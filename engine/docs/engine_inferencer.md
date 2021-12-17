@@ -4,8 +4,8 @@ A deep learning inference engine for quantized and sparsified models.
 ## Architecture
 Engine support model optimizer, model executor and high performance kernel for multi device.
 
-<a target="_blank" href="docs/imgs/infrastructure.png">
-  <img src="docs/imgs/infrastructure.png" alt="Infrastructure" width=800 height=500>
+<a target="_blank" href="imgs/infrastructure.png">
+  <img src="imgs/infrastructure.png" alt="Infrastructure" width=800 height=500>
 </a>
 
 ## Installation
@@ -20,6 +20,7 @@ Just support Linux operating system for now.
 conda create -n <env name> python=3.7
 conda install cmake --yes
 conda install absl-py --yes
+conda activate <env name>
 
 # install tensorflow 
 pip install https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl 
@@ -37,14 +38,17 @@ pip install neural-compressor
 
 ### 2.Generate the bert model intermediate representations, that are yaml and bin flies
 
-```
-# activate the env created at the Installation step
-conda activate <your_env_name>
-cd <work_folder>/engine
-python examples/convert_bert/main.py --model=<your_bert_model_path>
+```python
+# import compile api form engine
+from engine.compile import compile
+# get the engine intermediate graph (input onnx or tf model)
+graph = compile(<model_path>)
+# save the graph and get the final ir
+# the yaml and bin file will stored in '<ir_path>' folder
+graph.save(<ir_path>)
 ```
 
-Then in `<work_folder>/engine/ir/`, you will see the corresponding yaml and bin files
+Then in <ir_path>, you will see the corresponding yaml and bin files
 
 ### 3.Build the engine, **make sure your gcc version >= 7.3**
 
@@ -67,14 +71,6 @@ You can set the `batch_size` and `iterations` number. Besides you can use the `n
 `OMP_NUM_THREADS=4 numactl -C '0-3' ./inferencer --config=<the generated yaml file path> --weight=<the generated bin file path> --batch_size=32 --iterations=20`
 
 Then, you can see throughput result of the `inferencer`  on the terminal.
-
-You can also use our prepared yamls for performance test on `<work_folder>/engine/examples/nlp`, now the supported example yaml table is like below:
-| Model Name | FP32 | INT8 | Latency |
-| :------ | :------ | :------ | :------ |
-| Bert Base MRPC | [conf_fp32.yaml](engine/examples/nlp/bert_base_mrpc/conf_fp32.yaml) | [conf_int8.yaml](engine/examples/nlp/bert_base_mrpc/conf_int8.yaml) | [conf_int8_latency.yaml](engine/examples/nlp/bert_base_mrpc/conf_int8_latency.yaml) |
-| Bert Large MLPerf | [conf_fp32.yaml](engine/examples/nlp/bert_large_mlperf/conf_fp32.yaml) | [conf_int8.yaml](engine/examples/nlp/bert_large_mlperf/conf_int8.yaml) | [conf_int8_latency.yaml](engine/examples/nlp/bert_large_mlperf/conf_int8_latency.yaml) |
-|
-The *_latency.yaml is the model specially optimized for performance.
 
 please remember to change the input data type, shape and range for your input in `inferencer.cpp`
 
@@ -107,11 +103,6 @@ model:
         input_mask:
           dtype: int32
           shape: [-1, -1]
-        softmax1_min:
-          dtype: fp32
-          shape: [1]
-          location: [430411380, 4]
-
 ```
 All input tensors are in an operator typed Input. But slightly difference is some tensors have location while others not. A tensor with location means that is a frozen tensor or weight, it's read from the bin file. A tensor without location means it's activation, that should be input during model Forward. When you use C++ interface, initialize the tensor config and feed data/shape from dataloader:
 
@@ -130,7 +121,7 @@ All input tensors are in an operator typed Input. But slightly difference is som
 
 ```
 
-The output tensor is defined in an operator named Output, which only have inputs. Refer to `examples/execute_bert/conf_bert_mlperf_all_int8.yaml` and see:
+The output tensor is defined in an operator named Output, which only have inputs as follows:
 
 ```
   output_data:
