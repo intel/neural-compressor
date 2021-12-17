@@ -42,7 +42,7 @@ Supported deep learning frameworks are:
 * [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
 * [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0), [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0)
-* [Engine](./docs/engine.md), which is a built-in bare metal [acceleration library](./engine) for domain-specific NLP models.
+* [Execution Engine](./docs/engine.md), a reference bare metal solution(./engine) for domain-specific NLP models.
 
 ## Installation
 
@@ -190,7 +190,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 **Advanced Topics**
 
-* [Engine](docs/engine.md) is a new backend supported by Intel® Neural Compressor to support domain-specific acceleration for NLP models. 
+* [Execution Engine](docs/engine.md) is a bare metal solution domain-specific NLP models as the reference for customers.
 * [Adaptor](docs/adaptor.md) is the interface between components and framework. The method to develop adaptor extension is introduced with ONNX Runtime as example. 
 * [Strategy](docs/tuning_strategies.md) can automatically optimized low-precision recipes for deep learning models to achieve optimal product objectives like inference performance and memory usage with expected accuracy criteria. The method to develop a new strategy is introduced.
 
