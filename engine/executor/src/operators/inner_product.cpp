@@ -20,7 +20,8 @@ static unordered_map<string, dnnl::memory::data_type> type2mem{{"fp32", dnnl::me
                                                                {"s32", dnnl::memory::data_type::s32},
                                                                {"fp16", dnnl::memory::data_type::f16},
                                                                {"u8", dnnl::memory::data_type::u8},
-                                                               {"s8", dnnl::memory::data_type::s8}};
+                                                               {"s8", dnnl::memory::data_type::s8},
+                                                               {"bf16", dnnl::memory::data_type::bf16}};
 
 InnerProductOperator::InnerProductOperator(const OperatorConfig& conf)
     : Operator(conf),

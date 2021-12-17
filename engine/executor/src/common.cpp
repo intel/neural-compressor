@@ -18,7 +18,8 @@
 namespace executor {
 
 unordered_map<string, int> type2bytes = {{"fp32", sizeof(float)},       {"int8", sizeof(char)}, {"int32", sizeof(int)},
-                                         {"u8", sizeof(unsigned char)}, {"s8", sizeof(char)},   {"s32", sizeof(int)}};
+                                         {"u8", sizeof(unsigned char)}, {"s8", sizeof(char)},   {"s32", sizeof(int)},
+                                         {"bf16", sizeof(uint16_t)}};
 
 void GlobalInit(int* pargc, char*** pargv) {
   // Google flags.
@@ -238,12 +239,38 @@ void AddZeroPoints(const int size, const string& dtype, const float* src_data, c
 void Quantize_avx512(const int size, const string& dtype, const void* src_data, const float* range_mins,
                      const vector<float>& scales, void* dst_data) {
   const float* src_data_ = static_cast<const float*>(src_data);
+
+  int avx512_loop_len = size >> 4;
+
+  if (dtype == "bf16") {
+    uint16_t* dst_data_ = static_cast<uint16_t*>(dst_data);
+#pragma omp parallel for
+    for (int i = 0; i < avx512_loop_len; ++i) {
+      __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
+#if __AVX512_BF16__
+      __m256i data_bf16 = (__m256i)_mm512_cvtneps_pbh(_src_data);
+#else
+      auto y = _mm512_bsrli_epi128(_mm512_castps_si512(_src_data), 2);
+      __m256i data_bf16 = _mm512_cvtepi32_epi16(y);
+#endif
+      _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst_data_ + (i << 4)), data_bf16);
+    }
+    union {
+      unsigned int u;
+      float f;
+    } typecast;
+#pragma omp parallel for
+    for (int i = (avx512_loop_len << 4); i < size; i++) {
+      typecast.f = src_data_[i];
+      dst_data_[i] = typecast.u >> 16;
+    }
+    return;
+  }
+
   __m512 _min_with_scale_u8 = _mm512_set1_ps(range_mins[0] * scales[0]);
   __m512 _min_with_scale_s8 = _mm512_set1_ps(0);
   __m512 _scale = _mm512_set1_ps(scales[0]);
   __m512i zero = _mm512_setzero_epi32();
-
-  int avx512_loop_len = size >> 4;
 
   if (dtype == "u8") {
     unsigned char* dst_data_ = static_cast<unsigned char*>(dst_data);
@@ -306,6 +333,17 @@ void Quantize(const int size, const string& dtype, const void* src_data, const f
       data = data < -128 ? -128 : data;
       data = data > 127 ? 127 : data;
       dst_data_[i] = static_cast<char>(data);
+    }
+  } else if (dtype == "bf16") {
+    uint16_t* dst_data_ = static_cast<uint16_t*>(dst_data);
+    union {
+      unsigned int u;
+      float f;
+    } typecast;
+#pragma omp parallel for
+    for (int i = 0; i < size; i++) {
+      typecast.f = src_data_[i];
+      dst_data_[i] = typecast.u >> 16;
     }
   } else {
     LOG(ERROR) << "Can't suppport dst_dtype: " << dtype << " now!";

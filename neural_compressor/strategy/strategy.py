@@ -164,7 +164,8 @@ class TuneStrategy(object):
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
         if framework == 'engine':
             framework_specific_info.update(
-                 {'workspace_path': self.cfg.tuning.workspace.path})
+                 {'workspace_path': self.cfg.tuning.workspace.path,
+                  'q_dtype': self.cfg.quantization.dtype})
 
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
@@ -513,11 +514,12 @@ class TuneStrategy(object):
             self.best_qmodel = self.last_qmodel
         else:
             del self.last_qmodel
-
-        last_tune_msg = '[Accuracy (int8|fp32): {:.4f}|{:.4f}, {} (int8|fp32): {:.4f}|{:.4f}]'.format( \
-                                self.last_tune_result[0], self.baseline[0], \
-                                str(self.objective.measurer).capitalize(), \
-                                self.last_tune_result[1], self.baseline[1]) \
+        
+        last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}, {} ({}|fp32): {:.4f}|{:.4f}]'.format(\
+                                self.cfg.quantization.dtype, self.last_tune_result[0], \
+                                self.baseline[0], str(self.objective.measurer).capitalize(), \
+                                self.cfg.quantization.dtype, self.last_tune_result[1], \
+                                self.baseline[1]) \
                                 if self.last_tune_result else 'n/a'
         best_tune_msg = '[Accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0], \
                                 str(self.objective.measurer).capitalize(), \

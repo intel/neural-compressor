@@ -18,6 +18,11 @@
 
 namespace executor {
 
+static unordered_map<string, dnnl::memory::data_type> type2mem{
+    {"fp32", dnnl::memory::data_type::f32}, {"s32", dnnl::memory::data_type::s32},
+    {"fp16", dnnl::memory::data_type::f16}, {"u8", dnnl::memory::data_type::u8},
+    {"s8", dnnl::memory::data_type::s8},    {"bf16", dnnl::memory::data_type::bf16}};
+
 LayerNormOperator::LayerNormOperator(const OperatorConfig& conf) : Operator(conf) {
   auto attrs_map = operator_conf_.attributes();
   epsilon_ = StringToNum<float>(attrs_map["epsilon"]);
@@ -42,9 +47,9 @@ void LayerNormOperator::Reshape(const vector<Tensor*>& input, const vector<Tenso
   memory::dims dst_stride = src_stride;
 
   // 1.4 Prepare memory descriptors
-  memory::desc src_md(src_shape_origin, memory::data_type::f32, src_stride);
-  memory::desc scale_shift_md(scale_shift_shape, memory::data_type::f32, memory::format_tag::nc);
-  memory::desc dst_md(dst_shape, memory::data_type::f32, dst_stride);
+  memory::desc src_md(src_shape_origin, type2mem[input[0]->dtype()], src_stride);
+  memory::desc scale_shift_md(scale_shift_shape, dnnl::memory::data_type::f32, memory::format_tag::nc);
+  memory::desc dst_md(dst_shape, type2mem[output[0]->dtype()], dst_stride);
 
   // 1.5 Set dst tensor shape
   auto& dst_tensor_ptr = output[0];

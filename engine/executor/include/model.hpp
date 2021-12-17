@@ -68,6 +68,7 @@ class Model {
   inline vector<Tensor>& output_tensors() {
     LOG(INFO) << "Output tensor size is " << model_output_tensors_.size();
     for (int i = 0; i < model_output_tensors_.size(); ++i) {
+      output_tensors_[i].set_dtype(model_output_tensors_[i]->dtype());
       auto data_buffer = model_output_tensors_[i]->data();
       auto size = model_output_tensors_[i]->size();
       // copy the data from memory to an output buffer

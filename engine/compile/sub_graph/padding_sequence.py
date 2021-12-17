@@ -84,7 +84,7 @@ class PaddingSequence(Pattern):
                     'returns': []
                 },
 
-                # geminet
+                # geminet, bert_related in huggingface
                 {
                     'patterns': {
                         'in': [[(0, 'Unsqueeze'), (1, 'Unsqueeze'), (2, 'Cast'), (3, 'Sub'),
@@ -142,8 +142,14 @@ class PaddingSequence(Pattern):
         }
 
         def _make_padding_sequence_node(tensor_idx, hidden_size, model):
+            # Models with different size may have different nums of self-attention head.
+            # In Google Bert, the nums_head = hidden_size // 64.
+            # But in some other models, like minilm, they has smaller attention head channel.
+            # Use this dict to maintain the attr of padding_sequence operation.
+            # The last key is for debug and tell the info of unknown model.
+            heads_num_dict = {1024: 16, 768: 12, 384: 12, -1: -1}
             node_name = 'padding_sequence'
-            heads_num = int(hidden_size / 64)
+            heads_num = int(heads_num_dict[hidden_size])
             input_data = model.nodes[0]
             if len(input_data.output_tensors) > tensor_idx:
                 input_tensors = [copy.deepcopy(input_data.output_tensors[tensor_idx])]
@@ -162,6 +168,18 @@ class PaddingSequence(Pattern):
             model.insert_nodes(1, [padding_sequence_node])
 
             return model
+
+        def get_hidden_size(model, p=None, mat_idx=0):
+            if p == None:
+                p = [[(0, 'MatMul'), (1, ['Add', 'AddV2']), (2, ['Add', 'AddV2']), 
+                        (3, 'LayerNorm')]]
+            match_result = util.search_pattern(p, model)
+            if len(match_result)!=0:
+                mat_node = model.get_node_by_name(match_result[0][mat_idx])
+                hidden_size = int(mat_node.input_tensors[1].shape[-1])
+            else:
+                hidden_size = -1
+            return hidden_size
 
         pattern_dict = pattern_mapping_config['PaddingSequence'][0]
         model = _make_padding_sequence_node(2, 1024, model)
@@ -182,14 +200,16 @@ class PaddingSequence(Pattern):
             model.remove_nodes(['padding_sequence'])
 
         pattern_dict = pattern_mapping_config['PaddingSequence'][2]
+        hidden_size = get_hidden_size(model)
         if len(model.nodes[0].output_tensors) == 3:
-            model = _make_padding_sequence_node(2, 768, model)
+            model = _make_padding_sequence_node(2, hidden_size, model)
         else:
-            model = _make_padding_sequence_node(1, 768, model)
+            model = _make_padding_sequence_node(1, hidden_size, model)
         model, new_node_names, ret_old_nodes = util.pattern_mapping("PaddingSequence",
                                                                      pattern_dict, model)
 
         if len(new_node_names) != 0:
+            assert hidden_size!=-1, "Wrong hidden size in padding_sequence!"
             return model
         else:
             model.remove_nodes(['padding_sequence'])

@@ -48,7 +48,8 @@ struct type_caster<executor::Tensor> {
 
     std::vector<int64_t> shape(buf.ndim());
 
-    for (int i = 0; i < buf.ndim(); i++) {
+
+    for (int i = 0 ; i < buf.ndim() ; i++) {
       shape[i] = buf.shape()[i];
     }
     string dtype = "fp32";
@@ -56,6 +57,7 @@ struct type_caster<executor::Tensor> {
     if (py::isinstance<py::array_t<float>>(buf)) dtype = "fp32";
     if (py::isinstance<py::array_t<char>>(buf)) dtype = "s8";
     if (py::isinstance<py::array_t<unsigned char>>(buf)) dtype = "u8";
+    if (py::isinstance<py::array_t<uint16_t>>(buf)) dtype = "bf16";
 
     value = executor::Tensor(const_cast<void*>(buf.data()), shape, dtype);
 
@@ -73,6 +75,8 @@ struct type_caster<executor::Tensor> {
       a = py::array(std::move(src.shape()), reinterpret_cast<const uint8_t*>(src.raw_data()));
     } else if (src.dtype() == "s8") {
       a = py::array(std::move(src.shape()), reinterpret_cast<const int8_t*>(src.raw_data()));
+    } else if (src.dtype() == "bf16") {
+      a = py::array(std::move(src.shape()), reinterpret_cast<const uint16_t*>(src.raw_data()));
     }
     return a.release();
   }

@@ -18,6 +18,11 @@
 
 namespace executor {
 
+static unordered_map<string, dnnl::memory::data_type> type2mem{
+    {"fp32", dnnl::memory::data_type::f32}, {"s32", dnnl::memory::data_type::s32},
+    {"fp16", dnnl::memory::data_type::f16}, {"u8", dnnl::memory::data_type::u8},
+    {"s8", dnnl::memory::data_type::s8},    {"bf16", dnnl::memory::data_type::bf16}};
+
 #if __AVX512F__
 static inline __m512 i_poly(__m512 z, __m512 src_f32, const float c[]) {
   const auto c0 = _mm512_set1_ps(c[0]);
@@ -230,8 +235,8 @@ void SoftmaxOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*
 }
 
 void SoftmaxOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  if (output_dtype_ == "fp32") {
-    Reshape_f32(input, output);
+  if (output_dtype_ == "fp32" || output_dtype_ == "bf16") {
+    Reshape_dnnl(input, output);
   } else if (output_dtype_ == "u8") {
     Reshape_u8(input, output);
   } else {
@@ -240,8 +245,8 @@ void SoftmaxOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*
 }
 
 void SoftmaxOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  if (output_dtype_ == "fp32") {
-    Forward_f32(input, output);
+  if (output_dtype_ == "fp32" || output_dtype_ == "bf16") {
+    Forward_dnnl(input, output);
   } else if (output_dtype_ == "u8") {
     Forward_u8(input, output);
   } else {
@@ -249,7 +254,7 @@ void SoftmaxOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*
   }
 }
 
-void SoftmaxOperator::Reshape_f32(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+void SoftmaxOperator::Reshape_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   //// Part1: Derive operator's user proper shape and strides
   // 1.1: Prepare Tensor origin shape
   const memory::dims& src_shape_origin = input[0]->shape();
@@ -263,8 +268,8 @@ void SoftmaxOperator::Reshape_f32(const vector<Tensor*>& input, const vector<Ten
   memory::dims dst_stride = src_stride;
 
   // 1.4 Prepare memory descriptors
-  memory::desc src_md(src_shape_origin, memory::data_type::f32, src_stride);
-  memory::desc dst_md(dst_shape, memory::data_type::f32, dst_stride);
+  memory::desc src_md(src_shape_origin, type2mem[src_->dtype()], src_stride);
+  memory::desc dst_md(dst_shape, type2mem[dst_->dtype()], dst_stride);
 
   // 1.5 Set dst tensor shape
   auto& dst_tensor_ptr = output[0];
@@ -294,7 +299,7 @@ void SoftmaxOperator::Reshape_u8(const vector<Tensor*>& input, const vector<Tens
   dst_->set_shape(input_shape);
 }
 
-void SoftmaxOperator::Forward_f32(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   // 0. Alias variables part
   const auto& src_data = input[0]->data();
   // when change data value please use mutable_data

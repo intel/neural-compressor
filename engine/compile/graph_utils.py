@@ -29,7 +29,7 @@ DTYPES_DICT = {"float16": "fp16",
                "int32": "s32",
                "int64": "s64",
                "uint8": "u8",
-               "uint16": "u16",
+               "uint16": "bf16",
                }
 
 

@@ -28,6 +28,10 @@ class EngineModel(BaseModel):
         self._graph = None
         self._model = model
         self.q_config = None
+        if kwargs and 'config' in kwargs:
+            self._config = kwargs['config']
+        else:
+            self._config = None   
 
     def framework(self):
         return 'engine'
@@ -50,15 +54,8 @@ class EngineModel(BaseModel):
             graph.graph_init(yaml_path, bin_path)
             # logger.warn("When input yaml and bin, it can not use func in compile.")
         else:
-            from engine.compile.loaders.loader import Loader
-            from engine.compile.extractors.extractor import Extractor
-            from engine.compile.sub_graph.subgraph_matcher import SubGraphMatcher
-            loader = Loader()
-            extractor = Extractor()
-            sub_graph_matcher = SubGraphMatcher()
-            graph = loader(model)
-            graph = extractor(graph)
-            graph = sub_graph_matcher(graph)
+            from engine.compile import compile
+            graph = compile(model, config=self._config)
         return graph
 
     @property
@@ -78,6 +75,14 @@ class EngineModel(BaseModel):
     @model.setter
     def model(self, model):
         self._model = model
+
+    @property
+    def config(self):
+        return self._config
+
+    @config.setter
+    def config(self, config):
+        self._config = config
 
     def save(self, output_dir=None):
         self.graph.save(output_dir)

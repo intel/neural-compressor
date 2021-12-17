@@ -42,6 +42,8 @@ class EngineAdaptor(Adaptor):
         self.__config_dict = {}
         self.quantizable_ops = []
         self.work_space = framework_specific_info["workspace_path"]
+        self.q_dtype = framework_specific_info['q_dtype'] # default int8
+        assert self.q_dtype in ['int8', 'bf16'], 'Engine only supports int8 or bf16 quantization.'
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
         self.query_handler = EngineQuery(local_config_file=os.path.join(
@@ -50,7 +52,7 @@ class EngineAdaptor(Adaptor):
         self.fp32_results = []
         self.fp32_preds_as_label = False
         self.quantize_config = {} # adaptor should know current configs at any time
-
+        
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
@@ -69,34 +71,50 @@ class EngineAdaptor(Adaptor):
         assert q_func is None, "quantization aware training has not been supported on Deep engine"
         model = self.pre_optimized_model if self.pre_optimized_model else model
         from neural_compressor.model.engine_model import EngineModel
-        tmp_model = EngineModel(model.model)
+        tmp_model = EngineModel(model.model, config=model.config)
         self.quantizable_ops = self._query_quantizable_ops(model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
-        from neural_compressor.adaptor.engine_utils.engine_quantizer import EngineQuantizer
-        quantizer = EngineQuantizer(tmp_model,
-            data_loader,
-            iterations,
-            quantize_config,
-            self.quantizable_op_types)
-        tmp_model = quantizer.quantize_model()
+        # int8
+        if self.q_dtype == 'int8':
+            from neural_compressor.adaptor.engine_utils.int8_util import EngineInt8Quantizer
+            quantizer = EngineInt8Quantizer(tmp_model,
+                data_loader,
+                iterations,
+                quantize_config,
+                self.quantizable_op_types)
+            tmp_model = quantizer.quantize_model()
+
+        # bf16
+        else:
+            from neural_compressor.adaptor.engine_utils.bf16_util import EngineBf16Quantizer
+            quantizer = EngineBf16Quantizer(tmp_model,
+                data_loader,
+                iterations,
+                quantize_config,
+                self.quantizable_op_types)
+            tmp_model = quantizer.quantize_model()
+
         self.quantize_config = quantize_config # update so other methods can know current configs
         self._dump_model_op_stastics(tmp_model, quantize_config)
         return tmp_model
 
     def _dump_model_op_stastics(self, model, config):
-        int8_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
-            precision='int8')
+        quant_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
+            precision=self.q_dtype)
         res = {}
-        for op_type in int8_op_list:
+        for op_type in quant_op_list:
             res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
         for node in model.graph.nodes:
             if node.name in config and node.op_type in res:
-                if config[node.name] == 'fp32':
-                    res[node.op_type]['FP32'] += 1
+                capa_info = config[node.name]
+                if 'weight' in capa_info:
+                    dtype = capa_info['weight']['dtype']
+                elif 'activation' in capa_info:
+                    dtype = capa_info['activation']['dtype']
                 else:
-                    res[node.op_type]['INT8'] += 1
-
+                    dtype = capa_info
+                res[node.op_type][dtype.upper()] += 1
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
             res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
         OpPrecisionStatistics(output_data).print_stat()
@@ -116,9 +134,9 @@ class EngineAdaptor(Adaptor):
         quantizable_ops = self._query_quantizable_ops(self.pre_optimized_model)
         optype_wise = OrderedDict()
         special_config_types = list(self.query_handler.get_quantization_capability()\
-                                     ['int8'].keys())  # pylint: disable=no-member
+                                     [self.q_dtype].keys())  # pylint: disable=no-member
         default_config = self.query_handler.get_quantization_capability()[\
-                                     'int8']['default'] # pylint: disable=no-member
+                                     self.q_dtype]['default'] # pylint: disable=no-member
         op_wise = OrderedDict()
         for _, op in enumerate(quantizable_ops):
             if op.op_type not in special_config_types:
@@ -126,7 +144,7 @@ class EngineAdaptor(Adaptor):
             else:
                 op_capability = \
                     self.query_handler.get_quantization_capability()[\
-                                   'int8'][op.op_type]  # pylint: disable=no-member
+                                   self.q_dtype][op.op_type]  # pylint: disable=no-member
             if op.op_type not in optype_wise.keys():
                 optype_wise[op.op_type] = copy.deepcopy(op_capability)
 
@@ -148,8 +166,12 @@ class EngineAdaptor(Adaptor):
                 for tensor, config in tune_cfg['op'][(op.name, op.op_type)].items():
                     if config['dtype'] == "int8":
                         node_config[tensor]['dtype'] = 'int8'
-                    else:
+                    elif config['dtype'] == "uint8":
                         node_config[tensor]['dtype'] = 'uint8'
+                    elif config['dtype'] == "bf16":
+                        node_config[tensor]['dtype'] = 'bf16'
+                    else:
+                        node_config[tensor]['dtype'] = 'fp32'
                 quantize_config[op.name] = node_config
 
         return quantize_config
@@ -164,7 +186,7 @@ class EngineAdaptor(Adaptor):
 
     def _query_quantizable_op_types(self):
         quantizable_op_types = self.query_handler.get_op_types_by_precision( \
-                                  precision='int8') # pylint: disable=no-member
+                                precision=self.q_dtype) # pylint: disable=no-member
 
         return quantizable_op_types
 

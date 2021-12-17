@@ -44,14 +44,14 @@ def start_pipeline(model, config=None):
     compile_list = []
     # initialize the compile
     for compile_type in COMPILES.keys():
-        compile = COMPILES[compile_type]()
-        compile_list.append(compile)
+        compile_ = COMPILES[compile_type]()
+        compile_list.append(compile_)
     # convert the model
-    for compile in compile_list:
-        model = compile(model)
+    for compile_ in compile_list:
+        model = compile_(model)
     return model
 
 
 def compile(model, config=None):
-    model = start_pipeline(model, config=None)
+    model = start_pipeline(model, config=config)
     return model

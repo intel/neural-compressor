@@ -18,11 +18,12 @@
     name: 'default'
   
   precisions: &common_precisions
-    names: int8, uint8, fp32
+    names: int8, uint8, fp32, bf16
     valid_mixed_precisions: []
   
   ops: &common_ops
     int8: ['InnerProduct', 'Matmul']
+    bf16: ['InnerProduct', 'Matmul', 'Softmax']
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
@@ -33,42 +34,78 @@
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_channel']
-                    },
+                },
              'activation': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
-                        }
-                    },
+                }
+            },
           'Matmul': {
              'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
-                    },
+                },
              'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
+                        'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
-                        }
-                    },
+                }
+            },
           'default': {
              'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
-                    },
+                },
              'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
+                        'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
-                        }
-                    },
+                }
+            }
+          }
+    bf16: {
+          'InnerProduct': {
+             'weight': {
+                        'dtype': ['bf16', 'fp32']
+                },
+             'activation': {
+                        'dtype': ['bf16', 'fp32']
+                }
+            },
+          'Matmul': {
+             'weight': {
+                        'dtype': ['bf16', 'fp32']
+                },
+             'activation': {
+                        'dtype': ['bf16', 'fp32']
+                }
+            },
+          'Softmax': {
+             'activation': {
+                        'dtype': ['bf16', 'fp32']
+                }
+            },
+          'LayerNorm': {
+             'activation': {
+                        'dtype': ['bf16', 'fp32']
+                }
+            },
+          'default': {
+             'weight': {
+                        'dtype': ['bf16', 'fp32']
+                },
+             'activation': {
+                        'dtype': ['bf16', 'fp32']
+                }
+            }
           }
 
   patterns: &common_patterns
@@ -81,4 +118,6 @@
     uint8: [
         
         ]
--
+    bf16: [
+
+        ]

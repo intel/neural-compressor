@@ -386,3 +386,9 @@ class EmbeddingBag(Operator):
 class Flatten(Operator):
     def __init__(self):
         super().__init__()
+
+@operator_registry(operator_type='Reorder')
+class Reorder(Operator):
+    def __init__(self):
+        super().__init__()
+

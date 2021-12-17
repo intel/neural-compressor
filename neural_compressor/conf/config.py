@@ -581,6 +581,7 @@ schema = Schema({
         Optional('advance', default=None): {
             Optional('bias_correction'): And(str, lambda s: s in ['weight_empirical']),
         },
+        Optional('dtype', default='int8'): And(str, Or('int8', 'bf16')),
         Optional('calibration', default={'sampling_size': [100]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema

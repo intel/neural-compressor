@@ -40,6 +40,10 @@ class QuantizeOperator : public Operator {
   void Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) override;
   void Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) override;
 
+ private:
+  void MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output);
+
+ protected:
   string output_dtype_ = "fp32";
   vector<float> scales_;
 

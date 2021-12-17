@@ -731,7 +731,146 @@ class TestOps(unittest.TestCase):
         range_node_test.name = range_node.name
         name = range_node_test.name
         self.assertEqual('range', name)
+    
+    def test_relu(self):
+        relu_node = NodeProto()
+        relu_node.name = 'relu'
+        relu_node.op_type = 'Relu'
 
+        relu_node_test = OPERATORS['Relu']()
+        relu_node_test.name = relu_node.name
+        name = relu_node_test.name
+        self.assertEqual('relu', name)
+    
+    def test_matmul_with_bias_relu(self):
+        mat_node = NodeProto()
+        mat_node.name = 'matmul_with_bias_relu'
+        mat_node.op_type = 'MatMulWithBiasRelu'
+
+        mat_node_test = OPERATORS['MatMulWithBiasRelu']()
+        mat_node_test.name = mat_node.name
+        name = mat_node_test.name
+        self.assertEqual('matmul_with_bias_relu', name)
+    
+    def test_matmul(self):
+        mat_node = NodeProto()
+        mat_node.name = 'matmul'
+        mat_node.op_type = 'Matmul'
+
+        mat_node_test = OPERATORS['Matmul']()
+        mat_node_test.name = mat_node.name
+        name = mat_node_test.name
+        self.assertEqual('matmul', name)
+    
+    def test_quantize(self):
+        qat_node = NodeProto()
+        qat_node.name = 'quantize'
+        qat_node.op_type = 'Quantize'
+
+        qat_node_test = OPERATORS['Quantize']()
+        qat_node_test.name = qat_node.name
+        name = qat_node_test.name
+        self.assertEqual('quantize', name)
+    
+    def test_not(self):
+        not_node = NodeProto()
+        not_node.name = 'not'
+        not_node.op_type = 'Not'
+
+        not_node_test = OPERATORS['Not']()
+        not_node_test.name = not_node.name
+        name = not_node_test.name
+        self.assertEqual('not', name)
+    
+    def test_cumsum(self):
+        cumsum_node = NodeProto()
+        cumsum_node.name = 'cumsum'
+        cumsum_node.op_type = 'CumSum'
+
+        cumsum_node_test = OPERATORS['CumSum']()
+        cumsum_node_test.name = cumsum_node.name
+        name = cumsum_node_test.name
+        self.assertEqual('cumsum', name)
+    
+    def test_onehot(self):
+        onehot_node = NodeProto()
+        onehot_node.name = 'onehot'
+        onehot_node.op_type = 'Onehot'
+
+        onehot_node_test = OPERATORS['Onehot']()
+        onehot_node_test.name = onehot_node.name
+        name = onehot_node_test.name
+        self.assertEqual('onehot', name)
+    
+    def test_toke_type_ids(self):
+        token_node = NodeProto()
+        token_node.name = 'toke_type_ids'
+        token_node.op_type = 'TokenTypeIds'
+
+        token_node_test = OPERATORS['TokenTypeIds']()
+        token_node_test.name = token_node.name
+        name = token_node_test.name
+        self.assertEqual('toke_type_ids', name)
+    
+    def test_positio_ids(self):
+        position_node = NodeProto()
+        position_node.name = 'position_ids'
+        position_node.op_type = 'PositionIds'
+
+        position_node_test = OPERATORS['PositionIds']()
+        position_node_test.name = position_node.name
+        name = position_node_test.name
+        self.assertEqual('position_ids', name)
+    
+    def test_loop(self):
+        loop_node = NodeProto()
+        loop_node.name = 'loop'
+        loop_node.op_type = 'Loop'
+
+        loop_node_test = OPERATORS['Loop']()
+        loop_node_test.name = loop_node.name
+        name = loop_node_test.name
+        self.assertEqual('loop', name)
+    
+    def test_sigmoid(self):
+        sigmoid_node = NodeProto()
+        sigmoid_node.name = 'sigmoid'
+        sigmoid_node.op_type = 'Sigmoid'
+
+        sigmoid_node_test = OPERATORS['Sigmoid']()
+        sigmoid_node_test.name = sigmoid_node.name
+        name = sigmoid_node_test.name
+        self.assertEqual('sigmoid', name)
+    
+    def test_matmul_with_bias_sigmoid(self):
+        mat_node = NodeProto()
+        mat_node.name = 'matmul_with_bias_sigmoid'
+        mat_node.op_type = 'MatMulWithBiasSigmoid'
+
+        mat_node_test = OPERATORS['MatMulWithBiasSigmoid']()
+        mat_node_test.name = mat_node.name
+        name = mat_node_test.name
+        self.assertEqual('matmul_with_bias_sigmoid', name)
+    
+    def test_embedding_bag(self):
+        eb_node = NodeProto()
+        eb_node.name = 'embedding_bag'
+        eb_node.op_type = 'EmbeddingBag'
+
+        eb_node_test = OPERATORS['EmbeddingBag']()
+        eb_node_test.name = eb_node.name
+        name = eb_node_test.name
+        self.assertEqual('embedding_bag', name)
+    
+    def test_flatten(self):
+        flatten_node = NodeProto()
+        flatten_node.name = 'flatten'
+        flatten_node.op_type = 'Flatten'
+
+        flatten_node_test = OPERATORS['Flatten']()
+        flatten_node_test.name = flatten_node.name
+        name = flatten_node_test.name
+        self.assertEqual('flatten', name)
 
 if __name__ == "__main__":
     unittest.main()

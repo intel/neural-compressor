@@ -52,7 +52,7 @@ class InteractFeatures(Pattern):
                         1 : [[{8: [0]}], [[0], 1]],
                         2 : [[{9: [0]}], [[0], 1]],
                     },
-                    'returns': [8, 9]
+                    'returns': [8, 9, 1, 4] # need modify the relu node source op
                 },
 
                 {
@@ -112,6 +112,11 @@ class InteractFeatures(Pattern):
                     model.nodes[concat_node_idx].input_tensors = ret_old_nodes[j][0].input_tensors
                     model.nodes[concat_node_idx].attr = ret_old_nodes[j][0].attr
                     _set_attr(concat_num, new_node_names[j], model)
+                    relu_node_idx = model.get_node_id(new_node_names[j][0])
+                    model.nodes[relu_node_idx].output_tensors[0].dest_op.remove(
+                        ret_old_nodes[j][2].name)
+                    model.nodes[relu_node_idx].output_tensors[0].dest_op.remove(
+                        ret_old_nodes[j][3].name)
                 
             elif len(new_node_names) != 0 and i == 1:
                 for j in range(len(new_node_names)):

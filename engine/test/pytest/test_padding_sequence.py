@@ -183,11 +183,40 @@ class TestPaddingSequence(unittest.TestCase):
         add_node.construct('add', 'Add', input_tensors=input_tensors, 
                                 output_tensors=output_tensors)
         
+        mat_node = OPERATORS['MatMul']()
+        input_tensors = [Tensor(), 
+                        Tensor(name='src:0', dest_op=['matmul'], shape=[768])]
+        output_tensors = [Tensor(name='matmul:0', source_op=['matmul'], dest_op=['add_1'])]
+        mat_node.construct('matmul', 'MatMul', input_tensors=input_tensors, 
+                                output_tensors=output_tensors)
+        
+        add_1_node = OPERATORS['Add']()
+        input_tensors = [Tensor(name='matmul:0', source_op=['matmul'], dest_op=['add_1']),
+                        Tensor(data=np.array(1))]
+        output_tensors = [Tensor(name='add_1:0', source_op=['add_1'], dest_op=['add_2'])]
+        add_1_node.construct('add_1', 'Add', input_tensors=input_tensors, 
+                                output_tensors=output_tensors)
+        
+        add_2_node = OPERATORS['Add']()
+        input_tensors = [Tensor(name='add_1:0', source_op=['add_1'], dest_op=['add_2']),
+                        Tensor(data=np.array(1))]
+        output_tensors = [Tensor(name='add_2:0', source_op=['add_2'], dest_op=['layernorm'])]
+        add_2_node.construct('add_2', 'Add', input_tensors=input_tensors, 
+                                output_tensors=output_tensors)
+        
+        layernorm_node = OPERATORS['LayerNorm']()
+        input_tensors = [Tensor(name='add_2:0', source_op=['add_2'], dest_op=['layernorm']),
+                        Tensor(data=np.array(1), shape=[768, 768]), 
+                        Tensor(data=np.array(1), shape=[768])]
+        output_tensors = [Tensor(name='layernorm:0', source_op=['layernorm'])]
+        layernorm_node.construct('layernorm', 'LayerNorm', input_tensors=input_tensors, 
+                                output_tensors=output_tensors)
 
         graph.insert_nodes(len(graph.nodes), [input_data_node, unsqueeze_1_node, unsqueeze_2_node,
-                                                    cast_node, sub_node, mul_node, add_node])
+                                                cast_node, sub_node, mul_node, add_node, mat_node,
+                                                add_1_node, add_2_node, layernorm_node])
         graph = PaddingSequence()(graph)
-        self.assertEqual(3, len(graph.nodes))
+        self.assertEqual(7, len(graph.nodes))
         self.assertEqual('-1,12,0,-1', graph.nodes[1].attr['dst_shape'])
         self.assertEqual('AddV2', graph.nodes[2].op_type)
     

@@ -33,19 +33,28 @@ QuantizeOperator::QuantizeOperator(const OperatorConfig& conf) : Operator(conf) 
 
 QuantizeOperator::~QuantizeOperator() {}
 
-void QuantizeOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  if (input.size() < 3) {
-    LOG(ERROR) << "Input size is " << input.size();
-    return;
-  }
-
-  src_ = input[0];
-  src_min_ = input[1];
-  src_max_ = input[2];
+void QuantizeOperator::MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  int input_size = input.size();
   dst_ = output[0];
-
+  switch (input_size) {
+    case 1: {
+      src_ = input[0];
+      break;
+    }
+    case 3: {
+      src_ = input[0];
+      src_min_ = input[1];
+      src_max_ = input[2];
+      break;
+    }
+  }
+}
+void QuantizeOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  MapTensors(input, output);
   dst_->set_dtype(output_dtype_);
-  scales_ = GetScales(src_min_->data(), src_max_->data(), src_min_->size(), dst_->dtype());
+  if (output_dtype_ == "u8" || output_dtype_ == "s8") {
+    scales_ = GetScales(src_min_->data(), src_max_->data(), src_min_->size(), dst_->dtype());
+  }
 }
 
 void QuantizeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
@@ -60,14 +69,12 @@ void QuantizeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor
 void QuantizeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   const void* src_data = static_cast<const float*>(src_->data());
   void* dst_data = dst_->mutable_data();
-  if (src_min_ != nullptr) {
-    const float* min_data = static_cast<const float*>(src_min_->data());
+  const float* min_data = src_min_ != nullptr ? static_cast<const float*>(src_min_->data()) : nullptr;
 #if __AVX512F__
-    Quantize_avx512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+  Quantize_avx512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
 #else
-    Quantize(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+  Quantize(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
 #endif
-  }
   this->unref_tensors(input);
 }
 

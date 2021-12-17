@@ -407,6 +407,7 @@ class Graph(object):
                                         "s8": np.int8,
                                         "s32": np.int32,
                                         "u8": np.uint8,
+                                        "bf16": np.uint16,
                                        }
                         tensor_data = np.frombuffer(tensor_data, dtype=DTYPES_DICT[tensor_dtype])
                     tensorclass = Tensor()

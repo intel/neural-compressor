@@ -61,8 +61,8 @@ class SoftmaxOperator : public Operator {
   void MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output);
   void Reshape_u8(const vector<Tensor*>& input, const vector<Tensor*>& output);
   void Forward_u8(const vector<Tensor*>& input, const vector<Tensor*>& output);
-  void Reshape_f32(const vector<Tensor*>& input, const vector<Tensor*>& output);
-  void Forward_f32(const vector<Tensor*>& input, const vector<Tensor*>& output);
+  void Reshape_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output);
+  void Forward_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output);
 };
 }  // namespace executor
 #endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_

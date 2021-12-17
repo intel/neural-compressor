@@ -46,7 +46,7 @@ This is a tutorial of how to enable DLRM model with Intel® Neural Compressor.
 Example based on the DLRM ONNX model with "cat" interaction layer
 
 ### Write Yaml config file
-In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.
+In examples directory, there is conf.yaml(for int8 quantization and conf_bf16.yaml for bf16). We could remove most of the items and only keep mandatory item for tuning.
 ```yaml
 model:
   name: dlrm
@@ -65,6 +65,7 @@ evaluation:
       cores_per_instance: 28
 
 quantization:
+  dtype: bf16              # int8 for 8bit quantization
   calibration:
     sampling_size: 2000
 

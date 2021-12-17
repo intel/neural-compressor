@@ -5,6 +5,7 @@ export GLOG_minloglevel=2
 
 #default batch_size
 batch_size=32
+output_model=./ir
 
 function main {
 

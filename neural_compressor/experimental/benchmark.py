@@ -183,7 +183,8 @@ class Benchmark(object):
         if framework == 'engine':
             framework_specific_info.update(
                  {"workspace_path": cfg.tuning.workspace.path, \
-                  "b_dataloader": self._b_dataloader})
+                  "b_dataloader": self._b_dataloader, \
+                  'q_dtype': cfg.quantization.dtype})
 
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for quantization....'
 
