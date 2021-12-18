@@ -36,6 +36,7 @@ onnx = LazyImport('onnx')
 ort = LazyImport("onnxruntime")
 yaml = LazyImport('yaml')
 json = LazyImport('json')
+np = LazyImport('numpy')
 
 tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
@@ -1019,13 +1020,13 @@ class PyTorchBaseModel(BaseModel):
             tensor_name (string): weight name
 
         Returns:
-            (object): weight tensor
+            (tensor): weight tensor
 
         """
         state_dict = self._model.state_dict()
-        for name in state_dict:
+        for name, tensor in state_dict.items():
             if tensor_name == name:
-                return state_dict[name]
+                return tensor.cpu()
 
     def update_weights(self, tensor_name, new_tensor):
         """ Update weight value
@@ -1038,10 +1039,28 @@ class PyTorchBaseModel(BaseModel):
 
         """
         # TODO: copy tensor option to new tensor is better
+        device = next(self._model.parameters()).device 
         new_tensor = torch.tensor(new_tensor).float()
         module_index = '.'.join(tensor_name.split('.')[:-1])
         module = dict(self._model.named_modules())[module_index]
-        setattr(module, tensor_name.split('.')[-1], torch.nn.Parameter(new_tensor))
+        setattr(module, tensor_name.split('.')[-1], torch.nn.Parameter(new_tensor.to(device)))
+
+    def update_gradient(self, grad_name, new_grad):
+        """ Update grad value
+
+        Args:
+            grad_name (string): grad name
+            new_grad (ndarray): grad value
+
+        Returns:
+
+        """
+        device = next(self._model.parameters()).device
+        new_grad = torch.tensor(new_grad).float().to(device)
+        params = [p for n,p in self._model.named_parameters() if n == grad_name]
+        assert len(params) == 1, "lpot can only update grad of one tensor at one time"
+        param = params[0]
+        param.grad.copy_(new_grad)
 
     def prune_weights_(self, tensor_name, mask):
         """ Prune weight in place according to tensor_name with mask
@@ -1067,7 +1086,7 @@ class PyTorchBaseModel(BaseModel):
         Returns:
             tensor: input tensor
         """
-        return self.input_args[input_name]
+        return self.input_args[input_name].cpu()
 
     def get_gradient(self, input_tensor):
         """ Get gradients of specific tensor
@@ -1076,16 +1095,16 @@ class PyTorchBaseModel(BaseModel):
             input_tensor (string or tensor): weight name or a tensor
 
         Returns:
-            (tensor): gradient tensor
+            (ndarray): gradient tensor array
         """
         if isinstance(input_tensor, str):
             for name, tensor in self._model.named_parameters():
                 if name == input_tensor:
                     assert tensor.grad is not None, 'Please call backward() before get_gradient'
-                    return tensor.grad
+                    return np.array(tensor.grad.cpu())
         elif isinstance(input_tensor, torch.Tensor):
             assert input_tensor.grad is not None, 'Please call backward() before get_gradient'
-            return input_tensor.grad
+            return np.array(input_tensor.grad.cpu())
         else:
             logger.error("Expect str or torch.Tensor in get_gradient, " \
                          "but get {}.".format(type(input_tensor)))
@@ -1112,7 +1131,7 @@ class PyTorchBaseModel(BaseModel):
             # as its "type"
             if param.dim() in param_dims and any(type in name for type in ['weight', 'bias']):
                 param_size, sparse_param_size, dense_param_size = compute_sparsity(
-                    param.detach().numpy())
+                    param.detach().cpu().numpy())
                 density = dense_param_size / param_size
                 params_size += param_size
                 sparse_params_size += sparse_param_size

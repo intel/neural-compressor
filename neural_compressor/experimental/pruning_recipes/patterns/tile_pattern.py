@@ -27,9 +27,13 @@ class TilePatternBase(PatternBase):
         reduced_tensor = self.reduce(tensor)
         return 1 - np.count_nonzero(reduced_tensor) / reduced_tensor.size
 
-    def repeat_mask(self, mask):
-        return np.repeat(np.repeat(mask, self.mask_shape[0], axis=-2), \
-            self.mask_shape[1], axis=-1)
+    def repeat_mask(self, mask, ori_shape=None):
+        flatten_mask = np.repeat(np.repeat(mask, self.mask_shape[0], axis=-2), \
+                       self.mask_shape[1], axis=-1)
+        if ori_shape:
+            return flatten_mask.reshape(ori_shape)
+        else:
+            return flatten_mask
 
 @pattern_registry(pattern_type='tile_pattern_1x1')
 class TilePattern_1x1(TilePatternBase):
@@ -48,3 +52,14 @@ class TilePattern_1x16(TilePatternBase):
     def __init__(self):
         """ 1x16 tile wise sparsity """
         super(TilePattern_1x16, self).__init__([1, 16])
+
+@pattern_registry(pattern_type='tile_pattern_4x1')
+class TilePattern_4x1(TilePatternBase):
+    def __init__(self):
+        """ 4x1 tile wise vnni-aware sparsity """
+        super(TilePattern_4x1, self).__init__([4, 1])
+@pattern_registry(pattern_type='tile_pattern_1x2')
+class TilePattern_1x2(TilePatternBase):
+    def __init__(self):
+        """ 1x2 tile wise vnni-aware sparsity """
+        super(TilePattern_1x2, self).__init__([1, 2])

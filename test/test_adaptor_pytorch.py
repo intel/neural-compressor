@@ -465,11 +465,11 @@ class TestPytorchAdaptor(unittest.TestCase):
             if name == 'fc.bias':
                 tensor.grad = torch.zeros_like(tensor)
                 break
-        assert torch.equal(self.nc_model.get_gradient('fc.bias'), torch.zeros_like(tensor))
+        assert torch.equal(torch.Tensor(self.nc_model.get_gradient('fc.bias')), torch.zeros_like(tensor))
 
         rand_input = torch.rand(100, 3, 224, 224).float()
         rand_input.grad = torch.ones_like(rand_input)
-        assert torch.equal(self.nc_model.get_gradient(rand_input),
+        assert torch.equal(torch.Tensor(self.nc_model.get_gradient(rand_input)),
                            torch.ones_like(rand_input))
 
     def test_report_sparsity(self):

@@ -537,7 +537,9 @@ train_schema = Schema({
     Optional('iteration'): int,
     Optional('frequency'): int,
     Optional('execution_mode', default='eager'): And(str, lambda s: s in ['eager', 'graph']),
-    Optional('hostfile'): str
+    # TODO reserve for multinode training support
+    Optional('hostfile'): str,
+    Optional('gpu', default=False): bool
 })
 
 weight_compression_schema = Schema({

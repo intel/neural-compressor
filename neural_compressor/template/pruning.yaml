@@ -28,7 +28,8 @@ pruning:                                             # mandatory only for prunin
     iteration: 100
     frequency: 2
     hostfile: /path/to/host/file                     # reserved for multi-node training.
-    
+    gpu: True
+
     dataloader:
       batch_size: 256
       dataset:
@@ -60,7 +61,7 @@ pruning:                                             # mandatory only for prunin
         - !Pruner
             initial_sparsity: 0.0
             target_sparsity: 0.97
-            prune_type: basic_magnitude              # currently only support basic_magnitude
+            prune_type: basic_magnitude
             names: ['layer1.0.conv1.weight']         # tensor name to be pruned.
             start_epoch: 0
             end_epoch: 2

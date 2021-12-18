@@ -7,7 +7,7 @@ import shutil
 import yaml
 import tensorflow as tf
 
-from lpot.experimental import model_conversion
+from neural_compressor.experimental import model_conversion
 tf.compat.v1.enable_eager_execution()
 from tensorflow import keras
 

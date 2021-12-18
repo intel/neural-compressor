@@ -199,6 +199,11 @@ class Pruning(Component):
                                             self._model, \
                                             pruner,
                                             self.cfg.pruning.approach.weight_compression))
+                elif pruner.prune_type == 'group_lasso':
+                    self.pruners.append(PRUNERS['GroupLasso'](\
+                                            self._model, \
+                                            pruner,
+                                            self.cfg.pruning.approach.weight_compression))
 
     def __call__(self):
         """The main entry point of pruning.

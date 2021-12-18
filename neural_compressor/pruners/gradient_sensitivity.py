@@ -45,8 +45,9 @@ class GradientSensitivityPruner(Pruner):
         if self.elementwise_prune:
             for weight_name in self.weights:
                 if weight_name in self.masks:
-                    new_weight = self.masks[weight_name] * \
-                        np.array(self.model.get_weight(weight_name))
+                    new_weight = self.masks[weight_name].reshape(\
+                            np.array(self.model.get_weight(weight_name).shape)) * \
+                            np.array(self.model.get_weight(weight_name))
                     self.model.update_weights(weight_name, new_weight)
 
     def on_epoch_end(self):
@@ -61,8 +62,9 @@ class GradientSensitivityPruner(Pruner):
                                 self.masks[weight_name].sum()), str(
                                 1 - self.masks[weight_name].sum() /
                                 self.masks[weight_name].size)))
-                        new_weight = self.masks[weight_name] * \
-                            np.array(self.model.get_weight(weight_name))
+                        new_weight = self.masks[weight_name].reshape(\
+                                np.array(self.model.get_weight(weight_name).shape)) * \
+                                np.array(self.model.get_weight(weight_name))
                         self.model.update_weights(weight_name, new_weight)
         else:
             for weight_name_raw in self.weights:
@@ -159,10 +161,10 @@ class GradientSensitivityPruner(Pruner):
     def update_importance_elementwise(self, model, importance, weight_name):
         if importance.get(weight_name) is not None:
            importance[weight_name] += np.absolute(
-                np.array(model.get_gradient(weight_name) * model.get_weight(weight_name)))
+                np.array(np.array(model.get_gradient(weight_name)) * np.array(model.get_weight(weight_name))))
         else:
             importance[weight_name] = np.absolute(
-                np.array(model.get_gradient(weight_name) * model.get_weight(weight_name)))
+                np.array(model.get_gradient(weight_name) * np.array(model.get_weight(weight_name))))
 
     def update_importance_abs(self, model, importance, weight_name, parameters):
         head_mask = model.get_inputs(

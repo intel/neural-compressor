@@ -60,11 +60,29 @@ class PatternBase:
 
     def reduce(self, tensor, method='abs_sum'):
         """ reshaped tensor, support 'abs_max', 'abs_sum' """
+        if len(tensor.shape) in [2, 4]:
+            reshaped_tensor = self.reshape(tensor)
+            dims = list(range(4))
+            new_tensor = np.transpose(reshaped_tensor, dims[:-3] + [dims[-2], dims[-3], dims[-1]])
+            new_shape = list(reshaped_tensor.shape)
+            reduced_tensor = new_tensor.reshape(new_shape[:-3] + [new_shape[-2], -1])
+        else:
+            assert False, "tile-pattern pruning now only support 2d & 4d tensor"
+        if method == 'abs_max':
+            return np.abs(reduced_tensor).max(-1).values
+        elif method == 'abs_sum':
+            return np.abs(reduced_tensor).sum(-1)
+        else:
+            raise NotImplementedError
+
+    def reshape(self, tensor):
+        """ reshape tensor into dims+2 """
+        if len(tensor.shape) == 4:
+            tensor = tensor.reshape(tensor.shape[0], -1)
         assert tensor.shape[-1] % self.mask_shape[-1] == 0 and \
                 tensor.shape[-2] % self.mask_shape[-2] == 0, \
             'tensor shape {} cannot be divided by mask {}'.format(tensor.shape, self.mask_shape)
 
-        dims = list(range(len(tensor.shape) + 2))
         new_shape = list(tensor.shape)[:-2]
         new_shape.append(tensor.shape[-2] // self.mask_shape[-2])
         new_shape.append(self.mask_shape[-2])
@@ -72,11 +90,4 @@ class PatternBase:
         new_shape.append(self.mask_shape[-1])
 
         reshaped_tensor = tensor.reshape(new_shape)
-        new_tensor = np.transpose(reshaped_tensor, dims[:-3] + [dims[-2], dims[-3], dims[-1]])
-        reduced_tensor = new_tensor.reshape(new_shape[:-3] + [new_shape[-2], -1])
-        if method == 'abs_max':
-            return np.abs(reduced_tensor).max(-1).values
-        elif method == 'abs_sum':
-            return np.abs(reduced_tensor).sum(-1)
-        else:
-            raise NotImplementedError
+        return reshaped_tensor

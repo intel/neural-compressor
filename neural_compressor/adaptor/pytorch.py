@@ -1162,6 +1162,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
+        use_gpu = kwargs['kwargs']['gpu']
+        device = torch.device('cuda:0' if torch.cuda.is_available() and use_gpu else 'cpu')
+        model_ = model_.to(device)
         if hooks is not None:
             pre_epoch_begin = hooks['pre_epoch_begin']
             post_epoch_end = hooks['post_epoch_end']
@@ -1184,6 +1187,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                 dataloader.sampler.set_epoch(nepoch)
             for image, target in dataloader:
                 # TODO: to support adjust lr with epoch
+                image = image.to(device)
+                target = target.to(device)
                 if hooks is not None:
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)

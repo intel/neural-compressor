@@ -60,7 +60,7 @@ class BasicMagnitudePruner(Pruner):
                     tensor_flat = sorted(np.abs(reduced_tensor.flatten()))
                     threshold = float(tensor_flat[int(len(tensor_flat) * self.sparsity)])
                 reduced_mask = threshold < np.abs(reduced_tensor)
-                self.masks[weight] = self.pattern.repeat_mask(reduced_mask)
+                self.masks[weight] = self.pattern.repeat_mask(reduced_mask, tensor.shape)
 
     def on_epoch_end(self):
         res = dict()
