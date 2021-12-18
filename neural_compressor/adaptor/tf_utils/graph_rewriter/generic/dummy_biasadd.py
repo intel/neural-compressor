@@ -30,7 +30,7 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
         g.graph = self.model
         graph_info = g.parse_graph()
         valid_ops = ('BiasAdd', 'Add', 'AddV2', 'AddN')
-        target_nodes = g.query_fusion_pattern_nodes([['MatMul'],])
+        target_nodes = g.query_fusion_pattern_nodes([['MatMul', 'Conv2D'],])
         for i in target_nodes:
             next_node_names = graph_info[i[0]].outputs
             if next_node_names and len(next_node_names) == 1 and \
@@ -54,7 +54,14 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
             if exit_cur_loop:
                 continue
 
-            t_b_index = 0 if graph_info[i[0]].node.attr['transpose_b'].b else 1
+            if graph_info[i[0]].node.op == 'MatMul':
+                t_b_index = 0 if graph_info[i[0]].node.attr['transpose_b'].b else 1
+            elif graph_info[i[0]].node.op == 'Conv2D' and graph_info[i[0]].node.attr['data_format'].s == b'NHWC':
+                t_b_index = 3
+            elif graph_info[i[0]].node.op == 'Conv2D' and graph_info[i[0]].node.attr['data_format'].s == b'NCHW':
+                t_b_index = 1
+            else:
+                continue
             bias_add_length = matmul_b_node.attr['value'].tensor.tensor_shape.dim[t_b_index].size
 
             bias_add_content = [0.] * bias_add_length

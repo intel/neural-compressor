@@ -124,11 +124,6 @@ class PreOptimization():
         self._tmp_graph_def = ConvertLeakyReluOptimizer(
             self._tmp_graph_def).do_transformation()
 
-        #TODO we need to remove below optimizer once the TF enabled the single
-        # matmul op quantization
-        self._tmp_graph_def = InjectDummyBiasAddOptimizer(
-            self._tmp_graph_def).do_transformation()
-
         self._tmp_graph_def = ConvertAddToBiasAddOptimizer(
             self._tmp_graph_def).do_transformation()
 
@@ -138,6 +133,11 @@ class PreOptimization():
         self._tmp_graph_def = FuseConvWithMathOptimizer(
             self._tmp_graph_def).do_transformation()
 
+        #TODO we need to remove below optimizer once the TF enabled the single
+        # matmul op quantization
+        self._tmp_graph_def = InjectDummyBiasAddOptimizer(
+            self._tmp_graph_def).do_transformation()
+            
         self._tmp_graph_def = FuseBiasAddAndAddOptimizer(
             self._tmp_graph_def).do_transformation()
 
