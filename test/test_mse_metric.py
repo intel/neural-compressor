@@ -8,6 +8,7 @@ import os
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.model import MODELS
 import neural_compressor.adaptor.pytorch as nc_torch
+import neural_compressor.adaptor.torch_utils.util as nc_torch_util
 from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 from neural_compressor.experimental import Quantization, common
 import shutil
@@ -15,12 +16,15 @@ import copy
 import numpy as np
 
 try:
-    import intel_pytorch_extension as ipex
+    try:
+        import intel_pytorch_extension as ipex
+    except:
+        import intel_extension_for_pytorch as ipex
     TEST_IPEX = True
 except:
     TEST_IPEX = False
 
-PT_VERSION = nc_torch.get_torch_version()
+PT_VERSION = nc_torch_util.get_torch_version()
 if PT_VERSION >= PyTorchVersionMode.PT18.value:
     FX_MODE = True
 else:

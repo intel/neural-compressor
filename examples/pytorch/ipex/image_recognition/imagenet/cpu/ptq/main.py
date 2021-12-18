@@ -27,12 +27,19 @@ from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionM
 import subprocess
 
 try:
-    import intel_pytorch_extension as ipex
+    try:
+        import intel_pytorch_extension as ipex
+        IPEX_110 = False
+    except:
+        import intel_extension_for_pytorch as ipex
+        import torch.fx.experimental.optimization as optimization
+        IPEX_110 = True
     TEST_IPEX = True
     model_names = sorted(name for name in models.__dict__
         if name.islower() and not name.startswith("__")
         and callable(models.__dict__[name]))
 except:
+    IPEX_110 = None
     TEST_IPEX = False
     model_names = sorted(name for name in quantize_models.__dict__
         if name.islower() and not name.startswith("__")
@@ -116,7 +123,7 @@ def main():
     print(args)
 
     if args.ipex:
-        assert TEST_IPEX, 'Please import intel_pytorch_extension'
+        assert TEST_IPEX, 'Please import intel_pytorch_extension or intel_extension_for_pytorch according to version.'
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -306,11 +313,14 @@ def main_worker(gpu, ngpus_per_node, args):
         if args.int8:
             if args.ipex:
                 # TODO: It will remove when IPEX spport to save script model.
-                model.to(ipex.DEVICE)
-                try:
-                    new_model = torch.jit.script(model)
-                except:
-                    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+                if not IPEX_110:
+                    model.to(ipex.DEVICE)
+                    try:
+                        new_model = torch.jit.script(model)
+                    except:
+                        new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+                else:
+                    new_model = model
                 ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
                                                 "best_configure.json")
             else:
@@ -413,11 +423,23 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
     # switch to evaluate mode
     model.eval()
     if args.ipex:
-        if ipex_config_path is not None:
-            conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
+        if not IPEX_110:
+            conf = (
+                ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
+                if ipex_config_path is not None
+                else ipex.AmpConf(None)
+                )
         else:
-            conf = ipex.AmpConf(None)
-
+            conf = (
+                ipex.quantization.QuantConf(configure_file=ipex_config_path)
+                if ipex_config_path is not None
+                else ipex.quantization.QuantConf(None)
+                )
+            model = optimization.fuse(model, inplace=True)
+            for idx, (input, label) in enumerate(val_loader):
+                x = input.contiguous(memory_format=torch.channels_last)
+                break
+            model = ipex.quantization.convert(model, conf, x)
     with torch.no_grad():
         for i, (input, target) in enumerate(val_loader):
             if i >= args.warmup_iter:
@@ -428,9 +450,12 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
 
             # compute output
             if args.ipex:
-                with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                    output = model(input.to(ipex.DEVICE))
-                target = target.to(ipex.DEVICE)
+                if not IPEX_110:
+                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
+                        output = model(input.to(ipex.DEVICE))
+                    target = target.to(ipex.DEVICE)
+                else:
+                    output = model(input)
             else:
                 output = model(input)
             loss = criterion(output, target)
