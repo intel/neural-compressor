@@ -1153,6 +1153,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         model_ = model.model
+        device = "cuda" if self.device != "GPU" and torch.cuda.is_available() else self.device
         # self.model is set to neural_compressor model here to hold the inplace change in FWK model.
         self.model = model
         optimizer = optimizer_tuple[0](model_.parameters(), **optimizer_tuple[1])
@@ -1171,6 +1172,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             on_post_grad = hooks['on_post_grad']
         if hooks is not None:
             pre_epoch_begin()
+        model_.to(device)
         for nepoch in range(start_epochs, end_epochs):
             model_.train()
             cnt = 0
@@ -1186,7 +1188,8 @@ class PyTorchAdaptor(TemplateAdaptor):
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = pytorch_forward_wrapper(model_, image, device=self.device)
+                output = pytorch_forward_wrapper(model_, image, device=device)
+                output = output.to(self.device)
                 if hasattr(criterion, "teacher_model_forward"):
                     criterion.teacher_model_forward(image)
                 loss = criterion(output, target)
@@ -1204,6 +1207,9 @@ class PyTorchAdaptor(TemplateAdaptor):
         if hooks is not None:
             post_epoch_end()
 
+        if device != self.device:
+            model_.to(self.device)
+      
         return model_
 
     def _dump_model_op_stastics(self, model, tune_cfg):
@@ -2318,6 +2324,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
+        device = "cuda" if self.device != "GPU" and torch.cuda.is_available() else self.device
         self.model = model
         optimizer = optimizer_tuple[0](model.model.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
@@ -2336,6 +2343,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
+        model.model.to(device)
         for nepoch in range(start_epochs, end_epochs):
             cnt = 0
             if hooks is not None:
@@ -2345,7 +2353,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = pytorch_forward_wrapper(model.model, input, device=self.device)
+                output = pytorch_forward_wrapper(model.model, input, device=device)
+                output = output.to(self.device)
                 loss = criterion(output, target)
                 if hooks is not None:
                     on_post_grad()
@@ -2361,7 +2370,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if hooks is not None:
             post_epoch_end()
 
+        if device != self.device:
+            model.model.to(self.device)
+      
         return model.model
+
 
     def _dump_model_op_stastics(self, model, tune_cfg, approach):
         """This is a function to dump quantizable ops of model to user.
