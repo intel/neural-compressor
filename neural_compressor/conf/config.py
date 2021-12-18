@@ -336,9 +336,17 @@ transform_schema = Schema({
         Optional('random_crop'): bool,
         Optional('slice_crop'): bool,
         Optional('resize_side'): And(int, lambda s: s > 0),
+        Optional('resize_method', default='bilinear'): \
+            And(str, lambda s: s in ['bilinear', 'lanczos3', 'lanczos5',
+                                     'bicubic', 'gaussian', 'nearest',
+                                     'area', 'mitchellcubic']),
         Optional('random_flip_left_right'): bool,
+        Optional('data_format', default='channels_last'): \
+            And(str, lambda s: s in ['channels_first', 'channels_last']),
+        Optional('subpixels', default='RGB'): \
+            And(str, lambda s: s in ['BGR', 'RGB']),
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
-        Optional('scale'): float
+        Optional('scale'): float,
     },
     Optional('ResizeWithAspectRatio'):{
         'height': And(int, lambda s: s > 0),

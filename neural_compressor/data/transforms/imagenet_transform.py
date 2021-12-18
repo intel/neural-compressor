@@ -67,7 +67,9 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
     """
 
     def __init__(self, height, width, random_crop=False, resize_side=256, \
-                 random_flip_left_right=False, mean_value=[0.0,0.0,0.0], scale=1.0):
+                 resize_method='bilinear', random_flip_left_right=False, \
+                 mean_value=[0.0,0.0,0.0], scale=1.0, \
+                 data_format='channels_last', subpixels='RGB'):
 
         self.height = height
         self.width = width
@@ -76,13 +78,19 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         self.random_crop = random_crop
         self.random_flip_left_right = random_flip_left_right
         self.resize_side = resize_side
+        self.resize_method = resize_method
+        self.data_format = data_format
+        self.subpixels = subpixels
 
     # sample is (images, labels)
     def __call__(self, sample):
         image, label = sample
         shape = tf.shape(input=image)
-        height = tf.cast(shape[0], dtype=tf.float32)
-        width = tf.cast(shape[1], dtype=tf.float32)
+        
+        height = tf.cast(shape[0], dtype=tf.float32) \
+            if self.data_format=="channels_last" else tf.cast(shape[1], dtype=tf.float32)
+        width = tf.cast(shape[1], dtype=tf.float32) \
+            if self.data_format=="channels_last" else tf.cast(shape[2], dtype=tf.float32)
         scale = tf.cond(pred=tf.greater(height, width), \
                         true_fn=lambda: self.resize_side / width,
                         false_fn=lambda: self.resize_side / height,)
@@ -90,11 +98,6 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         scale = tf.cast(scale, dtype=tf.float32)
         new_height = tf.cast(tf.math.rint(height*scale), dtype=tf.int32)
         new_width = tf.cast(tf.math.rint(width*scale), dtype=tf.int32)
-
-        image = tf.expand_dims(image, 0)
-        image = tf.image.resize(image, [new_height, new_width],
-                                method=tf.image.ResizeMethod.BILINEAR)
-        image = tf.squeeze(image)
 
         # image = tf.cond(pred=tf.greater(shape[0], shape[1]), \
         #                 false_fn=lambda: tf.image.resize(image, \
@@ -105,6 +108,19 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         #                         self.resize_side * shape[1] / shape[0]], dtype=tf.int32)),
         #                )
 
+        if self.subpixels=='BGR' and self.data_format=='channels_first':
+            # 'RGB'->'BGR'
+            image = tf.cond(tf.equal(tf.rank(image), 3),
+                            lambda: tf.experimental.numpy.moveaxis(image[::-1, ...], 0, -1),
+                            lambda: tf.experimental.numpy.moveaxis(image[:, ::-1, ...], 1, -1))
+        elif self.subpixels=='BGR':
+            # 'RGB'->'BGR'
+            image = image[..., ::-1]
+        image = tf.expand_dims(image, 0)
+        image = tf.image.resize(image, [new_height, new_width],
+                                method=self.resize_method)
+        image = tf.squeeze(image)
+        
         shape = tf.shape(input=image)
         if self.random_crop:
             y0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[0] - self.height +1), 

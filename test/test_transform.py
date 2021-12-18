@@ -90,18 +90,41 @@ class TestTensorflowImagenetTransform(unittest.TestCase):
         self.assertEqual(len(resized_input[0]), 224)
         self.assertEqual(len(resized_input[0][0]), 3)
     
-    def testResizeCropImagenetTransform(self):
+    def testResizeCropImagenetTransform1(self):
         transforms = TRANSFORMS('tensorflow', "preprocess")
-        transform = transforms['ResizeCropImagenet'](height=224, width=224, random_crop=True,
-            random_flip_left_right=True)
         rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
         sample = (rand_input, 0)
+        transform = transforms['ResizeCropImagenet'](height=224, width=224, random_crop=True,
+            random_flip_left_right=True)
         result = transform(sample)
         resized_input = result[0].eval(session=tf.compat.v1.Session())
         self.assertEqual(len(resized_input), 224)
         self.assertEqual(len(resized_input[0]), 224)
         self.assertEqual(len(resized_input[0][0]), 3)
-    
+
+    @unittest.skipIf(tf.version.VERSION < '2.5.0', "Skip tf.experimental.numpy.moveaxis")
+    def testResizeCropImagenetTransform2(self):
+        transforms = TRANSFORMS('tensorflow', "preprocess")
+        rand_input = np.random.random_sample([600,600,3]).astype(np.float32)
+        sample = (rand_input, 0)
+        transform = transforms['ResizeCropImagenet'](height=224, width=224, random_crop=False,
+            random_flip_left_right=False, data_format='channels_last', subpixels='RGB')
+        result = transform(sample)
+        resized_input1 = result[0].eval(session=tf.compat.v1.Session())
+        transform = transforms['ResizeCropImagenet'](height=224, width=224, random_crop=False,
+            random_flip_left_right=False, data_format='channels_last', subpixels='BGR') 
+        result = transform(sample)       
+        resized_input2 = result[0].eval(session=tf.compat.v1.Session())
+        self.assertTrue((resized_input1[...,0]==resized_input2[...,-1]).all())
+
+        transform = transforms['ResizeCropImagenet'](height=224, width=224, random_crop=False,
+            random_flip_left_right=False, data_format='channels_first', subpixels='BGR')
+        rand_input = np.moveaxis(rand_input, -1, 0)
+        sample = (rand_input, 0)
+        result = transform(sample)       
+        resized_input3 = result[0].eval(session=tf.compat.v1.Session())
+        self.assertTrue((resized_input1[...,0]==resized_input3[...,-1]).all())
+
     def testLabelShift(self):
         transforms = TRANSFORMS('tensorflow', "postprocess")
         transform = transforms['LabelShift'](label_shift=1)
