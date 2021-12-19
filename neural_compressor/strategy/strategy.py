@@ -24,8 +24,8 @@ from collections import OrderedDict
 from pathlib import Path
 import yaml
 import numpy as np
+from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
-from ..objective import OBJECTIVES
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
@@ -185,9 +185,12 @@ class TuneStrategy(object):
         self.best_tune_result = None
         self.best_qmodel = None
 
-        objective = self.cfg.tuning.objective.lower()
-        self.objective = OBJECTIVES[objective](self.cfg.tuning.accuracy_criterion)
-
+        self.use_multi_objective = len(self.cfg.tuning.multi_objective.objective) > 1
+        objectives = [i.lower() for i in self.cfg.tuning.multi_objective.objective]
+        self.tune_result_record = []
+        self.multi_objective = MultiObjective(objectives, 
+                                              self.cfg.tuning.accuracy_criterion,
+                                              self.cfg.tuning.multi_objective.weight)
         self.capability = self.adaptor.query_fw_capability(model)
         self.graph_optimization_mode = bool('graph_optimization' in self.cfg)
 
@@ -319,9 +322,10 @@ class TuneStrategy(object):
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
-        baseline_msg = '[Accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
-                                str(self.objective.measurer).capitalize(), \
-                                self.baseline[1]) if self.baseline else 'n/a'
+        baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
+            ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+            self.multi_objective.representation, self.baseline[1]) if x != 'Accuracy']) + ']' \
+            if self.baseline else 'n/a'
         logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0
@@ -356,7 +360,19 @@ class TuneStrategy(object):
             self._add_tuning_history(saved_tune_cfg,
                                     saved_last_tune_result,
                                     q_config=self.q_model.q_config)
+            self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             if need_stop:
+                if self.use_multi_objective and len(self.tune_result_record) > 1 and \
+                    self.best_tune_result is not None:
+                    best_trail, best_result = self.multi_objective.best_result(
+                                                            self.tune_result_record,
+                                                            copy.deepcopy(self.baseline))
+                    if best_result != self.best_tune_result:
+                        from neural_compressor.utils.utility import recover
+                        self.best_qmodel = recover(self.model.model, 
+                            os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
+                            best_trail)
+                        self.best_tune_result = best_result
                 break
 
     def deploy_config(self):
@@ -439,7 +455,7 @@ class TuneStrategy(object):
                 # Pytorch can insert observer to model in this hook.
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
-            val = self.objective.evaluate(self.eval_func, model.model)
+            val = self.multi_objective.evaluate(self.eval_func, model.model)
             if self.cfg.tuning.tensorboard:
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
@@ -481,7 +497,7 @@ class TuneStrategy(object):
                                 raise AttributeError("The evaluation dataloader's iteration is"
                                                      "different between processes, please reset "
                                                      "dataloader's batch_size.")
-            val = self.objective.evaluate(eval_func, model)
+            val = self.multi_objective.evaluate(eval_func, model)
         assert np.isscalar(val[0]), \
             "The eval_func should return a scalar, but not {}!".format(str(type(val[0])))
         return val
@@ -510,25 +526,27 @@ class TuneStrategy(object):
             bool: True if need stop, otherwise False
         """
         need_stop = False
-
         if self.cfg.tuning.exit_policy.performance_only or \
-            self.objective.compare(self.best_tune_result, self.baseline):
+            self.multi_objective.compare(self.best_tune_result, self.baseline):
             del self.best_tune_result
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
         else:
             del self.last_qmodel
-        
-        last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}, {} ({}|fp32): {:.4f}|{:.4f}]'.format(\
-                                self.cfg.quantization.dtype, self.last_tune_result[0], \
-                                self.baseline[0], str(self.objective.measurer).capitalize(), \
-                                self.cfg.quantization.dtype, self.last_tune_result[1], \
-                                self.baseline[1]) \
-                                if self.last_tune_result else 'n/a'
-        best_tune_msg = '[Accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0], \
-                                str(self.objective.measurer).capitalize(), \
-                                self.best_tune_result[1]) if self.best_tune_result else 'n/a'
+
+        last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
+            self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
+            ''.join([', {} ({}|fp32): {:.4f}|{:.4f},'.format(x,self.cfg.quantization.dtype,y,z) \
+            for x,y,z in zip(self.multi_objective.representation, \
+            self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
+            if self.last_tune_result else 'n/a'
+
+        best_tune_msg = '[Accuracy: {:.4f}'.format(self.best_tune_result[0]) + \
+            ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+            self.multi_objective.representation, self.best_tune_result[1]) if x != 'Accuracy']) \
+            + ']' if self.best_tune_result else 'n/a'
+ 
         logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))

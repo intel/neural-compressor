@@ -22,7 +22,7 @@ import subprocess
 import signal
 import psutil
 from ..adaptor import FRAMEWORKS
-from ..objective import OBJECTIVES
+from ..objective import MultiObjective
 from ..conf.config import Benchmark_Conf
 from ..conf.dotdict import DotDict
 from ..utils import logger
@@ -221,11 +221,15 @@ class Benchmark(object):
                                       b_postprocess_cfg,
                                       iteration=iteration)
 
-        objective = cfg.tuning.objective.lower()
-        self.objective = OBJECTIVES[objective](cfg.tuning.accuracy_criterion, \
-                                               is_measure=True)
+        objectives = [i.lower() for i in cfg.tuning.multi_objective.objective]
+        assert len(objectives) == 1, 'benchmark supports one objective at a time'
+        self.multi_objective = MultiObjective(objectives,
+                                              cfg.tuning.accuracy_criterion,
+                                              cfg.tuning.multi_objective.weight,
+                                              is_measure=True)
 
-        val = self.objective.evaluate(b_func, self._model)
+
+        val = self.multi_objective.evaluate(b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val
@@ -233,13 +237,13 @@ class Benchmark(object):
         warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
             else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
-        if len(self.objective.measurer.result_list()) < warmup:
-            if len(self.objective.measurer.result_list()) > 1 and warmup != 0:
+        if len(self.multi_objective.objectives[0].result_list()) < warmup:
+            if len(self.multi_objective.objectives[0].result_list()) > 1 and warmup != 0:
                 warmup = 1
             else:
                 warmup = 0
 
-        result_list = self.objective.measurer.result_list()[warmup:]
+        result_list = self.multi_objective.objectives[0].result_list()[warmup:]
         latency = np.array(result_list).mean() / batch_size
         self._results[mode] = acc, batch_size, result_list
 

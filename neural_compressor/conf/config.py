@@ -92,6 +92,10 @@ def _valid_prune_sparsity(key, scope, error):
     elif "target_sparsity" in scope[key]:
         assert scope[key]["target_sparsity"] < 1
 
+def _valid_multi_objective(key, scope, error):
+    if 'weight' in scope and scope['weight'] is not None:
+        assert len(scope['objective']) == len(scope['weight'])
+
 # used for '123.68 116.78 103.94' style to float list
 def input_to_list_float(data):
     if isinstance(data, str):
@@ -678,7 +682,7 @@ schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'objective': 'performance',
+        'multi_objective': {'objective': ['performance']},
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): {
@@ -695,7 +699,12 @@ schema = Schema({
             Optional('absolute'): And(Or(str, int, float), Use(percent_to_float)),
             Optional('higher_is_better', default=True): bool,
         },
-        Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
+        Hook('multi_objective', handler=_valid_multi_objective): object,
+        Optional('multi_objective', default={'objective': ['performance']}): {
+            Optional('objective', default=['performance']): And(
+                Or(str, list), Use(input_to_list), lambda s: all(i in OBJECTIVES for i in s)),
+            Optional('weight', default=None): And(Or(str, list), Use(input_to_list_float)),
+        },
         Optional('exit_policy', default={'timeout': 0,
                                          'max_trials': 100,
                                          'performance_only': False}): {
@@ -811,7 +820,7 @@ quantization_default_schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'objective': 'performance',
+        'multi_objective': {'objective': ['performance']},
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
@@ -859,7 +868,7 @@ graph_optimization_default_schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'objective': 'performance',
+        'multi_objective': {'objective': ['performance']},
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
@@ -889,7 +898,7 @@ benchmark_default_schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'objective': 'performance',
+        'multi_objective': {'objective': ['performance']},
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,

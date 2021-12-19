@@ -166,10 +166,10 @@ class SigOptTuneStrategy(TuneStrategy):
             # record the FP32 baseline
             self._add_tuning_history()
 
-        baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
-                                                                str(self.objective.measurer),
-                                                                self.baseline[1]) \
-                                                                if self.baseline else 'n/a'
+        baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
+            ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+            self.multi_objective.representation, self.baseline[1]) if x != 'Accuracy']) + ']' \
+            if self.baseline else 'n/a'
         logger.info("FP32 baseline is: {}".format(baseline_msg))
         self.experiment = self.create_exp(acc_target=self.get_acc_target(self.baseline[0]))
         trials_count = 0

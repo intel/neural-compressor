@@ -40,18 +40,15 @@ def objective_registry(cls):
     OBJECTIVES[cls.__name__.lower()] = cls
     return cls
 
-class Measurer(object):
+
+class Objective(object):
     """The base class for precise benchmark supported by neural_compressor.
 
-    Args:
-       representation (string): the string represenation of Measurer object
-
     """
+    representation = ''
 
-    def __init__(self, representation=''):
+    def __init__(self):
         self._result_list = []
-        assert isinstance(representation, str)
-        self.representation = representation
         self._model = None
 
     @abstractmethod
@@ -112,7 +109,20 @@ class Measurer(object):
     def __str__(self):
         return self.representation
 
-class PerformanceMeasure(Measurer):
+@objective_registry
+class Accuracy(Objective):
+    representation = 'accuracy'
+
+    def start(self):
+        pass
+
+    def end(self, acc):
+        self._result_list.append(acc)
+
+@objective_registry
+class Performance(Objective):
+    representation = 'duration (seconds)'
+
     def start(self):
         self.start_time = time.time()
 
@@ -121,7 +131,10 @@ class PerformanceMeasure(Measurer):
         assert self.duration > 0, 'please use start() before end()'
         self._result_list.append(self.duration)
 
-class FootprintMeasure(Measurer):
+@objective_registry
+class Footprint(Objective):
+    representation = 'memory footprint (MB)'
+
     def start(self):
         tracemalloc.start()
 
@@ -130,7 +143,10 @@ class FootprintMeasure(Measurer):
         tracemalloc.stop()
         self._result_list.append(peak // 1048576)
 
-class ModelSizeMeasure(Measurer):
+@objective_registry
+class ModelSize(Objective):
+    representation = 'model size (MB)'
+
     def start(self):
         pass
 
@@ -138,17 +154,8 @@ class ModelSizeMeasure(Measurer):
         model_size = get_size(self.model)
         self._result_list.append(model_size)
 
-
-class Objective(object):
-    """The base class of objectives supported by neural_compressor.
-
-    Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
-    """
-
-    def __init__(self, accuracy_criterion, is_measure=False):
-
+class MultiObjective:
+    def __init__(self, objectives, accuracy_criterion, weight=None, is_measure=False):
         assert isinstance(accuracy_criterion, dict), 'accuracy criterian should be dict'
         assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
             'accuracy criterion should set relative or absolute'
@@ -162,10 +169,12 @@ class Objective(object):
             elif k == 'higher_is_better':
                 self.higher_is_better = bool(v)
 
+        self.objectives = [OBJECTIVES[i]() for i in objectives]
+        self.representation = [str(i).capitalize() for i in self.objectives]
         self.baseline = None
         self.val = None
+        self.weight = weight
         self.is_measure = is_measure
-        self.measurer = None
 
     def compare(self, last, baseline):
         """The interface of comparing if metric reaches
@@ -191,7 +200,7 @@ class Objective(object):
             acc_target =  base_acc - float(self.acc_goal) if self.higher_is_better \
                 else base_acc + float(self.acc_goal)
 
-        if last_measure == 0 or perf < last_measure:
+        if last_measure == 0 or all([x <= y for x, y in zip(perf, last_measure)]):
             return acc >= acc_target if self.higher_is_better else acc < acc_target
         else:
             return False
@@ -204,54 +213,89 @@ class Objective(object):
             model (object): model to do evaluation.
         """
 
-        self.measurer.reset()
-        self.measurer.model = model
+        self.reset()
+        self.set_model(model)
         if self.is_measure:
-            acc = eval_func(model, self.measurer)
+            acc = eval_func(model, self.objectives[0])
         else:
-           self.measurer.start()
+           self.start()
            acc = eval_func(model)
-           self.measurer.end()
+           self.end(acc)
 
-        self.val = acc, self.measurer.result()
+        self.val = acc, self.result()
         return self.val
 
-@objective_registry
-class Performance(Objective):
-    """The objective class of calculating performance when running quantize model.
-    Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
-    """
+    def reset(self):
+        for objective in self.objectives:
+            objective.reset()
 
-    def __init__(self, accuracy_criterion, is_measure=False):
-        super(Performance, self).__init__(accuracy_criterion, is_measure)
-        self.measurer = PerformanceMeasure('duration (seconds)')
+    def start(self):
+        for objective in self.objectives:
+            objective.start()
 
-@objective_registry
-class Footprint(Objective):
-    """The objective class of calculating peak memory footprint
-       when running quantize model.
+    def end(self, acc):
+        for objective in self.objectives:
+            if isinstance(objective, Accuracy):
+                objective.end(acc)
+            else:
+                objective.end()
 
-    Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
-    """
+    def result(self):
+        return [objective.result() for objective in self.objectives]
 
-    def __init__(self, accuracy_criterion, is_measure=False):
-        super(Footprint, self).__init__(accuracy_criterion, is_measure)
-        self.measurer = FootprintMeasure('memory footprint (MB)')
+    def set_model(self, model):
+        for objective in self.objectives:
+            objective.model = model
 
-@objective_registry
-class ModelSize(Objective):
-    """The objective class of calculating model size when running quantize model.
+    def best_result(self, tune_data, baseline):
+        """ tune_data = [
+                [acc1, [obj1, obj2, ...]],
+                [acc2, [obj1, obj2, ...]],
+                ...
+            ]
+        """
+        base_acc, base_obj = baseline
+        base_obj = np.array(base_obj)
+        base_obj[base_obj==0] = 1e-20
 
-    Args:
-        accuracy_criterion (dict): The dict of supported accuracy criterion.
-                                    {'relative': 0.01} or {'absolute': 0.01}
-    """
+        acc_data = np.array([i[0] for i in tune_data])
+        obj_data = np.array([i[1] for i in tune_data])
+        obj_data[obj_data==0] = 1e-20
 
-    def __init__(self, accuracy_criterion, is_measure=False):
-        super(ModelSize, self).__init__(accuracy_criterion, is_measure)
-        self.measurer = ModelSizeMeasure('model size (MB)')
+        if self.relative:
+            acc_target = base_acc * (1 - float(self.acc_goal)) if self.higher_is_better \
+                else base_acc * (1 + float(self.acc_goal))
+        else:
+            acc_target =  base_acc - float(self.acc_goal) if self.higher_is_better \
+                else base_acc + float(self.acc_goal)
+
+        acc_mask = acc_data >= acc_target if self.higher_is_better else acc_data < acc_target
+
+        obj_data = base_obj / obj_data
+
+        # normalize data
+        idx = self.representation.index('Accuracy') if 'Accuracy' in self.representation \
+                    else None
+
+        if idx is not None and not self.relative:
+            obj_data[:, idx] = base_obj[idx] - 1 / (obj_data[:, idx] / base_obj[idx])
+            
+        min_val = np.min(obj_data, axis=0)
+        max_val = np.max(obj_data, axis=0)
+        zero_mask = max_val != min_val
+
+        if idx is not None and self.higher_is_better:
+            # convert higher-is-better acc objective to lower-is-better
+            obj_data[:, idx] = max_val[idx] + min_val[idx] - obj_data[:, idx]
+
+        obj_data[:, zero_mask] = (obj_data[:, zero_mask] - min_val[zero_mask]) / \
+                                        (max_val[zero_mask] - min_val[zero_mask])
+        if self.weight:
+            weighted_result = np.sum(self.weight * obj_data, axis=1)
+        else:
+            weighted_result = np.sum(obj_data, axis=1)
+
+        weighted_result[acc_mask == False] = 0.
+        best_trail = np.argmax(weighted_result)
+        return best_trail, tune_data[best_trail]
 

@@ -460,7 +460,6 @@ class TestConf(unittest.TestCase):
         tuning:
           accuracy_criterion:
             relative: 0.01
-          objective: performance
           
         '''
         helper(test)

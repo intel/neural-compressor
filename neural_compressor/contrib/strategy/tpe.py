@@ -212,15 +212,15 @@ class TpeTuneStrategy(TuneStrategy):
                 self.baseline = self._evaluate(self.model)
                 self._add_tuning_history()
 
-            baseline_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.baseline[0],
-                                                                    str(self.objective.measurer),
-                                                                    self.baseline[1]) \
-                                                                    if self.baseline else 'n/a'
+            baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
+                ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+                self.multi_objective.representation, self.baseline[1]) if x != 'Accuracy']) \
+                + ']' if self.baseline else 'n/a'
             logger.info("FP32 baseline is: {}".format(baseline_msg))
 
-            if not self.objective.relative:
+            if not self.multi_objective.relative:
                 self.loss_function_config['acc_th'] =\
-                    (self.baseline[0] - self.objective.acc_goal) / self.baseline[0]
+                    (self.baseline[0] - self.multi_objective.acc_goal) / self.baseline[0]
             # start trials
             exit = False
             while not exit:
@@ -292,7 +292,8 @@ class TpeTuneStrategy(TuneStrategy):
 
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
         self.last_tune_result = self._evaluate(self.last_qmodel)
-        logger.info("The last tune result is {}.".format(self.last_tune_result))
+        logger.info("The last tune result is {}.".format(
+            (self.last_tune_result[0], self.last_tune_result[1][0])))
 
         saved_tune_cfg = copy.deepcopy(op_cfgs)
         saved_last_tune_result = copy.deepcopy(self.last_tune_result)
@@ -301,7 +302,7 @@ class TpeTuneStrategy(TuneStrategy):
         result = self._compute_metrics(
             tune_cfg,
             self.last_tune_result[0],
-            self.last_tune_result[1])
+            self.last_tune_result[1][0])
         result['source'] = 'tpe'
         self._add_tuning_history(saved_tune_cfg, saved_last_tune_result, result=result)
         logger.info("Current iteration loss is {}, acc_loss is {}, lat_diff is {}, " \
@@ -328,7 +329,7 @@ class TpeTuneStrategy(TuneStrategy):
         int8_acc = acc
         int8_lat = lat
         fp32_acc = self.baseline[0]
-        fp32_lat = self.baseline[1]
+        fp32_lat = self.baseline[1][0]
         acc_diff = (fp32_acc - int8_acc) / fp32_acc
         lat_diff = fp32_lat / int8_lat
         return acc_diff, lat_diff
@@ -430,7 +431,7 @@ class TpeTuneStrategy(TuneStrategy):
         """
         need_stop = False
         if not self.cfg_evaluated:
-            if self.objective.compare(self.best_tune_result, self.baseline):
+            if self.multi_objective.compare(self.best_tune_result, self.baseline):
                 del self.best_tune_result
                 del self.best_qmodel
                 self.best_tune_result = self.last_tune_result
@@ -439,14 +440,18 @@ class TpeTuneStrategy(TuneStrategy):
             else:
                 del self.last_qmodel
 
-        last_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.last_tune_result[0],
-                                                                str(self.objective.measurer),
-                                                                self.last_tune_result[1]) \
-                                                                if self.last_tune_result else 'n/a'
-        best_tune_msg = '[accuracy: {:.4f}, {}: {:.4f}]'.format(self.best_tune_result[0],
-                                                                str(self.objective.measurer),
-                                                                self.best_tune_result[1]) \
-                                                                if self.best_tune_result else 'n/a'
+        last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
+            self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
+            ''.join([', {} ({}|fp32): {:.4f}|{:.4f},'.format(x,self.cfg.quantization.dtype,y,z) \
+            for x,y,z in zip(self.multi_objective.representation, \
+            self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
+            if self.last_tune_result else 'n/a'
+
+        best_tune_msg = '[Accuracy: {:.4f}'.format(self.best_tune_result[0]) + \
+            ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+            self.multi_objective.representation, self.best_tune_result[1]) if x != 'Accuracy']) \
+            + ']' if self.best_tune_result else 'n/a'
+
         logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))

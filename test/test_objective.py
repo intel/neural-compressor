@@ -6,6 +6,9 @@ import shutil
 import yaml
 import numpy as np
 import tensorflow as tf
+import onnx
+from onnx import helper, TensorProto
+import random
 
 def build_fake_yaml_footprint():
     fake_yaml = '''
@@ -21,7 +24,8 @@ def build_fake_yaml_footprint():
               topk: 1
           performance: {}
         tuning:
-          objective: footprint
+          multi_objective:
+            objective: footprint
           strategy:
             name: fake
           accuracy_criterion:
@@ -48,7 +52,8 @@ def build_fake_yaml_model_size():
               topk: 1
           performance: {}
         tuning:
-          objective: modelsize
+          multi_objective:
+            objective: modelsize
           strategy:
             name: fake
           accuracy_criterion:
@@ -75,7 +80,6 @@ def build_fake_yaml():
               topk: 1
           performance: {}
         tuning:
-          objective: performance
           strategy:
             name: fake
           accuracy_criterion:
@@ -260,6 +264,147 @@ class TestObjective(unittest.TestCase):
         benchmarker.model = self.constant_graph_1
         benchmarker()
 
+def build_matmul_model():
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
+    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
+    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
+    matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
+    model = helper.make_model(graph)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
+class TestObjs(unittest.TestCase):
+
+    def test_model(self):
+        def eval(model):
+            return random.random()
+        
+        model = build_matmul_model()
+        
+        from neural_compressor import conf
+        from neural_compressor.experimental import Quantization
+        
+        conf.model.framework = 'onnxrt_integerops'
+        conf.quantization.approach = 'post_training_dynamic_quant'
+        conf.tuning.accuracy_criterion.absolute = 0.3
+        conf.tuning.multi_objective.objective = ['accuracy', 'performance']
+        conf.tuning.multi_objective.weight = [0.8, 0.2]
+        conf.tuning.exit_policy.timeout = 10000
+        conf.tuning.exit_policy.max_trials = 2
+        quantize = Quantization(conf)
+        quantize.model = model
+        quantize.eval_func = eval
+        q_model = quantize()
+
+    def test_tune_data(self):
+        from neural_compressor.objective import MultiObjective
+        obj = MultiObjective(['accuracy', 'modelsize', 'performance'],
+                             {'relative': 0.1},
+                             [0.7, 0.2, 0.1])
+        baseline = [0.8, [0.8, 780, 0.6]]
+        tune_data = [
+            [0.760, [0.760, 400, 0.23]],
+            [0.778, [0.778, 420, 0.24]],
+            [0.750, [0.750, 430, 0.22]],
+            [0.720, [0.720, 410, 0.18]],
+            [0.790, [0.790, 360, 0.15]], 
+            [0.750, [0.750, 430, 0.24]],
+            [0.785, [0.785, 360, 0.13]]]
+
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 4)
+
+        obj = MultiObjective(['accuracy', 'modelsize', 'performance'],
+                             {'relative': 0.1})
+        baseline = [0.8, [0.8, 780, 0.6]]
+        tune_data = [
+            [0.760, [0.760, 400, 0.23]],
+            [0.778, [0.778, 420, 0.24]],
+            [0.750, [0.750, 430, 0.22]],
+            [0.720, [0.720, 410, 0.18]],
+            [0.790, [0.790, 360, 0.15]], 
+            [0.750, [0.750, 430, 0.24]],
+            [0.785, [0.785, 360, 0.13]]]
+
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 6)
+
+        obj = MultiObjective(['accuracy', 'modelsize', 'performance'],
+                             {'absolute': 0.3})
+        baseline = [0.8, [0.8, 780, 0.6]]
+        tune_data = [
+            [0.760, [0.760, 400, 0.23]],
+            [0.778, [0.778, 420, 0.24]],
+            [0.750, [0.750, 430, 0.22]],
+            [0.720, [0.720, 410, 0.18]],
+            [0.790, [0.790, 360, 0.15]], 
+            [0.750, [0.750, 430, 0.24]],
+            [0.785, [0.785, 360, 0.13]]]
+
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 6)
+
+        obj = MultiObjective(['accuracy', 'modelsize', 'performance'],
+                             {'absolute': 0.3},
+                             [0.6, 0.1, 0.3])
+        baseline = [0.8, [0.8, 780, 0.6]]
+        tune_data = [
+            [0.760, [0.760, 400, 0.23]],
+            [0.778, [0.778, 400, 0.24]],
+            [0.750, [0.750, 400, 0.22]],
+            [0.720, [0.720, 400, 0.18]],
+            [0.790, [0.790, 400, 0.15]], 
+            [0.750, [0.750, 400, 0.24]],
+            [0.785, [0.785, 400, 0.13]]]
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 6)
+
+        obj = MultiObjective(['accuracy', 'modelsize', 'performance'],
+                             {'absolute': 0.04, 'higher_is_better': False},
+                             [0.6, 0.1, 0.3])
+        baseline = [0.75, [0.75, 780, 0.6]]
+        tune_data = [
+            [0.760, [0.760, 400, 0.23]],
+            [0.778, [0.778, 400, 0.10]],
+            [0.750, [0.750, 400, 0.22]],
+            [0.720, [0.720, 400, 0.18]],
+            [0.790, [0.790, 400, 0.15]], 
+            [0.750, [0.750, 400, 0.24]],
+            [0.785, [0.785, 400, 0.13]]]
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 3)
+
+        obj = MultiObjective(['accuracy', 'modelsize', 'performance'],
+                             {'absolute': 0.4, 'higher_is_better': False},
+                             [0.6, 0.1, 0.3])
+        baseline = [0.0, [0.0, 780, 0.6]]
+        tune_data = [
+            [0.00, [0.00, 400, 0.23]],
+            [0.80, [0.80, 400, 0.10]],
+            [0.02, [0.02, 400, 0.22]],
+            [0.10, [0.10, 400, 0.18]],
+            [0.20, [0.20, 400, 0.15]], 
+            [0.00, [0.00, 400, 0.24]],
+            [0.50, [0.50, 400, 0.13]]]
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 0)
+ 
+        obj = MultiObjective(['modelsize', 'performance'],
+                             {'relative': 0.08},
+                             [0.2, 0.8])
+        baseline = [0.8, [780, 0.6]]
+        tune_data = [
+            [0.760, [400, 0.23]],
+            [0.778, [420, 0.24]],
+            [0.750, [430, 0.22]],
+            [0.720, [410, 0.18]],
+            [0.790, [360, 0.15]], 
+            [0.750, [430, 0.24]],
+            [0.785, [360, 0.13]]]
+
+        num, _ = obj.best_result(tune_data, baseline)
+        self.assertEqual(num, 6)
 
 if __name__ == "__main__":
     unittest.main()
