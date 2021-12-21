@@ -56,7 +56,7 @@ def get_torch_version():
     version = LooseVersion(torch_version)
     return version
 
-try:
+try: # pragma: no cover
     try:
         import intel_pytorch_extension as ipex
         IPEX_110 = False
@@ -90,7 +90,7 @@ def get_torch_white_list(approach):
 
 
 def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
-    if device == "ipex" and IPEX_110:
+    if device == "ipex" and IPEX_110: # pragma: no cover
         if running_mode == "calibration":
             with ipex.quantization.calibrate(conf, default_recipe=True):
                 input = input.contiguous(memory_format=torch.channels_last)
@@ -102,7 +102,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
         if isinstance(input, dict) or isinstance(input, UserDict):
             if device=='cpu':
                 output = model(**input)
-            elif device=='ipex':
+            elif device=='ipex': # pragma: no cover
                 # have to split the case to avoid exposing ipex.DEVICE outside
                 # which require intel extension installed
                 for inp in input.keys():
@@ -118,7 +118,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
         elif isinstance(input, list) or isinstance(input, tuple):
             if device=='cpu':
                 output = model(*input)
-            elif device=='ipex':
+            elif device=='ipex': # pragma: no cover
                 input = [inp.to(ipex.DEVICE) \
                          if isinstance(inp, torch.Tensor) else inp
                          for inp in input]
@@ -133,7 +133,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
         else:
             if device=='cpu' or not isinstance(input, torch.Tensor):
                 output = model(input)
-            elif device=='ipex':
+            elif device=='ipex': # pragma: no cover
                 input = input.to(ipex.DEVICE)
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(input)
@@ -1930,7 +1930,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
 
-        assert IPEX_110 is not None, 'Please install IPEX.'
+        assert IPEX_110 is not None, 'Please install intel_extension_for_pytorch.'
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
@@ -2210,7 +2210,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
 
             # create a quantization config file for intel pytorch extension model
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
-            if not IPEX_110:
+            if not IPEX_110: 
                 ipex_conf = ipex.AmpConf(torch.int8)
             else:
                 ipex_conf = ipex.quantization.QuantConf(
@@ -2227,7 +2227,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
 
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
-            if IPEX_110:
+            if IPEX_110: 
                 self.default_cfgs = copy.deepcopy(self.cfgs)
                 self.fuse_patterns = self.get_fuse_pattern(self.cfgs)
             for op_cfg in self.cfgs:
