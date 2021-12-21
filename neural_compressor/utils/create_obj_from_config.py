@@ -159,7 +159,12 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, cal
     # in config yaml file
     assert dataloader, "dataloader should NOT be empty when train_func is None"
     assert adaptor, "adaptor should NOT be empty"
-    
+    postprocess_cfg = train_cfg.postprocess
+    if postprocess_cfg is not None:
+        postprocesses = TRANSFORMS(framework, "postprocess")
+        postprocess = get_postprocess(postprocesses, postprocess_cfg['transform'])
+    else:
+        postprocess = None
     if isinstance(train_cfg.optimizer, dict):
         assert train_cfg.optimizer and len(train_cfg.optimizer) == 1, \
             "optimizer should only set once"
@@ -187,7 +192,8 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, cal
 
     def train_func(model):
         return adaptor.train(model, dataloader, optimizer_tuple=optimizer,
-                             criterion_tuple=criterion, hooks=hooks, kwargs=default_dict)
+                             criterion_tuple=criterion, hooks=hooks,
+                             postprocess=postprocess, kwargs=default_dict)
     # TODO: to find a better way
     train_func.builtin = True
 

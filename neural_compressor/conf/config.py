@@ -516,13 +516,30 @@ optimizer_schema = Schema({
         Optional('momentum'): float,
         Optional('nesterov'): bool,
         Optional('weight_decay'): float
+    },
+    Optional('AdamW'): {
+        'weight_decay': float,
+        Optional('learning_rate', default=0.001): float,
+        Optional('beta_1', default=0.9): float,
+        Optional('beta_2', default=0.999): float,
+        Optional('epsilon', default=1e-07): float,
+        Optional('amsgrad', default=False):
+            And(bool, lambda s: s in [True, False])
     }
 })
 
 criterion_schema = Schema({
     Optional('CrossEntropyLoss'): {
         Optional('reduction', default='mean'): \
-            And(str, lambda s: s in ['none', 'sum', 'mean', 'auto', 'sum_over_batch_size'])
+            And(str, lambda s: s in ['none', 'sum', 'mean', 'auto', 'sum_over_batch_size']),
+        Optional('from_logits', default=False):
+            And(bool, lambda s: s in [True, False]),
+    },
+    Optional('SparseCategoricalCrossentropy'): {
+        Optional('reduction', default='mean'): \
+            And(str, lambda s: s in ['none', 'sum', 'mean', 'auto', 'sum_over_batch_size']),
+        Optional('from_logits', default=False):
+            And(bool, lambda s: s in [True, False]),
     },
     Optional('KnowledgeDistillationLoss'): {
         Optional('temperature'): And(float, lambda s: s > 0),
@@ -541,9 +558,12 @@ train_schema = Schema({
     Optional('iteration'): int,
     Optional('frequency'): int,
     Optional('execution_mode', default='eager'): And(str, lambda s: s in ['eager', 'graph']),
-    # TODO reserve for multinode training support
     Optional('hostfile'): str,
-    Optional('gpu', default=False): bool
+    Optional('postprocess'): {
+        Optional('transform'): postprocess_schema
+    },
+    # TODO reserve for multinode training support
+    Optional('gpu', default=False): bool,
 })
 
 weight_compression_schema = Schema({

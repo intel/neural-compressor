@@ -50,7 +50,7 @@ class TestPyConf(unittest.TestCase):
         conf.pruning.train.criterion = {'CrossEntropyLoss': {}}
         conf.pruning.train.optimizer = {}
         a = Pruning_Conf(conf)
-        self.assertEqual(a.usr_cfg.pruning.train.criterion, {'CrossEntropyLoss': {'reduction': 'mean'}})
+        self.assertEqual(a.usr_cfg.pruning.train.criterion, {'CrossEntropyLoss': {'from_logits': False, 'reduction': 'mean'}})
 
         self.assertEqual(a.usr_cfg.evaluation.accuracy.metric, {'topk': 5})
         conf.graph_optimization.op_wise = BF16
@@ -524,7 +524,7 @@ class TestConf(unittest.TestCase):
         self.assertEqual(tune_space[('conv2', 'CONV2D')]['activation']['dtype'], ['fp32'])
   
     def test_prune(self):
-        test = '''
+        test_pytorch_prune = '''
         model:
           name: imagenet_prune
           framework: pytorch
@@ -564,9 +564,51 @@ class TestConf(unittest.TestCase):
                     update_frequency: 2
                     names: ['layer1.0.conv2.weight']
         '''
-        helper(test)
+        helper(test_pytorch_prune)
         config = conf.Conf('fake_conf.yaml')
+        test_tensorflow_prune = '''
+        model:
+          name: vit
+          framework: tensorflow
 
+        pruning:
+          train:
+            epoch: 15
+            optimizer:
+              AdamW:
+                learning_rate: 0.001
+                weight_decay: 0.0001
+            criterion:
+              CrossEntropyLoss:
+                reduction: sum_over_batch_size
+                from_logits: True
+          approach:
+            weight_compression:
+              initial_sparsity: 0.0
+              target_sparsity: 0.7
+              start_epoch: 0
+              end_epoch: 9
+              pruners:
+                - !Pruner
+                    start_epoch: 0
+                    end_epoch: 9
+                    prune_type: basic_magnitude
+
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+
+        tuning:
+          accuracy_criterion:
+            relative: 0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+        '''
+        helper(test_tensorflow_prune)
+        config = conf.Conf('fake_conf.yaml')
+   
     def test_data_type(self):
         test = '''
         model:

@@ -20,6 +20,7 @@ from neural_compressor.utils.utility import LazyImport, singleton
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
+tfa = LazyImport('tensorflow_addons')
 
 @singleton
 class TensorflowOptimizers(object):
@@ -107,6 +108,33 @@ class TensorFlowSGD(object):
 
     def __call__(self, **kwargs):
         return tf.keras.optimizers.SGD, self._mapping(**kwargs)
+
+@optimizer_registry('AdamW', 'tensorflow')
+class TensorFlowAdamW(object):
+    """tensorflow_addons AdamW optimizer.
+
+    Args:
+        param_dict (dict): The dict of parameters setting by user for AdamW optimizer
+    """
+    def __init__(self, param_dict):
+        assert isinstance(param_dict, dict), 'This optimizer constructor parameter must be a dict'
+        self._param_dict = param_dict
+
+    def _mapping(self):
+        _param_map = {'learning_rate': 'learning_rate',
+                      'weight_decay': 'weight_decay',
+                      'beta_1': 'beta_1',
+                      'beta_2': 'beta_2',
+                      'epsilon': 'epsilon',
+                      'amsgrad': 'amsgrad'}
+        _dict = {}
+        for key in self._param_dict:
+            if key in _param_map:
+                _dict.update({_param_map[key] : self._param_dict[key]})
+        return _dict
+
+    def __call__(self, **kwargs):
+        return tfa.optimizers.AdamW, self._mapping(**kwargs)
 
 @optimizer_registry('SGD', 'pytorch')
 class PyTorchSGD(object):

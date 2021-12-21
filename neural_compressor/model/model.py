@@ -354,7 +354,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     elif tf.version.VERSION >= '2.5.0':
         for name, tensor in kwargs.items():
             kwargs[name] = tensor.type_spec
-    full_model = tf.function(lambda **kwargs: model(kwargs.values()))
+    full_model = tf.function(lambda **kwargs: model(kwargs.values(), training=False))
     concrete_function = full_model.get_concrete_function(**kwargs)
     frozen_model = convert_variables_to_constants_v2(concrete_function)
 

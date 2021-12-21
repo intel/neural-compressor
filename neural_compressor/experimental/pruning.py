@@ -120,7 +120,7 @@ class Pruning(Component):
             assert train_dataloader_cfg is not None, \
                    'dataloader field of train field of pruning section ' \
                    'in yaml file should be configured as train_dataloader property is NOT set!'
-
+            train_dataloader_cfg.distributed = self.train_distributed
             self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
 
         if self._eval_dataloader is None and self._eval_func is None:
@@ -128,7 +128,7 @@ class Pruning(Component):
             assert eval_dataloader_cfg is not None, \
                    'dataloader field of evaluation ' \
                    'in yaml file should be configured as eval_dataloader property is NOT set!'
-
+            eval_dataloader_cfg.distributed = self.evaluation_distributed
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         if self._pruning_func is None:
@@ -267,7 +267,9 @@ class Pruning(Component):
     @property
     def evaluation_distributed(self):
         """ Getter to know whether need distributed evaluation dataloader"""
-        return self._evaluation_distributed
+        eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
+        yaml_distributed = eval_dataloader_cfg.get('distributed', False)
+        return self._evaluation_distributed or yaml_distributed
 
     @evaluation_distributed.setter
     def evaluation_distributed(self, distributed):
@@ -276,7 +278,9 @@ class Pruning(Component):
     @property
     def train_distributed(self):
         """ Getter to know whether need distributed training dataloader"""
-        return self._train_distributed
+        train_dataloader_cfg = self.cfg.pruning.train.dataloader
+        yaml_distributed = train_dataloader_cfg.get('distributed', False)
+        return self._train_distributed or yaml_distributed
 
     @train_distributed.setter
     def train_distributed(self, distributed):
@@ -315,19 +319,22 @@ class TfPruningCallback(object):
         self._set_weights()
         res = self.hooks['on_epoch_end']()
         for layer_index, weights in res[0][0].items():
-            self.model.layers[layer_index].set_weights(
-                [weights, self.model.layers[layer_index].get_weights()[1]])
+            get_weights = self.model.layers[layer_index].get_weights()
+            get_weights[0] = weights
+            self.model.layers[layer_index].set_weights(get_weights)
 
     def on_batch_begin(self, batch, logs=None):
         self._set_weights()
         res = self.hooks['on_batch_begin'](batch)
         for layer_index, weights in res[0][0].items():
-            self.model.layers[layer_index].set_weights(
-                [weights, self.model.layers[layer_index].get_weights()[1]])
+            get_weights = self.model.layers[layer_index].get_weights()
+            get_weights[0] = weights
+            self.model.layers[layer_index].set_weights(get_weights)
 
     def on_batch_end(self, logs=None):
         self._set_weights()
         res = self.hooks['on_batch_end']()
         for layer_index, weights in res[0][0].items():
-            self.model.layers[layer_index].set_weights(
-                [weights, self.model.layers[layer_index].get_weights()[1]]) 
+            get_weights = self.model.layers[layer_index].get_weights()
+            get_weights[0] = weights
+            self.model.layers[layer_index].set_weights(get_weights)

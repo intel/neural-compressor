@@ -14,3 +14,4 @@ transformers<=4.12.3
 tensorflow_model_optimization
 sigopt
 horovod
+tensorflow-addons==0.15.0

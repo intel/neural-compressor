@@ -107,7 +107,7 @@ class TensorFlowAdaptor(Adaptor):
     
     @dump_elapsed_time(customized_msg="Model training")
     def train(self, model, dataloader, optimizer_tuple,
-                criterion_tuple, hooks, **kwargs):
+              criterion_tuple, hooks, postprocess, **kwargs):
         # check model is savedmodel or not
         import tensorflow as tf
         from neural_compressor.model.model import get_model_type
@@ -168,7 +168,8 @@ class TensorFlowAdaptor(Adaptor):
             epoch_loss_avg = tf.keras.metrics.Mean()
             hooks['on_epoch_begin'](epoch)         # on_epoch_begin hook
             # Training loop
-            for iter, (x, y) in enumerate(dataloader):
+            for iter, data in enumerate(dataloader):
+                x, y = postprocess(data) if postprocess is not None else data
                 hooks['on_batch_begin'](iter)      # on_batch_begin hook
                 cnt += 1
                 if hasattr(criterion, "teacher_model_forward"):
@@ -183,14 +184,22 @@ class TensorFlowAdaptor(Adaptor):
             hooks['on_epoch_end']()                # on_epoch_end hook
             # End epoch
             train_loss_results.append(epoch_loss_avg.result())
-            if not distributed or self.hvd.local_rank() == 0:
-                logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch+1, epoch_loss_avg.result()))
+            if distributed:
+                logger.info("Epoch-{:03d} training on rank {!s} have been done." \
+                    .format(epoch+1, self.hvd.allgather_object(self.hvd.rank())))
+            logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch+1, epoch_loss_avg.result()))
 
         hooks['post_epoch_end']()                  # post_epoch_end hook
         model._sess = None
         if not isinstance(criterion, TensorflowKnowledgeDistillationLoss):
-            if not distributed or self.hvd.rank() == 0:
-                # Update the input model with pruned weights manually due to keras API limitation.
+            if distributed:
+                if self.hvd.rank() == 0:
+                    # Update the input model with pruned weights manually due to keras API limitation.
+                    input_model.save(model._model)
+                rank_list = self.hvd.allgather_object(self.hvd.rank())
+                logger.info(f"rank 0 has saved the pruned model to '{model._model}',"
+                            f"all ranks {rank_list} ready.")
+            else:
                 input_model.save(model._model)
         else:
             input_model.save('distillation_model')
@@ -236,7 +245,9 @@ class TensorFlowAdaptor(Adaptor):
                     for i in range(len(list_len_dataloader)-1):
                         if list_len_dataloader[i] != list_len_dataloader[i+1]:
                             raise AttributeError("The evaluation dataloader's iteration is"
-                                                "different between processes, please reset dataloader's batch_size.") 
+                                                 "different between processes, please reset dataloader's batch_size.")
+            logger.info("Rank {!s} dataloaders' data distribution balance check for evaluation have been finnished." \
+                .format(hvd.allgather_object(hvd.rank())))
         if tensorboard:
             from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
             from tensorflow.python.framework import tensor_util

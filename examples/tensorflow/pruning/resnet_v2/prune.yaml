@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: 1.0
-
 model:
   name: resnet_v2_prune
   framework: tensorflow
@@ -25,22 +23,21 @@ pruning:
     optimizer:
       SGD:
         learning_rate: 0.001
-        momentum: 0.1
+        momentum: 0.9
         nesterov: True
-        weight_decay: 0.1
     criterion:
       CrossEntropyLoss:
-        reduction: sum
+        reduction: sum_over_batch_size
   approach:
     weight_compression:
       initial_sparsity: 0.0
       target_sparsity: 0.25
       start_epoch: 0
-      end_epoch: 8
+      end_epoch: 7
       pruners:
         - !Pruner
-            start_epoch: 3
-            end_epoch: 8
+            start_epoch: 0
+            end_epoch: 7
             prune_type: basic_magnitude
 
 evaluation:
@@ -52,5 +49,5 @@ tuning:
   accuracy_criterion:
     relative: 0.01                             # the tuning target of accuracy loss percentage: 1%
   exit_policy:
-    timeout: 0                                   # tuning timeout (seconds)
+    timeout: 0                                 # tuning timeout (seconds)
   random_seed: 9527                            # random seed

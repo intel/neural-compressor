@@ -12,6 +12,13 @@ import numpy as np
 import os
 import shutil
 import unittest
+from neural_compressor.experimental import Pruning, common
+from neural_compressor.utils import logger
+import types
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.utils.create_obj_from_config import create_train_func
+from neural_compressor.experimental.pruning import TfPruningCallback
+from neural_compressor.conf.dotdict import DotDict
 
 def build_fake_yaml():
     fake_yaml = """
@@ -24,12 +31,11 @@ def build_fake_yaml():
         optimizer:
           SGD:
             learning_rate: 0.001
-            momentum: 0.1
+            momentum: 0.9
             nesterov: True
-            weight_decay: 0.1
         criterion:
           CrossEntropyLoss:
-            reduction: sum
+            reduction: sum_over_batch_size
       approach:
         weight_compression:
           initial_sparsity: 0.0
@@ -327,11 +333,57 @@ class TestTensorflowPruning(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('nc_workspace',ignore_errors=True)
+    
+    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    def test_create_train_func1(self):
+        framework = 'tensorflow'
+        framework_specific_info = DotDict({'device': 'cpu',
+                                           'random_seed': 1978,
+                                           'workspace_path': './nc_workspace/',
+                                           'q_dataloader': None,
+                                           'inputs': [],
+                                           'outputs': []})
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
 
-    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
+        dataloader = common.DataLoader(TrainDataset(), batch_size=32)
+        train_cfg = DotDict({'epoch': 4,
+                             'optimizer': {'AdamW': {'learning_rate': 0.001, 'weight_decay': 0.0001}},
+                             'criterion': {'CrossEntropyLoss': {'reduction': 'sum_over_batch_size', 'from_logits': True}},
+                             'execution_mode': 'eager',
+                             'start_epoch': 0})
+        callbacks = TfPruningCallback
+        hooks = {}
+        pruning_func1 = create_train_func(framework, dataloader, adaptor, train_cfg, hooks, callbacks)
+        self.assertTrue(isinstance(pruning_func1, types.FunctionType))
+
+    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    def test_create_train_func2(self):
+        framework = 'tensorflow'
+        framework_specific_info = DotDict({'device': 'cpu',
+                                           'random_seed': 1978,
+                                           'workspace_path': './nc_workspace/',
+                                           'q_dataloader': None,
+                                           'inputs': [],
+                                           'outputs': []})
+        adaptor = FRAMEWORKS[framework](framework_specific_info)
+
+        dataloader = common.DataLoader(TrainDataset(), batch_size=32)
+        train_cfg = DotDict({'epoch': 100,
+                             'dataloader': {'distributed': False, 'batch_size': 32,
+                             'dataset': {'ImageRecord': {'root': './ImageNet'}},
+                             'transform': {'ResizeCropImagenet': {'height': 224,
+                             'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
+                             'last_batch': 'rollover', 'shuffle': False},
+                             'postprocess': {'transform': {'LabelShift': 1}},
+                             'optimizer': {'SGD': {'learning_rate': 0.0001,
+                             'momentum': 0.9, 'nesterov': True}},
+                             'criterion': {'SparseCategoricalCrossentropy': {'reduction': 'sum_over_batch_size'}},
+                             'execution_mode': 'eager', 'start_epoch': 0})
+        pruning_func2 = create_train_func(framework, dataloader, adaptor, train_cfg)
+        self.assertTrue(isinstance(pruning_func2, types.FunctionType))
+
+    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_tensorflow_pruning(self):
-        from neural_compressor.experimental import Pruning, common
-        from neural_compressor.utils import logger
         prune = Pruning("./fake_yaml.yaml")
         prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
         prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
@@ -342,7 +394,7 @@ class TestTensorflowPruning(unittest.TestCase):
         logger.info(sparsity)
         self.assertGreater(sparsity, 20)
         self.assertGreater(prune.baseline_score, 0.72)
-        self.assertGreater(prune.last_score, 0.741)
+        self.assertGreater(prune.last_score, 0.745)
 
 
 if __name__ == '__main__':

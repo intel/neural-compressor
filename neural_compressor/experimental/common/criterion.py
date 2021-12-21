@@ -99,18 +99,45 @@ class TensorFlowCrossEntropyLoss(object):
         self._param_dict = param_dict
 
     def _mapping(self):
-        _param_map = {'reduction': 'reduction'}
+        _param_map = {'reduction': 'reduction',
+                      'from_logits':'from_logits'}
         _dict = {}
         for key in self._param_dict:
             if key in _param_map:
                 if key == 'reduction':
-                    assert self._param_dict[key] in ['none', 'sum', 'mean', 'auto', 'sum_over_batch_size'], \
-                        'Supported reduction value is none, mean, sum, auto, sum_over_batch_size'
+                    assert self._param_dict[key] in ['auto', 'none', 'sum', 'sum_over_batch_size'], \
+                        'Supported reduction value for tensorflow is auto, none, sum, sum_over_batch_size'
                 _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 
     def __call__(self, **kwargs):
         return tf.keras.losses.CategoricalCrossentropy, self._mapping(**kwargs)
+
+@criterion_registry('SparseCategoricalCrossentropy', 'tensorflow')
+class TensorFlowSparseCategoricalCrossentropy(object):
+    """TensorFlow SparseCategoricalCrossentropyLoss criterion.
+
+    Args:
+        param_dict (dict): The dict of parameters setting by user for SparseCategoricalCrossentropy criterion.
+    """
+    def __init__(self, param_dict):
+        assert isinstance(param_dict, dict), 'This criterion constructor parameter must be a dict'
+        self._param_dict = param_dict
+
+    def _mapping(self):
+        _param_map = {'reduction': 'reduction',
+                      'from_logits':'from_logits'}
+        _dict = {}
+        for key in self._param_dict:
+            if key in _param_map:
+                if key == 'reduction':
+                    assert self._param_dict[key] in ['auto', 'none', 'sum', 'sum_over_batch_size'], \
+                        'Supported reduction value for tensorflow is auto, none, sum, sum_over_batch_size'
+                _dict.update({_param_map[key]: self._param_dict[key]})
+        return _dict
+
+    def __call__(self, **kwargs):
+        return tf.keras.losses.SparseCategoricalCrossentropy, self._mapping(**kwargs)
 
 @criterion_registry('CrossEntropyLoss', 'pytorch')
 class PyTorchCrossEntropyLoss(object):
