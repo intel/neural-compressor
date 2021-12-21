@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import tensorflow as tf
 from tensorflow.python.framework import dtypes
 from neural_compressor.utils.utility import dump_elapsed_time
 
@@ -32,6 +33,8 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
         valid_ops = ('BiasAdd', 'Add', 'AddV2', 'AddN')
         target_nodes = g.query_fusion_pattern_nodes([['MatMul', 'Conv2D'],])
         for i in target_nodes:
+            #only apply this pass for tensorflow release 2.7 and lower version.
+            if tf.version.VERSION >= '2.8.0': continue
             next_node_names = graph_info[i[0]].outputs
             if next_node_names and len(next_node_names) == 1 and \
                 graph_info[Helper.node_name_from_input(next_node_names[0])].node.op in valid_ops:
