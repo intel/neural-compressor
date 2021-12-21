@@ -15,11 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tensorflow as tf
 import numpy as np
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
@@ -41,11 +39,9 @@ class ConvertNanToRandom(GraphRewriterBase):
         for i in target_nodes:
             const_node = graph_info[i[0]].node
             const_content =  tensor_util.MakeNdarray(const_node.attr['value'].tensor)
-            if np.any(np.isnan(const_content)):
-                const_shape = const_content.shape
+            if const_content.dtype == np.float32 and np.any(np.isnan(const_content)):
                 const_node.attr['value'].CopyFrom(
                 attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
                     np.random.rand(*const_content.shape), dtypes.float32, const_content.shape)))
-
 
         return cur_graph.dump_graph()
