@@ -255,7 +255,8 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
     """
 
     def __init__(self, height, width, random_crop=False, resize_side=256, \
-                 mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225]):
+                 mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225], \
+                 resize_method='bilinear', data_format='channels_last', subpixels='RGB'):
 
         self.height = height
         self.width = width
@@ -263,9 +264,13 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
         self.std_value = std_value
         self.random_crop = random_crop
         self.resize_side = resize_side
+        self.resize_method = resize_method
+        self.data_format = data_format
+        self.subpixels = subpixels
 
     # sample is (images, labels)
     def __call__(self, sample):
+        # TODO Support optional resize_method, data_format, subpixels for ONNX
         image, label = sample
         height, width = image.shape[0], image.shape[1]
         scale = self.resize_side / width if height > width else self.resize_side / height
