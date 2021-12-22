@@ -82,7 +82,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         # Model wise tuning
         op_cfgs = {}
         best_cfg = None
-        best_acc = 0
+        best_acc = float('-inf') if self.higher_is_better else float('inf')
 
         logger.debug("Start AutoMixedPrecision strategy by model-wise tuning")
         for i, iterations in enumerate(self.calib_iter):
@@ -104,7 +104,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 yield op_cfgs
                 acc, _ = self.last_tune_result
                 # if acc >= best_acc or self.eval_dataloader is None:
-                if acc >= best_acc:
+                if (self.higher_is_better and acc >= best_acc) or \
+                    (not self.higher_is_better and acc <= best_acc):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
 
@@ -138,7 +139,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 op_cfgs = copy.deepcopy(best_cfg)
                 if ops_acc is not None:
                     ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key],
-                                         reverse=True)
+                                         reverse=self.higher_is_better)
                     for op in ordered_ops:
                         old_cfg = copy.deepcopy(op_cfgs['op'][op])
                         for cfg in self.opwise_tune_cfgs[op]:
@@ -151,7 +152,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
                         acc, _ = self.last_tune_result
-                        if acc <= best_acc:
+                        if (self.higher_is_better and acc <= best_acc) or \
+                            (not self.higher_is_better and acc >= best_acc):
                             op_cfgs['op'][op] = copy.deepcopy(old_cfg)
                         else:
                             best_acc = acc

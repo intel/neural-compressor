@@ -127,7 +127,8 @@ def build_gather_yaml():
         evaluation:
           accuracy:
             metric:
-              Accuracy: {}
+              MSE:
+                compare_label: False
             dataloader:
               dataset:
                 dummy_v2:
@@ -256,8 +257,19 @@ def build_matmul_model():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
     B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
+    H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
+ 
     matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
-    graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
+    e_value = np.random.randint(2, size=(5)).astype(np.float32)
+    E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
+    add = onnx.helper.make_node('Add', ['C', 'E'], ['D'], name='add')
+ 
+    f_value = np.random.randint(2, size=(5)).astype(np.float32)
+    F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
+    add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
+ 
+    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
@@ -531,6 +543,34 @@ class TestAdaptorONNXRT(unittest.TestCase):
             evaluator.model = common.Model(self.rn50_model)
             evaluator(mode)
 
+    def test_lower_is_better_case(self):
+        import time
+        conf.model.framework = 'onnxrt_qlinearops'
+        conf.quantization.approach = 'post_training_static_quant'
+        conf.tuning.exit_policy.max_trials = 6
+        conf.tuning.accuracy_criterion.relative = 0.01
+        conf.tuning.accuracy_criterion.higher_is_better = False
+        conf.tuning.exit_policy.timeout = 100
+        
+        result = [0., 0.1, 0.102, 0.1006, 0.1005, 0.1004, 0.1002]
+        def sub_eval(model, result):
+            time.sleep(0.001 * len(result))
+            del result[0]
+            return result[0]
 
+        def eval(model):
+            return sub_eval(model, result)
+
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.model = self.matmul_model
+        quantizer.calib_dataloader = self.matmul_dataloader
+        quantizer.eval_func = eval
+        q_model = quantizer()
+        node_names = [i.name for i in q_model.nodes()]
+        self.assertTrue('Matmul' in node_names)
+        self.assertTrue('add' in node_names)
+        self.assertTrue('add2_quant' in node_names)
+    
 if __name__ == "__main__":
     unittest.main()

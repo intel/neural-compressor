@@ -185,6 +185,7 @@ class TuneStrategy(object):
         self.best_tune_result = None
         self.best_qmodel = None
 
+        self.higher_is_better = bool(self.cfg.tuning.accuracy_criterion.higher_is_better)
         self.use_multi_objective = len(self.cfg.tuning.multi_objective.objective) > 1
         objectives = [i.lower() for i in self.cfg.tuning.multi_objective.objective]
         self.tune_result_record = []

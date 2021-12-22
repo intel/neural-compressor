@@ -118,7 +118,7 @@ class MSETuneStrategy(TuneStrategy):
         # Model wise tuning
         op_cfgs = {}
         best_cfg = None
-        best_acc = 0
+        best_acc = float('-inf') if self.higher_is_better else float('inf')
 
         for i, iterations in enumerate(self.calib_iter):
             op_cfgs['calib_iteration'] = int(iterations)
@@ -135,7 +135,8 @@ class MSETuneStrategy(TuneStrategy):
 
                 yield op_cfgs
                 acc, _ = self.last_tune_result
-                if acc > best_acc:
+                if (self.higher_is_better and acc > best_acc) or \
+                    (not self.higher_is_better and acc < best_acc):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
 
@@ -155,10 +156,11 @@ class MSETuneStrategy(TuneStrategy):
                         list(fp32_tensor_dict[op].values())[0],
                         list(dequantize_tensor_dict[op].values())[0]) for op in fp32_tensor_dict}
                 self.ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key],
-                                          reverse=True)
+                                          reverse=self.higher_is_better)
 
             if ops_mse is not None:
-                ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=True)
+                ordered_ops = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], \
+                                     reverse=self.higher_is_better)
                 op_cfgs = copy.deepcopy(best_cfg)
                 for op in ordered_ops:
                     if not isinstance(op, tuple):
@@ -172,7 +174,8 @@ class MSETuneStrategy(TuneStrategy):
                         op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
                     yield op_cfgs
                     acc, _ = self.last_tune_result
-                    if acc <= best_acc:
+                    if (self.higher_is_better and acc <= best_acc) or \
+                        (not self.higher_is_better and acc >= best_acc):
                         op_cfgs['op'][op] = copy.deepcopy(old_cfg)
                     else:
                         best_acc = acc
