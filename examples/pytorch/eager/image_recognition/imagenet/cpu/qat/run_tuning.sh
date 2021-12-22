@@ -47,6 +47,8 @@ function run_tuning {
         topology=${topology%*${topology:(-8)}}
         yaml="./conf_buildin.yaml"
         SCRIPTS=main_buildin.py
+        sed -i "/\/path\/to\/train\/dataset/s|root:.*|root: $dataset_location/train|g" conf_buildin.yaml
+        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_buildin.yaml
     else
         SCRIPTS=main.py
         yaml="./conf.yaml"

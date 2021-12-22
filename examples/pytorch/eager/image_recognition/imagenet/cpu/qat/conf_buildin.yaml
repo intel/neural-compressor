@@ -22,6 +22,20 @@ quantization:                                        # optional. required for QA
   train:
     end_epoch: 8
     iteration: 30
+    dataloader:
+      batch_size: 256
+      shuffle: True
+      dataset:
+        ImageFolder:
+          root: /path/to/train/dataset              # NOTE: modify to your training dataset location if needed
+      transform:
+        RandomResizedCrop:
+          size: 224
+        RandomHorizontalFlip: {}
+        ToTensor: {}
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
     optimizer:
       SGD:
         learning_rate: 0.0001
@@ -33,6 +47,38 @@ evaluation:                                          # optional. required if use
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    dataloader:
+      batch_size: 30
+      dataset:
+        ImageFolder:
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+        ToTensor: {}
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
+  performance:                                       # optional. used to benchmark performance of passing model.
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      batch_size: 1
+      dataset:
+        ImageFolder:
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+        ToTensor: {}
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
 
 tuning:
   accuracy_criterion:
