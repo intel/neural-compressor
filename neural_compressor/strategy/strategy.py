@@ -537,7 +537,7 @@ class TuneStrategy(object):
 
         last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
             self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
-            ''.join([', {} ({}|fp32): {:.4f}|{:.4f},'.format(x,self.cfg.quantization.dtype,y,z) \
+            ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,self.cfg.quantization.dtype,y,z) \
             for x,y,z in zip(self.multi_objective.representation, \
             self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
             if self.last_tune_result else 'n/a'
