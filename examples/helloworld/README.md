@@ -16,4 +16,5 @@ The following Hello World examples are available:
 *  TensorFlow slim model: [tf_example3](../../examples/helloworld/tf_example3/README.md)
 *  TensorFlow checkpoint: [tf_example4](../../examples/helloworld/tf_example4/README.md)
 *  Enable benchmark for performance and accuracy measurement: [tf_example5](../../examples/helloworld/tf_example5/README.md)
+*  Quantization and benchmark with Python-flavor config: [tf_example7](../../examples/helloworld/tf_example7/README.md)
 
