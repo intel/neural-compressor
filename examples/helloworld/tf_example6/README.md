@@ -2,10 +2,21 @@ tf_example6 example
 =====================
 This example is used to demonstrate how to use default user-facing APIs to quantize a model.
 
-1. Download the FP32 model
-wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
+### 1. Installation
+```shell
+pip install -r requirements.txt
+```
 
-2. Update the root of dataset in conf.yaml
+### 2. Prepare Dataset  
+TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
+We also prepared related scripts in [TF image_recognition example](../../tensorflow/image_recognition/README.md#2-prepare-dataset). 
+
+### 3. Download the FP32 model
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
+```
+
+### 4. Update the root of dataset in conf.yaml
 The configuration will will create a TopK metric function for evaluation and configure the batch size, instance number and core number for performance measurement.    
 ```yaml
 evaluation:                                          # optional. required if user doesn't provide eval_func in Quantization.
@@ -40,8 +51,18 @@ evaluation:                                          # optional. required if use
 
 ```
 
-3. Run quantization
-We only need to add the following lines for quantization to create an int8 model.
+### 5. Run Command
+* Run quantization
+```shell
+python test.py --tune
+``` 
+* Run benchmark, please make sure benchmark the model should after tuning.
+```shell
+python test.py --benchmark
+``` 
+
+### 6. Introduction
+* We only need to add the following lines for quantization to create an int8 model.
 ```python
     from neural_compressor import Quantization
     quantizer = Quantization('./conf.yaml')
@@ -51,12 +72,7 @@ We only need to add the following lines for quantization to create an int8 model
                       name='int8.pb',
                       as_text=False)
 ```
-* Run quantization and evaluation:
-```shell
-    python test.py --tune
-``` 
-
-4. Run benchmark according to config
+* Run benchmark according to config.
 ```python
      # Optional, run benchmark 
     from neural_compressor import Benchmark
@@ -64,8 +80,3 @@ We only need to add the following lines for quantization to create an int8 model
     results = evaluator('./int8.pb')
  
 ```
-
-* Run benchmark and please make sure benchmark should after tuning:
-```shell
-    python test.py --benchmark
-``` 
