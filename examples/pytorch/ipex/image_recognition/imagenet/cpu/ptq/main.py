@@ -312,8 +312,8 @@ def main_worker(gpu, ngpus_per_node, args):
         ipex_config_path = None
         if args.int8:
             if args.ipex:
-                # TODO: It will remove when IPEX spport to save script model.
                 if not IPEX_110:
+                    # TODO: It will remove when IPEX spport to save script model.
                     model.to(ipex.DEVICE)
                     try:
                         new_model = torch.jit.script(model)
@@ -331,12 +331,15 @@ def main_worker(gpu, ngpus_per_node, args):
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
             if args.ipex:
-                # TODO: It will remove when IPEX spport to save script model.
-                model.to(ipex.DEVICE)
-                try:
-                    new_model = torch.jit.script(model)
-                except:
-                    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+                if not IPEX_110:
+                    # TODO: It will remove when IPEX spport to save script model.
+                    model.to(ipex.DEVICE)
+                    try:
+                        new_model = torch.jit.script(model)
+                    except:
+                        new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
+                else:
+                    new_model = model
             else:
                 model.fuse_model()
                 new_model = model
@@ -430,16 +433,15 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
                 else ipex.AmpConf(None)
                 )
         else:
-            conf = (
-                ipex.quantization.QuantConf(configure_file=ipex_config_path)
-                if ipex_config_path is not None
-                else ipex.quantization.QuantConf(None)
-                )
-            model = optimization.fuse(model, inplace=True)
-            for idx, (input, label) in enumerate(val_loader):
-                x = input.contiguous(memory_format=torch.channels_last)
-                break
-            model = ipex.quantization.convert(model, conf, x)
+            if ipex_config_path is not None:
+                conf = ipex.quantization.QuantConf(configure_file=ipex_config_path)
+                model = optimization.fuse(model, inplace=True)
+                for idx, (input, label) in enumerate(val_loader):
+                    x = input.contiguous(memory_format=torch.channels_last)
+                    break
+                model = ipex.quantization.convert(model, conf, x)
+            else:
+                model = model
     with torch.no_grad():
         for i, (input, target) in enumerate(val_loader):
             if i >= args.warmup_iter:
