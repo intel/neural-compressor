@@ -190,7 +190,7 @@ class KnowledgeDistillationLoss(object):
     def teacher_model_forward(self, input, teacher_model=None):
         raise NotImplementedError('Function teacher_model_forward '
                                   'should be framework related.')
-    
+
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         raise NotImplementedError('Function teacher_student_loss_cal '
                                   'should be framework related.')
@@ -261,26 +261,37 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
         targets_prob = torch.nn.functional.softmax(targets, dim=-1)
         return torch.nn.functional.kl_div(log_prob, targets_prob)
-    
-    def teacher_model_forward(self, input, teacher_model=None):
+
+    def teacher_model_forward(self, input, teacher_model=None, device='cpu'):
         if self.loss_weights[1] > 0:
             model = self.teacher_model if teacher_model is None else teacher_model
             assert isinstance(model, torch.nn.Module), \
             'Teacher model should be a torch Module instead of {}'.format(type(model))
             model.eval()
+            model_device = [i.device for i in model.parameters()][0]
+            if device != model_device:
+                model.to(device)
             with torch.no_grad():
-                if isinstance(input, dict) or isinstance(input, UserDict):
+                if isinstance(input, dict) or isinstance(input, UserDict):  # pragma: no cover
+                    for k in input.keys():
+                        input[k] = input[k].to("dpcpp" if device=="gpu" else device) \
+                            if isinstance(input[k], torch.Tensor) else input[k]
                     outputs = model(**input)
-                elif isinstance(input, list) or isinstance(input, tuple):
+                elif isinstance(input, list) or isinstance(input, tuple):  # pragma: no cover
+                    tmp_device = "dpcpp" if device=="gpu" else device
+                    input = [inp.to(tmp_device) \
+                            if isinstance(inp, torch.Tensor) else inp
+                            for inp in input]
                     outputs = model(*input)
                 else:
+                    input = input.to("dpcpp" if device=="gpu" else device)
                     outputs = model(input)
                 self.teacher_outputs = outputs
-        
+
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
         return self.teacher_student_loss(student_outputs, teacher_outputs)
-    
+
     def student_targets_loss_cal(self, student_outputs, targets):
         assert self.student_targets_loss, 'student_targets_loss not specified.'
         return self.student_targets_loss(student_outputs, targets)
@@ -312,7 +323,7 @@ class PyTorchKnowledgeDistillationLossWrapper(object):
         for k in _params:
             new_dict[k] = param_dict[k]
         return new_dict
-    
+
     def __call__(self, **kwargs):
         return PyTorchKnowledgeDistillationLoss, self._param_check()
 
@@ -386,7 +397,7 @@ class TensorflowKnowledgeDistillationLossWrapper(object):
         for k in _params:
             new_dict[k] = param_dict[k]
         return new_dict
-    
+
     def __call__(self, **kwargs):
         return TensorflowKnowledgeDistillationLoss, self._param_check()
 

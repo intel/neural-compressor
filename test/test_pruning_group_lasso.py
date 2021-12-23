@@ -20,7 +20,6 @@ def build_fake_yaml():
         start_epoch: 0
         end_epoch: 4
         iteration: 10
-        gpu: True
         dataloader:
           batch_size: 30
           dataset:

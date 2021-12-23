@@ -28,7 +28,6 @@ pruning:                                             # mandatory only for prunin
     iteration: 100
     frequency: 2
     hostfile: /path/to/host/file                     # reserved for multi-node training.
-    gpu: True
 
     dataloader:
       batch_size: 256

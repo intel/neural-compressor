@@ -558,12 +558,11 @@ train_schema = Schema({
     Optional('iteration'): int,
     Optional('frequency'): int,
     Optional('execution_mode', default='eager'): And(str, lambda s: s in ['eager', 'graph']),
-    Optional('hostfile'): str,
     Optional('postprocess'): {
         Optional('transform'): postprocess_schema
     },
     # TODO reserve for multinode training support
-    Optional('gpu', default=False): bool,
+    Optional('hostfile'): str
 })
 
 weight_compression_schema = Schema({
