@@ -394,7 +394,7 @@ class ONNXRTAugment:
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
             node_thresholds = quantization_thresholds[tensor_name]
-            node_params = calculate_scale_zeropoint(parent, child, node_thresholds[0],
+            node_params = self.calculate_scale_zeropoint(parent, child, node_thresholds[0],
                                                          node_thresholds[1])
             quantization_params[tensor_name] = node_params
 
@@ -453,49 +453,58 @@ class ONNXRTAugment:
             dumped_tensors_map.update({"activation": map_node_activation})
         return dumped_tensors_map
 
-def calculate_scale_zeropoint(last_node, next_node, rmin, rmax):
-    '''
-       Given the source and destination node of tensor, \
-             return calculated zero point and scales.
-
-      :param last_node: the source of the tensor
-      :param next_node: the destination of the tensor
-      :param rmin: min threshold of the tensor
-      :param rmax: max threshold of the tensor
-      :return (List): zero_point and scale
-
-    '''
-
-    zp_and_scale = []
-    # adjust rmin and rmax such that 0 is included in the range. This is required
-    # to make sure zero can be uniquely represented.
-    rmin = min(rmin, 0)
-    rmax = max(rmax, 0)
-    if next_node:
-        if next_node.op_type == 'Relu':
-            if rmin < 0:
-                rmin = 0
-
-    if last_node:
-        if last_node.op_type in ['Conv', 'FusedConv']:
-            attrs = [attr for attr in last_node.attribute]
-            attrs_names = [attr.name for attr in last_node.attribute]
-            if 'activation' in attrs_names:
-                if attrs[attrs_names.index('activation')].s == b'Relu':
-                    rmin = max(rmin, 0)
-                if attrs[attrs_names.index('activation')].s == b'Clip':
-                    assert 'activation_params' in attrs_names, "the model contains no \
-                                                               params for clip node \
-                                                               {}".format(last_node)
-                    clip_params = attrs[attrs_names.index('activation_params')].floats
-                    rmin = min(rmin, clip_params[0], clip_params[1])
-                    rmax = max(rmax, clip_params[0], clip_params[1])
-
-    scale = np.float32((rmax - rmin) / 255 if rmin != rmax else 1)
-    initial_zero_point = (0 - rmin) / scale
-    zero_point = np.uint8(round(max(0, min(255, initial_zero_point))))
-
-    zp_and_scale.append(zero_point)
-    zp_and_scale.append(scale)
-
-    return zp_and_scale
+    def calculate_scale_zeropoint(self, last_node, next_node, rmin, rmax):
+        '''
+           Given the source and destination node of tensor, \
+                 return calculated zero point and scales.
+    
+          :param last_node: the source of the tensor
+          :param next_node: the destination of the tensor
+          :param rmin: min threshold of the tensor
+          :param rmax: max threshold of the tensor
+          :return (List): zero_point and scale
+    
+        '''
+    
+        zp_and_scale = []
+        # adjust rmin and rmax such that 0 is included in the range. This is required
+        # to make sure zero can be uniquely represented.
+        rmin = min(rmin, 0)
+        rmax = max(rmax, 0)
+        if next_node:
+            if next_node.op_type == 'Relu':
+                if rmin < 0:
+                    rmin = 0
+            elif next_node.op_type == 'Clip' and len(next_node.input) ==3:
+                if rmin < numpy_helper.to_array(
+                        self.model_wrapper.get_initializer(next_node.input[1])):
+                    rmin = numpy_helper.to_array(
+                        self.model_wrapper.get_initializer(next_node.input[1]))
+                if rmax > numpy_helper.to_array(
+                        self.model_wrapper.get_initializer(next_node.input[2])):
+                    rmax = numpy_helper.to_array(
+                        self.model_wrapper.get_initializer(next_node.input[2]))
+    
+        if last_node:
+            if last_node.op_type in ['Conv', 'FusedConv']:
+                attrs = [attr for attr in last_node.attribute]
+                attrs_names = [attr.name for attr in last_node.attribute]
+                if 'activation' in attrs_names:
+                    if attrs[attrs_names.index('activation')].s == b'Relu':
+                        rmin = max(rmin, 0)
+                    if attrs[attrs_names.index('activation')].s == b'Clip':
+                        assert 'activation_params' in attrs_names, "the model contains no \
+                                                                   params for clip node \
+                                                                   {}".format(last_node)
+                        clip_params = attrs[attrs_names.index('activation_params')].floats
+                        rmin = min(rmin, clip_params[0], clip_params[1])
+                        rmax = max(rmax, clip_params[0], clip_params[1])
+    
+        scale = np.float32((rmax - rmin) / 255 if rmin != rmax else 1)
+        initial_zero_point = (0 - rmin) / scale
+        zero_point = np.uint8(round(max(0, min(255, initial_zero_point))))
+    
+        zp_and_scale.append(zero_point)
+        zp_and_scale.append(scale)
+    
+        return zp_and_scale
