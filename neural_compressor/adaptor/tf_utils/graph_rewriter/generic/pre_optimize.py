@@ -19,7 +19,6 @@
 import logging
 from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
-
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer
 from .split_shared_input import SplitSharedInputOptimizer
@@ -40,6 +39,7 @@ from .fuse_biasadd_add import FuseBiasAddAndAddOptimizer
 from .switch_optimizer import SwitchOptimizer
 from .move_squeeze_after_relu import MoveSqueezeAfterReluOptimizer
 from .convert_nan_to_random import ConvertNanToRandom
+from .expanddims_optimizer import ExpandDimsOptimizer
 
 class PreOptimization():
     def __init__(self, model, optimization):
@@ -133,6 +133,9 @@ class PreOptimization():
         self._tmp_graph_def = FuseConvWithMathOptimizer(
             self._tmp_graph_def).do_transformation()
 
+        self._tmp_graph_def = ExpandDimsOptimizer(
+            self._tmp_graph_def).do_transformation()
+     
         #TODO we need to remove below optimizer once the TF enabled the single
         # matmul op quantization
         self._tmp_graph_def = InjectDummyBiasAddOptimizer(
