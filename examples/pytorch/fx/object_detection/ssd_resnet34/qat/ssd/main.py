@@ -117,7 +117,7 @@ def train300_mlperf_coco(args):
     global torch
     from coco import COCO
     # Check that GPUs are actually available
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
+    use_cuda = False
     args.distributed = False
     if use_cuda:
         try:
@@ -224,7 +224,6 @@ def train300_mlperf_coco(args):
         threshold = args.threshold
         nms_valid_thresh=0.05
         inv_map = {v:k for k,v in val_coco.label_map.items()}
-        use_cuda = not args.no_cuda and torch.cuda.is_available()
 
         model.eval()
         if use_cuda:
@@ -318,6 +317,8 @@ def train300_mlperf_coco(args):
             inv_map = {v:k for k,v in val_coco.label_map.items()}
             success = torch.zeros(1)
             if use_cuda:
+                model = model.cuda()
+                loss_func.cuda()
                 success = success.cuda()
 
 
@@ -382,8 +383,6 @@ def train300_mlperf_coco(args):
                         return model
 
                     prev_loss = loss
-                        
-
                     warmup_step(iter_num, current_lr)
                     optim.step()
                     optim.zero_grad()
