@@ -16,7 +16,7 @@ def build_fake_yaml():
           name: fake_yaml
           framework: tensorflow
           inputs: input 
-          outputs: conv3 
+          outputs: final
         device: cpu
         quantization: 
           op_wise: {
@@ -220,6 +220,13 @@ def create_test_graph():
     conv3_node.attr['padding'].CopyFrom(attr_value_pb2.AttrValue(s=b'SAME'))
     conv3_node.attr['data_format'].CopyFrom(attr_value_pb2.AttrValue(s=b'NHWC'))
 
+    identity_node = node_def_pb2.NodeDef()
+    identity_node.name = "final"
+    identity_node.op = "Identity"
+    identity_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(
+        type=dtypes.float32.as_datatype_enum))
+    identity_node.input.extend([conv3_node.name])
+
     test_graph = graph_pb2.GraphDef()
 
     test_graph.node.extend([input_node, 
@@ -236,7 +243,8 @@ def create_test_graph():
                                  bias_add_node2, 
                                  relu_node2,
                                  conv3_weight_node, 
-                                 conv3_node, 
+                                 conv3_node,
+                                 identity_node
                                 ])
     return test_graph
 
