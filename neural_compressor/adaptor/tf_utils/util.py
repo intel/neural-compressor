@@ -325,3 +325,12 @@ def get_graph_def(model, outputs=[], auto_input_output=False):
         model.output_tensor_names = outputs
     return model.graph_def
 
+def get_model_input_shape(model):
+    for node in model.graph_def.node:
+        if node.op == 'Placeholder':
+            _shape = list(tf.compat.v1.TensorShape(node.attr['shape'].shape))
+            if tf.__version__ < '2.0.0':
+                _shape = [item.value for item in _shape]
+            if len(_shape) > 1 and isinstance(_shape[0], int):
+                return _shape[0]
+    return 1

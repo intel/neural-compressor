@@ -42,7 +42,6 @@ class TensorFlowAdaptor(Adaptor):
         "MatMul": "matmul",
         "Pad": "pad"
     }
-
     def __init__(self, framework_specific_info):
         super().__init__(framework_specific_info)
 
@@ -507,10 +506,12 @@ class TensorFlowAdaptor(Adaptor):
                                         bf16_ops=self.bf16_ops,
                                         data_loader=data_loader).convert()
             except Exception: # pragma: no cover
+                from .tf_utils.util import get_model_input_shape
+                batch_size = get_model_input_shape(model)
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, 1))
-                data_loader.batch(1)
+                        format(batch_size, batch_size))
+                data_loader.batch(batch_size)
                 self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
                                         qt_config=self.quantize_config,
@@ -1059,6 +1060,8 @@ class TensorFlowAdaptor(Adaptor):
                                             recover_config=q_config)
 
         return converter.convert_without_calib()
+
+
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     def __init__(self, framework_specific_info):
