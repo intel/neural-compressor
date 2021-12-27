@@ -75,6 +75,8 @@ InnerProductOperator::InnerProductOperator(const OperatorConfig& conf)
   sigmoid_ = (iter != attrs_map.end() && iter->second == "sigmoid") ? true : false;
   relu_ = (iter != attrs_map.end() && iter->second == "relu") ? true : false;
   append_eltwise_ = (gelu_erf_ && !gelu_split_) || (gelu_tanh_ && !gelu_split_) || tanh_ || sigmoid_ || relu_;
+  append_op_ = (iter != attrs_map.end()) ? iter->second : "";
+  LOG(INFO) << "append_op: " << append_op_;
 }
 
 InnerProductOperator::~InnerProductOperator() {}
@@ -149,9 +151,194 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
                   ? true
                   : false;
   LOG(INFO) << "inner product has bias add " << has_bias_;
-
   dst_->set_dtype(output_dtype_);
+  if (src1_->dtype() == "fp32") {
+    weight_zero_ratio_ = GetSparseRatio<float>(static_cast<const float*>(src1_->data()), src1_->shape(), blocksize_);
+  } else if (src1_->dtype() == "s8") {
+    blocksize_ = {4, 16};
+    weight_zero_ratio_ = GetSparseRatio<int8_t>(static_cast<const int8_t*>(src1_->data()), src1_->shape(), blocksize_);
+  } else {
+    LOG(ERROR) << "src1 in innerproduct can not support dtype: " << src1_->dtype();
+  }
+  LOG(INFO) << "weight zero ratio: " << weight_zero_ratio_;
+  int64_t N = src1_->shape()[1];
+  if (!src1_perm_.empty() && src1_perm_ == vector<int64_t>{0, 1}) {
+    N = src1_->shape()[0];
+  }
+  if (weight_zero_ratio_ < sparse_threshold_ || N % blocksize_[1] != 0) {
+    dense_flag_ = true;
+  }
+#ifndef __AVX512F__
+  if (!dense_flag_) {
+    LOG(ERROR) << "Sparse kernel in InnerProduct only supports AVX512!";
+  }
+#endif
+  if (dense_flag_) {
+    PrepareDense(input, output);
+  } else {
+    PrepareSparse(input, output);
+  }
+}
 
+void InnerProductOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  if (dense_flag_) {
+    ReshapeDense(input, output);
+  } else {
+    ReshapeSparse(input, output);
+  }
+}
+
+void InnerProductOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  if (dense_flag_) {
+    ForwardDense(input, output);
+  } else {
+#if __AVX512F__
+    ForwardSparse(input, output);
+#endif
+  }
+  this->unref_tensors(input);
+}
+
+void InnerProductOperator::PrepareSparse(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  const vector<int64_t> weight_shape = src1_->shape();
+  vector<int64_t> weight_shape_perm = weight_shape;
+  if (!src1_perm_.empty() && src1_perm_ == vector<int64_t>{0, 1}) {
+    weight_shape_perm = {weight_shape[1], weight_shape[0]};
+  }
+  src1_->set_shape(weight_shape_perm);
+  if (!src1_min_) {  // fp32 kernel prepare
+    const float* weight_data = static_cast<const float*>(src1_->data());
+    float* weight_data_perm = static_cast<float*>(malloc(src1_->size() * sizeof(float)));
+    memcpy(weight_data_perm, weight_data, src1_->size() * sizeof(float));
+    if (!src1_perm_.empty() && src1_perm_ == vector<int64_t>{0, 1}) {
+      TransposeMatrix<float>(weight_data, weight_shape, weight_data_perm);
+    }
+    sparse_weight_ = create_bsc_matrix<float>(weight_data_perm, weight_shape_perm, blocksize_);
+    free(weight_data_perm);
+  } else {  // int8 kernel prepare
+    const int8_t* weight_data = static_cast<const int8_t*>(src1_->data());
+    int8_t* weight_data_perm = static_cast<int8_t*>(malloc(src1_->size() * sizeof(int8_t)));
+    memcpy(weight_data_perm, weight_data, src1_->size() * sizeof(int8_t));
+    if (!src1_perm_.empty() && src1_perm_ == vector<int64_t>{0, 1}) {
+      TransposeMatrix<int8_t>(weight_data, weight_shape, weight_data_perm);
+    }
+    sparse_weight_int8_ = create_bsc_matrix<int8_t>(weight_data_perm, weight_shape_perm, blocksize_);
+    reorder_bsc_int8_4x16(sparse_weight_int8_);
+    free(weight_data_perm);
+  }
+}
+
+void InnerProductOperator::ReshapeSparse(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  vector<int64_t> src0_shape_origin = src0_->shape();
+  vector<int64_t> src0_shape = src0_shape_origin;
+  if (!src0_perm_.empty() && src0_perm_ == vector<int64_t>{0, 1}) {
+    src0_shape = {src0_shape[1], src0_shape[0]};
+  }
+  src0_->set_shape(src0_shape);
+
+  vector<int64_t> dst_shape = {src0_shape[0], src1_->shape()[1]};
+  dst_->set_shape(dst_shape);
+}
+
+#if __AVX512F__
+void InnerProductOperator::ForwardSparse(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  int64_t M = src0_->shape()[0];
+  int64_t N = src1_->shape()[1];
+  int64_t K = src0_->shape()[1];
+  // fp32 kernel
+  if (!src1_min_) {
+    const int64_t* rowidxs = sparse_weight_->rowidxs;
+    const int64_t* colptr = sparse_weight_->colptr;
+    const int64_t ncolptr = sparse_weight_->ncolptr;
+    const float* A = static_cast<const float*>(src0_->data());
+    const float* B = static_cast<const float*>(sparse_weight_->data);
+    float* C = static_cast<float*>(dst_->mutable_data());
+    if (has_bias_) {
+      const float* bias = static_cast<const float*>(bias_->data());
+      if (append_op_ == "") {
+        sparse_gemm_bsc_bias_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, C);
+      } else if (append_op_ == "relu") {
+        sparse_gemm_bsc_bias_relu_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, C);
+      } else if (append_op_ == "sum") {
+        const float* post = static_cast<const float*>(post_->data());
+        sparse_gemm_bsc_bias_sum_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, post, C);
+      } else if (append_op_ == "tanh") {
+        sparse_gemm_bsc_bias_tanh_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, C);
+      } else if (append_op_ == "gelu_tanh") {
+        sparse_gemm_bsc_bias_gelu_tanh_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, C);
+      } else if (append_op_ == "sigmoid") {
+        sparse_gemm_bsc_bias_sigmod_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, C);
+      } else {
+        LOG(INFO) << "inner product has no such sparse kernel, output tensor is" << output[0]->name();
+      }
+    } else {
+      if (append_op_ == "") {
+        sparse_gemm_bsc_f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, C);
+      }
+    }
+  } else {  // int8 kernel
+    const int64_t* rowidxs = sparse_weight_int8_->rowidxs;
+    const int64_t* colptr = sparse_weight_int8_->colptr;
+    const int64_t ncolptr = sparse_weight_int8_->ncolptr;
+    const uint8_t* A = static_cast<const uint8_t*>(src0_->data());
+    const int8_t* B = static_cast<const int8_t*>(sparse_weight_int8_->data);
+    vector<float> src0_scales = GetScales(src0_min_->data(), src0_max_->data(), src0_min_->size(), src0_->dtype());
+    vector<float> src1_scales = GetScales(src1_min_->data(), src1_max_->data(), src1_min_->size(), src1_->dtype());
+    vector<float> dst_scales = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
+    vector<float> rescales = GetRescales(src0_scales, src1_scales, dst_scales, dst_->dtype(), append_eltwise_);
+    if (src1_->size() > 1) {  // per channel kernel
+      if (output[0]->dtype() == "u8") {
+        uint8_t* C = static_cast<uint8_t*>(dst_->mutable_data());
+        if (has_bias_) {
+          const int32_t* bias = static_cast<const int32_t*>(bias_->data());
+          if (append_op_ == "relu") {
+            sparse_gemm_bsc_4x16_u8s8u8_pc_relu(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, rescales, C);
+          }
+        }
+      } else if (output[0]->dtype() == "s8") {
+        int8_t* C = static_cast<int8_t*>(dst_->mutable_data());
+        if (has_bias_) {
+          const int32_t* bias = static_cast<const int32_t*>(bias_->data());
+          if (append_op_ == "") {
+            sparse_gemm_bsc_4x16_u8s8s8_pc(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, rescales, C);
+          }
+        }
+      }
+    } else {  // per tensor kernel
+      if (output[0]->dtype() == "fp32") {
+        float* C = static_cast<float*>(dst_->mutable_data());
+        if (has_bias_) {
+          const int32_t* bias = static_cast<const int32_t*>(bias_->data());
+          if (append_op_ == "") {
+            sparse_gemm_bsc_4x16_u8s8f32(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, rescales[0], C);
+          } else if (append_op_ == "relu") {
+            sparse_gemm_bsc_4x16_u8s8f32_relu(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, rescales[0],
+                                              C);
+          }
+        }
+      } else if (output[0]->dtype() == "u8") {
+        uint8_t* C = static_cast<uint8_t*>(dst_->mutable_data());
+        if (has_bias_) {
+          const int32_t* bias = static_cast<const int32_t*>(bias_->data());
+          if (append_op_ == "relu") {
+            sparse_gemm_bsc_4x16_u8s8u8_relu(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, rescales[0], C);
+          }
+        }
+      } else if (output[0]->dtype() == "s8") {
+        int8_t* C = static_cast<int8_t*>(dst_->mutable_data());
+        if (has_bias_) {
+          const int32_t* bias = static_cast<const int32_t*>(bias_->data());
+          if (append_op_ == "") {
+            sparse_gemm_bsc_4x16_u8s8s8(M, N, K, A, B, rowidxs, colptr, ncolptr, blocksize_, bias, rescales[0], C);
+          }
+        }
+      }
+    }
+  }
+}
+#endif
+
+void InnerProductOperator::PrepareDense(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   dnnl::primitive_attr attr;
   vector<float> src0_scales;
   vector<float> src1_scales;
@@ -231,7 +418,7 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
 }
 
 // 1. Create primitive
-void InnerProductOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+void InnerProductOperator::ReshapeDense(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   // Part1: Derive operator's user proper shape and strides
   // 1.1 Transpose tensor shape and get it
   vector<int64_t> src0_shape_origin = src0_->shape();
@@ -331,7 +518,7 @@ void InnerProductOperator::Reshape(const vector<Tensor*>& input, const vector<Te
 }
 
 // 2. inference kernel(for int8 and f32)
-void InnerProductOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+void InnerProductOperator::ForwardDense(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   if (post_ != nullptr && !binary_add_) {
     LOG(INFO) << "inner product has post op " << post_->name();
     void* post_data_ptr = const_cast<void*>(post_->data());
@@ -397,9 +584,6 @@ void InnerProductOperator::Forward(const vector<Tensor*>& input, const vector<Te
     gelu_p_.execute(gelu_eng_stream_, gelu_memory_args_);
   }
   eng_stream_.wait();
-
-  // // 6. unref tensors
-  this->unref_tensors(input);
 }
 
 REGISTER_OPERATOR_CLASS(InnerProduct);

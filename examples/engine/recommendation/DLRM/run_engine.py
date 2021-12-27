@@ -48,6 +48,8 @@ def get_args():
     parser.add_argument('--tune', action='store_true',
                         default=False, help="whether quantize the model")
     parser.add_argument('--mode', type=str, help="benchmark mode of performance or accuracy")
+    parser.add_argument('--dataset', default='kaggle', type=str, help="kaggle or terabyte")
+    parser.add_argument('--mlperf_bin_loader', action='store_true', default=False)
     args = parser.parse_args()
     return args
 
@@ -56,30 +58,30 @@ def main():
     args = get_args()
     raw_path = args.raw_path
     pro_data = args.pro_data
-    if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        kaggle_ds = CriteoDataset(dataset = "kaggle", max_ind_range=-1, \
-                                  sub_sample_rate=0.0, randomize="total", \
-                                  split="test",raw_path=raw_path, pro_data=pro_data, \
-                                  batch_size=args.batch_size)
-        ds = torch.utils.data.DataLoader(
-                    kaggle_ds,
-                    batch_size=args.batch_size,
-                    shuffle=False,
-                    num_workers=0,
-                    collate_fn=collate_wrapper_criteo,
-                    pin_memory=False,
-                    drop_last=False,  # True
-                )
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(args.input_model)
-        evaluator.b_dataloader = DLRM_DataLoader(ds)
-        evaluator(args.mode)
+    if args.mlperf_bin_loader and args.dataset == 'terabyte':
+        import criteo
+        kwargs = {"randomize": 'total',  "memory_map": True}
+        # --count-samples can be used to limit the number of samples used for testing
+        terabyte_ds = criteo.Criteo(data_path=raw_path,
+                            name=args.dataset,
+                            pre_process=criteo.pre_process_criteo_dlrm,  # currently an identity function
+                            use_cache=0,  # currently not used
+                            batch_size=args.batch_size,
+                            count=None,
+                            samples_to_aggregate_fix=None,
+                            samples_to_aggregate_min=None,
+                            samples_to_aggregate_max=None,
+                            samples_to_aggregate_quantile_file='dist_quantile.txt',
+                            samples_to_aggregate_trace_file='aggregated_samples.txt',
+                            test_num_workers=0,
+                            max_ind_range=40000000,
+                            sub_sample_rate=0.0,
+                            mlperf_bin_loader=args.mlperf_bin_loader,
+                            **kwargs)
 
-
-    if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        kaggle_ds = CriteoDataset(dataset = "kaggle", max_ind_range=-1, \
+        ds = terabyte_ds.test_loader
+    else: 
+        kaggle_ds = CriteoDataset(dataset = args.dataset, max_ind_range=-1, \
               sub_sample_rate=0.0, randomize="total", split="test", \
               raw_path=raw_path, pro_data=pro_data, batch_size=args.batch_size)
         ds = torch.utils.data.DataLoader(
@@ -91,6 +93,17 @@ def main():
             pin_memory=False,
             drop_last=False,  # True
         )
+
+    if args.benchmark:
+        from neural_compressor.experimental import Benchmark, common
+        evaluator = Benchmark(args.config)
+        evaluator.model = common.Model(args.input_model)
+        evaluator.b_dataloader = DLRM_DataLoader(ds)
+        evaluator(args.mode)
+
+
+    if args.tune:
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(args.config)
         quantizer.model = common.Model(args.input_model)
         quantizer.eval_dataloader = DLRM_DataLoader(ds)

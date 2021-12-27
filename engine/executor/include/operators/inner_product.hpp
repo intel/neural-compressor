@@ -20,6 +20,7 @@
 
 #include "../common.hpp"
 #include "../operator.hpp"
+#include "../sparse_operators/sparse_inner_product.hpp"
 #include "oneapi/dnnl/dnnl.hpp"
 
 namespace executor {
@@ -43,6 +44,16 @@ class InnerProductOperator : public Operator {
 
  private:
   void MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output);
+
+  void ReshapeDense(const vector<Tensor*>& input, const vector<Tensor*>& output);
+  void ForwardDense(const vector<Tensor*>& input, const vector<Tensor*>& output);
+  void PrepareDense(const vector<Tensor*>& input, const vector<Tensor*>& output);
+
+  void ReshapeSparse(const vector<Tensor*>& input, const vector<Tensor*>& output);
+#if __AVX512F__
+  void ForwardSparse(const vector<Tensor*>& input, const vector<Tensor*>& output);
+#endif
+  void PrepareSparse(const vector<Tensor*>& input, const vector<Tensor*>& output);
 
   // Converting string variables from operators attrs to boolean, or int/float
  protected:
@@ -111,6 +122,15 @@ class InnerProductOperator : public Operator {
 
   Tensor* dst_min_ = nullptr;
   Tensor* dst_max_ = nullptr;
+
+  bool dense_flag_ = false;
+  float sparse_threshold_ = 0.7;
+  float weight_zero_ratio_ = 0.0;
+
+  BSCMatrix<float>* sparse_weight_ = nullptr;
+  BSCMatrix<int8_t>* sparse_weight_int8_ = nullptr;
+  vector<int64_t> blocksize_ = {1, 16};
+  string append_op_;
 };
 }  // namespace executor
 #endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_INNER_PRODUCT_HPP_

@@ -55,11 +55,13 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/concat.cpp
     ${HOST_SRC_DIR}/src/operators/embeddingbag.cpp
     ${HOST_SRC_DIR}/src/operators/split.cpp
+    ${HOST_SRC_DIR}/src/sparse_operators/sparse_inner_product.cpp
 )
 
 # Header file include path
 target_include_directories(host_operators
     PUBLIC
+        ${HOST_SRC_DIR}/include/sparse_operators
         ${HOST_SRC_DIR}/include/operators
         ${HOST_SRC_DIR}/include
         ${HOST_SRC_DIR}/third_party/googletest/googletest/include

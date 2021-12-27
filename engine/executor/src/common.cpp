@@ -50,9 +50,8 @@ void* read_file_to_type(const string& root, const string& type, const vector<int
   }
 
   int64_t size = Product(shape);
-  // int used_count_ = 1;
   // from file tensor will directly malloc memory
-  void* p = reinterpret_cast<void*>(malloc(size * b));
+  void* p = reinterpret_cast<void*>(aligned_alloc(ALIGNMENT, (size * b / ALIGNMENT + 1) * ALIGNMENT));
 
   std::ifstream inFile(root, std::ios::in | std::ios::binary);
   if (inFile) {
@@ -62,9 +61,6 @@ void* read_file_to_type(const string& root, const string& type, const vector<int
   } else {
     std::memcpy(p, &root[location[0]], location[1]);
   }
-  // for (int i=0; i<5; i++){
-  //     cout << *((float*)p+i) << endl;
-  //
   return p;
 }
 
@@ -419,4 +415,25 @@ template void StringSplit<char>(vector<char>* split_list, const string& string_l
 template void StringSplit<unsigned char>(vector<unsigned char>* split_list, const string& string_list,
                                          const string& split_op);
 
+void InitSparse(int K, int N, int N_BLKSIZE, int K_BLKSIZE, int N_SPARSE, float* B) {
+  unsigned int seed = 0;
+  for (int k = 0; k < K; k++) {
+    for (int n = 0; n < N; n++) {
+      B[k * N + n] = rand_r(&seed) % 11 - 5;
+    }
+  }
+  // sparsify B
+  for (int nb = 0; nb < N / N_BLKSIZE; nb++) {
+    for (int kb = 0; kb < K / K_BLKSIZE; kb++) {
+      bool zero_fill = rand_r(&seed) % N_SPARSE != 0;
+      if (zero_fill) {
+        for (int n = 0; n < N_BLKSIZE; n++) {
+          for (int k = 0; k < K_BLKSIZE; k++) {
+            B[(kb * K_BLKSIZE + k) * N + nb * N_BLKSIZE + n] = 0;
+          }
+        }
+      }
+    }
+  }
+}
 }  // namespace executor

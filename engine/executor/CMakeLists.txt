@@ -7,7 +7,7 @@ else()
 cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -fpic -Wall -fopenmp -march=native -Wl,-rpath,'$ORIGIN'")
+set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -ffast-math -lm -ftree-loop-vectorize -fpic -Wall -fopenmp -march=native -Wl,-rpath,'$ORIGIN'")
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Os -Wall -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -Wall -s")
@@ -72,11 +72,13 @@ add_library(engine SHARED
     src/operators/concat.cpp
     src/operators/embeddingbag.cpp
     src/operators/split.cpp
+    src/sparse_operators/sparse_inner_product.cpp
 )
 
 # Header file include path
 target_include_directories(engine
     PUBLIC
+        ./include/sparse_operators
         ./include/operators
         ./include
 )
@@ -85,7 +87,7 @@ target_include_directories(engine
 target_link_libraries(engine
     PUBLIC
         ${CMAKE_THREAD_LIBS_INIT}
-        dnnl 
+        dnnl
         yaml-cpp
         gflags
         glog
@@ -115,7 +117,7 @@ target_link_libraries(engine_py
 add_executable(inferencer
     src/inferencer.cc
 )
- 
+
 target_include_directories(inferencer
     PRIVATE
         ${PROJECT_SOURCE_DIR}/include

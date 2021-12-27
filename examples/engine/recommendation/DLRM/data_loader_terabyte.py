@@ -65,6 +65,40 @@ class DataLoader:
             return math.ceil(self.length / self.batch_size)
 
 
+class CalibDataLoader:
+    """
+    DataLoader dedicated for the Criteo Terabyte Click Logs dataset
+    """
+
+    def __init__(
+            self,
+            data_filename,
+            batch_size,
+            max_ind_range=-1,
+            split="train",
+            drop_last_batch=False
+    ):
+        self.data_filename = data_filename
+        self.batch_size = batch_size
+        self.max_ind_range = max_ind_range
+
+        self.length = 128000 // batch_size
+        self.drop_last_batch = drop_last_batch
+        self.npzdata = np.load(self.data_filename)
+
+    def __iter__(self):
+        x_int = self.npzdata["X_int"]
+        x_cat = self.npzdata["X_cat"]
+        y = self.npzdata["y"]
+        for i in range(self.length):
+            x_int_batch = x_int[i * self.batch_size :(i+1) * self.batch_size]
+            x_cat_batch = x_cat[i * self.batch_size :(i+1) * self.batch_size]
+            y_batch = y[i * self.batch_size :(i+1) * self.batch_size]
+            yield _transform_features(x_int_batch, x_cat_batch, y_batch, self.max_ind_range)
+
+    def __len__(self):
+        return self.length
+
 def _transform_features(
         x_int_batch, x_cat_batch, y_batch, max_ind_range, flag_input_torch_tensor=False
 ):
@@ -206,11 +240,15 @@ class CriteoBinDataset(Dataset):
 
         self.batch_size = batch_size
         self.max_ind_range = max_ind_range
-        self.bytes_per_entry = (bytes_per_feature * self.tot_fea * batch_size)
+        self.bytes_per_batch = (bytes_per_feature * self.tot_fea * batch_size)
 
-        self.num_entries = math.ceil(os.path.getsize(data_file) / self.bytes_per_entry)
+        data_file_size = os.path.getsize(data_file)
+        self.num_batches = math.ceil(data_file_size / self.bytes_per_batch)
 
-        print('data file:', data_file, 'number of batches:', self.num_entries)
+        bytes_per_sample = bytes_per_feature * self.tot_fea
+        self.num_samples = data_file_size // bytes_per_sample
+
+        print('data file:', data_file, 'number of batches:', self.num_batches)
         self.file = open(data_file, 'rb')
 
         with np.load(counts_file) as data:
@@ -220,11 +258,11 @@ class CriteoBinDataset(Dataset):
         self.m_den = 13
 
     def __len__(self):
-        return self.num_entries
+        return self.num_batches
 
     def __getitem__(self, idx):
-        self.file.seek(idx * self.bytes_per_entry, 0)
-        raw_data = self.file.read(self.bytes_per_entry)
+        self.file.seek(idx * self.bytes_per_batch, 0)
+        raw_data = self.file.read(self.bytes_per_batch)
         array = np.frombuffer(raw_data, dtype=np.int32)
         tensor = torch.from_numpy(array).view((-1, self.tot_fea))
 
@@ -233,6 +271,19 @@ class CriteoBinDataset(Dataset):
                                    y_batch=tensor[:, 0],
                                    max_ind_range=self.max_ind_range,
                                    flag_input_torch_tensor=True)
+
+    def read(self, idx, bs):
+        self.file.seek(idx * self.bytes_per_batch, 0)
+        raw_data = self.file.read(self.bytes_per_batch * bs)
+        array = np.frombuffer(raw_data, dtype=np.int32)
+        tensor = torch.from_numpy(array).view((-1, self.tot_fea))
+
+        return _transform_features(x_int_batch=tensor[:, 1:14],
+                                   x_cat_batch=tensor[:, 14:],
+                                   y_batch=tensor[:, 0],
+                                   max_ind_range=self.max_ind_range,
+                                   flag_input_torch_tensor=True)
+
 
 
 def numpy_to_binary(input_files, output_file_path, split='train'):

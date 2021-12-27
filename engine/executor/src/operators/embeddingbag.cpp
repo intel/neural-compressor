@@ -54,7 +54,7 @@ void EmbeddingBagOperator::Forward(const vector<Tensor*>& input, const vector<Te
       float sum = 0;
       for (int j = offset_data[i]; j < end_index; ++j) {
         if (indices_data[j] < weight_shape_[0]) {
-          int index = indices_data[j] * weight_shape_[1] + k;
+          int64_t index = indices_data[j] * weight_shape_[1] + k;
           sum += weight_data[index];
         } else {
           sum = 0;

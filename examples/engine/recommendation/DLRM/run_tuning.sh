@@ -6,6 +6,8 @@ export GLOG_minloglevel=2
 #default batch_size
 batch_size=32
 output_model=./ir
+dataset=kaggle
+mlperf_bin_loader=False
 
 function main {
 
@@ -33,20 +35,42 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
+      --dataset=*)
+          dataset=$(echo "$var" |cut -f2 -d=)
+      ;;
+      --mlperf_bin_loader*)
+          mlperf_bin_loader=$(echo "$var")
+      ;;
     esac
   done
 
 }
 
 # run_tuning
+
 function run_tuning {
-    python run_engine.py \
-      --input_model=${input_model} \
-      --output_model=$output_model \
-      --raw_path=${dataset_location}/train.txt \
-      --pro_data=${dataset_location}/kaggleAdDisplayChallenge_processed.npz \
-      --config=$config \
-      --tune \
+    if [ ${mlperf_bin_loader} == '--mlperf_bin_loader' ]
+    then
+        python run_engine.py \
+          --input_model=${input_model} \
+          --output_model=$output_model \
+          --raw_path=${dataset_location} \
+          --pro_data=${dataset_location} \
+          --config=$config \
+          --dataset=$dataset \
+          --tune \
+          --mlperf_bin_loader
+    else
+        python run_engine.py \
+          --input_model=${input_model} \
+          --output_model=$output_model \
+          --raw_path=${dataset_location}/train.txt \
+          --pro_data=${dataset_location}/kaggleAdDisplayChallenge_processed.npz \
+          --config=$config \
+          --dataset=$dataset \
+          --tune
+    fi
+
 
 }
 

@@ -206,7 +206,7 @@ class MemoryAllocator {
           free(free_ptr);
           memory_buffer.erase(free_ptr);
           // allocate new buffer
-          void* buf = reinterpret_cast<void*>(malloc(size));
+          void* buf = reinterpret_cast<void*>(aligned_alloc(ALIGNMENT, (size / ALIGNMENT + 1) * ALIGNMENT));
           memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
           return buf;
         } else {
@@ -216,7 +216,7 @@ class MemoryAllocator {
       }
     }
     // allocate new buffer
-    void* buf = reinterpret_cast<void*>(malloc(size));
+    void* buf = reinterpret_cast<void*>(aligned_alloc(ALIGNMENT, (size / ALIGNMENT + 1) * ALIGNMENT));
     memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
     return buf;
   }
@@ -224,7 +224,7 @@ class MemoryAllocator {
   static void* DirectBufferGetMemory(size_t size, const int life_count) {
     MemoryBuffer& memory_buffer = Buffer();
     LOG(INFO) << "direct buffer tensor size is " << memory_buffer.size();
-    void* buf = reinterpret_cast<void*>(malloc(size));
+    void* buf = reinterpret_cast<void*>(aligned_alloc(ALIGNMENT, (size / ALIGNMENT + 1) * ALIGNMENT));
     memory_buffer.insert({buf, vector<size_t>({static_cast<size_t>(life_count), size})});
     return buf;
   }

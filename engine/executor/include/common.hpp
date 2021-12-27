@@ -106,6 +106,8 @@ void PrintToFile(const T* data, const std::string& name, size_t size = 1000);
 template <typename T>
 void StringSplit(vector<T>* split_list, const string& str_list, const string& split_op);
 
+void InitSparse(int K, int N, int N_BLKSIZE, int K_BLKSIZE, int N_SPARSE, float* A);
+
 }  // namespace executor
 
 #endif  // ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
