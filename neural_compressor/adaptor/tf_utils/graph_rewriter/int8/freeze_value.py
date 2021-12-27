@@ -89,7 +89,7 @@ class FreezeValueTransformer(GraphRewriterBase):
 
         res = {}
         temp = {}
-        pattern_def = r"{};{}\[\-?\d+\.?\d*e?\+?\d*\]".format(print_suffix, self.postfix)
+        pattern_def = r"{};{}\[\-?\d+\.?\d*e?-?\+?\d*\]".format(print_suffix, self.postfix)
         for i in lines:
 
             if not re.search(pattern_def, i):
