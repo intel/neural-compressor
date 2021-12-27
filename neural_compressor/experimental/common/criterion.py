@@ -213,6 +213,8 @@ class KnowledgeDistillationLoss(object):
             teacher_out_ = self.teacher_outputs / self.temperature
             distillation_loss = self.teacher_student_loss_cal(student_out_, teacher_out_)
             distillation_loss *=  self.temperature ** 2
+            # reset teacher_outputs to None to force updating it every loss call 
+            self.teacher_outputs = None 
         else:
             distillation_loss = 0
 

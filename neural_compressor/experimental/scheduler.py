@@ -246,12 +246,20 @@ class Scheduler(object):
                 # if no eval/train configuration. Make minimal initialization
                 combine_component.generate_hooks()
                 combine_component.generate_pruners()
+            elif isinstance(combine_component, Distillation):
+                # if no eval/train configuration. Make minimal initialization
+                combine_component.create_criterion()
+                combine_component.create_optimizer()
+                combine_component.generate_hooks()
 
             # If distillation is combined, set training configs
             if has_distillation:
-                if isinstance(combine_component, Distillation):  
+                if isinstance(combine_component, Distillation):
                     component_train_cfg.criterion = combine_component.train_cfg.criterion
                     component_train_cfg.optimizer = combine_component.train_cfg.optimizer
+                    dist_component.criterion = combine_component.train_cfg.criterion
+                    dist_component.on_post_forward = combine_component.on_post_forward
+                    dist_component.teacher_model = combine_component.teacher_model
                     self._sync_config(train_cfg, component_train_cfg) 
                 # Only sync train_cfg of distillation because criterion should include only one element
                 else:

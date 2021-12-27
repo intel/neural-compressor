@@ -95,6 +95,63 @@ class Distillation(Component):
                 else:
                     self.best_model = self._model
 
+    def init_train_cfg(self):
+        if self._train_cfg is None:
+            # train section of distillation section in yaml file should be configured.
+            self._train_cfg = self.cfg.distillation.train
+        assert self._train_cfg, "train field of distillation section in yaml file must " \
+                            "be configured for distillation if train_func is NOT set."
+
+    def create_criterion(self):
+        self.init_train_cfg()
+        if self.criterion is None:
+            assert 'criterion' in self._train_cfg.keys(), \
+                "criterion part in train field of distillation section in yaml file " \
+                "must be configured for distillation if criterion is NOT set."
+            criterion_cfg = self._train_cfg.criterion
+            assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
+                "criterion part, instead got {} loss.".format(len(criterion_cfg))
+            loss = list(criterion_cfg.keys())[0]
+            loss_cfg = criterion_cfg[loss]
+            criterion_builder = Criterions(self.framework)[loss](loss_cfg)
+            criterion_tuple = criterion_builder()
+            self.criterion = criterion_tuple[0](**criterion_tuple[1])
+        else:
+            logger.warning("Use user defined criterion, " \
+                            "ignoring the criterion setting in yaml file.")
+        
+        assert self.teacher_model, "teacher_model must be set."
+        if 'pytorch' in self.framework:
+            self.criterion.teacher_model = self.teacher_model.model # for pytorch
+        elif self.framework == 'tensorflow':
+            self.criterion.teacher_model = self.teacher_model._model # new, for tf
+            
+        self._train_cfg.criterion = self.criterion
+            
+    def create_optimizer(self):
+        self.init_train_cfg()
+        if self.optimizer is None:
+            assert 'optimizer' in self._train_cfg.keys(), \
+                "optimizer part in train field of distillation section in yaml file " \
+                "must be configured for distillation if optimizer is NOT set."
+            optimizer_cfg = self._train_cfg.optimizer
+            assert len(optimizer_cfg) == 1, "There must be exactly one optimizer in " \
+                "optimizer part, instead got {} optimizer.".format(len(optimizer_cfg))
+            optimizer_name = list(optimizer_cfg.keys())[0]
+            optimizer_cfg_ = optimizer_cfg[optimizer_name]
+            optimizer_builder = Optimizers(self.framework)[optimizer_name](optimizer_cfg_)
+            optimizer_tuple = optimizer_builder()
+            if self.framework == 'tensorflow':
+                self.optimizer = optimizer_tuple[0](**optimizer_tuple[1])
+            elif self.framework == 'pytorch':
+                self.optimizer = optimizer_tuple[0](self.model.model.parameters(), \
+                                                **optimizer_tuple[1])
+        else:
+            logger.warning("Use user defined optimizer, " \
+                            "ignoring the optimizer setting in yaml file.")
+        
+        self._train_cfg.optimizer = self.optimizer
+
     def pre_process(self):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
@@ -127,59 +184,13 @@ class Distillation(Component):
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         if self._train_func is None:
-            # train section of distillation section in yaml file should be configured.
-            self._train_cfg = self.cfg.distillation.train
-            assert self._train_cfg, "train field of distillation section in yaml file must " \
-                              "be configured for distillation if train_func is NOT set."
-            if self.criterion is None:
-                assert 'criterion' in self._train_cfg.keys(), \
-                    "criterion part in train field of distillation section in yaml file " \
-                    "must be configured for distillation if criterion is NOT set."
-                criterion_cfg = self._train_cfg.criterion
-                assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
-                    "criterion part, instead got {} loss.".format(len(criterion_cfg))
-                loss = list(criterion_cfg.keys())[0]
-                loss_cfg = criterion_cfg[loss]
-                criterion_builder = Criterions(self.framework)[loss](loss_cfg)
-                criterion_tuple = criterion_builder()
-                self.criterion = criterion_tuple[0](**criterion_tuple[1])
-            else:
-                logger.warning("Use user defined criterion, " \
-                               "ignoring the criterion setting in yaml file.")
-
-            if self.optimizer is None:
-                assert 'optimizer' in self._train_cfg.keys(), \
-                    "optimizer part in train field of distillation section in yaml file " \
-                    "must be configured for distillation if optimizer is NOT set."
-                optimizer_cfg = self._train_cfg.optimizer
-                assert len(optimizer_cfg) == 1, "There must be exactly one optimizer in " \
-                    "optimizer part, instead got {} optimizer.".format(len(optimizer_cfg))
-                optimizer_name = list(optimizer_cfg.keys())[0]
-                optimizer_cfg_ = optimizer_cfg[optimizer_name]
-                optimizer_builder = Optimizers(self.framework)[optimizer_name](optimizer_cfg_)
-                optimizer_tuple = optimizer_builder()
-                if self.framework == 'tensorflow':
-                    self.optimizer = optimizer_tuple[0](**optimizer_tuple[1])
-                elif self.framework == 'pytorch':
-                    self.optimizer = optimizer_tuple[0](self.model.model.parameters(), \
-                                                    **optimizer_tuple[1])
-            else:
-                logger.warning("Use user defined optimizer, " \
-                               "ignoring the optimizer setting in yaml file.")
-
-            assert self.teacher_model, "teacher_model must be set."
-            if self.framework == 'pytorch':
-                self.criterion.teacher_model = self.teacher_model.model#for pytorch
-            elif self.framework == 'tensorflow':
-                self.criterion.teacher_model = self.teacher_model._model#new, for tf
-            self._train_cfg.criterion = self.criterion
-            self._train_cfg.optimizer = self.optimizer
-
+            self.create_criterion()
+            self.create_optimizer()
             self._train_func = create_train_func(self.framework, \
-                                                                  self.train_dataloader, \
-                                                                  self.adaptor, \
-                                                                  self._train_cfg, \
-                                                                  hooks=self.hooks)
+                                                 self.train_dataloader, \
+                                                 self.adaptor, \
+                                                 self._train_cfg, \
+                                                 hooks=self.hooks)
         if self._eval_func is None:
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation

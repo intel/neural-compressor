@@ -85,8 +85,9 @@ class Component(object):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
-                                   'approach': self.cfg.quantization.approach,
                                    'q_dataloader': None}
+        if self.cfg.quantization.approach is not None:
+            framework_specific_info['approach'] = self.cfg.quantization.approach
 
         if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
             framework_specific_info.update(
@@ -204,7 +205,8 @@ class Component(object):
     def register_hook(self, scope, hook, input_args=None, input_kwargs=None):
         """ register hook for component. input_args and input_kwargs are reserved for user
             registered hooks."""
-        self.hooks_dict[scope].append(hook)
+        if hook not in self.hooks_dict[scope]:
+            self.hooks_dict[scope].append(hook)
 
     def __call__(self):
         self.pre_process()
