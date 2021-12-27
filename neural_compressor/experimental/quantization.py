@@ -262,7 +262,8 @@ class Quantization(Component):
            this api. The metric class should take the outputs of the model or
            postprocess(if have) as inputs, neural_compressor built-in metric always take
            (predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
+           or user defined metric object
 
         Args:
             user_metric(neural_compressor.experimental.common.Metric):
@@ -272,19 +273,23 @@ class Quantization(Component):
                 specific frameworks and initialized.
 
         """
-        from .common import Metric as NCMetric
-        assert isinstance(user_metric, NCMetric), \
-            'please initialize a neural_compressor.experimental.common.Metric and set....'
-
-        metric_cfg = {user_metric.name : {**user_metric.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-        from ..metric import METRICS
-        metrics = METRICS(self.framework)
-        metrics.register(user_metric.name, user_metric.metric_cls)
+ 
+        from .common import Metric as NCMetric
+        if isinstance(user_metric, NCMetric):
+            metric_cfg = {user_metric.name : {**user_metric.kwargs}}
+            deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
+            self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+            from ..metric import METRICS
+            metrics = METRICS(self.framework)
+            metrics.register(user_metric.name, user_metric.metric_cls)
+        else:
+            for i in ['reset', 'update', 'result']:
+                assert hasattr(user_metric, i), 'Please realise {} function' \
+                                                'in user defined metric'.format(i)
+            self._metric = user_metric
 
     @property
     def postprocess(self, user_postprocess):

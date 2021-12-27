@@ -147,7 +147,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
       quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
       quantizer.calib_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
-      quantizer.metric = common.Metric(metric_cls=Accuracy)
+      quantizer.metric = Accuracy()
       q_model = quantizer()
       q_model.save(FLAGS.output_model)
 ```
@@ -160,7 +160,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
       evaluator.b_dataloader = common.DataLoader(\
           dataset, batch_size=FLAGS.eval_batch_size, collate_fn=collate_fn)
       model_type = get_model_type(FLAGS.input_model)
-      evaluator.metric = common.Metric(metric_cls=Accuracy)
+      evaluator.metric = Accuracy()
       if model_type == 'frozen_pb':
           evaluator.model = FLAGS.input_model
       else:

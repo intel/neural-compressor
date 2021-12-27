@@ -1091,7 +1091,7 @@ def main(_):
       quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
       quantizer.calib_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
-      quantizer.metric = common.Metric(metric_cls=Accuracy)
+      quantizer.metric = Accuracy()
       q_model = quantizer()
       if FLAGS.strip_iterator:
           q_model.graph_def = strip_iterator(q_model.graph_def)
@@ -1106,7 +1106,7 @@ def main(_):
       dataset = Dataset(eval_file, FLAGS.eval_batch_size)
       evaluator.b_dataloader = common.DataLoader(\
           dataset, batch_size=FLAGS.eval_batch_size, collate_fn=collate_fn)
-      evaluator.metric = common.Metric(metric_cls=Accuracy)
+      evaluator.metric = Accuracy()
 
 
       from neural_compressor.model.model import get_model_type

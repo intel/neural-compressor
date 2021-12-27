@@ -39,6 +39,7 @@ class Component(object):
         self._train_distributed = False
         self._evaluation_distributed = False
         self.adaptor = None
+        self._metric = None
         self.hooks = {
             'pre_epoch_begin': self.pre_epoch_begin,
             'post_epoch_end': self.post_epoch_end,
@@ -122,10 +123,11 @@ class Component(object):
                                                     self.cfg.train,
                                                     hooks=self.hooks)
         if self._eval_func is None:
+            metric = self._metric if self._metric else self.cfg.evaluation.accuracy.metric
             self._eval_func = create_eval_func(self.framework,
                                                self._eval_dataloader,
                                                self.adaptor,
-                                               self.cfg.evaluation.accuracy.metric,
+                                               metric,
                                                self.cfg.evaluation.accuracy.postprocess,
                                                fp32_baseline = False)
         # register Quantization Aware Training hooks

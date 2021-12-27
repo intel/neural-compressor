@@ -60,6 +60,7 @@ class ModelConversion():
         self._eval_dataloader = None
         self._eval_func = None
         self.adaptor = None
+        self._metric = None
 
         self._source = None
         self._destination = None
@@ -107,7 +108,8 @@ class ModelConversion():
 
         # when eval_func is None but metric or _eval_dataloader is set by yaml or code,
         # it means Neural Compressor will create the eval_func from these info.
-        metric_cfg = deep_get(cfg, 'evaluation.accuracy.metric')
+        metric_cfg = self._metric if self._metric else \
+            deep_get(cfg, 'evaluation.accuracy.metric')
         postprocess_cfg = deep_get(cfg, 'evaluation.accuracy.postprocess')
         if self._eval_func is None and metric_cfg:
             eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
@@ -246,7 +248,8 @@ class ModelConversion():
            this api. The metric class should take the outputs of the model or
            postprocess(if have) as inputs, neural_compressor built-in metric always take
            (predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
+           or user defined metric object
 
         Args:
             user_metric(neural_compressor.common.Metric): user_metric should be object initialized from
@@ -255,19 +258,23 @@ class ModelConversion():
                                              specific frameworks and initialized.
 
         """
-        from .common import Metric as NCMetric
-        assert isinstance(user_metric, NCMetric), \
-            'please initialize a neural_compressor.common.Metric and set....'
-
-        metric_cfg = {user_metric.name : {**user_metric.kwargs}}
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-        from .metric import METRICS
-        metrics = METRICS(self.framework)
-        metrics.register(user_metric.name, user_metric.metric_cls)
+ 
+        from .common import Metric as NCMetric
+        if isinstance(user_metric, NCMetric):
+            metric_cfg = {user_metric.name : {**user_metric.kwargs}}
+            deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
+            self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+            from .metric import METRICS
+            metrics = METRICS(self.framework)
+            metrics.register(user_metric.name, user_metric.metric_cls)
+        else:
+            for i in ['reset', 'update', 'result']:
+                assert hasattr(user_metric, i), 'Please realise {} function' \
+                                                'in user defined metric'.format(i)
+            self._metric = user_metric
 
     @property
     def postprocess(self, user_postprocess):

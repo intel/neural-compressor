@@ -7,7 +7,34 @@ from neural_compressor.experimental.metric.f1 import evaluate
 from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
 from neural_compressor.experimental.metric import bleu
 
+class InCorrectMetric:
+    def __init__(self):
+        self.item = None
+
+class CorrectMetric:
+    def __init__(self):
+        self.item = []
+
+    def update(self, samples):
+        self.item.append(samples)
+
+    def result(self):
+        return 0
+
+    def reset(self):
+        self.item = []
+
 class TestMetrics(unittest.TestCase):
+    def testUserMetric(self):
+        from neural_compressor.experimental import common, Quantization, Benchmark, \
+            Graph_Optimization
+        for i in [Quantization(), Benchmark(), Graph_Optimization()]:
+            item = i
+            with self.assertRaises(AssertionError):
+                item.metric = InCorrectMetric()
+            item.framework = 'tensorflow'
+            item.metric = common.Metric(CorrectMetric, str(i))
+
     def testmIOU(self):
         metrics = METRICS('tensorflow')
         miou = metrics['mIOU']()
