@@ -39,17 +39,8 @@ pip install -r requirements.txt
 
 #### Install PyTorch
 ```shell
-# Install Dependencies
-conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi
-# Install pytorch from source
-git clone https://github.com/pytorch/pytorch.git
-cd pytorch
-git reset --hard 24aac321718d58791c4e6b7cfa50788a124dae23
-git submodule sync
-git submodule update --init --recursive
-export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
-python setup.py install
-pip install torchvision==0.7.0 --no-deps
+# Install pytorch
+pip install torch
 ```
 
 ## 2. Prepare pretrained model
