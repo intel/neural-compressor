@@ -92,27 +92,17 @@ class EngineQuantizer:
 
     # copy const for fall back
     def _copy_const(self):
-        nodes = copy.deepcopy(self.model.nodes)
         visted_const_tensor_name = []
-        for node in nodes:
-            if node.op_type == "InnerProduct":
-                weight_tensor = node.input_tensors[1]
-                if weight_tensor.name not in visted_const_tensor_name:
-                    visted_const_tensor_name.append(weight_tensor.name)
-                else:
-                    weight_tensor_new = copy.deepcopy(weight_tensor)
-                    weight_tensor_new.name = node.name + '_' + weight_tensor.name
-                    weight_tensor_new.dest_op = [node.name]
-                    node.input_tensors[1] = weight_tensor_new
-                if len(node.input_tensors) > 2:
-                    bias_tensor = node.input_tensors[2]
-                    if bias_tensor.name not in visted_const_tensor_name:
-                        visted_const_tensor_name.append(bias_tensor.name)
+        for node_id, node in enumerate(self.model.nodes):
+            for tensor_id, input_tensor in enumerate(node.input_tensors):
+                if not input_tensor.source_op:
+                    if input_tensor.name not in visted_const_tensor_name:
+                        visted_const_tensor_name.append(input_tensor.name)
                     else:
-                        bias_tensor_new = copy.deepcopy(bias_tensor)
-                        bias_tensor_new.name = node.name + '_' + bias_tensor.name
-                        bias_tensor_new.dest_op = [node.name]
-                        node.input_tensors[2] = bias_tensor_new
+                        input_tensor_new = copy.deepcopy(input_tensor)
+                        input_tensor_new.name = node.name + '_' + input_tensor.name
+                        input_tensor_new.dest_op = [node.name]
+                        self.model.nodes[node_id].input_tensors[tensor_id] = input_tensor_new
 
     def _remove_duplicate_quantize_op(self):
         visit_tensors = []
