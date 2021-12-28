@@ -299,7 +299,7 @@ class TestTensorflowPruning(unittest.TestCase):
         prune.evaluation_distributed = True
         prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=16)
         prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
-        prune.model = common.Model('./baseline_model')
+        prune.model = './baseline_model'
         pruned_model = prune()
         stats, sparsity = pruned_model.report_sparsity()
         logger.info(stats)

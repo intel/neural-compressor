@@ -109,7 +109,7 @@ class custom_metric(object):
         ...
 
 quantizer = Quantization(conf.yaml)
-quantizer.model = common.Model('/path/to/model')
+quantizer.model = '/path/to/model'
 # below two lines are optional if Neural Compressor built-in dataset is used as model calibration input in yaml
 cal_dl = dataset('/path/to/calibration/dataset')
 quantizer.calib_dataloader = common.DataLoader(cal_dl, batch_size=32)
@@ -122,7 +122,7 @@ q_model = quantizer()
 q_model.save('/path/to/output/dir') 
 ```
 
-`model` attribute in `Quantization` class is an abstraction of model formats across different frameworks. Neural Compressor supports passing the path of `keras model`, `frozen pb`, `checkpoint`, `saved model`, `torch.nn.model`, `mxnet.symbol.Symbol`, `gluon.HybirdBlock`, and `onnx model` to instantiate a `neural_compressor.experimental.common.Model()` class and set to `quantizer.model`.
+`model` attribute in `Quantization` class is an abstraction of model formats across different frameworks. Neural Compressor supports passing the path of `keras model`, `frozen pb`, `checkpoint`, `saved model`, `torch.nn.model`, `mxnet.symbol.Symbol`, `gluon.HybirdBlock`, and `onnx model` to instantiate a `neural_compressor.experimental.` class and set to `quantizer.model`.
 
 `calib_dataloader` and `eval_dataloader` attribute in `Quantization` class is used to set up a calibration dataloader by code. It is optional to set if the user sets corresponding fields in yaml.
 

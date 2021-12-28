@@ -46,7 +46,7 @@ After defining the metric class, users need to register it with a user-defined m
 
 from neural_compressor.quantization import Quantization, common
 quantizer = Quantization(yaml_file)
-quantizer.model = common.Model(graph)
+quantizer.model = graph
 quantizer.metric = common.Metric(NewMetric, 'metric_name')
 quantizer.calib_dataloader = dataloader
 q_model = quantizer()

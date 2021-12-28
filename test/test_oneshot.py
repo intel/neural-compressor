@@ -167,7 +167,7 @@ class TestPruning(unittest.TestCase):
         prune = Pruning('./fake.yaml')
         quantizer = Quantization('./fake2.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(q_model)
+        scheduler.model = q_model
         combination = scheduler.combine(prune, quantizer)
 
         def train_func_for_nc(model):
@@ -221,8 +221,8 @@ class TestPruning(unittest.TestCase):
         distiller = Distillation('./fake3.yaml')
         quantizer = Quantization('./fake2.yaml')
         scheduler = Scheduler()
-        distiller.teacher_model = common.Model(model)
-        scheduler.model = common.Model(q_model)
+        distiller.teacher_model = model
+        scheduler.model = q_model
         combination = scheduler.combine(distiller, quantizer)
 
         def train_func_for_nc(model):
@@ -272,8 +272,8 @@ class TestPruning(unittest.TestCase):
         pruner = Pruning('./fake.yaml')
         scheduler = Scheduler()
         model = copy.deepcopy(self.model)
-        distiller.teacher_model = common.Model(copy.deepcopy(model))
-        scheduler.model = common.Model(model)
+        distiller.teacher_model = copy.deepcopy(model)
+        scheduler.model = model
         combination = scheduler.combine(distiller, pruner)
 
         def train_func_for_nc(model):
@@ -328,8 +328,8 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fake2.yaml')
         distiller = Distillation('./fake3.yaml')
         scheduler = Scheduler()
-        distiller.teacher_model = common.Model(model)
-        scheduler.model = common.Model(q_model)
+        distiller.teacher_model = model
+        scheduler.model = q_model
         combination = scheduler.combine(prune, quantizer, distiller)
 
         def train_func_for_nc(model):
@@ -383,7 +383,7 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fx_fake2.yaml')
         scheduler = Scheduler()
         model = copy.deepcopy(self.model)
-        scheduler.model = common.Model(model)
+        scheduler.model = model
         combination = scheduler.combine(prune, quantizer)
 
         def train_func_for_nc(model):
@@ -438,8 +438,8 @@ class TestPruning(unittest.TestCase):
         distiller = Distillation('./fx_fake3.yaml')
         quantizer = Quantization('./fx_fake2.yaml')
         scheduler = Scheduler()
-        distiller.teacher_model = common.Model(copy.deepcopy(model))
-        scheduler.model = common.Model(model)
+        distiller.teacher_model = copy.deepcopy(model)
+        scheduler.model = model
         combination = scheduler.combine(distiller, quantizer)
 
         def train_func_for_nc(model):
@@ -488,8 +488,8 @@ class TestPruning(unittest.TestCase):
         pruner = Pruning('./fx_fake.yaml')
         scheduler = Scheduler()
         model = copy.deepcopy(self.model)
-        distiller.teacher_model = common.Model(copy.deepcopy(model))
-        scheduler.model = common.Model(model)
+        distiller.teacher_model = copy.deepcopy(model)
+        scheduler.model = model
         combination = scheduler.combine(distiller, pruner)
 
         def train_func_for_nc(model):
@@ -542,8 +542,8 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fx_fake2.yaml')
         distiller = Distillation('./fx_fake3.yaml')
         scheduler = Scheduler()
-        distiller.teacher_model = common.Model(copy.deepcopy(model))
-        scheduler.model = common.Model(model)
+        distiller.teacher_model = copy.deepcopy(model)
+        scheduler.model = model
         combination = scheduler.combine(prune, quantizer, distiller)
 
         def train_func_for_nc(model):

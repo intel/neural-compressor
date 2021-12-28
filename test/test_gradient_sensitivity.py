@@ -180,7 +180,7 @@ class TestGradientSensitivity(unittest.TestCase):
         def eval_func_for_nc(model):
             pass
 
-        prune.model = common.Model(model)
+        prune.model = model
         prune.pruning_func = training_func_for_nc
         prune.eval_func = eval_func_for_nc
         _ = prune()
@@ -236,7 +236,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
                         break
                 prune_cv.on_epoch_end()
             prune_cv.post_epoch_end()
-        prune_cv.model = common.Model(self.cv_model)
+        prune_cv.model = self.cv_model
         prune_cv.pruning_func = training_func_for_cv
         prune_cv.eval_dataloader = dummy_dataloader
         prune_cv.train_dataloader = dummy_dataloader

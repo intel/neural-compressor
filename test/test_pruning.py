@@ -86,7 +86,7 @@ class TestPruning(unittest.TestCase):
                     if cnt >= iters:
                         break
                 prune.on_epoch_end()
-        prune.model = common.Model(self.model)
+        prune.model = self.model
         prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
@@ -130,11 +130,11 @@ class TestPruning(unittest.TestCase):
                     if cnt >= iters:
                         break
                 prune.on_epoch_end()
-        prune.model = common.Model(self.model)
+        prune.model = self.model
         prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
-        _ = prune(common.Model(self.model), \
+        _ = prune(self.model, \
                   train_dataloader=dummy_dataloader, \
                   pruning_func=training_func_for_nc, \
                   eval_dataloader=dummy_dataloader)

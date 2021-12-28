@@ -64,7 +64,7 @@ def tune_model(
         input_graph = onnx.load(input_graph)
 
     quantizer = Quantization(config)
-    quantizer.model = common.Model(input_graph)
+    quantizer.model = input_graph
     quantized_model = quantizer()
     if quantized_model is not None:
         quantized_model.save(output_graph)

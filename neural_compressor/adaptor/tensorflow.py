@@ -525,9 +525,9 @@ class TensorFlowAdaptor(Adaptor):
               calib_sampling_size % data_loader.batch_size != 0:
                 iter = self.quantize_config['calib_iteration']
                 logger.warning(
-                    "Please Note that calibration sampling size {} \
-                    isn't divisible exactly by batch size {}. \
-                    So the real sampling size is {}.".
+                    "Please note that calibration sampling size {} " \
+                    "isn't divisible exactly by batch size {}. " \
+                    "So the real sampling size is {}.".
                     format(calib_sampling_size, data_loader.batch_size,
                            data_loader.batch_size * iter))
             converted_model = GraphConverter(model,
@@ -1129,9 +1129,9 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
               calib_sampling_size % data_loader.batch_size != 0:
                 iter = self.quantize_config['calib_iteration']
                 logger.warning(
-                    "Please Note that calibration sampling size {} \
-                    isn't divisible exactly by batch size {}. \
-                    So the real sampling size is {}.".
+                    "Please note that calibration sampling size {} " \
+                    "isn't divisible exactly by batch size {}. " \
+                    "So the real sampling size is {}.".
                     format(calib_sampling_size, data_loader.batch_size,
                            data_loader.batch_size * iter))
             converted_model = GraphConverter(model,

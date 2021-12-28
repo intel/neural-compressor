@@ -32,7 +32,7 @@ It quantizes the all int8 operators by calibration dataset. In order to meet the
 from neural_compressor.experimental import Quantization, common
 ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case)
 quantizer = Quantization(args.config)
-quantizer.model = common.Model(args.input_model)
+quantizer.model = args.input_model
 quantizer.eval_dataloader = common.DataLoader(ds, args.batch_size)
 quantizer.calib_dataloader = common.DataLoader(ds, args.batch_size)
 q_model = quantizer()
@@ -53,7 +53,7 @@ User can also run tuned low precision model on benchmark dataset and get the acc
 from neural_compressor.experimental import Benchmark, common
 ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case)
 evaluator = Benchmark(args.config)
-evaluator.model = common.Model(args.input_model)
+evaluator.model = args.input_model
 evaluator.b_dataloader = common.DataLoader(ds, args.batch_size)
 evaluator(args.mode)
 ```

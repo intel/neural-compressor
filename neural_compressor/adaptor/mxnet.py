@@ -132,9 +132,9 @@ class MxNetAdaptor(Adaptor):
               calib_sampling_size % dataloader.batch_size != 0:
                     iter = tune_cfg['calib_iteration']
                     logger.warning(
-                        "Please Note that calibration sampling size {} \
-                        isn't divisible exactly by batch size {}. \
-                        So the real sampling size is {}.".
+                        "Please note that calibration sampling size {} " \
+                        "isn't divisible exactly by batch size {}. " \
+                        "So the real sampling size is {}.".
                         format(calib_sampling_size, dataloader.batch_size,
                                dataloader.batch_size * iter))
             return calib_func(tune_cfg, dataloader)

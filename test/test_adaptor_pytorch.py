@@ -486,7 +486,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer = Quantization(fake_yaml)
             quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
             dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
-            quantizer.model = common.Model(model)
+            quantizer.model = model
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
@@ -504,10 +504,10 @@ class TestPytorchAdaptor(unittest.TestCase):
         from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
         # Load configure and weights by neural_compressor.model
-        evaluator.model = common.Model(model)
+        evaluator.model = model
         evaluator.b_dataloader = common.DataLoader(dataset)
         evaluator()
-        evaluator.model = common.Model(model)
+        evaluator.model = model
         evaluator()
 
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
@@ -517,7 +517,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             conf = Quantization_Conf(fake_yaml)
             quantizer = Quantization(conf)
             dataset = quantizer.dataset('dummy', (100, 3, 224, 224))
-            quantizer.model = common.Model(model)
+            quantizer.model = model
             if fake_yaml == 'qat_yaml.yaml':
                 quantizer.q_func = q_func
             else:
@@ -561,7 +561,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         model.model.eval().fuse_model()
         quantizer = Quantization('dump_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
-        quantizer.model = common.Model(model.model)
+        quantizer.model = model.model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_func = eval_func
         quantizer()
@@ -580,7 +580,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         dataloader = common._generate_common_dataloader(dataloader, 'pytorch')
         quantizer.eval_dataloader = dataloader
         quantizer.calib_dataloader = dataloader
-        quantizer.model = common.Model(model.model)
+        quantizer.model = model.model
         q_model = quantizer()
         quantizer.strategy.adaptor.inspect_tensor(
             model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
@@ -626,7 +626,7 @@ class TestPytorchAdaptor(unittest.TestCase):
 
         quantizer = Quantization('dynamic_yaml.yaml')
         model = dummymodel(vision_model)
-        quantizer.model = common.Model(model)
+        quantizer.model = model
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         quantizer()
@@ -700,7 +700,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         quantizer = Quantization('ipex_yaml.yaml')
         quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
-        quantizer.model = common.Model(model)
+        quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         nc_model = quantizer()
@@ -711,7 +711,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
             script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
         from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
-        evaluator.model = common.Model(script_model)
+        evaluator.model = script_model
         evaluator.b_dataloader = common.DataLoader(dataset)
         results = evaluator()
 

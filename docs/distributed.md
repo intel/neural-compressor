@@ -42,7 +42,7 @@ Do quantization based on distributed training/inference
 # tf.compat.v1.enable_eager_execution()        (Only TensorFlow 1.x needs)
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("yaml_file_path")
-quantizer.model = common.Model(model)
+quantizer.model = model
 q_model = quantizer()                          # q_model -> quantized low-precision model 
 ```
 
@@ -52,7 +52,7 @@ Only do model accuracy evaluation based on distributed inference
 # tf.compat.v1.enable_eager_execution()        (Only TensorFlow 1.x needs)
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("yaml_file_path")
-quantizer.model = common.Model(model) 
+quantizer.model = model 
 quantizer.pre_process()                        # If you simply want to do model evaluation with no need quantization, you should preprocess the quantizer before evaluation.
 result = quantizer.strategy.evaluation_result  # result -> (accuracy, evaluation_time_cost)
 ```
@@ -113,7 +113,7 @@ def train_func(model):
 ```
 from neural_compressor.experimental import Component, common
 component = Component(yaml_file)
-component.model = common.Model(model)
+component.model = model
 component.train_func = train_func
 component.eval_func = test_func
 model = component()

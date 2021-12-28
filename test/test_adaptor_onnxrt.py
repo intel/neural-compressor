@@ -419,7 +419,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer = Quantization("static.yaml")
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.eval_dataloader = self.cv_dataloader
-        quantizer.model = common.Model(self.mb_v2_model)
+        quantizer.model = self.mb_v2_model
         q_model = quantizer()
         framework_specific_info = {"device": "cpu",
                      "approach": "post_training_static_quant",
@@ -456,27 +456,27 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer = Quantization(conf)
         quantizer.calib_dataloader = self.rename_dataloader
         quantizer.eval_dataloader = self.rename_dataloader
-        quantizer.model = common.Model(self.rename_model)
+        quantizer.model = self.rename_model
         q_model = quantizer()
 
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
-            quantizer.model = common.Model(self.rn50_model)
+            quantizer.model = self.rn50_model
             q_model = quantizer()
             eval_func(q_model)
 
         import copy
         tmp_model = copy.deepcopy(self.rn50_model)
         tmp_model.opset_import[0].version = 10
-        quantizer.model = common.Model(tmp_model)
+        quantizer.model = tmp_model
         q_model = quantizer()
         tmp_model.opset_import.extend([onnx.helper.make_opsetid("", 11)]) 
-        quantizer.model = common.Model(tmp_model)
+        quantizer.model = tmp_model
         q_model = quantizer()
         model = onnx.load('rn50_9.onnx')
-        quantizer.model = common.Model(model)
+        quantizer.model = model
         q_model = quantizer()
 
         framework_specific_info = {"device": "cpu",
@@ -502,10 +502,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
  
         for fake_yaml in ["gather.yaml"]:
             quantizer = Quantization(fake_yaml)
-            quantizer.model = common.Model(self.gather_model)
+            quantizer.model = self.gather_model
             q_model = quantizer()
 
-            quantizer.model = common.Model(self.matmul_model)
+            quantizer.model = self.matmul_model
             q_model = quantizer()
 
             quantizer.eval_dataloader = self.matmul_dataloader
@@ -513,7 +513,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
             quantizer.calib_dataloader = self.matmul_dataloader
             quantizer.eval_dataloader = self.matmul_dataloader
-            quantizer.model = common.Model(self.matmul_model)
+            quantizer.model = self.matmul_model
             q_model = quantizer()
 
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
@@ -521,7 +521,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
-            quantizer.model = common.Model(self.mb_v2_model)
+            quantizer.model = self.mb_v2_model
             q_model = quantizer()
             eval_func(q_model)
 
@@ -529,7 +529,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.ir3_dataloader
             quantizer.eval_dataloader = self.ir3_dataloader
-            quantizer.model = common.Model(self.ir3_model)
+            quantizer.model = self.ir3_model
             q_model = quantizer()
 
             from neural_compressor.utils.utility import recover
@@ -540,7 +540,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             fake_yaml = "benchmark.yaml"
             evaluator = Benchmark(fake_yaml)
             evaluator.b_dataloader = self.cv_dataloader
-            evaluator.model = common.Model(self.rn50_model)
+            evaluator.model = self.rn50_model
             evaluator(mode)
 
     def test_lower_is_better_case(self):

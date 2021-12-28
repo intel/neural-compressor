@@ -324,7 +324,7 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(self.model)
+        scheduler.model = self.model
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -362,7 +362,7 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake2.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(self.model)
+        scheduler.model = self.model
         scheduler.append(prune)
         opt_model = scheduler()
 
@@ -373,8 +373,8 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fake3.yaml')
         distiller = Distillation('./fake6.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(self.q_model)
-        distiller.teacher_model = common.Model(self.q_model_teacher)
+        scheduler.model = self.q_model
+        distiller.teacher_model = self.q_model_teacher
         scheduler.append(distiller)
         scheduler.append(quantizer)
         opt_model = scheduler()
@@ -386,7 +386,7 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fake3.yaml')
         prune = Pruning('./fake2.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(self.q_model)
+        scheduler.model = self.q_model
         combination = scheduler.combine(prune, quantizer)
         scheduler.append(combination)
         opt_model = scheduler()
@@ -402,8 +402,8 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fake3.yaml')
         distiller = Distillation('./fake6.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(self.q_model)
-        distiller.teacher_model = common.Model(self.q_model_teacher)
+        scheduler.model = self.q_model
+        distiller.teacher_model = self.q_model_teacher
         combination = scheduler.combine(distiller, quantizer)
         scheduler.append(combination)
         opt_model = scheduler()
@@ -416,7 +416,7 @@ class TestPruning(unittest.TestCase):
         quantizer = Quantization('./fake5.yaml')
         prune = Pruning('./fake4.yaml')
         scheduler = Scheduler()
-        scheduler.model = common.Model(self.model)
+        scheduler.model = self.model
         combination = scheduler.combine(prune, quantizer)
         scheduler.append(combination)
         opt_model = scheduler()

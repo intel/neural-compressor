@@ -86,7 +86,7 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
-        prune.model = common.Model(self.model)
+        prune.model = self.model
         _ = prune()
 
 if __name__ == "__main__":

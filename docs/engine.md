@@ -164,7 +164,7 @@ It's easy to convert a tensorflow or onnx model to the int8 ir with high perform
 from neural_compressor.experimental import Quantization, common
 ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case)
 quantizer = Quantization(args.config)
-quantizer.model = common.Model(args.input_model)
+quantizer.model = args.input_model
 quantizer.eval_dataloader = common.DataLoader(ds, args.batch_size)
 quantizer.calib_dataloader = common.DataLoader(ds, args.batch_size)
 q_model = quantizer()
@@ -177,7 +177,7 @@ The output_model is the generated int8 ir of the execution engine. You are encou
 from neural_compressor.experimental import Benchmark, common
 ds = TF_BERTDataSet(args.data_dir, args.vocab_file, args.do_lower_case)
 evaluator = Benchmark(args.config)
-evaluator.model = common.Model(args.input_model)
+evaluator.model = args.input_model
 evaluator.b_dataloader = common.DataLoader(ds, args.batch_size)
 evaluator(args.mode)
 

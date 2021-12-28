@@ -18,7 +18,7 @@ class MyMetric(BaseMetric):
 
 # Quantize with customized dataloader and metric
 quantizer = Quantization('{{config_path}}')
-quantizer.model = common.Model('{{model_path}}')
+quantizer.model = '{{model_path}}'
 quantizer.metric = common.Metric(metric_cls=MyMetric, name='my_metric')
 quantized_model = quantizer()
 quantized_model.save('{{model_output_path}}')

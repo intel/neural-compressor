@@ -59,7 +59,7 @@ class Scheduler(object):
        prune = Pruning('/path/to/pruning.yaml')
        quantizer = Quantization('/path/to/quantization.yaml')
        scheduler = Scheduler()
-       scheduler.model(common.Model('/path/to/model'))
+       scheduler.model('/path/to/model')
        scheduler.append(prune)
        scheduler.append(quantizer)
        opt_model = scheduler()
@@ -80,7 +80,7 @@ class Scheduler(object):
        quantizer.eval_dataloader = ...            # optional if it is configured in user yaml.
 
        scheduler = Scheduler()
-       scheduler.model(common.Model('/path/to/model'))
+       scheduler.model('/path/to/model')
        scheduler.append(prune)
        scheduler.append(quantizer)
        opt_model = scheduler()

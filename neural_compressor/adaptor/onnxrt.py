@@ -126,9 +126,9 @@ class ONNXRTAdaptor(Adaptor):
                 if hasattr(data_loader, 'batch_size') and \
                   calib_sampling_size % data_loader.batch_size != 0:
                     logger.warning(
-                        "Please Note that calibration sampling size {} \
-                        isn't divisible exactly by batch size {}. \
-                        So the real sampling size is {}.".
+                        "Please note that calibration sampling size {} " \
+                        "isn't divisible exactly by batch size {}. " \
+                        "So the real sampling size is {}.".
                         format(calib_sampling_size, data_loader.batch_size,
                                data_loader.batch_size * iterations))
                 quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \

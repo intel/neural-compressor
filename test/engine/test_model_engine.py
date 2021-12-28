@@ -90,7 +90,7 @@ class TestDeepengineModel(unittest.TestCase):
         model.save('./ir')
 
         evaluator = Benchmark('test.yaml')
-        evaluator.model = common.Model('./ir')
+        evaluator.model = './ir'
         evaluator("performance")
         self.assertNotEqual(evaluator, None)
 

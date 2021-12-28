@@ -90,8 +90,8 @@ Simplest launcher code if training behavior is defined in user-defined yaml.
 ```python
 from neural_compressor.experimental import Distillation, common
 distiller = Distillation('/path/to/user/yaml')
-distiller.student_model = common.Model(student_model)
-distiller.teacher_model = common.Model(teacher_model)
+distiller.student_model = student_model
+distiller.teacher_model = teacher_model
 model = distiller()
 ```
 Distillation class also support Distillation_Conf class as it's argument.
@@ -101,8 +101,8 @@ from lpot.experimental import Distillation, common
 from lpot.conf.config import Distillation_Conf
 conf = Distillation_Conf('/path/to/user/yaml')
 distiller = Distillation(conf)
-distiller.student_model = common.Model(student_model)
-distiller.teacher_model = common.Model(teacher_model)
+distiller.student_model = student_model
+distiller.teacher_model = teacher_model
 model = distiller()
 ```
 
@@ -234,8 +234,8 @@ In this case, the launcher code is like the following:
 from neural_compressor.experimental import Distillation, common
 from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
 distiller = Distillation(args.config)
-distiller.student_model = common.Model(model)
-distiller.teacher_model = common.Model(teacher)
+distiller.student_model = model
+distiller.teacher_model = teacher
 distiller.criterion = PyTorchKnowledgeDistillationLoss()
 distiller.train_func = train_func
 model = distiller()

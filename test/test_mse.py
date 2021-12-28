@@ -193,7 +193,7 @@ class TestQuantization(unittest.TestCase):
         ds = dataset()
         quantizer.calib_dataloader = common.DataLoader(ds)
         quantizer.eval_dataloader = common.DataLoader(ds)
-        quantizer.model = common.Model('mb_v2.onnx')
+        quantizer.model = 'mb_v2.onnx'
         quantizer()
 
 if __name__ == "__main__":

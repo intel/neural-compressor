@@ -66,7 +66,7 @@ def benchmark_model(
         input_graph = onnx.load(input_graph)
 
     evaluator = Benchmark(config)
-    evaluator.model = common.Model(input_graph)
+    evaluator.model = input_graph
     evaluator(benchmark_mode)
 
 

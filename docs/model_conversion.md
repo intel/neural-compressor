@@ -16,7 +16,7 @@ See the following example which demonstrate model conversion API usage.
     conversion = ModelConversion()
     conversion.source = 'QAT'
     conversion.destination = 'default'
-    conversion.model = common.Model('/path/to/trained/saved_model')
+    conversion.model = '/path/to/trained/saved_model'
     q_model = conversion()
     q_model.save('/path/to/quantized/saved_model')
 ```
@@ -25,7 +25,7 @@ After this conversion is done, user could measure the accuracy or performance on
   ```python
     from neural_compressor.experimental import Benchmark, common
     evaluator = Benchmark('/path/to/yaml')
-    evaluator.model = common.Model('/path/to/quantized/saved_model')
+    evaluator.model = '/path/to/quantized/saved_model'
     evaluator.b_dataloader = ...       # create benchmark dataloader like examples/tensorflow/qat/benchmark.py
     evaluator('accuracy')
   ```

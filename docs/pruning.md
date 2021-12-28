@@ -124,7 +124,7 @@ Simplest launcher code if training behavior is defined in user-defined yaml.
 ```
 from neural_compressor.experimental import Pruning, common
 prune = Pruning('/path/to/user/pruning/yaml')
-prune.model = common.Model(model)
+prune.model = model
 model = prune()
 ```
 
@@ -135,7 +135,7 @@ from lpot.experimental import Pruning, common
 from lpot.conf.config import Pruning_Conf
 conf = Pruning_Conf('/path/to/user/pruning/yaml')
 prune = Pruning(conf)
-prune.model = common.Model(model)
+prune.model = model
 model = prune()
 ```
 
@@ -296,7 +296,7 @@ In this case, the launcher code is like the following:
 ```python
 from neural_compressor.experimental import Pruning, common
 prune = Pruning(args.config)
-prune.model = common.Model(model)
+prune.model = model
 prune.pruning_func = pruning_func
 model = prune()
 ```
@@ -310,7 +310,7 @@ from neural_compressor.experimental import Quantization, common, Pruning, Schedu
 prune = Pruning(prune_conf)
 quantizer = Quantization(post_training_quantization_conf)
 scheduler = Scheduler()
-scheduler.model = common.Model(model)
+scheduler.model = model
 scheduler.append(prune)
 scheduler.append(quantizer)
 opt_model = scheduler()

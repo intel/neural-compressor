@@ -134,8 +134,8 @@ class TestDistillation(unittest.TestCase):
         conf.evaluation.accuracy.dataloader.batch_size = 30
         conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
         distiller = Distillation(conf)
-        distiller.student_model = common.Model(self.student_model)
-        distiller.teacher_model = common.Model(self.teacher_model)
+        distiller.student_model = self.student_model
+        distiller.teacher_model = self.teacher_model
         print('student model: {}'.format(distiller.student_model))
         _ = distiller()
 
@@ -204,8 +204,8 @@ class TestDistillation(unittest.TestCase):
         conf = Distillation_Conf('fake_1.yaml')
         distiller = Distillation(conf)
         distiller = Distillation('fake_1.yaml')
-        distiller.student_model = common.Model(self.student_model_tf)
-        distiller.teacher_model = common.Model(self.teacher_model_tf)
+        distiller.student_model = self.student_model_tf
+        distiller.teacher_model = self.teacher_model_tf
         print('student model: {}'.format(distiller.student_model))
         _ = distiller()
 

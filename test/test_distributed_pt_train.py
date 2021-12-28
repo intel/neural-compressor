@@ -35,7 +35,7 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
-        prune.model = common.Model(self.model)
+        prune.model = self.model
         _ = prune()
         print('rank {} in size {}'.format(hvd.rank(), hvd.size()))
 
@@ -139,7 +139,7 @@ class TestDistributed(unittest.TestCase):
         from neural_compressor.experimental import Pruning, common
         prune = Pruning('fake.yaml')
 
-        prune.model = common.Model(self.model)
+        prune.model = self.model
         _ = prune()
         # assert hvd hook is registered. pruner has 2 pre_epoch_begin hooks: hvd and prune
         assert len(prune.hooks_dict['pre_epoch_begin'])==2

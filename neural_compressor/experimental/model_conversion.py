@@ -43,7 +43,7 @@ class ModelConversion():
          conversion = ModelConversion()
          conversion.source = 'QAT'
          conversion.destination = 'default'
-         conversion.model = common.Model('/path/to/saved_model')
+         conversion.model = '/path/to/saved_model'
          q_model = conversion()
 
     Args:

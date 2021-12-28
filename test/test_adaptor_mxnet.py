@@ -162,7 +162,7 @@ class TestAdaptorMXNet(unittest.TestCase):
             calib_data = mx.io.NDArrayIter(data=data, label=labels, batch_size=shape[0])
 
             fp32_model = (self.mlp_model, arg_params, aux_params)
-            self.quantizer_1.model = common.Model(fp32_model)
+            self.quantizer_1.model = fp32_model
             self.quantizer_1.calib_dataloader = calib_data
             self.quantizer_1.eval_dataloader = calib_data
             qmodel = self.quantizer_1()
@@ -188,7 +188,7 @@ class TestAdaptorMXNet(unittest.TestCase):
             calib_data = mx.io.NDArrayIter(data=data, label=label,  batch_size=shape[0])
 
             fp32_model = (self.conv_model, arg_params, aux_params)
-            self.quantizer_2.model = common.Model(fp32_model)
+            self.quantizer_2.model = fp32_model
             self.quantizer_2.calib_dataloader = calib_data
             self.quantizer_2.eval_dataloader = calib_data
             qmodel = self.quantizer_2()
@@ -260,7 +260,7 @@ class TestAdaptorMXNet(unittest.TestCase):
         net = create_model()
         valid_dataset = mx.gluon.data.vision.datasets.FashionMNIST(train=False)
         q_dataloader = Quant_dataloader(valid_dataset)
-        self.quantizer_1.model = common.Model(net)
+        self.quantizer_1.model = net
         self.quantizer_1.calib_dataloader = q_dataloader
         qmodel = self.quantizer_1()
         self.assertIsInstance(qmodel.model, mx.gluon.HybridBlock)

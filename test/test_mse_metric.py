@@ -170,7 +170,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 model.eval().fuse_model()
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-            quantizer.model = common.Model(model)
+            quantizer.model = model
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer()
@@ -208,7 +208,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         model.eval().fuse_model()
         quantizer = Quantization(fake_yaml)
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        quantizer.model = common.Model(model)
+        quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         q_model = quantizer()
@@ -222,7 +222,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         model = torchvision.models.resnet18()
         quantizer = Quantization(fake_yaml)
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        quantizer.model = common.Model(model)
+        quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         q_model = quantizer()
@@ -245,7 +245,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         model = torchvision.models.resnet18()
         quantizer = Quantization('ipex_yaml.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        quantizer.model = common.Model(model)
+        quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         nc_model = quantizer()
@@ -256,7 +256,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
             script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
         from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
-        evaluator.model = common.Model(script_model)
+        evaluator.model = script_model
         evaluator.b_dataloader = common.DataLoader(dataset)
         results = evaluator()
 

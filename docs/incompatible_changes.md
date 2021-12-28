@@ -24,7 +24,7 @@ q_model = quantizer('/path/to/model', q_dataloader = dataloader, eval_dataloader
 ```python
 # user facing API example in v1.2
 quantizer = Quantization(conf.yaml)
-quantizer.model = common.Model('/path/to/model')
+quantizer.model = '/path/to/model'
 dl = dataset('/path/to/dataset')
 quantizer.calib_dataloader = common.DataLoader(dl, batch_size=32)
 quantizer.eval_dataloader = common.DataLoader(dl, batch_size=32)

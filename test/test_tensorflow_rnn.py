@@ -49,7 +49,7 @@ def quantize(model,q_data, e_data):
 
     q_dataloader = DataLoader(dataset=list(zip(q_data[0], q_data[1])))
     e_dataloader = DataLoader(dataset=list(zip(e_data[0], e_data[1])))
-    quantizer.model= common.Model(model)
+    quantizer.model= model
     quantizer.calib_dataloader = q_dataloader
     quantizer.eval_dataloader = e_dataloader
     quantized_model = quantizer()

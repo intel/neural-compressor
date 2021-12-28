@@ -84,7 +84,7 @@ class TestPatternLock(unittest.TestCase):
                 prune.on_epoch_end()
         dummy_dataset = DummyDataset(tuple([100, 3, 256, 256]), label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        prune.model = common.Model(self.model)
+        prune.model = self.model
         prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
