@@ -322,10 +322,10 @@ opt_model = scheduler.fit()
 Following examples are supported in Neural Compressor:
 
 - CNN Examples:
-  - [resnet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/prune/README.md): magnitude pruning on resnet.
-  - [pruning and post-training quantization](../examples/pytorch/eager/image_recognition/imagenet/cpu/prune_and_ptq/README.md): magnitude pruning and then post-training quantization on resnet.
-  - [resnet_v2 example](../examples/tensorflow/pruning/resnet_v2/README.md): magnitude pruning on resnet_v2 for tensorflow.
+  - [resnet example](../examples/pytorch/image_recognition/torchvision_models/pruning/magnitude/eager/README.md): magnitude pruning on resnet.
+  - [pruning and post-training quantization](../examples/pytorch/image_recognition/torchvision_models/schedule/two_shot/eager/README.md): magnitude pruning and then post-training quantization on resnet.
+  - [resnet_v2 example](../examples/tensorflow/image_recognition/resnet_v2/pruning/README.md): magnitude pruning on resnet_v2 for tensorflow.
 - NLP Examples:
   - [BERT example](../examples/pytorch/eager/language_translation/prune/README.md): magnitude pruning on DistilBERT.
-  - [BERT example](../examples/pytorch/eager/huggingface_models/README.md): Pattern-lock and head-pruning on BERT-base.
+  - [BERT example](../examples/pytorch/nlp/huggingface_models/README.md): Pattern-lock and head-pruning on BERT-base.
 

@@ -100,6 +100,6 @@ Intel® Neural Compressor can support QAT calibration for
 PyTorch models. Refer to the [QAT model](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/eager/image_recognition/imagenet/cpu/qat/README.md) for step-by-step tuning.
 
 ### Example
-View a [QAT example of PyTorch resnet50](/examples/pytorch/eager/image_recognition/imagenet/cpu/qat).
+View a [QAT example of PyTorch resnet50](/examples/pytorch/image_recognition/torchvision_models/quantization/qat).
 
 

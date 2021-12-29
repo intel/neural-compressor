@@ -1,7 +1,0 @@
-tensorboardX
-tensorboard
-scikit-learn
-seqeval
-neural-compressor
-
-rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability

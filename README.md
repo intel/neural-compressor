@@ -318,46 +318,46 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td rowspan="2">ResNet50 v1.5</td>
     <td>TensorFlow</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/image_recognition">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/image_recognition/tensorflow_models/quantization">Link</a></td>
   </tr>
   <tr>
     <td>PyTorch</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">Link</a></td>
   </tr>
   <tr>
     <td>DLRM</td>
     <td>PyTorch</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/fx/recommendation">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/examples/pytorch/recommendation/dlrm/quantization">Link</a></td>
   </tr>
   <tr>
     <td rowspan="2">BERT-large</td>
     <td>TensorFlow</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/nlp/bert_large_squad">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/nlp/bert_large_squad/quantization">Link</a></td>
   </tr>
   <tr>
     <td>PyTorch</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/eager/language_translation/ptq">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/eager/language_translation">Link</a></td>
   </tr>
   <tr>
     <td rowspan="2">SSD-ResNet34</td>
     <td>TensorFlow</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/quantization">Link</a></td>
   </tr>
   <tr>
     <td>PyTorch</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/fx/object_detection/ssd_resnet34/ptq">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/ssd_resnet34/quantization">Link</a></td>
   </tr>
   <tr>
     <td>RNN-T</td>
     <td>PyTorch</td>
-    <td>WIP</td>
-    <td></td>
+    <td>Yes</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/speech_recognition/rnnt/quantization">Link</a></td>    
   </tr>
   <tr>
     <td rowspan="2">3D-UNet</td>
@@ -368,7 +368,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
   <tr>
     <td>PyTorch</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/eager/medical_imaging/3d-unet">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/image_recognition/3d-unet/quantization">Link</a></td>
   </tr>
 </tbody>
 </table>
@@ -997,4 +997,4 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 
 ## Hiring
 
-We are hiring. Please send your resume to [INC Jobs](lpot.maintainers@intel.com) if you have interests in model compression techniques.
+We are hiring. Please send your resume to lpot.maintainers@intel.com if you have interests in model compression techniques.

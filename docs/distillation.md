@@ -247,17 +247,17 @@ model = distiller.fit()
 Following examples are supported in Neural Compressor:
 
 - Image Classification Examples:
-  - [MobileNetV2 example](../examples/pytorch/eager/image_recognition/cifar10/README.md): distillation of WideResNet40-2 to MobileNetV2-0.35 on CIFAR-10 dataset.
-  - [CNN example](../examples/pytorch/eager/image_recognition/cifar100/README.md): distillation of CNN-10 to CNN-2 on CIFAR-100 dataset.
-  - [VGG example](../examples/pytorch/eager/image_recognition/cifar100/README.md): distillation of VGG-13-BN to VGG-8-BN on CIFAR-100 dataset.
-  - [ResNet example](../examples/pytorch/eager/image_recognition/imagenet/cpu/distillation/README.md): distillation of ResNet50 to ResNet18 on ImageNet dataset.
+  - [MobileNetV2 example](../examples/pytorch/image_recognition/MobileNetV2-0.35/distillation/eager/README.md): distillation of WideResNet40-2 to MobileNetV2-0.35 on CIFAR-10 dataset.
+  - [CNN example](../examples/pytorch/image_recognition/CNN-2/distillation/eager/README.md): distillation of CNN-10 to CNN-2 on CIFAR-100 dataset.
+  - [VGG example](../examples/pytorch/image_recognition/VGG-8/distillation/eager/README.md): distillation of VGG-13-BN to VGG-8-BN on CIFAR-100 dataset.
+  - [ResNet example](../examples/pytorch/image_recognition/torchvision_models/distillation/eager/README.md): distillation of ResNet50 to ResNet18 on ImageNet dataset.
 - Natural Language Processing Examples:
-  - [BlendCnn example](../examples/pytorch/eager/blendcnn/distillation/README.md): distillation of BERT-Base to BlendCnn on MRPC of GLUE dataset.
-  - [BiLSTM example](../examples/pytorch/eager/huggingface_models/README.md): distillation of RoBERTa-Base to BiLSTM on SST-2 of GLUE dataset.
-  - [DistilBERT example](../examples/pytorch/eager/huggingface_models/README.md): distillation of BERT-Base to DistilBERT on SQuAD dataset.
-  - [TinyBERT example](../examples/pytorch/eager/huggingface_models/README.md): distillation of BERT-Base to TinyBERT on MNLI of GLUE dataset.
-  - [BERT-3 example](../examples/pytorch/eager/huggingface_models/README.md): distillation of BERT-Base to BERT-3 on QQP of GLUE dataset.
-  - [DistilRoBERTa example](../examples/pytorch/eager/huggingface_models/README.md): distillation of RoBERTa-Large to DistilRoBERTa on COLA of GLUE dataset.
+  - [BlendCnn example](../examples/pytorch/nlp/blendcnn/distillation/eager/README.md): distillation of BERT-Base to BlendCnn on MRPC of GLUE dataset.
+  - [BiLSTM example](../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README.md): distillation of RoBERTa-Base to BiLSTM on SST-2 of GLUE dataset.
+  - [DistilBERT example](../examples/pytorch/nlp/huggingface_models/question-answering/distillation/eager/README.md): distillation of BERT-Base to DistilBERT on SQuAD dataset.
+  - [TinyBERT example](../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README.md): distillation of BERT-Base to TinyBERT on MNLI of GLUE dataset.
+  - [BERT-3 example](../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README.md): distillation of BERT-Base to BERT-3 on QQP of GLUE dataset.
+  - [DistilRoBERTa example](../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README.md): distillation of RoBERTa-Large to DistilRoBERTa on COLA of GLUE dataset.
 
 
 ### Results of distillation examples

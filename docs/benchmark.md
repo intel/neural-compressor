@@ -79,5 +79,5 @@ results = evaluator()
 
 ### Examples
 
-Refer to the [Benchmark example](../examples/tensorflow/image_recognition/run_benchmark.sh).
+Refer to the [Benchmark example](../examples/tensorflow/image_recognition/tensorflow_models/quantization/run_benchmark.sh).
 

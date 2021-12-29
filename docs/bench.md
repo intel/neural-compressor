@@ -66,10 +66,10 @@ You can use included models to test tuning. You have to point to the Dataset tha
 
 ## Examples
 ### ResNet50 v1.5
-Follow [instructions](../examples/tensorflow/image_recognition/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose **Image Recognition** domain, then click on **resnet50 v1 5** button and in the last step select the ImageRecord dataset like in the example below:
+Follow [instructions](../examples/tensorflow/image_recognition/tensorflow_models/quantization/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose **Image Recognition** domain, then click on **resnet50 v1 5** button and in the last step select the ImageRecord dataset like in the example below:
 ![examples1](imgs/bench/examples-resnet.png "examples1")
 ### MobileNet v1
-Follow [instructions](../examples/tensorflow/image_recognition/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose  **Image Recognition** domain, then click on **mobilenet v1** button and in the last step select the ImageRecord dataset like in the example below:
+Follow [instructions](../examples/tensorflow/image_recognition/tensorflow_models/quantization/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose  **Image Recognition** domain, then click on **mobilenet v1** button and in the last step select the ImageRecord dataset like in the example below:
 ![examples2](imgs/bench/examples-mobilenet.png "examples2")
 ### SSD MobileNet v1
 Follow [instructions](../examples/tensorflow/object_detection/README.md) to get the COCORecord dataset. Then go to **Examples**, choose  **Object Detection** domain, then click on **ssd mobilenet v1** button and in the last step select the COCORecord dataset like in the example below:
@@ -89,7 +89,7 @@ Follow [instructions](../examples/tensorflow/object_detection/README.md) to get 
 
 ## Examples
 ### ResNet50 v1.5
-* Follow [instructions](../examples/tensorflow/image_recognition/README.md) to:
+* Follow [instructions](../examples/tensorflow/image_recognition/tensorflow_models/quantization/README.md) to:
    * install Intel Tensorflow 1.15 up2
    * prepare dataset and a frozen pb model
 * In the **Create low precision model** in first step:

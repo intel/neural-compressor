@@ -148,7 +148,7 @@ PyTorch:
 TensorFlow:
 - TensorFlow example-1: 'ResNet50 V1.0' PTQ (Post Training Quantization) with distributed inference    
   - Step-1: Please cd (change directory) to the [TensorFlow Image Recognition Example](../examples/tensorflow/image_recognition) and follow the readme to run PTQ, ensure that PTQ of 'ResNet50 V1.0' can be successfully executed.
-  - Step-2: We only need to modify the [resnet50_v1.yaml](../examples/tensorflow/image_recognition/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
+  - Step-2: We only need to modify the [resnet50_v1.yaml](../examples/tensorflow/image_recognition/tensorflow_models/quantization/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
     ```
     # only need to modify the resnet50_v1.yaml, add a line 'distributed: True'
     ......
@@ -175,4 +175,4 @@ TensorFlow:
     horovodrun -np 2 -H your_node1_name:1,your_node2_name:1 python main.py --tune --config=resnet50_v1.yaml --input-graph=/PATH/TO/resnet50_fp32_pretrained_model.pb --output-graph=./nc_resnet50_v1.pb
     ```
 - TensorFlow example-2: 'resnet_v2' pruning on Keras backend with distributed training and inference
-   - Please follow this README.md exactly：[Pruning](../examples/tensorflow/pruning/resnet_v2)
+   - Please follow this README.md exactly：[Pruning](../examples/tensorflow/image_recognition/resnet_v2)
