@@ -125,7 +125,7 @@ Simplest launcher code if training behavior is defined in user-defined yaml.
 from neural_compressor.experimental import Pruning, common
 prune = Pruning('/path/to/user/pruning/yaml')
 prune.model = model
-model = prune()
+model = prune.fit()
 ```
 
 Pruning class also support Pruning_Conf class as it's argument.
@@ -136,7 +136,7 @@ from lpot.conf.config import Pruning_Conf
 conf = Pruning_Conf('/path/to/user/pruning/yaml')
 prune = Pruning(conf)
 prune.model = model
-model = prune()
+model = prune.fit()
 ```
 
 ### User-defined yaml
@@ -298,7 +298,7 @@ from neural_compressor.experimental import Pruning, common
 prune = Pruning(args.config)
 prune.model = model
 prune.pruning_func = pruning_func
-model = prune()
+model = prune.fit()
 ```
 
 ### Scheduler for Pruning and Quantization
@@ -313,7 +313,7 @@ scheduler = Scheduler()
 scheduler.model = model
 scheduler.append(prune)
 scheduler.append(quantizer)
-opt_model = scheduler()
+opt_model = scheduler.fit()
 ```
 
 ## Examples

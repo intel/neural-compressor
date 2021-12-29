@@ -125,7 +125,7 @@ from neural_compressor.experimental import Quantization
 quantizer = Quantization(args.config)
 quantizer.model = graph
 quantizer.eval_func = eval_func
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The Intel® Neural Compressor quantizer() function will return a best quantized model during timeout constrain.
+The Intel® Neural Compressor quantizer.fit() function will return a best quantized model during timeout constrain.

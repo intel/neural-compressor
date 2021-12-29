@@ -108,7 +108,7 @@ def main():
         quantizer.model = common.Model(args.input_model)
         quantizer.eval_dataloader = DLRM_DataLoader(ds)
         quantizer.calib_dataloader = DLRM_DataLoader(ds)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.output_model)
 
 if __name__ == '__main__':

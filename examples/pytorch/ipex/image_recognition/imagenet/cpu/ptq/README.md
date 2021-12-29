@@ -110,7 +110,7 @@ bash run_benchmark.sh --topology=mobilenet_v2_ipex --dataset_location=/path/to/i
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-nc_model = quantizer()
+nc_model = quantizer.fit()
 ```
 
 Here, nc_model is Neural Compressor model class, so it has "save" API:
@@ -241,7 +241,7 @@ The related code please refer to examples/pytorch/ipex/image_recognition/imagene
       from neural_compressor.experimental import Quantization, common
       quantizer = Quantization("./conf_ipex.yaml")
       quantizer.model = common.Model(model)
-      nc_model = quantizer()
+      nc_model = quantizer.fit()
       nc_model.save("Path_to_save_configure_file")
     ```
 

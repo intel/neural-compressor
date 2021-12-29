@@ -1092,7 +1092,7 @@ def main(_):
       quantizer.calib_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.metric = Accuracy()
-      q_model = quantizer()
+      q_model = quantizer.fit()
       if FLAGS.strip_iterator:
           q_model.graph_def = strip_iterator(q_model.graph_def)
       q_model.save(FLAGS.output_model)

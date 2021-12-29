@@ -33,7 +33,7 @@ The example below shows how to enable Neural Compressor on TensorFlow mobilenet_
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization('./conf.yaml')
 quantizer.model = "./mobilenet_v1_1.0_224_frozen.pb"
-quantized_model = quantizer()
+quantized_model = quantizer.fit()
 ```
 Quantization also support Quantization_Conf class as it's argument:
 ```python
@@ -43,7 +43,7 @@ from lpot.conf.config import Quantization_Conf
 conf = Quantization_Conf('./conf.yaml')
 quantizer = Quantization(conf)
 quantizer.model = "./mobilenet_v1_1.0_224_frozen.pb"
-quantized_model = quantizer()
+quantized_model = quantizer.fit()
 ```
 
 
@@ -127,7 +127,7 @@ quantizer.metric = common.Metric(MyMetric)
 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.model = '../models/simple_model'
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 > **Note** 
 >

@@ -148,7 +148,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
       quantizer.calib_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
       quantizer.metric = Accuracy()
-      q_model = quantizer()
+      q_model = quantizer.fit()
       q_model.save(FLAGS.output_model)
 ```
 #### Benchmark
@@ -167,5 +167,5 @@ After prepare step is done, we add tune and benchmark code to generate quantized
           evaluator.model = common.Model(estimator, input_fn=estimator_input_fn)
       evaluator(FLAGS.mode)
 ```
-The Intel® Neural Compressor quantizer() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantizer.fit() function will return a best quantized model under time constraint.
 

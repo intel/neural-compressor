@@ -204,7 +204,7 @@ class TestTensorboard(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer()
+        quantizer.fit()
 
         self.assertTrue(True if len(os.listdir("./runs/eval")) > 2 else False)
 

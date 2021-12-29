@@ -68,7 +68,7 @@ python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-nc_model = quantizer()
+nc_model = quantizer.fit()
 ```
 
 Here, nc_model is Neural Compressor model class, so it has "save" API:
@@ -191,10 +191,10 @@ model.module.fuse_model()
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.
 
 ### Dump tensors for debug
 

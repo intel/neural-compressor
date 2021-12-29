@@ -72,7 +72,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndReluAndRequantize':
@@ -101,7 +101,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
             quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
             quantizer.model = float_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_quantized_matmul = False
             for i in output_graph.graph_def.node:
@@ -137,7 +137,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.model = float_graph_def
-                    output_graph = quantizer()
+                    output_graph = quantizer.fit()
 
                     for i in output_graph.graph_def.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
@@ -170,7 +170,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.model = float_graph_def
-                    output_graph = quantizer()
+                    output_graph = quantizer.fit()
 
                     for i in output_graph.graph_def.node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
@@ -201,7 +201,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
@@ -232,7 +232,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
                     if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
@@ -263,7 +263,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
                     if i.op == 'MatMul':
@@ -294,7 +294,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
                     if i.op == 'MatMul':
@@ -327,7 +327,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
                 for i in output_graph.graph_def.node:
                     if i.op == 'MatMul':
                         found_quantized_matmul = False
@@ -359,7 +359,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer()
+                output_graph = quantizer.fit()
                 for i in output_graph.graph_def.node:
                     if i.op == 'MatMul':
                         found_quantized_matmul = False
@@ -399,7 +399,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.model = float_graph_def
-                    output_graph = quantizer()
+                    output_graph = quantizer.fit()
 
                     count=0
                     for i in output_graph.model.as_graph_def().node:

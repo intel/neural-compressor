@@ -143,7 +143,7 @@ class TestGraphDumpToDisk(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer()
+        quantizer.fit()
 
         with open(self.calibration_log_path) as f:
             data = f.readlines()

@@ -94,7 +94,7 @@ class TestItexEnabling(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             dequant_count = 0
             for i in output_graph.graph_def.node:

@@ -303,7 +303,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 model.fuse_model()
             quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
 

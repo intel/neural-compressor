@@ -134,7 +134,7 @@ class TestConfigRegex(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_fp32_conv = False
             found_quantized_conv = False
@@ -191,7 +191,7 @@ class TestConfigRegex(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_fp32_conv = False
             found_quantized_conv = False

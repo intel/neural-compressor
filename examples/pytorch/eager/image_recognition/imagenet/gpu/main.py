@@ -255,7 +255,7 @@ def main_worker(gpu, ngpus_per_node, args):
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         return
 
     for epoch in range(args.start_epoch, args.epochs):

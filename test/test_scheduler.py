@@ -356,7 +356,7 @@ class TestPruning(unittest.TestCase):
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
         scheduler.append(prune)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
 
     def test_pure_yaml_pruning(self):
         from neural_compressor.experimental import Pruning, common
@@ -364,7 +364,7 @@ class TestPruning(unittest.TestCase):
         scheduler = Scheduler()
         scheduler.model = self.model
         scheduler.append(prune)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
 
     def test_scheduler_qat_distillation(self):
         from neural_compressor.experimental import Quantization, common, Distillation
@@ -377,7 +377,7 @@ class TestPruning(unittest.TestCase):
         distiller.teacher_model = self.q_model_teacher
         scheduler.append(distiller)
         scheduler.append(quantizer)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
 
     def test_combine_qat_pruning(self):
         from neural_compressor.experimental import Pruning, common, Quantization
@@ -389,7 +389,7 @@ class TestPruning(unittest.TestCase):
         scheduler.model = self.q_model
         combination = scheduler.combine(prune, quantizer)
         scheduler.append(combination)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
         conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.97,
@@ -406,7 +406,7 @@ class TestPruning(unittest.TestCase):
         distiller.teacher_model = self.q_model_teacher
         combination = scheduler.combine(distiller, quantizer)
         scheduler.append(combination)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
 
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
@@ -419,7 +419,7 @@ class TestPruning(unittest.TestCase):
         scheduler.model = self.model
         combination = scheduler.combine(prune, quantizer)
         scheduler.append(combination)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
         conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.97,

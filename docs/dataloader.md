@@ -105,6 +105,6 @@ quantizer = Quantization('conf.yaml')
 quantizer.model = fp32_model
 quantizer.calib_dataloader = calib_data
 quantizer.eval_dataloader = calib_data
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 

@@ -470,7 +470,7 @@ def main():
         prune.pruning_func = train_func
         prune.eval_dataloader = train_dataloader
         prune.eval_func = eval_func
-        model = prune()
+        model = prune.fit()
         torch.save(model, args.output_model)
 
     # Final steps

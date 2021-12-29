@@ -99,7 +99,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
             quantize_v2_count = 0
 
             for i in output_graph.graph_def.node:
@@ -158,7 +158,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
             quantize_v2_count = 0
 
             for i in output_graph.graph_def.node:

@@ -114,19 +114,19 @@ class TestModelConversion(unittest.TestCase):
         conversion.source = 'qat'
         conversion.destination = 'default'
         conversion.model = self._qat_temp_path
-        q_model = conversion()
+        q_model = conversion.fit()
         q_model.save(self._quantized_temp_path)
         conf = Conf('fake_yaml.yaml')
         conversion = ModelConversion(conf)
         conversion.source = 'qat'
         conversion.destination = 'default'
         conversion.model = self._qat_temp_path
-        q_model = conversion()
+        q_model = conversion.fit()
         conversion = ModelConversion('fake_yaml.yaml')
         conversion.source = 'qat'
         conversion.destination = 'default'
         conversion.model = self._qat_temp_path
-        q_model = conversion()
+        q_model = conversion.fit()
 
         graph = tf.compat.v1.Graph()
         with graph.as_default():

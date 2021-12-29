@@ -587,7 +587,7 @@ def main():
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(raw_model)
         quantizer.eval_func = eval_func
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
 
     elif args.int8:

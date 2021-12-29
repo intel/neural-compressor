@@ -133,6 +133,8 @@ class ModelConversion():
 
         return q_model
 
+    fit = __call__
+
     def _gen_yaml(self):
         random_name = '{}'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         default_yaml_template = {'model': {'framework': self.framework, 'name': random_name},

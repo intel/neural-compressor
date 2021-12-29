@@ -62,7 +62,7 @@ sh run_tuning.sh --output_model=/path/to/tuned_checkpoint
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
-nc_model = quantizer()
+nc_model = quantizer.fit()
 ```
 
 Here, nc_model is Neural Compressor model class, so it has "save" API:
@@ -180,9 +180,9 @@ if args.tune:
         quantizer.model = common.Model(model, kwargs=prepare_custom_config_dict)
         quantizer.calib_dataloader = cal_dataloader
         quantizer.eval_func = eval_func
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.

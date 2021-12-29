@@ -372,4 +372,4 @@ if __name__ == '__main__':
     quantizer.eval_dataloader = common.DataLoader(Dataset())
     quantizer.model = './baseline_model'
     quantizer.q_func = q_func
-    quantizer()
+    quantizer.fit()

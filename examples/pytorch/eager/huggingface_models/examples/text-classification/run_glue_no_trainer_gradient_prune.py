@@ -510,7 +510,7 @@ def main():
         prune.model = common.Model(model)
         prune.pruning_func = train_func
         prune.eval_func = eval_func
-        model = prune()
+        model = prune.fit()
         model.save(args.output_model)
         # change to framework model for further use
         model = model.model

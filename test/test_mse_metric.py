@@ -173,7 +173,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.model = model
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
-            q_model = quantizer()
+            q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
 
 
@@ -211,7 +211,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
     
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
@@ -225,7 +225,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
 
 
@@ -248,7 +248,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
-        nc_model = quantizer()
+        nc_model = quantizer.fit()
         nc_model.save("./saved")
         try:
             script_model = torch.jit.script(model.to(ipex.DEVICE))

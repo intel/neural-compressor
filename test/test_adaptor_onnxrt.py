@@ -420,7 +420,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.eval_dataloader = self.cv_dataloader
         quantizer.model = self.mb_v2_model
-        q_model = quantizer()
+        q_model = quantizer.fit()
         framework_specific_info = {"device": "cpu",
                      "approach": "post_training_static_quant",
                      "random_seed": 1234,
@@ -457,27 +457,27 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.calib_dataloader = self.rename_dataloader
         quantizer.eval_dataloader = self.rename_dataloader
         quantizer.model = self.rename_model
-        q_model = quantizer()
+        q_model = quantizer.fit()
 
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = self.rn50_model
-            q_model = quantizer()
+            q_model = quantizer.fit()
             eval_func(q_model)
 
         import copy
         tmp_model = copy.deepcopy(self.rn50_model)
         tmp_model.opset_import[0].version = 10
         quantizer.model = tmp_model
-        q_model = quantizer()
+        q_model = quantizer.fit()
         tmp_model.opset_import.extend([onnx.helper.make_opsetid("", 11)]) 
         quantizer.model = tmp_model
-        q_model = quantizer()
+        q_model = quantizer.fit()
         model = onnx.load('rn50_9.onnx')
         quantizer.model = model
-        q_model = quantizer()
+        q_model = quantizer.fit()
 
         framework_specific_info = {"device": "cpu",
                      "approach": "post_training_static_quant",
@@ -503,18 +503,18 @@ class TestAdaptorONNXRT(unittest.TestCase):
         for fake_yaml in ["gather.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.model = self.gather_model
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
             quantizer.model = self.matmul_model
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
             quantizer.eval_dataloader = self.matmul_dataloader
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
             quantizer.calib_dataloader = self.matmul_dataloader
             quantizer.eval_dataloader = self.matmul_dataloader
             quantizer.model = self.matmul_model
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         for fake_yaml in ["non_MSE.yaml"]:
@@ -522,7 +522,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = self.mb_v2_model
-            q_model = quantizer()
+            q_model = quantizer.fit()
             eval_func(q_model)
 
         for fake_yaml in ["static.yaml"]:
@@ -530,7 +530,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.calib_dataloader = self.ir3_dataloader
             quantizer.eval_dataloader = self.ir3_dataloader
             quantizer.model = self.ir3_model
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
             from neural_compressor.utils.utility import recover
             model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)
@@ -566,7 +566,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.model = self.matmul_model
         quantizer.calib_dataloader = self.matmul_dataloader
         quantizer.eval_func = eval
-        q_model = quantizer()
+        q_model = quantizer.fit()
         node_names = [i.name for i in q_model.nodes()]
         self.assertTrue('Matmul' in node_names)
         self.assertTrue('add' in node_names)

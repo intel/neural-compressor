@@ -146,7 +146,7 @@ def main(_):
         kwargs = {'conf_threshold': FLAGS.conf_threshold,
                   'iou_threshold': FLAGS.iou_threshold}
         quantizer.postprocess = common.Postprocess(NMS, 'NMS', **kwargs)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(FLAGS.output_graph)
 
 

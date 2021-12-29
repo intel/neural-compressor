@@ -549,7 +549,7 @@ def main():
             agent.eval_func = eval_func
             print(agent)
             scheduler.append(agent)
-            model = scheduler()
+            model = scheduler.fit()
         else:
             agent.model = common.Model(model)
             agent.pruning_func = train_func

@@ -279,7 +279,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_fp32_conv = False
 
@@ -319,7 +319,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_fp32_conv = False
 
@@ -363,7 +363,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:
@@ -405,7 +405,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:
@@ -448,7 +448,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:
@@ -491,7 +491,7 @@ class TestTensorflowInt8Recipe(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             max_freezed_out = []
             for i in output_graph.graph_def.node:

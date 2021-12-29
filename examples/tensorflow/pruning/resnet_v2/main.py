@@ -270,8 +270,8 @@ if __name__ == '__main__':
     # prune.evaluation_distributed = True
     prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
     prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
-    prune.model = common.Model('./baseline_model')
-    model = prune()
+    prune.model = './baseline_model'
+    model = prune.fit()
     stats, sparsity = model.report_sparsity()
     logger.info(stats)
     logger.info(sparsity)

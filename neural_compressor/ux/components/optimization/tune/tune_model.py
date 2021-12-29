@@ -65,7 +65,7 @@ def tune_model(
 
     quantizer = Quantization(config)
     quantizer.model = input_graph
-    quantized_model = quantizer()
+    quantized_model = quantizer.fit()
     if quantized_model is not None:
         quantized_model.save(output_graph)
     else:

@@ -128,7 +128,7 @@ class TestTFQueryYaml(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             disable_arithmetic = False
             for i in output_graph.graph_def.node:

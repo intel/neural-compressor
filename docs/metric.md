@@ -49,7 +49,7 @@ quantizer = Quantization(yaml_file)
 quantizer.model = graph
 quantizer.metric = common.Metric(NewMetric, 'metric_name')
 quantizer.calib_dataloader = dataloader
-q_model = quantizer()
+q_model = quantizer.fit()
 
 ```
 

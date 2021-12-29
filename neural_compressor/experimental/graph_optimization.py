@@ -186,6 +186,8 @@ class Graph_Optimization():
 
             return self.strategy.best_qmodel
 
+    fit = __call__
+
     def dataset(self, dataset_type, *args, **kwargs):
         from .data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)

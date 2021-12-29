@@ -21,7 +21,7 @@ if args.tune:
     model.eval()
     quantizer = Quantization("./conf.yaml")
     quantizer.model = model
-    q_model = quantizer()
+    q_model = quantizer.fit()
     q_model.save(args.tuned_checkpoint)
     return
 ```

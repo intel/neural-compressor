@@ -424,7 +424,7 @@ def main():
                                      collate_fn=default_data_collator_nc
                                      )
         quantizer.eval_func = eval_func_for_nc
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(training_args.tuned_checkpoint)
         exit(0)
 

@@ -124,7 +124,7 @@ def main(args=None):
               tf.import_graph_def(frozen_graph, name='')
               quantizer = Quantization(FLAGS.config)
               quantizer.model = graph
-              quantized_model = quantizer()
+              quantized_model = quantizer.fit()
               quantized_model.save(FLAGS.output_model)
               frozen_graph= quantized_model.graph_def
 

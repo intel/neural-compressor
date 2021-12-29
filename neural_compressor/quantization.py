@@ -156,7 +156,7 @@ class Quantization(object):
         elif eval_dataloader is not None:
             self.exp_quantizer.eval_dataloader = eval_dataloader
 
-        nc_model = self.exp_quantizer()
+        nc_model = self.exp_quantizer.fit()
         if self.exp_quantizer.framework == 'tensorflow':
             return nc_model.graph if nc_model else None
         if self.exp_quantizer.framework == 'pytorch':
@@ -164,6 +164,8 @@ class Quantization(object):
                 self.exp_quantizer.conf.usr_cfg.tuning.workspace.path), 'checkpoint'))
             nc_model.save(saved_path)
         return nc_model.model
+
+    fit = __call__
 
     def dataset(self, dataset_type, *args, **kwargs):
         return DATASETS(self.exp_quantizer.framework)[dataset_type](*args, **kwargs)

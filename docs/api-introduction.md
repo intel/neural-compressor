@@ -118,7 +118,7 @@ dl = dataset('/path/to/evaluation/dataset')
 quantizer.eval_dataloader = common.DataLoader(dl, batch_size=32)
 # optional if Neural Compressor built-in metric could be used to do accuracy evaluation in yaml
 quantizer.metric = common.Metric(custom_metric) 
-q_model = quantizer()
+q_model = quantizer.fit()
 q_model.save('/path/to/output/dir') 
 ```
 

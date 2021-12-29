@@ -398,7 +398,7 @@ def train300_mlperf_coco(args):
         quantizer.model = common.Model(ssd300)
         quantizer.eval_func = eval_func
         quantizer.q_func = training_func_for_nc
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
 
     if args.benchmark or args.accuracy:

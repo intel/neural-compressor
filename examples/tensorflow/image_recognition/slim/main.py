@@ -68,7 +68,7 @@ def main(_):
       from neural_compressor.experimental import Quantization
       quantizer = Quantization(args.config)
       quantizer.model = args.input_graph
-      q_model = quantizer()
+      q_model = quantizer.fit()
       q_model.save(args.output_graph)
 
   if args.benchmark:

@@ -232,7 +232,7 @@ def main(_):
                                                  batch_size=FLAGS.batch_size)
         quantizer.model = common.Model(graph)
         quantizer.eval_func = eval_func
-        q_model = quantizer()
+        q_model = quantizer.fit()
         try:
             q_model.save(FLAGS.output_model)
         except Exception as e:

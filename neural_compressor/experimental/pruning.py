@@ -244,6 +244,8 @@ class Pruning(Component):
         """
         return super(Pruning, self).__call__()
 
+    fit = __call__
+
     @property
     def pruning_func(self):
         """ not support get pruning_func """

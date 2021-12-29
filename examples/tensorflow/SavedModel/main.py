@@ -45,7 +45,7 @@ class eval_object_detection_optimized_graph(object):
             from neural_compressor.experimental import Quantization
             quantizer = Quantization(self.args.config)
             quantizer.model = self.args.input_graph
-            q_model = quantizer()
+            q_model = quantizer.fit()
             q_model.save(self.args.output_model)
                 
         if self.args.benchmark:

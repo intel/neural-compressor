@@ -91,7 +91,7 @@ def main_worker(args):
 
         distiller.model = common.Model(model)
         distiller.teacher_model = common.Model(teacher_model)
-        model = distiller()
+        model = distiller.fit()
         model.save(args.output_model)
         return
 

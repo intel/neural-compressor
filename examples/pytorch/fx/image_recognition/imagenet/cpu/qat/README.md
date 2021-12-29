@@ -130,7 +130,7 @@ quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 quantizer.q_func = training_func_for_nc
 quantizer.eval_dataloader = val_loader
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.

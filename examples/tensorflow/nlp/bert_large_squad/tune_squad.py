@@ -81,7 +81,7 @@ def main(_):
         from neural_compressor.experimental import Quantization
         quantizer = Quantization(FLAGS.config)
         quantizer.model = FLAGS.input_model
-        q_model = quantizer()
+        q_model = quantizer.fit()
         if FLAGS.strip_iterator:
             q_model.graph_def = strip_iterator(q_model.graph_def)
         q_model.save(FLAGS.output_model)

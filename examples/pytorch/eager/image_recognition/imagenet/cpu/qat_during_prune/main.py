@@ -75,7 +75,7 @@ def main():
         combination = scheduler.combine(prune, quantizer)
         print(combination)
         scheduler.append(combination)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
         opt_model.save(args.tuned_checkpoint)
         return
 

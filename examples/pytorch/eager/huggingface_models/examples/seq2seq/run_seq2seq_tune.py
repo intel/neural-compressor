@@ -343,7 +343,7 @@ def main():
                                                 collate_fn=Seq2SeqDataCollator_nc(tokenizer, data_args, training_args.tpu_num_cores)
                                                 )
         quantizer.eval_func = eval_func_for_nc
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(training_args.tuned_checkpoint)
         exit(0)
 

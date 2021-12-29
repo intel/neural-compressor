@@ -527,7 +527,7 @@ def main():
         quantizer.eval_func = eval_func
         quantizer.q_func = train_func
         quantizer.model = common.Model(model)
-        model = quantizer()
+        model = quantizer.fit()
         model.save(training_args.output_dir)
         return
 

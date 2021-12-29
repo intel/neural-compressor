@@ -152,7 +152,7 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -192,7 +192,7 @@ class TestGraphOptimization(unittest.TestCase):
         graph_optimizer.output = 'op_to_store'
         graph_optimizer.model = model
         try:
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
         except SystemExit:
             pass
 
@@ -257,7 +257,7 @@ class TestGraphOptimization(unittest.TestCase):
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -299,7 +299,7 @@ class TestGraphOptimization(unittest.TestCase):
             from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml_2.yaml')
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -345,7 +345,7 @@ class TestGraphOptimization(unittest.TestCase):
             graph_optimizer.output = 'op_to_store, op2_to_store'
 
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
             for i in output_graph.graph_def.node:
                 if i.op == 'Cast':
@@ -390,7 +390,7 @@ class TestGraphOptimization(unittest.TestCase):
             graph_optimizer = Graph_Optimization('fake_yaml_3.yaml')
 
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -436,7 +436,7 @@ class TestGraphOptimization(unittest.TestCase):
             graph_optimizer.precisions = ['fp32', 'bf16']
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             self.assertIsNotNone(output_graph.graph_def)
@@ -481,7 +481,7 @@ class TestGraphOptimization(unittest.TestCase):
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.postprocess = common.Postprocess(data.transforms.transform.TensorflowWrapFunction(np.array))
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -528,7 +528,7 @@ class TestGraphOptimization(unittest.TestCase):
             graph_optimizer.model = output_graph_def
             graph_optimizer.eval_func = None
 
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -574,7 +574,7 @@ class TestGraphOptimization(unittest.TestCase):
 
             graph_optimizer.precisions = 'bf16'
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -681,7 +681,7 @@ class TestGraphOptimization(unittest.TestCase):
 
         graph_optimizer.precisions = 'bf16'
         graph_optimizer.model = float_graph_def
-        output_graph = graph_optimizer()
+        output_graph = graph_optimizer.fit()
         bn_bf16 = False
         for i in output_graph.graph_def.node:
             if i.op == 'FusedBatchNormV3' and i.attr['T'].type == dtypes.bfloat16:
@@ -723,7 +723,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
             graph_optimizer.output = 'op_to_store'
 
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -767,7 +767,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
             graph_optimizer.precisions = 'fp32'
 
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:
@@ -813,7 +813,7 @@ class TestGraphOptmizationFP32(unittest.TestCase):
             graph_optimizer.output = 'op_to_store'
 
             graph_optimizer.model = output_graph_def
-            output_graph = graph_optimizer()
+            output_graph = graph_optimizer.fit()
             found_cast_op = False
 
             for i in output_graph.graph_def.node:

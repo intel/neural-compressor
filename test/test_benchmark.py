@@ -49,12 +49,12 @@ from neural_compressor.conf.config import Benchmark_Conf
 benchmarker = Benchmark('fake_yaml.yaml')
 benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
 benchmarker.model = args.input_model
-benchmarker()
+benchmarker.fit()
 conf = Benchmark_Conf('fake_yaml.yaml')
 benchmarker = Benchmark(conf)
 benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
 benchmarker.model = args.input_model
-benchmarker()
+benchmarker.fit()
     '''
     # test normal case
     with open('fake.py', "w", encoding="utf-8") as f:
@@ -90,7 +90,7 @@ def build_benchmark_without_yaml():
         "benchmarker = Benchmark()\n",
         "benchmarker.model = args.input_model\n",
         "benchmarker.b_dataloader = common.DataLoader(dataset)\n",
-        "benchmarker()\n"
+        "benchmarker.fit()\n"
     ]
 
     with open('fake2.py', "w", encoding="utf-8") as f:
@@ -208,7 +208,7 @@ class TestObjective(unittest.TestCase):
         conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': [100,256,256,1], 'label':True}}
         benchmarker = Benchmark(conf)
         benchmarker.model = self.graph_path
-        benchmarker()
+        benchmarker.fit()
  
 if __name__ == "__main__":
     unittest.main()

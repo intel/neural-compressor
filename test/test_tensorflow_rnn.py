@@ -52,7 +52,7 @@ def quantize(model,q_data, e_data):
     quantizer.model= model
     quantizer.calib_dataloader = q_dataloader
     quantizer.eval_dataloader = e_dataloader
-    quantized_model = quantizer()
+    quantized_model = quantizer.fit()
     return quantized_model
 
 class TestTensorflowRnn(unittest.TestCase):

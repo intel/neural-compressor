@@ -190,7 +190,7 @@ def main():
                             temperature=args.temperature,
                             loss_types=args.loss_types,
                             loss_weights=args.loss_weights)
-    model = distiller()
+    model = distiller.fit()
     
     directory = "runs/%s/"%(args.name)
     os.makedirs(directory, exist_ok=True)

@@ -124,6 +124,6 @@ quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(dlrm)
 quantizer.calib_dataloader = eval_dataloader
 quantizer.eval_func = eval_func
-quantizer()
+quantizer.fit()
 ```
 

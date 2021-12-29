@@ -211,6 +211,8 @@ class Quantization(Component):
         """
         return super(Quantization, self).__call__()
 
+    fit = __call__
+
     def dataset(self, dataset_type, *args, **kwargs):
         from ..data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)

@@ -320,7 +320,7 @@ if __name__ == '__main__':
             quantizer.model = common.Model(fp32_model)
             quantizer.calib_dataloader = calib_data
             quantizer.eval_dataloader = data
-            q_model = quantizer()
+            q_model = quantizer.fit()
             q_model.save(args.output_graph)
             sys.exit()
         

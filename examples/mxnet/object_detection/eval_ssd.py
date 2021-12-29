@@ -276,7 +276,7 @@ if __name__ == '__main__':
         quantizer.calib_dataloader = val_data
         quantizer.eval_dataloader = val_data
         quantizer.eval_func = eval_func
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.output_graph)
         sys.exit()
 

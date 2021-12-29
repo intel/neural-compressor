@@ -168,7 +168,7 @@ def main():
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(args.config)
         quantizer.model = common.Model(model)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
 

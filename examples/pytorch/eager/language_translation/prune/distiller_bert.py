@@ -416,7 +416,7 @@ def train(args, train_dataset, model, tokenizer):
         prune.pruning_func = train_func
         prune.eval_dataloader = train_dataloader
         prune.eval_func = eval_func
-        model = prune()
+        model = prune.fit()
         torch.save(model, args.output_model)
 
 if __name__ == "__main__":

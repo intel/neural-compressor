@@ -84,7 +84,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
             found_conv_fusion = True
 
             for i in output_graph.graph_def.node:
@@ -120,7 +120,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
@@ -155,7 +155,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
@@ -192,7 +192,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
             found_conv_fusion = True
 
             for i in output_graph.graph_def.node:
@@ -227,7 +227,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_conv_fusion = False
 
@@ -273,7 +273,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_conv_fusion = False
 
@@ -319,7 +319,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             found_conv_fusion = False
 
@@ -370,7 +370,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             quantize_v2_count = 0
             for i in output_graph.graph_def.node:
@@ -416,7 +416,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             quantize_v2_count = 0
             for i in output_graph.graph_def.node:
@@ -450,7 +450,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             quantized_pool_data_type = None
             quantized_conv_data_type = None

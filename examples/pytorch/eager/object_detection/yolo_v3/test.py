@@ -180,7 +180,7 @@ if __name__ == "__main__":
         quantizer.eval_func = eval_func
         quantizer.calib_dataloader = nc_dataloader
 
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(opt.tuned_checkpoint)
         exit(0)
 

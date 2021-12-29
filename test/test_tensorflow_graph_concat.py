@@ -76,7 +76,7 @@ class TestTensorflowConcat(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = output_graph_def
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
         found_quantized_concat_node = False
 
         target_concat_node_name = 'v0/cg/incept_v3_a0/concat_eightbit_quantized_concatv2'
@@ -139,7 +139,7 @@ class TestTensorflowConcat(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
-            output_graph = quantizer()
+            output_graph = quantizer.fit()
 
             quantized_concat = False
             for i in output_graph.graph_def.node:

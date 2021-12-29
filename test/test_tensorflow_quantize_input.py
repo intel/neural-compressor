@@ -72,7 +72,7 @@ class TestQuantizeInput(unittest.TestCase):
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = constant_graph
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
             framework_specific_info = {'device': 'cpu', 'approach': 'post_training_static_quant', \
                 'random_seed': 1978, 'inputs': ['input'], 'outputs': ['op_to_store'], \

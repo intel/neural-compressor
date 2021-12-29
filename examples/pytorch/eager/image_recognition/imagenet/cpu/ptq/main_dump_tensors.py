@@ -161,7 +161,7 @@ def main():
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf_dump_tensors.yaml")
         quantizer.model = common.Model(model)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         return
 
 def train(train_loader, model, criterion, optimizer, epoch, args):

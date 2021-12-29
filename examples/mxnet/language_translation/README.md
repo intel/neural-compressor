@@ -136,8 +136,8 @@ After prepare step is done, we just need update main.py like below.
     quantizer.calib_dataloader = calib_data
     quantizer.eval_dataloader = calib_data
     quantizer.eval_func = test_func
-    q_model = quantizer()
+    q_model = quantizer.fit()
 
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.

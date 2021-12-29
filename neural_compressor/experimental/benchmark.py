@@ -109,6 +109,8 @@ class Benchmark(object):
         else:
             return self.config_instance()
 
+    fit = __call__
+
     def config_instance(self):
         raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
         multi_instance_cmd = ''

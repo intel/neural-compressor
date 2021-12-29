@@ -205,7 +205,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             quantizer.calib_dataloader = dataloader
             quantizer.model = model
             quantizer.eval_func = eval_func
-            q_model = quantizer()
+            q_model = quantizer.fit()
             q_model.save(args.tuned_checkpoint)
 
         elif args.int8:

@@ -115,8 +115,8 @@ After prepare step is done, we add tune code to generate quantized model.
     quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, batch_size=FLAGS.batch_size)
     quantizer.model = common.Model(graph)
     quantizer.eval_func = eval_func
-    q_model = quantizer()
+    q_model = quantizer.fit()
     q_model.save(FLAGS.output_model)
 ```
 
-The Intel® Neural Compressor quantizer() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantizer.fit() function will return a best quantized model under time constraint.

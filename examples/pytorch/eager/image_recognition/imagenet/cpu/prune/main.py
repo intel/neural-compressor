@@ -234,7 +234,7 @@ def main_worker(args):
         prune._train_dataloader = train_loader
         prune._eval_dataloader = val_loader 
         prune._pruning_func = train_func 
-        model = prune()
+        model = prune.fit()
         model.save(args.output_model)
         return
 

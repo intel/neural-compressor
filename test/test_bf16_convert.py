@@ -300,7 +300,7 @@ class TestBF16Convert(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.test_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
         cast_op_count = 0
         for node in output_graph.graph_def.node:
             if node.op == 'Cast':
@@ -352,7 +352,7 @@ class TestBF16Convert(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(
             dataset=list(zip(evl_data[0], evl_data[1])))
         quantizer.model = graph_def
-        quantized_model = quantizer()
+        quantized_model = quantizer.fit()
 
         convert_to_bf16_flag = False
         for i in quantized_model.graph_def.node:

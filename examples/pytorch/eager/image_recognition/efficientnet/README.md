@@ -151,7 +151,7 @@ model.fuse_model()
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("./conf_efficientnet_b0.yaml")
 quantizer.model = common.Model(model)
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.(Please refer [sample code](./validate.py))
+The quantizer.fit() function will return a best quantized model during timeout constrain.(Please refer [sample code](./validate.py))

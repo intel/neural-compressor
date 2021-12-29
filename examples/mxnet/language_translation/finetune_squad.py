@@ -908,7 +908,7 @@ if __name__ == '__main__':
         quantizer.calib_dataloader = dev_dataloader
         quantizer.eval_dataloader = dev_dataloader
         quantizer.eval_func = eval_func
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.output_dir)
     elif model_parameters or deploy:
         evaluate()

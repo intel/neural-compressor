@@ -33,7 +33,7 @@ quantizer = Quantization(args.config)
 quantizer.model = args.input_model
 quantizer.eval_dataloader = common.DataLoader(ds, args.batch_size)
 quantizer.calib_dataloader = common.DataLoader(ds, args.batch_size)
-q_model = quantizer()
+q_model = quantizer.fit()
 q_model.save(args.output_model)
 ```
 There are several build-in metrics in INC. In this example, MRPC is used and configured in bert.yaml:

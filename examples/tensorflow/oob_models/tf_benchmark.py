@@ -292,7 +292,7 @@ if __name__ == "__main__":
                                                        batch_size=args.batch_size,
                                                        collate_fn=oob_collate_data_func)
         quantizer.model = args.model_path
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.output_path)
 
     # benchmark

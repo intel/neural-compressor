@@ -611,7 +611,7 @@ def main():
                                 temperature=args.temperature,
                                 loss_types=args.loss_types,
                                 loss_weights=args.loss_weights)
-        model = distiller()
+        model = distiller.fit()
         model.save(args.output_dir)
         # change to framework model for further use
         model = model.model

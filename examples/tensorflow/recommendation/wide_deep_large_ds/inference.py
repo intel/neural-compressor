@@ -187,7 +187,7 @@ class eval_classifier_optimized_graph:
             quantizer.model = infer_graph
             quantizer.calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
             quantizer.eval_func = self.eval_inference
-            q_model = quantizer()
+            q_model = quantizer.fit()
             return q_model
         else:
             print("Please provide calibration dataset!")

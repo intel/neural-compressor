@@ -127,7 +127,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
 
     def test_weight_correction(self):
         from neural_compressor.experimental import Quantization, common
@@ -136,7 +136,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
 
 
 if __name__ == "__main__":

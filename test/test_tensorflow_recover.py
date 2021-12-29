@@ -107,7 +107,7 @@ class TestTensorflowRecover(unittest.TestCase):
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = constant_graph
-            q_model = quantizer()
+            q_model = quantizer.fit()
 
             from neural_compressor.utils.utility import recover
             recover_model = recover('./test.pb', './saved/history.snapshot', 0)
@@ -173,7 +173,7 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = constant_graph
-            q_model = quantizer()
+            q_model = quantizer.fit()
             found_cast_op = False
 
             from neural_compressor.utils.utility import recover

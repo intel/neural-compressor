@@ -134,7 +134,7 @@ quantizer = Quantization(args.nc_yaml)
 quantizer.model = model
 quantizer.calib_dataloader = dataloader
 quantizer.eval_func = eval_func
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.(Please refer [sample code](./classify.py))
+The quantizer.fit() function will return a best quantized model during timeout constrain.(Please refer [sample code](./classify.py))

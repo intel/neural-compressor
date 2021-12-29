@@ -758,7 +758,7 @@ if __name__ == '__main__':
             quantizer.calib_dataloader = calib_data 
             quantizer.eval_dataloader = calib_data
             quantizer.eval_func = test_func
-            q_model = quantizer()
+            q_model = quantizer.fit()
             q_model.save(args.output_dir)
     else:
         train(task.metrics)

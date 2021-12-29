@@ -148,8 +148,8 @@ After prepare step is done, we just need update imagenet_inference.py like below
     quantizer.model = common.Model(fp32_model)
     quantizer.calib_dataloader = data
     quantizer.eval_dataloader = data
-    q_model = quantizer()
+    q_model = quantizer.fit()
 
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.

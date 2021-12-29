@@ -79,7 +79,7 @@ def main():
         scheduler.model = common.Model(model)
         scheduler.append(prune)
         scheduler.append(quantizer)
-        opt_model = scheduler()
+        opt_model = scheduler.fit()
         opt_model.save(args.tuned_checkpoint)
         return
 
@@ -89,7 +89,7 @@ def main():
         model.fuse_model()
         quantizer = Quantization("./ptq_conf.yaml")
         quantizer.model = common.Model(model)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
 
@@ -98,7 +98,7 @@ def main():
         prune = Pruning('./prune_conf.yaml')
 
         prune.model = common.Model(model)
-        p_model = prune()
+        p_model = prune.fit()
         p_model.save(args.tuned_checkpoint)
         return
 

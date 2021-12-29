@@ -92,7 +92,7 @@ from neural_compressor.experimental import Distillation, common
 distiller = Distillation('/path/to/user/yaml')
 distiller.student_model = student_model
 distiller.teacher_model = teacher_model
-model = distiller()
+model = distiller.fit()
 ```
 Distillation class also support Distillation_Conf class as it's argument.
 
@@ -103,7 +103,7 @@ conf = Distillation_Conf('/path/to/user/yaml')
 distiller = Distillation(conf)
 distiller.student_model = student_model
 distiller.teacher_model = teacher_model
-model = distiller()
+model = distiller.fit()
 ```
 
 ### User-defined yaml
@@ -238,7 +238,7 @@ distiller.student_model = model
 distiller.teacher_model = teacher
 distiller.criterion = PyTorchKnowledgeDistillationLoss()
 distiller.train_func = train_func
-model = distiller()
+model = distiller.fit()
 ```
 
 ## Examples

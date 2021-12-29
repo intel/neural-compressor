@@ -50,7 +50,7 @@ quantizer.metric = MyMetric()
 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.model = common.Model('../models/saved_model')
-q_model = quantizer()
+q_model = quantizer.fit()
 
 # Optional, run quantized model
 import tensorflow as tf

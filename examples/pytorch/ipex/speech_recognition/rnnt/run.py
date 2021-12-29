@@ -150,7 +150,7 @@ def main():
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = calib_dataloader
         quantizer.eval_func = eval_func
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
 

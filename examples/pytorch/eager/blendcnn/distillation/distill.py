@@ -209,7 +209,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
         distiller.criterion = criterion
         distiller.train_func = train_func
         distiller.eval_func = eval_func
-        model = distiller()
+        model = distiller.fit()
         model.save(args.output_model)
         return
 

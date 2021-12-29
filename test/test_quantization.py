@@ -236,7 +236,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
 
     def test_resume(self):
         from neural_compressor.experimental import Quantization, common
@@ -245,12 +245,12 @@ class TestQuantization(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
         quantizer = Quantization('fake_yaml2.yaml')
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
 
     def test_autodump(self):
         # test auto_dump using old api
@@ -269,7 +269,16 @@ class TestQuantization(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
+
+    def test_fit_method(self):
+        from neural_compressor.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml4.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        output_graph = quantizer.fit()
 
     def test_quantization_without_yaml(self):
         from neural_compressor.experimental import Quantization, common
@@ -278,7 +287,7 @@ class TestQuantization(unittest.TestCase):
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
 
     def test_invalid_eval_func(self):
         from neural_compressor.experimental import Quantization, common
@@ -290,7 +299,7 @@ class TestQuantization(unittest.TestCase):
         def invalid_eval_func(model):
           return [1.]
         quantizer.eval_func = invalid_eval_func
-        output_graph = quantizer()
+        output_graph = quantizer.fit()
 
 if __name__ == "__main__":
     unittest.main()

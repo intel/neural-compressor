@@ -29,7 +29,7 @@ dl = dataset('/path/to/dataset')
 quantizer.calib_dataloader = common.DataLoader(dl, batch_size=32)
 quantizer.eval_dataloader = common.DataLoader(dl, batch_size=32)
 quantizer.metric = common.Metric(custom_metric) 
-q_model = quantizer()
+q_model = quantizer.fit()
 q_model.save('/path/to/output/dir') # explicitly call to save q_model
 
 ```

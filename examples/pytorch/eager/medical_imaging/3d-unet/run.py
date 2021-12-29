@@ -187,7 +187,7 @@ def main():
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func
         quantizer.calib_dataloader = common.DataLoader(CalibrationDL())
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save('./nc_workspace')
         exit(0)
 

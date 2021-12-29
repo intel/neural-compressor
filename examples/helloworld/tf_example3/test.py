@@ -11,7 +11,7 @@ def main():
 
     # Do quantization
     quantizer.model = common.Model('./inception_v1.ckpt')
-    quantized_model = quantizer()
+    quantized_model = quantizer.fit()
   
      
 if __name__ == "__main__":

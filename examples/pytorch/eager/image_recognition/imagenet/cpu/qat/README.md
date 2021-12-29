@@ -99,11 +99,11 @@ quantizer = Quantization(args.config)
 quantizer.model = common.Model(model)
 quantizer.calib_dataloader = train_loader
 quantizer.eval_dataloader = val_loader
-q_model = quantizer()
+q_model = quantizer.fit()
 q_model.save(args.tuned_checkpoint)
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.
 
 
 ### Without buildin training function
@@ -202,10 +202,10 @@ quantizer = Quantization("./conf.yaml")
 quantizer.model = common.Model(model)
 quantizer.q_func = training_func_for_nc
 quantizer.eval_dataloader = val_loader
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.
 
 
 

@@ -39,6 +39,6 @@ python test.py
     
     quantizer = Quantization(conf)
     quantizer.model = common.Model("../models/frozen_graph.pb")
-    quantizer()
+    quantizer.fit()
 ```
 

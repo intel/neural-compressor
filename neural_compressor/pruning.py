@@ -151,3 +151,5 @@ class Pruning:
         self.exp_pruner.eval_dataloader = eval_dataloader
         self.exp_pruner.eval_func = eval_func
         return self.exp_pruner()
+
+    fit = __call__

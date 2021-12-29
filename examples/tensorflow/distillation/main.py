@@ -74,12 +74,12 @@ def main_worker(args):
     teacher_model = tf.keras.applications.DenseNet201(weights='imagenet')
 
     if args.distillation:
-        from neural_compressor.experimental import Distillation, common
+        from neural_compressor.experimental import Distillation
         distiller = Distillation(args.config)
 
-        distiller.model = common.Model(model)
-        distiller.teacher_model = common.Model(teacher_model)
-        model = distiller()
+        distiller.model = model
+        distiller.teacher_model = teacher_model
+        model = distiller.fit()
         model.save(args.output_model)
         return
 

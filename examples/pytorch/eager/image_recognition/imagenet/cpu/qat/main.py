@@ -226,7 +226,7 @@ def main():
         quantizer.model = common.Model(model)
         quantizer.q_func = training_func_for_nc
         quantizer.eval_dataloader = val_loader
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
 

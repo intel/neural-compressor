@@ -128,7 +128,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer()
+        quantizer.fit()
 
 
     def test_run_basic_max_trials(self):
@@ -139,7 +139,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer()
+        quantizer.fit()
 
 if __name__ == "__main__":
     unittest.main()

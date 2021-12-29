@@ -70,7 +70,7 @@ def main():
         quantizer.model = common.Model(args.input_model)
         quantizer.eval_dataloader = common.DataLoader(ds, args.batch_size)
         quantizer.calib_dataloader = common.DataLoader(ds, args.batch_size)
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(args.output_model)
 
 if __name__ == '__main__':

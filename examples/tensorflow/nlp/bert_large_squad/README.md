@@ -165,7 +165,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
         from neural_compressor.quantization import Quantization
         quantizer = Quantization('./bert.yaml')
         quantizer.model = FLAGS.input_model
-        q_model = quantizer()
+        q_model = quantizer.fit()
         q_model.save(FLAGS.output_model)
 
 ```
@@ -184,4 +184,4 @@ After prepare step is done, we add tune and benchmark code to generate quantized
             print('Latency: {:.3f} ms'.format(latency * 1000))
             print('Throughput: {:.3f} images/sec'.format(1./ latency))
 ```
-The Intel® Neural Compressor quantizer() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantizer.fit() function will return a best quantized model under time constraint.

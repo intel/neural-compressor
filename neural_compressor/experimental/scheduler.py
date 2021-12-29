@@ -150,6 +150,8 @@ class Scheduler(object):
 
         return model
 
+    fit = __call__
+
     def combine(self, *args):
         """Combine neural_compressor components into a new component.
            Args:

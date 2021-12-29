@@ -18,7 +18,7 @@ def main():
     conf.tuning.accuracy_criterion.absolute = 0.9
     quantizer = Quantization(conf)
     quantizer.model = common.Model("../models/frozen_graph.pb")
-    quantizer()
+    quantizer.fit()
       
 if __name__ == "__main__":
 

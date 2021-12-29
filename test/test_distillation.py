@@ -137,7 +137,7 @@ class TestDistillation(unittest.TestCase):
         distiller.student_model = self.student_model
         distiller.teacher_model = self.teacher_model
         print('student model: {}'.format(distiller.student_model))
-        _ = distiller()
+        _ = distiller.fit()
 
     def test_distillation_external(self):
         import tensorflow as tf
@@ -189,7 +189,7 @@ class TestDistillation(unittest.TestCase):
         distiller.train_func = training_func_for_nc
         distiller.eval_dataloader = dummy_dataloader
         distiller.train_dataloader = dummy_dataloader
-        _ = distiller()
+        _ = distiller.fit()
         distiller.train_func = create_train_func(
                                                 distiller.framework, \
                                                 distiller.train_dataloader, \
@@ -207,7 +207,7 @@ class TestDistillation(unittest.TestCase):
         distiller.student_model = self.student_model_tf
         distiller.teacher_model = self.teacher_model_tf
         print('student model: {}'.format(distiller.student_model))
-        _ = distiller()
+        _ = distiller.fit()
 
 if __name__ == "__main__":
     unittest.main()

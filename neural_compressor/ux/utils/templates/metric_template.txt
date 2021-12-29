@@ -20,5 +20,5 @@ class MyMetric(BaseMetric):
 quantizer = Quantization('{{config_path}}')
 quantizer.model = '{{model_path}}'
 quantizer.metric = common.Metric(metric_cls=MyMetric, name='my_metric')
-quantized_model = quantizer()
+quantized_model = quantizer.fit()
 quantized_model.save('{{model_output_path}}')

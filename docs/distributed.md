@@ -43,7 +43,7 @@ Do quantization based on distributed training/inference
 from neural_compressor.experimental import Quantization, common
 quantizer = Quantization("yaml_file_path")
 quantizer.model = model
-q_model = quantizer()                          # q_model -> quantized low-precision model 
+q_model = quantizer.fit()                          # q_model -> quantized low-precision model 
 ```
 
 Only do model accuracy evaluation based on distributed inference

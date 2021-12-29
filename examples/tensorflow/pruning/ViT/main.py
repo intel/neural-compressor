@@ -45,8 +45,8 @@ if __name__ == '__main__':
     training_set, test_set = prepare_dataset()
     prune.train_dataloader = common.DataLoader(training_set, batch_size=128)
     prune.eval_dataloader = common.DataLoader(test_set, batch_size=256)
-    prune.model = common.Model('./ViT_Model')
-    model = prune()
+    prune.model = './ViT_Model'
+    model = prune.fit()
     stats, sparsity = model.report_sparsity()
     logger.info(stats)
     logger.info(sparsity)

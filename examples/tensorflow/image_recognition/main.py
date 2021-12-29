@@ -54,7 +54,7 @@ class eval_classifier_optimized_graph:
           from neural_compressor.experimental import Quantization, common
           quantizer = Quantization(self.args.config)
           quantizer.model = common.Model(self.args.input_graph)
-          q_model = quantizer()
+          q_model = quantizer.fit()
           q_model.save(self.args.output_graph)
 
       if self.args.benchmark:

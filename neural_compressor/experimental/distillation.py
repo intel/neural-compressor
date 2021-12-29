@@ -260,6 +260,8 @@ class Distillation(Component):
         """
         return super(Distillation, self).__call__()
 
+    fit = __call__
+
     @property
     def criterion(self):
         return self._criterion

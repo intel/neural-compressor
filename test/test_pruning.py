@@ -90,7 +90,7 @@ class TestPruning(unittest.TestCase):
         prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
-        _ = prune()
+        _ = prune.fit()
 
     def test_pruning_external(self):
         from neural_compressor.experimental import common
@@ -134,10 +134,10 @@ class TestPruning(unittest.TestCase):
         prune.pruning_func = training_func_for_nc
         prune.eval_dataloader = dummy_dataloader
         prune.train_dataloader = dummy_dataloader
-        _ = prune(self.model, \
-                  train_dataloader=dummy_dataloader, \
-                  pruning_func=training_func_for_nc, \
-                  eval_dataloader=dummy_dataloader)
+        _ = prune.fit(self.model, \
+                      train_dataloader=dummy_dataloader, \
+                      pruning_func=training_func_for_nc, \
+                      eval_dataloader=dummy_dataloader)
 
 if __name__ == "__main__":
     unittest.main()

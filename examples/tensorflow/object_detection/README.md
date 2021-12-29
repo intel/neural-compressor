@@ -243,7 +243,7 @@ quantizer.model = common.Model(args.input_graph)
 quantizer.calib_dataloader = infer
 quantizer.eval_dataloader = infer
 quantizer.eval_func = infer.accuracy_check
-q_model = quantizer()
+q_model = quantizer.fit()
 ```
 
-The quantizer() function will return a best quantized model during timeout constrain.
+The quantizer.fit() function will return a best quantized model during timeout constrain.

@@ -412,7 +412,7 @@ After completed preparation steps, we just need to add below tuning part in `eva
     from neural_compressor.experimental import Quantization, common
     quantizer = Quantization(self.args.config)
     quantizer.model = common.Model(self.args.input_graph)
-    q_model = quantizer()
+    q_model = quantizer.fit()
     return q_model
 ```
 
@@ -420,4 +420,4 @@ Finally, add one line in `__main__` function of `eval_image_-classifier_inferenc
 ```python
 q_graph = evaluate_opt_graph.auto_tune()
 ```
-The quantizer() function will return a best quantized model within timeout constrain.
+The quantizer.fit() function will return a best quantized model within timeout constrain.
