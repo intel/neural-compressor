@@ -45,9 +45,13 @@ class ExpandDimsOptimizer(GraphRewriterBase):
 
         for node_combination in target_nodes:
             expanddims_node = graph_info[node_combination[0]].node
-            weight_node =  graph_info[expanddims_node.input[0]].node
             dims_node =  graph_info[expanddims_node.input[1]].node
             next_node =  graph_info[graph_info[node_combination[0]].outputs[0]].node
+            # to solve the case that input 0 of ExpandDims is a tensor, not a node
+            if expanddims_node.input[0] in graph_info:
+                weight_node =  graph_info[expanddims_node.input[0]].node
+            else:
+                continue
             
             if weight_node.op == 'Const' and next_node.op == 'Conv2D':
                 dims = Helper.values_from_const(dims_node)
