@@ -487,7 +487,9 @@ void sparse_gemm_bsc_bias_sigmod_f32(int64_t M, int64_t N, int64_t K, const floa
     i_sigmoid(C + i);
   }
 }
+#endif
 
+#if __AVX512VNNI__
 /********* int8 kernel *********/
 // output f32
 void sparse_gemm_bsc_4x16_u8s8f32(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,

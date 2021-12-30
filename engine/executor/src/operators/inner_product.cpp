@@ -16,12 +16,10 @@
 
 namespace executor {
 
-static unordered_map<string, dnnl::memory::data_type> type2mem{{"fp32", dnnl::memory::data_type::f32},
-                                                               {"s32", dnnl::memory::data_type::s32},
-                                                               {"fp16", dnnl::memory::data_type::f16},
-                                                               {"u8", dnnl::memory::data_type::u8},
-                                                               {"s8", dnnl::memory::data_type::s8},
-                                                               {"bf16", dnnl::memory::data_type::bf16}};
+static unordered_map<string, dnnl::memory::data_type> type2mem{
+    {"fp32", dnnl::memory::data_type::f32}, {"s32", dnnl::memory::data_type::s32},
+    {"fp16", dnnl::memory::data_type::f16}, {"u8", dnnl::memory::data_type::u8},
+    {"s8", dnnl::memory::data_type::s8},    {"bf16", dnnl::memory::data_type::bf16}};
 
 InnerProductOperator::InnerProductOperator(const OperatorConfig& conf)
     : Operator(conf),
@@ -170,7 +168,15 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
   }
 #ifndef __AVX512F__
   if (!dense_flag_) {
-    LOG(ERROR) << "Sparse kernel in InnerProduct only supports AVX512!";
+    if (!src1_) {
+      dense_flag_ = true;
+      LOG(ERROR) << "Sparse fp32 kernel in InnerProduct only supports AVX512!";
+    } else {
+#ifndef __AVX512VNNI__
+      dense_flag_ = true;
+      LOG(ERROR) << "Sparse int8 kernel in InnerProduct only supports AVX512VNNI!";
+#endif
+    }
   }
 #endif
   if (dense_flag_) {
@@ -277,6 +283,7 @@ void InnerProductOperator::ForwardSparse(const vector<Tensor*>& input, const vec
       }
     }
   } else {  // int8 kernel
+#if __AVX512VNNI__
     const int64_t* rowidxs = sparse_weight_int8_->rowidxs;
     const int64_t* colptr = sparse_weight_int8_->colptr;
     const int64_t ncolptr = sparse_weight_int8_->ncolptr;
@@ -334,6 +341,7 @@ void InnerProductOperator::ForwardSparse(const vector<Tensor*>& input, const vec
         }
       }
     }
+#endif
   }
 }
 #endif
