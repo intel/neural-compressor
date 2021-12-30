@@ -4,3 +4,4 @@ protobuf
 sacrebleu >= 1.4.12
 rouge-score
 nltk==3.6.5
+transformers==4.10.0

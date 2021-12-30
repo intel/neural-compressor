@@ -2,7 +2,7 @@ Step-by-Step
 ============
 
 This document is used to list steps of reproducing PyTorch BERT pattern lock pruning examples result.
-Original BERT documents please refer to [BERT README](../../../../common/BERT_README.md) and [README](../../../../common/examples/question-answering/README.md).
+Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/question-answering/README.md).
 
 # Prerequisite
 
