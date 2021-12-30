@@ -315,7 +315,7 @@ if __name__ == '__main__':
     with open('fake_ut.py', 'w', encoding="utf-8") as f:
         f.write(fake_ut)
         build_fake_yaml()
-        cmd = 'cp -r ../examples/tensorflow/pruning/resnet_v2/baseline_model ./'
+        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
 
 def build_fake_yaml():
@@ -359,7 +359,7 @@ class TestDistributed(unittest.TestCase):
     def setUpClass(cls):
         build_fake_ut()
         build_fake_yaml()
-        cmd = 'cp -r ../examples/tensorflow/pruning/resnet_v2/baseline_model ./'
+        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
     
     @classmethod

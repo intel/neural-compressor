@@ -325,7 +325,7 @@ class TestTensorflowPruning(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-        cmd = 'cp -r ../examples/tensorflow/pruning/resnet_v2/baseline_model ./'
+        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
 
     @classmethod

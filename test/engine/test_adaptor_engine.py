@@ -123,13 +123,13 @@ class TestDeepengineAdaptor(unittest.TestCase):
 
     def test_adaptor(self):
         quantizer = Quantization('test.yaml')
-        quantizer.model = "/home/tensorflow/test-engine/bert_mlperf_2none.pb"
+        quantizer.model = "/home/tensorflow/inc_ut/engine/bert_mlperf_2none.pb"
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
     def test_adaptor_bf16(self):
         quantizer = Quantization('test_bf16.yaml')
-        quantizer.model = "/home/tensorflow/test-engine/bert_mlperf_2none.pb"
+        quantizer.model = "/home/tensorflow/inc_ut/engine/bert_mlperf_2none.pb"
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 

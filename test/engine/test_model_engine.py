@@ -71,7 +71,7 @@ class TestDeepengineModel(unittest.TestCase):
         build_yaml()
 
     def test_model(self):
-        model_dir = "/home/tensorflow/test-engine/bert_mlperf_2none.pb"
+        model_dir = "/home/tensorflow/inc_ut/engine/bert_mlperf_2none.pb"
         if not os.path.exists(model_dir):
            print("The model dir is not not found, therefore test may not all round")
            return
