@@ -140,15 +140,15 @@ horovodrun requires user set up SSH on all hosts without any prompts. To do dist
 ## Following examples are supported
 PyTorch:
 - PyTorch example-1: MNIST
-  - Please follow this README.md exactly：[MNIST](../examples/pytorch/eager/image_recognition/mnist)
+  - Please follow this README.md exactly：[MNIST](../examples/pytorch/image_recognition/mnist)
 
 - PyTorch example-2: QAT (Quantization Aware Training)
-  - Please follow this README.md exactly：[QAT](../examples/pytorch/eager/image_recognition/imagenet/cpu/distributed)
+  - Please follow this README.md exactly：[QAT](../examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed)
 
 TensorFlow:
 - TensorFlow example-1: 'ResNet50 V1.0' PTQ (Post Training Quantization) with distributed inference    
   - Step-1: Please cd (change directory) to the [TensorFlow Image Recognition Example](../examples/tensorflow/image_recognition) and follow the readme to run PTQ, ensure that PTQ of 'ResNet50 V1.0' can be successfully executed.
-  - Step-2: We only need to modify the [resnet50_v1.yaml](../examples/tensorflow/image_recognition/tensorflow_models/quantization/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
+  - Step-2: We only need to modify the [resnet50_v1.yaml](../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
     ```
     # only need to modify the resnet50_v1.yaml, add a line 'distributed: True'
     ......

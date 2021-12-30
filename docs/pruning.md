@@ -323,9 +323,9 @@ Following examples are supported in Neural Compressor:
 
 - CNN Examples:
   - [resnet example](../examples/pytorch/image_recognition/torchvision_models/pruning/magnitude/eager/README.md): magnitude pruning on resnet.
-  - [pruning and post-training quantization](../examples/pytorch/image_recognition/torchvision_models/schedule/two_shot/eager/README.md): magnitude pruning and then post-training quantization on resnet.
-  - [resnet_v2 example](../examples/tensorflow/image_recognition/resnet_v2/pruning/README.md): magnitude pruning on resnet_v2 for tensorflow.
+  - [pruning and post-training quantization](../examples/pytorch/image_recognition/torchvision_models/optimization_pipeline/prune_and_ptq/eager/README.md): magnitude pruning and then post-training quantization on resnet.
+  - [resnet_v2 example](../examples/tensorflow/image_recognition/resnet_v2/pruning/magnitude/README.md): magnitude pruning on resnet_v2 for tensorflow.
 - NLP Examples:
-  - [BERT example](../examples/pytorch/eager/language_translation/prune/README.md): magnitude pruning on DistilBERT.
-  - [BERT example](../examples/pytorch/nlp/huggingface_models/README.md): Pattern-lock and head-pruning on BERT-base.
+  - [BERT example](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/magnitude/eager/README.md): magnitude pruning on DistilBERT.
+  - [BERT example](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager/README.md): Pattern-lock and head-pruning on BERT-base.
 

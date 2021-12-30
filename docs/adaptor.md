@@ -203,7 +203,7 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
 
 1. Capability
    
-   The user should explore quantization capability first. According to [onnx_quantizer](https://github.com/microsoft/onnxruntime/blob/503b61d897074a494f5798069308ee67d8fb9ace/onnxruntime/python/tools/quantization/onnx_quantizer.py#L77), the quantization tools support the following attributes:
+   The user should explore quantization capability first. According to [onnx_quantizer](https://github.com/microsoft/onnxruntime/blob/503b61d897074a494f5798069308ee67d8fb9ace/onnxruntime/python/tools/quantization/onnx_quantizer.py#L76), the quantization tools support the following attributes:
    * whether per_channel
    * whether reduce_range
    * QLinear mode or Integer mode (which is only seen in onnxruntime)
