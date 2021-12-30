@@ -33,15 +33,15 @@ Click the image to enlarge it.
 #### Supported Frameworks
 
 Supported deep learning frameworks are:
-* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP3](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3), [1.15.0 UP2](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up2), [1.15.0 UP1](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up1), [2.1.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.1.0), [2.2.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.2.0), [2.3.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.3.0), [2.4.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.4.0), [2.5.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.5.0), [Official TensorFlow 2.6.0](https://github.com/tensorflow/tensorflow/tree/v2.6.0)
+* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP3](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3), [2.5.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.5.0), [2.7.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.5.0), [Official TensorFlow 2.6.2](https://github.com/tensorflow/tensorflow/tree/v2.6.2), [Official TensorFlow 2.7.0](https://github.com/tensorflow/tensorflow/tree/v2.7.0)
 
 >  **Note**: Intel Optimized TensorFlow 2.5.0 requires to set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 before running Neural Compressor quantization or deploying the quantized model.
 
 >  **Note**: From the official TensorFlow 2.6.0, oneDNN support has been upstreamed. Download the official TensorFlow 2.6.0 binary for the CPU device and set the environment variable TF_ENABLE_ONEDNN_OPTS=1 before running the quantization process or deploying the quantized model.
 
-* [PyTorch\*](https://pytorch.org/), including [1.5.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
+* [PyTorch\*](https://pytorch.org/), including [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.10.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
-* [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.6.0](https://github.com/microsoft/onnxruntime/tree/v1.6.0), [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0)
+* [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0), [1.9.0](https://github.com/microsoft/onnxruntime/tree/v1.9.0)
 * [Execution Engine](./docs/engine.md), a reference bare metal solution(./engine) for domain-specific NLP models.
 
 ## Installation
@@ -229,48 +229,30 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
 </thead>
 <tbody>
   <tr>
-    <td class="tg-nrix" rowspan="20">Cascade Lake<br><br>Cooper Lake<br><br>Skylake<br><br>Ice Lake</td>
-    <td class="tg-nrix" rowspan="20">CentOS 8.3<br><br>Ubuntu 18.04</td>
-    <td class="tg-nrix" rowspan="20">3.6<br><br>3.7<br><br>3.8<br><br>3.9</td>
-    <td class="tg-cly1" rowspan="10">TensorFlow</td>
-    <td class="tg-7zrl">2.6.0</td>
+    <td class="tg-nrix" rowspan="14">Cascade Lake<br><br>Cooper Lake<br><br>Skylake<br><br>Ice Lake</td>
+    <td class="tg-nrix" rowspan="14">CentOS 8.3<br><br>Ubuntu 18.04</td>
+    <td class="tg-nrix" rowspan="14">3.6<br><br>3.7<br><br>3.8<br><br>3.9</td>
+    <td class="tg-cly1" rowspan="4">TensorFlow</td>
+    <td class="tg-7zrl">2.7.0</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">2.6.2</td>
   </tr>
   <tr>
     <td class="tg-7zrl">2.5.0</td>
   </tr>
   <tr>
-    <td class="tg-7zrl">2.4.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">2.3.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">2.2.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">2.1.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.15.0 UP1</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.15.0 UP2</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.15.0 UP3</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.15.2</td>
+    <td class="tg-7zrl">1.15.0UP3</td>
   </tr>
   <tr>
     <td class="tg-7zrl" rowspan="4">PyTorch</td>
-    <td class="tg-7zrl">1.5.0+cpu</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.8.0+cpu</td>
+    <td class="tg-7zrl">1.10.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.9.0+cpu</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">1.8.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">IPEX</td>
@@ -287,13 +269,13 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
   </tr>
   <tr>
     <td class="tg-7zrl" rowspan="3">ONNX Runtime</td>
-    <td class="tg-7zrl">1.6.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.7.0</td>
+    <td class="tg-7zrl">1.9.0</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.8.0</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">1.7.0</td>
   </tr>
 </tbody>
 </table>
@@ -340,7 +322,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
   <tr>
     <td>PyTorch</td>
     <td>Yes</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/eager/language_translation">Link</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.8/examples/pytorch/eager/language_translation">Link</a></td>
   </tr>
   <tr>
     <td rowspan="2">SSD-ResNet34</td>
@@ -378,193 +360,185 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 <table>
 <thead>
   <tr>
-    <th rowspan="3">Framework</th>
-    <th rowspan="3">Version</th>
-    <th rowspan="3">Model</th>
+    <th rowspan="2">Framework</th>
+    <th rowspan="2">version</th>
+    <th rowspan="2">model</th>
     <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance</th>
+    <th colspan="3">Performance/ICX8380/1s4c10ins1bs/throughput(samples/sec)</th>
   </tr>
   <tr>
-    <th rowspan="2">INT8 Tuning Accuracy</th>
-    <th rowspan="2">FP32 Accuracy Baseline</th>
-    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 throughput</th>
-    <th>FP32 throughput</th>
-    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
-  </tr>
-  <tr>
-    <th>CLX8280 1s 4c per instance bs1</th>
-    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>resnet50v1.0</td>
-    <td>74.24%</td>
+    <td>74.11%</td>
     <td>74.27%</td>
-    <td>-0.04%</td>
-    <td>925.93</td>
-    <td>329.57</td>
-    <td>2.81x</td>
+    <td>-0.22%</td>
+    <td>1287.00</td>
+    <td>495.29</td>
+    <td>2.60x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>resnet50v1.5</td>
-    <td>76.94%</td>
+    <td>76.82%</td>
     <td>76.46%</td>
-    <td>0.63%</td>
-    <td>726.14</td>
-    <td>281.58</td>
-    <td>2.58x</td>
+    <td>0.47%</td>
+    <td>1218.03</td>
+    <td>420.34</td>
+    <td>2.90x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>resnet101</td>
-    <td>77.21%</td>
+    <td>77.50%</td>
     <td>76.45%</td>
-    <td>0.99%</td>
-    <td>549.88</td>
-    <td>227.27</td>
-    <td>2.42x</td>
+    <td>1.37%</td>
+    <td>849.62</td>
+    <td>345.54</td>
+    <td>2.46x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>inception_v1</td>
-    <td>70.30%</td>
+    <td>70.48%</td>
     <td>69.74%</td>
-    <td>0.80%</td>
-    <td>1256.73</td>
-    <td>705.65</td>
-    <td>1.78x</td>
+    <td>1.06%</td>
+    <td>2202.64</td>
+    <td>1058.20</td>
+    <td>2.08x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>inception_v2</td>
-    <td>74.27%</td>
+    <td>74.36%</td>
     <td>73.97%</td>
-    <td>0.41%</td>
-    <td>1046.34</td>
-    <td>567.72</td>
-    <td>1.84x</td>
+    <td>0.53%</td>
+    <td>1751.31</td>
+    <td>827.81</td>
+    <td>2.11x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>inception_v3</td>
-    <td>77.29%</td>
+    <td>77.28%</td>
     <td>76.75%</td>
-    <td>0.70%</td>
-    <td>542.64</td>
-    <td>254.92</td>
-    <td>2.13x</td>
+    <td>0.69%</td>
+    <td>868.06</td>
+    <td>384.17</td>
+    <td>2.26x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>inception_v4</td>
-    <td>80.36%</td>
-    <td>80.27%</td>
-    <td>0.11%</td>
-    <td>335.25</td>
-    <td>129.32</td>
-    <td>2.59x</td>
-  </tr>
-  <tr>
-    <td>tensorflow</td>
-    <td>2.5.0</td>
-    <td>inception_resnet_v2</td>
-    <td>80.42%</td>
     <td>80.40%</td>
-    <td>0.02%</td>
-    <td>157.41</td>
-    <td>79.83</td>
-    <td>1.97x</td>
+    <td>80.27%</td>
+    <td>0.16%</td>
+    <td>569.48</td>
+    <td>197.28</td>
+    <td>2.89x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
+    <td>inception_resnet_v2</td>
+    <td>80.44%</td>
+    <td>80.40%</td>
+    <td>0.05%</td>
+    <td>269.03</td>
+    <td>137.25</td>
+    <td>1.96x</td>
+  </tr>
+  <tr>
+    <td>tensorflow</td>
+    <td>2.6.0</td>
     <td>mobilenetv1</td>
-    <td>73.93%</td>
+    <td>71.79%</td>
     <td>70.96%</td>
-    <td>4.19%</td>
-    <td>2372.88</td>
-    <td>691.70</td>
-    <td>3.43x</td>
+    <td>1.17%</td>
+    <td>3831.42</td>
+    <td>1189.06</td>
+    <td>3.22x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>mobilenetv2</td>
-    <td>71.96%</td>
+    <td>71.79%</td>
     <td>71.76%</td>
-    <td>0.28%</td>
-    <td>1408.45</td>
-    <td>673.72</td>
-    <td>2.09x</td>
+    <td>0.04%</td>
+    <td>2570.69</td>
+    <td>1237.62</td>
+    <td>2.07x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>ssd_resnet50_v1</td>
-    <td>37.91%</td>
+    <td>37.86%</td>
     <td>38.00%</td>
-    <td>-0.24%</td>
-    <td>49.84</td>
-    <td>17.03</td>
-    <td>2.93x</td>
+    <td>-0.37%</td>
+    <td>65.52</td>
+    <td>24.01</td>
+    <td>2.73x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>ssd_mobilenet_v1</td>
-    <td>23.02%</td>
+    <td>22.97%</td>
     <td>23.13%</td>
-    <td>-0.48%</td>
-    <td>571.43</td>
-    <td>260.22</td>
-    <td>2.20x</td>
+    <td>-0.69%</td>
+    <td>842.46</td>
+    <td>404.04</td>
+    <td>2.08x</td>
   </tr>
   <tr>
     <td>tensorflow</td>
-    <td>2.5.0</td>
+    <td>2.6.0</td>
     <td>ssd_resnet34</td>
-    <td>21.97%</td>
-    <td>22.16%</td>
-    <td>-0.86%</td>
-    <td>26.49</td>
-    <td>7.29</td>
-    <td>3.63x</td>
+    <td>21.69%</td>
+    <td>22.09%</td>
+    <td>-1.81%</td>
+    <td>41.23</td>
+    <td>10.75</td>
+    <td>3.83x</td>
   </tr>
-</tbody>  
+</tbody>
 </table>
 
 
 <table class="docutils">
 <thead>
   <tr>
-    <th rowspan="3">Framework</th>
-    <th rowspan="3">Version</th>
-    <th rowspan="3">Model</th>
+    <th rowspan="2">Framework</th>
+    <th rowspan="2">version</th>
+    <th rowspan="2">model</th>
     <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance</th>
+    <th colspan="3">Performance/ICX8380/1s4c10ins1bs/throughput(samples/sec)</th>
   </tr>
   <tr>
-    <th rowspan="2">INT8 Tuning Accuracy</th>
-    <th rowspan="2">FP32 Accuracy Baseline</th>
-    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 throughput</th>
-    <th>FP32 throughput</th>
-    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
-  </tr>
-  <tr>
-    <th>CLX8280 1s 4c per instance bs1</th>
-    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody>
@@ -572,111 +546,111 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>resnet18</td>
-    <td>69.58%</td>
+    <td>69.59%</td>
     <td>69.76%</td>
-    <td>-0.26%</td>
-    <td>492.61</td>
-    <td>263.65</td>
-    <td>1.87x</td>
+    <td>-0.24%</td>
+    <td>692.04</td>
+    <td>363.64</td>
+    <td>1.90x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>resnet50</td>
-    <td>75.87%</td>
+    <td>76.00%</td>
     <td>76.13%</td>
-    <td>-0.34%</td>
-    <td>281.24</td>
-    <td>130.01</td>
-    <td>2.16x</td>
+    <td>-0.17%</td>
+    <td>453.10</td>
+    <td>186.67</td>
+    <td>2.43x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>resnext101_32x8d</td>
-    <td>79.09%</td>
+    <td>79.02%</td>
     <td>79.31%</td>
-    <td>-0.28%</td>
-    <td>109.32</td>
-    <td>47.45</td>
-    <td>2.30x</td>
+    <td>-0.36%</td>
+    <td>196.27</td>
+    <td>70.08</td>
+    <td>2.80x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_base_mrpc</td>
-    <td>88.16%</td>
+    <td>88.12%</td>
     <td>88.73%</td>
-    <td>-0.64%</td>
-    <td>170.11</td>
-    <td>85.83</td>
-    <td>1.98x</td>
+    <td>-0.69%</td>
+    <td>199.32</td>
+    <td>107.34</td>
+    <td>1.86x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_base_cola</td>
-    <td>58.29%</td>
+    <td>59.06%</td>
     <td>58.84%</td>
-    <td>-0.93%</td>
-    <td>178.71</td>
-    <td>83.91</td>
-    <td>2.13x</td>
+    <td>0.37%</td>
+    <td>198.53</td>
+    <td>105.29</td>
+    <td>1.89x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_base_sts-b</td>
-    <td>88.65%</td>
+    <td>88.72%</td>
     <td>89.27%</td>
-    <td>-0.70%</td>
-    <td>176.81</td>
-    <td>84.27</td>
-    <td>2.10x</td>
+    <td>-0.62%</td>
+    <td>203.29</td>
+    <td>107.03</td>
+    <td>1.90x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_base_sst-2</td>
-    <td>91.63%</td>
+    <td>91.74%</td>
     <td>91.86%</td>
-    <td>-0.25%</td>
-    <td>177.71</td>
-    <td>84.16</td>
-    <td>2.11x</td>
+    <td>-0.13%</td>
+    <td>197.86</td>
+    <td>105.31</td>
+    <td>1.88x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_base_rte</td>
-    <td>69.31%</td>
+    <td>70.40%</td>
     <td>69.68%</td>
-    <td>-0.52%</td>
-    <td>177.17</td>
-    <td>85.53</td>
-    <td>2.07x</td>
+    <td>1.04%</td>
+    <td>192.90</td>
+    <td>107.25</td>
+    <td>1.80x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_large_mrpc</td>
-    <td>87.48%</td>
+    <td>87.66%</td>
     <td>88.33%</td>
-    <td>-0.95%</td>
-    <td>62.06</td>
-    <td>24.83</td>
-    <td>2.50x</td>
+    <td>-0.75%</td>
+    <td>94.08</td>
+    <td>33.84</td>
+    <td>2.78x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_large_squad</td>
-    <td>92.78988</td>
-    <td>93.04683</td>
-    <td>-0.28%</td>
-    <td>13.89</td>
-    <td>7.49</td>
-    <td>1.85x</td>
+    <td>92.69</td>
+    <td>93.05</td>
+    <td>-0.38%</td>
+    <td>20.93</td>
+    <td>11.18</td>
+    <td>1.87x</td>
   </tr>
   <tr>
     <td>pytorch</td>
@@ -685,31 +659,64 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
     <td>91.12%</td>
     <td>91.82%</td>
     <td>-0.76%</td>
-    <td>63.02</td>
-    <td>24.21</td>
-    <td>2.60x</td>
+    <td>93.75</td>
+    <td>33.73</td>
+    <td>2.78x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_large_rte</td>
-    <td>72.92%</td>
+    <td>72.20%</td>
     <td>72.56%</td>
-    <td>0.50%</td>
-    <td>46.07</td>
-    <td>23.45</td>
-    <td>1.96x</td>
+    <td>-0.50%</td>
+    <td>52.80</td>
+    <td>33.62</td>
+    <td>1.57x</td>
   </tr>
   <tr>
     <td>pytorch</td>
     <td>1.9.0+cpu</td>
     <td>bert_large_cola</td>
-    <td>62.85%</td>
+    <td>62.07%</td>
     <td>62.57%</td>
-    <td>0.45%</td>
-    <td>61.92</td>
-    <td>24.52</td>
-    <td>2.52x</td>
+    <td>-0.80%</td>
+    <td>94.97</td>
+    <td>33.77</td>
+    <td>2.81x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>inception_v3</td>
+    <td>69.48%</td>
+    <td>69.54%</td>
+    <td>-0.09%</td>
+    <td>418.59</td>
+    <td>207.77</td>
+    <td>2.01x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>peleenet</td>
+    <td>71.61%</td>
+    <td>72.08%</td>
+    <td>-0.66%</td>
+    <td>461.47</td>
+    <td>359.58</td>
+    <td>1.28x</td>
+  </tr>
+  <tr>
+    <td>pytorch</td>
+    <td>1.9.0+cpu</td>
+    <td>yolo_v3</td>
+    <td>24.50%</td>
+    <td>24.54%</td>
+    <td>-0.17%</td>
+    <td>98.11</td>
+    <td>37.50</td>
+    <td>2.62x</td>
   </tr>
 </tbody>
 </table>
@@ -939,50 +946,155 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 <table>
 <thead>
   <tr>
-    <th rowspan="3">Model</th>
+    <th rowspan="2">model</th>
     <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance</th>
+    <th colspan="3">Performance/ICX8380/1s4c10ins1bs/seq_len128/throughput(samples/sec)</th>
+    <th colspan="3">Performance/ICX8380/2s4c20ins64bs/seq_len128/throughput(samples/sec)</th>
   </tr>
   <tr>
-    <th rowspan="2">INT8 Tuning Accuracy</th>
-    <th rowspan="2">FP32 Accuracy Baseline</th>
-    <th rowspan="2">Acc Ratio [(INT8-FP32)/FP32]</th>
-    <th>INT8 throughput</th>
-    <th>FP32 throughput</th>
-    <th rowspan="2">Throughput Ratio[INT8/FP32]</th>
-  </tr>
-  <tr>
-    <th>CLX8280 1s 4c per instance bs1</th>
-    <th>CLX8280 1s 4c per instance bs1</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc&nbsp;&nbsp;&nbsp;Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Preformance&nbsp;&nbsp;&nbsp;Ratio[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Preformance&nbsp;&nbsp;&nbsp;Ratio[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody>
   <tr>
-    <td>bert_base_mrpc</td>
-    <td>0.8235</td>
-    <td>83.09%</td>
-    <td>-0.89%</td>
-    <td>319.49</td>
-    <td>97.86</td>
-    <td>3.26x</td>
+    <td>bert_large_squad</td>
+    <td>90.74</td>
+    <td>90.87</td>
+    <td>-0.14%</td>
+    <td>44.9</td>
+    <td>12.33</td>
+    <td>3.64x</td>
+    <td>362.21</td>
+    <td>88.38</td>
+    <td>4.10x</td>
   </tr>
   <tr>
-    <td>bert_large</td>
-    <td>90.6648</td>
-    <td>90.87</td>
-    <td>-0.23%</td>
-    <td>30.12</td>
-    <td>7.33</td>
-    <td>4.11x</td>
+    <td>distilbert_base_uncased_sst2</td>
+    <td>90.14%</td>
+    <td>90.25%</td>
+    <td>-0.12%</td>
+    <td>1003.01</td>
+    <td>283.69</td>
+    <td>3.54x</td>
+    <td>2104.26</td>
+    <td>606.58</td>
+    <td>3.47x</td>
+  </tr>
+  <tr>
+    <td>minilm_l6_h384_uncased_sst2</td>
+    <td>89.33%</td>
+    <td>90.14%</td>
+    <td>-0.90%</td>
+    <td>2739.73</td>
+    <td>999</td>
+    <td>2.74x</td>
+    <td>5389.98</td>
+    <td>2333.14</td>
+    <td>2.31x</td>
+  </tr>
+  <tr>
+    <td>roberta_base_mrpc</td>
+    <td>89.46%</td>
+    <td>88.97%</td>
+    <td>0.55%</td>
+    <td>506.07</td>
+    <td>142.13</td>
+    <td>3.56x</td>
+    <td>1167.09</td>
+    <td>311.5</td>
+    <td>3.75x</td>
+  </tr>
+  <tr>
+    <td>bert_base_nli_mean_tokens_stsb</td>
+    <td>89.27%</td>
+    <td>89.55%</td>
+    <td>-0.31%</td>
+    <td>503.52</td>
+    <td>140.98</td>
+    <td>3.57x</td>
+    <td>1096.46</td>
+    <td>332.54</td>
+    <td>3.30x</td>
+  </tr>
+  <tr>
+    <td>bert_base_sparse_mrpc</td>
+    <td>70.34%</td>
+    <td>70.59%</td>
+    <td>-0.35%</td>
+    <td>506.59</td>
+    <td>142.33</td>
+    <td>3.56x</td>
+    <td>1133.04</td>
+    <td>339.96</td>
+    <td>3.33x</td>
+  </tr>
+  <tr>
+    <td>distilroberta_base_wnli</td>
+    <td>56.34%</td>
+    <td>56.34%</td>
+    <td>0.00%</td>
+    <td>1026.69</td>
+    <td>290.7</td>
+    <td>3.53x</td>
+    <td>2309.9</td>
+    <td>620.81</td>
+    <td>3.72x</td>
+  </tr>
+  <tr>
+    <td>paraphrase_xlm_r_multilingual_v1_stsb</td>
+    <td>86.72%</td>
+    <td>87.23%</td>
+    <td>-0.58%</td>
+    <td>509.68</td>
+    <td>142.73</td>
+    <td>3.57x</td>
+    <td>1169.45</td>
+    <td>311.59</td>
+    <td>3.75x</td>
   </tr>
   <tr>
     <td>distilbert_base_uncased_mrpc</td>
-    <td>0.8407</td>
-    <td>84.31%</td>
-    <td>-0.28%</td>
-    <td>672.43</td>
-    <td>192.20</td>
-    <td>3.50x</td>
+    <td>84.07%</td>
+    <td>84.07%</td>
+    <td>0.00%</td>
+    <td>1002</td>
+    <td>280.27</td>
+    <td>3.58x</td>
+    <td>2107.96</td>
+    <td>606.95</td>
+    <td>3.47x</td>
+  </tr>
+  <tr>
+    <td>finbert_financial_phrasebank</td>
+    <td>82.74%</td>
+    <td>82.80%</td>
+    <td>-0.07%</td>
+    <td>919.12</td>
+    <td>272.48</td>
+    <td>3.37x</td>
+    <td>1101.13</td>
+    <td>331.88</td>
+    <td>3.32x</td>
+  </tr>
+  <tr>
+    <td>distilbert_base_uncased_emotion</td>
+    <td>93.85%</td>
+    <td>94.20%</td>
+    <td>-0.37%</td>
+    <td>1003.01</td>
+    <td>283.53</td>
+    <td>3.54x</td>
+    <td>2103.22</td>
+    <td>607.08</td>
+    <td>3.46x</td>
   </tr>
 </tbody>
 </table>
