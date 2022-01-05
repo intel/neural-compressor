@@ -45,7 +45,7 @@ function run_tuning {
 
     if [ "${topology}" = "distilbert_base_MRPC" ]; then
         TASK_NAME='MRPC'
-        model_name_or_path='distilbert-base-uncased'
+        model_name_or_path=$input_model
         model_type='distilbert'
     elif [ "${topology}" = "albert_base_MRPC" ]; then
         TASK_NAME='MRPC'

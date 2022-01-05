@@ -69,7 +69,7 @@ function run_benchmark {
         model_name_or_path='bert-base-uncased'
     elif [ "${topology}" = "distilbert_base_MRPC" ]; then
         TASK_NAME='MRPC'
-        model_name_or_path='distilbert-base-uncased'
+        model_name_or_path=$input_model
     elif [ "${topology}" = "albert_base_MRPC" ]; then
         MAX_SEQ_LENGTH=512
         TASK_NAME='MRPC'
