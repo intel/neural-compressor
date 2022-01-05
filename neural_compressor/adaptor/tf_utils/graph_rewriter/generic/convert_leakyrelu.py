@@ -54,7 +54,9 @@ class ConvertLeakyReluOptimizer(GraphRewriterBase):
             mul_coeff_node = graph_info[mul_coeff_node_name].node
             if mul_coeff_node.op != 'Const':
                 continue
-
+            nd = tensor_util.MakeNdarray(mul_coeff_node.attr['value'].tensor).ndim
+            if nd > 1:
+                continue
             alpha_value = float(tensor_util.MakeNdarray(mul_coeff_node.attr['value'].tensor))
             if alpha_value > 1.0:
                 continue
