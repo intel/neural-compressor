@@ -271,27 +271,25 @@ class QuantizeNodeBase():
         for each_input_name in self.node_name_mapping[original_node].node.input[:1]:
             if each_input_name[0] == '^':
                 continue
-            input_node_name = helper.node_name_from_input(each_input_name)
-            if input_node_name in self.output_node_maps:
-                # dtype = dtypes.DType(
-                #     self.output_node_maps[input_node_name].attr["T"].type
-                # ) if self.output_node_maps[
-                #     input_node_name].op == "Dequantize" else dtypes.quint8
-                if self.node_name_mapping[original_node].node.op == "MatMul":
-                    # mkl ops _MklQuantizedMatMulWithBiasAndRelu|AndRequantize
-                    # requires the T1 data type as quint8
-                    dtype = dtypes.quint8
-                elif self.output_node_maps[input_node_name].op == "Dequantize":
-                    dtype = dtypes.DType(
-                        self.output_node_maps[input_node_name].attr["T"].type)
-                elif self._find_relu_node(self.node_name_mapping[original_node].node):
-                    dtype = dtypes.quint8
-                else:
-                    dtype = dtypes.qint8
+
+            if self.node_name_mapping[original_node].node.op == "MatMul":
+                # mkl ops _MklQuantizedMatMulWithBiasAndRelu|AndRequantize
+                # requires the T1 data type as quint8
+                dtype = dtypes.quint8
             else:
-                dtype = dtypes.quint8 if self._find_relu_node(
-                    self.node_name_mapping[original_node].node
-                ) else dtypes.qint8
+                input_node_name = helper.node_name_from_input(each_input_name)
+                if input_node_name in self.output_node_maps:
+                    if self.output_node_maps[input_node_name].op == "Dequantize":
+                        dtype = dtypes.DType(
+                            self.output_node_maps[input_node_name].attr["T"].type)
+                    elif self._find_relu_node(self.node_name_mapping[original_node].node):
+                        dtype = dtypes.quint8
+                    else:
+                        dtype = dtypes.qint8
+                else:
+                    dtype = dtypes.quint8 if self._find_relu_node(
+                        self.node_name_mapping[original_node].node
+                    ) else dtypes.qint8
             quantize_input_name, min_input_name, max_input_name = (
                 self._eightbitize_input_to_node(namespace_prefix,
                                                 each_input_name,
