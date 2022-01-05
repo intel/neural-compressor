@@ -75,17 +75,14 @@ function run_tuning {
         TASK_NAME='MRPC'
         model_name_or_path=$input_model
         model_type='xlnet'
-        batch_size=8
     elif [ "${topology}" = "roberta_base_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=$input_model
         model_type='roberta'
-        batch_size=8
     elif [ "${topology}" = "camembert_base_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=$input_model
         model_type='camembert'
-        batch_size=8
     fi
 
     sed -i "/: bert/s|name:.*|name: $model_type|g" conf.yaml
