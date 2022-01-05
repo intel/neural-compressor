@@ -429,6 +429,7 @@ class TestPruning(unittest.TestCase):
                                delta=0.01)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
+    @unittest.skipIf(torch.version.__version__ < '1.9.0', "requires higher version of torch than 1.9.0")
     def test_distillation_qat_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, common, Quantization
         datasets = DATASETS('pytorch_fx')
@@ -531,7 +532,8 @@ class TestPruning(unittest.TestCase):
                                0.97,
                                delta=0.01)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
-    
+
+    @unittest.skipIf(torch.version.__version__ < '1.9.0', "requires higher version of torch than 1.9.0")
     def test_prune_qat_distillation_oneshot_fx(self):
         from neural_compressor.experimental import Pruning, common, Quantization, Distillation
         datasets = DATASETS('pytorch_fx')
