@@ -67,8 +67,8 @@ def build_fake_model():
             y = tf.constant(np.random.random((2,2,1,1)).astype(np.float32), name='y')
             z = tf.constant(np.random.random((1,1,1,1)).astype(np.float32), name='z')
             op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
-            op2 = tf.nn.conv2d(input=op, filters=z, strides=[1,1,1,1], padding='VALID', name='op2_to_store')
-
+            op2 = tf.nn.conv2d(input=op, filters=z, strides=[1,1,1,1], padding='VALID', )
+            last_identity = tf.identity(op2, name='op2_to_store')
             sess.run(tf.compat.v1.global_variables_initializer())
             constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op2_to_store'])
 
@@ -83,7 +83,8 @@ def build_fake_model():
             y = tf.constant(np.random.random((2,2,1,1)).astype(np.float32), name='y')
             z = tf.constant(np.random.random((1,1,1,1)).astype(np.float32), name='z')
             op = tf.nn.conv2d(input=x, filters=y, strides=[1,1,1,1], padding='VALID', name='op_to_store')
-            op2 = tf.nn.conv2d(input=op, filters=z, strides=[1,1,1,1], padding='VALID', name='op2_to_store')
+            op2 = tf.nn.conv2d(input=op, filters=z, strides=[1,1,1,1], padding='VALID')
+            last_identity = tf.identity(op2, name='op2_to_store')
 
             sess.run(tf.compat.v1.global_variables_initializer())
             constant_graph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['op2_to_store'])
