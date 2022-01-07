@@ -46,6 +46,10 @@ function run_tuning {
         TASK_NAME='translation_en_to_ro'
         model_name_or_path=$input_model
         model_type='t5'
+    elif [ "${topology}" = "marianmt_WMT_en_ro" ];then
+        TASK_NAME='translation_en_to_ro'
+        model_name_or_path=$input_model
+        model_type='marianmt'
     elif [ "${topology}" = "pegasus_billsum" ]; then
         TASK_NAME='summarization_billsum'
         model_name_or_path=$input_model 
@@ -61,6 +65,7 @@ function run_tuning {
         --data_dir ${dataset_location} \
         --task ${TASK_NAME} \
         --do_eval \
+        --do_train \
         --predict_with_generate \
         --per_device_eval_batch_size ${batch_size} \
         --output_dir ${tuned_checkpoint} \

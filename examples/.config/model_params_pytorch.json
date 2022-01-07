@@ -405,8 +405,8 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "marianmt_WMT_en_ro(rm)": {
-      "model_src_dir": "eager/huggingface_models",
+    "marianmt_WMT_en_ro": {
+      "model_src_dir": "nlp/huggingface_models/seq2seq/quantization/ptq_dynamic/eager",
       "dataset_location": "/tf_dataset/pytorch/huggingface/language_translation_pt/test_data/wmt_en_ro",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/marian_translation",
       "yaml": "conf.yaml",
