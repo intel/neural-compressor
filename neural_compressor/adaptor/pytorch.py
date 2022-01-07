@@ -1260,11 +1260,11 @@ class PyTorchAdaptor(TemplateAdaptor):
         # fetch other quantizable ops supported in PyTorch from model
         for name, child in modules.items():
             op_type = str(type(child)).rstrip('\'>').split('.')[-1]
-            if op_type == 'DeQuantize':
-                if op_type not in res.keys():
-                    res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
-                res[op_type]['INT8'] += 1
             if tune_cfg['approach'] != 'post_training_dynamic_quant':
+                if op_type == 'DeQuantize':
+                    if op_type not in res.keys():
+                        res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+                    res[op_type]['INT8'] += 1
                 if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or \
                       op_type == 'Embedding':
                     ignore_log = True
