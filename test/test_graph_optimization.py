@@ -184,47 +184,64 @@ class TestGraphOptimization(unittest.TestCase):
         os.remove('fake_yaml_4.yaml')
 
     def test_not_supported_model(self):
-        import torchvision
-        model = torchvision.models.resnet18()
-        from neural_compressor.experimental import Graph_Optimization
-        graph_optimizer = Graph_Optimization('fake_yaml_4.yaml')
-        graph_optimizer.input = 'input'
-        graph_optimizer.output = 'op_to_store'
-        graph_optimizer.model = model
-        try:
-            output_graph = graph_optimizer.fit()
-        except SystemExit:
+        import neural_compressor.adaptor.pytorch as nc_torch
+        from neural_compressor.adaptor.pytorch import PyTorchVersionMode
+        PT_VERSION = nc_torch.get_torch_version()
+        if PT_VERSION != PyTorchVersionMode.PT18.value:
+            import torchvision
+            model = torchvision.models.resnet18()
+            from neural_compressor.experimental import Graph_Optimization
+            graph_optimizer = Graph_Optimization('fake_yaml_4.yaml')
+            graph_optimizer.input = 'input'
+            graph_optimizer.output = 'op_to_store'
+            graph_optimizer.model = model
+            try:
+                output_graph = graph_optimizer.fit()
+            except SystemExit:
+                pass
+        else:
             pass
 
     def test_not_supported_model_without_yaml(self):
-        import torchvision
-        model = torchvision.models.resnet18()
-        from neural_compressor.experimental import Graph_Optimization
-        graph_optimizer = Graph_Optimization()
-        graph_optimizer.input = 'input'
-        graph_optimizer.output = 'op_to_store'
-        try:
-            graph_optimizer.model = model
-        except SystemExit:
+        import neural_compressor.adaptor.pytorch as nc_torch
+        from neural_compressor.adaptor.pytorch import PyTorchVersionMode
+        PT_VERSION = nc_torch.get_torch_version()
+        if PT_VERSION != PyTorchVersionMode.PT18.value:
+            import torchvision
+            model = torchvision.models.resnet18()
+            from neural_compressor.experimental import Graph_Optimization
+            graph_optimizer = Graph_Optimization()
+            graph_optimizer.input = 'input'
+            graph_optimizer.output = 'op_to_store'
+            try:
+                graph_optimizer.model = model
+            except SystemExit:
+                pass
+        else:
             pass
 
     def test_not_supported_model_with_conf(self):
-        from neural_compressor.experimental import Graph_Optimization
-        from neural_compressor import conf
-        import torchvision
-        model = torchvision.models.resnet18()
- 
-        conf.model.inputs = 'input'
-        conf.model.outputs = 'op_to_store'
-        conf.graph_optimization.precisions = 'bf16'
-        graph_optimizer = Graph_Optimization(conf)
-        try:
-            graph_optimizer.model = model
-        except SystemExit:
+        import neural_compressor.adaptor.pytorch as nc_torch
+        from neural_compressor.adaptor.pytorch import PyTorchVersionMode
+        PT_VERSION = nc_torch.get_torch_version()
+        if PT_VERSION != PyTorchVersionMode.PT18.value:
+            from neural_compressor.experimental import Graph_Optimization
+            from neural_compressor import conf
+            import torchvision
+            model = torchvision.models.resnet18()
+
+            conf.model.inputs = 'input'
+            conf.model.outputs = 'op_to_store'
+            conf.graph_optimization.precisions = 'bf16'
+            graph_optimizer = Graph_Optimization(conf)
+            try:
+                graph_optimizer.model = model
+            except SystemExit:
+                pass
+        else:
             pass
 
 
- 
     @disable_random()
     def test_graph_optimization_with_evaluation(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 300, 300, 16], name="input")
