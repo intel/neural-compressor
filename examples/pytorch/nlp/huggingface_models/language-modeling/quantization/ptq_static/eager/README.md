@@ -58,7 +58,7 @@ python run_clm_tune.py \
 ```
 > NOTE 
 >
-> Until now, enabled dialogpt, reformer.
+> the metric we use is eval loss, not perplexity, because the perplexity is too sensitive. Until now, we have enabled dialogpt, reformer, ctrl models. The accuracy of the int8 model is relative less than 0.01 to fp32, except for ctrl, which is relative less than 0.05.
 >
 > model_name_or_path : Path to pretrained model or model identifier from huggingface.co/models
 >

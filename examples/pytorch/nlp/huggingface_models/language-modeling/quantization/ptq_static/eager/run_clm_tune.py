@@ -372,14 +372,14 @@ def main():
             perplexity = math.exp(eval_output["eval_loss"])
             results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
                         "eval_samples_per_second":eval_output['eval_samples_per_second']}
-            clm_task_metrics_keys = ["perplexity"]
+            clm_task_metrics_keys = ["perplexity","eval_loss"]
             for key in clm_task_metrics_keys:
                 if key in results.keys():
                     logger.info("Finally Eval {}:{}".format(key, results[key]))
-                    if key=="perplexity":
-                        perplexity = results[key]
+                    if key=="eval_loss":
+                        eval_loss = results[key]
                         break
-            return 100-perplexity
+            return eval_loss
 
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
@@ -402,7 +402,7 @@ def main():
         perplexity = math.exp(eval_output["eval_loss"])
         results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
                     "eval_samples_per_second":eval_output['eval_samples_per_second']}
-        clm_task_metrics_keys = ["perplexity"]
+        clm_task_metrics_keys = ["eval_loss"]
         for key in clm_task_metrics_keys:
             if key in results.keys():
                 acc = results[key]
@@ -426,7 +426,7 @@ def main():
         perplexity = math.exp(eval_output["eval_loss"])
         results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
                     "eval_samples_per_second":eval_output['eval_samples_per_second']}
-        clm_task_metrics_keys = ["perplexity"]
+        clm_task_metrics_keys = ["eval_loss"]
         for key in clm_task_metrics_keys:
             if key in results.keys():
                 acc = results[key]

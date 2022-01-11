@@ -297,13 +297,13 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "ctrl_WikiText(rm)": {
-      "model_src_dir": "eager/language_translation/ptq",
+    "ctrl_WikiText": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/eager",
       "dataset_location": "/tf_dataset/pytorch/huggingface/language_translation_pt/wikitext-2-raw/",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/ctrl_output",
-      "yaml": "ctrl.yaml",
+      "yaml": "conf.yaml",
       "strategy": "basic",
-      "batch_size": 64,
+      "batch_size": 16,
       "new_benchmark": false
     },
     "xlnet_base_cased_MRPC": {

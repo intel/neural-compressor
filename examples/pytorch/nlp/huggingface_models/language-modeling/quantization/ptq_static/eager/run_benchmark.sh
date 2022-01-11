@@ -70,6 +70,10 @@ function run_benchmark {
     elif [ "${topology}" = "reformer_crime_and_punishment" ]; then
         TASK_NAME='crime_and_punish'
         model_name_or_path=$input_model
+    elif [ "${topology}" = "ctrl_WikiText" ]; then
+        TASK_NAME='wikitext'
+        model_name_or_path=$input_model
+        extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
     fi
 
     if [[ ${int8} == "true" ]]; then
