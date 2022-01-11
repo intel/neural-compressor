@@ -608,7 +608,8 @@ schema = Schema({
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
-                                                     'activation': {}}}): {
+                                                     'activation': {}},
+                                      'dtype': 'int8'}): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
             # TODO check if framework support dynamic quantize
