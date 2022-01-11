@@ -512,20 +512,26 @@ configs_schema = Schema({
 
 optimizer_schema = Schema({
     Optional('SGD'): {
-        'learning_rate': float,
-        Optional('momentum'): float,
+        'learning_rate': Use(float),
+        Optional('momentum'): Use(float),
         Optional('nesterov'): bool,
-        Optional('weight_decay'): float
+        Optional('weight_decay'): Use(float)
     },
     Optional('AdamW'): {
-        'weight_decay': float,
-        Optional('learning_rate', default=0.001): float,
-        Optional('beta_1', default=0.9): float,
-        Optional('beta_2', default=0.999): float,
-        Optional('epsilon', default=1e-07): float,
-        Optional('amsgrad', default=False):
-            And(bool, lambda s: s in [True, False])
-    }
+        'weight_decay': Use(float),
+        Optional('learning_rate', default=0.001): Use(float),
+        Optional('beta_1', default=0.9): Use(float),
+        Optional('beta_2', default=0.999): Use(float),
+        Optional('epsilon', default=1e-07): Use(float),
+        Optional('amsgrad', default=False): bool
+    },
+    Optional('Adam'): {
+        Optional('learning_rate', default=0.001): Use(float),
+        Optional('beta_1', default=0.9): Use(float),
+        Optional('beta_2', default=0.999): Use(float),
+        Optional('epsilon', default=1e-07): Use(float),
+        Optional('amsgrad', default=False): bool
+    }, 
 })
 
 criterion_schema = Schema({
