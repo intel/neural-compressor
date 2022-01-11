@@ -138,6 +138,8 @@ def get_input_output(graph_path, args):
     if args.use_nc:
         from neural_compressor.experimental import common
         model = common.Model(graph_path)
+        if args.output_name is not None and args.output_name != [] and args.output_name != ['']:
+            model.output_tensor_names = args.output_name
         graph_def = model.graph_def
         output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
 
@@ -156,7 +158,7 @@ def get_input_output(graph_path, args):
         load_graph = _load_pb(graph_def, graph_file_name=graph_path)
         output_nodes = summarize_graph(load_graph, fix_dynamic_shape)
 
-    return output_nodes
+    return graph_def, output_nodes
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

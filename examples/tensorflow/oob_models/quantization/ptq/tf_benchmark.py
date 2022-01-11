@@ -27,19 +27,14 @@ def metrics_generator(array, tolerance):
     success_rate = np.sum(array < tolerance) / array.size
     return max_diff, mean_diff, median_diff, success_rate
 
-def initialize_graph(model_details, args):
+def initialize_graph(model_details, args, od_graph_def):
     graph = tf_v1.Graph()
     with graph.as_default():
         input_variables = {
             in_name + ":0": tf_v1.Variable(val)
             for in_name, val in model_details['input'].items()}
 
-        if args.use_nc:
-            from neural_compressor.experimental import common
-            model = common.Model(model_details['model_dir'])
-            od_graph_def = model.graph_def
-        else:
-            od_graph_def = tf_v1.GraphDef()
+        if not args.use_nc:
             with tf_v1.gfile.GFile(os.path.join(os.getcwd(), model_details['model_dir']), 'rb') as fid:
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
@@ -52,11 +47,13 @@ def initialize_graph(model_details, args):
             output_list = [ out_name for out_name in model_details['output'] ]
             input_data_type = [ tf_v1.convert_to_tensor(item).dtype.as_datatype_enum for item in model_details['input'].values() ]
 
+            od_graph_def_tmp = od_graph_def
             od_graph_def = optimize_for_inference_lib.optimize_for_inference(
                 od_graph_def,  # inputGraph,
                 input_list,  # an array of the input nodes
                 output_list,  # an array of output nodes
                 input_data_type)
+            od_graph_def.library.CopyFrom(od_graph_def_tmp.library)
 
         tf_v1.import_graph_def(od_graph_def, name='g',
                             input_map=input_variables)
@@ -77,9 +74,9 @@ def create_tf_config(args):
         config.graph_options.rewrite_options.auto_mixed_precision_mkl = rewriter_config_pb2.RewriterConfig.ON
     return config
 
-def run_benchmark(model_details, args):
+def run_benchmark(model_details, args, find_graph_def):
     tf_config = create_tf_config(args)
-    graph = initialize_graph(model_details, args)
+    graph = initialize_graph(model_details, args, find_graph_def)
     run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
     run_metadata = tf_v1.RunMetadata()
 
@@ -117,12 +114,15 @@ def run_benchmark(model_details, args):
                 print("Iteration: {}, inference time: {:.6f} sec.".format(rep, delta))
 
             # save profiling file
-            if args.profile and rep == args.num_iter - 1:
+            if args.profile and rep == int(args.num_iter / 2):
                 trace = timeline.Timeline(step_stats=run_metadata.step_stats)
                 # model_dir = os.path.dirname(os.path.abspath(model_detail['model_dir']))
                 model_dir = str(os.path.dirname(os.path.realpath(__file__))) + '/timeline'
                 if not os.path.exists(model_dir):
-                    os.makedirs(model_dir)
+                    try:
+                        os.makedirs(model_dir)
+                    except:
+                        pass
                 profiling_file = model_dir + '/timeline-' + str(rep + 1) + '-' + str(os.getpid()) + '.json'
                 with open(profiling_file, 'w') as trace_file:
                     trace_file.write(
@@ -209,6 +209,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_graph", action='store_true', help="save_graph")
     parser.add_argument("--benchmark", action='store_true', help="Benchmark.")
     parser.add_argument("--use_nc", action='store_true', help="Find input/output via neural_compressor.")
+    parser.add_argument("--output_name", nargs='*', help="Specify output for neural_compressor ckpt.")
     # tuning
     parser.add_argument("--yaml", type=str, help="config yaml file of neural_compressor.", default='./config.yaml')
     parser.add_argument("--tune", action='store_true', help="Do neural_compressor optimize.")
@@ -218,11 +219,12 @@ if __name__ == "__main__":
 
 
     # benchmark PB model directly
+    find_graph_def = tf_v1.GraphDef()
     if args.model_path and not args.model_name:
         # generate model detail
         model_dir = args.model_path
         model_detail = {}
-        model_input_output = get_input_output(model_dir, args)
+        find_graph_def, model_input_output = get_input_output(model_dir, args)
         # ckpt/meta model will save freezed pb in the same dir
         model_dir = model_dir if not args.is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']
@@ -297,5 +299,5 @@ if __name__ == "__main__":
 
     # benchmark
     if args.benchmark:
-        run_benchmark(model_detail, args)
+        run_benchmark(model_detail, args, find_graph_def)
 

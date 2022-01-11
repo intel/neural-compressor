@@ -4,6 +4,8 @@ set -x
 function main {
 
   init_params "$@"
+  extra_cmd=" "
+  set_args
   run_tuning
 
 }
@@ -35,106 +37,125 @@ function init_params {
 
 }
 
-models_need_name=(
---------
-CRNN
-CapsuleNet
-CenterNet
-CharCNN
-Hierarchical_LSTM
-MANN
-MiniGo
-TextCNN
-TextRNN
-aipg-vdcnn
-arttrack-coco-multi
-arttrack-mpii-single
-context_rcnn_resnet101_snapshot_serenget
-deepspeech
-deepvariant_wgs
-dense_vnet_abdominal_ct
-east_resnet_v1_50
-efficientnet-b0
-efficientnet-b0_auto_aug
-efficientnet-b5
-efficientnet-b7_auto_aug
-facenet-20180408-102900
-handwritten-score-recognition-0003
-license-plate-recognition-barrier-0007
-optical_character_recognition-text_recognition-tf
-pose-ae-multiperson
-pose-ae-refinement
-resnet_v2_200
-show_and_tell
-text-recognition-0012
-vggvox
-wide_deep
-yolo-v3-tiny
-NeuMF
-PRNet
-DIEN_Deep-Interest-Evolution-Network
---------
-)
+# set exe args
+function set_args {
+  models_need_name=(
+  --------
+  CRNN
+  CapsuleNet
+  CenterNet
+  CharCNN
+  Hierarchical_LSTM
+  MANN
+  MiniGo
+  TextCNN
+  TextRNN
+  aipg-vdcnn
+  arttrack-coco-multi
+  arttrack-mpii-single
+  context_rcnn_resnet101_snapshot_serenget
+  deepspeech
+  deepvariant_wgs
+  dense_vnet_abdominal_ct
+  east_resnet_v1_50
+  efficientnet-b0
+  efficientnet-b0_auto_aug
+  efficientnet-b5
+  efficientnet-b7_auto_aug
+  facenet-20180408-102900
+  handwritten-score-recognition-0003
+  license-plate-recognition-barrier-0007
+  optical_character_recognition-text_recognition-tf
+  pose-ae-multiperson
+  pose-ae-refinement
+  resnet_v2_200
+  show_and_tell
+  text-recognition-0012
+  vggvox
+  wide_deep
+  yolo-v3-tiny
+  NeuMF
+  PRNet
+  DIEN_Deep-Interest-Evolution-Network
+  --------
+  )
 
-models_need_disable_optimize=(
---------
-CRNN
-efficientnet-b0
-efficientnet-b0_auto_aug
-efficientnet-b5
-efficientnet-b7_auto_aug
-vggvox
---------
-)
+  models_need_disable_optimize=(
+  --------
+  CRNN
+  efficientnet-b0
+  efficientnet-b0_auto_aug
+  efficientnet-b5
+  efficientnet-b7_auto_aug
+  vggvox
+  --------
+  )
 
-# bs !=1 when tuning
-models_need_bs16=(
---------
-icnet-camvid-ava-0001
-icnet-camvid-ava-sparse-30-0001
-icnet-camvid-ava-sparse-60-0001
---------
-)
-models_need_bs32=(
---------
-adv_inception_v3
-ens3_adv_inception_v3
---------
-)
+  # bs !=1 when tuning
+  models_need_bs16=(
+  --------
+  icnet-camvid-ava-0001
+  icnet-camvid-ava-sparse-30-0001
+  icnet-camvid-ava-sparse-60-0001
+  --------
+  )
+  models_need_bs32=(
+  --------
+  adv_inception_v3
+  ens3_adv_inception_v3
+  --------
+  )
 
-# neural_compressor graph_def
-models_need_nc_graphdef=(
---------
-pose-ae-multiperson
-pose-ae-refinement
-centernet_hg104
-DETR
-Elmo
-Time_series_LSTM
-Unet
-WD
-ResNest101
-ResNest50
-ResNest50-3D
-adversarial_text
-Attention_OCR
-AttRec
-GPT2
-Parallel_WaveNet
-PNASNet-5
-VAE-CF
-DLRM
-Deep_Speech_2
---------
-)
+  # neural_compressor graph_def
+  models_need_nc_graphdef=(
+  --------
+  pose-ae-multiperson
+  pose-ae-refinement
+  centernet_hg104
+  DETR
+  Elmo
+  Time_series_LSTM
+  Unet
+  WD
+  ResNest101
+  ResNest50
+  ResNest50-3D
+  adversarial_text
+  Attention_OCR
+  AttRec
+  GPT2
+  Parallel_WaveNet
+  PNASNet-5
+  VAE-CF
+  DLRM
+  Deep_Speech_2
+  --------
+  )
 
+  # neural_compressor need output for ckpt
+  if [ "${topology}" == "adversarial_text" ];then
+    extra_cmd+=" --output_name Identity "
+  elif [ "${topology}" == "Attention_OCR" ];then
+    extra_cmd+=" --output_name AttentionOcr_v1/predicted_text "
+  elif [ "${topology}" == "AttRec" ];then
+    extra_cmd+=" --output_name  "
+  elif [ "${topology}" == "GPT2" ];then
+    extra_cmd+=" --output_name strided_slice "
+  elif [ "${topology}" == "Parallel_WaveNet" ];then
+    extra_cmd+=" --output_name truediv_1 "
+  elif [ "${topology}" == "PNASNet-5" ];then
+    extra_cmd+=" --output_name final_layer/FC/BiasAdd "
+  elif [ "${topology}" == "VAE-CF" ];then
+    extra_cmd+=" --output_name private_vae_graph/sequential_1/decoder_20104/BiasAdd "
+  fi
+}
 
 # run_tuning
 function run_tuning {
     input="input"
     output="predict"
     yaml='./config.yaml'
-    extra_cmd=' --num_warmup 10 -n 500 '
+    extra_cmd+=' --num_warmup 10 -n 500 '
 
     if [[ "${models_need_name[@]}"  =~ " ${topology} " ]]; then
       echo "$topology need model name!"
