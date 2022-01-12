@@ -44,7 +44,7 @@ if args.tune:
 
     1. Non_traceable_module_class/name
 
-        Select module classes or names that cannot be traced by proxy object, and pass them into INC: `common.Model` as a dict. 
+        Select module classes or names that cannot be traced by proxy object, and pass them into neural_compressor: `common.Model` as a dict. 
 
         These non_traceable modules will be considered as a  called function. If there is any nn.Conv2D in modules, it won't be converted into quantized::Conv2D.
 

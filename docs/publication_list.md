@@ -1,6 +1,13 @@
 Full Publications 
 ==========
 
+* [Ease-of-use quantization for PyTorch with Intel® Neural Compressor](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html) (Jan 2022)
+* [Intel Neural Compressor Tutorial on BiliBili](https://space.bilibili.com/1840724569?from=search&seid=8673550305007703901&spm_id_from=333.337.0.0) (Dec 2021)
+* [Faster AI/ML Results With Intel Neural Compressor](https://gestaltit.com/tech-talks/intel/intel-2021/jpwarren/faster-ai-ml-results-with-intel-neural-compressor) (Dec 2021)
+* [Prune Once for All: Sparse Pre-Trained Language Models](https://nips.cc/Conferences/2021/Schedule?showEvent=21839) (Nov 2021)
+* [Faster, Easier Optimization with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/optimization-with-intel-neural-compressor.html) (Nov 2021)
+* [Intel® Neural Compressor: A Scalable Quantization Tool for ONNX Models](https://events.linuxfoundation.org/lf-ai-data-day-onnx-community-virtual-meetup-fall/program/schedule) (Oct 2021)
+* [A "Double Play" for MLPerf™ Inference Performance Gains with 3rd Generation Intel® Xeon® Scalable Processors](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/intel-mlperf-inference-performance.html) (Sep 2021)
 * [Optimize TensorFlow Pre-trained Model for Inference](https://software.intel.com/content/www/us/en/develop/articles/optimize-tensorflow-pre-trained-model-inference.html) (Jun 2021)
 * [3D Digital Face Reconstruction Solution enabled by 3rd Gen Intel® Xeon® Scalable Processors](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/tencent-3d-digital-face-reconstruction.html) (Apr 2021)
 * [Accelerating Alibaba Transformer model performance with 3rd Gen Intel® Xeon® Scalable Processors (Ice Lake) and Intel® Deep Learning Boost](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/alibaba-lpot.html) (Apr 2021)
