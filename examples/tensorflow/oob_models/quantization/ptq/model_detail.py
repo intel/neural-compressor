@@ -233,7 +233,7 @@ models = [
     # TextRNN
     {
         'model_name': 'TextRNN',
-        'input': {'input_x': generate_data([100,], input_dtype="int32"), 'input_y': generate_data([100,], input_dtype="int32"), 'dropout_keep_prob': generate_data([100])},
+        'input': {'input_x': generate_data([100,], input_dtype="int32"), 'input_y': generate_data([1,], input_dtype="int32", newaxis = False), 'dropout_keep_prob': generate_data([100])},
         'output': ['Accuracy']
     },
     # TextRCNN, need bs=512
@@ -245,7 +245,7 @@ models = [
     # CapsuleNet
     {
         'model_name': 'CapsuleNet',
-        'input': {'shuffle_batch': generate_data([28, 28, 1]),'one_hot': generate_data([10])},
+        'input': {'input/x': generate_data([128, 28, 28, 1], newaxis=False), 'input/label': generate_data([128, 10], newaxis=False)},
         'output': ['Decoder/fully_connected_2/Sigmoid']
     },
     # CharCNN
@@ -299,9 +299,15 @@ models = [
         'output':['lstm/basic_lstm_cell/Sigmoid_2']
     },
     # deepspeech
-    {
+    { 
         'model_name': 'deepspeech',
-        'input': {'input_node': generate_data([16, 19, 26]), 'previous_state_h/read': generate_data([2048]), 'previous_state_c/read': generate_data([2048]),"input_lengths":np.array([16],dtype=np.int32)},
+        'input': {'previous_state_c/read': generate_data([2048]), 'previous_state_h/read': generate_data([2048]), 'input_node': generate_data([16, 19, 26]),"input_lengths":np.array([16],dtype=np.int32)},
+        'output': ['raw_logits','lstm_fused_cell/GatherNd','lstm_fused_cell/GatherNd_1']
+    },
+    # deepspeech-tuned
+    { 
+        'model_name': 'deepspeech-tuned',
+        'input': {'previous_state_c': generate_data([2048]), 'previous_state_h': generate_data([2048]), 'input_node': generate_data([16, 19, 26]),"input_lengths":np.array([16],dtype=np.int32)},
         'output': ['raw_logits','lstm_fused_cell/GatherNd','lstm_fused_cell/GatherNd_1']
     },
     # AttRec

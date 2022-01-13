@@ -10,7 +10,7 @@ import numpy as np
 from tensorflow.python.client import timeline
 from tensorflow.python.tools import optimize_for_inference_lib
 from tensorflow.core.protobuf import rewriter_config_pb2
-
+from dataloaders import WidedeepDataloader
 from find_outputs import get_input_output
 from utils import *
 
@@ -164,7 +164,7 @@ def oob_collate_data_func(batch):
         return [oob_collate_data_func(samples) for samples in batch]
     elif isinstance(elem, np.ndarray):
         return np.stack(batch)
-    elif elem in (True,False):
+    elif isinstance(elem, bool):
         return elem
     else:
         return batch
@@ -251,6 +251,9 @@ if __name__ == "__main__":
 
     # benchmark with input/output
     elif args.model_name:
+        # handle the case that the original input is deleted
+        if args.benchmark and args.model_name == 'deepspeech':
+            args.model_name = 'deepspeech-tuned'
         assert args.model_path is not None, "Model path is undefined."
         from model_detail import models
         model_detail = None
@@ -290,9 +293,15 @@ if __name__ == "__main__":
         # generate dummy data
         dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
                                     low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset=dataset,
-                                                       batch_size=args.batch_size,
-                                                       collate_fn=oob_collate_data_func)
+
+        dataloader_dict = {'wide_deep': WidedeepDataloader}
+        if args.model_name and args.model_name in dataloader_dict.keys():
+            Dataloader = dataloader_dict[args.model_name]
+        else:
+            Dataloader = common.DataLoader
+        quantizer.calib_dataloader = Dataloader(dataset=dataset,
+                                                        batch_size=args.batch_size,
+                                                        collate_fn=oob_collate_data_func)
         quantizer.model = args.model_path
         q_model = quantizer.fit()
         q_model.save(args.output_path)
