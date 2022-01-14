@@ -147,14 +147,14 @@ models = [
     # pose-ae-multiperson
     {
         'model_name': 'pose-ae-multiperson',
-        'input': {'my_model/strided_slice': generate_data([512, 512, 3])},
+        'input': {'Placeholder_1': generate_data([512, 512, 3])},
         'output': ['my_model/out_3/add']
     },
 
     # pose-ae-refinement
     {
         'model_name': 'pose-ae-refinement',
-        'input': {'my_model/strided_slice': generate_data([512, 512, 3])},
+        'input': {'Placeholder_1': generate_data([512, 512, 3])},
         'output': ['my_model/out_3/add']
     },
 
