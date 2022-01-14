@@ -8,6 +8,9 @@ Network pruning is one of popular approaches of network compression, which reduc
 - Structured Pruning
 
 Structured pruning means pruning sparsity patterns, in which there is some structure, most often in the form of blocks.
+Neural Compressor provided a NLP Structured pruning example:
+[Bert example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager).
+[README of Structured pruning example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager/README.md).
 
 - Unstructured Pruning
 
