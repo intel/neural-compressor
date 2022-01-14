@@ -849,9 +849,12 @@ class GraphRewriterHelper():
             odd_list = sorted_requant[::2]
             even_list = sorted_requant[1::2]
             for index, value in enumerate(even_list):
-                min_value = str(min(0, float(value.split(':')[1][1:-1])))
+                min_value = min(0, float(value.split(':')[1][1:-1]))
+                max_value = float(odd_list[index].split(':')[1][1:-1])
+                max_value = max_value if max_value > min_value else min_value + 1e-05
                 mixed_str = value.split(':')[0] + '_max:[' + \
-                    min_value + ']' + odd_list[index].split(':')[1]
+                    str(min_value) + '][' + str(max_value) + ']'
+
                 res.append(mixed_str)
             return res
         with open(log_path) as f:
