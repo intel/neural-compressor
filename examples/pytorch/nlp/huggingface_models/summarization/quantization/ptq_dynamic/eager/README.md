@@ -46,82 +46,18 @@ Before use Intel® Neural Compressor, you should fine tune the model to get pret
 wget https://cdn-datasets.huggingface.co/summarization/pegasus_data/billsum.tar.gz
 tar -xzvf billsum.tar.gz
 ```
-##### Finetune command
-```shell
-export TASK_NAME=summarization_billsum
-
-python run_seq2seq_tune.py \
-  --model_name_or_path google/pegasus-billsum \
-  --do_train \
-  --do_eval \
-  --task $TASK_NAME \
-  --data_dir /path/to/data/dir \
-  --output_dir /path/to/checkpoint/dir \
-  --overwrite_output_dir \
-  --predict_with_generate \
-  --max_source_length 1024 \
-  --max_target_length=256 \
-  --val_max_target_length=256 \
-  --test_max_target_length=256 
-```
-for example /path/to/data/dir can be `./billsum`
-
-#### translation_en_ro task
-
-##### Finetune command
-```shell
-export TASK_NAME=translation
-
-python run_seq2seq_tune.py \
-  --model_name_or_path t5-small \
-  --do_train \
-  --do_eval \
-  --task $TASK_NAME \
-  --data_dir /path/to/data/dir \
-  --output_dir /path/to/checkpoint/dir \
-  --overwrite_output_dir \
-  --predict_with_generate 
-```
-for example /path/to/data/dir can be `../test_data/wmt_en_ro`
-
-> NOTE 
->
-> model_name_or_path : Path to pretrained model or model identifier from huggingface.co/models
->
-> task : Task name, summarization (or summarization_{dataset} for pegasus) or translation
-
-Where task name can be one of summarization_{summarization dataset name},translation_{language}\_to\_{language}.
-
-Where summarization dataset can be one of xsum,billsum etc.
-
-Where output_dir is path of checkpoint which be created by fine tuning.
-
-* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by neural_compressor tuning as below.
-
 
 # Start to neural_compressor tune for Model Quantization
 ```shell
-cd examples/pytorch/nlp/huggingface_models/seq2seq/quantization/ptq_dynamic/eager
-```
-
-## Seq2seq task
-
-```bash
-sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/seq2seq/data/dir --input_model=/path/to/checkpoint/dir
+cd examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager
+sh run_tuning.sh --topology=topology_name
 ```
 > NOTE
 >
-> topology_name can be:{"t5_WMT_en_ro", "marianmt_WMT_en_ro", "pegasus_billsum"}
+> topology_name can be:{"pegasus_samsum"}
 >
-> /path/to/checkpoint/dir is the path to output_dir set in finetune. 
+> /path/to/summarization/data/dir is the path to data_dir set in finetune.
 >
-> /path/to/seq2seq/data/dir is the path to data_dir set in finetune.
->
-> for example,
->
-> `examples/test_data/wmt_en_ro` for translation task
->
-> `examples/seq2seq/billsum` for summarization task
 
 Examples of enabling Intel® Neural Compressor
 ============================================================
@@ -169,15 +105,13 @@ Here we set accuracy target as tolerating 0.01 relative accuracy loss of baselin
 For seq2seq task,We need update run_seq2seq_tune.py like below
 
 ```python
-if training_args.tune:
+if model_args.tune:
     def eval_func_for_nc(model):
         trainer.model = model
         results = trainer.evaluate(
-            eval_dataset=eval_dataset,metric_key_prefix="val", max_length=data_args.val_max_target_length, num_beams=data_args.eval_beams
+            max_length=max_length, num_beams=num_beams, metric_key_prefix="eval"
         )
-        assert data_args.task.startswith("summarization") or data_args.task.startswith("translation") , \
-            "data_args.task should startswith summarization or translation"
-        task_metrics_keys = ['val_bleu','val_rouge1','val_rouge2','val_rougeL','val_rougeLsum']
+        task_metrics_keys = ['eval_bleu','eval_rouge1','eval_rouge2','eval_rougeL','eval_rougeLsum']
         for key in task_metrics_keys:
             if key in results.keys():
                 logger.info("Finally Eval {}:{}".format(key, results[key]))
@@ -194,7 +128,7 @@ if training_args.tune:
     calib_dataloader = trainer.get_train_dataloader()
     quantizer.calib_dataloader = calib_dataloader
     quantizer.eval_func = eval_func_for_nc
-    q_model = quantizer()
+    q_model = quantizer.fit()
     q_model.save(training_args.output_dir)
     exit(0)
 ```

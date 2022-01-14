@@ -397,27 +397,27 @@
       "new_benchmark": false
     },
     "t5_WMT_en_ro": {
-      "model_src_dir": "nlp/huggingface_models/seq2seq/quantization/ptq_dynamic/eager",
-      "dataset_location": "/tf_dataset/pytorch/huggingface/language_translation_pt/test_data/wmt_en_ro",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/t5_translation",
+      "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/eager",
+      "dataset_location": "",
+      "input_model": "",
       "yaml": "conf.yaml",
       "strategy": "basic",
       "batch_size": 64,
       "new_benchmark": false
     },
     "marianmt_WMT_en_ro": {
-      "model_src_dir": "nlp/huggingface_models/seq2seq/quantization/ptq_dynamic/eager",
-      "dataset_location": "/tf_dataset/pytorch/huggingface/language_translation_pt/test_data/wmt_en_ro",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/marian_translation",
+      "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/eager",
+      "dataset_location": "",
+      "input_model": "",
       "yaml": "conf.yaml",
       "strategy": "basic",
       "batch_size": 64,
       "new_benchmark": false
     },
-    "pegasus_billsum": {
-      "model_src_dir": "nlp/huggingface_models/seq2seq/quantization/ptq_dynamic/eager",
-      "dataset_location": "/tf_dataset/pytorch/huggingface/language_translation_pt/test_data/billsum",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/pegasus_billsum",
+    "pegasus_samsum": {
+      "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager",
+      "dataset_location": "",
+      "input_model": "",
       "yaml": "conf.yaml",
       "strategy": "basic",
       "batch_size": 64,

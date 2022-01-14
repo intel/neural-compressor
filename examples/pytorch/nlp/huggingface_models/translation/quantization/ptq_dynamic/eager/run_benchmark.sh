@@ -64,16 +64,11 @@ function run_benchmark {
     fi
 
     if [ "${topology}" = "t5_WMT_en_ro" ];then
-        TASK_NAME='translation_en_to_ro'
-        model_name_or_path=$input_model
-    elif [ "${topology}" = "marianmt_WMT_en_ro" ];then
-        TASK_NAME='translation_en_to_ro'
-        model_name_or_path=$input_model
-        model_type='marianmt'
-    elif [ "${topology}" = "pegasus_billsum" ]; then
-        TASK_NAME='summarization_billsum'
-        model_name_or_path=$input_model #'google/pegasus-billsum'
-        extra_cmd='--predict_with_generate --max_source_length 1024 --max_target_length=256 --val_max_target_length=256 --test_max_target_length=256'
+        model_name_or_path='t5-small'
+        extra_cmd="--source_lang en --target_lang ro --dataset_name wmt16 --dataset_config_name ro-en"
+    elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
+        model_name_or_path='Helsinki-NLP/opus-mt-en-ro'
+        extra_cmd="--source_lang en --target_lang ro --dataset_name wmt16 --dataset_config_name ro-en"
     fi
 
     if [[ ${int8} == "true" ]]; then
@@ -81,15 +76,13 @@ function run_benchmark {
     fi
     echo $extra_cmd
 
-    python -u run_seq2seq_tune.py \
+    python -u run_translation.py \
         --model_name_or_path ${model_name_or_path} \
-        --data_dir ${dataset_location} \
-        --task ${TASK_NAME} \
         --do_eval \
-        --do_train \
         --predict_with_generate \
         --per_device_eval_batch_size ${batch_size} \
         --output_dir ${tuned_checkpoint} \
+        --source_prefix "translate English to Romanian: " \
         ${mode_cmd} \
         ${extra_cmd}
 }
