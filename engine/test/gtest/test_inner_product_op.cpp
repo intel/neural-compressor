@@ -50,11 +50,17 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
   }
   auto iter = attrs_map.find("append_op");
   bool relu_ = (iter != attrs_map.end() && iter->second == "relu") ? true : false;
+  bool append_sum_ = (iter != attrs_map.end() && iter->second == "sum") ? true : false;
+  bool gelu_tanh_ = (iter != attrs_map.end() && iter->second == "gelu_tanh") ? true : false;
+  bool tanh_ = (iter != attrs_map.end() && iter->second == "tanh") ? true : false;
+  bool sigmoid_ = (iter != attrs_map.end() && iter->second == "sigmoid") ? true : false;
+
   auto src_tensor_shape = input[0]->shape();
   const auto src_tensor_data = static_cast<const float*>(input[0]->data());
   auto wei_tensor_shape = input[1]->shape();
   const auto wei_tensor_data = static_cast<const float*>(input[1]->data());
   const auto bias_tensor_data = static_cast<const float*>(input[2]->data());
+  const float* post_tensor_data = append_sum_ ? static_cast<const float*>(input[3]->data()) : nullptr;
   vector<int64_t> src_stride = executor::GetStrides(src_tensor_shape, src0_perm);
   vector<int64_t> wei_stride = executor::GetStrides(wei_tensor_shape, src1_perm);
 
@@ -80,6 +86,10 @@ void GetTrueData(const std::vector<Tensor*>& input, const std::vector<Tensor*>& 
         if (dst_data[i * N + j] < 0) {
           dst_data[i * N + j] = 0;
         }
+      } else if (append_sum_) {
+        dst_data[i * N + j] += post_tensor_data[i * N + j];
+      } else if (tanh_) {
+        dst_data[i * N + j] = tanhf(dst_data[i * N + j]);
       }
     }
   }
@@ -209,6 +219,7 @@ static auto CasesFp32 = []() {
   std::vector<int64_t> src_shape;
   std::vector<int64_t> weight_shape;
   std::vector<int64_t> bias_shape;
+  std::vector<int64_t> post_shape;
 
   // case: simple
   src_shape = {1, 2};
@@ -235,8 +246,18 @@ static auto CasesFp32 = []() {
   weight_shape = {768, 1024};
   bias_shape = {1024};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "1,0", "", true), false});
+  // case: sparse with tail
+  src_shape = {103, 768};
+  weight_shape = {768, 1024};
+  bias_shape = {1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "1,0", "", true), false});
   // case: sparse with perm
   src_shape = {32, 512};
+  weight_shape = {1024, 512};
+  bias_shape = {1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "", true), false});
+  // case: sparse with perm, with tail
+  src_shape = {77, 512};
   weight_shape = {1024, 512};
   bias_shape = {1024};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "", true), false});
@@ -245,7 +266,37 @@ static auto CasesFp32 = []() {
   weight_shape = {1024, 512};
   bias_shape = {1024};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "relu", true), false});
-
+  // case: sparse with perm, relu, with tail
+  src_shape = {33, 512};
+  weight_shape = {1024, 512};
+  bias_shape = {1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "relu", true), false});
+  // case: sparse with sum, perm
+  src_shape = {32, 512};
+  weight_shape = {1024, 512};
+  bias_shape = {1024};
+  post_shape = {32, 1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, "0,1", "sum", true), false});
+  return ::testing::ValuesIn(cases);
+  // case: sparse with sum, with perm, with tail
+  src_shape = {33, 512};
+  weight_shape = {1024, 512};
+  bias_shape = {1024};
+  post_shape = {33, 1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, "0,1", "sum", true), false});
+  return ::testing::ValuesIn(cases);
+  // case: sparse with tanh
+  src_shape = {32, 512};
+  weight_shape = {512, 1024};
+  bias_shape = {1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "1,0", "tanh", true), false});
+  return ::testing::ValuesIn(cases);
+  // case: sparse with tanh, with tail
+  src_shape = {33, 512};
+  weight_shape = {1024, 512};
+  bias_shape = {1024};
+  post_shape = {33, 1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "tanh", true), false});
   return ::testing::ValuesIn(cases);
 };
 

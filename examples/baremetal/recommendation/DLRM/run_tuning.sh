@@ -35,6 +35,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
       --dataset=*)
           dataset=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -57,6 +60,7 @@ function run_tuning {
           --raw_path=${dataset_location} \
           --pro_data=${dataset_location} \
           --config=$config \
+          --batch_size=${batch_size} \
           --dataset=$dataset \
           --tune \
           --mlperf_bin_loader
@@ -66,6 +70,7 @@ function run_tuning {
           --output_model=$output_model \
           --raw_path=${dataset_location}/train.txt \
           --pro_data=${dataset_location}/kaggleAdDisplayChallenge_processed.npz \
+          --batch_size=${batch_size} \
           --config=$config \
           --dataset=$dataset \
           --tune

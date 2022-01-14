@@ -130,6 +130,9 @@ class InnerProductOperator : public Operator {
   BSCMatrix<float>* sparse_weight_ = nullptr;
   BSCMatrix<int8_t>* sparse_weight_int8_ = nullptr;
   vector<int64_t> blocksize_ = {1, 16};
+  vector<float> rescales_;
+  // M dimension num of per BLOCK is 4 for sparse kernel algorithm
+  int64_t M_NBLK_ = 4;
   string append_op_;
 };
 }  // namespace executor

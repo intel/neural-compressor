@@ -58,6 +58,7 @@ function run_benchmark {
           --output_model=$output_model \
           --raw_path=${dataset_location} \
           --pro_data=${dataset_location} \
+          --batch_size=${batch_size} \
           --config=$config \
           --dataset=$dataset \
           --benchmark \
@@ -69,6 +70,7 @@ function run_benchmark {
           --output_model=$output_model \
           --raw_path=${dataset_location}/train.txt \
           --pro_data=${dataset_location}/kaggleAdDisplayChallenge_processed.npz \
+          --batch_size=${batch_size} \
           --config=$config \
           --dataset=$dataset \
           --benchmark \

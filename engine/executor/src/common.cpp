@@ -156,13 +156,13 @@ vector<float> GetScales(const void* mins, const void* maxs, const int64_t size, 
   if (dtype == "u8") {
     for (int i = 0; i < size; i++) {
       float max_sub_min = maxs_p[i] - mins_p[i];
-      max_sub_min = max_sub_min == 0.f ? FLT_MIN : max_sub_min;
+      max_sub_min = max_sub_min < 1e-10 ? 1e-10 : max_sub_min;
       scales.emplace_back(255.f / max_sub_min);
     }
   } else if (dtype == "s8") {
     for (int i = 0; i < size; i++) {
       float abs_max = max(abs(maxs_p[i]), abs(mins_p[i]));
-      abs_max = abs_max == 0.f ? FLT_MIN : abs_max;
+      abs_max = abs_max < 1e-10 ? 1e-10 : abs_max;
       scales.emplace_back(127.f / abs_max);
     }
   } else if (dtype == "fp32") {

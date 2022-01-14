@@ -199,39 +199,63 @@ void reorder_bsc_int8_4x16(BSCMatrix<int8_t>* bsc) {
   for (int i = 0; i < bsc->nnz; ++i) {
     bsc->rowidxs[i] *= block_row;
   }
-  free(bsc->data);
   bsc->data = new_data;
 }
 
 #if __AVX512F__
 /********* fp32 kernel *********/
 void sparse_gemm_bsc_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B, const int64_t* rowidxs,
-                         const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize, float* C) {
-  int64_t M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                         const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize, float* C,
+                         const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
   __m512 d = _mm512_setzero_ps();
 #pragma omp parallel for collapse(2)
   for (int64_t mb = 0; mb < M / M_NBLK; mb++) {
     for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       for (int64_t i = 0; i < M_NBLK; i++) {
-        c[i] = _mm512_setzero_ps();
+        output[i] = _mm512_setzero_ps();
       }
       for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
         int64_t b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int64_t i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int64_t i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int64_t i = 0; i < M_NBLK; i++) {
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_setzero_ps();
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
@@ -239,31 +263,55 @@ void sparse_gemm_bsc_f32(int64_t M, int64_t N, int64_t K, const float* A, const 
 
 void sparse_gemm_bsc_bias_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B, const int64_t* rowidxs,
                               const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                              const float* bias, float* C) {
-  int64_t M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                              const float* bias, float* C, const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 #pragma omp parallel for collapse(2)
   for (int64_t mb = 0; mb < M / M_NBLK; mb++) {
     for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       for (int64_t i = 0; i < M_NBLK; i++) {
-        c[i] = _mm512_load_ps(&bias[b_col * 16]);
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
       }
       for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
         int64_t b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int64_t i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int64_t i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int64_t i = 0; i < M_NBLK; i++) {
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
@@ -271,33 +319,59 @@ void sparse_gemm_bsc_bias_f32(int64_t M, int64_t N, int64_t K, const float* A, c
 
 void sparse_gemm_bsc_bias_relu_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B,
                                    const int64_t* rowidxs, const int64_t* colptr, const int64_t ncolptr,
-                                   const vector<int64_t>& blocksize, const float* bias, float* C) {
-  int64_t M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                   const vector<int64_t>& blocksize, const float* bias, float* C,
+                                   const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
   __m512 d = _mm512_setzero_ps();
 #pragma omp parallel for collapse(2)
   for (int64_t mb = 0; mb < M / M_NBLK; mb++) {
     for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       for (int64_t i = 0; i < M_NBLK; i++) {
-        c[i] = _mm512_load_ps(&bias[b_col * 16]);
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
       }
       for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
         int64_t b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int64_t i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int64_t i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int64_t i = 0; i < M_NBLK; i++) {
-        c[i] = _mm512_max_ps(c[i], d);
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        output[i] = _mm512_max_ps(output[i], d);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_max_ps(output[i], d);
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
@@ -305,72 +379,123 @@ void sparse_gemm_bsc_bias_relu_f32(int64_t M, int64_t N, int64_t K, const float*
 
 void sparse_gemm_bsc_bias_sum_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B,
                                   const int64_t* rowidxs, const int64_t* colptr, const int64_t ncolptr,
-                                  const vector<int64_t>& blocksize, const float* bias, const float* post, float* C) {
-  int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                  const vector<int64_t>& blocksize, const float* bias, const float* post, float* C,
+                                  const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; mb++) {
     for (int b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       for (int i = 0; i < M_NBLK; i++) {
-        c[i] =
+        output[i] =
             _mm512_add_ps(_mm512_load_ps(&bias[b_col * 16]), _mm512_load_ps(post + (mb * M_NBLK + i) * N + b_col * 16));
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
         int b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int i = 0; i < M_NBLK; i++) {
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_add_ps(_mm512_load_ps(&bias[b_col * 16]),
+                             _mm512_load_ps(post + (tail_row_bgn + i) * N + b_col * 16));
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
 }
 
-static inline void replace_tanh(float* a, int N = 16) {
+static inline void replace_tanh(float* activation, int N = 16) {
   for (int i = 0; i < N; i += 1) {
-    float plus = expf(a[i]);
-    float minus = expf(-a[i]);
-    a[i] = (plus - minus) / (plus + minus);
+    float plus = expf(activation[i]);
+    float minus = expf(-activation[i]);
+    activation[i] = (plus - minus) / (plus + minus);
   }
 }
 
 void sparse_gemm_bsc_bias_tanh_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B,
                                    const int64_t* rowidxs, const int64_t* colptr, const int64_t ncolptr,
-                                   const vector<int64_t>& blocksize, const float* bias, float* C) {
-  int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                   const vector<int64_t>& blocksize, const float* bias, float* C,
+                                   const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; mb++) {
     for (int b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       for (int i = 0; i < M_NBLK; i++) {
-        c[i] = _mm512_load_ps(&bias[b_col * 16]);
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
         int b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int i = 0; i < M_NBLK; i++) {
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
@@ -381,57 +506,79 @@ void sparse_gemm_bsc_bias_tanh_f32(int64_t M, int64_t N, int64_t K, const float*
 }
 
 // gelu_tanh
-static inline void i_gelu_tanh(float* a, int len = 16) {
+static inline void i_gelu_tanh(float* activation, int len = 16) {
   for (int i = 0; i < len; ++i) {
     const float sqrt_2_over_pi = 0.79788458347320556640625f;
     const float fitting_const = 0.044715f;
-    float v = sqrt_2_over_pi * a[i] * (1.f + fitting_const * a[i] * a[i]);
+    float v = sqrt_2_over_pi * activation[i] * (1.f + fitting_const * activation[i] * activation[i]);
     // compute tanh(v)
     float tanh_v = 1.f;
     if (v < -7.5944) {
       tanh_v = -1.f;
     } else if (v < 7.5944) {
       float exp_v = expf(v);
-      // float r_exp_v = expf(-v);
       float r_exp_v = 1.f / exp_v;
       tanh_v = (exp_v - r_exp_v) / (exp_v + r_exp_v);
     }
     // compute gelu_tanh
-    a[i] = 0.5f * a[i] * (1.f + tanh_v);
-    // a[i] = 0.5f * a[i] * (1.f + tanhf(v));
+    activation[i] = 0.5f * activation[i] * (1.f + tanh_v);
   }
 }
 
 void sparse_gemm_bsc_bias_gelu_tanh_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B,
                                         const int64_t* rowidxs, const int64_t* colptr, const int64_t ncolptr,
-                                        const vector<int64_t>& blocksize, const float* bias, float* C) {
-  int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                        const vector<int64_t>& blocksize, const float* bias, float* C,
+                                        const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
-
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; mb++) {
     for (int b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_ps(bias + b_col * 16);
+      output[0] = _mm512_load_ps(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; i++) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int i = 0; i < M_NBLK; ++i) {
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
@@ -443,41 +590,66 @@ void sparse_gemm_bsc_bias_gelu_tanh_f32(int64_t M, int64_t N, int64_t K, const f
 }
 
 // sigmoid
-static inline void i_sigmoid(float* a, int len = 16) {
+static inline void i_sigmoid(float* activation, int len = 16) {
   for (int i = 0; i < len; ++i) {
-    a[i] = 1.f / (1.f + expf(-a[i]));
+    activation[i] = 1.f / (1.f + expf(-activation[i]));
   }
 }
 
 void sparse_gemm_bsc_bias_sigmod_f32(int64_t M, int64_t N, int64_t K, const float* A, const float* B,
                                      const int64_t* rowidxs, const int64_t* colptr, const int64_t ncolptr,
-                                     const vector<int64_t>& blocksize, const float* bias, float* C) {
-  int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                     const vector<int64_t>& blocksize, const float* bias, float* C,
+                                     const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; mb++) {
     for (int b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
-      __m512 c[M_NBLK];
+      __m512 output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_ps(bias + b_col * 16);
+      output[0] = _mm512_load_ps(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; i++) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512 a[M_NBLK];
+        __m512 activation[M_NBLK];
         for (int i = 0; i < M_NBLK; i++) {
-          a[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
+          activation[i] = _mm512_set1_ps(A[(mb * M_NBLK + i) * K + b_row]);
         }
-        __m512 b = _mm512_load_ps(&B[b_row_idx * 16]);
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
         for (int i = 0; i < M_NBLK; i++) {
-          c[i] = _mm512_fmadd_ps(b, a[i], c[i]);
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
         }
       }
       for (int i = 0; i < M_NBLK; ++i) {
-        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c[i]);
+        _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, output[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int64_t b_col = 0; b_col < ncolptr - 1; b_col++) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512 output[kTailCnt];
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        output[i] = _mm512_load_ps(&bias[b_col * 16]);
+      }
+      for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
+        int64_t b_row = rowidxs[b_row_idx];
+        __m512 activation[kTailCnt];
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          activation[i] = _mm512_set1_ps(A[(tail_row_bgn + i) * K + b_row]);
+        }
+        __m512 sparse_weight = _mm512_load_ps(&B[b_row_idx * 16]);
+        for (int64_t i = 0; i < tail_row_num; i++) {
+          output[i] = _mm512_fmadd_ps(sparse_weight, activation[i], output[i]);
+        }
+      }
+      for (int64_t i = 0; i < tail_row_num; i++) {
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, output[i]);
       }
     }
   }
@@ -494,9 +666,7 @@ void sparse_gemm_bsc_bias_sigmod_f32(int64_t M, int64_t N, int64_t K, const floa
 // output f32
 void sparse_gemm_bsc_4x16_u8s8f32(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,
                                   const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                                  const int* bias, const float scale, float* C) {
-  const int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                  const int* bias, const float scale, float* C, const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 
@@ -506,29 +676,59 @@ void sparse_gemm_bsc_4x16_u8s8f32(int M, int N, int K, const uint8_t* A, const i
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; ++mb) {
     for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
-      __m512i c[M_NBLK];
+      __m512i output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_epi32(bias + b_col * 16);
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; ++i) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512i a[M_NBLK];
+        __m512i activation[M_NBLK];
         for (int i = 0; i < M_NBLK; ++i) {
-          a[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
         }
-        __m512i b = _mm512_load_epi32(&B[b_row_idx << 6]);
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
         for (int i = 0; i < M_NBLK; ++i) {
-          c[i] = _mm512_dpbusds_epi32(c[i], a[i], b);
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
         }
       }
       __m512 c_f32[M_NBLK];
       for (int i = 0; i < M_NBLK; ++i) {
-        c_f32[i] = _mm512_cvt_roundepi32_ps(c[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c_f32[i] = _mm512_cvtepi32_ps(c[i]);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
         _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c_f32[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512i output[kTailCnt];
+      // load bias
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
+      for (int i = 1; i < tail_row_num; ++i) {
+        output[i] = output[0];
+      }
+      for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
+        int b_row = rowidxs[b_row_idx];
+        __m512i activation[kTailCnt];
+        for (int i = 0; i < tail_row_num; ++i) {
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (tail_row_bgn + i) * K + b_row));
+        }
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
+        for (int i = 0; i < tail_row_num; ++i) {
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
+        }
+      }
+      __m512 c_f32[kTailCnt];
+      for (int i = 0; i < tail_row_num; ++i) {
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, c_f32[i]);
       }
     }
   }
@@ -537,9 +737,7 @@ void sparse_gemm_bsc_4x16_u8s8f32(int M, int N, int K, const uint8_t* A, const i
 // Fuse ReLu, output f32
 void sparse_gemm_bsc_4x16_u8s8f32_relu(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,
                                        const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                                       const int* bias, const float scale, float* C) {
-  const int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                       const int* bias, const float scale, float* C, const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 
@@ -549,31 +747,63 @@ void sparse_gemm_bsc_4x16_u8s8f32_relu(int M, int N, int K, const uint8_t* A, co
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; ++mb) {
     for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
-      __m512i c[M_NBLK];
+      __m512i output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_epi32(bias + b_col * 16);
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; ++i) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512i a[M_NBLK];
+        __m512i activation[M_NBLK];
         for (int i = 0; i < M_NBLK; ++i) {
-          a[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
         }
-        __m512i b = _mm512_load_epi32(&B[b_row_idx << 6]);
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
         for (int i = 0; i < M_NBLK; ++i) {
-          c[i] = _mm512_dpbusds_epi32(c[i], a[i], b);
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
         }
       }
       __m512 c_f32[M_NBLK];
       for (int i = 0; i < M_NBLK; ++i) {
         // ReLU
-        c[i] = _mm512_max_epi32(c[i], zero);
-        c_f32[i] = _mm512_cvt_roundepi32_ps(c[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c_f32[i] = _mm512_cvtepi32_ps(c[i]);
+        output[i] = _mm512_max_epi32(output[i], zero);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
         _mm512_store_ps(C + (mb * M_NBLK + i) * N + b_col * 16, c_f32[i]);
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512i output[kTailCnt];
+      // load bias
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
+      for (int i = 1; i < tail_row_num; ++i) {
+        output[i] = output[0];
+      }
+      for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
+        int b_row = rowidxs[b_row_idx];
+        __m512i activation[kTailCnt];
+        for (int i = 0; i < tail_row_num; ++i) {
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (tail_row_bgn + i) * K + b_row));
+        }
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
+        for (int i = 0; i < tail_row_num; ++i) {
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
+        }
+      }
+      __m512 c_f32[kTailCnt];
+      for (int i = 0; i < tail_row_num; ++i) {
+        // ReLU
+        output[i] = _mm512_max_epi32(output[i], zero);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
+        _mm512_store_ps(C + (tail_row_bgn + i) * N + b_col * 16, c_f32[i]);
       }
     }
   }
@@ -582,9 +812,7 @@ void sparse_gemm_bsc_4x16_u8s8f32_relu(int M, int N, int K, const uint8_t* A, co
 // Fuse ReLu, output u8
 void sparse_gemm_bsc_4x16_u8s8u8_relu(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,
                                       const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                                      const int* bias, const float scale, uint8_t* C) {
-  const int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                      const int* bias, const float scale, uint8_t* C, const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 
@@ -594,38 +822,75 @@ void sparse_gemm_bsc_4x16_u8s8u8_relu(int M, int N, int K, const uint8_t* A, con
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; ++mb) {
     for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
-      __m512i c[M_NBLK];
+      __m512i output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_epi32(bias + b_col * 16);
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; ++i) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512i a[M_NBLK];
+        __m512i activation[M_NBLK];
         for (int i = 0; i < M_NBLK; ++i) {
-          a[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
         }
-        __m512i b = _mm512_load_epi32(&B[b_row_idx << 6]);
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
         for (int i = 0; i < M_NBLK; ++i) {
-          c[i] = _mm512_dpbusds_epi32(c[i], a[i], b);
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
         }
       }
       __m512 c_f32[M_NBLK];
       for (int i = 0; i < M_NBLK; ++i) {
         // ReLU
-        c[i] = _mm512_max_epi32(c[i], zero);
+        output[i] = _mm512_max_epi32(output[i], zero);
 
-        c_f32[i] = _mm512_cvt_roundepi32_ps(c[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c_f32[i] = _mm512_cvtepi32_ps(c[i]);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
 
         // if output is u8, we assume we will do ReLU,
         // so there's no negative values in output,
         // and we will use unsigned int later.
-        c[i] = _mm512_cvt_roundps_epu32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c[i] = _mm512_cvtps_epu32(c_f32[i]);
-        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtusepi32_epi8(c[i]));
+        output[i] = _mm512_cvt_roundps_epu32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtusepi32_epi8(output[i]));
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512i output[kTailCnt];
+      // load bias
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
+      for (int i = 1; i < tail_row_num; ++i) {
+        output[i] = output[0];
+      }
+      for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
+        int b_row = rowidxs[b_row_idx];
+        __m512i activation[kTailCnt];
+        for (int i = 0; i < tail_row_num; ++i) {
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (tail_row_bgn + i) * K + b_row));
+        }
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
+        for (int i = 0; i < tail_row_num; ++i) {
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
+        }
+      }
+      __m512 c_f32[kTailCnt];
+      for (int i = 0; i < tail_row_num; ++i) {
+        // ReLU
+        output[i] = _mm512_max_epi32(output[i], zero);
+
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
+
+        // if output is u8, we assume we will do ReLU,
+        // so there's no negative values in output,
+        // and we will use unsigned int later.
+        output[i] = _mm512_cvt_roundps_epu32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (tail_row_bgn + i) * N + b_col * 16, _mm512_cvtusepi32_epi8(output[i]));
       }
     }
   }
@@ -634,9 +899,8 @@ void sparse_gemm_bsc_4x16_u8s8u8_relu(int M, int N, int K, const uint8_t* A, con
 // Fuse ReLu, output u8, per channel
 void sparse_gemm_bsc_4x16_u8s8u8_pc_relu(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,
                                          const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                                         const int* bias, const vector<float>& scale, uint8_t* C) {
-  const int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                         const int* bias, const vector<float>& scale, uint8_t* C,
+                                         const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 
@@ -645,39 +909,77 @@ void sparse_gemm_bsc_4x16_u8s8u8_pc_relu(int M, int N, int K, const uint8_t* A, 
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; ++mb) {
     for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
-      __m512i c[M_NBLK];
+      __m512i output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_epi32(bias + b_col * 16);
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; ++i) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512i a[M_NBLK];
+        __m512i activation[M_NBLK];
         for (int i = 0; i < M_NBLK; ++i) {
-          a[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
         }
-        __m512i b = _mm512_load_epi32(&B[b_row_idx << 6]);
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
         for (int i = 0; i < M_NBLK; ++i) {
-          c[i] = _mm512_dpbusds_epi32(c[i], a[i], b);
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
         }
       }
-      __m512 _scale = _mm512_load_ps(&(scale[b_col << 4]));
+      __m512 _scale = _mm512_loadu_ps(&(scale[b_col << 4]));
       __m512 c_f32[M_NBLK];
       for (int i = 0; i < M_NBLK; ++i) {
         // ReLU
-        c[i] = _mm512_max_epi32(c[i], zero);
+        output[i] = _mm512_max_epi32(output[i], zero);
 
-        c_f32[i] = _mm512_cvt_roundepi32_ps(c[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c_f32[i] = _mm512_cvtepi32_ps(c[i]);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
 
         // if output is u8, we assume we will do ReLU,
         // so there's no negative values in output,
         // and we will use unsigned int later.
-        c[i] = _mm512_cvt_roundps_epu32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c[i] = _mm512_cvtps_epu32(c_f32[i]);
-        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtusepi32_epi8(c[i]));
+        output[i] = _mm512_cvt_roundps_epu32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtusepi32_epi8(output[i]));
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512i output[kTailCnt];
+      // load bias
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
+      for (int i = 1; i < tail_row_num; ++i) {
+        output[i] = output[0];
+      }
+      for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
+        int b_row = rowidxs[b_row_idx];
+        __m512i activation[kTailCnt];
+        for (int i = 0; i < tail_row_num; ++i) {
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (tail_row_bgn + i) * K + b_row));
+        }
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
+        for (int i = 0; i < tail_row_num; ++i) {
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
+        }
+      }
+      __m512 _scale = _mm512_loadu_ps(&(scale[b_col << 4]));
+      __m512 c_f32[kTailCnt];
+      for (int i = 0; i < tail_row_num; ++i) {
+        // ReLU
+        output[i] = _mm512_max_epi32(output[i], zero);
+
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
+
+        // if output is u8, we assume we will do ReLU,
+        // so there's no negative values in output,
+        // and we will use unsigned int later.
+        output[i] = _mm512_cvt_roundps_epu32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (tail_row_bgn + i) * N + b_col * 16, _mm512_cvtusepi32_epi8(output[i]));
       }
     }
   }
@@ -686,9 +988,7 @@ void sparse_gemm_bsc_4x16_u8s8u8_pc_relu(int M, int N, int K, const uint8_t* A, 
 // output s8
 void sparse_gemm_bsc_4x16_u8s8s8(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,
                                  const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                                 const int* bias, const float scale, int8_t* C) {
-  const int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                 const int* bias, const float scale, int8_t* C, const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 
@@ -698,32 +998,63 @@ void sparse_gemm_bsc_4x16_u8s8s8(int M, int N, int K, const uint8_t* A, const in
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; ++mb) {
     for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
-      __m512i c[M_NBLK];
+      __m512i output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_epi32(bias + b_col * 16);
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; ++i) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512i a[M_NBLK];
+        __m512i activation[M_NBLK];
         for (int i = 0; i < M_NBLK; ++i) {
-          a[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
         }
-        __m512i b = _mm512_load_epi32(&B[b_row_idx << 6]);
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
         for (int i = 0; i < M_NBLK; ++i) {
-          c[i] = _mm512_dpbusds_epi32(c[i], a[i], b);
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
         }
       }
       __m512 c_f32[M_NBLK];
       for (int i = 0; i < M_NBLK; ++i) {
-        c_f32[i] = _mm512_cvt_roundepi32_ps(c[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c_f32[i] = _mm512_cvtepi32_ps(c[i]);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
 
-        c[i] = _mm512_cvt_roundps_epi32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c[i] = _mm512_cvtps_epi32(c_f32[i]);
-        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtsepi32_epi8(c[i]));
+        output[i] = _mm512_cvt_roundps_epi32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtsepi32_epi8(output[i]));
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512i output[kTailCnt];
+      // load bias
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
+      for (int i = 1; i < tail_row_num; ++i) {
+        output[i] = output[0];
+      }
+      for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
+        int b_row = rowidxs[b_row_idx];
+        __m512i activation[kTailCnt];
+        for (int i = 0; i < tail_row_num; ++i) {
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (tail_row_bgn + i) * K + b_row));
+        }
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
+        for (int i = 0; i < tail_row_num; ++i) {
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
+        }
+      }
+      __m512 c_f32[kTailCnt];
+      for (int i = 0; i < tail_row_num; ++i) {
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
+
+        output[i] = _mm512_cvt_roundps_epi32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (tail_row_bgn + i) * N + b_col * 16, _mm512_cvtsepi32_epi8(output[i]));
       }
     }
   }
@@ -732,9 +1063,7 @@ void sparse_gemm_bsc_4x16_u8s8s8(int M, int N, int K, const uint8_t* A, const in
 // output s8, per channel
 void sparse_gemm_bsc_4x16_u8s8s8_pc(int M, int N, int K, const uint8_t* A, const int8_t* B, const int64_t* rowidxs,
                                     const int64_t* colptr, const int64_t ncolptr, const vector<int64_t>& blocksize,
-                                    const int* bias, const vector<float>& scale, int8_t* C) {
-  const int M_NBLK = 4;
-  assert(M % M_NBLK == 0);
+                                    const int* bias, const vector<float>& scale, int8_t* C, const int64_t M_NBLK) {
   assert(K % blocksize[0] == 0);
   assert(N % blocksize[1] == 0);
 
@@ -743,33 +1072,65 @@ void sparse_gemm_bsc_4x16_u8s8s8_pc(int M, int N, int K, const uint8_t* A, const
 #pragma omp parallel for collapse(2)
   for (int mb = 0; mb < M / M_NBLK; ++mb) {
     for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
-      __m512i c[M_NBLK];
+      __m512i output[M_NBLK];
       // load bias
-      c[0] = _mm512_load_epi32(bias + b_col * 16);
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
       for (int i = 1; i < M_NBLK; ++i) {
-        c[i] = c[0];
+        output[i] = output[0];
       }
       for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
         int b_row = rowidxs[b_row_idx];
-        __m512i a[M_NBLK];
+        __m512i activation[M_NBLK];
         for (int i = 0; i < M_NBLK; ++i) {
-          a[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (mb * M_NBLK + i) * K + b_row));
         }
-        __m512i b = _mm512_load_epi32(&B[b_row_idx << 6]);
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
         for (int i = 0; i < M_NBLK; ++i) {
-          c[i] = _mm512_dpbusds_epi32(c[i], a[i], b);
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
         }
       }
-      __m512 _scale = _mm512_load_ps(&(scale[b_col << 4]));
+      __m512 _scale = _mm512_loadu_ps(&(scale[b_col << 4]));
       __m512 c_f32[M_NBLK];
       for (int i = 0; i < M_NBLK; ++i) {
-        c_f32[i] = _mm512_cvt_roundepi32_ps(c[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c_f32[i] = _mm512_cvtepi32_ps(c[i]);
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
 
-        c[i] = _mm512_cvt_roundps_epi32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
-        // c[i] = _mm512_cvtps_epi32(c_f32[i]);
-        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtsepi32_epi8(c[i]));
+        output[i] = _mm512_cvt_roundps_epi32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (mb * M_NBLK + i) * N + b_col * 16, _mm512_cvtsepi32_epi8(output[i]));
+      }
+    }
+  }
+  int tail_row_bgn = M / M_NBLK * M_NBLK;
+  int tail_row_num = M - tail_row_bgn;
+  if (tail_row_num != 0) {
+#pragma omp parallel for
+    for (int b_col = 0; b_col < ncolptr - 1; ++b_col) {  // N dim
+      const size_t kTailCnt = tail_row_num;
+      __m512i output[kTailCnt];
+      // load bias
+      output[0] = _mm512_load_epi32(bias + b_col * 16);
+      for (int i = 1; i < tail_row_num; ++i) {
+        output[i] = output[0];
+      }
+      for (int b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; ++b_row_idx) {  // K dim
+        int b_row = rowidxs[b_row_idx];
+        __m512i activation[kTailCnt];
+        for (int i = 0; i < tail_row_num; ++i) {
+          activation[i] = _mm512_set1_epi32(*reinterpret_cast<const int*>(A + (tail_row_bgn + i) * K + b_row));
+        }
+        __m512i sparse_weight = _mm512_load_epi32(&B[b_row_idx << 6]);
+        for (int i = 0; i < tail_row_num; ++i) {
+          output[i] = _mm512_dpbusds_epi32(output[i], activation[i], sparse_weight);
+        }
+      }
+      __m512 _scale = _mm512_loadu_ps(&(scale[b_col << 4]));
+      __m512 c_f32[kTailCnt];
+      for (int i = 0; i < tail_row_num; ++i) {
+        c_f32[i] = _mm512_cvt_roundepi32_ps(output[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        c_f32[i] = _mm512_mul_ps(c_f32[i], _scale);
+
+        output[i] = _mm512_cvt_roundps_epi32(c_f32[i], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_store_epi64(C + (tail_row_bgn + i) * N + b_col * 16, _mm512_cvtsepi32_epi8(output[i]));
       }
     }
   }
