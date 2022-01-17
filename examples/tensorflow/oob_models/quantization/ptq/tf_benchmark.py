@@ -164,7 +164,7 @@ def oob_collate_data_func(batch):
         return [oob_collate_data_func(samples) for samples in batch]
     elif isinstance(elem, np.ndarray):
         return np.stack(batch)
-    elif isinstance(elem, bool):
+    elif isinstance(elem, bool) or isinstance(elem, np.bool_):
         return elem
     else:
         return batch
