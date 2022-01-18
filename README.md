@@ -196,6 +196,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 **Publications**
 
+* [AI Performance and Productivity with Intel® Neural Compressor](https://twitter.com/IntelAI/status/1469079414562557952) (Jan 2022)
 * [Ease-of-use quantization for PyTorch with Intel® Neural Compressor](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html) (Jan 2022)
 * [Faster, Easier Optimization with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/optimization-with-intel-neural-compressor.html) (Nov 2021)
 * [MLPerf™ Performance Gains Abound with latest 3rd Generation Intel® Xeon® Scalable Processors](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/3rd-gen-xeon-mlperf-performance-gains.html) (Apr 2021)
