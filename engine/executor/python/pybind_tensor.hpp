@@ -48,8 +48,7 @@ struct type_caster<executor::Tensor> {
 
     std::vector<int64_t> shape(buf.ndim());
 
-
-    for (int i = 0 ; i < buf.ndim() ; i++) {
+    for (int i = 0; i < buf.ndim(); i++) {
       shape[i] = buf.shape()[i];
     }
     string dtype = "fp32";

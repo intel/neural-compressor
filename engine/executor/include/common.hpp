@@ -108,6 +108,31 @@ void StringSplit(vector<T>* split_list, const string& str_list, const string& sp
 
 void InitSparse(int K, int N, int N_BLKSIZE, int K_BLKSIZE, int N_SPARSE, float* A);
 
+/************* ref ************/
+template <typename dst_type, typename src_type>
+void ref_mov_ker(dst_type* inout, const src_type* in, size_t len);
+template <typename dst_type, typename src_type>
+void ref_add_ker(dst_type* inout, src_type* in, size_t len);
+/************* fp32 ************/
+void zero_ker(float* out, size_t len);
+void move_ker(float* out, const float* in, size_t len);
+void add_ker(float* inout, float* in, size_t len);
+/************* bf16 ************/
+#if __AVX512F__
+// Conversion from BF16 to FP32
+__m512 cvt_bf16_to_fp32(const __m256i src);
+// Conversion from FP32 to BF16
+__m256i trunc_fp32_to_bf16(const __m512 src);
+__m256i cvt_fp32_to_bf16(const __m512 src);
+#endif
+void zero_ker(uint16_t* out, size_t len);
+void move_ker(uint16_t* out, const uint16_t* in, size_t len);
+void add_ker(uint16_t* inout, uint16_t* in, size_t len);
+/************* int8 ************/
+void zero_ker(uint8_t* out, size_t len);
+void move_ker(uint8_t* out, const uint8_t* in, size_t len);
+void add_ker(uint8_t* inout, uint8_t* in, size_t len);
+
 }  // namespace executor
 
 #endif  // ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_

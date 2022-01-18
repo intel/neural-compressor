@@ -31,6 +31,7 @@ supported_patterns = [
     'InputData',
     'LayerNorm',
     'WordEmbeddings',
+    'MergedEmbeddingbag',
     'EmbeddingBag',
     'TokenTypeEmbeddings',
     'TokenTypeEmbeddingsV1',

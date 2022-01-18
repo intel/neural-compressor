@@ -72,6 +72,7 @@ add_library(engine SHARED
     src/operators/concat.cpp
     src/operators/embeddingbag.cpp
     src/operators/split.cpp
+    src/operators/merged_embeddingbag.cpp
     src/sparse_operators/sparse_inner_product.cpp
 )
 

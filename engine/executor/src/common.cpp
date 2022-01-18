@@ -436,4 +436,253 @@ void InitSparse(int K, int N, int N_BLKSIZE, int K_BLKSIZE, int N_SPARSE, float*
     }
   }
 }
+
+/************* ref ************/
+template <typename dst_type, typename src_type>
+void ref_mov_ker(dst_type* inout, const src_type* in, size_t len) {
+#pragma omp palleral for
+  for (int i = 0; i < len; i++) {
+    *(inout + i) = *(in + i);
+  }
+}
+template void ref_mov_ker(float* inout, const float* in, size_t len);
+template void ref_mov_ker(uint16_t* inout, const uint16_t* in, size_t len);
+template void ref_mov_ker(uint8_t* inout, const uint8_t* in, size_t len);
+
+template <typename dst_type, typename src_type>
+void ref_add_ker(dst_type* inout, src_type* in, size_t len) {
+#pragma omp palleral for
+  for (int i = 0; i < len; i++) {
+    *(inout + i) += *(in + i);
+  }
+}
+template void ref_add_ker(float* inout, float* in, size_t len);
+template void ref_add_ker(uint16_t* inout, uint16_t* in, size_t len);
+template void ref_add_ker(uint8_t* inout, uint8_t* in, size_t len);
+
+/************* fp32 ************/
+void zero_ker(float* out, size_t len) {
+  int64_t i = 0;
+#if __AVX512F__
+  __m512 zero_512 = _mm512_setzero_ps();
+#pragma unroll(4)
+  for (i = 0; i < len - 15; i += 16) {
+    _mm512_storeu_ps(out + i, zero_512);
+  }
+
+  if (i < len) {
+    auto mask = ((1 << (len - i)) - 1);
+    _mm512_mask_storeu_ps(out + i, mask, zero_512);
+  }
+#else
+  memset(out, 0, len * sizeof(float));
+#endif
+}
+
+void move_ker(float* out, const float* in, size_t len) {
+  int64_t i = 0;
+#if __AVX512F__
+#pragma unroll(4)
+  for (i = 0; i < len - 15; i += 16) {
+    auto in0 = _mm512_loadu_ps(in + i);
+    _mm512_storeu_ps(out + i, in0);
+  }
+
+  if (i < len) {
+    auto mask = ((1 << (len - i)) - 1);
+    auto in0 = _mm512_maskz_loadu_ps(mask, in + i);
+    _mm512_mask_storeu_ps(out + i, mask, in0);
+  }
+#else
+  ref_mov_ker(out, in, len);
+#endif
+}
+
+void add_ker(float* inout, float* in, size_t len) {
+  int i = 0;
+#if __AVX512F__
+#pragma unroll(2)
+  for (i = 0; i < len - 31; i += 32) {
+    auto out1 = _mm512_loadu_ps(inout + i);
+    auto out2 = _mm512_loadu_ps(inout + i + 16);
+    auto in1 = _mm512_loadu_ps(in + i);
+    auto in2 = _mm512_loadu_ps(in + i + 16);
+    out1 = _mm512_add_ps(out1, in1);
+    out2 = _mm512_add_ps(out2, in2);
+    _mm512_storeu_ps(inout + i, out1);
+    _mm512_storeu_ps(inout + i + 16, out2);
+  }
+
+  if (i < len - 15) {
+    auto out1 = _mm512_loadu_ps(inout + i);
+    auto in1 = _mm512_loadu_ps(in + i);
+    _mm512_storeu_ps(inout + i, _mm512_add_ps(out1, in1));
+    i += 16;
+  }
+
+  if (i < len) {
+    auto mask = (1 << (len - i)) - 1;
+    auto out1 = _mm512_maskz_loadu_ps(mask, inout + i);
+    auto in1 = _mm512_maskz_loadu_ps(mask, in + i);
+    _mm512_mask_storeu_ps(inout + i, mask, _mm512_add_ps(out1, in1));
+  }
+#else
+  ref_add_ker(inout, in, len);
+#endif
+}
+
+/************* bf16 ************/
+#if __AVX512F__
+// Conversion from BF16 to FP32
+inline __m512 cvt_bf16_to_fp32(const __m256i src) {
+  auto y = _mm512_cvtepu16_epi32(src);
+  return _mm512_castsi512_ps(_mm512_bslli_epi128(y, 2));
+}
+// Conversion from FP32 to BF16
+inline __m256i trunc_fp32_to_bf16(const __m512 src) {
+  auto y = _mm512_bsrli_epi128(_mm512_castps_si512(src), 2);
+  return _mm512_cvtepi32_epi16(y);
+}
+
+inline __m256i cvt_fp32_to_bf16(const __m512 src) {
+#if __AVX512_BF16__
+  return _mm512_cvtneps_pbh(src);
+#else
+  return trunc_fp32_to_bf16(src);
+#endif
+}
+#endif
+
+void zero_ker(uint16_t* out, size_t len) {
+  int64_t i = 0;
+#if __AVX512F__
+  __m512i zero_512 = _mm512_setzero_si512();
+#pragma unroll(4)
+  for (i = 0; i < len - 31; i += 32) {
+    _mm512_storeu_si512(out + i, zero_512);
+  }
+
+  if (i < len) {
+    auto mask = ((1 << (len - i)) - 1);
+    _mm512_mask_storeu_epi16(out + i, mask, zero_512);
+  }
+#else
+  memset(out, 0, len * sizeof(uint16_t));
+#endif
+}
+
+void move_ker(uint16_t* out, const uint16_t* in, size_t len) {
+  int64_t i = 0;
+#if __AVX512F__
+#pragma unroll(4)
+  for (i = 0; i < len - 31; i += 32) {
+    auto in0 = _mm512_loadu_si512(in + i);
+    _mm512_storeu_si512(out + i, in0);
+  }
+
+  if (i < len) {
+    auto mask = (1 << (len - i)) - 1;
+    auto in0 = _mm512_maskz_loadu_epi16(mask, in + i);
+    _mm512_mask_storeu_epi16(out + i, mask, in0);
+  }
+#else
+  ref_mov_ker(out, in, len);
+#endif
+}
+
+void add_ker(uint16_t* inout, uint16_t* in, size_t len) {
+  int i = 0;
+#if __AVX512F__
+#pragma unroll(2)
+  for (i = 0; i < len - 31; i += 32) {
+    auto inout1 = cvt_bf16_to_fp32(_mm256_loadu_si256(reinterpret_cast<__m256i*>(inout + i)));
+    auto inout2 = cvt_bf16_to_fp32(_mm256_loadu_si256(reinterpret_cast<__m256i*>(inout + i + 16)));
+    auto in1 = cvt_bf16_to_fp32(_mm256_loadu_si256(reinterpret_cast<__m256i*>(in + i)));
+    auto in2 = cvt_bf16_to_fp32(_mm256_loadu_si256(reinterpret_cast<__m256i*>(in + i + 16)));
+    inout1 = _mm512_add_ps(inout1, in1);
+    inout2 = _mm512_add_ps(inout2, in2);
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inout + i), cvt_fp32_to_bf16(inout1));
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inout + i + 16), cvt_fp32_to_bf16(inout2));
+  }
+
+  if (i < len - 15) {
+    auto inout1 = cvt_bf16_to_fp32(_mm256_loadu_si256(reinterpret_cast<__m256i*>(inout + i)));
+    auto in1 = cvt_bf16_to_fp32(_mm256_loadu_si256(reinterpret_cast<__m256i*>(in + i)));
+    inout1 = _mm512_add_ps(inout1, in1);
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inout + i), cvt_fp32_to_bf16(inout1));
+    i += 16;
+  }
+
+  if (i < len) {
+    auto mask = (1 << (len - i)) - 1;
+    auto inout1 = cvt_bf16_to_fp32(_mm256_maskz_loadu_epi16(mask, inout + i));
+    auto in1 = cvt_bf16_to_fp32(_mm256_maskz_loadu_epi16(mask, in + i));
+    inout1 = _mm512_add_ps(inout1, in1);
+    _mm256_mask_storeu_epi16(inout + i, mask, cvt_fp32_to_bf16(inout1));
+  }
+#else
+  ref_add_ker(inout, in, len);
+#endif
+}
+
+/************* uint8 ************/
+void zero_ker(uint8_t* out, size_t len) {
+  int64_t i;
+#if __AVX512F__
+  __m512i zero_512 = _mm512_setzero_si512();
+#pragma unroll(4)
+  for (i = 0; i < len - 63; i += 64) {
+    _mm512_storeu_si512(out + i, zero_512);
+  }
+
+  if (i < len) {
+    auto mask = ((1 << (len - i)) - 1);
+    _mm512_mask_storeu_epi8(out + i, mask, zero_512);
+  }
+#else
+  memset(out, 0, sizeof(uint8_t) * len);
+#endif
+}
+
+void move_ker(uint8_t* out, const uint8_t* in, size_t len) {
+  int64_t i;
+#if __AVX512F__
+#pragma unroll(2)
+  for (i = 0; i < len - 63; i += 64) {
+    auto in0 = _mm512_loadu_si512(in + i);
+    _mm512_storeu_si512(out + i, in0);
+  }
+
+  if (i < len) {
+    auto mask = ((1 << (len - i)) - 1);
+    auto in0 = _mm512_maskz_loadu_epi8(mask, in + i);
+    _mm512_mask_storeu_epi8(out + i, mask, in0);
+  }
+#else
+  ref_mov_ker(out, in, len);
+#endif
+}
+
+void add_ker(uint8_t* inout, uint8_t* in, size_t len) {
+  int64_t i;
+#if __AVX512F__
+#pragma unroll(2)
+  for (i = 0; i < len - 63; i += 64) {
+    auto in0 = _mm512_loadu_si512(in + i);
+    auto out = _mm512_loadu_si512(inout + i);
+    out = _mm512_adds_epi8(out, in0);  // add with saturate
+    _mm512_storeu_si512(inout + i, out);
+  }
+
+  if (i < len) {
+    auto mask = ((1 << (len - i)) - 1);
+    auto in0 = _mm512_maskz_loadu_epi8(mask, in + i);
+    auto out = _mm512_maskz_loadu_epi8(mask, inout + i);
+    out = _mm512_adds_epi8(out, in0);
+    _mm512_mask_storeu_epi8(inout + i, mask, out);
+  }
+#else
+  ref_add_ker(inout, in, len);
+#endif
+}
 }  // namespace executor
