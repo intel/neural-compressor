@@ -524,6 +524,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_func = eval_func
             q_model = quantizer.fit()
+            q_model.report_sparsity()
             q_model.save('./saved')
             # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
@@ -747,6 +748,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'preserved_attributes': []}
                               })
             q_model = quantizer.fit()
+            q_model.report_sparsity()
             q_model.save('./saved')
             # Load configure and weights with neural_compressor.utils
             model_fx = load('./saved', model_origin,

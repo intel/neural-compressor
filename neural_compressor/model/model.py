@@ -1123,13 +1123,19 @@ class PyTorchBaseModel(BaseModel):
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])
         pd.set_option('precision', 2)
+        # TODO: need to specify modules(Conv2d, Linear, etc.) instead of dims
         param_dims = [2, 4]
         params_size = 0
         sparse_params_size = 0
-        for name, param in self._model.named_parameters():
-            # Extract just the actual parameter's name, which in this context we treat
-            # as its "type"
-            if param.dim() in param_dims and any(type in name for type in ['weight', 'bias']):
+        model_params = dict(self._model.state_dict())
+        for name, param in model_params.items():
+            # '_packed_params._packed_params' and dtype is specific for quantized module
+            if '_packed_params._packed_params' in name and isinstance(param, tuple):
+                param = param[0]
+            if hasattr(param, 'dtype') and param.dtype in [torch.qint8, torch.quint8]:
+                param = param.dequantize()
+            if hasattr(param, 'dim') and param.dim() in param_dims \
+              and any(type in name for type in ['weight', 'bias', '_packed_params']):
                 param_size, sparse_param_size, dense_param_size = compute_sparsity(
                     param.detach().cpu().numpy())
                 density = dense_param_size / param_size
