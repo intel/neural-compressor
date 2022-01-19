@@ -41,23 +41,12 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
                 continue
             bias_node_name = i[0] + '_dummy_biasadd'
             bias_const_node_name = i[0] + '_fake_const'
-            next_node_names = graph_info[i[0]].outputs
+            matmul_a_node_name = Helper.node_name_from_input(graph_info[i[0]].node.input[0])
+            matmul_a_node = graph_info[matmul_a_node_name].node
             matmul_b_node_name = Helper.node_name_from_input(graph_info[i[0]].node.input[1])
             matmul_b_node = graph_info[matmul_b_node_name].node
 
-            if graph_info[i[0]].node.op == 'Conv2D' and matmul_b_node.op != 'Const':
-                continue
-            exit_cur_loop = False
-            while matmul_b_node.op != 'Const':
-                last_node = graph_info[matmul_b_node_name].node
-                if last_node.input and last_node.op != 'Enter':
-                    matmul_b_node_name = last_node.input[0]
-                else:
-                    exit_cur_loop = True
-                    break
-                matmul_b_node = graph_info[matmul_b_node_name].node
-
-            if exit_cur_loop:
+            if matmul_a_node.op == 'Const' or matmul_b_node.op != 'Const':
                 continue
 
             if graph_info[i[0]].node.op == 'MatMul':
