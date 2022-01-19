@@ -277,8 +277,8 @@ models = [
     # CRNN
     {
         'model_name': 'CRNN',
-        'input': {'train_IteratorGetNext': generate_data([32, 100, 3])},
-        'output': ['shadow_net/sequence_rnn_module/transpose_time_major']
+        'input': {'input': generate_data([32, 100, 3])},
+        'output': ['CTCGreedyDecoder']
     },
     # yolo-v3-tiny
     {
