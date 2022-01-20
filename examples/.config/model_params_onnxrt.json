@@ -260,6 +260,15 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "faster_rcnn": {
+      "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
+      "yaml": "faster_rcnn.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     }
   }
 }
