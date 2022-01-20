@@ -239,7 +239,8 @@ if __name__ == "__main__":
             else:
                 dtype = model_input_output['inputs'][_input]['type']
                 dshape = model_input_output['inputs'][_input]['shape']
-                dummy_input = generate_data(dshape, dtype, args.batch_size)
+                is_one_dim = model_input_output['inputs'][_input]['is_one_dim']
+                dummy_input = generate_data(dshape, dtype, args.batch_size, is_one_dim=is_one_dim)
                 input_dic[_input] = dummy_input
                 logger.info("Find benchmark input name: {}, dtype: {}, shape: {}"
                             .format(_input, dtype, dummy_input.shape))

@@ -31,7 +31,12 @@ def summarize_graph(graph_def, fix_dynamic_shape):
                     else:
                         node_dict['shape'] = [item.value if item.value != None else fix_dynamic_shape for item in _shape]
                     # if shape dimension > 1, suppose first dimension is batch-size
-                    if len(node_dict['shape']) > 1: node_dict['shape'] = node_dict['shape'][1:]
+                    is_one_dim = False
+                    if len(node_dict['shape']) > 1: 
+                        node_dict['shape'] = node_dict['shape'][1:]
+                    else:
+                        is_one_dim = True
+                    node_dict['is_one_dim'] = is_one_dim
                 except ValueError as e:
                     print(str(e))
                     _shape = [fix_dynamic_shape, fix_dynamic_shape, 3]

@@ -12,7 +12,7 @@ try:
 except ImportError:
     import tensorflow as tf_v1
 
-def generate_data(input_shape, input_dtype="float32", batch_size=1, max_int_value=35, newaxis=True):
+def generate_data(input_shape, input_dtype="float32", batch_size=1, max_int_value=35, newaxis=True, is_one_dim=False):
     np.random.seed(1024)
     if input_dtype in ["uint8", "int8", "int32", "int64"]:
         dummy_input = np.random.randint(1, max_int_value, input_shape).astype(input_dtype)
@@ -21,6 +21,8 @@ def generate_data(input_shape, input_dtype="float32", batch_size=1, max_int_valu
     # handle the case that the shape of the input is one-dimensional
     if newaxis == False:
         return np.repeat(dummy_input, batch_size, axis=0)
+    if len(input_shape) == 1 and is_one_dim:
+        return dummy_input
     return np.repeat(dummy_input[np.newaxis, :], batch_size, axis=0)
 
 def freeze_graph(input_checkpoint, output_graph, output_node_names):
