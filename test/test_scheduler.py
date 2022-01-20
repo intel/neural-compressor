@@ -390,6 +390,7 @@ class TestPruning(unittest.TestCase):
         combination = scheduler.combine(prune, quantizer)
         scheduler.append(combination)
         opt_model = scheduler.fit()
+        opt_model.report_sparsity()
         conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.97,
@@ -420,6 +421,7 @@ class TestPruning(unittest.TestCase):
         combination = scheduler.combine(prune, quantizer)
         scheduler.append(combination)
         opt_model = scheduler.fit()
+        opt_model.report_sparsity()
         conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.97,
