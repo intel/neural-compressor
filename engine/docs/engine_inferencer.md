@@ -5,7 +5,7 @@ A deep learning inference engine for quantized and sparsified models.
 Engine support model optimizer, model executor and high performance kernel for multi device.
 
 <a target="_blank" href="imgs/infrastructure.png">
-  <img src="imgs/infrastructure.png" alt="Infrastructure" width=800 height=500>
+  <img src="imgs/infrastructure.png" alt="Infrastructure" width=762 height=672>
 </a>
 
 ## Installation
