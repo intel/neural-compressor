@@ -46,7 +46,9 @@ class Pruning(JsonSerializer):
         """Initialize Configuration Pruning class."""
         super().__init__()
         # [Optional]
-        self.magnitude = Magnitude(data.get("magnitude", {}))
+        self.magnitude = None
+        if data.get("magnitude", {}):
+            self.magnitude = Magnitude(data.get("magnitude", {}))
         # [Optional]
         self.start_epoch = data.get("start_epoch", None)
         # [Optional]

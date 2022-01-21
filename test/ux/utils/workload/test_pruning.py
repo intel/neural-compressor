@@ -138,12 +138,7 @@ class TestPruningConfig(unittest.TestCase):
         """Test Pruning config constructor defaults."""
         pruning = Pruning()
 
-        self.assertIsNone(pruning.magnitude.weights)
-        self.assertIsNone(pruning.magnitude.method)
-        self.assertIsNone(pruning.magnitude.init_sparsity)
-        self.assertIsNone(pruning.magnitude.target_sparsity)
-        self.assertIsNone(pruning.magnitude.start_epoch)
-        self.assertIsNone(pruning.magnitude.end_epoch)
+        self.assertIsNone(pruning.magnitude)
         self.assertIsNone(pruning.start_epoch)
         self.assertIsNone(pruning.end_epoch)
         self.assertIsNone(pruning.frequency)

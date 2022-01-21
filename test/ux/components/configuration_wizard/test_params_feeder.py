@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,11 +15,19 @@
 """Parameters feeder test."""
 import os
 import unittest
-from typing import Dict
 from unittest.mock import MagicMock, patch
 
 from neural_compressor.ux.components.configuration_wizard.params_feeder import Feeder
 from neural_compressor.ux.utils.exceptions import ClientErrorException
+
+fake_metrics: dict = {
+    "topk": {},
+    "COCOmAP": {},
+    "MSE": {},
+    "RMSE": {},
+    "MAE": {},
+    "metric1": {},
+}
 
 
 @patch.dict(os.environ, {"HOME": "/foo/bar"})
@@ -780,256 +788,51 @@ class TestParamsFeeder(unittest.TestCase):
         with self.assertRaisesRegex(ClientErrorException, "Framework not set."):
             feeder.get_metrics()
 
-    class FakeMetrics:
-        """Metrics class placeholder for tests."""
-
-        def __init__(self) -> None:
-            """Create object."""
-            self.metrics: Dict[str, dict] = {
-                "topk": {},
-                "COCOmAP": {},
-                "MSE": {},
-                "RMSE": {},
-                "MAE": {},
-                "metric1": {},
-            }
-
     @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
-        {"pytorch": FakeMetrics},
-    )
-    @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
-    )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
-    def test_get_metrics_for_pytorch(
-        self,
-        mocked_check_module: MagicMock,
-        mocked_load_help_nc_params: MagicMock,
-    ) -> None:
-        """Test that get_domains fails when no config given."""
-        mocked_load_help_nc_params.return_value = {
-            "__help__topk": "help for topk",
-            "topk": {
-                "__help__k": "help for k in topk",
-                "__help__missing_param": "help for missing_param in topk",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
-        }
-
-        expected = [
-            {
-                "name": "topk",
-                "help": "help for topk",
-                "params": [
-                    {
-                        "name": "k",
-                        "help": "help for k in topk",
-                        "value": [1, 5],
-                    },
-                ],
-            },
-            {
-                "name": "COCOmAP",
-                "help": "",
-                "params": [
-                    {
-                        "name": "anno_path",
-                        "help": "",
-                        "value": "/foo/bar/workdir/label_map.yaml",
-                    },
-                ],
-            },
-            {
-                "name": "MSE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "RMSE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "MAE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "metric1",
-                "help": "help for metric1",
-                "value": None,
-            },
-            {
-                "name": "custom",
-                "help": "",
-                "value": None,
-            },
-        ]
-
-        feeder = Feeder(
-            data={
-                "config": {
-                    "framework": "pytorch",
-                },
-            },
-        )
-
-        actual = feeder.get_metrics()
-
-        mocked_check_module.assert_called_once_with("ignite")
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
-        self.assertEqual(expected, actual)
-
-    @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
-        {"tensorflow": FakeMetrics},
-    )
-    @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
-    )
-    @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
-    def test_get_metrics_with_label(
-        self,
-        mocked_check_module: MagicMock,
-        mocked_load_help_nc_params: MagicMock,
-    ) -> None:
-        """Test that get_domains fails when no config given."""
-        self.maxDiff = None
-        mocked_load_help_nc_params.return_value = {
-            "__help__COCOmAP": None,
-            "COCOmAP": {
-                "__help__anno_path": "annotation path",
-                "__label__anno_path": "annotation path",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
-        }
-
-        expected = [
-            {
-                "name": "topk",
-                "help": "",
-                "params": [
-                    {
-                        "name": "k",
-                        "help": "",
-                        "value": [1, 5],
-                    },
-                ],
-            },
-            {
-                "name": "COCOmAP",
-                "help": None,
-                "params": [
-                    {
-                        "name": "anno_path",
-                        "help": "annotation path",
-                        "value": "/foo/bar/workdir/label_map.yaml",
-                        "label": "annotation path",
-                    },
-                ],
-            },
-            {
-                "name": "MSE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "RMSE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "MAE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "metric1",
-                "help": "help for metric1",
-                "value": None,
-            },
-            {
-                "name": "custom",
-                "help": "",
-                "value": None,
-            },
-        ]
-
-        feeder = Feeder(
-            data={
-                "config": {
-                    "framework": "tensorflow",
-                },
-            },
-        )
-
-        actual = feeder.get_metrics()
-
-        mocked_check_module.assert_called_once_with("tensorflow")
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
-        self.assertEqual(expected, actual)
-
-    @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
-        {"onnxrt_qlinearops": FakeMetrics},
-    )
-    @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.get_metrics_dict",
     )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_onnxrt(
         self,
         mocked_check_module: MagicMock,
-        mocked_load_help_nc_params: MagicMock,
+        mocked_get_metrics_dict: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_load_help_nc_params.return_value = {
-            "__help__topk": "help for topk",
-            "topk": {
-                "__help__k": "help for k in topk",
-                "__help__missing_param": "help for missing_param in topk",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
+        mocked_get_metrics_dict.return_value = {
+            "onnxrt": [
+                {
+                    "name": "topk",
+                    "help": "help for topk",
+                    "params": [
+                        {
+                            "name": "k",
+                            "help": "help for k in topk",
+                            "value": [1, 5],
+                        },
+                    ],
+                },
+                {
+                    "name": "COCOmAP",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "anno_path",
+                            "help": "",
+                            "value": "/foo/bar/workdir/label_map.yaml",
+                        },
+                    ],
+                },
+                {
+                    "name": "metric1",
+                    "help": "help for metric1",
+                    "value": None,
+                },
+                {
+                    "name": "custom",
+                    "help": "",
+                    "value": None,
+                },
+            ],
         }
 
         expected = [
@@ -1052,39 +855,6 @@ class TestParamsFeeder(unittest.TestCase):
                         "name": "anno_path",
                         "help": "",
                         "value": "/foo/bar/workdir/label_map.yaml",
-                    },
-                ],
-            },
-            {
-                "name": "MSE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "RMSE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
-                    },
-                ],
-            },
-            {
-                "name": "MAE",
-                "help": "",
-                "params": [
-                    {
-                        "name": "compare_label",
-                        "help": "",
-                        "value": True,
                     },
                 ],
             },
@@ -1111,40 +881,54 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("onnxrt")
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
+        mocked_get_metrics_dict.assert_called_once()
         self.assertEqual(expected, actual)
 
     @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.framework_metrics",
-        {},
+        "neural_compressor.ux.utils.utils.get_metrics_dict",
+        {"tensorflow": fake_metrics},
+        {"onnxrt_qlinearops": fake_metrics},
     )
     @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.load_help_nc_params",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.get_metrics_dict",
     )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_unknown_framework(
         self,
         mocked_check_module: MagicMock,
-        mocked_load_help_nc_params: MagicMock,
+        mocked_get_metrics_dict: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_load_help_nc_params.return_value = {
-            "__help__topk": "help for topk",
-            "topk": {
-                "__help__k": "help for k in topk",
-                "__help__missing_param": "help for missing_param in topk",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
+        mocked_get_metrics_dict.return_value = {
+            "onnxrt": [
+                {
+                    "name": "topk",
+                    "help": "help for topk",
+                    "params": [
+                        {
+                            "name": "k",
+                            "help": "help for k in topk",
+                            "value": [1, 5],
+                        },
+                    ],
+                },
+            ],
+            "tensorflow": [
+                {
+                    "name": "topk",
+                    "help": "help for topk",
+                    "params": [
+                        {
+                            "name": "k",
+                            "help": "help for k in topk",
+                            "value": [1, 5],
+                        },
+                    ],
+                },
+            ],
         }
 
-        expected = [
-            {
-                "name": "custom",
-                "help": "",
-                "value": None,
-            },
-        ]
+        expected: list = []
 
         feeder = Feeder(
             data={
@@ -1157,7 +941,7 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("unknown_framework")
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
+        mocked_get_metrics_dict.assert_called_once()
         self.assertEqual(expected, actual)
 
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder")

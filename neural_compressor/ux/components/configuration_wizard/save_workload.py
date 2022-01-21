@@ -31,6 +31,7 @@ from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.utils.utils import replace_with_values
 from neural_compressor.ux.utils.workload.config import Config
 from neural_compressor.ux.utils.workload.dataloader import Dataloader, Dataset, Transform
+from neural_compressor.ux.utils.workload.tuning import MultiObjective
 from neural_compressor.ux.utils.workload.workload import ExecutionMode, Workload
 
 logging.basicConfig(level=logging.INFO)
@@ -327,4 +328,8 @@ def update_quantization_data(config: Config, quantization_data: Dict[str, Any]) 
     if quantization_data.get("strategy"):
         config.tuning.strategy.name = str(quantization_data["strategy"])
     if quantization_data.get("objective"):
-        config.tuning.objective = str(quantization_data["objective"])
+        config.tuning.multi_objective = MultiObjective(
+            {
+                "objective": str(quantization_data["objective"]),
+            },
+        )

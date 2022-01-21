@@ -13,10 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Parameters feeder module."""
-import os
 from typing import Any, Dict, List, Optional
 
-from neural_compressor.experimental.metric.metric import framework_metrics
 from neural_compressor.objective import OBJECTIVES
 from neural_compressor.strategy import STRATEGIES
 from neural_compressor.ux.components.model.repository import ModelRepository
@@ -24,13 +22,13 @@ from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.utils import (
     check_module,
     filter_transforms,
+    get_metrics_dict,
     load_dataloader_config,
     load_help_nc_params,
     load_model_config,
     load_precisions_config,
     load_transforms_config,
 )
-from neural_compressor.ux.web.configuration import Configuration
 
 
 class Feeder:
@@ -205,68 +203,8 @@ class Feeder:
         else:
             check_module(framework)
 
-        help_dict = load_help_nc_params("metrics")
-
-        key_in_framework_metrics = "onnxrt_qlinearops" if framework == "onnxrt" else framework
-        metrics_class = framework_metrics.get(key_in_framework_metrics)
-        raw_metric_list = list(metrics_class().metrics.keys()) if metrics_class else []
-        raw_metric_list += ["custom"]
-        metrics_updated = _update_metric_parameters(raw_metric_list)
-        for metric, value in metrics_updated.copy().items():
-            if isinstance(value, dict):
-                for key in value.copy().keys():
-                    for field in ["help", "label"]:
-                        msg_key = f"__{field}__{key}"
-                        metrics_updated[metric][msg_key] = help_dict.get(
-                            metric,
-                            {},
-                        ).get(msg_key, "")
-            metrics_updated[f"__help__{metric}"] = help_dict.get(
-                f"__help__{metric}",
-                "",
-            )
-        return self._parse_help_in_dict(metrics_updated)
-
-    def _parse_help_in_dict(self, data: dict) -> list:
-        parsed_list = []
-        for key, value in data.items():
-            if key.startswith("__help__") or key.startswith("__label__"):
-                continue
-            if isinstance(value, dict):
-                parsed_list.append(
-                    {
-                        "name": key,
-                        "help": data.get(f"__help__{key}", ""),
-                        "params": self._parse_help_in_dict(value),
-                    },
-                )
-            else:
-                item = {
-                    "name": key,
-                    "help": data.get(f"__help__{key}", ""),
-                    "value": value,
-                }
-                label = data.get(f"__label__{key}")
-                if label:
-                    item["label"] = label
-                parsed_list.append(item)
-        return parsed_list
-
-
-def _update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
-    """Add parameters to metrics."""
-    metrics: Dict[str, Any] = {}
-    for metric in metric_list:
-        if metric == "topk":
-            metrics.update({metric: {"k": [1, 5]}})
-        elif metric == "COCOmAP":
-            annotation_path = os.path.join(Configuration().workdir, "label_map.yaml")
-            metrics.update({metric: {"anno_path": annotation_path}})
-        elif metric in ["MSE", "RMSE", "MAE"]:
-            metrics.update({metric: {"compare_label": True}})
-        else:
-            metrics.update({metric: None})
-    return metrics
+        metrics = get_metrics_dict()
+        return metrics.get(framework, [])
 
 
 def get_possible_values(data: dict) -> Dict[str, List[Any]]:

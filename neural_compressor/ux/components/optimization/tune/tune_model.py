@@ -56,7 +56,7 @@ def tune_model(
     framework: str,
 ) -> None:
     """Execute tuning."""
-    from neural_compressor.experimental import Quantization, common
+    from neural_compressor.experimental import Quantization
 
     if framework == "onnxrt":
         import onnx

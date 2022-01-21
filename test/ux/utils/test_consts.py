@@ -16,7 +16,7 @@
 
 import unittest
 
-from neural_compressor.ux.utils.consts import github_info
+from neural_compressor.ux.utils.github_info import GithubInfo
 
 
 class TestConsts(unittest.TestCase):
@@ -27,11 +27,10 @@ class TestConsts(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
     def test_github_info(self) -> None:
-        """Test if github_info is built as expected."""
-        self.assertIs(type(github_info), dict)
-        self.assertEqual(github_info.get("user"), "intel")
-        self.assertEqual(github_info.get("repository"), "neural-compressor")
-        self.assertRegex(github_info.get("tag", ""), "^v[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
+        """Test if GithubInfo is built as expected."""
+        self.assertEqual(GithubInfo.user, "intel")
+        self.assertEqual(GithubInfo.repository, "neural-compressor")
+        self.assertRegex(GithubInfo.tag(), "^v[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
 
 
 if __name__ == "__main__":

@@ -15,9 +15,8 @@
 """Model config test."""
 
 import unittest
-from typing import Any, List
 
-from neural_compressor.ux.utils.workload.model import Model, parse_nodes
+from neural_compressor.ux.utils.workload.model import Model
 
 
 class TestModelConfig(unittest.TestCase):
@@ -26,30 +25,6 @@ class TestModelConfig(unittest.TestCase):
     def __init__(self, *args: str, **kwargs: str) -> None:
         """Model config constructor."""
         super().__init__(*args, **kwargs)
-
-    def test_parse_none_nodes(self) -> None:
-        """Test parsing None to empty list."""
-        nodes = None
-        result = parse_nodes(nodes)
-        self.assertEqual(result, [])
-
-    def test_parse_string_nodes(self) -> None:
-        """Test parsing string to empty list."""
-        nodes = "input"
-        result = parse_nodes(nodes)
-        self.assertEqual(result, ["input"])
-
-    def test_parse_nodes_empty_list(self) -> None:
-        """Test parsing list to list."""
-        nodes: List[Any] = []
-        result = parse_nodes(nodes)
-        self.assertEqual(result, [])
-
-    def test_parse_nodes_list(self) -> None:
-        """Test parsing nodes list to list."""
-        nodes = ["input_1", "input_2"]
-        result = parse_nodes(nodes)
-        self.assertEqual(result, ["input_1", "input_2"])
 
     def test_string_single_nodes_constructor(self) -> None:
         """Test if path is correctly recognized as hidden."""

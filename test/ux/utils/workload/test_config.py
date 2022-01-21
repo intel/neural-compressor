@@ -152,15 +152,13 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.tuning.accuracy_criterion)
         self.assertEqual(config.tuning.accuracy_criterion.relative, 0.01)
         self.assertIsNone(config.tuning.accuracy_criterion.absolute)
-        self.assertIsNone(config.tuning.objective)
+        self.assertIsNone(config.tuning.multi_objective)
         self.assertIsNotNone(config.tuning.exit_policy)
         self.assertEqual(config.tuning.exit_policy.timeout, 0)
         self.assertIsNone(config.tuning.exit_policy.max_trials)
         self.assertEqual(config.tuning.random_seed, 9527)
         self.assertIsNone(config.tuning.tensorboard)
-        self.assertIsNotNone(config.tuning.workspace)
-        self.assertIsNone(config.tuning.workspace.path)
-        self.assertIsNone(config.tuning.workspace.resume)
+        self.assertIsNone(config.tuning.workspace)
 
         self.assertIsNotNone(config.quantization)
         self.assertIsNotNone(config.quantization.calibration)
@@ -311,13 +309,11 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.tuning.accuracy_criterion)
         self.assertIsNone(config.tuning.accuracy_criterion.relative)
         self.assertIsNone(config.tuning.accuracy_criterion.absolute)
-        self.assertIsNone(config.tuning.objective)
+        self.assertIsNone(config.tuning.multi_objective)
         self.assertIsNone(config.tuning.exit_policy)
         self.assertIsNone(config.tuning.random_seed)
         self.assertIsNone(config.tuning.tensorboard)
-        self.assertIsNotNone(config.tuning.workspace)
-        self.assertIsNone(config.tuning.workspace.path)
-        self.assertIsNone(config.tuning.workspace.resume)
+        self.assertIsNone(config.tuning.workspace)
 
         self.assertIsNone(config.quantization)
 
@@ -329,6 +325,7 @@ class TestConfig(unittest.TestCase):
         """Test Config serializer."""
         config = Config(self.predefined_config)
         result = config.serialize()
+        print(result)
         self.maxDiff = None
         self.assertDictEqual(
             result,

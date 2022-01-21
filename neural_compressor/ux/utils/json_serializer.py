@@ -139,8 +139,6 @@ class JsonSerializer:
         if issubclass(type(value), JsonSerializer):
             # pylint: disable=maybe-no-member
             serialized_value = value.serialize(serialization_type)
-            if isinstance(serialized_value, dict) and not serialized_value:  # Ignore empty objects
-                return None
             return serialized_value
         if isinstance(value, Enum):
             return value.value

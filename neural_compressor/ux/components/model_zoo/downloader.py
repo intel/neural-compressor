@@ -21,8 +21,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import requests
 
-from neural_compressor.ux.utils.consts import github_info
 from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.github_info import GithubInfo
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import is_development_env, load_model_config
 from neural_compressor.ux.web.communication import MessageQueue
@@ -270,9 +270,9 @@ class Downloader:
             )
             headers = {"Private-Token": os.environ.get("NC_TOKEN")}
             return url, headers
-        user = github_info.get("user")
-        repository = github_info.get("repository")
-        tag = github_info.get("tag")
+        user = GithubInfo.user
+        repository = GithubInfo.repository
+        tag = GithubInfo.tag()
 
         if not (user, repository, tag):
             raise ClientErrorException("Missing github repository information.")

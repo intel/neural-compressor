@@ -58,7 +58,7 @@ def benchmark_model(
     framework: str,
 ) -> None:
     """Execute benchmark."""
-    from neural_compressor.experimental import Benchmark, common
+    from neural_compressor.experimental import Benchmark
 
     if framework == "onnxrt":
         import onnx

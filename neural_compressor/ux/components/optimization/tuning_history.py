@@ -52,7 +52,13 @@ def _build_tuning_history(workload_data: dict) -> dict:
         raise NotFoundException("Unable to find config file")
     config = Config()
     config.load(config_path)
-    objective = config.tuning.objective
+    objective = "performance"
+    if (
+        config.tuning.multi_objective
+        and config.tuning.multi_objective.objective
+        and len(config.tuning.multi_objective.objective) > 0
+    ):
+        objective = config.tuning.multi_objective.objective[0]
 
     history_snapshot_parser = HistorySnapshotParser(
         history_snapshot,

@@ -14,14 +14,12 @@
 # limitations under the License.
 
 """Constant values."""
+import os
+from enum import Enum
 
-from neural_compressor.ux.utils.utils import release_tag
-
-github_info = {
-    "user": "intel",
-    "repository": "neural-compressor",
-    "tag": release_tag(),
-}
+GITHUB_ORG = "intel"
+GITHUB_REPO = "neural-compressor"
+WORKDIR_LOCATION = os.path.join(os.environ.get("HOME", ""), ".neural_compressor")
 
 
 class Precisions:
@@ -30,3 +28,10 @@ class Precisions:
     INT8 = "int8"
     FP32 = "fp32"
     MIXED = "bf16,fp32"
+
+
+class Frameworks(Enum):
+    """Supported frameworks enumeration."""
+
+    TF = "TensorFlow"
+    ONNX = "ONNXRT"

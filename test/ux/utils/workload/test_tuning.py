@@ -228,7 +228,9 @@ class TestTuningConfig(unittest.TestCase):
                 "relative": 0.01,
                 "absolute": 0.02,
             },
-            "objective": "performance",
+            "multi_objective": {
+                "objective": ["performance"],
+            },
             "exit_policy": {
                 "timeout": 60,
                 "max_trials": 200,
@@ -251,7 +253,8 @@ class TestTuningConfig(unittest.TestCase):
         self.assertEqual(tuning.accuracy_criterion.relative, 0.01)
         self.assertEqual(tuning.accuracy_criterion.absolute, 0.02)
 
-        self.assertEqual(tuning.objective, "performance")
+        self.assertIsNotNone(tuning.multi_objective)
+        self.assertEqual(tuning.multi_objective.objective, ["performance"])
 
         self.assertIsNotNone(tuning.exit_policy)
         self.assertEqual(tuning.exit_policy.timeout, 60)
@@ -278,14 +281,12 @@ class TestTuningConfig(unittest.TestCase):
         self.assertIsNone(tuning.accuracy_criterion.relative)
         self.assertIsNone(tuning.accuracy_criterion.absolute)
 
-        self.assertIsNone(tuning.objective)
+        self.assertIsNone(tuning.multi_objective)
         self.assertIsNone(tuning.exit_policy)
         self.assertIsNone(tuning.random_seed)
         self.assertIsNone(tuning.tensorboard)
 
-        self.assertIsNotNone(tuning.workspace)
-        self.assertIsNone(tuning.workspace.path)
-        self.assertIsNone(tuning.workspace.resume)
+        self.assertIsNone(tuning.workspace)
 
     def test_set_timeout(self) -> None:
         """Test setting timeout in Tuning config."""
@@ -437,7 +438,9 @@ class TestTuningConfig(unittest.TestCase):
                 "relative": 0.01,
                 "absolute": 0.02,
             },
-            "objective": "performance",
+            "multi_objective": {
+                "objective": ["performance"],
+            },
             "exit_policy": {
                 "timeout": 60,
                 "max_trials": 200,
@@ -465,7 +468,9 @@ class TestTuningConfig(unittest.TestCase):
                     "relative": 0.01,
                     "absolute": 0.02,
                 },
-                "objective": "performance",
+                "multi_objective": {
+                    "objective": ["performance"],
+                },
                 "exit_policy": {
                     "timeout": 60,
                     "max_trials": 200,
@@ -476,6 +481,50 @@ class TestTuningConfig(unittest.TestCase):
                     "path": "/path/to/workspace",
                     "resume": "/path/to/snapshot/file",
                 },
+            },
+        )
+
+    def test_tuning_serializer_optional_fields(self) -> None:
+        """Test Tuning config serializer."""
+        data = {
+            "strategy": {
+                "name": "basic",
+            },
+            "accuracy_criterion": {
+                "relative": 0.01,
+                "absolute": 0.02,
+            },
+            "multi_objective": {
+                "objective": ["performance"],
+            },
+            "exit_policy": {
+                "timeout": 60,
+                "max_trials": 200,
+            },
+            "random_seed": 12345,
+            "additional_field": {"key": "val"},
+        }
+        tuning = Tuning(data)
+        result = tuning.serialize()
+
+        self.assertDictEqual(
+            result,
+            {
+                "strategy": {
+                    "name": "basic",
+                },
+                "accuracy_criterion": {
+                    "relative": 0.01,
+                    "absolute": 0.02,
+                },
+                "multi_objective": {
+                    "objective": ["performance"],
+                },
+                "exit_policy": {
+                    "timeout": 60,
+                    "max_trials": 200,
+                },
+                "random_seed": 12345,
             },
         )
 

@@ -29,7 +29,7 @@ from neural_compressor.ux.utils.workload.graph_optimization import GraphOptimiza
 from neural_compressor.ux.utils.workload.model import Model
 from neural_compressor.ux.utils.workload.pruning import Pruning
 from neural_compressor.ux.utils.workload.quantization import Quantization
-from neural_compressor.ux.utils.workload.tuning import Tuning
+from neural_compressor.ux.utils.workload.tuning import Tuning, Workspace
 from neural_compressor.ux.utils.yaml_utils import float_representer
 
 
@@ -237,6 +237,8 @@ class Config(JsonSerializer):
 
     def set_workspace(self, path: str) -> None:
         """Update tuning workspace path in config."""
+        if self.tuning.workspace is None:
+            self.tuning.workspace = Workspace()
         self.tuning.workspace.path = path
 
     def set_accuracy_goal(self, accuracy_goal: float) -> None:

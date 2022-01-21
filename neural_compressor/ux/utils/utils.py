@@ -23,6 +23,8 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from neural_compressor.experimental.metric.metric import registry_metrics
+from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, Frameworks
 from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
@@ -321,6 +323,78 @@ def load_help_nc_params(parameter: str) -> Dict[str, Any]:
     return _load_json_as_dict(json_path)
 
 
+def get_metrics_dict() -> dict:
+    """Get metrics list from Neural Compressor and add help messages."""
+    help_dict = load_help_nc_params("metrics")
+    metrics = {}
+
+    for framework, fw_metrics in registry_metrics.items():
+        inc_framework_name = "onnxrt" if framework == "onnxrt_qlinearops" else framework
+        if inc_framework_name.lower() not in [fw.value.lower() for fw in Frameworks]:
+            continue
+        raw_metric_list = list(fw_metrics.keys()) if fw_metrics else []
+        raw_metric_list += ["custom"]
+        metrics_updated = _update_metric_parameters(raw_metric_list)
+        for metric, value in metrics_updated.copy().items():
+            if isinstance(value, dict):
+                for key in value.copy().keys():
+                    for field in ["help", "label"]:
+                        msg_key = f"__{field}__{key}"
+                        metrics_updated[metric][msg_key] = help_dict.get(
+                            metric,
+                            {},
+                        ).get(msg_key, "")
+            metrics_updated[f"__help__{metric}"] = help_dict.get(
+                f"__help__{metric}",
+                "",
+            )
+        metrics.update({inc_framework_name: _parse_help_in_dict(metrics_updated)})
+
+    return metrics
+
+
+def _update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
+    """Add parameters to metrics."""
+    metrics: Dict[str, Any] = {}
+    for metric in metric_list:
+        if metric == "topk":
+            metrics.update({metric: {"k": [1, 5]}})
+        elif metric == "COCOmAP":
+            annotation_path = os.path.join(WORKDIR_LOCATION, "label_map.yaml")
+            metrics.update({metric: {"anno_path": annotation_path}})
+        elif metric in ["MSE", "RMSE", "MAE"]:
+            metrics.update({metric: {"compare_label": True}})
+        else:
+            metrics.update({metric: None})
+    return metrics
+
+
+def _parse_help_in_dict(data: dict) -> list:
+    parsed_list = []
+    for key, value in data.items():
+        if key.startswith("__help__") or key.startswith("__label__"):
+            continue
+        if isinstance(value, dict):
+            parsed_list.append(
+                {
+                    "name": key,
+                    "help": data.get(f"__help__{key}", ""),
+                    "params": _parse_help_in_dict(value),
+                },
+            )
+        else:
+            item = {
+                "name": key,
+                "help": data.get(f"__help__{key}", ""),
+                "value": value,
+            }
+            label = data.get(f"__label__{key}")
+            if label:
+                item["label"] = label
+            parsed_list.append(item)
+    return parsed_list
+
+
 def replace_with_values(param: dict, file_path: str) -> None:
     """Replace parameters with value."""
     with open(file_path, "r+") as opened_file:
@@ -431,3 +505,21 @@ def release_tag() -> str:
 
     release_version = matches.groupdict().get("release")
     return f"v{release_version}"
+
+
+def parse_to_string_list(values: Union[None, str, List[str]]) -> List[str]:
+    """Parse to string list."""
+    if isinstance(values, str):
+        return [values]
+    if isinstance(values, list):
+        return values
+    return []
+
+
+def parse_to_float_list(values: Union[None, float, List[float]]) -> List[float]:
+    """Parse to float list."""
+    if isinstance(values, float):
+        return [values]
+    if isinstance(values, list):
+        return values
+    return []

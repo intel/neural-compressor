@@ -14,11 +14,15 @@
 # limitations under the License.
 """Configuration tuning module."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
-from neural_compressor.ux.utils.utils import parse_bool_value
+from neural_compressor.ux.utils.utils import (
+    parse_bool_value,
+    parse_to_float_list,
+    parse_to_string_list,
+)
 
 
 class Strategy(JsonSerializer):
@@ -33,6 +37,36 @@ class Strategy(JsonSerializer):
 
         self.accuracy_weight: Optional[float] = data.get("accuracy_weight", None)
         self.latency_weight: Optional[float] = data.get("latency_weight", None)
+
+
+class MultiObjective(JsonSerializer):
+    """Configuration MultiObjective class."""
+
+    def __init__(self, data: Dict[str, Any] = {}) -> None:
+        """Initialize configuration MultiObjective class."""
+        super().__init__()
+        self._objective: List[str] = data.get("objective", [])
+        self._weight: List[float] = data.get("weight", [])
+
+    @property
+    def objective(self) -> List[str]:
+        """Get objectives."""
+        return self._objective
+
+    @objective.setter
+    def objective(self, value: Union[None, str, List[str]]) -> None:
+        """Set inputs value."""
+        self._objective = parse_to_string_list(value)
+
+    @property
+    def weight(self) -> List[float]:
+        """Get weights."""
+        return self._weight
+
+    @weight.setter
+    def weight(self, value: Union[None, float, List[float]]) -> None:
+        """Set weights value."""
+        self._weight = parse_to_float_list(value)
 
 
 class AccCriterion(JsonSerializer):
@@ -81,7 +115,7 @@ class Tuning(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}) -> None:
         """Initialize Configuration Tuning class."""
         super().__init__()
-        self.strategy: Strategy = Strategy()  # [Optional]
+        self.strategy: Strategy = Strategy()
         if data.get("strategy"):
             self.strategy = Strategy(data.get("strategy", {}))
 
@@ -89,10 +123,11 @@ class Tuning(JsonSerializer):
             data.get("accuracy_criterion", {}),
         )
 
-        # [Optional] One of neural_compressor.objective.OBJECTIVES
-        self.objective: Optional[str] = data.get("objective", None)
+        self.multi_objective: Optional[MultiObjective] = None
+        if data.get("multi_objective"):
+            self.multi_objective = MultiObjective(data.get("multi_objective", {}))
 
-        self.exit_policy: Optional[ExitPolicy] = None  # [Optional]
+        self.exit_policy: Optional[ExitPolicy] = None
         if data.get("exit_policy"):
             self.exit_policy = ExitPolicy(data.get("exit_policy", {}))
 
@@ -100,7 +135,9 @@ class Tuning(JsonSerializer):
 
         self.tensorboard: Optional[bool] = data.get("tensorboard", None)
 
-        self.workspace: Workspace = Workspace(data.get("workspace", {}))
+        self.workspace: Optional[Workspace] = None
+        if data.get("workspace", {}):
+            self.workspace = Workspace(data.get("workspace", {}))
 
     def set_timeout(self, timeout: int) -> None:
         """Update tuning timeout in config."""

@@ -17,6 +17,7 @@
 from typing import Any, Dict, List, Union
 
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
+from neural_compressor.ux.utils.utils import parse_to_string_list
 
 
 class Model(JsonSerializer):
@@ -38,7 +39,7 @@ class Model(JsonSerializer):
     @inputs.setter
     def inputs(self, value: Union[None, str, List[str]]) -> None:
         """Set inputs value."""
-        self._inputs = parse_nodes(value)
+        self._inputs = parse_to_string_list(value)
 
     @property
     def outputs(self) -> List[str]:
@@ -48,7 +49,7 @@ class Model(JsonSerializer):
     @outputs.setter
     def outputs(self, value: Union[None, str, List[str]]) -> None:
         """Set outputs value."""
-        self._outputs = parse_nodes(value)
+        self._outputs = parse_to_string_list(value)
 
     def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:
         """Serialize configuration Model class."""
@@ -67,12 +68,3 @@ class Model(JsonSerializer):
             else:
                 item.update({"outputs": self.outputs})
         return item
-
-
-def parse_nodes(nodes: Union[None, str, List[str]]) -> List[str]:
-    """Parse boundary nodes to required format."""
-    if isinstance(nodes, str):
-        return [nodes]
-    if isinstance(nodes, list):
-        return nodes
-    return []

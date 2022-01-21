@@ -862,6 +862,131 @@ class TestEvaluationConfig(unittest.TestCase):
         self.assertIsNone(evaluation.accuracy)
         self.assertIsNone(evaluation.performance)
 
+    def test_evalution_serializer(self):
+        """Test Evaluation serializer."""
+        evaluation = Evaluation(
+            {
+                "performance": {
+                    "warmup": 100,
+                    "iteration": 1000,
+                    "configs": {
+                        "cores_per_instance": 2,
+                        "num_of_instance": 4,
+                        "inter_num_of_threads": 8,
+                        "intra_num_of_threads": 16,
+                        "kmp_blocktime": 3,
+                    },
+                    "dataloader": {
+                        "last_batch": "rollover",
+                        "batch_size": 2,
+                        "dataset": {
+                            "TestDataset": {
+                                "dataset_param": "/some/path",
+                                "bool_param": True,
+                                "list_param": ["item1", "item2"],
+                            },
+                        },
+                        "transform": {
+                            "TestTransform": {
+                                "shape": [1000, 224, 224, 3],
+                                "some_op": True,
+                            },
+                            "AnotherTestTransform": {
+                                "shape": [10, 299, 299, 3],
+                                "some_op": False,
+                            },
+                        },
+                        "filter": {
+                            "LabelBalance": {"size": 1},
+                        },
+                    },
+                    "postprocess": {
+                        "transform": {
+                            "LabelShift": 1,
+                            "SquadV1": {
+                                "label_file": "/path/to/dev-v1.1.json",
+                                "vocab_file": "/path/to/vocab.txt",
+                            },
+                        },
+                    },
+                },
+            },
+        )
+        result = evaluation.serialize()
+        expected = {
+            "performance": {
+                "warmup": 100,
+                "iteration": 1000,
+                "configs": {
+                    "cores_per_instance": 2,
+                    "num_of_instance": 4,
+                    "inter_num_of_threads": 8,
+                    "intra_num_of_threads": 16,
+                    "kmp_blocktime": 3,
+                },
+                "dataloader": {
+                    "last_batch": "rollover",
+                    "batch_size": 2,
+                    "dataset": {
+                        "TestDataset": {
+                            "dataset_param": "/some/path",
+                            "bool_param": True,
+                            "list_param": ["item1", "item2"],
+                        },
+                    },
+                    "transform": {
+                        "TestTransform": {
+                            "shape": [1000, 224, 224, 3],
+                            "some_op": True,
+                        },
+                        "AnotherTestTransform": {
+                            "shape": [10, 299, 299, 3],
+                            "some_op": False,
+                        },
+                    },
+                    "filter": {
+                        "LabelBalance": {"size": 1},
+                    },
+                },
+                "postprocess": {
+                    "transform": {
+                        "LabelShift": 1,
+                        "SquadV1": {
+                            "label_file": "/path/to/dev-v1.1.json",
+                            "vocab_file": "/path/to/vocab.txt",
+                        },
+                    },
+                },
+            },
+        }
+        self.assertDictEqual(expected, result)
+
+    @patch("neural_compressor.ux.utils.workload.evaluation.HWInfo")
+    def test_evalution_serializer_with_empty_keys(self, mock_hwinfo: MagicMock) -> None:
+        """Test Evaluation serializer."""
+        mock_hwinfo.return_value.cores = 8
+
+        evaluation = Evaluation(
+            {
+                "accuracy": {},
+                "performance": {},
+            },
+        )
+        result = evaluation.serialize()
+        expected = {
+            "accuracy": {},
+            "performance": {
+                "configs": {
+                    "cores_per_instance": 4,
+                    "kmp_blocktime": 1,
+                    "num_of_instance": 2,
+                },
+                "iteration": -1,
+                "warmup": 5,
+            },
+        }
+        self.assertDictEqual(expected, result)
+
 
 if __name__ == "__main__":
     unittest.main()

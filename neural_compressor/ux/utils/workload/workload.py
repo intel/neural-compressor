@@ -137,7 +137,7 @@ class Workload(JsonSerializer):
             self.workload_path,
             self.model_output_name,
         )
-        self.version = "4.0"
+        self.version = "5.0"
 
     def initialize_config(self, data: dict) -> None:
         """Initialize config."""
@@ -271,6 +271,7 @@ class WorkloadMigrator:
             2: self._migrate_to_v2,
             3: self._migrate_to_v3,
             4: self._migrate_to_v4,
+            5: self._migrate_to_v5,
         }
 
     @property
@@ -375,3 +376,22 @@ class WorkloadMigrator:
                 "version": 4,
             },
         )
+
+    def _migrate_to_v5(self) -> None:
+        """Parse workload form v4 to v5."""
+        print("Migrating workload.json to v5...")
+        objective = self.workload_data.get("config", {}).get("tuning", {}).get("objective", None)
+        self.workload_data.update(
+            {
+                "version": 5,
+            },
+        )
+        if isinstance(objective, str):
+            del self.workload_data["config"]["tuning"]["objective"]
+            self.workload_data["config"]["tuning"].update(
+                {
+                    "multi_objective": {
+                        "objective": [objective],
+                    },
+                },
+            )
