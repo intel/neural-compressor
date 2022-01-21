@@ -1092,7 +1092,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
 
-        self._dump_model_op_stastics(q_model.model, q_model.tune_cfg)
+        self._dump_model_op_stats(q_model.model, q_model.tune_cfg)
 
         return q_model
 
@@ -1231,7 +1231,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         return model_
 
-    def _dump_model_op_stastics(self, model, tune_cfg):
+    def _dump_model_op_stats(self, model, tune_cfg):
         """This is a function to dump quantizable ops of model to user.
         Args:
             model (object): input model
@@ -2411,7 +2411,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             self._get_scale_zeropoint(q_model.model, self.tune_cfg)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
 
-        self._dump_model_op_stastics(q_model.model, q_model.tune_cfg, self.approach)
+        self._dump_model_op_stats(q_model.model, q_model.tune_cfg, self.approach)
         return q_model
 
 
@@ -2541,7 +2541,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         return model.model
 
 
-    def _dump_model_op_stastics(self, model, tune_cfg, approach):
+    def _dump_model_op_stats(self, model, tune_cfg, approach):
         """This is a function to dump quantizable ops of model to user.
         Args:
             model (object): input model
@@ -2570,7 +2570,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 if node.op == 'call_module':
                     op_class = type(modules[node.target])
                     op_type = str(op_class.__name__)
-                    if 'quantized' in str(op_class):
+                    if 'quantized' in str(op_class) or quantized_mode:
                         if op_type not in res.keys():
                             res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                         res[op_type]['INT8'] += 1

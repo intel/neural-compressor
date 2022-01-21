@@ -147,7 +147,7 @@ class ONNXRTAdaptor(Adaptor):
         tmp_model.model = quantizer.model.model
         self.quantize_config = quantize_config # update so other methods can know current configs
 
-        self._dump_model_op_stastics(tmp_model)
+        self._dump_model_op_stats(tmp_model)
         return tmp_model
 
     def _generate_qconfig(self, model, tune_cfg, quantize_params):
@@ -232,7 +232,7 @@ class ONNXRTAdaptor(Adaptor):
             quantize_params = None
         return quantize_params, tune_cfg
 
-    def _dump_model_op_stastics(self, model):
+    def _dump_model_op_stats(self, model):
         fp32_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
             precision='int8')
 

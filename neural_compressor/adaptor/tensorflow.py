@@ -541,11 +541,11 @@ class TensorFlowAdaptor(Adaptor):
         converted_model.q_config.update({'framework_specific_info': \
                                             self.framework_specific_info})
 
-        self._dump_model_op_stastics(converted_model.graph_def)
+        self._dump_model_op_stats(converted_model.graph_def)
 
         return converted_model
 
-    def _dump_model_op_stastics(self, model_graphdef):
+    def _dump_model_op_stats(self, model_graphdef):
         fp32_op_list = copy.deepcopy(
             self.query_handler.get_op_types_by_precision(precision='uint8'))
         int8_op_prefix_list = ['QuantizedConv2D', 'QuantizedDepthwise',
@@ -1143,7 +1143,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                    data_loader=data_loader,
                                    itex_mode=True).convert()
 
-        self._dump_model_op_stastics(converted_model.graph_def)
+        self._dump_model_op_stats(converted_model.graph_def)
 
         return converted_model
 @singleton

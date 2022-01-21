@@ -96,10 +96,10 @@ class EngineAdaptor(Adaptor):
             tmp_model = quantizer.quantize_model()
 
         self.quantize_config = quantize_config # update so other methods can know current configs
-        self._dump_model_op_stastics(tmp_model, quantize_config)
+        self._dump_model_op_stats(tmp_model, quantize_config)
         return tmp_model
 
-    def _dump_model_op_stastics(self, model, config):
+    def _dump_model_op_stats(self, model, config):
         quant_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
             precision=self.q_dtype)
         res = {}
