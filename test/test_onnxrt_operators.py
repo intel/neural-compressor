@@ -80,6 +80,75 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.quantize_model()
         assert quantizer.model.model
 
+    def test_embed(self):
+        input_ids_shape = [1, 4]
+        input_ids_tensor = helper.make_tensor_value_info('input_ids', TensorProto.INT32, input_ids_shape)
+
+        segment_ids_shape = [1, 4]
+        segment_ids_tensor = helper.make_tensor_value_info('segment_ids', TensorProto.INT32, segment_ids_shape)
+
+        # EmbedLayerNormalization Node Constants and Weights:
+        word_embed_shape = [32, 4]
+        word_embed_weights = np.random.random_sample(word_embed_shape).astype(dtype='float32')
+        word_embed_initializer = onnx.numpy_helper.from_array(word_embed_weights, name='word_embed')
+
+        pos_embed_shape = [16, 4]
+        pos_embed_weights = np.random.random_sample(pos_embed_shape).astype(dtype='float32')
+        pos_embed_initializer = onnx.numpy_helper.from_array(pos_embed_weights, name='pos_embed')
+
+        seg_embed_shape = [2, 4]
+        seg_embed_weights = np.random.random_sample(seg_embed_shape).astype(dtype='float32')
+        seg_embed_initializer = onnx.numpy_helper.from_array(seg_embed_weights, name='seg_embed')
+
+        gamma_shape = [4]
+        gamma = np.random.random_sample(gamma_shape).astype(dtype='float32')
+        gamma_initializer = onnx.numpy_helper.from_array(gamma, name='gamma')
+
+        beta_shape = [4]
+        beta = np.random.random_sample(beta_shape).astype(dtype='float32')
+        beta_initializer = onnx.numpy_helper.from_array(beta, name='beta')
+
+        # EmbedLayerNormalization Outputs:
+        layernorm_out_shape = [1, 4, 4]
+        layernorm_out_tensor = helper.make_tensor_value_info('layernorm_out', TensorProto.FLOAT, layernorm_out_shape)
+
+        mask_index_out_shape = [1]
+        mask_index_out_tensor = helper.make_tensor_value_info('mask_index_out', TensorProto.INT32, mask_index_out_shape)
+
+        # EmbedLayerNormalization Node:
+        embed_layer_norm_inputs = [
+            'input_ids', 'segment_ids', 'word_embed', 'pos_embed', 'seg_embed', 'gamma', 'beta'
+        ]
+        embed_layer_norm_outputs = ['layernorm_out', 'mask_index_out']
+        embed_layer_norm_node = helper.make_node('EmbedLayerNormalization',
+                                                 embed_layer_norm_inputs,
+                                                 embed_layer_norm_outputs,
+                                                 domain='com.microsoft',
+                                                 name='Embed')
+
+        # Construct the Graph and Model:
+        nodes = [embed_layer_norm_node]
+        graph_name = 'embed_layernorm_graph'
+        inputs = [input_ids_tensor, segment_ids_tensor]
+        outputs = [layernorm_out_tensor, mask_index_out_tensor]
+        initializers = [
+            word_embed_initializer, pos_embed_initializer, seg_embed_initializer, gamma_initializer, beta_initializer
+        ]
+
+        graph = helper.make_graph(nodes, graph_name, inputs, outputs, initializer=initializers)
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 14)])
+        model.ir_version = 7 # use stable onnx ir version
+        
+        q_config = {'Embed': self.q_config}
+        quantize_params = {'word_embed': [np.float32(10.), np.uint8(0)],
+                           'pos_embed': [np.float32(10.), np.uint8(0)],
+                           'seg_embed': [np.float32(10.), np.uint8(0)],
+                           'gamma': [np.float32(10.), np.uint8(0)],
+                           'beta': [np.float32(10.), np.uint8(0)],
+                           'layernorm_out': [np.float32(10.), np.uint8(0)],
+                           'mask_index_out': [np.float32(10.), np.uint8(0)]}   
+        self.static_test(model, q_config, quantize_params, ['EmbedLayerNormalization'])                        
+
     def test_concat_reshape_pooling(self):
         model = build_model()
         q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
