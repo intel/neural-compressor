@@ -9,8 +9,8 @@ Network pruning is one of popular approaches of network compression, which reduc
 
 Structured pruning means pruning sparsity patterns, in which there is some structure, most often in the form of blocks.
 Neural Compressor provided a NLP Structured pruning example:
-[Bert example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager).
-[README of Structured pruning example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager/README.md).
+[Bert example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager).
+[README of Structured pruning example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager/README.md).
 
 - Unstructured Pruning
 
@@ -56,69 +56,7 @@ Neural Compressor also supports the two-shot execution of unstructured pruning a
 ### User facing API
 
 Neural Compressor pruning API is defined under `neural_compressor.experimental.Pruning`, which takes a user defined yaml file as input. The user defined yaml defines training, pruning and evaluation behaviors.
-
-```
-# pruning.py in neural_compressor/experimental
-class Pruning():
-    def __init__(self, conf_fname_or_obj):
-        # The initialization function of pruning, taking the path or Pruning_Conf class to user-defined yaml as input
-        ...
-
-    def __call__(self):
-        # The main entry of pruning, executing pruning according to user configuration.
-        ...
-
-    @model.setter
-    def model(self, user_model):
-        # The wrapper of framework model. `user_model` is the path to framework model or framework runtime model 
-        object.
-        # This attribute needs to be set before invoking self.__call__().
-        ...
-
-    @pruning_func.setter
-    def pruning_func(self, user_pruning_func)
-        # The training function provided by user. This function takes framework runtime model object as input parameter, 
-        # and executes entire training process with self contained training hyper-parameters.
-        # It is optional if training could be configured by neural_compressor built-in dataloader/optimizer/criterion.
-        ...
-
-    @eval_func.setter
-    def eval_func(self, user_eval_func)
-        # The evaluation function provided by user. This function takes framework runtime model object as input parameter and executes evaluation process.
-        # It is optional if evaluation could be configured by neural_compressor built-in dataloader/optimizer/criterion.
-        ...
-
-    @train_dataloader.setter
-    def train_dataloader(self, dataloader):
-        # The dataloader used in training phase. It is optional if training dataloader is configured in user-define yaml.
-        ...
-
-    @eval_dataloader.setter
-    def eval_dataloader(self, dataloader):
-        # The dataloader used in evaluation phase. It is optional if training dataloader is configured in user-define yaml.
-        ...
-
-    def on_epoch_begin(self, epoch):
-        # The hook point used by pruning algorithm
-        ...
-
-    def on_epoch_end(self):
-        # The hook point used by pruning algorithm
-        ...
-
-    def on_batch_begin(self, batch):
-        # The hook point used by pruning algorithm
-        ...
-
-    def on_batch_end(self):
-        # The hook point used by pruning algorithm
-        ...
-
-    def on_post_grad(self):
-        # The hook point used by pruning algorithm
-        ...
-
-```
+[API Readme](../docs/pruning_api.md).
 
 ### Launcher code
 
@@ -145,70 +83,7 @@ model = prune.fit()
 ### User-defined yaml
 
 The user-defined yaml follows below syntax, note `train` section is optional if user implements `pruning_func` and sets to `pruning_func` attribute of pruning instance.
-
-```
-pruning:
-  train:                    # optional. No need if user implements `pruning_func` and pass to `pruning_func` attribute of pruning instance.
-    start_epoch: 0
-    end_epoch: 10
-    iteration: 100
-    frequency: 2
-    
-    dataloader:
-      batch_size: 256
-      dataset:
-        ImageFolder:
-          root: /path/to/imagenet/train
-      transform:
-        RandomResizedCrop:
-          size: 224
-        RandomHorizontalFlip:
-        ToTensor:
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225] 
-    criterion:
-      CrossEntropyLoss:
-        reduction: None
-    optimizer:
-      SGD:
-        learning_rate: 0.1
-        momentum: 0.9
-        weight_decay: 0.0004
-        nesterov: False
-
-  approach:
-    weight_compression:
-      initial_sparsity: 0.0
-      target_sparsity: 0.3
-      pruners:
-        - !Pruner
-            initial_sparsity: 0.0
-            target_sparsity: 0.97
-            start_epoch: 0
-            end_epoch: 2
-            prune_type: basic_magnitude
-            update_frequency: 0.1
-            names: ['layer1.0.conv1.weight']
-        - !Pruner
-            start_epoch: 0
-            end_epoch: 1
-            prune_type: gradient_sensitivity
-            update_frequency: 1
-            names: [
-                     'bert.encoder.layer.0.attention.output.dense.weight',
-                   ]
-            parameters: {
-                          target: 8,
-                          transpose: True,
-                          stride: 64,
-                          index: 0,
-                          normalize: True,
-                          importance_inputs: ['head_mask'],
-                          importance_metric: abs_gradient
-                        }
-
-```
+[user-defined yaml](../docs/pruning.yaml).
 
 #### `train`
 
