@@ -127,13 +127,13 @@ if __name__ == '__main__':
     setup(
         name="neural_compressor",
         version=__version__,
-        author="Intel MLP/MLPC Team",
+        author="Intel AIA/AIPC Team",
         author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com, xi2.chen@intel.com",
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding='utf-8').read(),
         long_description_content_type="text/markdown",
         keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training, tuning strategy',
-        license='',
+        license='Apache 2.0',
         url="https://github.com/intel/neural-compressor",
         ext_modules=[CMakeExtension("engine_py", str(cwd) + '/engine/executor/')],
         packages = find_packages(),
@@ -164,5 +164,6 @@ if __name__ == '__main__':
               'Intended Audience :: Science/Research',
               'Programming Language :: Python :: 3',
               'Topic :: Scientific/Engineering :: Artificial Intelligence',
+              'License :: OSI Approved :: Apache Software License',
         ],
     )
