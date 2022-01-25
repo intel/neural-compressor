@@ -257,7 +257,7 @@ models = [
     # CenterNet
     {
         'model_name': 'CenterNet',
-        'input': {'IteratorGetNext': generate_data([224, 224,3]), "is_training":False},
+        'input': {'inputs': generate_data([224, 224, 3])},
         'output': ['detector/hm/Sigmoid']
     },
     # VNet
