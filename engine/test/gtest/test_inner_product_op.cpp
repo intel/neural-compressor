@@ -221,26 +221,32 @@ static auto CasesFp32 = []() {
   std::vector<int64_t> bias_shape;
   std::vector<int64_t> post_shape;
 
-  // case: simple
+  // case: dense
   src_shape = {1, 2};
   weight_shape = {1, 2};
   bias_shape = {1};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "", false), false});
-  // case: simple
+  // case: dense
   src_shape = {10, 20};
   weight_shape = {40, 20};
   bias_shape = {40};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "0,1", "", false), false});
-  // case: simple
+  // case: dense with perm
   src_shape = {10, 5};
   weight_shape = {5, 8};
   bias_shape = {8};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "1,0", "", false), false});
-  // case: simple
+  // case: dense with perm
   src_shape = {128, 768};
   weight_shape = {768, 512};
   bias_shape = {512};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "1,0", "", false), false});
+  // case: dense with sum, with perm, with tail
+  src_shape = {33, 512};
+  weight_shape = {1024, 512};
+  bias_shape = {1024};
+  post_shape = {33, 1024};
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, "0,1", "sum", false), false});
   // case: sparse
   src_shape = {32, 768};
   weight_shape = {768, 1024};
@@ -277,20 +283,17 @@ static auto CasesFp32 = []() {
   bias_shape = {1024};
   post_shape = {32, 1024};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, "0,1", "sum", true), false});
-  return ::testing::ValuesIn(cases);
   // case: sparse with sum, with perm, with tail
   src_shape = {33, 512};
   weight_shape = {1024, 512};
   bias_shape = {1024};
   post_shape = {33, 1024};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, "0,1", "sum", true), false});
-  return ::testing::ValuesIn(cases);
   // case: sparse with tanh
   src_shape = {32, 512};
   weight_shape = {512, 1024};
   bias_shape = {1024};
   cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, "1,0", "tanh", true), false});
-  return ::testing::ValuesIn(cases);
   // case: sparse with tanh, with tail
   src_shape = {33, 512};
   weight_shape = {1024, 512};
