@@ -32,13 +32,8 @@ class ReduceMean(Operator):
             self._attr['axis'] = self._input_tensors[1].data[0]
             self._attr['keep_dims'] = node.attr['keep_dims'].b
         if framework == 'onnxruntime':
-            if len(node.attribute) == 2:
-                axis = node.attribute[1].ints
-                self._attr['keep_dims'] = bool(node.attribute[0].i)
-            if len(node.attribute) == 1:
-               axis = node.attribute[0].ints
-
-            if len(axis) == 1:
-                self._attr['axis'] = axis[0]
-            else:
-                self._attr['axis'] = list2str(axis)
+            for attribute in node.attribute:
+                if attribute.name == 'axes':
+                    self._attr['axis'] = list2str(attribute.ints)
+                if attribute.name == 'keepdims':
+                    self._attr['keep_dims'] = bool(attribute.i)

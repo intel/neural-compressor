@@ -36,7 +36,9 @@ void ConcatOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   //// Part1: Derive operator's user proper shape and strides
   // 1.1: Prepare Tensor origin shape
   const memory::dims& src_shape_origin = input[0]->shape();
-
+  if (axis_ < 0) {
+    axis_ = src_shape_origin.size() + axis_;
+  }
   // 1.2 Get tensor's number
   const int num_src = input.size();
 
