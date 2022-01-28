@@ -56,6 +56,7 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/embeddingbag.cpp
     ${HOST_SRC_DIR}/src/operators/split.cpp
     ${HOST_SRC_DIR}/src/operators/convolution.cpp
+    ${HOST_SRC_DIR}/src/operators/slice.cpp
     ${HOST_SRC_DIR}/src/sparse_operators/sparse_inner_product.cpp
 )
 
@@ -98,6 +99,7 @@ file(GLOB OPS_TEST_CASES_SRC
     test_token_type_ids_op.cpp
     test_concat_op.cpp
     test_split_op.cpp
+    test_slice_op.cpp
     test_embeddingbag_op.cpp
     test_convolution_op.cpp
 )
