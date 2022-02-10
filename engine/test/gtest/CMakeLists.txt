@@ -57,6 +57,7 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/split.cpp
     ${HOST_SRC_DIR}/src/operators/convolution.cpp
     ${HOST_SRC_DIR}/src/operators/slice.cpp
+    ${HOST_SRC_DIR}/src/operators/group_norm.cpp
     ${HOST_SRC_DIR}/src/sparse_operators/sparse_inner_product.cpp
 )
 
@@ -102,6 +103,7 @@ file(GLOB OPS_TEST_CASES_SRC
     test_slice_op.cpp
     test_embeddingbag_op.cpp
     test_convolution_op.cpp
+    test_group_norm_op.cpp
 )
 
 function(register_gtest_func exe src)

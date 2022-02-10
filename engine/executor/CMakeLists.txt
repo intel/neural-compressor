@@ -75,6 +75,7 @@ add_library(engine SHARED
     src/operators/convolution.cpp
     src/operators/merged_embeddingbag.cpp
     src/operators/slice.cpp
+    src/operators/group_norm.cpp
     src/sparse_operators/sparse_inner_product.cpp
 )
 
