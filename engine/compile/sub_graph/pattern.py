@@ -52,7 +52,6 @@ supported_patterns = [
     'MatMulWithBiasRelu',
     'MatMulWithBiasSigmoid',
     'LayerNormWithReduceMean',
-    'LastHiddenStatesConcat',
     'StartEndLogits',
     'OutputData',
 ]
