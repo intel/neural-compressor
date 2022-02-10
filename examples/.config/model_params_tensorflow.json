@@ -2290,7 +2290,7 @@
     "Elmo": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/dpg/elmo/model/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5",
+      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/dpg/elmo/model/elmo.pb",
       "yaml": "config.yaml",
       "strategy": "basic",
       "batch_size": 1,
