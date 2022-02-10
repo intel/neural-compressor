@@ -492,15 +492,15 @@ class TestOps(unittest.TestCase):
         reduce_mean_node = NodeProto()
         reduce_mean_node.name = 'reduce_mean'
         reduce_mean_node.op_type = 'ReduceMean'
-        reduce_mean_node.attribute.append(make_attribute('keep_dims', 0))
-        reduce_mean_node.attribute.append(make_attribute('axis', [0]))
+        reduce_mean_node.attribute.append(make_attribute('keepdims', 0))
+        reduce_mean_node.attribute.append(make_attribute('axes', [0,1]))
 
         reduce_mean_node_test = OPERATORS['ReduceMean']()
         reduce_mean_node_test.set_attr('onnxruntime', reduce_mean_node)
         keep_dims = reduce_mean_node_test.attr['keep_dims']
         axis = reduce_mean_node_test.attr['axis']
         self.assertFalse(keep_dims)
-        self.assertEqual(0, axis)
+        self.assertEqual('0,1', axis)
     
     def test_reduce_mean_tensorflow(self):
         reduce_mean_node = node_def_pb2.NodeDef()
