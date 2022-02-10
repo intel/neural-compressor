@@ -1,6 +1,7 @@
 Full Publications 
 ==========
 
+* [Quantize AI Model by Intel® oneAPI AI Analytics Toolkit on Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) (Feb 2022)
 * [AI Performance and Productivity with Intel® Neural Compressor](https://twitter.com/IntelAI/status/1469079414562557952) (Jan 2022)
 * [Ease-of-use quantization for PyTorch with Intel® Neural Compressor](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html) (Jan 2022)
 * [Intel Neural Compressor Tutorial on BiliBili](https://space.bilibili.com/1840724569?from=search&seid=8673550305007703901&spm_id_from=333.337.0.0) (Dec 2021)

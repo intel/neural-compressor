@@ -196,6 +196,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 **Publications**
 
+* [Quantize AI Model by Intel® oneAPI AI Analytics Toolkit on Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) (Feb 2022)
 * [AI Performance and Productivity with Intel® Neural Compressor](https://twitter.com/IntelAI/status/1469079414562557952) (Jan 2022)
 * [Ease-of-use quantization for PyTorch with Intel® Neural Compressor](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html) (Jan 2022)
 * [Faster, Easier Optimization with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/optimization-with-intel-neural-compressor.html) (Nov 2021)
