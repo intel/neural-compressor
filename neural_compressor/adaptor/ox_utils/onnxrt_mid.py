@@ -209,18 +209,23 @@ class ONNXRTAugment:
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
             if len_inputs == 1:
-                ort_inputs.update({inputs_names[0]: inputs})
+                ort_inputs.update(
+                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                )
             else:
                 assert len_inputs == len(inputs), \
                     'number of input tensors must align with graph inputs'
-                for i in range(len_inputs):
-                    if not isinstance(inputs[i], np.ndarray): # pragma: no cover
-                        ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                    else:
-                        ort_inputs.update({inputs_names[i]: inputs[i]})
+                if isinstance(inputs, dict):  # pragma: no cover
+                    ort_inputs.update(inputs)
+                else:
+                    for i in range(len_inputs):
+                        if not isinstance(inputs[i], np.ndarray): # pragma: no cover
+                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                        else:
+                            ort_inputs.update({inputs_names[i]: inputs[i]})
             if self.iterations != []:
                 if idx > max(self.iterations):
-                    break    
+                    break
                 if idx in self.iterations:
                     intermediate_outputs.append(session.run(None, ort_inputs))
             else:

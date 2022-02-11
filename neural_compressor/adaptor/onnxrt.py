@@ -617,17 +617,22 @@ class ONNXRTAdaptor(Adaptor):
                 if not isinstance(labels, list):
                     labels = [labels]
                 if len_inputs == 1:
-                    ort_inputs.update({inputs_names[0]: inputs})
+                    ort_inputs.update(
+                        inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                    )
                 else:
                     assert len_inputs == len(inputs), \
-                        'number of input tensors must align with graph inputs'  
+                        'number of input tensors must align with graph inputs'
 
-                    for i in range(len_inputs):
-                        # in case dataloader contains non-array input
-                        if not isinstance(inputs[i], np.ndarray):
-                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
-                        else:
-                            ort_inputs.update({inputs_names[i]: inputs[i]})   
+                    if isinstance(inputs, dict):  # pragma: no cover
+                        ort_inputs.update(inputs)
+                    else:
+                        for i in range(len_inputs):
+                            # in case dataloader contains non-array input
+                            if not isinstance(inputs[i], np.ndarray):
+                                ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                            else:
+                                ort_inputs.update({inputs_names[i]: inputs[i]})
 
                 if measurer is not None:
                     measurer.start()
