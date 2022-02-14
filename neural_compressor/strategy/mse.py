@@ -169,7 +169,7 @@ class MSETuneStrategy(TuneStrategy):
                     old_cfg = copy.deepcopy(op_cfgs['op'][op])
                     op_cfgs['op'][op]['activation'].clear()
                     op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                    if 'weight' in op_cfgs['op'][op]:
+                    if 'weight' in op_cfgs['op'][op] and op_cfgs['op'][op]['weight'] is not None:
                         op_cfgs['op'][op]['weight'].clear()
                         op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
                     yield op_cfgs
@@ -184,7 +184,7 @@ class MSETuneStrategy(TuneStrategy):
                 for op in ordered_ops:
                     op_cfgs['op'][op]['activation'].clear()
                     op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
-                    if 'weight' in op_cfgs['op'][op]:
+                    if 'weight' in op_cfgs['op'][op] and op_cfgs['op'][op]['weight'] is not None:
                         op_cfgs['op'][op]['weight'].clear()
                         op_cfgs['op'][op]['weight']['dtype'] = 'fp32'
                     yield op_cfgs

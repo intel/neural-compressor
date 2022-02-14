@@ -128,7 +128,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                         if fallback_dtype == cfg['activation']['dtype']:
                             op_cfgs['op'][op]['activation'].clear()
                             op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                            if 'weight' in cfg:
+                            if 'weight' in cfg and op_cfgs['op'][op]['weight'] is not None:
                                 assert cfg['weight']['dtype'] == fallback_dtype
                                 op_cfgs['op'][op]['weight'].clear()
                                 op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
@@ -146,7 +146,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                             if fallback_dtype == cfg['activation']['dtype']:
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if 'weight' in cfg:
+                                if 'weight' in cfg and op_cfgs['op'][op]['weight'] is not None:
                                     assert cfg['weight']['dtype'] == fallback_dtype
                                     op_cfgs['op'][op]['weight'].clear()
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
@@ -164,7 +164,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                             if fallback_dtype == cfg['activation']['dtype']:
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if 'weight' in op_cfgs['op'][op]:
+                                if ('weight' in op_cfgs['op'][op] and 
+                                        op_cfgs['op'][op]['weight'] is not None):
                                     op_cfgs['op'][op]['weight'].clear()
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs

@@ -136,8 +136,9 @@ class BasicTuneStrategy(TuneStrategy):
                         if ('weight' in cfg and fallback_dtype == cfg['weight']['dtype']) \
                            or ('weight' not in cfg
                                and fallback_dtype == cfg['activation']['dtype']):
-                            op_cfgs['op'][op]['weight'].clear()
-                            op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                            if op_cfgs['op'][op]['weight'] is not None:
+                                op_cfgs['op'][op]['weight'].clear()
+                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                             assert cfg['activation']['dtype'] == fallback_dtype
                             op_cfgs['op'][op]['activation'].clear()
                             op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
@@ -155,8 +156,9 @@ class BasicTuneStrategy(TuneStrategy):
                             if ('weight' in cfg and fallback_dtype == cfg['weight']['dtype']) \
                                or ('weight' not in cfg
                                    and fallback_dtype == cfg['activation']['dtype']):
-                                op_cfgs['op'][op]['weight'].clear()
-                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                                if op_cfgs['op'][op]['weight'] is not None:
+                                    op_cfgs['op'][op]['weight'].clear()
+                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                                 assert cfg['activation']['dtype'] == fallback_dtype
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
@@ -174,8 +176,9 @@ class BasicTuneStrategy(TuneStrategy):
                             if ('weight' in cfg and fallback_dtype == cfg['weight']['dtype']) \
                                or ('weight' not in cfg
                                    and fallback_dtype == cfg['activation']['dtype']):
-                                op_cfgs['op'][op]['weight'].clear()
-                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
+                                if op_cfgs['op'][op]['weight'] is not None:
+                                    op_cfgs['op'][op]['weight'].clear()
+                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                                 assert cfg['activation']['dtype'] == fallback_dtype
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
