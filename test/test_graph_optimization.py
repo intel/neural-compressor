@@ -187,7 +187,10 @@ class TestGraphOptimization(unittest.TestCase):
         import neural_compressor.adaptor.pytorch as nc_torch
         from neural_compressor.adaptor.pytorch import PyTorchVersionMode
         PT_VERSION = nc_torch.get_torch_version()
-        if PT_VERSION != PyTorchVersionMode.PT18.value:
+        if PT_VERSION > PyTorchVersionMode.PT18.value \
+           and PT_VERSION < PyTorchVersionMode.PT19.value:
+            pass
+        else:
             import torchvision
             model = torchvision.models.resnet18()
             from neural_compressor.experimental import Graph_Optimization
@@ -199,14 +202,15 @@ class TestGraphOptimization(unittest.TestCase):
                 output_graph = graph_optimizer.fit()
             except SystemExit:
                 pass
-        else:
-            pass
 
     def test_not_supported_model_without_yaml(self):
         import neural_compressor.adaptor.pytorch as nc_torch
         from neural_compressor.adaptor.pytorch import PyTorchVersionMode
         PT_VERSION = nc_torch.get_torch_version()
-        if PT_VERSION != PyTorchVersionMode.PT18.value:
+        if PT_VERSION > PyTorchVersionMode.PT18.value \
+           and PT_VERSION < PyTorchVersionMode.PT19.value:
+            pass
+        else:
             import torchvision
             model = torchvision.models.resnet18()
             from neural_compressor.experimental import Graph_Optimization
@@ -217,14 +221,15 @@ class TestGraphOptimization(unittest.TestCase):
                 graph_optimizer.model = model
             except SystemExit:
                 pass
-        else:
-            pass
 
     def test_not_supported_model_with_conf(self):
         import neural_compressor.adaptor.pytorch as nc_torch
         from neural_compressor.adaptor.pytorch import PyTorchVersionMode
         PT_VERSION = nc_torch.get_torch_version()
-        if PT_VERSION != PyTorchVersionMode.PT18.value:
+        if PT_VERSION > PyTorchVersionMode.PT18.value \
+           and PT_VERSION < PyTorchVersionMode.PT19.value:
+            pass
+        else:
             from neural_compressor.experimental import Graph_Optimization
             from neural_compressor import conf
             import torchvision
@@ -238,8 +243,6 @@ class TestGraphOptimization(unittest.TestCase):
                 graph_optimizer.model = model
             except SystemExit:
                 pass
-        else:
-            pass
 
 
     @disable_random()
