@@ -148,7 +148,8 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install -i https://test.pypi.org/simple/ neural-compressor
 
   # install from conda
-  conda install neural-compressor -c conda-forge -c intel 
+  conda install pycocotools -c esri   
+  conda install neural-compressor -c conda-forge -c intel
   ```
 
 #### Option 2 Install from source
