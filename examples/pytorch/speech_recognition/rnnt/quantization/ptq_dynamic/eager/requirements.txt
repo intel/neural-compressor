@@ -2,6 +2,6 @@ neural-compressor
 sox
 absl-py
 toml
-unidecode
+text-unidecode
 inflect
-librosa
+librosa==0.8.1
