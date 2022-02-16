@@ -61,6 +61,7 @@ function set_args {
 
   models_need_name=(
   --------
+  AttRec
   CRNN
   CapsuleNet
   CenterNet
@@ -127,7 +128,6 @@ function set_args {
   ResNest50-3D
   adversarial_text
   Attention_OCR
-  AttRec
   GPT2
   Parallel_WaveNet
   PNASNet-5

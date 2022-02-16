@@ -41,6 +41,7 @@ function init_params {
 function set_args {
   models_need_name=(
   --------
+  AttRec
   CRNN
   CapsuleNet
   CenterNet
