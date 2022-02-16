@@ -313,7 +313,7 @@ models = [
     # AttRec
     {
         'model_name': 'AttRec',
-        'input': {'keep_prob': np.array([.5]), 'Placeholder': generate_data([5], input_dtype="int32"), 'Placeholder_1': np.array([3], dtype=np.int32),"Placeholder_3": np.array([1],dtype=np.int32)},
+        'input': {'keep_prob': np.array([.5], dtype=np.float32), 'Placeholder': generate_data([5], input_dtype="int32"), 'Placeholder_1': np.array([3], dtype=np.int32),"Placeholder_3": np.array([1],dtype=np.int32)},
         'output': ['TopKV2']
     },
     # MiniGo

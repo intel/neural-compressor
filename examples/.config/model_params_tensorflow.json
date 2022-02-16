@@ -2281,7 +2281,7 @@
     "DETR": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/dpg/DETR/weights/detr/",
+      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/dpg/DETR/DETR.pb",
       "yaml": "config.yaml",
       "strategy": "basic",
       "batch_size": 1,
@@ -2326,7 +2326,7 @@
     "AttRec": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/AttRec/save_path/",
+      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/AttRec/AttRec.pb",
       "yaml": "config.yaml",
       "strategy": "basic",
       "batch_size": 1,
