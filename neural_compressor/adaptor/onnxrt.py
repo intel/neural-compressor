@@ -749,10 +749,10 @@ class ONNXRTQuery(QueryBackendCapability):
         """
         default_config = None
         for sub_data in data:
-            if sub_data['version']['name'] == self.version:
+            if self.version in sub_data['version']['name']:
                 return sub_data
 
-            if sub_data['version']['name'] == 'default':
+            if 'default' in sub_data['version']['name']:
                 default_config = sub_data
 
         return default_config
