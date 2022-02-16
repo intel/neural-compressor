@@ -92,20 +92,23 @@ def run_benchmark(model_details, args, find_graph_def):
         output_dict = {out_name: graph.get_tensor_by_name("g/" + out_name + ":0")
                        for out_name in model_details['output']}
 
+        feed_dict = {graph.get_tensor_by_name("g/" + in_name + ":0"): model_details['input'][in_name]
+                       for in_name in model_details['input']}
+
         sess.run(tf_v1.global_variables_initializer())
 
         total_time = 0.0
         reps_done = 0
         for rep in range(args.num_iter):
             if rep < args.num_warmup:
-                _ = sess.run(output_dict)
+                _ = sess.run(output_dict, feed_dict=feed_dict)
                 continue
             start = time.time()
 
             if args.profile:
-                _ = sess.run(output_dict, options=run_options, run_metadata=run_metadata)
+                _ = sess.run(output_dict, feed_dict=feed_dict, options=run_options, run_metadata=run_metadata)
             else:
-                _ = sess.run(output_dict)
+                _ = sess.run(output_dict, feed_dict=feed_dict)
 
             end = time.time()
             delta = end - start
