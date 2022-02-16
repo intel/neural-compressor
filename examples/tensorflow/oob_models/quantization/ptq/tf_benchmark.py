@@ -12,6 +12,7 @@ from tensorflow.python.tools import optimize_for_inference_lib
 from tensorflow.core.protobuf import rewriter_config_pb2
 from dataloaders import WidedeepDataloader
 from find_outputs import get_input_output
+from find_outputs import _load_pb
 from utils import *
 
 logging.basicConfig(level=logging.INFO,
@@ -224,7 +225,7 @@ if __name__ == "__main__":
         # generate model detail
         model_dir = args.model_path
         model_detail = {}
-        find_graph_def, model_input_output = get_input_output(model_dir, args)
+        _, model_input_output = get_input_output(model_dir, args)
         # ckpt/meta model will save freezed pb in the same dir
         model_dir = model_dir if not args.is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']
@@ -309,5 +310,6 @@ if __name__ == "__main__":
 
     # benchmark
     if args.benchmark:
-        run_benchmark(model_detail, args, find_graph_def)
+        graph_def = _load_pb(find_graph_def, graph_file_name=args.model_path)
+        run_benchmark(model_detail, args, graph_def)
 
