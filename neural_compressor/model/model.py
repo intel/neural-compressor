@@ -839,7 +839,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         import numpy as np
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])
-        pd.set_option('precision', 2)
+        pd.set_option('display.precision', 2)
         param_dims = [2, 4]
         params_size = 0
         sparse_params_size = 0
@@ -1122,7 +1122,7 @@ class PyTorchBaseModel(BaseModel):
         import pandas as pd
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])
-        pd.set_option('precision', 2)
+        pd.set_option('display.precision', 2)
         # TODO: need to specify modules(Conv2d, Linear, etc.) instead of dims
         param_dims = [2, 4]
         params_size = 0
@@ -1161,7 +1161,6 @@ class PyTorchBaseModel(BaseModel):
             int(sparse_params_size),
             total_sparsity,
             0, 0, 0])
-
         return df, total_sparsity
 
 class PyTorchModel(PyTorchBaseModel):
