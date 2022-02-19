@@ -92,23 +92,20 @@ def run_benchmark(model_details, args, find_graph_def):
         output_dict = {out_name: graph.get_tensor_by_name("g/" + out_name + ":0")
                        for out_name in model_details['output']}
 
-        feed_dict = {graph.get_tensor_by_name("g/" + in_name + ":0"): model_details['input'][in_name]
-                       for in_name in model_details['input']}
-
         sess.run(tf_v1.global_variables_initializer())
 
         total_time = 0.0
         reps_done = 0
         for rep in range(args.num_iter):
             if rep < args.num_warmup:
-                _ = sess.run(output_dict, feed_dict=feed_dict)
+                _ = sess.run(output_dict)
                 continue
             start = time.time()
 
             if args.profile:
-                _ = sess.run(output_dict, feed_dict=feed_dict, options=run_options, run_metadata=run_metadata)
+                _ = sess.run(output_dict, options=run_options, run_metadata=run_metadata)
             else:
-                _ = sess.run(output_dict, feed_dict=feed_dict)
+                _ = sess.run(output_dict)
 
             end = time.time()
             delta = end - start
@@ -228,7 +225,7 @@ if __name__ == "__main__":
         # generate model detail
         model_dir = args.model_path
         model_detail = {}
-        _, model_input_output = get_input_output(model_dir, args)
+        find_graph_def, model_input_output = get_input_output(model_dir, args)
         # ckpt/meta model will save freezed pb in the same dir
         model_dir = model_dir if not args.is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']
@@ -256,6 +253,7 @@ if __name__ == "__main__":
 
     # benchmark with input/output
     elif args.model_name:
+        find_graph_def, _ = get_input_output(args.model_path, args)
         # handle the case that the original input is deleted
         if args.benchmark and args.model_name == 'deepspeech':
             args.model_name = 'deepspeech-tuned'
@@ -313,6 +311,5 @@ if __name__ == "__main__":
 
     # benchmark
     if args.benchmark:
-        graph_def = _load_pb(find_graph_def, graph_file_name=args.model_path)
-        run_benchmark(model_detail, args, graph_def)
+        run_benchmark(model_detail, args, find_graph_def)
 
