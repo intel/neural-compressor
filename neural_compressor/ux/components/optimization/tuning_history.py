@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,53 +16,49 @@
 """Tuning history."""
 import os.path
 from time import sleep
-from typing import Optional
+from typing import List, Optional
 
 from neural_compressor.utils.utility import get_tuning_history
+from neural_compressor.ux.components.optimization.optimization import Optimization
 from neural_compressor.ux.utils.exceptions import NotFoundException
 from neural_compressor.ux.utils.workload.config import Config
+from neural_compressor.ux.web.communication import MessageQueue
 from neural_compressor.ux.web.service.history_snapshot_parser import HistorySnapshotParser
 
+mq = MessageQueue()
 
-def tuning_history(workload_id: str) -> dict:
-    """Get tuning history for requested Workload."""
-    from neural_compressor.ux.web.service.workload import WorkloadService
 
-    workload_data = WorkloadService.get_workload_data_by_id(workload_id)
-
+def tuning_history(optimization: Optimization) -> dict:
+    """Get tuning history for requested Optimization."""
     response = {
-        "workload_id": workload_data.get("id"),
+        "optimization_id": optimization.id,
     }
+    history_path = tuning_history_path(optimization.workdir)
 
-    tuning_data = _build_tuning_history(workload_data)
+    tuning_data = _build_tuning_history(optimization, history_path)
     response.update(tuning_data)
 
     return response
 
 
-def _build_tuning_history(workload_data: dict) -> dict:
+def _build_tuning_history(optimization: Optimization, history_path: str) -> dict:
     """Build tuning history data response."""
-    history_path = tuning_history_filename(workload_data.get("id", ""))
     if not os.path.isfile(history_path):
         raise NotFoundException(f"Unable to find tuning history file {history_path}")
     history_snapshot = get_tuning_history(history_path)
 
-    config_path = workload_data.get("config_path")
+    config_path = optimization.config_path
     if not config_path:
         raise NotFoundException("Unable to find config file")
     config = Config()
     config.load(config_path)
-    objective = "performance"
-    if (
-        config.tuning.multi_objective
-        and config.tuning.multi_objective.objective
-        and len(config.tuning.multi_objective.objective) > 0
-    ):
-        objective = config.tuning.multi_objective.objective[0]
+    objective: List[str] = ["performance"]
+    if config.tuning.multi_objective:
+        objective = config.tuning.multi_objective.objective
 
     history_snapshot_parser = HistorySnapshotParser(
         history_snapshot,
-        "performance" == objective,
+        "performance" in objective,
     )
     tuning_data = history_snapshot_parser.parse_history_snapshot()
 
@@ -91,25 +87,19 @@ def _build_tuning_history(workload_data: dict) -> dict:
     return response
 
 
-def tuning_history_filename(workload_id: str) -> str:
-    """Build tuning history filename based on id."""
-    from neural_compressor.ux.web.service.workload import WorkloadService
-
-    workload_data = WorkloadService.get_workload_data_by_id(workload_id)
-    workload_path = workload_data.get("workload_path", "")
-    history_path = os.path.join(workload_path, "history.snapshot")
-
-    return history_path
+def tuning_history_path(optimization_workdir: str) -> str:
+    """Build path to tuning history filename."""
+    return os.path.join(optimization_workdir, "history.snapshot")
 
 
 class Watcher:
     """Tuning history watcher that sends update on file change."""
 
-    def __init__(self, workload_id: str) -> None:
+    def __init__(self, optimization: Optimization) -> None:
         """Initialize object."""
-        self.workload_id = workload_id
+        self.optimization = optimization
         self.watch = False
-        self.tuning_history_filename = tuning_history_filename(workload_id)
+        self.tuning_history_path = tuning_history_path(optimization.workdir)
         self.last_tuning_history_timestamp = self.history_file_modification_time()
 
     def stop(self) -> None:
@@ -118,12 +108,10 @@ class Watcher:
 
     def __call__(self) -> None:
         """Execute the watch."""
-        from neural_compressor.ux.web.service.workload import WorkloadService
-
         self.watch = True
         while self.watch:
             if self.was_history_file_changed():
-                WorkloadService.send_history_snapshot(self.workload_id)
+                TuningHistory.send_history_snapshot(self.optimization)
             sleep(10)
 
     def was_history_file_changed(self) -> bool:
@@ -137,6 +125,24 @@ class Watcher:
     def history_file_modification_time(self) -> Optional[float]:
         """Get modification date of history file."""
         try:
-            return os.path.getmtime(self.tuning_history_filename)
+            return os.path.getmtime(self.tuning_history_path)
         except OSError:
             return None
+
+
+class TuningHistory:
+    """Tuning history class."""
+
+    @staticmethod
+    def send_history_snapshot(optimization: Optimization) -> None:
+        """Get tuning history for requested Workload."""
+        try:
+            response = tuning_history(optimization)
+            mq.post_success("tuning_history", response)
+        except NotFoundException:
+            mq.post_error(
+                "tuning_history",
+                {
+                    "optimization_id": optimization.id,
+                },
+            )

@@ -48,10 +48,10 @@ class TestGraphReader(unittest.TestCase):
         graph_reader = GraphReader()
         self.assertIs(collapsed_graph, graph_reader.read(model_path, expanded_groups))
 
-        mocked_model_repository.assert_called_once_with()
+        mocked_model_repository.assert_called_once()
         mocked_model_repository.return_value.get_model.assert_called_once_with(model_path)
 
-        mocked_model.get_model_graph.assert_called_once_with()
+        mocked_model.get_model_graph.assert_called_once()
 
         mocked_collapser.assert_called_once_with(expanded_groups)
         mocked_collapser.return_value.collapse.assert_called_once_with(model_graph)

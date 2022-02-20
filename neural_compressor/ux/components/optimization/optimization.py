@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,15 @@
 """Optimization class."""
 
 import os
-import re
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
+from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
+from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION
 from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
-from neural_compressor.ux.utils.workload.workload import Workload
+from neural_compressor.ux.utils.utils import get_file_extension, normalize_string
 
 
 class Optimization(JsonSerializer):
@@ -30,22 +31,45 @@ class Optimization(JsonSerializer):
 
     def __init__(
         self,
-        workload: Workload,
+        optimization_data: dict,
+        project_data: dict,
+        dataset_data: dict,
         template_path: Optional[str] = None,
     ) -> None:
         """Initialize Optimization class."""
-        self.input_graph: str = workload.model_path
-        self.input_precision: str = workload.input_precision
-        self.output_graph: str = workload.model_output_path
-        self.output_precision: str = workload.output_precision
-        self.framework: str = workload.framework
+        super().__init__()
+        self._skip.extend(["optimization", "dataloader"])
+        names_mapper = NamesMapper(MappingDirection.ToCore)
+        self.id: int = optimization_data["id"]
+        self.project_id: int = project_data["id"]
+        self.project_name: str = project_data["name"]
 
-        self.input_nodes: Optional[str] = None
-        self.output_nodes: Optional[str] = None
-        self.set_boundary_nodes(workload)
+        self.optimization: OptimizationInterface = OptimizationInterface(optimization_data)
 
-        self.tune: bool = workload.tune
-        self.config_path = workload.config_path
+        self.dataloader: DataloaderInterface = DataloaderInterface(dataset_data)
+
+        self.tune: bool = False
+
+        self.model_id = project_data["input_model"]["id"]
+        self.model_name = project_data["input_model"]["name"]
+        self.input_graph: str = project_data["input_model"]["path"]
+        self.model_domain: str = project_data["input_model"]["domain"]["name"]
+        self.model_domain_flavour: str = project_data["input_model"]["domain_flavour"]["name"]
+        self.input_nodes: Optional[List[str]] = project_data["input_model"]["input_nodes"]
+        self.output_nodes: Optional[List[str]] = project_data["input_model"]["output_nodes"]
+        self.input_precision: str = project_data["input_model"]["precision"]["name"]
+        normalized_model_name = normalize_string(self.output_model_dir)
+        self.output_graph: str = os.path.join(normalized_model_name, self.output_model_name)
+
+        self.framework: str = names_mapper.map_name(
+            parameter_type="framework",
+            value=project_data["input_model"]["framework"]["name"],
+        )
+
+        self.config_path: Optional[str] = os.path.join(
+            self.workdir,
+            self.config_filename,
+        )
 
         self.instances: int = 1
         self.cores_per_instance: int = HWInfo().cores // self.instances
@@ -58,6 +82,67 @@ class Optimization(JsonSerializer):
     def execute(self) -> None:
         """Execute optimization."""
         raise NotImplementedError
+
+    @property
+    def output_model_name(self) -> str:
+        """Get output model name."""
+        output_name = normalize_string(self.optimization.name)
+        if os.path.isfile(self.input_graph):
+            output_name += "." + get_file_extension(self.input_graph)
+
+        return output_name
+
+    @property
+    def output_model_dir(self) -> str:
+        """Get path to output model directory."""
+        normalized_project_name = normalize_string(self.project_name)
+        normalized_optimization_name = normalize_string(self.optimization.name)
+        return os.path.join(
+            WORKSPACE_LOCATION,
+            f"{normalized_project_name}_{self.project_id}",
+            "optimizations",
+            f"{normalized_optimization_name}_{self.optimization.id}",
+        )
+
+    @property
+    def workdir(self) -> str:
+        """Get path to optimization workdir."""
+        normalized_project_name = normalize_string(self.project_name)
+        normalized_optimization_name = normalize_string(self.optimization.name)
+        return os.path.join(
+            WORKSPACE_LOCATION,
+            f"{normalized_project_name}_{self.project_id}",
+            "optimizations",
+            f"{normalized_optimization_name}_{self.optimization.id}",
+        )
+
+    @property
+    def config_filename(self) -> str:
+        """Get filename for configuration."""
+        return "config.yaml"
+
+    @property
+    def configuration_data(self) -> dict:
+        """Get configuration data for config generator."""
+        configuration_data = {
+            "framework": self.framework,
+            "model": {
+                "name": self.model_name,
+                "domain": self.model_domain,
+                "domain_flavour": self.model_domain_flavour,
+                "input_graph": self.input_graph,
+                "input_nodes": self.input_nodes,
+                "output_nodes": self.output_nodes,
+            },
+            "batch_size": self.optimization.batch_size,
+            "dataloader": {
+                "dataset": {self.dataloader.dataset_type: self.dataloader.dataset_params},
+                "transforms": self.dataloader.transforms,
+                "filter": self.dataloader.filter,
+                "metric": self.dataloader.metric,
+            },
+        }
+        return configuration_data
 
     @property
     def command(self) -> List[str]:
@@ -88,25 +173,48 @@ class Optimization(JsonSerializer):
         """Get optimization parameters."""
         raise NotImplementedError
 
-    def serialize(self, serialization_type: str = "default") -> Dict[str, Any]:
-        """Serialize Optimization class to dict."""
-        result = {}
-        for key, value in self.__dict__.items():
-            variable_name = re.sub(r"^_", "", key)
-            if variable_name == "command":
-                result[variable_name] = " ".join(value)
-            else:
-                result[variable_name] = value
-        return result
+    @abstractmethod
+    def generate_config(self) -> None:
+        """Generate yaml config."""
+        raise NotImplementedError
 
-    def set_boundary_nodes(self, workload: Workload) -> None:
-        """Set optimization input and output nodes according to workload."""
-        if isinstance(workload.input_nodes, str):
-            self.input_graph = workload.input_nodes
-        if isinstance(workload.input_nodes, list):
-            self.input_nodes = ",".join(workload.input_nodes)
 
-        if isinstance(workload.output_nodes, str):
-            self.output_nodes = workload.output_nodes
-        if isinstance(workload.output_nodes, list):
-            self.output_nodes = ",".join(workload.output_nodes)
+class OptimizationInterface:
+    """Interface for optimization."""
+
+    id: int
+    name: str
+    type: str
+    output_precision: str
+    batch_size: int
+    sampling_size: int
+
+    def __init__(self, optimization_data: dict):
+        """Initialize optimization interface with data."""
+        names_mapper = NamesMapper(MappingDirection.ToCore)
+        self.id = optimization_data["id"]
+        self.name = optimization_data["name"]
+        self.type = optimization_data["optimization_type"]["name"]
+        self.batch_size = optimization_data["batch_size"]
+        self.output_precision = names_mapper.map_name(
+            parameter_type="precision",
+            value=optimization_data["precision"]["name"],
+        )
+
+
+class DataloaderInterface:
+    """Interface for dataloader."""
+
+    dataset_type: str
+    dataset_params: dict
+    transforms: dict
+    filter: dict
+    metric: dict
+
+    def __init__(self, dataloader_data: dict):
+        """Initialize optimization interface with data."""
+        self.dataset_type = dataloader_data["dataset_type"]
+        self.dataset_params = dataloader_data["parameters"]
+        self.transforms = dataloader_data["transforms"]
+        self.filter = dataloader_data["filter"]
+        self.metric = dataloader_data["metric"]

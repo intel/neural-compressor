@@ -23,6 +23,18 @@ h3 {
   font-family: IntelOneRg;
 }
 
+h1 {
+  font-size: 200% !important;
+}
+
+h2 {
+  font-size: 150%;
+}
+
+h3 {
+  font-size: 110%;
+}
+
 .form-field {
   margin-right: 5px;
 }
@@ -40,7 +52,7 @@ h3 {
 }
 
 table.rounded {
-  width: 95%;
+  width: 100%;
   margin: auto;
   border-collapse: collapse;
 
@@ -60,27 +72,16 @@ table.rounded {
 
 
   tr:nth-child(even) {
-    background: $lighter-gray1
+    background: #FFF
   }
 
   tr:nth-child(odd) {
-    background: #FFF
+    background: $lighter-gray1
   }
 
   tr.cell,
   td.cell {
     padding: 5px;
-  }
-
-  tr:first-child {
-
-    td:first-child {
-      border-radius: 0.5rem 0 0 0;
-    }
-
-    td:last-child {
-      border-radius: 0 0.5rem 0 0;
-    }
   }
 
   tr:last-child {
@@ -92,10 +93,39 @@ table.rounded {
     td:first-child {
       border-radius: 0 0 0 0.5rem;
     }
+
+    td:only-child {
+      border-radius: 0 0 0.5rem 0.5rem;
+    }
+  }
+
+  tr:first-child {
+
+    td:first-child {
+      border-radius: 0.5rem 0 0 0;
+    }
+
+    td:last-child {
+      border-radius: 0 0.5rem 0 0;
+    }
+
+    td:only-child {
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+  }
+
+  tr:only-child {
+    td:only-child {
+      border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+    }
   }
 
   tr.hover:hover {
     background-color: #dde6ee;
+  }
+
+  tr.active {
+    background-color: #FFE17A;
   }
 }
 
@@ -125,12 +155,15 @@ table.rounded {
   float: right;
 }
 
-.failure,
-.mat-dialog-container {
+.failure {
   background-color: $lighter-red;
   color: $dark-red;
+}
+
+.mat-dialog-container {
   margin: -24px;
   box-sizing: unset;
+  width: 1000px;
 }
 
 .big-spinner-center {

@@ -61,6 +61,8 @@ export class DetailsComponent implements OnInit, OnChanges {
   showXAxisLabel: boolean = true;
   timeline: boolean = true;
 
+  empty = false;
+
   colorScheme = {
     domain: [
       '#0095CA',
@@ -78,6 +80,34 @@ export class DetailsComponent implements OnInit, OnChanges {
       '#515A3D',
       '#C98F00',]
   };
+
+  profilingChartData = [{
+    name: 'profiling',
+    series: [{
+      name: 'Relu',
+      value: 42460
+    },
+    {
+      name: 'BiasAdd',
+      value: 9820
+    },
+    {
+      name: 'Add',
+      value: 790
+    },
+    {
+      name: 'MaxPool',
+      value: 474
+    },
+    {
+      name: 'Mean',
+      value: 141
+    },
+    {
+      name: 'Const',
+      value: 115
+    }]
+  }];
 
   constructor(
     public activatedRoute: ActivatedRoute,
@@ -103,6 +133,8 @@ export class DetailsComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
+    this.activatedRoute.snapshot.params.id === 'aaf88e6463e1e13556f22bccd594a64eb5865e76bdcbdcddb582624a362db02ec386a550bdd9629609168e430400c1cd' ? this.empty = true : this.empty = false;;
+
     this.onResize();
     this.startDetails();
     this.token = this.modelService.getToken();
@@ -160,6 +192,14 @@ export class DetailsComponent implements OnInit, OnChanges {
           this.openErrorDialog(result['data']['message']);
         }
       });
+  }
+
+  addOptimization(fileName) {
+    const dialogRef = this.dialog.open(ErrorComponent, {
+      data: {
+        fileName: fileName
+      }
+    });
   }
 
   getProfilingData(result) {

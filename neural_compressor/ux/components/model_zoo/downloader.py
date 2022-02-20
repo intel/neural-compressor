@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import requests
 
-from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.github_info import GithubInfo
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import is_development_env, load_model_config
@@ -35,7 +35,7 @@ class Downloader:
     def __init__(self, data: Dict[str, Any]) -> None:
         """Initialize Downloader class."""
         configuration = Configuration()
-        self.request_id: str = str(data.get("id", ""))
+        self.request_id: str = str(data.get("request_id", ""))
         self.framework: str = data.get("framework", "")
         self.domain: str = data.get("domain", "")
         self.model: str = data.get("model", "")
@@ -80,9 +80,14 @@ class Downloader:
         """Download config from GitHub for specified model."""
         yaml_relative_location = model_info.get("yaml", "")
         if not yaml_relative_location:
-            raise ClientErrorException("Missing yaml location.")
+            raise InternalException("Missing yaml location.")
+
+        model_src_dir = model_info.get("model_src_dir", None)
+        if not model_src_dir:
+            raise InternalException("Missing model location.")
 
         url, headers = self.get_yaml_url(
+            model_src_dir,
             yaml_relative_location,
         )
 
@@ -151,7 +156,7 @@ class Downloader:
         self.mq.post_success(
             "download_finish",
             {
-                "id": self.request_id,
+                "request_id": self.request_id,
                 "path": model_path,
             },
         )
@@ -183,7 +188,7 @@ class Downloader:
                             "download_start",
                             {
                                 "message": "started",
-                                "id": self.request_id,
+                                "request_id": self.request_id,
                                 "url": url,
                             },
                         )
@@ -206,7 +211,7 @@ class Downloader:
                                     self.mq.post_success(
                                         "download_progress",
                                         {
-                                            "id": self.request_id,
+                                            "request_id": self.request_id,
                                             "progress": progress,
                                         },
                                     )
@@ -221,7 +226,7 @@ class Downloader:
         self.mq.post_success(
             "unpack_start",
             {
-                "id": self.request_id,
+                "request_id": self.request_id,
             },
         )
         log.debug(f"Unpacking {archive_path}")
@@ -242,13 +247,14 @@ class Downloader:
         unpacked_path = os.path.join(self.download_dir, filename)
         self.mq.post_success(
             "unpack_finish",
-            {"id": self.request_id, "path": unpacked_path},
+            {"request_id": self.request_id, "path": unpacked_path},
         )
         log.debug(f"Model file has been extracted to {unpacked_path}")
         return unpacked_path
 
     def get_yaml_url(
         self,
+        model_src_dir: str,
         yaml_relative_location: str,
     ) -> Tuple[str, dict]:
         """Get url for yaml config download."""
@@ -259,7 +265,7 @@ class Downloader:
                 os.path.join(
                     "examples",
                     self.framework,
-                    self.domain,
+                    model_src_dir,
                     yaml_relative_location,
                 ),
             )
@@ -281,7 +287,7 @@ class Downloader:
             url_prefix,
             "examples",
             self.framework,
-            self.domain,
+            model_src_dir,
             yaml_relative_location,
         )
         return url, {}

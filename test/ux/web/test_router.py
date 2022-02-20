@@ -20,6 +20,7 @@ import unittest
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.web.communication import Request
 from neural_compressor.ux.web.exceptions import ServiceNotFoundException
 from neural_compressor.ux.web.router import Router
@@ -67,6 +68,18 @@ class TestRouter(unittest.TestCase):
         self.assertEqual({}, response.command)
         self.assertEqual(expected_return, response.data)
 
+    def test_request_id_expected_deferred_function(self) -> None:
+        """Test validating request_id in deferred endpoint."""
+        params = {
+            "foo": "bar",
+        }
+        request = Request("GET", "model/boundary_nodes", params)
+
+        with self.assertRaises(ClientErrorException):
+
+            router = Router()
+            router.handle(request)
+
     @patch("neural_compressor.ux.web.router.get_boundary_nodes")
     @patch("neural_compressor.ux.web.router.Thread")
     def test_executes_expected_deferred_function(
@@ -76,9 +89,10 @@ class TestRouter(unittest.TestCase):
     ) -> None:
         """Test that passing known deferred endpoint succeeds."""
         params = {
+            "request_id": "asd",
             "foo": "bar",
         }
-        request = Request("GET", "get_boundary_nodes", params)
+        request = Request("GET", "model/boundary_nodes", params)
 
         router = Router()
         response = router.handle(request)

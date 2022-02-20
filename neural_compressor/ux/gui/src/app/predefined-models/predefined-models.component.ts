@@ -58,11 +58,11 @@ export class PredefinedModelsComponent implements OnInit {
   ngOnInit() {
     this.listModelZoo();
 
-    this.modelService.workspacePathChange.subscribe(
-      response => {
-        this.listModelZoo();
-      }
-    );
+    // this.modelService.workspacePathChange.subscribe(
+    //   response => {
+    //     this.listModelZoo();
+    //   }
+    // );
 
     this.socketService.modelDownloadFinish$
       .subscribe(response => {
@@ -79,7 +79,7 @@ export class PredefinedModelsComponent implements OnInit {
           if (response['status'] === 'success') {
             if (this.model.id) {
               this.router.navigate(['/details', this.model['id']], { queryParamsHandling: "merge" });
-              this.modelService.configurationSaved.next(true);
+              // this.modelService.configurationSaved.next(true);
             }
           } else {
             this.openErrorDialog({

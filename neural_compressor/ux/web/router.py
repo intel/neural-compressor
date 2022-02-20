@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,31 +23,32 @@ from neural_compressor.ux.components.benchmark.execute_benchmark import execute_
 from neural_compressor.ux.components.configuration_wizard.get_boundary_nodes import (
     get_boundary_nodes,
 )
-from neural_compressor.ux.components.configuration_wizard.get_configuration import (
-    get_predefined_configuration,
-)
 from neural_compressor.ux.components.configuration_wizard.params_feeder import get_possible_values
-from neural_compressor.ux.components.configuration_wizard.save_workload import save_workload
+from neural_compressor.ux.components.db_manager.db_operations import (
+    BenchmarkAPIInterface,
+    DatasetAPIInterface,
+    DictionariesAPIInterface,
+    ModelAPIInterface,
+    OptimizationAPIInterface,
+    ProfilingAPIInterface,
+    ProjectAPIInterface,
+)
 from neural_compressor.ux.components.file_browser.file_browser import get_directory_entries
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.graph_reader import GraphReader
-from neural_compressor.ux.components.manage_workspace import (
-    get_default_path,
-    get_workloads_list,
-    set_workspace,
-)
+from neural_compressor.ux.components.manage_workspace import get_default_path, set_workspace
 from neural_compressor.ux.components.model_zoo.list_models import list_models
-from neural_compressor.ux.components.model_zoo.save_workload import (
-    save_workload as save_example_workload,
-)
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
 from neural_compressor.ux.components.profiling.execute_profiling import execute_profiling
+from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.web.communication import Request, Response, create_simple_response
 from neural_compressor.ux.web.exceptions import ServiceNotFoundException
+from neural_compressor.ux.web.service.benchmark import BenchmarkService
+from neural_compressor.ux.web.service.optimization import OptimizationService
+from neural_compressor.ux.web.service.profiling import ProfilingService
 from neural_compressor.ux.web.service.request_data_processor import RequestDataProcessor
-from neural_compressor.ux.web.service.workload import WorkloadService
 
 
 class RoutingDefinition:
@@ -77,28 +78,82 @@ class Router:
         """Initialize object."""
         self.routes: Dict[str, RoutingDefinition] = {
             "filesystem": RealtimeRoutingDefinition(get_directory_entries),
-            "save_workload": RealtimeRoutingDefinition(save_workload),
-            "configuration": RealtimeRoutingDefinition(get_predefined_configuration),
-            "optimize": DeferredRoutingDefinition(_execute_optimization_benchmark),
-            "benchmark": DeferredRoutingDefinition(execute_benchmark),
-            "profile": DeferredRoutingDefinition(execute_profiling),
             "get_default_path": RealtimeRoutingDefinition(get_default_path),
             "set_workspace": RealtimeRoutingDefinition(set_workspace),
-            "get_workloads_list": RealtimeRoutingDefinition(get_workloads_list),
-            "get_boundary_nodes": DeferredRoutingDefinition(get_boundary_nodes),
             "get_possible_values": RealtimeRoutingDefinition(get_possible_values),
             "list_model_zoo": RealtimeRoutingDefinition(list_models),
-            "model_graph": RealtimeRoutingDefinition(get_model_graph),
             "system_info": RealtimeRoutingDefinition(get_system_info),
-            "workload/config.yaml": RealtimeRoutingDefinition(WorkloadService.get_config),
-            "workload/output.log": RealtimeRoutingDefinition(WorkloadService.get_output),
-            "workload/code_template.py": RealtimeRoutingDefinition(
-                WorkloadService.get_code_template,
+            "project": RealtimeRoutingDefinition(ProjectAPIInterface.get_project_details),
+            "project/create": RealtimeRoutingDefinition(ProjectAPIInterface.create_project),
+            "project/list": RealtimeRoutingDefinition(ProjectAPIInterface.list_projects),
+            "project/note": RealtimeRoutingDefinition(ProjectAPIInterface.update_project_notes),
+            "dataset": RealtimeRoutingDefinition(DatasetAPIInterface.get_dataset_details),
+            "dataset/add": RealtimeRoutingDefinition(DatasetAPIInterface.add_dataset),
+            "dataset/list": RealtimeRoutingDefinition(DatasetAPIInterface.list_datasets),
+            "optimization": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.get_optimization_details,
             ),
-            "workload/tuning_history": DeferredRoutingDefinition(
-                WorkloadService.request_history_snapshot,
+            "optimization/add": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.add_optimization,
             ),
-            "save_example_workload": DeferredRoutingDefinition(save_example_workload),
+            "optimization/list": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.list_optimizations,
+            ),
+            "optimization/execute": DeferredRoutingDefinition(execute_optimization),
+            "optimization/config.yaml": RealtimeRoutingDefinition(OptimizationService.get_config),
+            "optimization/output.log": RealtimeRoutingDefinition(OptimizationService.get_output),
+            "optimization/pin_accuracy_benchmark": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.pin_accuracy_benchmark,
+            ),
+            "optimization/pin_performance_benchmark": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.pin_performance_benchmark,
+            ),
+            "benchmark": RealtimeRoutingDefinition(BenchmarkAPIInterface.get_benchmark_details),
+            "benchmark/add": RealtimeRoutingDefinition(BenchmarkAPIInterface.add_benchmark),
+            "benchmark/list": RealtimeRoutingDefinition(BenchmarkAPIInterface.list_benchmarks),
+            "benchmark/execute": DeferredRoutingDefinition(execute_benchmark),
+            "benchmark/config.yaml": RealtimeRoutingDefinition(BenchmarkService.get_config),
+            "benchmark/output.log": RealtimeRoutingDefinition(BenchmarkService.get_output),
+            "profiling": RealtimeRoutingDefinition(ProfilingAPIInterface.get_profiling_details),
+            "profiling/add": RealtimeRoutingDefinition(ProfilingAPIInterface.add_profiling),
+            "profiling/list": RealtimeRoutingDefinition(ProfilingAPIInterface.list_profilings),
+            "profiling/execute": DeferredRoutingDefinition(execute_profiling),
+            "profiling/config.yaml": RealtimeRoutingDefinition(ProfilingService.get_config),
+            "profiling/output.log": RealtimeRoutingDefinition(ProfilingService.get_output),
+            "examples/list": RealtimeRoutingDefinition(list_models),
+            "model/list": RealtimeRoutingDefinition(ModelAPIInterface.list_models),
+            "model/boundary_nodes": DeferredRoutingDefinition(get_boundary_nodes),
+            "model/graph": RealtimeRoutingDefinition(get_model_graph),
+            "dict/domains": RealtimeRoutingDefinition(DictionariesAPIInterface.list_domains),
+            "dict/domain_flavours": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_domain_flavours,
+            ),
+            "dict/optimization_types": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_optimization_types,
+            ),
+            "dict/optimization_types/precision": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_optimization_types_for_precision,
+            ),
+            "dict/precisions": RealtimeRoutingDefinition(DictionariesAPIInterface.list_precisions),
+            "dict/dataloaders": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_dataloaders,
+            ),
+            "dict/dataloaders/framework": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_dataloaders_by_framework,
+            ),
+            "dict/transforms": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_transforms,
+            ),
+            "dict/transforms/framework": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_transforms_by_framework,
+            ),
+            "dict/transforms/domain": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_transforms_by_domain,
+            ),
+            "dict/metrics": RealtimeRoutingDefinition(DictionariesAPIInterface.list_metrics),
+            "dict/metrics/framework": RealtimeRoutingDefinition(
+                DictionariesAPIInterface.list_metrics_by_framework,
+            ),
         }
 
     def handle(self, request: Request) -> Response:
@@ -115,8 +170,8 @@ class Router:
 
         return create_simple_response(serialized_data)
 
-    @staticmethod
     def _process_routing_definition(
+        self,
         routing_definition: RoutingDefinition,
         data: dict,
     ) -> Any:
@@ -124,6 +179,7 @@ class Router:
         if isinstance(routing_definition, RealtimeRoutingDefinition):
             return routing_definition.callback(data)
         if isinstance(routing_definition, DeferredRoutingDefinition):
+            self._validate_deffered_routing_data(data)
             t = Thread(target=routing_definition.callback, args=(data,))
             t.daemon = True
             t.start()
@@ -132,24 +188,12 @@ class Router:
             f"Unsupported RoutingDefinition type: {routing_definition.__class__.__name__}",
         )
 
-
-def _execute_optimization_benchmark(data: dict) -> None:
-    """Execute both tuning and benchmark."""
-    optimization_data = execute_optimization(data)
-    models_info = optimization_data.get("execution_details", {}).get("optimization", {})
-    benchmark_data = {
-        "id": data.get("id"),
-        "input_model": {
-            "precision": models_info.get("input_precision"),
-            "path": models_info.get("input_graph"),
-        },
-        "optimized_model": {
-            "precision": models_info.get("output_precision"),
-            "path": models_info.get("output_graph"),
-        },
-    }
-    if not optimization_data.get("is_custom_dataloader", None):
-        execute_benchmark(benchmark_data)
+    @staticmethod
+    def _validate_deffered_routing_data(data: dict) -> None:
+        """Validate input data for Deffered Routing and raises in case of issues."""
+        request_id = str(data.get("request_id", ""))
+        if not request_id:
+            raise ClientErrorException("Missing request id.")
 
 
 def get_model_graph(data: Dict[str, Any]) -> Graph:
@@ -167,3 +211,8 @@ def get_system_info(data: Dict[str, Any]) -> dict:
     if "cores" in hw_info:
         del hw_info["cores"]
     return hw_info
+
+
+def not_implemented(data: dict) -> None:
+    """Temporary method to mark not implemented endpoints."""
+    raise NotImplementedError

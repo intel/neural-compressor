@@ -35,31 +35,29 @@ evaluation:
           label_file: /path/to/dev-v1.1.json
           vocab_file: /path/to/vocab.txt
   performance:
-    iteration: 50
+    iteration: 10
+    configs:
+        num_of_instance: 4
+        cores_per_instance: 7
     dataloader:
       dataset:
         bert:
           root: /path/to/eval.tf_record
           label_file: /path/to/dev-v1.1.json
       batch_size: 64
+
 quantization:
   calibration:
     sampling_size: 500
     dataloader:
-      batch_size: 500
       dataset:
         bert:
           root: /path/to/eval.tf_record
           label_file: /path/to/dev-v1.1.json
+      batch_size: 64
   model_wise:
     weight:
       granularity: per_channel
-  op_wise: {
-             'MatMul': {
-               'activation':  {'dtype': ['fp32']},
-               'weight':  {'dtype': ['fp32']},
-             }
-           }
 tuning:
   accuracy_criterion:
     relative:  0.01

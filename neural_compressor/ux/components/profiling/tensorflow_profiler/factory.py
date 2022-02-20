@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,6 @@ class ProfilerFactory:
     """Profiler factory."""
 
     @staticmethod
-    def get_profiler(workload_id: str, model_path: str) -> Optional[Profiler]:
+    def get_profiler(profiling_data: dict) -> Optional[Profiler]:
         """Get profiling for specified workload."""
-        return Profiler(workload_id, model_path)
+        return Profiler(profiling_data)

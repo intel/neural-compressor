@@ -1,0 +1,108 @@
+<h2>Profiling</h2>
+<p>Here you can profile the optimized models. You can check duration of each layer of the model.
+  When you click on the table row, you can see profiling details. When you click "Run", you execute profiling.</p>
+<table class="rounded">
+  <tr>
+    <td class="header">Name</td>
+    <td class="header">Model</td>
+    <td class="header">Precision</td>
+    <td class="header">Dataset</td>
+    <td class="header">Number of threads</td>
+    <td class="header">Logs</td>
+    <td class="header">Status</td>
+    <td class="header">Action</td>
+  </tr>
+  <ng-container *ngFor="let profiling of profilingList">
+    <tr [ngClass]="{'active': profiling.id === activeProfilingId, 'pointer': true}"
+      (click)="getProfilingDetails(profiling.id)" matTooltip="Click to see details">
+      <td class="center">{{ profiling.name }}</td>
+      <td class="center">{{ profiling.model.name }}</td>
+      <td class="center">{{ profiling.model.precision.name }}</td>
+      <td class="center">{{ profiling.dataset.name }}</td>
+      <td class="center">{{ profiling.num_threads }}</td>
+      <td class="center" (click)="$event.stopPropagation()">
+        <a *ngIf="profiling['log_path']" class="file-button"
+          href="{{ apiBaseUrl }}api/profiling/output.log?id={{ profiling.id}}&token={{ token }}" target="_blank">
+          Show output</a>
+      </td>
+      <td class="cell center" [matTooltip]="profiling['status']">
+        <img *ngIf="profiling['status'] === 'success'" class="icon-button"
+          src="./../../assets/010a-passed-completed-solid.svg">
+        <img *ngIf="profiling['status'] === 'error' || profiling['status'] === 'failure'" class="icon-button"
+          src="./../../assets/009a-close-solid.svg">
+        <img *ngIf="profiling['status'] === null" class="icon-button" src="./../../assets/005a-help-solid-gray.svg">
+        <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Benchmark is running"
+          *ngIf="profiling['status'] === 'wip'" [diameter]="30">
+        </mat-spinner>
+      </td>
+      <td class="center">
+        <button mat-raised-button [matTooltip]="'Run this profiling'" color="accent" class="action-btn"
+          [disabled]="profiling['status'] === 'wip'" (click)="$event.stopPropagation();executeProfiling(profiling.id)">
+          <img src="./../../assets/088a-start-solid-white.svg">
+          Run
+        </button>
+      </td>
+    </tr>
+  </ng-container>
+</table>
+
+<button mat-raised-button class="create-new-btn" (click)="openProfilingForm()">
+  <img src="./../../assets/008a-plus-solid-black.svg">
+  Add new profiling
+</button>
+
+<br>
+<br>
+<br>
+<br>
+
+<ng-container *ngIf="!profilingData">
+  <p>Run profiling to see the results.</p>
+</ng-container>
+
+<ng-container *ngIf="profilingData?.length">
+  <div class="item chart-div">
+    <h2>Total execution time comparison</h2>
+    <ngx-charts-bar-vertical-2d class="inline" [view]="viewLine" [scheme]="customColor"
+      [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
+      [results]="profilingChartData" [showDataLabel]=true [legend]="true">
+    </ngx-charts-bar-vertical-2d>
+  </div>
+  <br>
+
+  <div class="item item-charts1">
+    <br>
+    <button mat-raised-button color="accent" class="float-right" (click)="showProfilingChart()">Update chart</button>
+    <h2>Profiling data</h2>
+    <table class="rounded">
+      <tr>
+        <td class="header" *ngFor="let header of profilingDataHeaders; let last = last">
+          {{ header | modelList }} {{ header.includes('time') ? '[μs]' : null}}
+        </td>
+        <td class="header">show on chart</td>
+      </tr>
+      <tr *ngFor="let row of profilingData; let index = index">
+        <ng-container *ngFor="let header of profilingDataHeaders">
+          <ng-container *ngIf="typeOf(row[header].run) !== 'undefined'">
+            <td class="cell">
+              {{ row[header].run }}
+            </td>
+          </ng-container>
+          <ng-container *ngIf="typeOf(row[header].defined) !== 'undefined'">
+            <td class="cell">
+              {{ row[header].defined }}
+            </td>
+          </ng-container>
+          <ng-container *ngIf="typeOf(row[header].run) === 'undefined'">
+            <td class="cell">
+              {{ row[header] }}
+            </td>
+          </ng-container>
+        </ng-container>
+        <td class="center">
+          <mat-checkbox [(ngModel)]="showInChart[index]"></mat-checkbox>
+        </td>
+      </tr>
+    </table>
+  </div>
+</ng-container>

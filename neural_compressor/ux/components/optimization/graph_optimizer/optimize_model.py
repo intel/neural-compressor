@@ -16,7 +16,7 @@
 
 import argparse
 import sys
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 
 def parse_args() -> Any:
@@ -75,8 +75,8 @@ def optimize_graph(
     output_graph: str,
     framework: str,
     precisions: str,
-    input: Optional[str] = None,
-    output: Optional[str] = None,
+    input: Optional[List[str]] = None,
+    output: Optional[List[str]] = None,
 ) -> None:
     """Execute graph optimization."""
     from neural_compressor.experimental import Graph_Optimization

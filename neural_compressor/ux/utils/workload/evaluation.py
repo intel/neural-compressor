@@ -16,6 +16,7 @@
 
 from typing import Any, Dict, List, Optional, Union
 
+from neural_compressor.ux.utils.consts import postprocess_transforms
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.workload.dataloader import Dataloader
@@ -66,8 +67,10 @@ class Metric(JsonSerializer):
             return {self.name: {"compare_label": self.param}}
         if self.name in ["COCOmAP"] and self.param:
             return {self.name: {"anno_path": self.param}}
-        if self.name:
+        if self.name and self.param:
             return {self.name: self.param}
+        if self.name and not self.param:
+            return {self.name: {}}
         return {}
 
 
@@ -167,3 +170,24 @@ class Evaluation(JsonSerializer):
         self.performance = None
         if isinstance(data.get("performance"), dict):
             self.performance = Performance(data.get("performance", {}))
+
+    def set_accuracy_postprocess_transforms(self, transforms: List[Dict[str, Any]]) -> None:
+        """Set postprocess transformation."""
+        if transforms is None or len(transforms) <= 0:
+            return
+        transform_names = {transform["name"] for transform in transforms}
+        has_postprocess_transforms = len(transform_names.intersection(postprocess_transforms)) > 0
+        if not has_postprocess_transforms:
+            return
+
+        if self.accuracy:
+            self.accuracy.postprocess = Postprocess()
+
+        if self.accuracy and self.accuracy.postprocess:
+            for single_transform in transforms:
+                print(f'\nSetting {single_transform["name"]} postprocess transform')
+                if single_transform["name"] in postprocess_transforms:
+                    self.accuracy.postprocess.transform = {  # type: ignore
+                        single_transform["name"]: single_transform["params"],
+                    }
+                    break

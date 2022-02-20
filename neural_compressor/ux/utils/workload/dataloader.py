@@ -15,8 +15,9 @@
 """Configuration dataloader module."""
 
 from collections import OrderedDict
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from neural_compressor.ux.utils.consts import postprocess_transforms
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 
@@ -100,6 +101,18 @@ class Dataloader(JsonSerializer):
         self.filter = None
         if data.get("filter"):
             self.filter = Filter(data.get("filter", {}))
+
+    def set_transforms_from_list(self, transforms_list: List[dict]) -> None:
+        """Set transformations ordered dict from list."""
+        transforms: OrderedDict = OrderedDict()
+        for transform in transforms_list:
+            transform_name = transform["name"]
+            if transform_name in postprocess_transforms:
+                continue
+            transform_params = transform["params"]
+            transforms.update({transform_name: Transform(transform_name, transform_params)})
+            transforms.move_to_end(transform_name)
+        self.transform = transforms
 
     def set_dataset(self, dataset_data: Dict[str, Any]) -> None:
         """Set dataset for dataloader."""

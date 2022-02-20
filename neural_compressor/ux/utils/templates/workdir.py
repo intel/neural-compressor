@@ -218,17 +218,18 @@ class Workdir:
         ] = code_template_path
         self.dump()
 
-    def clean_logs(self) -> None:
+    @staticmethod
+    def clean_logs(workdir_path: str) -> None:
         """Clean log files."""
-        log_files = [os.path.join(self.workload_path, "output.txt")]
+        log_files = [os.path.join(workdir_path, "output.txt")]
         log_files.extend(
             glob.glob(
-                os.path.join(self.workload_path, "*.proc"),
+                os.path.join(workdir_path, "*.proc"),
             ),
         )
         log_files.extend(
             glob.glob(
-                os.path.join(self.workload_path, "*performance_benchmark.txt"),
+                os.path.join(workdir_path, "*performance_benchmark.txt"),
             ),
         )
         for file in log_files:

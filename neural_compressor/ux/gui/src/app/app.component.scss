@@ -58,6 +58,11 @@
   min-height: 100%;
 }
 
+.router-outlet {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
 .footer {
   position: fixed;
   bottom: 0px;
@@ -107,7 +112,7 @@
   }
 
   .title {
-    font-size: 100%;
+    font-size: 90%;
     margin-right: 5px;
   }
 

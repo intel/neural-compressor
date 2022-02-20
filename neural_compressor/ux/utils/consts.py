@@ -14,20 +14,31 @@
 # limitations under the License.
 
 """Constant values."""
+
 import os
 from enum import Enum
 
 GITHUB_ORG = "intel"
 GITHUB_REPO = "neural-compressor"
 WORKDIR_LOCATION = os.path.join(os.environ.get("HOME", ""), ".neural_compressor")
+WORKSPACE_LOCATION = os.path.join(os.environ.get("HOME", ""), "workdir")
 
 
-class Precisions:
-    """Precisions enumeration."""
+class Domains(Enum):
+    """Model domains enumeration."""
 
-    INT8 = "int8"
-    FP32 = "fp32"
-    MIXED = "bf16,fp32"
+    IMAGE_RECOGNITION = "Image Recognition"
+    OBJECT_DETECTION = "Object Detection"
+    NLP = "Neural Language Processing"
+    RECOMMENDATION = "Recommendation"
+
+
+class DomainFlavours(Enum):
+    """Domain flavours enumeration."""
+
+    NONE = ""
+    SSD = "SSD"
+    YOLO = "Yolo"
 
 
 class Frameworks(Enum):
@@ -35,3 +46,46 @@ class Frameworks(Enum):
 
     TF = "TensorFlow"
     ONNX = "ONNXRT"
+
+
+class OptimizationTypes(Enum):
+    """OptimizationTypes enumeration."""
+
+    QUANTIZATION = "Quantization"
+    GRAPH_OPTIMIZATION = "Graph optimization"
+
+
+class ExecutionStatus(Enum):
+    """Executions statuses for optimizations, benchmarks and profilings."""
+
+    WIP = "wip"
+    SUCCESS = "success"
+    ERROR = "error"
+
+
+class Precisions(Enum):
+    """Precisions enumeration."""
+
+    FP32 = "fp32"
+    BF16 = "bf16"
+    INT8 = "int8"
+
+
+class Strategies(Enum):
+    """Strategies enumeration."""
+
+    BASIC = "basic"
+    BAYESIAN = "bayesian"
+    EXHAUSTIVE = "exhaustive"
+    MSE = "mse"
+    RANDOM = "random"
+    SIGOPT = "sigopt"
+    TPE = "tpe"
+
+
+precision_optimization_types = {
+    OptimizationTypes.QUANTIZATION: [Precisions.INT8],
+    OptimizationTypes.GRAPH_OPTIMIZATION: [Precisions.BF16, Precisions.FP32],
+}
+
+postprocess_transforms = ["SquadV1"]

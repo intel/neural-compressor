@@ -27,10 +27,10 @@
   <mat-sidenav-content>
     <div class="wrapper">
       <div class="graph">
-        <ngx-graph [view]="viewSize" [showMiniMap]="true" [miniMapMaxHeight]="viewSize[1]" [miniMapMaxWidth]="200"
+        <ngx-graph [showMiniMap]="true" [miniMapMaxHeight]="miniMapMaxHeight" [miniMapMaxWidth]="200"
           [miniMapPosition]="'UpperLeft'" [links]="edges" [nodes]="nodes" [draggingEnabled]="false" [enableZoom]="true"
           [autoZoom]="false" [layoutSettings]="layoutSettings" [panToNode$]="panToNodeObservable" [center$]="center$"
-          [zoomToFit$]="zoomToFit$" [autoCenter]="true">
+          [zoomToFit$]="zoomToFit$" [autoCenter]="false">
 
           <ng-template #defsTemplate>
             <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4"
@@ -43,7 +43,7 @@
             <ng-container *ngIf="node.node_type === 'node'">
               <svg:g class="node" (click)="getDetails(node); sidenav.open()" [matTooltip]="'Click to see details'">
                 <svg:foreignObject width="350" height="60" class="node-container"
-                  [ngStyle]="{'border': node.color ? node.color + ' 2px solid' : '#000864 2px solid' }">
+                  [ngStyle]="{'border': node.color ? node.color + ' 2px solid' : '#005B85 2px solid' }">
                   <div class="node-header" [ngStyle]="{'background-color': node.color}">
                     {{ node.label }}
                   </div>
@@ -83,8 +83,8 @@
         </ngx-graph>
       </div>
       <div class="graph-buttons">
-        <button (click)="zoomToFit()">Zoom out</button>
-        <button (click)="center()">Center</button>
+        <button mat-raised-button class="graph-button" (click)="zoomToFit()">Zoom out</button>
+        <button mat-raised-button class="graph-button" (click)="center()">Center</button>
       </div>
       <div class="nodes-table-container" *ngIf="expandedNodesArray.length">
         <table class="nodes-table">

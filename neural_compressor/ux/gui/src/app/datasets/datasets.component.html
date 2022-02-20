@@ -1,0 +1,82 @@
+<div>
+  <h2>Datasets</h2>
+  <p>Here you can add new datasets to use with optimizations, benchmarks and profiling.
+    When you click on the row, you can see dataset details.</p>
+  <table class="rounded">
+    <tr>
+      <td class="header green">Dataset name</td>
+      <td class="header green">Dataset type</td>
+    </tr>
+    <tr [ngClass]="{'hover active': dataset.id === activeDatasetId, 'pointer': true}" *ngFor="let dataset of datasets"
+      (click)="getDatasetDetails(dataset.id)" matTooltip="Click to see details">
+      <td class="center cell">{{ dataset.name }}</td>
+      <td class="center cell">{{ dataset.dataset_type }}</td>
+    </tr>
+  </table>
+
+  <button mat-raised-button class="create-new-btn" (click)="addDataset()">
+    <img src="./../../assets/008a-plus-solid-black.svg">
+    Add new dataset
+  </button>
+</div>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<div class="container" *ngIf="objectKeys(datasetDetails).length > 0">
+  <div class="item">
+    <h2>Dataset details</h2>
+    <table class="rounded">
+      <ng-container *ngFor="let detail of datasetDetails | keyvalue">
+        <tr *ngIf="!['metric', 'parameters', 'transforms', 'id', 'project_id'].includes(detail.key)">
+          <th>{{ detail.key | modelList}}</th>
+          <td>{{ detail.value }}</td>
+        </tr>
+      </ng-container>
+    </table>
+  </div>
+
+  <div class="item" *ngIf="objectKeys(datasetDetails['parameters']).length > 0">
+    <h2>Parameters</h2>
+    <table class="rounded">
+      <tr *ngFor="let param of  datasetDetails['parameters'] | keyvalue">
+        <th>{{ param.key | modelList }}</th>
+        <td>{{ param.value }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="item" *ngIf="datasetDetails['transforms'] && objectKeys(datasetDetails['transforms']).length > 0">
+    <h2>Transforms</h2>
+    <ng-container *ngFor="let transform of datasetDetails['transforms']">
+      <table class="rounded">
+        <tr>
+          <td class="header" colspan=2>{{ transform.name }}</td>
+        </tr>
+        <tr *ngFor="let param of transform['params'] | keyvalue">
+          <th>{{ param.key | modelList }}</th>
+          <td>{{ param.value }}</td>
+        </tr>
+      </table>
+      <br>
+    </ng-container>
+  </div>
+
+  <div class="item" *ngIf="datasetDetails['metric'] && objectKeys(datasetDetails['metric']).length > 0">
+    <h2>Metric</h2>
+    <table class="rounded">
+      <tr>
+        <td class="header" colspan=2>{{ datasetDetails['metric']['name'] }}</td>
+      </tr>
+      <ng-container *ngFor="let metricParam of datasetDetails['metric'] | keyvalue">
+        <tr *ngIf="metricParam.key !== 'name'">
+          <td>{{ metricParam.key }}</td>
+          <td>{{ metricParam.value }}</td>
+        </tr>
+      </ng-container>
+    </table>
+  </div>
+</div>

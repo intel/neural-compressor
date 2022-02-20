@@ -27,6 +27,8 @@ from flask_socketio import SocketIO
 from werkzeug.serving import make_ssl_devcert
 from werkzeug.wrappers import Response as WebResponse
 
+from neural_compressor.ux.components.db_manager.db_manager import DBManager
+from neural_compressor.ux.components.db_manager.db_operations import initialize_associations
 from neural_compressor.ux.utils.exceptions import InternalException
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.web.communication import MessageQueue, Request
@@ -36,6 +38,7 @@ from neural_compressor.ux.web.service.response_generator import ResponseGenerato
 
 app = Flask(__name__, static_url_path="")
 socketio = SocketIO()
+
 router = Router()
 
 METHODS = ["GET", "POST"]
@@ -62,6 +65,10 @@ def run_server(configuration: Configuration) -> None:
         max_http_buffer_size=2000,
     )
     tls_args = get_tls_args(configuration)
+    db_manager = DBManager()
+    db_manager.initialize_database()
+    db_manager.create_all()
+    initialize_associations()
 
     socketio.run(app, host=addr, port=server_port, **tls_args)
 

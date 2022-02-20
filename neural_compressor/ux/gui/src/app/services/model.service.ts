@@ -25,9 +25,11 @@ export class ModelService {
   baseUrl = environment.baseUrl;
   myModels = [];
   workspacePath: string;
-  workspacePathChange: Subject<boolean> = new Subject<boolean>();
-  systemInfoChange: Subject<boolean> = new Subject<boolean>();
-  configurationSaved: Subject<boolean> = new Subject<boolean>();
+  projectCreated$: Subject<boolean> = new Subject<boolean>();
+  datasetCreated$: Subject<boolean> = new Subject<boolean>();
+  optimizationCreated$: Subject<boolean> = new Subject<boolean>();
+  benchmarkCreated$: Subject<boolean> = new Subject<boolean>();
+  projectChanged$: Subject<boolean> = new Subject<boolean>();
 
   token;
   systemInfo = {};
@@ -57,7 +59,6 @@ export class ModelService {
       this.baseUrl + 'api/system_info'
     ).subscribe(resp => {
       this.systemInfo = resp;
-      this.systemInfoChange.next(true);
     }
     );
   }
@@ -77,8 +78,16 @@ export class ModelService {
       });
     }
     return this.http.get(
-      this.baseUrl + 'api/model_graph' + '?path=' + path + groupsParam
+      this.baseUrl + 'api/model/graph' + '?path=' + path + groupsParam
     );
+  }
+
+  getDictionary(param: string) {
+    return this.http.get(this.baseUrl + 'api/dict/' + param);
+  }
+
+  getDictionaryWithParam(path: string, paramName: string, param: {}) {
+    return this.http.post(this.baseUrl + 'api/dict/' + path + '/' + paramName, param);
   }
 
   getPossibleValues(param: string, config?: {}) {
@@ -166,6 +175,108 @@ export class ModelService {
     return this.http.get(this.baseUrl + 'api/list_model_zoo');
   }
 
+  getProjectList() {
+    return this.http.get(this.baseUrl + 'api/project/list');
+  }
+
+  getProjectDetails(id) {
+    return this.http.post(this.baseUrl + 'api/project', { id: id });
+  }
+
+  createProject(newProject) {
+    return this.http.post(this.baseUrl + 'api/project/create',
+      newProject
+    );
+  }
+
+  getDatasetList(id) {
+    return this.http.post(this.baseUrl + 'api/dataset/list', { project_id: id });
+  }
+
+  getDatasetDetails(id) {
+    return this.http.post(this.baseUrl + 'api/dataset', { id: id });
+  }
+
+  addDataset(dataset) {
+    return this.http.post(this.baseUrl + 'api/dataset/add', dataset);
+  }
+
+  getOptimizationList(id) {
+    return this.http.post(this.baseUrl + 'api/optimization/list', { project_id: id });
+  }
+
+  getOptimizationDetails(id) {
+    return this.http.post(this.baseUrl + 'api/optimization', { id: id });
+  }
+
+  addOptimization(optimization) {
+    return this.http.post(this.baseUrl + 'api/optimization/add', optimization);
+  }
+
+  executeOptimization(optimizationId, requestId) {
+    return this.http.post(
+      this.baseUrl + 'api/optimization/execute',
+      {
+        request_id: requestId,
+        optimization_id: optimizationId,
+      }
+    );
+  }
+
+  addNotes(id, notes) {
+    return this.http.post(this.baseUrl + 'api/project/note', {
+      id: id,
+      notes: notes
+    });
+  }
+
+  getModelList(id) {
+    return this.http.post(this.baseUrl + 'api/model/list', { project_id: id });
+  }
+
+  getBenchmarksList(id) {
+    return this.http.post(this.baseUrl + 'api/benchmark/list', { project_id: id });
+  }
+
+  addBenchmark(benchmark) {
+    return this.http.post(this.baseUrl + 'api/benchmark/add', benchmark);
+  }
+
+  getBenchmarkDetails(id) {
+    return this.http.post(this.baseUrl + 'api/benchmark', { id: id });
+  }
+
+  executeBenchmark(benchmarkId, requestId) {
+    return this.http.post(
+      this.baseUrl + 'api/benchmark/execute',
+      {
+        request_id: requestId,
+        benchmark_id: benchmarkId,
+      }
+    );
+  }
+
+  addProfiling(profiling) {
+    return this.http.post(this.baseUrl + 'api/profiling/add', profiling);
+  }
+
+  getProfilingList(id) {
+    return this.http.post(this.baseUrl + 'api/profiling/list', { project_id: id });
+  }
+
+  getProfilingDetails(id) {
+    return this.http.post(this.baseUrl + 'api/profiling', { id: id });
+  }
+
+  executeProfiling(profilingId, requestId) {
+    return this.http.post(
+      this.baseUrl + 'api/profiling/execute',
+      {
+        profiling_id: profilingId,
+        request_id: requestId,
+      }
+    );
+  }
 }
 
 export interface NewModel {

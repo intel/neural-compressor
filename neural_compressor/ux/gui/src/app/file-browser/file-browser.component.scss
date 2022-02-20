@@ -29,7 +29,7 @@ img {
 }
 
 button {
-  background-color: white;
+  background-color: $lighter-gray1;
   border: none;
   padding-bottom: 10px;
   padding-right: 10px;
@@ -58,5 +58,15 @@ button {
 }
 
 .file-container {
-  height: 88%;
+  height: 70%;
+  background-color: $lighter-gray1;
+}
+
+.legend-icon {
+  margin-left: 20px;
+}
+
+.legend {
+  position: relative;
+  top: 40px;
 }

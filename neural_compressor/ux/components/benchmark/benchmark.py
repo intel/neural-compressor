@@ -15,14 +15,16 @@
 """Benchmark class."""
 
 import os
-import re
-from typing import Any, Dict
+from typing import List
 
-from neural_compressor.ux.components.benchmark import Benchmarks
 from neural_compressor.ux.components.benchmark.benchmark_model import benchmark_model
+from neural_compressor.ux.components.config_generator.benchmark_config_generator import (
+    BenchmarkConfigGenerator,
+)
+from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
+from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION
 from neural_compressor.ux.utils.exceptions import ClientErrorException
-from neural_compressor.ux.utils.hw_info import HWInfo
-from neural_compressor.ux.utils.workload.workload import Workload
+from neural_compressor.ux.utils.utils import normalize_string
 
 
 class Benchmark:
@@ -30,44 +32,51 @@ class Benchmark:
 
     def __init__(
         self,
-        workload: Workload,
-        model_path: str,
-        mode: str,
-        precision: str,
+        project_data: dict,
+        benchmark_data: dict,
     ) -> None:
         """Initialize Benchmark class."""
-        hw_info = HWInfo()
-        self.instances: int = 1
-        if mode == Benchmarks.PERF:
-            self.instances = workload.config.get_performance_num_of_instance() or 1
+        names_mapper = NamesMapper(MappingDirection.ToCore)
+        self.project_id: str = project_data["id"]
+        self.project_name: str = project_data["name"]
 
-        self.cores_per_instance: int = hw_info.cores // self.instances
-        if mode == Benchmarks.PERF:
-            self.cores_per_instance = (
-                workload.config.get_performance_cores_per_instance()
-                or hw_info.cores // self.instances
-            )
+        self.benchmark_id: str = benchmark_data["id"]
+        self.benchmark_name: str = benchmark_data["name"]
 
-        self.model_path = model_path
-        self.precision = precision
-        self.mode = mode
-        self.batch_size = 1
-        self.framework = workload.framework
-        if (
-            workload.config
-            and workload.config.evaluation
-            and workload.config.evaluation.performance
-            and workload.config.evaluation.performance.dataloader
-            and workload.config.evaluation.performance.dataloader.batch_size
-        ):
-            self.batch_size = workload.config.evaluation.performance.dataloader.batch_size
+        self.dataloader: DataloaderInterface = DataloaderInterface(benchmark_data["dataset"])
+
+        self.instances: int = benchmark_data["number_of_instance"]
+        self.cores_per_instance = benchmark_data["cores_per_instance"]
+
+        self.model_id = benchmark_data["model"]["id"]
+        self.model_name = benchmark_data["model"]["name"]
+        self.model_path = benchmark_data["model"]["path"]
+        self.model_domain: str = benchmark_data["model"]["domain"]["name"]
+        self.model_domain_flavour: str = benchmark_data["model"]["domain_flavour"]["name"]
+        self.input_nodes: List[str] = benchmark_data["model"]["input_nodes"]
+        self.output_nodes: List[str] = benchmark_data["model"]["output_nodes"]
+
+        self.precision = benchmark_data["model"]["precision"]["name"]
+        self.warmup_iterations = benchmark_data["warmup_iterations"]
+        self.iterations = benchmark_data["iterations"]
+        self.num_of_instance = benchmark_data["number_of_instance"]
+        self.cores_per_instance = benchmark_data["cores_per_instance"]
+        self.batch_size = benchmark_data["batch_size"]
+        self.mode = benchmark_data["mode"]
+        self.framework: str = names_mapper.map_name(
+            parameter_type="framework",
+            value=benchmark_data["model"]["framework"]["name"],
+        )
+        self.config_path: str = os.path.join(
+            self.workdir,
+            self.config_filename,
+        )
 
         if not os.path.exists(self.model_path):
             raise ClientErrorException(
                 f"Could not find model at specified path: {self.model_path}.",
             )
 
-        self.config_path = workload.config_path
         self.benchmark_script = os.path.join(
             os.path.dirname(__file__),
             "benchmark_model.py",
@@ -95,13 +104,76 @@ class Benchmark:
             framework=self.framework,
         )
 
-    def serialize(self) -> Dict[str, Any]:
-        """Serialize Benchmark to dict."""
-        result = {}
-        for key, value in self.__dict__.items():
-            variable_name = re.sub(r"^_", "", key)
-            if variable_name == "command":
-                result[variable_name] = " ".join(value)
-            else:
-                result[variable_name] = value
-        return result
+    @property
+    def workdir(self) -> str:
+        """Get path to optimization workdir."""
+        normalized_project_name = normalize_string(self.project_name)
+        normalized_benchmark_name = normalize_string(self.benchmark_name)
+        normalized_model_name = normalize_string(self.model_name)
+        return os.path.join(
+            WORKSPACE_LOCATION,
+            f"{normalized_project_name}_{self.project_id}",
+            "models",
+            f"{normalized_model_name}_{self.model_id}",
+            "benchmarks",
+            f"{normalized_benchmark_name}_{self.benchmark_id}",
+        )
+
+    @property
+    def config_filename(self) -> str:
+        """Get filename for configuration."""
+        return "config.yaml"
+
+    @property
+    def configuration_data(self) -> dict:
+        """Get configuration data for config generator."""
+        configuration_data = {
+            "framework": self.framework,
+            "model": {
+                "name": self.model_name,
+                "domain": self.model_domain,
+                "domain_flavour": self.model_domain_flavour,
+                "input_graph": self.model_path,
+                "input_nodes": self.input_nodes,
+                "output_nodes": self.output_nodes,
+            },
+            "batch_size": self.batch_size,
+            "dataloader": {
+                "dataset": {self.dataloader.dataset_type: self.dataloader.dataset_params},
+                "transforms": self.dataloader.transforms,
+                "filter": self.dataloader.filter,
+                "metric": self.dataloader.metric,
+            },
+            "mode": self.mode,
+            "warmup_iterations": self.warmup_iterations,
+            "iterations": self.iterations,
+            "number_of_instance": self.num_of_instance,
+            "cores_per_instance": self.cores_per_instance,
+        }
+        return configuration_data
+
+    def generate_config(self) -> None:
+        """Generate yaml config for benchmark."""
+        config_generator: BenchmarkConfigGenerator = BenchmarkConfigGenerator(
+            configuration_path=self.config_path,
+            data=self.configuration_data,
+        )
+        config_generator.generate()
+
+
+class DataloaderInterface:
+    """Interface for dataloader."""
+
+    dataset_type: str
+    dataset_params: dict
+    transforms: dict
+    filter: dict
+    metric: dict
+
+    def __init__(self, dataloader_data: dict):
+        """Initialize optimization interface with data."""
+        self.dataset_type = dataloader_data["dataset_type"]
+        self.dataset_params = dataloader_data["parameters"]
+        self.transforms = dataloader_data["transforms"]
+        self.filter = dataloader_data["filter"]
+        self.metric = dataloader_data["metric"]

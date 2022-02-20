@@ -1,0 +1,143 @@
+<div class="container">
+  <h1 joyrideStep="intro" [stepContent]="intro">{{ project['name'] ?? 'Project name' }}
+    <img class="help-button right pointer" matTooltip="Help" (click)="onClick()"
+      src="./../../assets/383-general-support.svg">
+  </h1>
+
+  <ng-template #intro>
+    Congratulations! You've just created this project.
+  </ng-template>
+
+  <mat-tab-group mat-stretch-tabs *ngIf="project['input_model']">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <img class="tab-icon" src="./../../assets/298a-workflow-process-solid.svg">
+        <div joyrideStep="addOptimizationTour" [stepContent]="addOptimizationTour">
+          Optimizations
+        </div>
+      </ng-template>
+      <ng-template #addOptimizationTour>
+        You can start by adding new optimization for your model.
+      </ng-template>
+      <app-optimizations [framework]="project['input_model']['framework']['name'].toLowerCase()"></app-optimizations>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <img class="tab-icon" src="./../../assets/174-gauge.svg">
+        <div joyrideStep="benchmarkTour" [stepContent]="benchmarkTour">Benchmarks</div>
+      </ng-template>
+      <ng-template #benchmarkTour>
+        Add new benchmark to check out the performance and accuracy of initial and optimized model.
+      </ng-template>
+      <app-benchmarks></app-benchmarks>
+    </mat-tab>
+
+    <ng-container *ngIf="project['input_model']">
+      <mat-tab [disabled]="!project['input_model']['supports_profiling']">
+        <ng-template mat-tab-label>
+          <img *ngIf="project['input_model']['supports_profiling']" class="tab-icon"
+            src="./../../assets/043-organize.svg">
+          <img *ngIf="!project['input_model']['supports_profiling']" class="tab-icon"
+            src="./../../assets/043-organize-disabled.svg">
+          <div joyrideStep="profilingTour" [stepContent]="profilingTour"
+            [matTooltip]="!project['input_model']['supports_profiling'] ? 'Profiling is not available for this model.' : null">
+            Profiling</div>
+        </ng-template>
+        <ng-template #profilingTour>
+          In this tab you can run profiling to find out the performance of each layer of your model.
+        </ng-template>
+        <app-profiling *ngIf="project['input_model']['supports_profiling']"></app-profiling>
+        <p *ngIf="!project['input_model']['supports_profiling']">Profiling is not available for this model.</p>
+      </mat-tab>
+    </ng-container>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <img class="tab-icon" src="./../../assets/234a-database-solid.svg">
+        <div joyrideStep="datasetTour" [stepContent]="datasetTour">Datasets</div>
+      </ng-template>
+      <ng-template #datasetTour>
+        Add new datasets to experiment with the model.
+      </ng-template>
+      <app-datasets [framework]="project['input_model'] ? project['input_model']['framework']['name'] : null">
+      </app-datasets>
+    </mat-tab>
+
+    <ng-container *ngIf="project['input_model']">
+      <mat-tab [disabled]="!project['input_model']['supports_graph']">
+        <ng-template mat-tab-label>
+          <img *ngIf="project['input_model']['supports_graph']" class="tab-icon" src="./../../assets/307-org-chart.svg">
+          <img *ngIf="!project['input_model']['supports_graph']" class="tab-icon"
+            src="./../../assets/307-org-chart-disabled.svg">
+          <div joyrideStep="graphTour" [stepContent]="graphTour"
+            [matTooltip]="!project['input_model']['supports_graph'] ? 'Graph is not available for this model.' : null">
+            Graph</div>
+        </ng-template>
+        <ng-template #graphTour>
+          Here you can see the graphic visualization of the model.
+        </ng-template>
+        <ng-template matTabContent>
+          <app-graph *ngIf="project['input_model']['supports_graph']" [modelPath]="project['input_model']['path']">
+          </app-graph>
+          <p *ngIf="!project['input_model']['supports_graph']">Graph is not available for this model.</p>
+        </ng-template>
+      </mat-tab>
+    </ng-container>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <img class="tab-icon" src="./../../assets/005a-help-solid.svg">
+        Project info
+      </ng-template>
+      <mat-card>
+        <div class="item item-row1" joyrideStep="secondStep">
+          <h2>Project details</h2>
+          <table class="rounded">
+            <tr>
+              <td class="header">Project name</td>
+              <td class="cell">{{ project['name'] }}</td>
+            </tr>
+            <tr>
+              <td class="header">Created at</td>
+              <td class="cell">{{ project['created_at'] }}</td>
+            </tr>
+            <tr>
+              <td class="header">Modified at</td>
+              <td class="cell">{{ project['modified_at'] }}</td>
+            </tr>
+            <tr>
+              <td class="header">Framework</td>
+              <td class="cell">{{ project['input_model']['framework']['name'] }}</td>
+            </tr>
+            <tr>
+              <td class="header">Domain</td>
+              <td class="cell">{{ project['input_model']['domain']['name'] }}</td>
+            </tr>
+            <tr>
+              <td class="header">Size</td>
+              <td class="cell">{{ project['input_model']['size'] }} MB</td>
+            </tr>
+            <tr>
+              <td class="header">Input model path</td>
+              <td class="cell">
+                {{ project['input_model']['path'] ? getFileName(project['input_model']['path']) : null }}
+                <img *ngIf="project['input_model']['path']" class="icon-button right"
+                  src="./../../assets/146a-copy-solid.svg" matTooltip="Copy full model path to clipboard"
+                  matTooltipPosition="after" (click)="copyToClipboard(project['input_model']['path'])">
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="item">
+          <h2>Notes</h2>
+          <textarea [(ngModel)]="project['notes']" name="notes" cdkTextareaAutosize></textarea>
+          <br>
+          <button mat-raised-button (click)="addNotes()" color="accent">
+            <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
+            Save notes
+          </button>
+        </div>
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>

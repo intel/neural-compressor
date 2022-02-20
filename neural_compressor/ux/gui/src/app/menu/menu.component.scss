@@ -17,6 +17,17 @@
   cursor: pointer;
 }
 
+.create-new-btn {
+  background-color: $accent-yellow;
+  float: right;
+  font-size: 100%;
+}
+
+.plus-icon {
+  position: relative;
+  top: -2px;
+}
+
 .config-btn {
   background-color: $dark-gray;
   text-align: left;
@@ -24,6 +35,7 @@
 
 .name {
   color: white;
+  font-size: 120%;
 }
 
 .name:hover {
@@ -32,20 +44,10 @@
 
 .time {
   color: $light-gray;
-  font-size: 80%;
   position: relative;
   top: -20px;
   text-align: left;
-  margin-left: 30px;
-}
-
-.wip {
-  margin-left: 0px !important;
-}
-
-.model-list {
-  font-family: IntelClearLt;
-  padding: 10px;
+  font-size: 80%;
 }
 
 img {
@@ -71,24 +73,6 @@ img {
   width: 100%;
 }
 
-.model-list-btn {
-  color: $light-gray;
-  cursor: pointer;
-  background-color: $dark-gray;
-}
-
-.model-list-btn:hover {
-  color: $accent-yellow;
-}
-
-@media all and (max-width:1500px) {
-  .time {
-    font-size: 60%;
-    position: relative;
-    top: -5px;
-  }
-
-  .config-btn {
-    line-height: 20px;
-  }
+.project-list {
+  padding: 10px;
 }

@@ -1,0 +1,73 @@
+// Copyright (c) 2021 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+@import './../../variables.scss';
+
+.fixed-height {
+  position: relative;
+  top: 5px;
+  max-height: 40px !important;
+  margin-left: 5px;
+}
+
+.spinner {
+  position: relative;
+  top: 10px;
+  margin-left: 5px;
+}
+
+.spinner-wrapper {
+  display: flex;
+}
+
+.info {
+  color: $dark-gray;
+  position: relative;
+  top: -12px;
+}
+
+.icon {
+  width: 20px;
+  position: relative;
+  top: -2px;
+}
+
+.required {
+  color: $dark-gray;
+  float: right;
+}
+
+.custom {
+  color: $dark-gray;
+  position: relative;
+  top: -5px;
+}
+
+.navigation-icon {
+  width: 20px;
+  position: relative;
+  top: -2px;
+  margin-right: 5px;
+}
+
+.shape-warning {
+  color: $orange;
+  position: relative;
+  top: -20px;
+}
+
+.warning-icon {
+  width: 20px;
+  position: relative;
+  top: 5px;
+}

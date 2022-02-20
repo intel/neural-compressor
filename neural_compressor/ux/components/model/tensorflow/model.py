@@ -24,6 +24,7 @@ from neural_compressor.ux.components.graph.reader.tensorflow_reader import Tenso
 from neural_compressor.ux.components.model.model import Model
 from neural_compressor.ux.components.model.shape import Shape
 from neural_compressor.ux.components.model.tensorflow.utils import get_input_shape
+from neural_compressor.ux.utils.consts import Domains, Frameworks
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import check_module
 
@@ -73,12 +74,17 @@ class TensorflowModel(Model):
     @property
     def input_shape(self) -> Shape:
         """Try to detect data shape."""
-        domain = self.domain.domain
-        default_shapes = {
-            "image_recognition": 224,
-            "object_detection": 300,
-        }
-        default_shape = default_shapes.get(domain, None)
+        try:
+            domain = Domains(self.domain.domain)
+            default_shapes = {
+                Domains.IMAGE_RECOGNITION: 224,
+                Domains.OBJECT_DETECTION: 300,
+            }
+            default_shape = default_shapes.get(domain, None)
+        except ValueError:
+            log.debug(f'Could not detect "{self.domain.domain}" domain.')
+            default_shape = None
+
         if default_shape is None:
             return Shape(trusted=True)
 
@@ -101,7 +107,7 @@ class TensorflowModel(Model):
     @staticmethod
     def get_framework_name() -> str:
         """Get the name of framework."""
-        return "tensorflow"
+        return Frameworks.TF.value
 
     def guard_requirements_installed(self) -> None:
         """Ensure all requirements are installed."""

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Model repository."""
 
-from typing import List, Optional, Type
+from typing import List, Type
 
 from neural_compressor.ux.components.model.model import Model
 from neural_compressor.ux.components.model.onnxrt.model import OnnxrtModel
@@ -52,7 +52,7 @@ class ModelRepository:
         return sorted(unique_frameworks)
 
     @staticmethod
-    def get_framework_from_path(model_path: str) -> Optional[str]:
+    def get_framework_from_path(model_path: str) -> str:
         """
         Get framework name from model extension.
 
@@ -63,7 +63,7 @@ class ModelRepository:
             model = model_repository.get_model(model_path)
             return model.get_framework_name()
         except NotFoundException:
-            return None
+            raise NotFoundException("Framework was not recognized.")
 
     @staticmethod
     def get_supported_frameworks() -> List[str]:

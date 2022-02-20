@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 """Generic profiling script."""
 
 import argparse
+import json
 from typing import Any, Optional
 
 from neural_compressor.ux.components.profiling.factory import ProfilerFactory
@@ -25,25 +26,28 @@ def parse_args() -> Any:
     """Parse input arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--workload-id",
+        "--profiling-config",
         type=str,
-        required=False,
-        help="Workload ID.",
-    )
-    parser.add_argument(
-        "--model-path",
-        type=str,
-        required=False,
-        help="Path to model.",
+        required=True,
+        help="Path to json with profiling details.",
     )
     return parser.parse_args()
 
 
+def load_profiling_details(json_path: str) -> dict:
+    """Load profiling details from json."""
+    with open(json_path, "r") as json_file:
+        data = json.load(json_file)
+    return data
+
+
 if __name__ == "__main__":
     args = parse_args()
+    profiling_data = load_profiling_details(
+        json_path=args.profiling_config,
+    )
     profiler: Optional[Profiler] = ProfilerFactory().get_profiler(
-        args.workload_id,
-        args.model_path,
+        profiling_data,
     )
     if profiler is None:
         raise Exception("Could not find profiler for workload.")

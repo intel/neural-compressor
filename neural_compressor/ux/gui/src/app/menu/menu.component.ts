@@ -14,8 +14,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorComponent } from '../error/error.component';
+import { ProjectFormComponent } from '../project-form/project-form.component';
 import { ModelService } from '../services/model.service';
-import { SocketService } from '../services/socket.service';
 
 @Component({
   selector: 'app-menu',
@@ -25,64 +25,26 @@ import { SocketService } from '../services/socket.service';
 export class MenuComponent implements OnInit {
 
   showSpinner = true;
-  modelList = [];
+  projectList = [];
 
   constructor(
     private modelService: ModelService,
-    private socketService: SocketService,
     public dialog: MatDialog
   ) { }
 
   ngOnInit() {
     this.modelService.getSystemInfo();
-
-    this.modelService.configurationSaved
-      .subscribe(result => {
-        this.getAllModels();
-      });
-    this.socketService.optimizationStart$
-      .subscribe(result => {
-        this.getAllModels();
-      });
-    this.socketService.optimizationFinish$
-      .subscribe(result => {
-        this.getAllModels();
-      });
-    this.socketService.benchmarkStart$
-      .subscribe(result => {
-        this.getAllModels();
-      });
-    this.socketService.benchmarkFinish$
-      .subscribe(result => {
-        if (result['data'] && result['data']['current_step'] === result['data']['number_of_steps']) {
-          this.getAllModels();
-        }
-      });
-    this.socketService.profilingStart$
-      .subscribe(result => {
-        this.getAllModels();
-      });
-    this.socketService.profilingFinish$
-      .subscribe(result => {
-        this.getAllModels();
-      });
-    this.getAllModels();
+    this.getAllProjects();
+    this.modelService.projectCreated$
+      .subscribe(response => this.getAllProjects());
   }
 
-  getAllModels() {
-    this.modelService.getDefaultPath('workspace')
+  getAllProjects() {
+    this.modelService.getProjectList()
       .subscribe(
         response => {
-          this.modelService.getAllModels()
-            .subscribe(
-              list => {
-                this.showSpinner = false;
-                this.modelList = list['workloads_list'];
-              },
-              error => {
-                this.showSpinner = false;
-                this.openErrorDialog(error);
-              });
+          this.showSpinner = false;
+          this.projectList = response['projects'];
         },
         error => {
           this.showSpinner = false;
@@ -96,12 +58,19 @@ export class MenuComponent implements OnInit {
     });
   }
 
-  getFileName(path: string): string {
-    return path ? path.replace(/^.*[\\\/]/, '') : '';
-  }
-
   getDate(date: string) {
     return new Date(date);
+  }
+
+  createNewProject() {
+    const dialogRef = this.dialog.open(ProjectFormComponent, {
+      width: '60%',
+    });
+    dialogRef.afterClosed().subscribe(response => {
+      if (response !== undefined) {
+        this.showSpinner = true;
+      }
+    });
   }
 
 }

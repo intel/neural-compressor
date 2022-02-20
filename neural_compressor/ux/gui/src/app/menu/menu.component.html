@@ -1,36 +1,20 @@
-<div class="model-list">
-  <ng-container *ngFor="let model of modelList">
-    <br>
-    <button mat-flat-button [routerLink]="['/details', model['id']]" class="config-btn" queryParamsHandling="preserve"
-      routerLinkActive="active">
-      <span *ngIf="model['status'] !== 'wip'">
-        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'success'"
-          src="./../../assets/010a-passed-completed-solid.svg">
-        <img [matTooltip]="model['message']" *ngIf="model['status'] === 'error' || model['status'] === 'failure'"
-          src="./../../assets/009a-close-solid.svg">
-        <img *ngIf="model['status'] === null || model['status'] === ''" src="./../../assets/005a-help-solid-gray.svg">
-        <span class="name" [matTooltip]="getFileName(model['model_path'])">{{ getFileName(model['model_path']) |
-          longName }}</span>
-        <br>
-        <span class="time"> {{ getDate(model['created_at']) | timeAgo }}</span>
-      </span>
-
-      <span *ngIf="model['status'] === 'wip'" class="spinner-wrapper">
-        <mat-spinner mode="indeterminate" class="spinner" matTooltip="Configuration is running" [diameter]="25"
-          color="accent">
-        </mat-spinner>
-        <span>
-          <span class="name" [matTooltip]="getFileName(model['model_path'])">{{ getFileName(model['model_path']) |
-            longName }}</span>
-          <br>
-          <span class="time wip"> {{ getDate(model['created_at']) | timeAgo }}</span>
-        </span>
-      </span>
-    </button>
-  </ng-container>
+<div class="project-list">
   <br>
-  <button mat-flat-button *ngIf="modelList.length" [routerLink]="['/my-models']" queryParamsHandling="preserve"
-    class="model-list-btn">
-    See models comparison table
+  <h3>My projects</h3>
+  <div *ngFor="let project of projectList">
+    <button mat-flat-button [routerLink]="['/project', project.id]" class="config-btn" queryParamsHandling="preserve"
+      routerLinkActive="active">
+      <span class="name">{{ project.name }}</span>
+      <br>
+      <span class="time"> {{ getDate(project.created_at) | timeAgo }}</span>
+    </button>
+  </div>
+  <br>
+  <button mat-raised-button class="create-new-btn" (click)="createNewProject()">
+    <img class="plus-icon" src="./../../assets/008a-plus-solid-black.svg">
+    Create new project
   </button>
 </div>
+<mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+  [style.display]="showSpinner ? 'block' : 'none'">
+</mat-spinner>

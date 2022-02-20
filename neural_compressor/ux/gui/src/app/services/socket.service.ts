@@ -110,9 +110,9 @@ export class SocketService {
 
   getBoundaryNodes(newModel: NewModel) {
     return this.http.post(
-      this.baseUrl + 'api/get_boundary_nodes',
+      this.baseUrl + 'api/model/boundary_nodes',
       {
-        id: newModel.id,
+        request_id: newModel.id,
         model_path: newModel.model_path
       });
   }

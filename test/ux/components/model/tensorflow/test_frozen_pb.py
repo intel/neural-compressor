@@ -22,6 +22,7 @@ from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.node import Node
 from neural_compressor.ux.components.model.domain import Domain
 from neural_compressor.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
+from neural_compressor.ux.utils.consts import DomainFlavours, Domains, Frameworks
 
 
 class TestFrozenPbModel(unittest.TestCase):
@@ -60,7 +61,7 @@ class TestFrozenPbModel(unittest.TestCase):
 
     def test_get_framework_name(self) -> None:
         """Test getting correct framework name."""
-        self.assertEqual("tensorflow", FrozenPbModel.get_framework_name())
+        self.assertEqual(Frameworks.TF.value, FrozenPbModel.get_framework_name())
 
     def test_supports_correct_path(self) -> None:
         """Test getting correct framework name."""
@@ -121,32 +122,32 @@ class TestFrozenPbModel(unittest.TestCase):
         """Test getting domain of a model."""
         self.assert_model_domain_matches_expected(
             node_names=["boxes", "scores", "classes"],
-            expected_domain="object_detection",
-            expected_domain_flavour="",
+            expected_domain=Domains.OBJECT_DETECTION.value,
+            expected_domain_flavour=DomainFlavours.NONE.value,
         )
 
     def test_domain_object_detection_domain_ssd(self) -> None:
         """Test getting domain of a model."""
         self.assert_model_domain_matches_expected(
             node_names=["bboxes", "scores", "classes", "ssd"],
-            expected_domain="object_detection",
-            expected_domain_flavour="ssd",
+            expected_domain=Domains.OBJECT_DETECTION.value,
+            expected_domain_flavour=DomainFlavours.SSD.value,
         )
 
     def test_domain_object_detection_domain_yolo(self) -> None:
         """Test getting domain of a model."""
         self.assert_model_domain_matches_expected(
             node_names=["boxes", "yolo"],
-            expected_domain="object_detection",
-            expected_domain_flavour="yolo",
+            expected_domain=Domains.OBJECT_DETECTION.value,
+            expected_domain_flavour=DomainFlavours.YOLO.value,
         )
 
     def test_domain_image_recognition_resnet(self) -> None:
         """Test getting domain of a model."""
         self.assert_model_domain_matches_expected(
             node_names=["resnet_model/Pad"],
-            expected_domain="image_recognition",
-            expected_domain_flavour="",
+            expected_domain=Domains.IMAGE_RECOGNITION.value,
+            expected_domain_flavour=DomainFlavours.NONE.value,
         )
 
     def test_domain_unknown(self) -> None:

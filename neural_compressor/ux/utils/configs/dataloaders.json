@@ -1,48 +1,6 @@
 [
     {
-        "name": "mxnet",
-        "help": null,
-        "params": [
-            {
-                "name": "dummy",
-                "help": null,
-                "show_dataset_location": false,
-                "params": [
-                    {
-                        "name": "shape",
-                        "help": null,
-                        "value": []
-                    }
-                ]
-            },
-            {
-                "name": "ImageFolderDataset",
-                "help": null,
-                "show_dataset_location": true,
-                "params": [
-                    {
-                        "name": "root",
-                        "help": null,
-                        "value": ""
-                    }
-                ]
-            },
-            {
-                "name": "ImageRecordDataset",
-                "help": null,
-                "show_dataset_location": true,
-                "params": [
-                    {
-                        "name": "root",
-                        "help": null,
-                        "value": ""
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        "name": "onnxrt",
+        "name": "ONNXRT",
         "help": null,
         "params": [
             {
@@ -210,81 +168,7 @@
         ]
     },
     {
-        "name": "pytorch",
-        "help": null,
-        "params": [
-            {
-                "name": "Bert",
-                "help": null,
-                "show_dataset_location": true,
-                "params": [
-                    {
-                        "name": "dataset",
-                        "help": null,
-                        "value": []
-                    },
-                    {
-                        "name": "task",
-                        "help": null,
-                        "value": [
-                            "classifier",
-                            "squad"
-                        ]
-                    }
-                ]
-            },
-            {
-                "name": "DatasetFolder",
-                "help": null,
-                "show_dataset_location": true,
-                "params": [
-                    {
-                        "name": "root",
-                        "help": null,
-                        "value": ""
-                    }
-                ]
-            },
-            {
-                "name": "dummy",
-                "help": null,
-                "show_dataset_location": false,
-                "params": [
-                    {
-                        "name": "shape",
-                        "help": null,
-                        "value": []
-                    }
-                ]
-            },
-            {
-                "name": "ImageFolder",
-                "help": null,
-                "show_dataset_location": true,
-                "params": [
-                    {
-                        "name": "root",
-                        "help": null,
-                        "value": ""
-                    }
-                ]
-            },
-            {
-                "name": "ImageNet",
-                "help": null,
-                "show_dataset_location": true,
-                "params": [
-                    {
-                        "name": "root",
-                        "help": null,
-                        "value": ""
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        "name": "tensorflow",
+        "name": "TensorFlow",
         "help": null,
         "params": [
             {

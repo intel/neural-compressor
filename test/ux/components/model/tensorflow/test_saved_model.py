@@ -18,6 +18,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from neural_compressor.ux.components.model.tensorflow.saved_model import SavedModelModel
+from neural_compressor.ux.utils.consts import Frameworks
 
 
 class TestSavedModelModel(unittest.TestCase):
@@ -56,7 +57,7 @@ class TestSavedModelModel(unittest.TestCase):
 
     def test_get_framework_name(self) -> None:
         """Test getting correct framework name."""
-        self.assertEqual("tensorflow", SavedModelModel.get_framework_name())
+        self.assertEqual(Frameworks.TF.value, SavedModelModel.get_framework_name())
 
     def test_supports_correct_path(self) -> None:
         """Test getting correct framework name."""

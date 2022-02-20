@@ -15,21 +15,39 @@
 """Optimization class."""
 
 import os
-from typing import List
+from typing import List, Optional
 
+from neural_compressor.ux.components.config_generator.graph_optimization_config_generator import (
+    GraphOptimizationConfigGenerator,
+)
 from neural_compressor.ux.components.optimization.graph_optimizer.optimize_model import (
     optimize_graph,
     optimize_graph_config,
 )
 from neural_compressor.ux.components.optimization.optimization import Optimization
+from neural_compressor.ux.utils.exceptions import InternalException
 
 
 class GraphOptimization(Optimization):
     """Optimization class."""
 
+    def __init__(
+        self,
+        optimization_data: dict,
+        project_data: dict,
+        dataset_data: dict,
+        template_path: Optional[str] = None,
+    ) -> None:
+        """Initialize Optimization class."""
+        super().__init__(optimization_data, project_data, dataset_data, template_path)
+        if not self.tune:
+            self.config_path = None
+
     def execute(self) -> None:
         """Execute graph optimization."""
         if self.tune:
+            if self.config_path is None:
+                raise InternalException("Could not find path to config.")
             optimize_graph_config(
                 input_graph=self.input_graph,
                 output_graph=self.output_graph,
@@ -43,7 +61,7 @@ class GraphOptimization(Optimization):
                 input=self.input_nodes,
                 output=self.output_nodes,
                 framework=self.framework,
-                precisions=self.output_precision,
+                precisions=self.optimization.output_precision,
             )
 
     @property
@@ -74,7 +92,27 @@ class GraphOptimization(Optimization):
                 [
                     f"--input-nodes={self.input_nodes}",
                     f"--output-nodes={self.output_nodes}",
-                    f"--precisions={self.output_precision}",
+                    f"--precisions={self.optimization.output_precision}",
                 ],
             )
         return parameters
+
+    @property
+    def configuration_data(self) -> dict:
+        """Get configuration data for graph optimization config generator."""
+        configuration_data: dict = super().configuration_data
+        configuration_data.update(
+            {
+                "optimization_precision": self.optimization.output_precision,
+            },
+        )
+        return configuration_data
+
+    def generate_config(self) -> None:
+        """Generate yaml config."""
+        if self.tune:
+            config_generator: GraphOptimizationConfigGenerator = GraphOptimizationConfigGenerator(
+                configuration_path=self.config_path,
+                data=self.configuration_data,
+            )
+            config_generator.generate()

@@ -58,6 +58,17 @@ import { SystemInfoComponent } from './system-info/system-info.component';
 import { LongNamePipe } from './pipes/long-name.pipe';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
+import { ProjectComponent } from './project/project.component';
+import { OptimizationsComponent } from './optimizations/optimizations.component';
+import { BenchmarksComponent } from './benchmarks/benchmarks.component';
+import { ProfilingComponent } from './profiling/profiling.component';
+import { DatasetsComponent } from './datasets/datasets.component';
+import { ProjectFormComponent } from './project-form/project-form.component';
+import { BenchmarkFormComponent } from './benchmark-form/benchmark-form.component';
+import { OptimizationFormComponent } from './optimization-form/optimization-form.component';
+import { DatasetFormComponent } from './dataset-form/dataset-form.component';
+import { JoyrideModule } from 'ngx-joyride';
+import { ProfilingFormComponent } from './profiling-form/profiling-form.component';
 
 @NgModule({
   declarations: [
@@ -73,7 +84,17 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     GraphComponent,
     DetailsComponent,
     HomeComponent,
-    SystemInfoComponent
+    SystemInfoComponent,
+    ProjectComponent,
+    OptimizationsComponent,
+    BenchmarksComponent,
+    ProfilingComponent,
+    DatasetsComponent,
+    ProjectFormComponent,
+    BenchmarkFormComponent,
+    OptimizationFormComponent,
+    DatasetFormComponent,
+    ProfilingFormComponent
   ],
   imports: [
     BrowserModule,
@@ -83,6 +104,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     FlexLayoutModule,
     FormsModule,
     HttpClientModule,
+    JoyrideModule.forRoot(),
     MatExpansionModule,
     MatButtonModule,
     MatButtonToggleModule,

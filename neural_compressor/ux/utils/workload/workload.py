@@ -116,7 +116,7 @@ class Workload(JsonSerializer):
             self.config_name,
         )
 
-        self.input_precision = Precisions.FP32  # TODO: Detect input model precision
+        self.input_precision: str = Precisions.FP32.value  # TODO: Detect input model precision
         self.output_precision = data.get("precision", data.get("output_precision"))
 
         self.mode = self.get_optimization_mode()
@@ -175,7 +175,7 @@ class Workload(JsonSerializer):
         modes_map = {
             Precisions.INT8: Optimizations.TUNING,
             Precisions.FP32: Optimizations.GRAPH,
-            Precisions.MIXED: Optimizations.GRAPH,
+            Precisions.BF16: Optimizations.GRAPH,
         }
         mode = modes_map.get(self.output_precision, None)
         if mode is None:
@@ -327,7 +327,7 @@ class WorkloadMigrator:
 
     def _migrate_to_v2(self) -> None:
         """Parse workload from v1 to v2."""
-        print("Migrating workload.json to v2...")
+        log.info("Migrating workload.json to v2...")
         new_data = {
             "input_precision": "fp32",
             "output_precision": "int8",
@@ -358,7 +358,7 @@ class WorkloadMigrator:
 
     def _migrate_to_v3(self) -> None:
         """Parse workload from v2 to v3."""
-        print("Migrating workload.json to v3...")
+        log.info("Migrating workload.json to v3...")
         self.workload_data.update(
             {
                 "project_name": os.path.basename(self.workload_data.get("model_path", "")),
@@ -369,7 +369,7 @@ class WorkloadMigrator:
 
     def _migrate_to_v4(self) -> None:
         """Parse workload from v3 to v4."""
-        print("Migrating workload.json to v4...")
+        log.info("Migrating workload.json to v4...")
         self.workload_data.update(
             {
                 "supports_profiling": False,
@@ -379,7 +379,7 @@ class WorkloadMigrator:
 
     def _migrate_to_v5(self) -> None:
         """Parse workload form v4 to v5."""
-        print("Migrating workload.json to v5...")
+        log.info("Migrating workload.json to v5...")
         objective = self.workload_data.get("config", {}).get("tuning", {}).get("objective", None)
         self.workload_data.update(
             {

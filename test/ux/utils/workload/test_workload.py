@@ -51,7 +51,6 @@ class TestWorkloadsMigrator(unittest.TestCase):
 
     def test_workload_migration_from_v4(self) -> None:
         """Test Workload config migrator from v4."""
-        self.maxDiff = None
         self._assert_migrates(
             "workload_v4_tuned.json",
             "workload_v5_tuned.json",

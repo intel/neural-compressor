@@ -33,7 +33,7 @@
 
 .group-node-container {
   border-radius: 0.5rem;
-  background-color: #000864;
+  background-color: #005B85;
 }
 
 .node-header {
@@ -46,7 +46,7 @@
   font-size: 150%;
   text-align: center;
   color: white !important;
-  background-color: #000864 !important;
+  background-color: #005B85 !important;
   cursor: pointer;
   font-family: IntelClearBd;
 
@@ -62,7 +62,7 @@
 
 .node-text {
   position: relative;
-  top: -5px;
+  top: -20px;
 }
 
 .sidenav {
@@ -80,18 +80,32 @@
   top: -8px;
 }
 
-.wrapper {
-  width: 100%;
-  overflow: hidden;
+@media all and (max-height:1500px) {
+  .wrapper {
+    height: 1000px;
+  }
+}
+
+@media all and (max-height:1000px) {
+  .wrapper {
+    height: 800px;
+  }
+}
+
+@media all and (max-height:800px) {
+  .wrapper {
+    height: 500px;
+  }
 }
 
 .graph {
-  float: left;
+  height: 95%;
+  width: 95%;
 }
 
 .nodes-table-container {
   position: absolute;
-  top: 0px;
+  top: 60px;
   right: 0px;
   background-color: #e1e1e1;
 }
@@ -125,8 +139,13 @@
 }
 
 .graph-buttons {
-  cursor: pointer;
   position: absolute;
-  bottom: 0px;
-  left: 0px;
+  top: 0px;
+  right: 0px;
+  margin-top: 5px;
+}
+
+.graph-button {
+  cursor: pointer;
+  margin-left: 5px;
 }

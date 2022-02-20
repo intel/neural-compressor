@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { ProjectFormComponent } from '../project-form/project-form.component';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -23,12 +25,25 @@ export class HomeComponent implements OnInit {
 
   clicked: 'systemInfo' | 'details';
   chosenRow = {};
+  showSpinner = false;
 
   constructor(
-    private modelService: ModelService
+    private modelService: ModelService,
+    public dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
+  }
+
+  createNewProject() {
+    const dialogRef = this.dialog.open(ProjectFormComponent, {
+      width: '60%',
+    });
+    dialogRef.afterClosed().subscribe(response => {
+      if (response !== undefined) {
+        this.showSpinner = true;
+      }
+    });
   }
 
   systemInfo() {

@@ -533,7 +533,7 @@ export class ImportModelComponent implements OnInit {
       .subscribe(
         response => {
           this.router.navigate(['/details', this.id], { queryParamsHandling: "merge" });
-          this.modelService.configurationSaved.next(true);
+          // this.modelService.configurationSaved.next(true);
         },
         error => {
           this.openErrorDialog(error);

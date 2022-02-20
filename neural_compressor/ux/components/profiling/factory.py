@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,24 +19,20 @@ from neural_compressor.ux.components.profiling.profiler import Profiler
 from neural_compressor.ux.components.profiling.tensorflow_profiler.factory import (
     ProfilerFactory as TensorflowProfilerFactory,
 )
-from neural_compressor.ux.utils.templates.workdir import Workdir
-from neural_compressor.ux.utils.workload.workload import Workload
 
 
 class ProfilerFactory:
     """Profiling factory."""
 
     @staticmethod
-    def get_profiler(workload_id: str, model_path: str) -> Optional[Profiler]:
+    def get_profiler(profiling_data: dict) -> Optional[Profiler]:
         """Get profiling for specified framework."""
-        workload: Workload = Workdir(
-            request_id=workload_id,
-            overwrite=False,
-        ).get_workload_object()
         framework_profilers = {
             "tensorflow": TensorflowProfilerFactory.get_profiler,
         }
 
-        if workload.framework is None or framework_profilers.get(workload.framework, None) is None:
+        framework = profiling_data.get("framework")
+
+        if framework is None or framework_profilers.get(framework, None) is None:
             return None
-        return framework_profilers[workload.framework](workload_id, model_path)
+        return framework_profilers[framework](profiling_data)

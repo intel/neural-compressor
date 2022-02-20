@@ -92,16 +92,15 @@ class PerformanceParser(Parser):
 
             with open(log_file) as f:
                 for line in f:
-                    for key in self.patterns:
-                        prog = re.compile(self.patterns[key])
+                    for metric_name in self.patterns:
+                        prog = re.compile(self.patterns[metric_name])
                         match = prog.search(line)
                         if not match:
                             continue
-                        metric_name = f"perf_{key}_input_model"
                         self.metric.insert_data(metric_name, match.group(1))
                         converted_value = getattr(self.metric, metric_name)
                         parse_result = {
-                            key: converted_value,
+                            metric_name: converted_value,
                         }
                         partial = self.update_partial(partial, parse_result)
 
@@ -123,11 +122,7 @@ class PerformanceParser(Parser):
         """Calculate final values."""
         summary = {}
         for key, value in partial.items():
-            summarized_value = self.summarize_value(key, value)
-            for precision in ["input_model", "optimized_model"]:
-                metric_name = f"perf_{key}_{precision}"
-
-                summary[metric_name] = summarized_value
+            summary[key] = self.summarize_value(key, value)
         return summary
 
     @staticmethod
@@ -158,13 +153,11 @@ class AccuracyParser(Parser):
 
             with open(log_file) as f:
                 for line in f:
-                    for key in self.patterns:
-                        prog = re.compile(self.patterns[key])
+                    for metric_name in self.patterns:
+                        prog = re.compile(self.patterns[metric_name])
                         match = prog.search(line)
                         if match:
-                            for precision in ["input_model", "optimized_model"]:
-                                metric_name = f"acc_{precision}"
-                                self.metric.insert_data(metric_name, match.group(1))
+                            self.metric.insert_data(metric_name, match.group(1))
 
         parsed_data: Dict[str, Any] = self.metric.serialize()  # type: ignore
         return parsed_data

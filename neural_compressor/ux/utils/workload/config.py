@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Configuration module."""
+import os
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
@@ -267,7 +268,8 @@ class Config(JsonSerializer):
 
     def set_transform(self, transform: List[Dict[str, Any]]) -> None:
         """Set transforms metrics in config."""
-        self.set_postprocess_transform(transform)
+        if self.evaluation:
+            self.evaluation.set_accuracy_postprocess_transforms(transform)
         if (
             self.quantization
             and self.quantization.calibration
@@ -306,16 +308,6 @@ class Config(JsonSerializer):
                 single_transform["params"],
             )
             config[single_transform["name"]] = deepcopy(trans_obj)
-
-    def set_postprocess_transform(self, transform: List[Dict[str, Any]]) -> None:
-        """Set postprocess transformation."""
-        if self.evaluation and self.evaluation.accuracy and self.evaluation.accuracy.postprocess:
-            for single_transform in transform:
-                if single_transform["name"] == "SquadV1":
-                    self.evaluation.accuracy.postprocess.transform = {  # type: ignore
-                        single_transform["name"]: single_transform["params"],
-                    }
-                    break
 
     def set_quantization_approach(self, approach: str) -> None:
         """Update quantization approach in config."""
@@ -398,6 +390,6 @@ class Config(JsonSerializer):
             default_flow_style=None,
             sort_keys=False,
         )
-
+        os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
         with open(yaml_path, "w") as yaml_config:
             yaml_config.write(yaml_content)

@@ -143,10 +143,8 @@ class TestBenchmarkParser(unittest.TestCase):
 
         self.assertEqual(
             {
-                "perf_throughput_input_model": 123.4568,
-                "perf_throughput_optimized_model": 123.4568,
-                "perf_latency_input_model": 2.3457,
-                "perf_latency_optimized_model": 2.3457,
+                "throughput": 123.4568,
+                "latency": 2.3457,
             },
             parsed,
         )
@@ -184,10 +182,8 @@ class TestBenchmarkParser(unittest.TestCase):
 
         self.assertEqual(
             {
-                "perf_throughput_input_model": 15.0,  # SUM
-                "perf_throughput_optimized_model": 15.0,  # SUM
-                "perf_latency_input_model": 3.5,  # AVG
-                "perf_latency_optimized_model": 3.5,  # AVG
+                "throughput": 15.0,  # SUM
+                "latency": 3.5,  # AVG
             },
             parsed,
         )
