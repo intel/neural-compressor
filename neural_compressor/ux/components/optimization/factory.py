@@ -14,31 +14,36 @@
 # limitations under the License.
 """Optimization class factory."""
 
-from typing import Optional
-
-from neural_compressor.ux.components.optimization import Optimizations
 from neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization import (
     GraphOptimization,
 )
 from neural_compressor.ux.components.optimization.optimization import Optimization
 from neural_compressor.ux.components.optimization.tune.tuning import Tuning
+from neural_compressor.ux.utils.consts import OptimizationTypes
 from neural_compressor.ux.utils.exceptions import InternalException
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.workload.workload import Workload
 
 
 class OptimizationFactory:
     """Optimization factory."""
 
     @staticmethod
-    def get_optimization(workload: Workload, template_path: Optional[str] = None) -> Optimization:
+    def get_optimization(
+        optimization_data: dict,
+        project_data: dict,
+        dataset_data: dict,
+    ) -> Optimization:
         """Get optimization for specified workload."""
+        try:
+            optimization_type = optimization_data["optimization_type"]["name"]
+        except KeyError:
+            raise InternalException("Missing optimization type.")
         optimization_map = {
-            Optimizations.TUNING: Tuning,
-            Optimizations.GRAPH: GraphOptimization,
+            OptimizationTypes.QUANTIZATION.value: Tuning,
+            OptimizationTypes.GRAPH_OPTIMIZATION.value: GraphOptimization,
         }
-        optimization = optimization_map.get(workload.mode, None)
+        optimization = optimization_map.get(optimization_type, None)
         if optimization is None:
-            raise InternalException(f"Could not find optimization class for {workload.mode}")
+            raise InternalException(f"Could not find optimization class for {optimization_type}")
         log.debug(f"Initializing {optimization.__name__} class.")
-        return optimization(workload, template_path)
+        return optimization(optimization_data, project_data, dataset_data)

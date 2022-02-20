@@ -6,6 +6,10 @@
             {
                 "name": "AlignImageChannel",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "dim",
@@ -17,6 +21,9 @@
             {
                 "name": "BilinearImagenet",
                 "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
                 "params": [
                     {
                         "name": "height",
@@ -48,6 +55,10 @@
             {
                 "name": "Cast",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "dtype",
@@ -59,6 +70,10 @@
             {
                 "name": "CenterCrop",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -70,6 +85,10 @@
             {
                 "name": "CropResize",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "x",
@@ -106,6 +125,10 @@
             {
                 "name": "CropToBoundingBox",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "offset_height",
@@ -132,16 +155,27 @@
             {
                 "name": "DecodeImage",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "EncodeJpeg",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "LabelShift",
                 "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
                 "params": [
                     {
                         "name": "label_shift",
@@ -153,6 +187,10 @@
             {
                 "name": "Normalize",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "mean",
@@ -171,6 +209,9 @@
             {
                 "name": "QuantizedInput",
                 "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
                 "params": [
                     {
                         "name": "dtype",
@@ -187,6 +228,10 @@
             {
                 "name": "RandomCrop",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -198,11 +243,19 @@
             {
                 "name": "RandomHorizontalFlip",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "RandomResizedCrop",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -229,16 +282,28 @@
             {
                 "name": "RandomVerticalFlip",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "Rescale",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "Resize",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -255,6 +320,9 @@
             {
                 "name": "ResizeCropImagenet",
                 "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
                 "params": [
                     {
                         "name": "height",
@@ -296,6 +364,10 @@
             {
                 "name": "Transpose",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "perm",
@@ -307,11 +379,18 @@
             {
                 "name": "ToArray",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "SquadV1",
                 "help": null,
+                "domains": [
+                    "Neural Language Processing"
+                ],
                 "params": [
                     {
                         "name": "label_file",
@@ -334,6 +413,10 @@
             {
                 "name": "AlignImageChannel",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "dim",
@@ -345,6 +428,9 @@
             {
                 "name": "CenterCrop",
                 "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -356,6 +442,10 @@
             {
                 "name": "CropResize",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "x",
@@ -392,6 +482,10 @@
             {
                 "name": "Normalize",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "mean",
@@ -410,6 +504,10 @@
             {
                 "name": "RandomCrop",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -421,11 +519,19 @@
             {
                 "name": "RandomHorizontalFlip",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "RandomResizedCrop",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -452,16 +558,28 @@
             {
                 "name": "RandomVerticalFlip",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "Rescale",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "Resize",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "size",
@@ -478,6 +596,9 @@
             {
                 "name": "ResizeCropImagenet",
                 "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
                 "params": [
                     {
                         "name": "height",
@@ -514,11 +635,19 @@
             {
                 "name": "ToArray",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "value": null
             },
             {
                 "name": "Transpose",
                 "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
                 "params": [
                     {
                         "name": "perm",

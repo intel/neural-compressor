@@ -17,6 +17,8 @@
 import unittest
 
 from neural_compressor.ux.components.model.repository import ModelRepository
+from neural_compressor.ux.utils.consts import Frameworks
+from neural_compressor.ux.utils.exceptions import NotFoundException
 
 
 class TestModelRepository(unittest.TestCase):
@@ -36,7 +38,7 @@ class TestModelRepository(unittest.TestCase):
 
     def test_get_frameworks(self) -> None:
         """Test getting frameworks."""
-        expected = ["onnxrt", "tensorflow"]
+        expected = [Frameworks.ONNX.value, Frameworks.TF.value]
 
         repository = ModelRepository()
         actual = repository.get_frameworks()
@@ -46,12 +48,12 @@ class TestModelRepository(unittest.TestCase):
     def test_framework_from_path_for_known_model(self) -> None:
         """Test get_framework_from_path."""
         actual = ModelRepository.get_framework_from_path("/home/user/model.onnx")
-        self.assertEqual("onnxrt", actual)
+        self.assertEqual(Frameworks.ONNX.value, actual)
 
     def test_framework_from_path_for_unknown_model(self) -> None:
         """Test get_framework_from_path."""
-        actual = ModelRepository.get_framework_from_path("/home/user/favourite_song.mp3")
-        self.assertIsNone(actual)
+        with self.assertRaises(NotFoundException):
+            ModelRepository.get_framework_from_path("/home/user/favourite_song.mp3")
 
 
 if __name__ == "__main__":

@@ -5,8 +5,8 @@
             "help": "Float32 precision"
         },
         {
-            "name": "bf16,fp32",
-            "help": "Mixed precision - bfloat16 and float32",
+            "name": "bf16",
+            "help": "BFloat16",
             "label": "bf16"
         },
         {

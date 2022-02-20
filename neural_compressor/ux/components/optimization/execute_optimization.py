@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,21 +15,28 @@
 
 """Execute tune."""
 
-import json
 import os
 import threading
-from typing import Any, Dict, Optional
+from copy import deepcopy
+from typing import Any, Dict
 
+from neural_compressor.ux.components.db_manager.db_operations import (
+    DatasetAPIInterface,
+    ModelAPIInterface,
+    OptimizationAPIInterface,
+    ProjectAPIInterface,
+)
+from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
 from neural_compressor.ux.components.optimization.factory import OptimizationFactory
 from neural_compressor.ux.components.optimization.optimization import Optimization
 from neural_compressor.ux.components.optimization.tuning_history import Watcher
+from neural_compressor.ux.utils.consts import ExecutionStatus
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.executor import Executor
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.parser import OptimizationParser
 from neural_compressor.ux.utils.templates.workdir import Workdir
-from neural_compressor.ux.utils.utils import _load_json_as_dict, get_size
-from neural_compressor.ux.utils.workload.workload import ExecutionMode
+from neural_compressor.ux.utils.utils import get_size, normalize_string
 from neural_compressor.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -37,54 +44,74 @@ mq = MessageQueue()
 
 def execute_optimization(data: Dict[str, Any]) -> dict:
     """Get configuration."""
-    from neural_compressor.ux.utils.workload.workload import Workload
-
-    if not str(data.get("id", "")):
-        message = "Missing request id."
+    if not all([str(data.get("request_id", "")), str(data.get("optimization_id", ""))]):
+        message = "Missing request id or optimization id."
         mq.post_error(
             "optimization_finish",
             {"message": message, "code": 404},
         )
         raise Exception(message)
 
-    request_id: str = data["id"]
-
-    workdir: Optional[Workdir] = None
+    request_id: str = str(data["request_id"])
+    optimization_id: int = int(data["optimization_id"])
 
     try:
-        workdir = Workdir(request_id=request_id, overwrite=False)
-        workload_path: str = workdir.workload_path
-        workload_data = _load_json_as_dict(
-            os.path.join(workload_path, "workload.json"),
+        optimization_details = OptimizationAPIInterface.get_optimization_details(
+            {"id": optimization_id},
         )
-        workload = Workload(workload_data)
+        dataset_details = DatasetAPIInterface.get_dataset_details(
+            {"id": optimization_details["dataset"]["id"]},
+        )
+        project_id = optimization_details["project_id"]
+        project_details = ProjectAPIInterface.get_project_details({"id": project_id})
         optimization: Optimization = OptimizationFactory.get_optimization(
-            workload,
-            workdir.template_path,
+            optimization_data=optimization_details,
+            project_data=project_details,
+            dataset_data=dataset_details,
         )
+        logs = [os.path.join(optimization.workdir, "output.txt")]
+
         send_data = {
             "message": "started",
-            "id": request_id,
+            "request_id": request_id,
             "size_input_model": get_size(optimization.input_graph),
+            "config_path": optimization.config_path,
+            "output_path": logs[0],
         }
-        workdir.clean_logs()
-        workdir.update_data(
-            request_id=request_id,
-            model_path=optimization.input_graph,
-            input_precision=optimization.input_precision,
-            model_output_path=optimization.output_graph,
-            output_precision=optimization.output_precision,
-            status="wip",
+
+        Workdir.clean_logs(optimization.workdir)
+        OptimizationAPIInterface.update_optimization_status(
+            {
+                "id": optimization_id,
+                "status": ExecutionStatus.WIP,
+            },
+        )
+
+        optimization.generate_config()
+
+        OptimizationAPIInterface.update_paths(
+            {
+                "id": optimization_id,
+                "config_path": optimization.config_path,
+                "log_path": logs[0],
+            },
+        )
+
+        OptimizationAPIInterface.update_execution_command(
+            {
+                "id": optimization_id,
+                "execution_command": optimization.command,
+            },
         )
 
         executor = Executor(
-            workspace_path=workload_path,
+            workspace_path=optimization.workdir,
             subject="optimization",
             data=send_data,
             log_name="output",
         )
 
-        tuning_history_watcher = Watcher(request_id)
+        tuning_history_watcher = Watcher(optimization)
         threading.Thread(target=tuning_history_watcher, daemon=True).start()
 
         proc = executor.call(
@@ -97,63 +124,101 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
         if optimization_time:
             optimization_time = round(optimization_time, 2)
         log.debug(f"Elapsed time: {optimization_time}")
-        logs = [os.path.join(workload_path, "output.txt")]
+        logs = [os.path.join(optimization.workdir, "output.txt")]
         parser = OptimizationParser(logs)
         if proc.is_ok:
-            response_data = parser.process()
+            parsed_log = parser.process()
 
-            if ExecutionMode.BASIC == workload.execution_mode:
-                response_data.update(
-                    {
-                        "acc_input_model": None,
-                        "acc_optimized_model": None,
-                    },
-                )
-
-            optimized_model_path = response_data.get(
+            optimized_model_path = parsed_log.get(
                 "path_optimized_model",
                 optimization.output_graph,
             )
             optimization.output_graph = optimized_model_path
 
-            if isinstance(response_data, dict):
-                response_data["id"] = request_id
-                response_data["optimization_time"] = optimization_time
-                response_data["size_optimized_model"] = get_size(optimized_model_path)
-                response_data["model_output_path"] = optimized_model_path
-                response_data["size_input_model"] = get_size(optimization.input_graph)
-                response_data["is_custom_dataloader"] = bool(workdir.template_path)
+            if isinstance(parsed_log, dict):
+                optimized_model_data: dict = {
+                    "project_id": optimization.project_id,
+                    "model_name": normalize_string(optimization_details["name"]),
+                    "model_path": optimized_model_path,
+                    "framework": optimization.framework,
+                    "size": get_size(optimized_model_path),
+                    "precision_id": optimization_details["precision"]["id"],
+                    "domain_id": project_details["input_model"]["domain"]["id"],
+                    "domain_flavour_id": project_details["input_model"]["domain_flavour"]["id"],
+                    "input_nodes": optimization.input_nodes,
+                    "output_nodes": optimization.output_nodes,
+                    "supports_profiling": project_details["input_model"]["supports_profiling"],
+                    "supports_graph": project_details["input_model"]["supports_graph"],
+                }
 
-                workdir.update_data(
-                    request_id=request_id,
-                    model_path=optimization.input_graph,
-                    model_output_path=optimized_model_path,
-                    metric=response_data,
-                    status="success",
-                    execution_details={"optimization": optimization.serialize()},
-                    input_precision=optimization.input_precision,
-                    output_precision=optimization.output_precision,
+                optimized_model_data = parse_model_data_to_bench_names(optimized_model_data)
+
+                optimized_model_id = ModelAPIInterface.add_model(optimized_model_data)
+                OptimizationAPIInterface.update_optimized_model(
+                    {
+                        "id": optimization_id,
+                        "optimized_model_id": optimized_model_id,
+                    },
                 )
-                response_data["execution_details"] = {"optimization": optimization.serialize()}
+                OptimizationAPIInterface.update_optimization_duration(
+                    {
+                        "id": optimization_id,
+                        "duration": optimization_time,
+                    },
+                )
+                OptimizationAPIInterface.update_optimization_status(
+                    {
+                        "id": optimization_id,
+                        "status": ExecutionStatus.SUCCESS,
+                    },
+                )
 
-            log.debug(f"Parsed data is {json.dumps(response_data)}")
+            optimization_data = OptimizationAPIInterface.get_optimization_details(
+                {
+                    "id": optimization_id,
+                },
+            )
+            response_data = {
+                "request_id": request_id,
+            }
+            response_data.update(optimization_data)
+
             mq.post_success("optimization_finish", response_data)
             return response_data
         else:
             log.debug("FAIL")
-            workdir.update_data(
-                request_id=request_id,
-                model_path=optimization.input_graph,
-                input_precision=optimization.input_precision,
-                output_precision=optimization.output_precision,
-                status="error",
+            OptimizationAPIInterface.update_optimization_status(
+                {
+                    "id": optimization_id,
+                    "status": ExecutionStatus.ERROR,
+                },
             )
             raise ClientErrorException("Optimization failed during execution.")
     except Exception as err:
-        mq.post_failure("optimization_finish", {"message": str(err), "id": request_id})
-        if workdir is not None and workdir.get_workload_data(request_id).get("status") != "error":
-            workdir.update_data(
-                request_id=request_id,
-                status="error",
+        mq.post_failure("optimization_finish", {"message": str(err), "request_id": request_id})
+        optimization_status = OptimizationAPIInterface.get_optimization_details(
+            {"id": optimization_id},
+        ).get("status")
+        if optimization_status != ExecutionStatus.ERROR.value:
+            OptimizationAPIInterface.update_optimization_status(
+                {
+                    "id": optimization_id,
+                    "status": ExecutionStatus.ERROR,
+                },
             )
         raise
+
+
+def parse_model_data_to_bench_names(data: dict) -> dict:
+    """Parse names to Bench format."""
+    model_data = deepcopy(data)
+    names_mapper = NamesMapper(MappingDirection.ToBench)
+
+    framework = model_data.get("framework", None)
+    if framework is not None:
+        mapped_framework = names_mapper.map_name(
+            parameter_type="framework",
+            value=framework,
+        )
+    model_data.update({"framework": mapped_framework})
+    return model_data

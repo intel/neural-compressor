@@ -20,6 +20,8 @@ import unittest
 from typing import Any, List
 from unittest.mock import MagicMock, patch
 
+from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
+from neural_compressor.ux.utils.consts import DomainFlavours, Domains, Frameworks
 from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
@@ -75,21 +77,21 @@ class TestUtils(unittest.TestCase):
 
     def test_get_dataset_path(self) -> None:
         """Test getting dataset path."""
-        framework = "tensorflow"
-        domain = "image_recognition"
+        framework = Frameworks.TF.value
+        domain = Domains.IMAGE_RECOGNITION.value
         result = get_dataset_path(framework, domain)
         self.assertEqual(result, "examples/test/dataset/imagenet")
 
     def test_get_dataset_path_unknown_framework(self) -> None:
         """Test getting dataset path failure."""
         framework = "unknown"
-        domain = "image_recognition"
+        domain = Domains.IMAGE_RECOGNITION.value
         with self.assertRaises(Exception):
             get_dataset_path(framework, domain)
 
     def test_get_dataset_path_unknown_domain(self) -> None:
         """Test getting dataset path failure."""
-        framework = "tensorflow"
+        framework = Frameworks.TF.value
         domain = "domain"
         with self.assertRaises(Exception):
             get_dataset_path(framework, domain)
@@ -100,14 +102,14 @@ class TestUtils(unittest.TestCase):
         mocked_get_model_type.return_value = "frozen_pb"
         path = "/home/user/model.pb"
         result = get_framework_from_path(path)
-        self.assertEqual(result, "tensorflow")
+        self.assertEqual(result, Frameworks.TF.value)
         mocked_get_model_type.assert_called_with(path)
 
     def test_get_onnx_framework_from_path(self) -> None:
         """Test getting framework name from path."""
         path = "/home/user/model.onnx"
         result = get_framework_from_path(path)
-        self.assertEqual(result, "onnxrt")
+        self.assertEqual(result, Frameworks.ONNX.value)
 
     def test_get_unknown_framework_from_path(self) -> None:
         """Test getting framework name from path."""
@@ -148,35 +150,35 @@ class TestUtils(unittest.TestCase):
     def test_get_predefined_tf_image_recognition_config_path(self) -> None:
         """Test getting predefined config path for TF image recognition models."""
         self._assert_predefined_config_path(
-            framework="tensorflow",
-            domain="image_recognition",
-            domain_flavour="",
+            framework=Frameworks.TF.value,
+            domain=Domains.IMAGE_RECOGNITION.value,
+            domain_flavour=DomainFlavours.NONE.value,
             expected_filename="image_recognition.yaml",
         )
 
     def test_get_predefined_tf_object_detection_config_path(self) -> None:
         """Test getting predefined config path for TF object detection models."""
         self._assert_predefined_config_path(
-            framework="tensorflow",
-            domain="object_detection",
-            domain_flavour="",
+            framework=Frameworks.TF.value,
+            domain=Domains.OBJECT_DETECTION.value,
+            domain_flavour=DomainFlavours.NONE.value,
             expected_filename="object_detection.yaml",
         )
 
     def test_get_predefined_tf_object_detection_ssd_config_path(self) -> None:
         """Test getting predefined config path for TF object detection models."""
         self._assert_predefined_config_path(
-            framework="tensorflow",
-            domain="object_detection",
-            domain_flavour="ssd",
+            framework=Frameworks.TF.value,
+            domain=Domains.OBJECT_DETECTION.value,
+            domain_flavour=DomainFlavours.SSD.value,
             expected_filename="object_detection_ssd.yaml",
         )
 
     def test_get_predefined_tf_object_detection_unknown_flavour_config_path(self) -> None:
         """Test getting predefined config path for TF object detection models."""
         self._assert_predefined_config_path(
-            framework="tensorflow",
-            domain="object_detection",
+            framework=Frameworks.TF.value,
+            domain=Domains.OBJECT_DETECTION.value,
             domain_flavour="foo",
             expected_filename="object_detection.yaml",
         )
@@ -184,36 +186,36 @@ class TestUtils(unittest.TestCase):
     def test_get_predefined_tf_nlp_config_path(self) -> None:
         """Test getting predefined config path for TF NLP models."""
         self._assert_predefined_config_path(
-            framework="tensorflow",
-            domain="nlp",
-            domain_flavour="",
+            framework=Frameworks.TF.value,
+            domain=Domains.NLP.value,
+            domain_flavour=DomainFlavours.NONE.value,
             expected_filename="nlp.yaml",
         )
 
     def test_get_predefined_tf_recommendation_config_path(self) -> None:
         """Test getting predefined config path for TF recommendation models."""
         self._assert_predefined_config_path(
-            framework="tensorflow",
-            domain="recommendation",
-            domain_flavour="",
+            framework=Frameworks.TF.value,
+            domain=Domains.RECOMMENDATION.value,
+            domain_flavour=DomainFlavours.NONE.value,
             expected_filename="recommendation.yaml",
         )
 
     def test_get_predefined_onnx_image_recognition_config_path(self) -> None:
         """Test getting predefined config path for onnx image recognition models."""
         self._assert_predefined_config_path(
-            framework="onnxrt",
-            domain="image_recognition",
-            domain_flavour="",
+            framework=Frameworks.ONNX.value,
+            domain=Domains.IMAGE_RECOGNITION.value,
+            domain_flavour=DomainFlavours.NONE.value,
             expected_filename="image_recognition.yaml",
         )
 
     def test_get_predefined_onnx_nlp_config_path(self) -> None:
         """Test getting predefined config path for onnx NLP models."""
         self._assert_predefined_config_path(
-            framework="onnxrt",
-            domain="nlp",
-            domain_flavour="",
+            framework=Frameworks.ONNX.value,
+            domain=Domains.NLP.value,
+            domain_flavour=DomainFlavours.NONE.value,
             expected_filename="nlp.yaml",
         )
 
@@ -229,7 +231,7 @@ class TestUtils(unittest.TestCase):
         """Test getting predefined config path for onnx NLP models."""
         with self.assertRaises(Exception):
             get_predefined_config_path(
-                framework="onnxrt",
+                framework=Frameworks.ONNX.value,
                 domain="object_detection",
             )
 
@@ -321,6 +323,8 @@ class TestUtils(unittest.TestCase):
     ) -> None:
         """Assert predefined config path."""
         result = get_predefined_config_path(framework, domain, domain_flavour)
+        names_mapper = NamesMapper(MappingDirection.ToCore)
+        mapped_framework = names_mapper.map_name("framework", framework)
         expected = os.path.join(
             os.path.abspath(
                 os.path.dirname(
@@ -329,7 +333,7 @@ class TestUtils(unittest.TestCase):
             ),
             "configs",
             "predefined_configs",
-            f"{framework}",
+            f"{mapped_framework}",
             expected_filename,
         )
         self.assertEqual(result, expected)

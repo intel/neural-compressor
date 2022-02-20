@@ -13,7 +13,7 @@
 // limitations under the License.
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
-@import '~@angular/material/theming';
+@import '@angular/material/theming';
 // Plus imports for other components in your app.
 
 // Include the common styles for Angular Material. We include this here so that you only
@@ -86,6 +86,17 @@ $custom-typography: mat-typography-config($font-family: IntelClearRg);
 @include mat-table-typography($custom-typography);
 @include mat-core($custom-typography);
 
+@mixin custom-tabs-theme() {
+  .mat-tab-label-active {
+    background-color: #005b8523;
+  }
+
+  .mat-tab-label {
+    font-size: large;
+  }
+}
+
+@include custom-tabs-theme();
 
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
@@ -109,11 +120,10 @@ $gui-theme: mat-light-theme($gui-primary, $gui-accent, $gui-warn);
 html,
 body {
   height: 100%;
-}
-
-body,
-button {
   margin: 0;
   font-family: IntelOneBd;
-  font-size: 12px;
+}
+
+button {
+  min-height: 50px;
 }

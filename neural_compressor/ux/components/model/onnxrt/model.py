@@ -17,11 +17,18 @@
 from typing import List
 
 from neural_compressor.ux.components.model.model import Model
+from neural_compressor.ux.components.model.shape import Shape
+from neural_compressor.ux.utils.consts import Frameworks
 from neural_compressor.ux.utils.utils import check_module, get_file_extension
 
 
 class OnnxrtModel(Model):
     """Onnxrt Model class."""
+
+    @property
+    def input_shape(self) -> Shape:
+        """Try to detect data shape."""
+        return Shape(shape=None, trusted=False)
 
     @property
     def shape_elements_order(self) -> List[str]:
@@ -31,7 +38,7 @@ class OnnxrtModel(Model):
     @staticmethod
     def get_framework_name() -> str:
         """Get the name of framework."""
-        return "onnxrt"
+        return Frameworks.ONNX.value
 
     @staticmethod
     def supports_path(path: str) -> bool:

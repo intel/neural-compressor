@@ -40,3 +40,6 @@ Thumbs.db
 
 # Local dev configuration
 src/environments/environment.ts
+
+# Angular 13 cache
+.angular

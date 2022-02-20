@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 """Tensorflow profiler."""
 
-from typing import Any, List, Tuple
+from typing import Any, List
 
 import tensorflow.compat.v1 as tf_v1
 from tensorflow.python.profiler import model_analyzer, option_builder
@@ -25,41 +25,34 @@ from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader impor
     TensorflowDataLoader,
 )
 from neural_compressor.utils.create_obj_from_config import create_dataloader
-from neural_compressor.ux.components.model.repository import ModelRepository
+from neural_compressor.ux.components.config_generator.profiling_config_generator import (
+    ProfilingConfigGenerator,
+)
 from neural_compressor.ux.components.profiling.profiler import Profiler as Parent
 from neural_compressor.ux.components.profiling.tensorflow_profiler import utils
 from neural_compressor.ux.utils.exceptions import NotFoundException
-from neural_compressor.ux.utils.templates.workdir import Workdir
-from neural_compressor.ux.utils.workload.workload import Workload
 
 
 class Profiler(Parent):
     """Tensorflow profiler class."""
 
-    def __init__(self, workload_id: str, model_path: str) -> None:
+    def __init__(self, profiling_data: dict) -> None:
         """Initialize profiler for specified model."""
-        workdir = Workdir(request_id=workload_id, overwrite=False)
-        self.workload: Workload = workdir.get_workload_object()
-        self.model_name: str = self.workload.model_name
-        self.model_path: str = model_path
-        self.input_nodes: List[str] = []
-        self.output_nodes: List[str] = []
+        self.model_path: str = profiling_data["model_path"]
+        self.batch_size: int = profiling_data["batch_size"]
+        self.dataloader_data: dict = {
+            "dataset": profiling_data["dataset"],
+            "transforms": profiling_data.get("transforms", None),
+            "filter": profiling_data.get("filter", None),
+            "metric": profiling_data.get("metric", None),
+        }
+        self.model_domain: str = profiling_data["model_domain"]
+        self.model_domain_flavour: str = profiling_data["model_domain_flavour"]
+        self.input_nodes: List[str] = profiling_data["model_inputs"]
+        self.output_nodes: List[str] = profiling_data["model_outputs"]
+        self.num_threads: int = profiling_data["num_threads"]
         self.dataloader = self.build_dataloader()
         self.input_datatype = tf_v1.dtypes.float32.as_datatype_enum
-
-        self.set_boundary_nodes()
-
-    @property
-    def num_threads(self) -> int:
-        """Get number of threads for profiling."""
-        if (
-            self.workload.config.evaluation
-            and self.workload.config.evaluation.performance
-            and self.workload.config.evaluation.performance.configs
-            and self.workload.config.evaluation.performance.configs.intra_num_of_threads
-        ):
-            return self.workload.config.evaluation.performance.configs.intra_num_of_threads
-        return 1
 
     def initialize_graph(self) -> Any:
         """Initialize tensorflow model graph."""
@@ -152,55 +145,6 @@ class Profiler(Parent):
                 return node
         raise NotFoundException()
 
-    def set_boundary_nodes(self) -> None:
-        """Set boundary nodes values."""
-        self.set_boundary_nodes_from_workload()
-        if self.input_nodes is None:
-            self.input_nodes = self.workload.config.model.inputs
-        if self.output_nodes is None:
-            self.output_nodes = self.workload.config.model.outputs
-
-        detected_input_nodes, detected_output_nodes = self.detect_boundary_nodes_from_model()
-        if not self.input_nodes:
-            self.input_nodes = detected_input_nodes
-
-        if not self.output_nodes:
-            self.output_nodes = detected_output_nodes
-
-        # Make sure that input nodes are list
-        if isinstance(self.input_nodes, str):
-            self.input_nodes = self.convert_nodes_to_list(self.input_nodes)
-
-        # Make sure that output nodes are list
-        if isinstance(self.output_nodes, str):
-            self.output_nodes = self.convert_nodes_to_list(self.output_nodes)
-
-    def set_boundary_nodes_from_workload(self) -> None:
-        """Set boundary nodes using Workload input and output nodes."""
-        self.input_nodes = self.workload.input_nodes  # type: ignore
-        self.output_nodes = self.workload.output_nodes  # type: ignore
-
-    def detect_boundary_nodes_from_model(self) -> Tuple[List[str], List[str]]:
-        """
-        Detect input and output nodes from model.
-
-        Returns tuple with lists of input and output nodes in that order.
-        """
-        input_nodes: List[str] = []
-        output_nodes: List[str] = []
-        try:
-            model = ModelRepository().get_model(self.model_path)
-            # pylint: disable=assignment-from-none
-            input_nodes = model.get_input_nodes()  # type: ignore
-            # pylint: disable=assignment-from-none
-            output_nodes = model.get_output_nodes()  # type: ignore
-            if isinstance(output_nodes, list):
-                output_nodes.remove("custom")
-        except NotFoundException:
-            print("Could not read model's nodes.")
-
-        return input_nodes, output_nodes
-
     @staticmethod
     def convert_nodes_to_list(nodes: str) -> List[str]:
         """Convert string node into list of nodes."""
@@ -208,14 +152,26 @@ class Profiler(Parent):
 
     def build_dataloader(self) -> TensorflowDataLoader:
         """Build dataloader based on config."""
-        if not (
-            self.workload.config.evaluation
-            and self.workload.config.evaluation.performance
-            and self.workload.config.evaluation.performance.dataloader
-        ):
-            raise Exception("Could not find performance dataloader.")
+        config_generator = ProfilingConfigGenerator(
+            configuration_path="",
+            data={
+                "framework": "tensorflow",
+                "model": {
+                    "name": "",
+                    "input_graph": self.model_path,
+                    "domain": self.model_domain,
+                    "domain_flavour": self.model_domain_flavour,
+                    "input_nodes": self.input_nodes,
+                    "output_nodes": self.output_nodes,
+                },
+                "batch_size": self.batch_size,
+                "dataloader": self.dataloader_data,
+                "num_threads": self.num_threads,
+            },
+        )
+        dataloader_config = config_generator.generate_dataloader_config()
         dataloader_cfg = DotDict(
-            self.workload.config.evaluation.performance.dataloader.serialize(),
+            dataloader_config.serialize(),
         )
         dataloader = create_dataloader("tensorflow", dataloader_cfg)
         return dataloader

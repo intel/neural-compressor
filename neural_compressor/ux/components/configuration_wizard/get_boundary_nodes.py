@@ -20,7 +20,7 @@ from typing import Any, Dict
 from neural_compressor.ux.components.model.repository import ModelRepository
 from neural_compressor.ux.utils.exceptions import ClientErrorException, NotFoundException
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.utils import check_module
+from neural_compressor.ux.utils.utils import check_module, normalize_framework
 from neural_compressor.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
@@ -28,21 +28,21 @@ mq = MessageQueue()
 
 def get_boundary_nodes(data: Dict[str, Any]) -> None:
     """Get configuration."""
-    request_id = str(data.get("id", ""))
+    request_id = str(data.get("request_id", ""))
     model_path = data.get("model_path", None)
 
     if not (request_id and model_path):
         message = "Missing model path or request id."
         mq.post_error(
             "boundary_nodes_finish",
-            {"message": message, "code": 404, "id": request_id},
+            {"message": message, "code": 404, "request_id": request_id},
         )
         return
 
     try:
         mq.post_success(
             "boundary_nodes_start",
-            {"message": "started", "id": request_id},
+            {"message": "started", "request_id": request_id},
         )
         model_repository = ModelRepository()
         try:
@@ -55,17 +55,18 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
             )
 
         framework = model.get_framework_name()
+        framework_name = normalize_framework(framework)
         try:
-            check_module(framework)
+            check_module(framework_name)
         except ClientErrorException:
             raise ClientErrorException(
                 f"Detected {framework} model. "
-                f"Could not find installed {framework} module. "
-                f"Please install {framework}.",
+                f"Could not find installed {framework_name} module. "
+                f"Please install {framework_name}.",
             )
 
         response_data = {
-            "id": request_id,
+            "request_id": request_id,
             "framework": framework,
             "inputs": model.get_input_nodes(),
             "outputs": model.get_output_nodes(),
@@ -76,7 +77,7 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
     except ClientErrorException as err:
         mq.post_error(
             "boundary_nodes_finish",
-            {"message": str(err), "code": 404, "id": request_id},
+            {"message": str(err), "code": 404, "request_id": request_id},
         )
         return
     log.debug(f"Parsed data is {json.dumps(response_data)}")

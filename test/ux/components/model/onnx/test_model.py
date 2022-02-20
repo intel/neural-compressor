@@ -18,6 +18,7 @@ import unittest
 from unittest.mock import MagicMock, call, patch
 
 from neural_compressor.ux.components.model.onnxrt.model import OnnxrtModel
+from neural_compressor.ux.utils.consts import Frameworks
 
 
 class TestOnnxrtModel(unittest.TestCase):
@@ -25,7 +26,7 @@ class TestOnnxrtModel(unittest.TestCase):
 
     def test_get_framework_name(self) -> None:
         """Test getting correct framework name."""
-        self.assertEqual("onnxrt", OnnxrtModel.get_framework_name())
+        self.assertEqual(Frameworks.ONNX.value, OnnxrtModel.get_framework_name())
 
     def test_supports_correct_path(self) -> None:
         """Test getting correct framework name."""

@@ -32,7 +32,7 @@
               <img class="icon" src="./../../assets/298a-workflow-process-solid.svg">
               Show graph
             </button>
-            <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="25"></mat-spinner>
+            <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="30"></mat-spinner>
           </span>
 
           <div *ngIf="boundaryNodesVisible()">
@@ -108,7 +108,7 @@
                   </mat-option>
                 </mat-select>
               </mat-form-field>
-              <mat-spinner class="spinner" *ngIf="showDomainSpinner" [diameter]="25"></mat-spinner>
+              <mat-spinner class="spinner" *ngIf="showDomainSpinner" [diameter]="30"></mat-spinner>
             </div>
           </mat-card>
         </ng-container>

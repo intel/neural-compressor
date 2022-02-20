@@ -29,12 +29,11 @@ class Metric(JsonSerializer):
     def __init__(self) -> None:
         """Initialize configuration Dataset class."""
         super().__init__()
+        self._accuracy: Optional[float] = None
+        self._latency: Optional[float] = None
+        self._throughput: Optional[float] = None
         self._acc_input_model: Optional[float] = None
         self._acc_optimized_model: Optional[float] = None
-        self._perf_latency_input_model: Optional[float] = None
-        self._perf_latency_optimized_model: Optional[float] = None
-        self._perf_throughput_optimized_model: Optional[float] = None
-        self._perf_throughput_input_model: Optional[float] = None
         self._optimization_time: Optional[float] = None
         self._size_input_model: Optional[float] = None
         self._size_optimized_model: Optional[float] = None
@@ -42,78 +41,41 @@ class Metric(JsonSerializer):
         self._profiling_data: Optional[List[dict]] = None
 
     @property
-    def acc_input_model(self) -> Optional[float]:
-        """Accuracy for float32."""
-        return self._acc_input_model
+    def accuracy(self) -> Optional[float]:
+        """Accuracy for model."""
+        return self._accuracy
 
-    @acc_input_model.setter
-    def acc_input_model(self, value: str) -> None:
-        """Set input model accuracy from value."""
+    @accuracy.setter
+    def accuracy(self, value: str) -> None:
+        """Set model accuracy from value."""
         float_value = float(value)
         if float_value > 1:
             float_value /= 100
-        self._acc_input_model = round(float_value, DIGITS)
+        self._accuracy = round(float_value, DIGITS)
 
     @property
-    def acc_optimized_model(self) -> Optional[float]:
-        """Accuracy for optimized model."""
-        return self._acc_optimized_model
+    def latency(self) -> Optional[float]:
+        """Latency for model."""
+        return self._latency
 
-    @acc_optimized_model.setter
-    def acc_optimized_model(self, value: str) -> None:
-        """Set optimized model accuracy from value."""
-        float_value = float(value)
-        if float_value > 1:
-            float_value /= 100
-        self._acc_optimized_model = round(float_value, DIGITS)
-
-    @property
-    def perf_latency_input_model(self) -> Optional[float]:
-        """Latency for input model."""
-        return self._perf_latency_input_model
-
-    @perf_latency_input_model.setter
-    def perf_latency_input_model(self, value: str) -> None:
-        """Set latency for input model."""
-        self._perf_latency_input_model = round(float(value), DIGITS)
-        if not self.perf_throughput_input_model:
-            self.perf_throughput_input_model = self.calculate_throughput(
-                self._perf_latency_input_model,
+    @latency.setter
+    def latency(self, value: str) -> None:
+        """Set latency for model."""
+        self._latency = round(float(value), DIGITS)
+        if not self.throughput:
+            self.throughput = self.calculate_throughput(
+                self._latency,
             )
 
     @property
-    def perf_latency_optimized_model(self) -> Optional[float]:
-        """Latency for optimized model."""
-        return self._perf_latency_optimized_model
+    def throughput(self) -> Optional[float]:
+        """Throughput for model."""
+        return self._throughput
 
-    @perf_latency_optimized_model.setter
-    def perf_latency_optimized_model(self, value: str) -> None:
-        """Set latency for optimized model."""
-        self._perf_latency_optimized_model = round(float(value), DIGITS)
-        if not self.perf_throughput_optimized_model:
-            self.perf_throughput_optimized_model = self.calculate_throughput(
-                self._perf_latency_optimized_model,
-            )
-
-    @property
-    def perf_throughput_optimized_model(self) -> Optional[float]:
-        """Throughput for optimized model."""
-        return self._perf_throughput_optimized_model
-
-    @perf_throughput_optimized_model.setter
-    def perf_throughput_optimized_model(self, value: str) -> None:
-        """Set throughput from value for optimized model."""
-        self._perf_throughput_optimized_model = round(float(value), DIGITS)
-
-    @property
-    def perf_throughput_input_model(self) -> Optional[float]:
-        """Throughput for input model."""
-        return self._perf_throughput_input_model
-
-    @perf_throughput_input_model.setter
-    def perf_throughput_input_model(self, value: str) -> None:
-        """Set throughput from value for input model."""
-        self._perf_throughput_input_model = round(float(value), DIGITS)
+    @throughput.setter
+    def throughput(self, value: str) -> None:
+        """Set throughput from value for model."""
+        self._throughput = round(float(value), DIGITS)
 
     def insert_data(self, attribute: str, value: str) -> None:
         """Set attribute value."""
@@ -128,6 +90,32 @@ class Metric(JsonSerializer):
         TODO: change 1000 to the batch size when Benchmark is ready
         """
         return 1000 / value
+
+    @property
+    def acc_input_model(self) -> Optional[float]:
+        """Accuracy for input model."""
+        return self._acc_input_model
+
+    @acc_input_model.setter
+    def acc_input_model(self, value: str) -> None:
+        """Set input model accuracy from value."""
+        float_value = float(value)
+        if float_value > 1:
+            float_value /= 100
+        self._acc_input_model = round(float_value, DIGITS)
+
+    @property
+    def acc_optimized_model(self) -> Optional[float]:
+        """Accuracy for input model."""
+        return self._acc_optimized_model
+
+    @acc_optimized_model.setter
+    def acc_optimized_model(self, value: str) -> None:
+        """Set input model accuracy from value."""
+        float_value = float(value)
+        if float_value > 1:
+            float_value /= 100
+        self._acc_optimized_model = round(float_value, DIGITS)
 
     @property
     def size_input_model(self) -> Optional[float]:

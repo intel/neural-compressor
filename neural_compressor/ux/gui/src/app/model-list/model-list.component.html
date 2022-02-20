@@ -15,7 +15,7 @@
   <br>
   <br>
   <br>
-  <table *ngIf="modelList && modelList[0]" class="model-list rounded">
+  <table *ngIf="modelList && modelList[0]" class="rounded">
     <tbody>
       <tr *ngIf="detailedView">
         <td class="header small-column" rowspan="2">RERUN</td>
@@ -69,7 +69,7 @@
             src="./../../assets/009a-close-solid.svg">
           <img *ngIf="model['status'] === null" class="icon-button" src="./../../assets/005a-help-solid-gray.svg">
           <mat-spinner style="margin:0 auto;" mode="indeterminate" matTooltip="Configuration is running"
-            *ngIf="model['status'] === 'wip'" [diameter]="25">
+            *ngIf="model['status'] === 'wip'" [diameter]="30">
           </mat-spinner>
         </td>
         <td class="cell center icon-button" [matTooltip]="'Show details'">

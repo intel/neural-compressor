@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, Inject, Input, OnInit, Optional, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject } from 'rxjs';
@@ -24,12 +24,14 @@ import { ModelService } from '../services/model.service';
 })
 export class GraphComponent implements OnInit {
 
+  @Input() modelPath: string;
+
   edges: Edge[] = [];
   nodes: Node[] = [];
-  viewSize = [1000, 1000];
   nodeDetails: Node;
   expandedNodesArray = [];
   showSpinner = false;
+  miniMapMaxHeight = window.innerHeight;
 
   layoutSettings = { orientation: 'TB' };
   panToNodeObservable: Subject<string> = new Subject<string>();
@@ -40,30 +42,31 @@ export class GraphComponent implements OnInit {
   @ViewChild('sidenav') sidenav: MatSidenav;
 
   customColor = [
-    '#004A86',
-    '#0095CA',
-    '#525252',
-    '#41728A',
-    '#653171',
-    '#708541',
-    '#B24501',
-    '#000F8A',
-    '#C81326',
-    '#EDB200',
     '#005B85',
-    '#183544',
-    '#515A3D',
-    '#C98F00',
+    '#0095CA',
+    '#00C7FD',
+    '#047271',
+    '#07b3b0',
+    '#9E8A87',
+    '#333471',
+    '#5153B0',
+    '#ED6A5E ',
+    '#9D79BC',
+    '#A14DA0',
   ];
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data,
+    @Optional() @Inject(MAT_DIALOG_DATA) public data,
     private modelService: ModelService
   ) { }
 
   ngOnInit(): void {
-    this.viewSize = this.data.viewSize;
-    this.updateGraph(this.data['graph']);
+    this.showSpinner = true;
+    this.modelPath = this.modelPath ?? this.data.modelPath;
+    this.modelService.getModelGraph(this.modelPath)
+      .subscribe(response => {
+        this.updateGraph(response);
+      });
   }
 
   center() {
@@ -84,7 +87,7 @@ export class GraphComponent implements OnInit {
         attributes: node.attributes,
         properties: node.properties,
         node_type: node.node_type,
-        color: this.customColor[node.label.length % 14]
+        color: this.customColor[node.label.length % this.customColor.length]
       });
     });
     graph.edges.forEach(edge => {
@@ -113,7 +116,7 @@ export class GraphComponent implements OnInit {
     } else {
       this.expandedNodesArray.push(id);
     }
-    this.modelService.getModelGraph(this.data.modelPath, this.expandedNodesArray)
+    this.modelService.getModelGraph(this.modelPath, this.expandedNodesArray)
       .subscribe(graph => this.updateGraph(graph));
   }
 

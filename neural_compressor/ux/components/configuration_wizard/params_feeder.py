@@ -28,6 +28,7 @@ from neural_compressor.ux.utils.utils import (
     load_model_config,
     load_precisions_config,
     load_transforms_config,
+    normalize_framework,
 )
 
 
@@ -198,6 +199,7 @@ class Feeder:
         if framework is None:
             raise ClientErrorException("Framework not set.")
 
+        framework = normalize_framework(framework)
         if framework == "pytorch":
             check_module("ignite")
         else:

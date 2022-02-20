@@ -325,7 +325,6 @@ class TestConfig(unittest.TestCase):
         """Test Config serializer."""
         config = Config(self.predefined_config)
         result = config.serialize()
-        print(result)
         self.maxDiff = None
         self.assertDictEqual(
             result,
@@ -1111,7 +1110,8 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(expected.serialize(), config.serialize())
 
-    def test_dump(self) -> None:
+    @patch("os.makedirs")
+    def test_dump(self, mocked_makedirs: MagicMock) -> None:
         """Test dump."""
         config = Config(self.predefined_config)
 
@@ -1127,6 +1127,7 @@ class TestConfig(unittest.TestCase):
 
             mocked_open.assert_called_once_with("path to yaml file", "w")
             mocked_open().write.assert_called_once_with(expected_yaml)
+            mocked_makedirs.assert_called_once()
 
 
 if __name__ == "__main__":

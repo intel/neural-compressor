@@ -20,6 +20,9 @@ from typing import Any, List, Optional
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.model.domain import Domain
 from neural_compressor.ux.components.model.shape import Shape
+from neural_compressor.ux.utils.consts import DomainFlavours, Domains
+from neural_compressor.ux.utils.logger import log
+from neural_compressor.ux.utils.utils import get_size
 
 
 class Model(ABC):
@@ -29,6 +32,8 @@ class Model(ABC):
         """Initialize object."""
         self.ensure_supported_path(path)
         self.path = path
+        self.size = get_size(self.path)
+        self.framework = None
 
     def get_input_nodes(self) -> Optional[List[Any]]:
         """Get model input nodes."""
@@ -69,13 +74,19 @@ class Model(ABC):
             return not missing
 
         if has_all_name_parts(["bboxes", "scores", "classes", "ssd"]):
-            return Domain(domain="object_detection", domain_flavour="ssd")
+            return Domain(
+                domain=Domains.OBJECT_DETECTION.value,
+                domain_flavour=DomainFlavours.SSD.value,
+            )
         if has_all_name_parts(["boxes", "yolo"]):
-            return Domain(domain="object_detection", domain_flavour="yolo")
+            return Domain(
+                domain=Domains.OBJECT_DETECTION.value,
+                domain_flavour=DomainFlavours.YOLO.value,
+            )
         if has_all_name_parts(["boxes", "scores", "classes"]):
-            return Domain(domain="object_detection")
+            return Domain(domain=Domains.OBJECT_DETECTION.value)
         if has_all_name_parts(["resnet"]):
-            return Domain(domain="image_recognition")
+            return Domain(domain=Domains.IMAGE_RECOGNITION.value)
         return Domain()
 
     @property
@@ -101,6 +112,16 @@ class Model(ABC):
     @property
     def supports_profiling(self) -> bool:
         """Check if profiling is supported for the model."""
+        return False
+
+    @property
+    def supports_graph(self) -> bool:
+        """Check if it is possible to display model's graph."""
+        try:
+            self.get_model_graph()
+            return True
+        except Exception:
+            log.debug("Could not load graph of model.")
         return False
 
     @abstractmethod

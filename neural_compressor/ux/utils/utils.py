@@ -21,10 +21,11 @@ import socket
 from functools import wraps
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from neural_compressor.experimental.metric.metric import registry_metrics
-from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, Frameworks
+from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
+from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, Domains, Frameworks
 from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
@@ -32,11 +33,12 @@ from neural_compressor.ux.utils.exceptions import (
 )
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.proc import Proc
+from neural_compressor.ux.utils.workload.dataloader import Transform
 from neural_compressor.version import __version__ as nc_version
 
 dataset_locations = {
-    "tensorflow": {
-        "image_recognition": {
+    Frameworks.TF: {
+        Domains.IMAGE_RECOGNITION: {
             "name": "Imagenet",
             "path": "examples/test/dataset/imagenet",
         },
@@ -65,7 +67,7 @@ def is_hidden(path: str) -> bool:
 @deprecated
 def get_dataset_path(framework: str, domain: str) -> str:
     """Get dataset path for specified framework and domain."""
-    dataset = dataset_locations.get(framework, {}).get(domain, {})
+    dataset = dataset_locations.get(Frameworks(framework), {}).get(Domains(domain), {})
     if dataset is None:
         raise Exception("Could not found dataset location.")
     if dataset.get("path") is None:
@@ -105,23 +107,46 @@ def is_dataset_file(path: str) -> bool:
 
 def get_predefined_config_path(framework: str, domain: str, domain_flavour: str = "") -> str:
     """Get predefined config for specified model domain."""
+    mapper = NamesMapper(MappingDirection.ToCore)
+    mapped_framework = mapper.map_name("framework", framework)
+    mapped_domain = mapper.map_name("domain", domain)
+    mapped_domain_flavour = mapper.map_name("domain_flavour", domain_flavour)
+
     possible_filenames = [
-        f"{domain}_{domain_flavour}.yaml",
-        f"{domain}.yaml",
+        f"{mapped_domain}_{mapped_domain_flavour}.yaml",
+        f"{mapped_domain}.yaml",
     ]
     for filename in possible_filenames:
         config_path = os.path.join(
             os.path.dirname(__file__),
             "configs",
             "predefined_configs",
-            f"{framework}",
+            f"{mapped_framework}",
             filename,
         )
         if config_path and os.path.isfile(config_path):
             return config_path
-    raise Exception(
+    raise NotFoundException(
         f"Could not found predefined config for {framework} {domain} {domain_flavour} model.",
     )
+
+
+def normalize_domain(domain: str) -> str:
+    """Normalize domain strings by replacing spaces to underscores and lowering case."""
+    if domain == Domains.NLP.value:
+        return "nlp"
+    return domain.lower().replace(" ", "_")
+
+
+def normalize_framework(framework: str) -> str:
+    """Normalize framework strings by lowering case."""
+    return framework.lower()
+
+
+def normalize_string(string_to_normalize: str) -> str:
+    """Normalize string for usage in path."""
+    normalized = string_to_normalize.lower().replace(" ", "_")
+    return re.escape(normalized)
 
 
 def get_model_zoo_config_path(
@@ -213,7 +238,7 @@ def check_module(module_name: str) -> None:
     """Check if module exists. Raise exception when not found."""
     if module_name == "onnxrt":
         module_name = "onnxruntime"
-    module = find_spec(module_name)
+    module = find_spec(module_name.lower())
     if module is None:
         raise ClientErrorException(f"Could not find {module_name} module.")
 
@@ -313,16 +338,6 @@ def load_precisions_config() -> dict:
     return _load_json_as_dict(json_path)
 
 
-def load_help_nc_params(parameter: str) -> Dict[str, Any]:
-    """Load help info from json for metrics, objectives and strategies."""
-    json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
-        f"{parameter}.json",
-    )
-    return _load_json_as_dict(json_path)
-
-
 def get_metrics_dict() -> dict:
     """Get metrics list from Neural Compressor and add help messages."""
     help_dict = load_help_nc_params("metrics")
@@ -393,6 +408,16 @@ def _parse_help_in_dict(data: dict) -> list:
                 item["label"] = label
             parsed_list.append(item)
     return parsed_list
+
+
+def load_help_nc_params(parameter: str) -> Dict[str, Any]:
+    """Load help info from json for metrics, objectives and strategies."""
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        f"{parameter}.json",
+    )
+    return _load_json_as_dict(json_path)
 
 
 def replace_with_values(param: dict, file_path: str) -> None:
@@ -505,6 +530,61 @@ def release_tag() -> str:
 
     release_version = matches.groupdict().get("release")
     return f"v{release_version}"
+
+
+def get_shape_from_transforms(
+    transforms: List[Transform],
+    shape_elements_order: List[str],
+) -> list:
+    """Detect dataset sizes based on configured transforms."""
+    shapes = {
+        "channels": 3,
+        "height": None,
+        "width": None,
+    }
+
+    for transform in transforms:
+        name = transform.name
+        parameters = transform.parameters
+        if name in [
+            "Resize",
+            "CenterCrop",
+            "RandomResizedCrop",
+            "RandomCrop",
+            "CropResize",
+        ]:
+            shapes["height"], shapes["width"] = get_height_width_from_size(parameters.get("size"))
+        elif "Transpose" == name:
+            axes = parameters.get("perm")
+            if not axes:
+                raise ValueError("Unknown value of 'perm' argument in Transpose")
+            shape_elements_order = [shape_elements_order[idx] for idx in axes]
+        elif "CropToBoundingBox" == name:
+            shapes["height"] = parameters.get("target_height")
+            shapes["width"] = parameters.get("target_width")
+        elif name in [
+            "ResizeCropImagenet",
+            "BilinearImagenet",
+        ]:
+            shapes["height"] = parameters.get("height")
+            shapes["width"] = parameters.get("width")
+
+    if not shapes["height"] or not shapes["width"]:
+        raise NotFoundException("Unable to detect shape for Dummy dataset")
+
+    return [[shapes.get(dimension) for dimension in shape_elements_order]]
+
+
+def get_height_width_from_size(size: Any) -> Tuple[Optional[int], Optional[int]]:
+    """Detect dataset sizes based on size param common in some Transforms."""
+    if isinstance(size, int):
+        return size, size
+    elif isinstance(size, list):
+        if len(size) == 1:
+            return size[0], size[0]
+        elif len(size) == 2:
+            return size[0], size[1]
+    return None, None
 
 
 def parse_to_string_list(values: Union[None, str, List[str]]) -> List[str]:

@@ -21,66 +21,51 @@
   padding-top: 5px;
   padding-bottom: 5px;
   float: right;
-  margin: 20px;
+  margin-top: 20px;
   font-size: 150%;
   background-color: $accent-yellow;
   color: black;
 }
 
-.inline-block {
-  display: inline-block;
-  width: 20%;
-  height: 40vh !important;
-  margin: 3%;
-}
-
-.inline-block:hover {
-  background-color: $pale-blue;
-}
-
-.img-container {
-  height: 50%;
-  margin: auto;
-  text-align: center;
-  margin-top: 10%;
-  margin-bottom: 20%;
-}
-
 .big-icon {
-  max-height: 100%;
-  margin: auto;
+  max-height: 200px;
 }
 
 .intro {
   padding: 0 40px 0px 40px;
-  font-size: 150%;
 }
 
-.cards {
-  min-height: 80vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
+.margin-top {
+  position: relative;
+  top: 50px;
+  padding-left: 20px;
 }
 
-.grid>div {
-  display: flex;
-  flex-basis: calc(33.33% - 14px);
-  justify-content: center;
-  flex-direction: column;
+.margin-left {
+  left: 3px;
 }
 
-.grid>div:first-child {
+.big-button {
+  background-color: white;
+  margin: auto;
+  margin-top: 100px;
   display: flex;
-  margin-bottom: 0px;
-  flex-basis: calc(100% - 22px);
-  justify-content: center;
-  flex-direction: column;
+  cursor: pointer;
+  width: 50%;
+  padding: 20px;
 }
 
-.grid>div>div {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
+.big-button:hover {
+  background-color: $lighter-blue;
+}
+
+.big-number {
+  font-family: IntelOneBd;
+  font-size: 200%;
+  color: $blue;
+  margin: 10px;
+}
+
+.steps {
+  margin-top: 50px;
 }
