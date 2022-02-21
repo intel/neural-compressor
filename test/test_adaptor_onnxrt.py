@@ -240,13 +240,11 @@ def build_ir3_model():
     weight = helper.make_tensor_value_info('X1_weight', TensorProto.FLOAT, [1000, 2048])
 
     X1_weight = generate_input_initializer([1000, 2048], np.float32, 'X1_weight')
-    X1_bias = generate_input_initializer([1000], np.float32, 'X1_bias')
     kwargs = {'alpha':1.0, 'beta':1.0, 'transA':0, 'transB':1}
     gemm = helper.make_node('Gemm', ['input0', 'X1_weight'], ['output'], name='gemm', **kwargs)
 
     graph = helper.make_graph([gemm], 'test_graph_6', [input0], [output])
     graph.initializer.add().CopyFrom(X1_weight)
-    graph.initializer.add().CopyFrom(X1_bias)  
     graph.input.extend([weight])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})

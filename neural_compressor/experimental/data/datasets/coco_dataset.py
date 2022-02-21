@@ -156,7 +156,6 @@ class COCORaw(Dataset):
         import os
         import numpy as np
         from pycocotools.coco import COCO
-        from neural_compressor.experimental.metric.coco_label_map import category_map
         self.image_list = []
         self.transform = transform
         img_path = os.path.join(root, img_dir)
@@ -183,7 +182,7 @@ class COCORaw(Dataset):
                 bbox = [bbox[0]/float(pic_width), bbox[1]/float(pic_height),\
                     bbox[2]/float(pic_width), bbox[3]/float(pic_height)]
                 bboxes.append([bbox[1], bbox[0], bbox[1]+bbox[3], bbox[0]+bbox[2]])
-                labels.append(category_map[ann['category_id']].encode('utf8'))
+                labels.append(coco.cats[ann['category_id']]['name'].encode('utf8'))
             img_file = os.path.join(img_path, img_detail['file_name'])
             if not os.path.exists(img_file) or len(bboxes) == 0:
                 continue
@@ -228,7 +227,6 @@ class COCONpy(Dataset):
         import os
         import numpy as np
         from pycocotools.coco import COCO
-        from neural_compressor.experimental.metric.coco_label_map import category_map
         self.image_list = []
         npy_path = os.path.join(root, npy_dir)
         anno_path = os.path.join(root, anno_dir)
