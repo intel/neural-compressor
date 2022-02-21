@@ -157,7 +157,7 @@ if __name__ == '__main__':
         install_requires=[
             'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
             'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
-            'prettytable', 'cryptography', 'Cython'],
+            'prettytable', 'cryptography', 'Cython', 'sqlalchemy==1.4.27'],
         scripts=['neural_compressor/ux/bin/inc_bench', 'engine/bin/inferencer'],
         python_requires='>=3.6.0',
         classifiers=[
