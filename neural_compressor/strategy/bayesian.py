@@ -184,7 +184,9 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
         # See if success
         if not res.success:
             continue
-
+        
+        if isinstance(res.fun, float):
+            res.fun = np.array([res.fun])
         # Store it if better than previous minimum(maximum).
         if max_acq is None or -res.fun[0] >= max_acq:
             x_max = res.x
