@@ -61,6 +61,9 @@ terms are listed below.
 
    onnx/models
 
+   sparsednn
+
+   keras-example-resnetv2
 
 
                                 Apache License
@@ -371,14 +374,17 @@ terms are listed below.
 	Copyright (c) 2013 Rafal Zajac <rzajac@gmail.com>
 	Copyright (c) 2018 Piotr Dziwinski <piotrdz@gmail.com>
 
-	example-pytorch-cifar10
+	example-pytorch-WideResNet-cifar10
 	Copyright (c) 2019 xternalz
 
-	example-pytorch-cifar100
+	example-pytorch-plain_cnn-cifar100
 	Copyright (c) 2019 Iman Mirzadeh
 
 	haq/model/mobilenetv2
 	Copyright (c) 2019 MIT HAN Lab
+
+    mnist
+    Copyright (c) Microsoft Corporation. All rights reserved.
 
     The MIT License (MIT)
 
