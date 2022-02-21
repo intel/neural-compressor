@@ -41,6 +41,11 @@ def initialize_graph(model_details, args, od_graph_def):
                 od_graph_def.ParseFromString(serialized_graph)
                 od_graph_def = delete_assign(od_graph_def)
 
+        elif args.use_nc and not od_graph_def.node:
+            from neural_compressor.experimental import common
+            model = common.Model(os.path.join(os.getcwd(), model_details['model_dir']))
+            od_graph_def = model.graph_def
+
         # optimize for inference
         if not args.disable_optimize:
             # optimize graph for inference
@@ -253,7 +258,6 @@ if __name__ == "__main__":
 
     # benchmark with input/output
     elif args.model_name:
-        find_graph_def, _ = get_input_output(args.model_path, args)
         # handle the case that the original input is deleted
         if args.benchmark and args.model_name == 'deepspeech':
             args.model_name = 'deepspeech-tuned'
