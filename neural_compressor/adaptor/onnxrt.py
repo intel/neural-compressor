@@ -736,7 +736,7 @@ class ONNXRTQuery(QueryBackendCapability):
                 raise ValueError("Please check if the format of {} follows Neural Compressor yaml schema.".
                                  format(self.cfg))
 
-    def _get_specified_version_cfg(self, data):
+    def _get_specified_version_cfg(self, data): # pragma: no cover
         """Get the configuration for the current runtime.
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
