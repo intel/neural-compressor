@@ -1,7 +1,5 @@
 <div class="container">
-  <h1 joyrideStep="intro" [stepContent]="intro">{{ project['name'] ?? 'Project name' }}
-    <img class="help-button right pointer" matTooltip="Help" (click)="onClick()"
-      src="./../../assets/383-general-support.svg">
+  <h1>{{ project['name'] ?? 'Project name' }}
   </h1>
 
   <ng-template #intro>
@@ -12,7 +10,7 @@
     <mat-tab>
       <ng-template mat-tab-label>
         <img class="tab-icon" src="./../../assets/298a-workflow-process-solid.svg">
-        <div joyrideStep="addOptimizationTour" [stepContent]="addOptimizationTour">
+        <div>
           Optimizations
         </div>
       </ng-template>
@@ -25,7 +23,7 @@
     <mat-tab>
       <ng-template mat-tab-label>
         <img class="tab-icon" src="./../../assets/174-gauge.svg">
-        <div joyrideStep="benchmarkTour" [stepContent]="benchmarkTour">Benchmarks</div>
+        <div>Benchmarks</div>
       </ng-template>
       <ng-template #benchmarkTour>
         Add new benchmark to check out the performance and accuracy of initial and optimized model.
@@ -40,7 +38,7 @@
             src="./../../assets/043-organize.svg">
           <img *ngIf="!project['input_model']['supports_profiling']" class="tab-icon"
             src="./../../assets/043-organize-disabled.svg">
-          <div joyrideStep="profilingTour" [stepContent]="profilingTour"
+          <div
             [matTooltip]="!project['input_model']['supports_profiling'] ? 'Profiling is not available for this model.' : null">
             Profiling</div>
         </ng-template>
@@ -55,7 +53,7 @@
     <mat-tab>
       <ng-template mat-tab-label>
         <img class="tab-icon" src="./../../assets/234a-database-solid.svg">
-        <div joyrideStep="datasetTour" [stepContent]="datasetTour">Datasets</div>
+        <div>Datasets</div>
       </ng-template>
       <ng-template #datasetTour>
         Add new datasets to experiment with the model.
@@ -70,7 +68,7 @@
           <img *ngIf="project['input_model']['supports_graph']" class="tab-icon" src="./../../assets/307-org-chart.svg">
           <img *ngIf="!project['input_model']['supports_graph']" class="tab-icon"
             src="./../../assets/307-org-chart-disabled.svg">
-          <div joyrideStep="graphTour" [stepContent]="graphTour"
+          <div
             [matTooltip]="!project['input_model']['supports_graph'] ? 'Graph is not available for this model.' : null">
             Graph</div>
         </ng-template>
@@ -91,7 +89,7 @@
         Project info
       </ng-template>
       <mat-card>
-        <div class="item item-row1" joyrideStep="secondStep">
+        <div class="item item-row1">
           <h2>Project details</h2>
           <table class="rounded">
             <tr>

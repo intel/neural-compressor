@@ -13,7 +13,6 @@
 // limitations under the License.
 import { Component } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { JoyrideService } from 'ngx-joyride';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -28,7 +27,6 @@ export class ProjectComponent {
   constructor(
     private modelService: ModelService,
     public activatedRoute: ActivatedRoute,
-    private readonly joyrideService: JoyrideService,
     private router: Router) {
     router.events.subscribe((val) => {
       if (val instanceof NavigationEnd) {
@@ -36,15 +34,6 @@ export class ProjectComponent {
         this.modelService.projectChanged$.next(true);
       }
     });
-  }
-
-  onClick() {
-    this.joyrideService.startTour(
-      {
-        steps: ['intro', 'addOptimizationTour', 'datasetTour', 'benchmarkTour', 'profilingTour', 'graphTour'],
-        themeColor: '#005B85',
-      }
-    );
   }
 
   getProject() {

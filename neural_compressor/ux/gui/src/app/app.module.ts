@@ -67,7 +67,6 @@ import { ProjectFormComponent } from './project-form/project-form.component';
 import { BenchmarkFormComponent } from './benchmark-form/benchmark-form.component';
 import { OptimizationFormComponent } from './optimization-form/optimization-form.component';
 import { DatasetFormComponent } from './dataset-form/dataset-form.component';
-import { JoyrideModule } from 'ngx-joyride';
 import { ProfilingFormComponent } from './profiling-form/profiling-form.component';
 
 @NgModule({
@@ -104,7 +103,6 @@ import { ProfilingFormComponent } from './profiling-form/profiling-form.componen
     FlexLayoutModule,
     FormsModule,
     HttpClientModule,
-    JoyrideModule.forRoot(),
     MatExpansionModule,
     MatButtonModule,
     MatButtonToggleModule,
