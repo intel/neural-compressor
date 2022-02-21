@@ -43,6 +43,7 @@ from transformers import (
     set_seed,
 )
 
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 logger = logging.getLogger(__name__)
 

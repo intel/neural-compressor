@@ -51,6 +51,7 @@ from transformers import (
 # from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
 
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 # check_min_version("4.8.0.dev0")
