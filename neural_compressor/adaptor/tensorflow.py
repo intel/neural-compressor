@@ -1146,7 +1146,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         self._dump_model_op_stats(converted_model.graph_def)
 
         return converted_model
-@singleton
+
 class TensorflowQuery(QueryBackendCapability):
 
     def __init__(self, local_config_file=None):
@@ -1161,7 +1161,7 @@ class TensorflowQuery(QueryBackendCapability):
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.
         If there's no matched configuration in the input yaml, we'll
-        use the `default` field of yaml.
+        use the configuration of the nearest framework version field of yaml.
 
         Args:
             data (Yaml content): input yaml file.
@@ -1169,15 +1169,37 @@ class TensorflowQuery(QueryBackendCapability):
         Returns:
             [dictionary]: the content for specific version.
         """
-        default_config = None
+        config = None
+
+        fallback_list = []
         for sub_data in data:
+            if 'default' in sub_data['version']['name']:
+                assert config == None, "Only one default config " \
+                       "is allowed in framework yaml file."
+                config = sub_data
+
             if self.version in sub_data['version']['name']:
                 return sub_data
+            else:
+                sorted_list = copy.deepcopy(sub_data['version']['name'])
+                if isinstance(sorted_list, list):
+                    sorted_list.sort()
+                else:
+                    sorted_list = list(sorted_list)
+                sorted_list.remove('default') if 'default' in sorted_list else None
+                import bisect
+                position = bisect.bisect(sorted_list, self.version)
+                if position != 0:
+                    fallback_list.append([sorted_list[position - 1], sub_data])
 
-            if 'default' in sub_data['version']['name']:
-                default_config = sub_data
+        assert config != None, "The default config in framework yaml must exist."
+        nearest_version = str(0)
+        for fallback in fallback_list:
+            if fallback[0] > nearest_version:
+                nearest_version = fallback[0]
+                config = fallback[1]
 
-        return default_config
+        return config
 
     def _one_shot_query(self):
         with open(self.cfg) as f:

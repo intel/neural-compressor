@@ -48,6 +48,30 @@ def build_fake_yaml_on_grappler():
         yaml.dump(y, f)
     f.close()
 
+def build_fake_framework_yaml():
+    fake_yaml = '''
+---
+-
+  version:
+    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.7.0']  
+
+  ops:
+    int8: ['Conv2D', 'MatMul']
+    uint8: ['MatMul']
+
+-
+  version:
+    name: ['default']  
+
+  ops:
+    int8: ['BatchMatMul', 'BatchMatMulV2']
+    uint8: ['Conv2D']
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_framework.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()  
+
 class TestTFQueryYaml(unittest.TestCase):
 
     @classmethod
@@ -138,6 +162,27 @@ class TestTFQueryYaml(unittest.TestCase):
             #     self.assertEqual(False, disable_arithmetic)
             # else:
             self.assertEqual(True, disable_arithmetic)
+
+class TestFrameworkQueryYaml(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        build_fake_framework_yaml()
+        self.tf_yaml_path = os.path.join(os.getcwd() + "/fake_framework.yaml")
+
+        with open(self.tf_yaml_path) as f:
+            self.content = yaml.safe_load(f)
+        self.query_handler = TensorflowQuery(local_config_file=self.tf_yaml_path)
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fake_framework.yaml')
+
+    def test_version_fallback(self):
+        if self.query_handler.version >= "2.1.0":
+            self.assertEqual(True, 'Conv2D' in self.query_handler.get_op_types()['int8'])
+        else:
+            self.assertEqual(True, 'BatchMatMul' in self.query_handler.get_op_types()['int8'])
 
 if __name__ == '__main__':
     unittest.main()
