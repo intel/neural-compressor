@@ -11,6 +11,7 @@ import os
 import unittest
 import shutil
 
+@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
 class TestDistributedTFDataDataloader(unittest.TestCase):
     def setUp(self):
         tf.compat.v1.enable_eager_execution()
@@ -155,6 +156,7 @@ class TestDistributedTFDataDataloader(unittest.TestCase):
             self.assertIsInstance(x, np.ndarray)
             self.count += 1
 
+@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
 class TestDefaultDataLoaderSequentialSampler(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
@@ -347,6 +349,7 @@ class TestDefaultDataLoaderSequentialSampler(unittest.TestCase):
             self.assertIsInstance(x, np.ndarray)
             self.count += 1
 
+@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
 class TestDefaultDataLoaderIterableSampler(unittest.TestCase):
     class iter_dataset(object):
         def __iter__(self):
@@ -486,6 +489,7 @@ class TestDefaultDataLoaderIterableSampler(unittest.TestCase):
                 break
             self.count += 1
 
+@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
 class TestTensorflowBertDataLoader(unittest.TestCase):
     label = [{
         "paragraphs0":[

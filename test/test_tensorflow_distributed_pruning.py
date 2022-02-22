@@ -290,7 +290,7 @@ class EvalDataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 class TestTensorflowPruning(unittest.TestCase):
-    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0' or tensorflow.version.VERSION >= '2.8.0', "keras model need tensorflow version >= 2.3.0,and horovod not support version >= 2.8.0")
     def test_tensorflow_pruning(self):
         from neural_compressor.experimental import Pruning, common
         from neural_compressor.utils import logger
