@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import unittest
 import re
+import tensorflow
 
 def build_fake_ut():
     fake_ut = """
@@ -71,7 +72,6 @@ class TestMetrics(unittest.TestCase):
         miou.update(preds, labels)
         self.assertAlmostEqual(miou.result(), 0.58333333)
 
-
     def test_onnxrt_GLUE(self):
         metrics = METRICS('onnxrt_qlinearops')
         glue = metrics['GLUE']('mrpc')
@@ -119,7 +119,6 @@ class TestMetrics(unittest.TestCase):
         F1.update(preds, labels)
         self.assertEqual(F1.result(), 0.9)
 
-
     def test_squad_evaluate(self):
         evaluate.hvd = hvd
         hvd.init()
@@ -142,7 +141,6 @@ class TestMetrics(unittest.TestCase):
         f1_squad = evaluate_squad(dataset,predictions)
         self.assertEqual(f1_squad['f1'], 100.)
         self.assertEqual(f1_squad['exact_match'], 100.)
-
 
     def test_pytorch_F1(self):
         metrics = METRICS('pytorch')
@@ -394,7 +392,7 @@ class TestMetrics(unittest.TestCase):
             np.array([[0.9267181 , 0.8510787]]),
             np.array([[ 1., 67., 51., 79., 47.]])
         ]
-        self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)        
+        self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)
 
     def test_tensorflow_VOCmAP(self):
         metrics = METRICS('tensorflow')
@@ -963,6 +961,7 @@ class TestDistributed(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors = True)
         shutil.rmtree('runs', ignore_errors = True)
 
+    @unittest.skipIf(tensorflow.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
     def test_distributed(self):
         distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
         p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,
