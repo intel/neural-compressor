@@ -241,6 +241,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             self.assertEqual(found_quantized_matmul, False)
 
     @disable_random()
+    @unittest.skipIf(float(tf.__version__[:3]) > 2.7, "only tf lower than 2.8 enable dummy biasadd")
     def test_matmul_with_dummy_biasadd(self):
         g = tf.Graph()
         with g.as_default():
@@ -272,6 +273,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
+    @unittest.skipIf(float(tf.__version__[:3]) > 2.7, "only tf lower than 2.8 enable dummy biasadd")
     def test_matmul_with_nan(self):
         g = tf.Graph()
         with g.as_default():
