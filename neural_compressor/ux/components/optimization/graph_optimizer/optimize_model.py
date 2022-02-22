@@ -142,6 +142,15 @@ def set_eager_execution(input_graph: str) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
+
+    input_nodes = args.input_nodes
+    if isinstance(input_nodes, str):
+        input_nodes = input_nodes.split(",")
+
+    output_nodes = args.output_nodes
+    if isinstance(output_nodes, str):
+        output_nodes = output_nodes.split(",")
+
     set_eager_execution(args.input_graph)
     if args.config is None:
         optimize_graph(

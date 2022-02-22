@@ -40,6 +40,13 @@ class GraphOptimization(Optimization):
     ) -> None:
         """Initialize Optimization class."""
         super().__init__(optimization_data, project_data, dataset_data, template_path)
+        self.joined_input_nodes: str = ""
+        self.joined_output_nodes: str = ""
+        if isinstance(self.input_nodes, list):
+            self.joined_input_nodes = ",".join(self.input_nodes)
+        if isinstance(self.output_nodes, list):
+            self.joined_output_nodes = ",".join(self.output_nodes)
+
         if not self.tune:
             self.config_path = None
 
@@ -90,8 +97,8 @@ class GraphOptimization(Optimization):
         else:
             parameters.extend(
                 [
-                    f"--input-nodes={self.input_nodes}",
-                    f"--output-nodes={self.output_nodes}",
+                    f"--input-nodes={self.joined_input_nodes}",
+                    f"--output-nodes={self.joined_output_nodes}",
                     f"--precisions={self.optimization.output_precision}",
                 ],
             )
