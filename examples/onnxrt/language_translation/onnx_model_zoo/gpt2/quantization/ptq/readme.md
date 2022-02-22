@@ -5,7 +5,7 @@ This example load a language translation model and confirm its accuracy and spee
 
 ### Environment
 onnx: 1.7.0
-onnxruntime: 1.7.0
+onnxruntime: 1.8.0
 transformers: 3.2.0
 
 ### Prepare dataset
