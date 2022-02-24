@@ -33,7 +33,7 @@ Click the image to enlarge it.
 #### Supported Frameworks
 
 Supported deep learning frameworks are:
-* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP3](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3), [2.5.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.5.0), [2.7.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.5.0), [Official TensorFlow 2.6.2](https://github.com/tensorflow/tensorflow/tree/v2.6.2), [Official TensorFlow 2.7.0](https://github.com/tensorflow/tensorflow/tree/v2.7.0)
+* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP3](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3), [2.7.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.7.0), [2.8.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0), [Official TensorFlow 2.6.2](https://github.com/tensorflow/tensorflow/tree/v2.6.2), [Official TensorFlow 2.7.0](https://github.com/tensorflow/tensorflow/tree/v2.7.0)
 
 >  **Note**: Intel Optimized TensorFlow 2.5.0 requires to set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 before running Neural Compressor quantization or deploying the quantized model.
 
@@ -41,7 +41,7 @@ Supported deep learning frameworks are:
 
 * [PyTorch\*](https://pytorch.org/), including [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.10.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
-* [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.7.0](https://github.com/microsoft/onnxruntime/tree/v1.7.0), [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0), [1.9.0](https://github.com/microsoft/onnxruntime/tree/v1.9.0)
+* [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0), [1.9.0](https://github.com/microsoft/onnxruntime/tree/v1.9.0), [1.10.0](https://github.com/microsoft/onnxruntime/tree/v1.10.0)
 * [Execution Engine](./docs/engine.md), a reference bare metal solution(./engine) for domain-specific NLP models.
 
 ## Installation
@@ -59,7 +59,7 @@ library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.6 or 3.7 or 3.8 or 3.9
+- Python version: 3.7 or 3.8 or 3.9
 
 - C++ compiler: 7.2.1 or above
 
@@ -125,14 +125,14 @@ for post-installation instructions.
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.6 or 3.7 or 3.8 or 3.9
+- Python version: 3.7 or 3.8 or 3.9
 
 - Download and install [anaconda](https://anaconda.org/).
 
 - Create a virtual environment named nc in anaconda:
 
     ```shell
-    # Here we install python 3.7 for instance. You can also choose python 3.6, 3.8, or 3.9.
+    # Here we install python 3.7 for instance. You can also choose python 3.8 or 3.9.
     conda create -n nc python=3.7
     conda activate nc
     ```
@@ -238,15 +238,15 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
   <tr>
     <td class="tg-nrix" rowspan="14">Cascade Lake<br><br>Cooper Lake<br><br>Skylake<br><br>Ice Lake</td>
     <td class="tg-nrix" rowspan="14">CentOS 8.3<br><br>Ubuntu 18.04</td>
-    <td class="tg-nrix" rowspan="14">3.6<br><br>3.7<br><br>3.8<br><br>3.9</td>
+    <td class="tg-nrix" rowspan="14">3.7<br><br>3.8<br><br>3.9</td>
     <td class="tg-cly1" rowspan="4">TensorFlow</td>
+    <td class="tg-7zrl">2.8.0</td>
+  </tr>
+  <tr>
     <td class="tg-7zrl">2.7.0</td>
   </tr>
   <tr>
     <td class="tg-7zrl">2.6.2</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">2.5.0</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.15.0UP3</td>
@@ -276,13 +276,13 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
   </tr>
   <tr>
     <td class="tg-7zrl" rowspan="3">ONNX Runtime</td>
+    <td class="tg-7zrl">1.10.0</td>
+  </tr>
+  <tr>
     <td class="tg-7zrl">1.9.0</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.8.0</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.7.0</td>
   </tr>
 </tbody>
 </table>
