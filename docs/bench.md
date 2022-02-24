@@ -3,6 +3,18 @@ Intel® Neural Compressor Bench
 
 Intel® Neural Compressor Bench is a web application for easier use of Intel® Neural Compressor. It is only available on Linux based hosts.
 
+## Table of Contents
+- [Introduction](#introduction)
+- [Home screen](#home-screen)
+- [Create new project](#create-new-project)
+  - [Add optimization](#add-optimization)
+  - [Add benchmark](#add-benchmark)
+  - [Add profiling](#add-profiling)
+  - [Display model graph](#display-model-graph)
+  - [Add dataset](#add-dataset)
+  - [Project information](#project-information)
+- [System information](#system-information)
+- [Security](#security)
 # Introduction
 ## Start the Intel® Neural Compressor Bench
 
@@ -30,9 +42,9 @@ or specify different port that is already opened, for example 8080:
     inc_bench -p 8080
     ```
 
-* When using TF 2.5.0, set environment variable `TF_ENABLE_MKL_NATIVE_FORMAT=0` for INT8 tuning:
+* When using official TF>=2.6.0, set environment variable `TF_ENABLE_ONEDNN_OPTS=1` for INT8 tuning:
     ```shell
-    TF_ENABLE_MKL_NATIVE_FORMAT=0 inc_bench
+    TF_ENABLE_ONEDNN_OPTS=1 inc_bench
     ```
 
 * To start the Intel® Neural Compressor Bench server with your own TLS certificate add `--cert` and `--key` parameters:
@@ -51,158 +63,93 @@ or specify different port that is already opened, for example 8080:
 
     You are forfeiting security, confidentiality and integrity of all client-server communication. Your server is exposed to external threats.
 
-## Home
-This view shows introduction to Intel® Neural Compressor Bench and 2 buttons for creating new configurations in 2 different ways. First one links to **Quantize from presets** where you can find examples of models to chose from, the second one to **Quantize using wizard** where you can your custom models with many configurable parameters.
+## Home screen
+This view shows introduction to Intel® Neural Compressor Bench and a button for creating new project.
+
 ![Home](imgs/bench/home.png "Home")
 
+# Create new project
+To create a new project, you need to choose its name and input model.
 
-# Quantize from presets
+![Project1](imgs/bench/project1.png "Project1")
 
-## Description
-In this scenario you can use one of preset models divided into 2 domain categories: image recognition and object detection.
-![Examples](imgs/bench/examples.png "Examples")
+When the model is chosen, you can also edit its input and output nodes, see the model graph (for Tensorflow models) and set shape for synthetic dataset. It is also possible that you will have to choose model domain if it was not auto detected. It is used to set some default parameters.
 
-You can use included models to test tuning. You have to point to the Dataset that you want to use and click **Finish** to add it to your models. A new model will be downloaded and added to the **My models** list, ready for tuning.
+![Project2](imgs/bench/project2.png "Project2")
 
-## Examples
-### ResNet50 v1.5
-Follow [instructions](../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose **Image Recognition** domain, then click on **resnet50 v1 5** button and in the last step select the ImageRecord dataset like in the example below:
-![examples1](imgs/bench/examples-resnet.png "examples1")
-### MobileNet v1
-Follow [instructions](../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/README.md) to get the ImageRecord dataset. Then go to **Examples**, choose  **Image Recognition** domain, then click on **mobilenet v1** button and in the last step select the ImageRecord dataset like in the example below:
-![examples2](imgs/bench/examples-mobilenet.png "examples2")
-### SSD MobileNet v1
-Follow [instructions](../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/README.md) to get the COCORecord dataset. Then go to **Examples**, choose  **Object Detection** domain, then click on **ssd mobilenet v1** button and in the last step select the COCORecord dataset like in the example below:
-![examples3](imgs/bench/examples-ssd.png "examples3")
-
-# Quantize using wizard
-## Description
-### Basic parameters
-
-1. Enter information in all required fields (marked by a *) in the Wizard:
-
-![Wizard1](imgs/bench/wizard1.png "Wizard1")
-![Wizard2](imgs/bench/wizard2.png "Wizard2")
-
-2. Either save this configuration (by clicking **Finish**), or change some advanced parameters (by checking the checkbox ![Show advanced](imgs/bench/show_advanced.png "Show advanced")
-).
-
-## Examples
-### ResNet50 v1.5
-* Follow [instructions](../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/README.md) to:
-   * install Intel Tensorflow 1.15 up2
-   * prepare dataset and a frozen pb model
-* In the **Create low precision model** in first step:
-   * select created frozen model
-   * inputs, outputs and model domain will be selected automatically
-![resnet1](imgs/bench/resnet1.png "resnet1")
-
-* in second step :
-   * in **Calibration/dataset location**, select **ImageRecord** file from created dataset
-   * transformation and other parameters will be filled automatically
-   * click **Finish** or change Advanced parameters
-![resnet2](imgs/bench/resnet2.png "resnet2")
-
-### SSD-ResNet34
-* Follow [instructions](../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/README.md) to:
-   * install Intel Tensorflow 1.15 up2
-   * prepare dataset and a frozen pb model
-* In the **Create low precision model** in first step:
-   * select created frozen model
-   * inputs, outputs and model domain will be selected automatically
-![ssd1](imgs/bench/ssd1.png "ssd1")
-
-* in second step :
-   * in **Calibration/dataset location**, select **coco record** file from created dataset
-   * transformation and other parameters will be filled automatically
-   * click **Finish** or change Advanced parameters
-![ssd2](imgs/bench/ssd2.png "ssd2")
-
-### BERT
-* Follow [instructions](../examples/tensorflow/nlp/bert_large_squad/quantization/ptq/README.md) to:
-   * install Intel Tensorflow 1.15 up2
-   * prepare dataset and a frozen pb model
-* In the **Create low precision model** in first step:
-   * select created frozen model
-   * select `input_file`, `batch_size` in inputs (in that order)
-   * choose **custom** in output and enter `IteratorGetNext:3, unstack:0, unstack:1` in input field
-   * choose NLP as model domain
-![Bert1](imgs/bench/bert1.png "Bert1")
-
-* in second step :
-   * in **Calibration/dataset location**, select **eval.tf_record** file from created dataset
-   * label_file and vocab_file fields should be filled automatically
-   * click **Finish** or change Advanced parameters
-![Bert2](imgs/bench/bert2.png "Bert2")
-
-## Advanced configs
-
-### Advanced parameters
-
-From the advanced parameters page, you can configure more features such as tuning, quantization, and benchmarking.
-
-![Wizard advanced](imgs/bench/wizard_advanced.png "Wizard advanced")
-
-### Custom dataset or metric
-
-If you choose **custom** in the Dataset or Metric section, the appropriate code templates will be generated for you to fill in with your code. The path to the template will be available by clicking the **Copy code template path** button located in the right-most column in the **My models** list.
-
-Follow the comments in the generated code template to fill in required methods with your own code.
-
-# Available views
-On the left hand side there is a panel with list of configurations.
+On the left hand side there is a panel with list of created projects. When  you click on the project name, you can see its details. "Create new project" button goes to new project wizard described in previous section.
 
 ![Menu](imgs/bench/menu.png "Menu")
+
+## Add optimization
+### Optimization table
+In Optimizations tab you can see list of optimizations in the project. Currently UI supports three optimization precisions and two types of optimization.
+![Optimizations-table](imgs/bench/optimizations-table.png "Optimizations-table")
+
+### Optimization wizard
+To add new optimization, click "Add new optimization" button at the bottom of the table and follow the steps.
+![Optimizations-wizard](imgs/bench/optimizations-wizard.png "Optimizations-wizard")
+### Optimization details
+To perform optimization click "Run" button. Once process is finished you can click on row with specific optimization to display details about optimization parameters and optimized model.
+![Optimization-details](imgs/bench/optimization-details.png "Optimization-details")
+
+## Add benchmark
+### Benchmark table
+For each optimization and input model you can add benchmark. Benchmark have 2 modes: accuracy and performance. In benchmark tab you can see all your benchmarks. When you check checkboxes in the last column you can choose benchmark you want to compare in the chart (visible after clicking "Compare selected").
+
+![Benchmarks-table](imgs/bench/benchmarks-table.png "Benchmarks-table")
+
+### Benchmark wizard
+To add new benchmark, click "Add new benchmark" button at the bottom of the table and follow the steps.
+
+![Benchmarks-wizard](imgs/bench/benchmarks-wizard.png "Benchmarks-wizard")
+
+### Benchmark details
+When the benchmark is added, you can click "Run" button to execute it. Results will be filled in the table and in details view visible after clicking row in the table. You can also see config and output logs when clicking links highlighted in blue.
+
+![Benchmark-details](imgs/bench/benchmark-details.png "Benchmark-details")
+
+
+## Add profiling
+### Profiling table
+It is also possible to do profiling of all Tensorflow frozen models in project.
+![Profiling-table](imgs/bench/profiling-table.png "Profiling-table")
+### Profiling wizard
+To profile model, click "Add new profiling" button at the bottom of the table and follow the steps.
+![Profiling-wizard](imgs/bench/profiling-wizard.png "Profiling-wizard")
+### Profiling details
+Once profiling entry is added, you can click "Run" button to execute it. After completing the process, the results will appear in the form of a bar chart and a table with full profiling data. The table is also used to control which operations are to be included in the chart. Check the box next to the selected row and click "Update chart" button to include it in the bar chart.
+![Profiling-details](imgs/bench/profiling-details.png "Profiling-details")
+
+## Display model graph
+For Tensorflow frozen pb models there will be a button available ![Show graph](imgs/bench/show_graph_button.png "Show graph") in the project wizard. It is also possible to see the graph in graph tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.
+
+
+![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
+
+## Add dataset
+### Dataset list
+Dataset tab presents list of datasets assigned to a project. In most cases the "dummy" dataset consisting of synthetic data should be automatically added while creating a project.
+![Datasets-table](imgs/bench/datasets-table.png "Datasets-table")
+### Dataset wizard
+New dataset can be defined by clicking "Add new profiling" button at the bottom of the table and follow the steps.
+![Datasets-wizard](imgs/bench/datasets-wizard.png "Datasets-wizard")
+
+### Dataset details
+Dataset details can be inspected by clicking specific row.
+![Dataset-details](imgs/bench/dataset-details.png "Dataset-details")
+## Project information
+
+Last tab is called "Project info". You can find here details about the project, when it was created and modified, what is the framework and some details about input model. It is also possible to add some notes about the project.
+
+![Project info](imgs/bench/project-info.png "Project info")
+
+## System information
 
 One can see system information by clicking ![System info](imgs/bench/system_info.png "System info") button. The result is details dialog:
 
 ![System info table](imgs/bench/system_info_table.png "System info table")
 
-By clicking ![See models](imgs/bench/see_models.png "See models")  button you can navigate to **My models list**.
-
-## My Models list
-
-This view lists all Model Configurations defined on a given server.
-
-You can create a new model using pre-defined models by using a New Model Wizard or **Examples**:
-
-![My models](imgs/bench/my_models.png "My models")
-
-## Configuration details
-
-When clicking on configuration from the left hand side list, you can see its details view. You can see the results, rerun the tuning, check the configuration and console output. You can also see the model graph.
-
-![Details](imgs/bench/details.png "Details")
-
-## Tuning
-
-Now that you have created a Model Configuration, you can do the following:
-
-* See the generated config (by clicking the **Show config** link).
-* Start the tuning process:
-  * Click the blue arrow ![Start Tuning button](imgs/bench/tuning_start.png "Start tuning") to start the tuning.
-  * Click **Show output** to see logs that are generated during tuning.
-  * Your model will be tuned according to configuration.
-  * When the tuning is finished, you will see accuracy results in the **My Models** list:
-      - The **Accuracy** section displays comparisons in accuracy metrics between the original and tuned models.
-      - **Model size** compares the sizes of both models.
-      - When automatic benchmarking is finished, **Throughput** shows the performance gain from tuning.
-
-### Tuning history
-
-If the configuration was tuned several times, in the details view there will be a chart showing accuracy and duration of historical tunings.
-
-### Profiling
-
-You can also run profiling to check the performance of model layers. To do that you need to click ![Start profiling button](imgs/bench/profiling_start.png "Start profiling") button and when the profiling is finished, a table with profiling data will be shown:
-![Profiling table](imgs/bench/profiling_table.png "Profiling table")
-
-## Model Graph Display
-For Tensorflow frozen pb models there will be a new button available ![Show graph](imgs/bench/show_graph_button.png "Show graph").
-
-Click it to display graph of selected model:
-
-![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
 
 ## Security
 Intel® Neural Compressor Bench uses encrypted connections to ensure security, confidentiality and integrity of all client-server communication.
