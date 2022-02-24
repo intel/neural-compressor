@@ -2299,7 +2299,7 @@
     "Time_series_LSTM": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
-      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/time_series_LSTM/model/",
+      "input_model": "/tf_dataset2/tf_dataset/tf_oob_models/time_series_LSTM/time_series_lstm.pb",
       "yaml": "config.yaml",
       "strategy": "basic",
       "batch_size": 1,

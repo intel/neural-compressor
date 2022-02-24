@@ -60,6 +60,20 @@ models = [
         'output': ['cls_score','bbox_pred','head_score','head_bbox_pred','torso_score','torso_reg_pred','wp_score','wp_reg_pred']
     },
 
+    # COVID-Net
+    {
+        'model_name': 'COVID-Net',
+        'input': {'input_1': generate_data([480, 480, 3])},
+        'output': ['norm_dense_1/Softmax']
+    },
+
+    # Time_series_LSTM
+    {
+         'model_name': 'Time_series_LSTM',
+         'input': {'lstm_input': generate_data([6, 1])},
+         'output': ['activation']
+    },
+
     # cpm-pose
     {
         'model_name': 'cpm-pose',
