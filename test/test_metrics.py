@@ -1,7 +1,6 @@
 """Tests for the metrics module."""
 import numpy as np
 import unittest
-import tensorflow as tf
 from neural_compressor.metric import METRICS
 from neural_compressor.experimental.metric.f1 import evaluate
 from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
@@ -65,7 +64,6 @@ class TestMetrics(unittest.TestCase):
         with self.assertRaises(ValueError):
             bleu.update(['a','b'], ('c',))
 
-    @unittest.skipIf(tf.__version__<='2.2.0' and tf.__version__>='2.1.0', "tf 2.1 or 2.2 dont support module transformers")
     def test_onnxrt_GLUE(self):
         metrics = METRICS('onnxrt_qlinearops')
         glue = metrics['GLUE']('mrpc')
