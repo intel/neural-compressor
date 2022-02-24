@@ -46,6 +46,8 @@ function set_args {
   CapsuleNet
   CenterNet
   CharCNN
+  COVID-Net
+  Time_series_LSTM
   Hierarchical_LSTM
   MANN
   MiniGo
@@ -84,6 +86,8 @@ function set_args {
   models_need_disable_optimize=(
   --------
   CRNN
+  COVID-Net
+  Time_series_LSTM
   efficientnet-b0
   efficientnet-b0_auto_aug
   efficientnet-b5
