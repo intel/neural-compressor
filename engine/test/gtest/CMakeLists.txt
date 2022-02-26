@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.11)
 
 project(gtest_ut)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "-std=c++11 -O0 -fpic -Wall -g -ggdb -march=native")
 set(HOST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../executor/")
 set(MAIN_SRC_GTEST "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
@@ -59,11 +58,15 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/slice.cpp
     ${HOST_SRC_DIR}/src/operators/group_norm.cpp
     ${HOST_SRC_DIR}/src/sparse_operators/sparse_inner_product.cpp
+    ${HOST_SRC_DIR}/src/kernels/jit_naive_gemm_kernel.cpp
+    ${HOST_SRC_DIR}/src/kernels/jit_naive_matmul.cpp
 )
 
 # Header file include path
 target_include_directories(host_operators
     PUBLIC
+        ${HOST_SRC_DIR}/include/kernels/xbyak
+        ${HOST_SRC_DIR}/include/kernels
         ${HOST_SRC_DIR}/include/sparse_operators
         ${HOST_SRC_DIR}/include/operators
         ${HOST_SRC_DIR}/include
@@ -104,6 +107,7 @@ file(GLOB OPS_TEST_CASES_SRC
     test_embeddingbag_op.cpp
     test_convolution_op.cpp
     test_group_norm_op.cpp
+    kernels/test_naive_gemm.cpp
 )
 
 function(register_gtest_func exe src)
