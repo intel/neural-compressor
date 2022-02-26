@@ -6,7 +6,7 @@ elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.2.1)
 else()
 cmake_minimum_required(VERSION 3.12)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+
 set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -ffast-math -lm -ftree-loop-vectorize -fpic -Wall -fopenmp -march=native -Wl,-rpath,'$ORIGIN'")
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Os -Wall -s")
@@ -77,11 +77,15 @@ add_library(engine SHARED
     src/operators/slice.cpp
     src/operators/group_norm.cpp
     src/sparse_operators/sparse_inner_product.cpp
+    src/kernels/jit_naive_gemm_kernel.cpp
+    src/kernels/jit_naive_matmul.cpp
 )
 
 # Header file include path
 target_include_directories(engine
     PUBLIC
+        ./include/kernels
+        ./include/kernels/xbyak
         ./include/sparse_operators
         ./include/operators
         ./include
