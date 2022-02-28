@@ -687,6 +687,7 @@ class TemplateAdaptor(Adaptor):
         self.query_handler = None
         self.approach = ''
         self.pre_optimized_model = None
+        self.sub_module_list = None
         self.default_qconfig = framework_specific_info['default_qconfig'] \
             if 'default_qconfig' in framework_specific_info else None
 
@@ -866,7 +867,8 @@ class TemplateAdaptor(Adaptor):
         """
         self.pre_optimized_model = model
         tmp_model = model.model
-        if isinstance(self, PyTorch_FXAdaptor):
+        if isinstance(self, PyTorch_FXAdaptor) and \
+          self.approach != "post_training_dynamic_quant":
             tmp_model = self.fuse_fx_model(model)
         quantizable_ops = []
         self.non_quant_dict = self.get_non_quant_modules(model.kwargs)
@@ -894,7 +896,7 @@ class TemplateAdaptor(Adaptor):
         """This is a helper function to get fused fx model for PyTorch_FXAdaptor.
 
         Args:
-            model (object): input model which is Neural Compressor model
+            model (object): input model which is Neural Compressor model.
 
         Returns:
             fused_model (GraphModule): fused GraphModule model from torch.fx.
@@ -915,11 +917,67 @@ class TemplateAdaptor(Adaptor):
                                             'non_traceable_module_name', [])
         skipped_module_classes = prepare_custom_config_dict.get(\
                                             'non_traceable_module_class', [])
-        tracer = QuantizationTracer(
-            skipped_module_names, skipped_module_classes)
-        graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-        fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
+        try:
+            tracer = QuantizationTracer(
+                skipped_module_names, skipped_module_classes)
+            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
+            fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
+        except:
+            self.sub_module_list = []
+            self._fuse_sub_graph(tmp_model, prefix='')
+            fused_model = tmp_model
         return fused_model
+
+    def _fuse_sub_graph(self, model, prefix):
+        """This is a helper function to get fused fx sub modules recursively for PyTorch_FXAdaptor.
+
+        Args:
+            model (object): input model which is PyTorch model.
+            prefix (string): prefix of op name.
+
+        Returns:
+            fused_model (GraphModule): fused GraphModule model from torch.fx.
+        """
+        from torch.quantization.quantize_fx import _fuse_fx
+        import torch.quantization.quantization_mappings as tqqm
+        fx_white_list = tqqm.get_default_qconfig_propagation_list()
+        for name, module in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if type(module) in fx_white_list:
+                module = torch.quantization.QuantWrapper(module)
+            if self._check_dynamic_control(module):
+                self._fuse_sub_graph(module, op_name)
+            else:
+                try:
+                    graph_module = torch.fx.symbolic_trace(module)
+                    fused_model = _fuse_fx(graph_module)
+                    setattr(model, name, fused_model)
+                    self.sub_module_list.append(op_name)
+                except:
+                    self._fuse_sub_graph(module, op_name)
+
+    def _check_dynamic_control(self, module):
+        """This is a helper function to check dynamic control in forward function of module.
+
+        Args:
+            module (object): input module which is PyTorch Module.
+
+        Returns:
+            fused_model (GraphModule): fused GraphModule model from torch.fx.
+        """
+        import inspect
+        import re
+        try:
+            lines = inspect.getsource(module.forward)
+            # Proxy obj. will always be detectd as `not None`.
+            # Other situations could be detected by prepare_fx function.
+            pattern = "is( not)? None"
+            anws = re.search(pattern, lines)
+            if anws:
+                return True
+        except:  # pragma: no cover
+            logger.info('Module has no forward function')
+        return False
 
     def get_non_quant_modules(self, model_kwargs):
         """This is a helper function to get all non_quant_modules from customer and default.
@@ -2380,32 +2438,49 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             q_model = model
         q_model.model.eval()
         if q_model.kwargs is not None:
-            prepare_custom_config_dict = q_model.kwargs.get(
-                                            'prepare_custom_config_dict', None)
-            convert_custom_config_dict = q_model.kwargs.get(
-                                            'convert_custom_config_dict', None)
+            self.prepare_custom_config_dict = q_model.kwargs.get(
+                                              'prepare_custom_config_dict', None)
+            self.convert_custom_config_dict = q_model.kwargs.get(
+                                              'convert_custom_config_dict', None)
         else:
-            prepare_custom_config_dict, convert_custom_config_dict = None, None
-        fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
+            self.prepare_custom_config_dict, self.convert_custom_config_dict = None, None
+        self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
+        self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
             q_model.model.train()
-            q_model.model = prepare_qat_fx(q_model.model, fx_op_cfgs,
-              prepare_custom_config_dict=prepare_custom_config_dict)
+            if self.sub_module_list is None:
+                q_model.model = prepare_qat_fx(q_model.model, self.fx_op_cfgs,
+                  prepare_custom_config_dict=self.prepare_custom_config_dict)
+            else:
+                logger.info('Fx trace of the entire model failed. ' + \
+                            'We will conduct auto quantization')
+                PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list, self.fx_op_cfgs, \
+                                                    q_model.model, prefix='', is_qat=True)
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
-            # distinguish how q_func is passed since neural_compressor built-in functions accept neural_compressor
-            # model and user defined func should accept framework model.
+            # distinguish how q_func is passed since neural_compressor built-in functions accept 
+            # neural_compressor model and user defined func should accept framework model.
             q_model.model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
             assert q_model.model is not None, "Please return a trained model in train function!"
             q_model.model.eval()
         else:
-            q_model.model = prepare_fx(q_model.model, fx_op_cfgs,
-              prepare_custom_config_dict=prepare_custom_config_dict)
+            if self.sub_module_list is None:
+                q_model.model = prepare_fx(q_model.model, self.fx_op_cfgs,
+                  prepare_custom_config_dict=self.prepare_custom_config_dict)
+            else:
+                logger.info('Fx trace of the entire model failed, ' + \
+                            'We will conduct auto quantization')
+                PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list, self.fx_op_cfgs, \
+                                                    q_model.model, prefix='')
             if self.approach == 'post_training_static_quant':
                 iterations = tune_cfg.get('calib_iteration', 1)
                 self.model_calibration(q_model.model, dataloader, iterations,
-                                       calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
-        q_model.model = convert_fx(q_model.model,
-          convert_custom_config_dict=convert_custom_config_dict)
+                  calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
+        if self.sub_module_list is None:
+            q_model.model = convert_fx(q_model.model,
+              convert_custom_config_dict=self.convert_custom_config_dict)
+        else:
+            PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
+                                                q_model.model, prefix='')
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model.model, self.tune_cfg)
@@ -2540,9 +2615,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         return model.model
 
-
-    def _dump_model_op_stats(self, model, tune_cfg, approach):
-        """This is a function to dump quantizable ops of model to user.
+    def _get_module_op_stats(self, model, tune_cfg, approach):
+        """This is a function to get quantizable ops of model to user.
         Args:
             model (object): input model
             tune_cfg (dict): quantization config
@@ -2551,7 +2625,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             None
         """
         modules = dict(model.named_modules())
-        res = {}
+        res = dict()
         if approach == 'post_training_dynamic_quant':
             # fetch int8 and fp32 ops set by Neural Compressor from tune_cfg
             for key in tune_cfg['op']:
@@ -2598,6 +2672,45 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 elif "dequantize" in op_type and quantized_mode:
                     quantized_mode = False
                 res[op_type]['INT8'] += 1
+        return res
+
+    def _get_sub_module_op_stats(self, model, tune_cfg, approach, res, prefix=''):
+        """This is a function to get quantizable ops of sub modules to user recursively.
+        Args:
+            model (object): input model
+            tune_cfg (dict): quantization config
+            approach (str): quantization approach
+            res (dict) : contains result of quantizable ops
+            prefix (string): prefix of op name
+        Returns:
+            None
+        """
+        for name, module in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if op_name in self.sub_module_list:
+                module_res = self._get_module_op_stats(module, tune_cfg, approach)
+                for key, value in module_res.items():
+                    if key in res:
+                        res[key] = {k: res[key][k]+v for k, v in value.items()}
+                    else:
+                        res[key] = value
+            else:
+                self._get_sub_module_op_stats(module, tune_cfg, approach, res, op_name)
+
+    def _dump_model_op_stats(self, model, tune_cfg, approach):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            model (object): input model
+            tune_cfg (dict): quantization config
+            approach (str): quantization approach
+        Returns:
+            None
+        """
+        if self.sub_module_list is None:
+            res = self._get_module_op_stats(model, tune_cfg, approach)
+        else:
+            res = dict()
+            self._get_sub_module_op_stats(model, tune_cfg, approach, res)
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
@@ -2629,6 +2742,61 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             else:
                 self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
+    def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
+        """get activation scale and zero_point for converted module.
+
+        Args:
+            model (dir): Int8 model converted from fp32 model.
+                         scale and zero_point is set with calibration for each module
+            tune_cfg (object): This file saves scale and zero_point of 
+                               output activation of each quantized module.
+            prefix (string): prefix of op name
+
+        Returns:
+            None
+        """
+        # get scale and zero_point of modules.
+        modules = dict(model.named_modules())
+        for key in tune_cfg['op']:
+            sub_name = key[0].replace(prefix + '.', '', 1)
+            if sub_name in modules:
+                value = tune_cfg['op'][key]
+                assert isinstance(value, dict)
+                if hasattr(modules[sub_name], 'scale'):
+                    value['activation']['scale'] = float(modules[sub_name].scale)
+                if hasattr(modules[sub_name], 'zero_point'):
+                    value['activation']['zero_point'] = int(modules[sub_name].zero_point)
+        # get scale and zero_point of getattr ops (like quantize ops).
+        for node in model.graph.nodes:
+            if node.op == 'get_attr':
+                sub_name = prefix + '--' + node.target
+                if 'scale' in node.target:
+                    tune_cfg['get_attr'][sub_name] = float(getattr(model, node.target))
+                elif 'zero_point' in node.target:
+                    tune_cfg['get_attr'][sub_name] = int(getattr(model, node.target))
+                else:
+                    pass
+
+    def _get_sub_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
+        """get activation scale and zero_point for converted sub modules recursively.
+
+        Args:
+            model (dir): Int8 model converted from fp32 model.
+                        scale and zero_point is set with calibration for each module
+            tune_cfg (object): This file saves scale and zero_point of \
+                            output activation of each quantized module.
+            prefix (string): prefix of op name
+
+        Returns:
+            None
+        """
+        for name, module in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if op_name in self.sub_module_list:
+                self._get_module_scale_zeropoint(module, tune_cfg, op_name)
+            else:
+                self._get_sub_module_scale_zeropoint(module, tune_cfg, op_name)
+
     def _get_scale_zeropoint(self, model, tune_cfg):
         """get activation scale and zero_point for converted model.
 
@@ -2641,27 +2809,75 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        # get scale and zero_point of modules.
-        modules = dict(model.named_modules())
-        for key in tune_cfg['op']:
-            if key[0] not in modules:
-                continue
-            value = tune_cfg['op'][key]
-            assert isinstance(value, dict)
-            if hasattr(modules[key[0]], 'scale'):
-                value['activation']['scale'] = float(modules[key[0]].scale)
-            if hasattr(modules[key[0]], 'zero_point'):
-                value['activation']['zero_point'] = int(modules[key[0]].zero_point)
-        # get scale and zero_point of getattr ops.
         tune_cfg['get_attr'] = {}
-        for node in model.graph.nodes:
-            if node.op == 'get_attr':
-                if 'scale' in node.target:
-                    tune_cfg['get_attr'][node.target] = float(getattr(model, node.target))
-                elif 'zero_point' in node.target:
-                    tune_cfg['get_attr'][node.target] = int(getattr(model, node.target))
+        if self.sub_module_list is None:
+            self._get_module_scale_zeropoint(model, tune_cfg)
+        else:
+            self._get_sub_module_scale_zeropoint(model, tune_cfg)
+
+    @staticmethod
+    def prepare_sub_graph(sub_module_list, fx_op_cfgs, model, prefix, is_qat=False):
+        """Static method to prepare sub modules recursively.
+
+        Args:
+            sub_module_list (list): contains the name of traceable sub modules
+            fx_op_cfgs (dict): the configuration for prepare_fx quantization.
+            model (dir): input model which is PyTorch model.
+            prefix (string): prefix of op name
+            is_qat (bool): whether it is a qat quantization
+
+        Returns:
+            model (dir): output model which is a prepared PyTorch model.
+        """
+        from torch.quantization.quantize_fx import prepare_fx, prepare_qat_fx
+        import torch.quantization.quantization_mappings as tqqm
+        fx_white_list = tqqm.get_default_qconfig_propagation_list()
+        for name, module in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if op_name in sub_module_list:
+                # remove prefix in fx_op_cfgs
+                fx_sub_op_cfgs = dict()
+                fx_sub_op_cfgs[''] = None
+                fx_sub_op_cfgs['module_name'] = []
+                for k, v in fx_op_cfgs['module_name']:
+                    if op_name in k:
+                        sub_name = k.replace(op_name + '.', '', 1)
+                        fx_sub_op_cfgs['module_name'].append((sub_name, v))
+
+                if type(module) in fx_white_list:
+                    # Don't really need a quant/dequant, just move nn.Embedding \
+                    # to lower level for fx detection.
+                    module = torch.quantization.QuantWrapper(module)
+                if is_qat:
+                    module_pre = prepare_qat_fx(module, fx_sub_op_cfgs)
                 else:
-                    pass
+                    module_pre = prepare_fx(module, fx_sub_op_cfgs)
+                setattr(model, name, module_pre)
+            else:
+                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list, fx_op_cfgs, \
+                                                    module, op_name, is_qat)
+
+    @staticmethod
+    def convert_sub_graph(sub_module_list, model, prefix):
+        """Static method to convert sub modules recursively.
+
+        Args:
+            sub_module_list (list): contains the name of traceable sub modules
+            model (dir): input model which is prepared PyTorch model.
+            prefix (string): prefix of op name
+
+        Returns:
+            model (dir): output model which is a converted PyTorch int8 model.
+        """
+        from torch.quantization.quantize_fx import convert_fx
+        for name, module in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if op_name in sub_module_list:
+                module_con = convert_fx(module)
+                setattr(model, name, module_con)
+            else:
+                PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
+                                                    module, op_name)
 
 
 class PyTorchQuery(QueryBackendCapability):

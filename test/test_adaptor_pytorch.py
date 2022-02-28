@@ -318,7 +318,6 @@ class M(torch.nn.Module):
         self.dequant = DeQuantStub()
 
     def forward(self, x):
-        dim = x.size()
         x = self.quant(x)
         x = self.conv(x)
         x = x.view(1, -1)
@@ -332,26 +331,44 @@ class FP32Model(torch.nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(1, 1, 1)
     def forward(self, x):
-        x = self.conv(x)
+        times = x.size(1)
+        for _ in range(times):
+            x = self.conv(x)
+        return x
+
+
+class DynamicModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = nn.Conv2d(1, 1, 1)
+    def forward(self, x):
+        if x is not None:
+            x = self.conv(x)
         return x
 
 
 class SubModel(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, bypass=True):
         super().__init__()
         self.quant = QuantStub()
         self.conv = nn.Conv2d(1, 1, 1)
         self.conv1 = nn.Conv2d(1, 1, 1)
+        self.bn = nn.BatchNorm2d(1)
+        self.relu = nn.ReLU()
         self.fp32 = FP32Model()
         self.norm = nn.LayerNorm([1, 224, 224])
         self.dequant = DeQuantStub()
+        self.bypass = bypass
 
     def forward(self, x):
         x = self.conv(x)
+        x = self.bn(x)
         x = self.quant(x)
+        x = self.relu(x)
         x = self.conv1(x)
         x = self.dequant(x)
-        x = self.fp32(x)
+        if not self.bypass:
+            x = self.fp32(x)
         x = self.norm(x)
         return x
 
@@ -367,7 +384,7 @@ class PartialQuantModel(torch.nn.Module):
         self.conv2 = nn.Conv2d(1, 1, 1)
         self.linear = nn.Linear(224 * 224, 1)
         self.dequant = DeQuantStub()
-        self.sub = SubModel()
+        self.sub = SubModel(bypass=False)
 
     def forward(self, x):
         x = self.conv(x)
@@ -380,6 +397,26 @@ class PartialQuantModel(torch.nn.Module):
         x = x.view(1, -1)
         x = self.linear(x)
         x = self.dequant(x)
+        return x
+
+class DynamicControlModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = nn.Conv2d(3, 1, 1)
+        self.bn = nn.BatchNorm2d(1)
+        self.linear = nn.Linear(224 * 224, 1)
+        self.sub = SubModel()
+        self.fp32 = FP32Model()
+        self.dyn = DynamicModel()
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.dyn(x)
+        x = self.bn(x)
+        x = self.sub(x)
+        x = self.fp32(x)
+        x = x.view(1, -1)
+        x = self.linear(x)
         return x
 
 
@@ -861,7 +898,44 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         self.assertEqual(model_fx.code, model_fx_recover.code)
         shutil.rmtree('./saved', ignore_errors=True)
 
+    def test_fx_sub_module_quant(self):
+        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+            model_origin = DynamicControlModel()
+            # run fx_quant in neural_compressor and save the quantized GraphModule
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
+            quantizer.eval_func = eval_func
+            if fake_yaml == 'fx_qat_yaml.yaml':
+                quantizer.q_func = q_func
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(model_origin,
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
+            q_model = quantizer.fit()
+            q_model.save('./saved')
+            # Load configure and weights with neural_compressor.utils
+            model_fx = load('./saved', model_origin,
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
+            self.assertTrue(isinstance(model_fx.sub, torch.fx.graph_module.GraphModule))
 
+            # recover int8 model with only tune_cfg
+            history_file = './saved/history.snapshot'
+            model_fx_recover = recover(model_origin, history_file, 0,
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
+            self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
+            shutil.rmtree('./saved', ignore_errors=True)
 
 if __name__ == "__main__":
     unittest.main()
