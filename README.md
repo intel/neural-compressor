@@ -9,15 +9,15 @@ Intel® Neural Compressor (formerly known as Intel® Low Precision Optimization 
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
 
-## Architecture
+## Infrastructure
 
-Intel® Neural Compressor features an infrastructure and workflow that aids in increasing performance and faster deployments across architectures. 
+Intel® Neural Compressor features an architecture and workflow that aids in increasing performance and faster deployments across infrastructures. 
 
 
-#### Infrastructure
+#### Architecture
 
-<a target="_blank" href="docs/imgs/infrastructure.png">
-  <img src="docs/imgs/infrastructure.png" alt="Infrastructure" width=914 height=370>
+<a target="_blank" href="docs/imgs/architecture.png">
+  <img src="docs/imgs/architecture.png" alt="Architecture" width=914 height=370>
 </a>
 
 Click the image to enlarge it.
@@ -25,7 +25,7 @@ Click the image to enlarge it.
 #### Workflow
 
 <a target="_blank" href="docs/imgs/workflow.png">
-  <img src="docs/imgs/workflow.png" alt="Workflow" width=914 height=370>
+  <img src="docs/imgs/workflow.png" alt="Workflow" width=914 height=390>
 </a>
 
 Click the image to enlarge it.

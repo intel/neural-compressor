@@ -4,8 +4,8 @@ A deep learning inference engine for quantized and sparsified models.
 ## Architecture
 Engine support model optimizer, model executor and high performance kernel for multi device.
 
-<a target="_blank" href="imgs/infrastructure.png">
-  <img src="imgs/infrastructure.png" alt="Infrastructure" width=762 height=672>
+<a target="_blank" href="imgs/architecture.png">
+  <img src="imgs/architecture.png" alt="Architecture" width=762 height=672>
 </a>
 
 ## Installation
@@ -22,8 +22,8 @@ conda install cmake --yes
 conda install absl-py --yes
 conda activate <env name>
 
-# install tensorflow 
-pip install https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl 
+# install tensorflow
+pip install https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
 
 # install transformers
 pip install transformers
@@ -86,7 +86,7 @@ please remember to change the input data type, shape and range for your input in
 The dataloader generate data using prepare_batch() and make sure the generate data is the yaml need:
 
 ```
-model: 
+model:
   name: bert_mlperf_int8
   operator:
     input_data:
@@ -97,7 +97,7 @@ model:
         input_ids:
           dtype: int32
           shape: [-1, -1]
-        segment_ids: 
+        segment_ids:
           dtype: int32
           shape: [-1, -1]
         input_mask:

@@ -4,7 +4,7 @@ A reference deep learning execution engine for quantized and sparsified models.
 ## Deployment Architecture
 The reference execution engine supports model optimizer, model executor and high performance kernel for CPU.
 
-<a target="_blank" href="docs/imgs/infrastructure.png">
+<a target="_blank" href="docs/imgs/engine_infrastructure.png">
   <img src="imgs/engine_infrastructure.png" alt="Infrastructure" width=762 height=672>
 </a>
 
