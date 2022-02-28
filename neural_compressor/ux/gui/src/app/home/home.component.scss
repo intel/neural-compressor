@@ -14,58 +14,81 @@
 @import './../../variables.scss';
 
 .create-new-btn {
-  position: relative;
-  bottom: 0;
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 5px;
   padding-bottom: 5px;
   float: right;
-  margin-top: 20px;
-  font-size: 150%;
+  margin: 20px;
+  font-size: 200%;
   background-color: $accent-yellow;
   color: black;
 }
 
+.inline-block {
+  display: inline-block;
+  width: 20%;
+  height: 40vh !important;
+  margin: 3%;
+}
+
+.img-container {
+  height: 50%;
+  margin: auto;
+  text-align: center;
+  margin-top: 10%;
+  margin-bottom: 20%;
+}
+
+@media all and (min-width: 2000px) {
+  .img-container {
+    padding-top: 50px;
+  }
+}
+
 .big-icon {
-  max-height: 200px;
+  max-height: 100%;
+  margin: auto;
 }
 
 .intro {
   padding: 0 40px 0px 40px;
+  font-size: 150%;
 }
 
-.margin-top {
-  position: relative;
-  top: 50px;
-  padding-left: 20px;
-}
-
-.margin-left {
-  left: 3px;
-}
-
-.big-button {
-  background-color: white;
-  margin: auto;
-  margin-top: 100px;
+.cards {
+  min-height: 60vh;
   display: flex;
-  cursor: pointer;
-  width: 50%;
-  padding: 20px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.big-button:hover {
-  background-color: $lighter-blue;
+.grid>div {
+  display: flex;
+  flex-basis: calc(33.33% - 14px);
+  justify-content: center;
+  flex-direction: column;
 }
 
-.big-number {
-  font-family: IntelOneBd;
-  font-size: 200%;
-  color: $blue;
-  margin: 10px;
+.grid>div:first-child {
+  display: flex;
+  margin-bottom: 0px;
+  flex-basis: calc(100% - 22px);
+  justify-content: center;
+  flex-direction: column;
 }
 
-.steps {
-  margin-top: 50px;
+.grid>div>div {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+}
+
+.button-img {
+  height: 50px;
+}
+
+.center {
+  text-align: center;
 }
