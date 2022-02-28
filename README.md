@@ -1,10 +1,6 @@
-<div align="center">
+Introduction to Intel® Neural Compressor 
+===========================
 
-<p align="center"> <img src="docs/imgs/inc_logo.png" height="280px"><br></p>
-
-</div>
-
----
 Intel® Neural Compressor (formerly known as Intel® Low Precision Optimization Tool) is an open-source Python library running on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep learning frameworks for popular network compression technologies, such as quantization, pruning, knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help user quickly find out the best quantized model. It also implements different weight pruning algorithms to generate pruned model with predefined sparsity goal and supports knowledge distillation to distill the knowledge from the teacher model to the student model.
 
 > **Note**
@@ -12,8 +8,6 @@ Intel® Neural Compressor (formerly known as Intel® Low Precision Optimization 
 > GPU support is under development.
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
-
----
 
 ## Architecture
 
@@ -23,7 +17,7 @@ Intel® Neural Compressor features an infrastructure and workflow that aids in i
 #### Infrastructure
 
 <a target="_blank" href="docs/imgs/infrastructure.png">
-  <img src="docs/imgs/infrastructure.png" alt="Infrastructure" width=800 height=360>
+  <img src="docs/imgs/infrastructure.png" alt="Infrastructure" width=914 height=370>
 </a>
 
 Click the image to enlarge it.
@@ -31,7 +25,7 @@ Click the image to enlarge it.
 #### Workflow
 
 <a target="_blank" href="docs/imgs/workflow.png">
-  <img src="docs/imgs/workflow.png" alt="Workflow" width=800 height=360>
+  <img src="docs/imgs/workflow.png" alt="Workflow" width=914 height=370>
 </a>
 
 Click the image to enlarge it.
@@ -39,7 +33,7 @@ Click the image to enlarge it.
 #### Supported Frameworks
 
 Supported deep learning frameworks are:
-* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP3](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3), [2.7.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.7.0), [2.8.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0), [Official TensorFlow 2.6.2](https://github.com/tensorflow/tensorflow/tree/v2.6.2), [Official TensorFlow 2.7.0](https://github.com/tensorflow/tensorflow/tree/v2.7.0)
+* [TensorFlow\*](https://github.com/Intel-tensorflow/tensorflow), including [1.15.0 UP3](https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3), [2.7.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.7.0), [2.8.0](https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0), [Official TensorFlow 2.6.2](https://github.com/tensorflow/tensorflow/tree/v2.6.2), [Official TensorFlow 2.7.0](https://github.com/tensorflow/tensorflow/tree/v2.7.0), [Official TensorFlow 2.8.0](https://github.com/tensorflow/tensorflow/tree/v2.8.0)
 
 >  **Note**: Intel Optimized TensorFlow 2.5.0 requires to set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 before running Neural Compressor quantization or deploying the quantized model.
 
