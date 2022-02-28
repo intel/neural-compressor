@@ -18,6 +18,7 @@
 from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
 from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
 from ..adaptor.pytorch import PyTorchVersionMode
+from ..adaptor.pytorch import PyTorch_FXAdaptor
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
@@ -29,6 +30,29 @@ import copy
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
                                  lambda loader, node: tuple(loader.construct_sequence(node)))
 
+
+def _set_sub_module_scale_zeropoint(model, tune_cfg, prefix=''):
+    """set activation scale and zero_point for converted sub modules recursively.
+
+    Args:
+        q_model (dir): Int8 model converted from fp32 model. 
+                       scale=1, zero_point=0 for each module
+        tune_cfg (object): This file provides scale and zero_point of \
+                           output activation of each quantized module.
+        prefix (string): prefix of op name
+
+    Returns:
+        (object): quantized model with scale and zero_point
+    """
+    for name, module in model.named_children():
+        op_name = prefix + '.' + name if prefix != '' else name
+        if op_name in tune_cfg['fx_sub_module_list']:
+            for key_name in tune_cfg['get_attr'].keys():
+                node_name, node_target = key_name.split('--')
+                if op_name == node_name:
+                    setattr(model, node_target, torch.tensor(tune_cfg['get_attr'][key_name]))
+        else:
+            _set_sub_module_scale_zeropoint(module, tune_cfg, op_name)
 
 def _set_activation_scale_zeropoint(q_model, tune_cfg):
     """set activation scale and zero_point for converted model.
@@ -61,9 +85,12 @@ def _set_activation_scale_zeropoint(q_model, tune_cfg):
 
     if tune_cfg['framework'] == "pytorch_fx":
         # get scale and zero_point of getattr ops.
-        for node_target in tune_cfg['get_attr'].keys():
-            setattr(q_model, node_target, torch.tensor(tune_cfg['get_attr'][node_target]))
-
+        if not tune_cfg['fx_sub_module_list']:
+            for node_target in tune_cfg['get_attr'].keys():
+                setattr(q_model, node_target,
+                  torch.tensor(tune_cfg['get_attr'][node_target]))
+        else:
+            _set_sub_module_scale_zeropoint(q_model, tune_cfg)
 
 def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     """Execute the quantize process on the specified model.
@@ -74,6 +101,8 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
                               in This directory. 'checkpoint' dir is under workspace folder
                               and workspace folder is define in configure yaml file.
         model (object): fp32 model need to do quantization.
+        history_cfg (object): configurations from history.snapshot file.
+        **kwargs (dict): contains customer config dict and etc.
 
     Returns:
         (object): quantized model
@@ -90,7 +119,8 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         with open(tune_cfg_file, 'r') as f:
             tune_cfg = yaml.safe_load(f)
     else:
-        assert history_cfg is not None, "Need chieckpoint_dir or history_cfg to rebuild int8 model"
+        assert history_cfg is not None, \
+          "Need chieckpoint_dir or history_cfg to rebuild int8 model"
         tune_cfg = history_cfg
 
     version = get_torch_version()
@@ -136,15 +166,29 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
-        if tune_cfg['approach'] == "quant_aware_training":
-            q_model.train()
-            q_model = prepare_qat_fx(q_model, fx_op_cfgs,
-              prepare_custom_config_dict=prepare_custom_config_dict)
+        if not tune_cfg['fx_sub_module_list']:
+            if tune_cfg['approach'] == "quant_aware_training":
+                q_model.train()
+                q_model = prepare_qat_fx(q_model, fx_op_cfgs,
+                  prepare_custom_config_dict=prepare_custom_config_dict)
+            else:
+                q_model = prepare_fx(q_model, fx_op_cfgs,
+                  prepare_custom_config_dict=prepare_custom_config_dict)
+            q_model = convert_fx(q_model,
+              convert_custom_config_dict=convert_custom_config_dict)
         else:
-            q_model = prepare_fx(q_model, fx_op_cfgs,
-              prepare_custom_config_dict=prepare_custom_config_dict)
-        q_model = convert_fx(q_model,
-          convert_custom_config_dict=convert_custom_config_dict)
+            sub_module_list = tune_cfg['fx_sub_module_list']
+            if tune_cfg['approach'] == "quant_aware_training":
+                q_model.train()
+                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list, \
+                                                    fx_op_cfgs, q_model, \
+                                                    prefix='',is_qat=True)
+            else:
+                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list, \
+                                                    fx_op_cfgs, q_model, \
+                                                    prefix='')
+            PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
+                                                q_model, prefix='')
 
         if checkpoint_dir is None and history_cfg is not None:
             _set_activation_scale_zeropoint(q_model, history_cfg)
