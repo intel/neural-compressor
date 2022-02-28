@@ -26,6 +26,7 @@ export class HomeComponent implements OnInit {
   clicked: 'systemInfo' | 'details';
   chosenRow = {};
   showSpinner = false;
+  width = window.innerWidth;
 
   constructor(
     private modelService: ModelService,
