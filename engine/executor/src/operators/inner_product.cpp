@@ -155,7 +155,7 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
   } else if (src1_->dtype() == "s8") {
     blocksize_ = {4, 16};
     weight_zero_ratio_ = GetSparseRatio<int8_t>(static_cast<const int8_t*>(src1_->data()), src1_->shape(), blocksize_);
-  } else {
+  } else if (src1_->dtype() != "bf16") {
     LOG(ERROR) << "src1 in innerproduct can not support dtype: " << src1_->dtype();
   }
   LOG(INFO) << "weight zero ratio: " << weight_zero_ratio_;
