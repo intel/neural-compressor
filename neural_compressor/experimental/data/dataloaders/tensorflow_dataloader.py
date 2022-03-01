@@ -88,7 +88,10 @@ class TFDataDataLoader(BaseDataLoader):
             for iter_tensors in dataset:
                 samples = []
                 iter_inputs, iter_labels = iter_tensors[0],iter_tensors[1]
-                samples.append(iter_inputs.numpy())
+                if isinstance(iter_inputs, tf.Tensor):
+                    samples.append(iter_inputs.numpy())
+                else:
+                    samples.append((iter_input.numpy() for iter_input in iter_inputs))
                 if isinstance(iter_labels,tf.Tensor):
                     samples.append(iter_labels.numpy())
                 else:
