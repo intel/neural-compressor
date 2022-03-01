@@ -110,7 +110,7 @@ class GraphAnalyzer():
                                  'global_step', 'read', 'switch', 'cond', 'train',
                                  'init_ops', '[A-Za-z]+Dataset']
         unlikely_input_types = ['FIFOQueueV2', 'QueueDequeueV2', 'QueueDequeueUpToV2',
-                                'OneShotIterator', 'IteratorGetNext']
+                                'OneShotIterator', 'IteratorGetNext', 'IteratorV2']
         exclude_input_names = []
         extra_input_names = []
 

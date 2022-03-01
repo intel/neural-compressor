@@ -12,7 +12,6 @@ from tensorflow.python.tools import optimize_for_inference_lib
 from tensorflow.core.protobuf import rewriter_config_pb2
 from dataloaders import WidedeepDataloader
 from find_outputs import get_input_output
-from find_outputs import _load_pb
 from utils import *
 
 logging.basicConfig(level=logging.INFO,
@@ -175,6 +174,14 @@ def oob_collate_data_func(batch):
     else:
         return batch
 
+def oob_collate_sparse_func(batch):
+    """Data collation function for sparse dummy dataset"""
+    extract_batch = []
+    for i in batch[0]:
+        for j in i[0]:
+            extract_batch.append(j)
+    return tuple(extract_batch[idx] for idx in seq_idxs), 0
+
 class DataLoader(object):
     def __init__(self, inputs_tensor, total_samples, batch_size):
         """dataloader generator
@@ -230,31 +237,37 @@ if __name__ == "__main__":
         # generate model detail
         model_dir = args.model_path
         model_detail = {}
+        model_detail['a_row_max'] = []
+        model_detail['a_column_max'] = []
         find_graph_def, model_input_output = get_input_output(model_dir, args)
         # ckpt/meta model will save freezed pb in the same dir
         model_dir = model_dir if not args.is_meta else args.model_path[:-5] + "_freeze.pb"
         output = model_input_output['outputs']
         input_dic = {}
-        for _input in model_input_output['inputs']:
+        input_nodes_info = model_input_output['inputs']['input_nodes_info']
+        for _input in input_nodes_info:
             # deal with bool dtype input
-            if model_input_output['inputs'][_input]['type'] == 'bool':
-                input_dic[_input] = model_input_output['inputs'][_input]['value']
-                logger.info("Find benchmark input name: {}, dtype: {}".format(_input, model_input_output['inputs'][_input]['type']))
+            if input_nodes_info[_input]['type'] == 'bool':
+                input_dic[_input] = input_nodes_info[_input]['value']
             elif _input == 'dropout_keep_prob':
                 input_dic[_input] = np.array([0.5,], dtype='float32')
             else:
-                dtype = model_input_output['inputs'][_input]['type']
-                dshape = model_input_output['inputs'][_input]['shape']
-                is_one_dim = model_input_output['inputs'][_input]['is_one_dim']
-                dummy_input = generate_data(dshape, dtype, args.batch_size, is_one_dim=is_one_dim)
+                dtype = input_nodes_info[_input]['type']
+                dshape = input_nodes_info[_input]['shape']
+                is_one_dim = input_nodes_info[_input]['is_one_dim']
+                sparse_d_shape_ops = model_input_output['inputs'].get('sparse_d_shape', {})
+                sparse_d_shape_op = [i for i in sparse_d_shape_ops.values() if _input in i]
+                if sparse_d_shape_op and list(sparse_d_shape_op[0]).index(_input)==0:
+                    dense_shape = sparse_d_shape_op[0][_input]
+                    dummy_input = generate_sparse_indice(dense_shape, dtype, args.batch_size)
+                else:
+                    dummy_input = generate_data(dshape, dtype, args.batch_size, is_one_dim=is_one_dim)
                 input_dic[_input] = dummy_input
-                logger.info("Find benchmark input name: {}, dtype: {}, shape: {}"
-                            .format(_input, dtype, dummy_input.shape))
         model_detail['model_dir'] = model_dir
         model_detail['input'] = input_dic
         model_detail['output'] = output
         model_detail['ckpt'] = args.is_meta
-
+        model_detail['sparse_d_shape'] = model_input_output['inputs'].get('sparse_d_shape', {})
 
     # benchmark with input/output
     elif args.model_name:
@@ -284,9 +297,9 @@ if __name__ == "__main__":
             # TODO: wait scalar support in dummy dataset
             inputs_shape.append((1,))
             inputs_dtype.append('bool')
-    logger.info("***** Final benchmark input name: {}, shape: {}".format( \
-                model_detail['input'].keys(), inputs_shape))
-    logger.info("***** Final benchmark output name: {}".format(model_detail['output']))
+    logger.info("Final benchmark input nodes: name_list={}, shape_list={}, dtype_list={}".format( \
+                list(model_detail['input'].keys()), inputs_shape, inputs_dtype))
+    logger.info("Final benchmark output nodes: name_list={}".format(model_detail['output']))
 
     # tune
     if args.tune:
@@ -298,15 +311,32 @@ if __name__ == "__main__":
 
         quantizer = Quantization("./config_tmp.yaml")
         # generate dummy data
-        dataset = quantizer.dataset(dataset_type='dummy', shape=inputs_shape,
-                                    low=1.0, high=20.0, dtype=inputs_dtype, label=True)
-
-        dataloader_dict = {'wide_deep': WidedeepDataloader}
-        if args.model_name and args.model_name in dataloader_dict.keys():
-            Dataloader = dataloader_dict[args.model_name]
+        if  model_detail.get('sparse_d_shape'):
+            sparse_input_names = [list(i.keys()) for i in model_detail['sparse_d_shape'].values()]
+            sparse_input_seq = sparse_input_names[0]
+            for i in range(1, len(sparse_input_names)):
+                sparse_input_seq += sparse_input_names[i]
+            input_dense_shape = [tuple(list(i.values())[0]) for i in model_detail['sparse_d_shape'].values()]
+            dataset = quantizer.dataset(dataset_type='sparse_dummy_v2',
+                                        dense_shape=input_dense_shape,
+                                        label_shape=[[1] for _ in range(len(input_dense_shape))],
+                                        sparse_ratio=[1-1/np.multiply(*i) for i in input_dense_shape])
+            seq_idxs = [sparse_input_seq.index(i) for i in inputs.keys()]
+            quantizer.calib_dataloader = common.DataLoader(dataset=dataset,
+                                                           batch_size=1,
+                                                           collate_fn=oob_collate_sparse_func)
         else:
-            Dataloader = common.DataLoader
-        quantizer.calib_dataloader = Dataloader(dataset=dataset,
+            dataset = quantizer.dataset(dataset_type='dummy',
+                                        shape=inputs_shape,
+                                        low=1.0, high=20.0,
+                                        dtype=inputs_dtype,
+                                        label=True)
+            dataloader_dict = {'wide_deep': WidedeepDataloader}
+            if args.model_name and args.model_name in dataloader_dict.keys():
+                Dataloader = dataloader_dict[args.model_name]
+            else:
+                Dataloader = common.DataLoader
+                quantizer.calib_dataloader = Dataloader(dataset=dataset,
                                                         batch_size=args.batch_size,
                                                         collate_fn=oob_collate_data_func)
         quantizer.model = args.model_path
@@ -316,4 +346,3 @@ if __name__ == "__main__":
     # benchmark
     if args.benchmark:
         run_benchmark(model_detail, args, find_graph_def)
-

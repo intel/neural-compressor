@@ -5,14 +5,15 @@ import sys
 import re
 
 from utils import *
-
+from neural_compressor.utils import logger
+from tensorflow.python.framework import tensor_util
 
 unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'Postprocessor', 'Batch', 'Preprocessor', 'save', \
     'global_step', 'Conv2d', 'read', 'switch', 'gradient', 'cond', 'train', 'detection_masks', 'detection_classes', 'xmax', 'xmin', 'ymax', 'ymin', \
-        'init_op', 'Merge', 'batch', 'SparseToDense', 'init_ops', 'RMSProp', 'transpose', 'ApplyAdam', ]
+        'init_op', 'Merge', 'batch', 'SparseToDense', 'init_ops', 'RMSProp', 'transpose', 'ApplyAdam']
 
 def summarize_graph(graph_def, fix_dynamic_shape):
-    placeholders = dict()
+    placeholders = dict(input_nodes_info={})
     outputs = list()
     graph = tf_v1.Graph()
     with graph.as_default():  # pylint: disable=not-context-manager
@@ -20,6 +21,7 @@ def summarize_graph(graph_def, fix_dynamic_shape):
     for node in graph.as_graph_def().node:  # pylint: disable=no-member
         if node.op == 'Placeholder':
             node_dict = dict()
+            node_dict['node_name'] = node.name
             node_dict['type'] = tf_v1.DType(node.attr['dtype'].type).name
             is_one_dim = False
             if node_dict['type'] != 'bool':
@@ -34,6 +36,7 @@ def summarize_graph(graph_def, fix_dynamic_shape):
                     if len(node_dict['shape']) > 1: 
                         node_dict['shape'] = node_dict['shape'][1:]
                     else:
+                        node_dict['shape'] = []
                         is_one_dim = True
                 except ValueError as e:
                     print(str(e))
@@ -44,8 +47,13 @@ def summarize_graph(graph_def, fix_dynamic_shape):
                 node_dict['shape'] = None
                 node_dict['value'] = False
             node_dict['is_one_dim'] = is_one_dim
-            print("********** Find input node: {}".format(node_dict))
-            placeholders[node.name] = node_dict
+            logger.info("[-OOB parse] Find a possible input node: {}".format(node_dict))
+            placeholders['input_nodes_info'].update({node.name: node_dict})
+            for tf_op in children(node.name, graph):
+                if tf_op.type == 'SparseTensorDenseMatMul':
+                    a_shape = tensor_util.MakeNdarray(tf_op.inputs[2].op.node_def.attr['value'].tensor)
+                    placeholders['sparse_d_shape'] = {tf_op.name: {tf_op.inputs[0].op.name: a_shape}}
+                    placeholders['sparse_d_shape'][tf_op.name][tf_op.inputs[1].op.name] = a_shape
 
         if len(children(node.name, graph)) == 0:
             is_output = True
@@ -56,7 +64,7 @@ def summarize_graph(graph_def, fix_dynamic_shape):
                     if unlikely_pattern in item:
                         is_output = False
             if is_output:
-                print("********** Find output node: {}".format(node.name))
+                logger.info("[-OOB parse] Find a possible output node: '{}'".format(node.name))
                 outputs.append(node.name)
 
     result = dict()
@@ -140,11 +148,17 @@ def get_input_output(graph_path, args):
 
     if args.use_nc:
         from neural_compressor.experimental import common
-        model = common.Model(graph_path)
-        if args.output_name is not None and args.output_name != [] and args.output_name != ['']:
+        model = common.Model(graph_path)        
+        if args.output_name in [[], ['']]:
+            raise AttributeError("Empty '--output_name', please specify a valid '--output_name'.")
+        elif args.output_name is not None:
             model.output_tensor_names = args.output_name
-        graph_def = model.graph_def
-        output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
+            graph_def = model.graph_def
+            output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
+            output_nodes['outputs'] = args.output_name
+        else:
+            graph_def = model.graph_def
+            output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
 
     elif args.is_meta:
         # meta file

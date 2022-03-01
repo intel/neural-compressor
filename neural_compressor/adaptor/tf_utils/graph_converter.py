@@ -154,11 +154,9 @@ class GraphConverter:
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
                 feed_dict = dict(zip(input_tensor, inputs))
-
-            _ = model.sess.run(output_tensor, feed_dict) if model.iter_op is None \
+            _ = model.sess.run(output_tensor, feed_dict) if model.iter_op==[] \
                 else iterator_sess_run(model.sess, model.iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
-
             if idx + 1 == self.calib_iteration:
                 break
 
