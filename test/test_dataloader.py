@@ -1124,6 +1124,43 @@ class TestDataloader(unittest.TestCase):
             dataset = datasets['dummy_v2'](\
                 input_shape=(256, 256, 3), dtype=['float32', 'int8'])
 
+    def test_tensorflow_sparse_dummy_v2(self):
+        datasets = DATASETS('tensorflow')
+        # test with label
+        dataset = datasets['sparse_dummy_v2'](\
+            dense_shape=[[10, 20], [5, 3]], label_shape=[[1]], sparse_ratio=[0.98, 0.8])
+        data_loader = DATALOADERS['tensorflow'](dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data[0][0][0].shape, (1, 4, 2))
+        self.assertEqual(data[0][0][1].shape, (1, 4))
+        self.assertEqual(data[0][1].shape, (1, 1))
+
+        # test without label
+        dataset = datasets['sparse_dummy_v2'](\
+            dense_shape=(256, 256, 3), sparse_ratio=0.3)
+        data_loader = DATALOADERS['tensorflow'](dataset)
+        iterator = iter(data_loader)
+        data = next(iterator)
+        self.assertEqual(data[0][0].shape, (1, 137626, 3))
+        self.assertEqual(data[0][1].shape, (1, 137626))
+ 
+        with self.assertRaises(AssertionError):
+            dataset = datasets['sparse_dummy_v2'](\
+                dense_shape=(256, 256, 3), low=[1., 0.])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['sparse_dummy_v2'](\
+                dense_shape=(256, 256, 3), high=[128., 127.])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['sparse_dummy_v2'](\
+                dense_shape=(256, 256, 3), dtype=['float32', 'int8'])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['sparse_dummy_v2'](\
+                dense_shape=(256, 256, 3), dtype=['0.3', '0.5'])
+        with self.assertRaises(AssertionError):
+            dataset = datasets['sparse_dummy_v2'](\
+                dense_shape=(256, 256, 3), label_shape=[[1], [2], [3]])
+
     def test_tensorflow_dataloader_multi_input(self):
         x = tf.data.Dataset.from_tensor_slices((np.random.random(20), np.random.random(20)))
         y = tf.data.Dataset.from_tensor_slices(np.random.random(20))
