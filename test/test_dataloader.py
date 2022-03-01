@@ -1124,6 +1124,16 @@ class TestDataloader(unittest.TestCase):
             dataset = datasets['dummy_v2'](\
                 input_shape=(256, 256, 3), dtype=['float32', 'int8'])
 
+    def test_tensorflow_dataloader_multi_input(self):
+        x = tf.data.Dataset.from_tensor_slices((np.random.random(20), np.random.random(20)))
+        y = tf.data.Dataset.from_tensor_slices(np.random.random(20))
+        dataset = tf.data.Dataset.zip((x, y))
+        dataloader = DATALOADERS['tensorflow'](dataset)
+        for i, (x, y) in enumerate(dataloader):
+            self.assertIsNotNone(x)
+            self.assertIsNotNone(y)
+            break
+        
     def test_style_transfer_dataset(self):
         random_array = np.random.random_sample([100,100,3]) * 255
         random_array = random_array.astype(np.uint8)
