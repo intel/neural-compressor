@@ -66,7 +66,9 @@ class DummyDataset(Dataset):
         np.random.seed(9527)
         self.transform = transform
         self.label = label
-        if isinstance(shape, list):
+        if len(shape)==0:
+            logger.info("No data in the dummy dataset.")
+        elif isinstance(shape, list):
             # list tensor should same first demension n
             n = shape[0][0]
             assert all(isinstance(elem, tuple) and elem[0] == n for elem in shape), \
