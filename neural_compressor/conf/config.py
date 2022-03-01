@@ -424,6 +424,26 @@ dataset_schema = Schema({
             And(str, Use(input_int_to_float))),
         Optional('dtype'): And(Or(str, list), Use(input_to_list)),
     },
+    Optional('sparse_dummy_v2'): {
+        'dense_shape': And(Or(str, list), Use(list_to_tuple)),
+        Optional('label_shape', default=[1]): And(Or(str, list), Use(list_to_tuple)),
+        Optional('sparse_ratio'): Or(
+            float,
+            And(list, Use(input_int_to_float)),
+            And(int, Use(input_int_to_float))),
+        Optional('low'): Or(
+            float,
+            And(int, Use(input_int_to_float)),
+            And(list, Use(input_int_to_float)),
+            And(str, Use(input_int_to_float))),
+        Optional('high'): Or(
+            float,
+            And(int, Use(input_int_to_float)),
+            And(list, Use(input_int_to_float)),
+            And(str, Use(input_int_to_float))),
+        Optional('dtype'): And(Or(str, list), Use(input_to_list)),
+    },
+ 
     Optional('dummy'): {
         'shape': And(Or(str, list), Use(list_to_tuple)),
         Optional('low'): Or(
