@@ -54,8 +54,7 @@ class DummyDataset(Dataset):
                                                         If transform is not None, it will ignore
                                                         it.  
           filter (Filter objects, default=None): filter out examples according to 
-                                                specific conditions
-
+                                                specific conditions                                         
     """
     def __init__(self, shape, low=-128., high=127., dtype='float32', label=True, \
         transform=None, filter=None):

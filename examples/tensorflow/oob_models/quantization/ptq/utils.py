@@ -12,18 +12,28 @@ try:
 except ImportError:
     import tensorflow as tf_v1
 
-def generate_data(input_shape, input_dtype="float32", batch_size=1, max_int_value=35, newaxis=True, is_one_dim=False):
+def generate_data(input_shape, input_dtype="float32",
+                  batch_size=1, max_int_value=35,
+                  newaxis=True, is_one_dim=False):
     np.random.seed(1024)
     if input_dtype in ["uint8", "int8", "int32", "int64"]:
+        if is_one_dim:
+            return np.random.randint(1, max_int_value, batch_size).astype(input_dtype)
         dummy_input = np.random.randint(1, max_int_value, input_shape).astype(input_dtype)
     else:
+        if is_one_dim:
+            return np.random.randn(batch_size).astype(input_dtype)
         dummy_input = np.random.randn(*input_shape).astype(input_dtype)
     # handle the case that the shape of the input is one-dimensional
     if newaxis == False:
         return np.repeat(dummy_input, batch_size, axis=0)
-    if len(input_shape) == 1 and is_one_dim:
-        return dummy_input
     return np.repeat(dummy_input[np.newaxis, :], batch_size, axis=0)
+
+def generate_sparse_indice(dense_shape, input_dtype="int64", batch_size=1):
+    dummy_indice = np.ones(shape=[batch_size, 2], dtype=input_dtype)
+    dummy_indice[:,0] = np.random.randint(0, dense_shape[0], batch_size).astype(input_dtype)
+    dummy_indice[:,1] = np.random.randint(0, dense_shape[1], batch_size).astype(input_dtype)
+    return dummy_indice
 
 def freeze_graph(input_checkpoint, output_graph, output_node_names):
     tf_v1.disable_eager_execution()
@@ -88,4 +98,3 @@ def write_graph(out_graph_def, out_graph_file):
         raise ValueError('"output_graph" directory does not exists.')
     f = gfile.GFile(out_graph_file, 'wb')
     f.write(out_graph_def.SerializeToString())
-
