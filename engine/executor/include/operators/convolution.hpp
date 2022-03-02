@@ -61,8 +61,8 @@ class ConvolutionOperator : public Operator {
   float output_scale_ = 1.f;
   string output_dtype_ = "fp32";
   vector<int64_t> src_perm_;
-  vector<int64_t> weight_perm_;
   vector<int64_t> dst_perm_;
+  int64_t group_ = 1;
   vector<int64_t> pads_;
   vector<int64_t> strides_;
   vector<int64_t> weight_shape_;

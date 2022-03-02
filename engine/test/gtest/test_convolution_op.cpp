@@ -43,16 +43,13 @@ void Conv2D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
   if (src_perm.empty()) {
     src_perm = {0, 1, 2, 3};
   }
-  vector<int64_t> weight_perm;
-  executor::StringSplit<int64_t>(&weight_perm, attrs_map["weight_perm"], ",");
-  if (weight_perm.empty()) {
-    weight_perm = {0, 1, 2, 3};
-  }
   vector<int64_t> dst_perm;
   executor::StringSplit<int64_t>(&dst_perm, attrs_map["dst_perm"], ",");
   if (dst_perm.empty()) {
     dst_perm = {0, 1, 2, 3};
   }
+  int64_t group = 1;
+  group = executor::StringToNum<int64_t>(attrs_map["group"]);
   vector<int64_t> pads;
   executor::StringSplit<int64_t>(&pads, attrs_map["pads"], ",");
   if (pads.empty()) {
@@ -86,8 +83,8 @@ void Conv2D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
   vector<int64_t> src_shape = executor::GetShapes(src_shape_origin, src_perm);
   vector<int64_t> src_stride = executor::GetStrides(src_shape_origin, src_perm);
   vector<int64_t> weight_shape_origin = weight->shape();
-  vector<int64_t> weight_shape = executor::GetShapes(weight_shape_origin, weight_perm);
-  vector<int64_t> weight_stride = executor::GetStrides(weight_shape_origin, weight_perm);
+  vector<int64_t> weight_shape = executor::GetShapes(weight_shape_origin);
+  vector<int64_t> weight_stride = executor::GetStrides(weight_shape_origin);
 
   // 1.2 malloc tensor for output
   // src_: N * IC* IH * IW, weight_: OC * IC * KH * KW
@@ -100,6 +97,7 @@ void Conv2D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
   const int64_t IH = src_shape[2];
   const int64_t IW = src_shape[3];
   const int64_t OC = weight_shape[0];
+  const int64_t KC = weight_shape[1];
   const int64_t KH = weight_shape[2];
   const int64_t KW = weight_shape[3];
   const int64_t PH_L = pads[0];
@@ -132,40 +130,47 @@ void Conv2D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
     }
   }
 
+  const int64_t num_output_g = OC / group;
   float* dst_data = static_cast<float*>(output[0]->mutable_data());
+#pragma omp parallel for
   for (int n = 0; n < N; ++n) {
-    for (int oc = 0; oc < OC; ++oc) {
-      for (int oh = 0; oh < OH; ++oh) {
-        for (int ow = 0; ow < OW; ++ow) {
-          float sum_data = bias_tensor_data[oc];
-          for (int ic = 0; ic < IC; ++ic) {
-            float* pad_map_data =
-                src_pad_data + n * pad_stride[0] + ic * pad_stride[1] + oh * SH * pad_stride[2] + ow * SW;
-            for (int kh = 0; kh < KH; ++kh) {
-              for (int kw = 0; kw < KW; ++kw) {
-                sum_data +=
-                    wei_tensor_data[oc * weight_stride[0] + ic * weight_stride[1] + kh * weight_stride[2] + kw] *
-                    pad_map_data[kh * pad_stride[2] + kw];
+#pragma omp simd
+    for (int g = 0; g < group; ++g) {
+      for (int oc = 0; oc < num_output_g; ++oc) {
+        for (int oh = 0; oh < OH; ++oh) {
+          for (int ow = 0; ow < OW; ++ow) {
+            float sum_data = bias_tensor_data[g * num_output_g + oc];
+            for (int kc = 0; kc < KC; ++kc) {
+              float* pad_map_data =
+                  src_pad_data + n * pad_stride[0] + (g * KC + kc) * pad_stride[1] + oh * SH * pad_stride[2] + ow * SW;
+              for (int kh = 0; kh < KH; ++kh) {
+                for (int kw = 0; kw < KW; ++kw) {
+                  sum_data += wei_tensor_data[(g * num_output_g + oc) * weight_stride[0] + kc * weight_stride[1] +
+                                              kh * weight_stride[2] + kw] *
+                              pad_map_data[kh * pad_stride[2] + kw];
+                }
               }
             }
+            if (gelu_erf) {
+              const float sqrt_2_over_2 = 0.707106;
+              float v = sum_data * sqrt_2_over_2;
+              sum_data = (sqrt_2_over_2 * v * (1.f + ::erff(v)));
+            } else if (gelu_tanh) {
+              const float a = 0.797884;
+              const float b = 0.044715;
+              const float g = a * sum_data * (1 + b * sum_data * sum_data);
+              sum_data = 0.5 * sum_data * (1 + ::tanhf(g));
+            } else if (relu) {
+              sum_data = sum_data < 0 ? 0 : sum_data;
+            } else if (binary_add) {
+              sum_data += post_tensor_data[n * output_stride[0] + (g * num_output_g + oc) * output_stride[1] +
+                                           oh * output_stride[2] + ow];
+            } else if (tanh) {
+              sum_data = tanhf(sum_data);
+            }
+            dst_data[n * output_stride[0] + (g * num_output_g + oc) * output_stride[1] + oh * output_stride[2] + ow] =
+                sum_data;
           }
-          if (gelu_erf) {
-            const float sqrt_2_over_2 = 0.707106;
-            float v = sum_data * sqrt_2_over_2;
-            sum_data = (sqrt_2_over_2 * v * (1.f + ::erff(v)));
-          } else if (gelu_tanh) {
-            const float a = 0.797884;
-            const float b = 0.044715;
-            const float g = a * sum_data * (1 + b * sum_data * sum_data);
-            sum_data = 0.5 * sum_data * (1 + ::tanhf(g));
-          } else if (relu) {
-            sum_data = sum_data < 0 ? 0 : sum_data;
-          } else if (binary_add) {
-            sum_data += post_tensor_data[n * output_stride[0] + oc * output_stride[1] + oh * output_stride[2] + ow];
-          } else if (tanh) {
-            sum_data = tanhf(sum_data);
-          }
-          dst_data[n * output_stride[0] + oc * output_stride[1] + oh * output_stride[2] + ow] = sum_data;
         }
       }
     }
@@ -180,16 +185,13 @@ void Conv1D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
   if (src_perm.empty()) {
     src_perm = {0, 1, 2};
   }
-  vector<int64_t> weight_perm;
-  executor::StringSplit<int64_t>(&weight_perm, attrs_map["weight_perm"], ",");
-  if (weight_perm.empty()) {
-    weight_perm = {0, 1, 2};
-  }
   vector<int64_t> dst_perm;
   executor::StringSplit<int64_t>(&dst_perm, attrs_map["dst_perm"], ",");
   if (dst_perm.empty()) {
     dst_perm = {0, 1, 2};
   }
+  int64_t group = 1;
+  group = executor::StringToNum<int64_t>(attrs_map["group"]);
   vector<int64_t> pads;
   executor::StringSplit<int64_t>(&pads, attrs_map["pads"], ",");
   if (pads.empty()) {
@@ -220,8 +222,8 @@ void Conv1D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
   vector<int64_t> src_shape = executor::GetShapes(src_shape_origin, src_perm);
   vector<int64_t> src_stride = executor::GetStrides(src_shape_origin, src_perm);
   vector<int64_t> weight_shape_origin = weight->shape();
-  vector<int64_t> weight_shape = executor::GetShapes(weight_shape_origin, weight_perm);
-  vector<int64_t> weight_stride = executor::GetStrides(weight_shape_origin, weight_perm);
+  vector<int64_t> weight_shape = executor::GetShapes(weight_shape_origin);
+  vector<int64_t> weight_stride = executor::GetStrides(weight_shape_origin);
 
   // 1.2 malloc tensor for output
   // src_: N * IC* IH * IW, weight_: OC * IC * KH * KW
@@ -232,6 +234,7 @@ void Conv1D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
   const int64_t IC = src_shape[1];
   const int64_t IH = src_shape[2];
   const int64_t OC = weight_shape[0];
+  const int64_t KC = weight_shape[1];
   const int64_t KH = weight_shape[2];
   const int64_t PH_L = pads[0];
   const int64_t PH_R = pads[1];
@@ -256,37 +259,44 @@ void Conv1D(const std::vector<Tensor*>& input, const std::vector<Tensor*>& outpu
     }
   }
 
+  const int64_t num_output_g = OC / group;
   float* dst_data = static_cast<float*>(output[0]->mutable_data());
+#pragma omp parallel for
   for (int n = 0; n < N; ++n) {
-    for (int oc = 0; oc < OC; ++oc) {
-      for (int oh = 0; oh < OH; ++oh) {
-        float sum_data = bias_tensor_data[oc];
-        for (int ic = 0; ic < IC; ++ic) {
-          float* pad_map_data = src_pad_data + n * pad_stride[0] + ic * pad_stride[1] + oh * SH;
-          for (int kh = 0; kh < KH; ++kh) {
-            sum_data += wei_tensor_data[oc * weight_stride[0] + ic * weight_stride[1] + kh] * pad_map_data[kh];
+#pragma omp simd
+    for (int g = 0; g < group; ++g) {
+      for (int oc = 0; oc < num_output_g; ++oc) {
+        for (int oh = 0; oh < OH; ++oh) {
+          float sum_data = bias_tensor_data[g * num_output_g + oc];
+          for (int kc = 0; kc < KC; ++kc) {
+            float* pad_map_data = src_pad_data + n * pad_stride[0] + (g * KC + kc) * pad_stride[1] + oh * SH;
+            for (int kh = 0; kh < KH; ++kh) {
+              sum_data += wei_tensor_data[(g * num_output_g + oc) * weight_stride[0] + kc * weight_stride[1] + kh] *
+                          pad_map_data[kh];
+            }
           }
+          if (gelu_erf) {
+            const float sqrt_2_over_2 = 0.707106;
+            float v = sum_data * sqrt_2_over_2;
+            sum_data = (sqrt_2_over_2 * v * (1.f + ::erff(v)));
+          } else if (gelu_tanh) {
+            const float a = 0.797884;
+            const float b = 0.044715;
+            const float g = a * sum_data * (1 + b * sum_data * sum_data);
+            sum_data = 0.5 * sum_data * (1 + ::tanhf(g));
+          } else if (relu) {
+            sum_data = sum_data < 0 ? 0 : sum_data;
+          } else if (binary_add) {
+            sum_data += post_tensor_data[n * output_stride[0] + (g * num_output_g + oc) * output_stride[1] + oh];
+          } else if (tanh) {
+            sum_data = tanhf(sum_data);
+          }
+          dst_data[n * output_stride[0] + (g * num_output_g + oc) * output_stride[1] + oh] = sum_data;
         }
-        if (gelu_erf) {
-          const float sqrt_2_over_2 = 0.707106;
-          float v = sum_data * sqrt_2_over_2;
-          sum_data = (sqrt_2_over_2 * v * (1.f + ::erff(v)));
-        } else if (gelu_tanh) {
-          const float a = 0.797884;
-          const float b = 0.044715;
-          const float g = a * sum_data * (1 + b * sum_data * sum_data);
-          sum_data = 0.5 * sum_data * (1 + ::tanhf(g));
-        } else if (relu) {
-          sum_data = sum_data < 0 ? 0 : sum_data;
-        } else if (binary_add) {
-          sum_data += post_tensor_data[n * output_stride[0] + oc * output_stride[1] + oh];
-        } else if (tanh) {
-          sum_data = tanhf(sum_data);
-        }
-        dst_data[n * output_stride[0] + oc * output_stride[1] + oh] = sum_data;
       }
     }
   }
+
   free(src_pad_data);
 }
 
@@ -344,8 +354,8 @@ TEST_P(InnerProductTest, TestPostfix) {
 }
 
 std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t> >& input_shape,
-                                           const std::string& src_perm, const std::string& weight_perm,
-                                           const std::string& dst_perm, const std::string& pads,
+                                           const std::string& src_perm, const std::string& dst_perm,
+                                           const std::string& group, const std::string& pads,
                                            const std::string& strides, const std::string& output_dtype,
                                            const std::string& append_op) {
   // Step 1: Construct Tensor config ptr
@@ -364,7 +374,7 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
 
   // Step 1.1: Construct Operator config obj
   std::map<std::string, std::string> attr_map;
-  attr_map = {{"src_perm", src_perm}, {"weight_perm", weight_perm},   {"dst_perm", dst_perm},  {"pads", pads},
+  attr_map = {{"src_perm", src_perm}, {"dst_perm", dst_perm},         {"group", group},        {"pads", pads},
               {"strides", strides},   {"output_dtype", output_dtype}, {"append_op", append_op}};
 
   AttrConfig* op_attr = new AttrConfig(attr_map);
@@ -416,220 +426,270 @@ static auto CasesFp32 = []() {
   std::vector<int64_t> weight_shape;
   std::vector<int64_t> bias_shape;
   std::vector<int64_t> post_shape;
+  std::string group = "";
   std::string pads = "";
   std::string strides = "";
   std::string src_perm = "";
-  std::string weight_perm = "";
   std::string dst_perm = "";
   std::string output_dtype = "fp32";
   std::string append_op = "";
 
-  // case: 2d conv
+  // case1: 2d conv
   src_shape = {3, 32, 13, 13};
   weight_shape = {64, 32, 3, 3};
   bias_shape = {64};
   src_perm = "0,1,2,3";
-  weight_perm = "0,1,2,3";
   dst_perm = "0,1,2,3";
+  group = "1";
   pads = "1,1,1,1";
   strides = "4,4";
   output_dtype = "fp32";
   append_op = "";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
-  // case: 2d conv, gelu_erf
+  // case2: 2d conv, gelu_erf
   src_shape = {3, 32, 13, 13};
   weight_shape = {64, 32, 3, 3};
   bias_shape = {64};
   src_perm = "0,1,2,3";
-  weight_perm = "0,1,2,3";
   dst_perm = "0,1,2,3";
+  group = "1";
   pads = "1,1,1,1";
   strides = "4,4";
   output_dtype = "fp32";
   append_op = "gelu_erf";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
-  // case: 2d conv, gelu_tanh
+  // case3: 2d conv, gelu_tanh
   src_shape = {3, 32, 13, 13};
   weight_shape = {64, 32, 3, 3};
   bias_shape = {64};
   src_perm = "0,1,2,3";
-  weight_perm = "0,1,2,3";
   dst_perm = "0,1,2,3";
+  group = "1";
   pads = "1,1,1,1";
   strides = "4,4";
   output_dtype = "fp32";
   append_op = "gelu_tanh";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 2d conv, relu
+  // case4: 2d conv, relu
   src_shape = {3, 32, 13, 13};
   weight_shape = {64, 32, 3, 3};
   bias_shape = {64};
   src_perm = "0,1,2,3";
-  weight_perm = "0,1,2,3";
   dst_perm = "0,1,2,3";
+  group = "1";
   pads = "1,1,1,1";
   strides = "4,4";
   output_dtype = "fp32";
   append_op = "relu";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 2d conv, tanh
+  // case5: 2d conv, tanh
   src_shape = {3, 32, 13, 13};
   weight_shape = {64, 32, 3, 3};
   bias_shape = {64};
   src_perm = "0,1,2,3";
-  weight_perm = "0,1,2,3";
   dst_perm = "0,1,2,3";
+  group = "1";
   pads = "1,1,1,1";
   strides = "4,4";
   output_dtype = "fp32";
   append_op = "tanh";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 2d conv, binary_add
+  // case6: 2d conv, binary_add
   src_shape = {3, 32, 13, 13};
   weight_shape = {64, 32, 3, 3};
   bias_shape = {64};
   post_shape = {3, 64, 4, 4};
   src_perm = "0,1,2,3";
-  weight_perm = "0,1,2,3";
   dst_perm = "0,1,2,3";
+  group = "1";
   pads = "1,1,1,1";
   strides = "4,4";
   output_dtype = "fp32";
   append_op = "binary_add";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, src_perm, weight_perm, dst_perm,
-                                    pads, strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, src_perm, dst_perm, group, pads,
+                                    strides, output_dtype, append_op),
                    false});
 
-  // case: 1d conv
+  // case7: 2d conv, binary_add, group=2
+  src_shape = {3, 32, 13, 13};
+  weight_shape = {64, 16, 3, 3};
+  bias_shape = {64};
+  post_shape = {3, 64, 4, 4};
+  src_perm = "";
+  dst_perm = "";
+  group = "2";
+  pads = "1,1,1,1";
+  strides = "4,4";
+  output_dtype = "fp32";
+  append_op = "binary_add";
+
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, src_perm, dst_perm, group, pads,
+                                    strides, output_dtype, append_op),
+                   false});
+
+  // case8: 1d conv
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 1d conv, gelu_erf
+  // case9: 1d conv, gelu_erf
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "gelu_erf";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 1d conv, gelu_tanh
+  // case10: 1d conv, gelu_tanh
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "gelu_tanh";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 1d conv, relu
+  // case11: 1d conv, relu
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "relu";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 1d conv, relu
+  // case12: 1d conv, relu
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "relu";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 1d conv, tanh
+  // case13: 1d conv, tanh
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "tanh";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, weight_perm, dst_perm, pads,
-                                    strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
                    false});
 
-  // case: 1d conv, binary_add
+  // case14: 1d conv, binary_add
   src_shape = {3, 32, 13};
   weight_shape = {64, 32, 3};
   bias_shape = {64};
   post_shape = {3, 64, 4};
   src_perm = "0,1,2";
-  weight_perm = "0,1,2";
   dst_perm = "0,1,2";
+  group = "1";
   pads = "1,1";
   strides = "4";
   output_dtype = "fp32";
   append_op = "binary_add";
 
-  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, src_perm, weight_perm, dst_perm,
-                                    pads, strides, output_dtype, append_op),
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, src_perm, dst_perm, group, pads,
+                                    strides, output_dtype, append_op),
+                   false});
+
+  // case15: 1d conv, group=2
+  src_shape = {3, 32, 13};
+  weight_shape = {64, 16, 3};
+  bias_shape = {64};
+  src_perm = "";
+  dst_perm = "";
+  group = "2";
+  pads = "1,1";
+  strides = "4";
+  output_dtype = "fp32";
+  append_op = "";
+
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape}, src_perm, dst_perm, group, pads, strides,
+                                    output_dtype, append_op),
+                   false});
+
+  // case16: 1d conv, group=2, binary_add
+  src_shape = {3, 32, 13};
+  weight_shape = {64, 16, 3};
+  bias_shape = {64};
+  post_shape = {3, 64, 4};
+  src_perm = "";
+  dst_perm = "";
+  group = "2";
+  pads = "1,1";
+  strides = "4";
+  output_dtype = "fp32";
+  append_op = "binary_add";
+
+  cases.push_back({GenerateFp32Case({src_shape, weight_shape, bias_shape, post_shape}, src_perm, dst_perm, group, pads,
+                                    strides, output_dtype, append_op),
                    false});
 
   return ::testing::ValuesIn(cases);
