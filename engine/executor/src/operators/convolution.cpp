@@ -26,7 +26,6 @@ static unordered_map<string, dnnl::memory::data_type> type2mem{
 ConvolutionOperator::ConvolutionOperator(const OperatorConfig& conf)
     : Operator(conf),
       src_perm_({}),
-      weight_perm_({}),
       dst_perm_({}),
       output_scale_(1.),
       format_any_(true),
@@ -38,13 +37,13 @@ ConvolutionOperator::ConvolutionOperator(const OperatorConfig& conf)
   if (iter != attrs_map.end()) {
     StringSplit<int64_t>(&src_perm_, attrs_map["src_perm"], ",");
   }
-  iter = attrs_map.find("weight_perm");
-  if (iter != attrs_map.end()) {
-    StringSplit<int64_t>(&weight_perm_, attrs_map["weight_perm"], ",");
-  }
   iter = attrs_map.find("dst_perm");
   if (iter != attrs_map.end()) {
     StringSplit<int64_t>(&dst_perm_, attrs_map["dst_perm"], ",");
+  }
+  iter = attrs_map.find("group");
+  if (iter != attrs_map.end()) {
+    group_ = StringToNum<int64_t>(attrs_map["group"]);
   }
   iter = attrs_map.find("pads");
   if (iter != attrs_map.end()) {
@@ -237,16 +236,27 @@ void ConvolutionOperator::Prepare(const vector<Tensor*>& input, const vector<Ten
 
   // cache weight here, save weight and bias memory descriptor
   vector<int64_t> weight_shape_origin = weight_->shape();
-  weight_shape_ = GetShapes(weight_shape_origin, weight_perm_);
-  vector<int64_t> weight_stride = GetStrides(weight_shape_origin, weight_perm_);
+  weight_shape_ = GetShapes(weight_shape_origin);
   weight_->set_shape(weight_shape_);
-  any_weight_md_ = memory::desc(weight_shape_, type2mem[weight_->dtype()], memory::format_tag::any);
-  weight_md_ = memory::desc(weight_shape_, type2mem[weight_->dtype()], weight_stride);
+
+  vector<int64_t> weight_group_shape = weight_shape_origin;
+  if (group_ != 1) {
+    weight_group_shape.insert(weight_group_shape.begin(), group_);
+    weight_group_shape[1] /= group_;
+    if (weight_group_shape[1] % group_ != 0) {
+      LOG(ERROR) << "Output channel(" << weight_group_shape[1] << ") is not divisible by "
+                 << "group(" << group_ << ") in covolution!";
+    }
+  }
+  vector<int64_t> weight_group_stride = GetStrides(weight_group_shape);
+
+  any_weight_md_ = memory::desc(weight_group_shape, type2mem[weight_->dtype()], memory::format_tag::any);
+  weight_md_ = memory::desc(weight_group_shape, type2mem[weight_->dtype()], weight_group_stride);
   weight_m_ = memory(weight_md_, eng_, weight_->mutable_data());
 
   if (has_bias_) {
-    vector<int64_t> bias_shape = {weight_shape_[0]};
-    vector<int64_t> bias_stride = GetStrides(bias_shape);
+    const vector<int64_t> bias_shape = bias_->shape();
+    const vector<int64_t> bias_stride = GetStrides(bias_shape);
     bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
     any_bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
     bias_m_ = memory(bias_md_, eng_, bias_->mutable_data());
@@ -268,7 +278,7 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
   vector<int64_t> padding_dims_r;
   switch (src_shape_origin.size()) {
     case 3: {
-      // src_: N * IC* IH, weight_: OC * IC * KH
+      // src_: N * IC* IH, weight_: OC * KC * KH
       // pad: (PH_L, PH_R), stride: (SH)
       // OH = (IH - KH + PH_L + PH_R) / SH + 1, // output height
       // dst_: N * OC * OH
@@ -276,10 +286,15 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
       const int64_t IC = src_shape[1];
       const int64_t IH = src_shape[2];
       const int64_t OC = weight_shape_[0];
+      const int64_t KC = weight_shape_[1];
       const int64_t KH = weight_shape_[2];
       const int64_t PH_L = pads_[0];
       const int64_t PH_R = pads_[1];
       const int64_t SH = strides_[0];
+      if (KC * group_ != IC) {
+        LOG(ERROR) << "Multiplying kernel channel(" << KC << " and group(" << group_
+                   << ") does not equal input channel(" << IC << ") in covolution!";
+      }
       const int64_t OH = (IH - KH + PH_L + PH_R) / SH + 1;
       padding_dims_l = {PH_L};
       padding_dims_r = {PH_R};
@@ -287,7 +302,7 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
       break;
     }
     case 4: {
-      // src_: N * IC* IH * IW, weight_: OC * IC * KH * KW
+      // src_: N * IC* IH * IW, weight_: OC * KC * KH * KW
       // pad: (PH_L, PH_R, PW_L, PW_R), stride: (SH, SW)
       // OH = (IH - KH + PH_L + PH_R) / SH + 1, // output height
       // OW = (IW - KW + PW_L + PW_R) / SW + 1; // output width
@@ -297,6 +312,7 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
       const int64_t IH = src_shape[2];
       const int64_t IW = src_shape[3];
       const int64_t OC = weight_shape_[0];
+      const int64_t KC = weight_shape_[1];
       const int64_t KH = weight_shape_[2];
       const int64_t KW = weight_shape_[3];
       const int64_t PH_L = pads_[0];
@@ -307,6 +323,10 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
       const int64_t SW = strides_[1];
       const int64_t OH = (IH - KH + PH_L + PH_R) / SH + 1;
       const int64_t OW = (IW - KW + PW_L + PW_R) / SW + 1;
+      if (KC * group_ != IC) {
+        LOG(ERROR) << "Multiplying kernel channel(" << KC << " and group(" << group_
+                   << ") does not equal input channel(" << IC << ") in covolution!";
+      }
       padding_dims_l = {PH_L, PW_L};
       padding_dims_r = {PH_R, PW_R};
       dst_shape_origin = {N, OC, OH, OW};
@@ -343,7 +363,6 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
                                             weight_md_, bias_md_, dst_md, strides_, padding_dims_l, padding_dims_r)
           : dnnl::convolution_forward::desc(prop_kind::forward_inference, algorithm::convolution_auto, src_md,
                                             weight_md_, dst_md, strides_, padding_dims_l, padding_dims_r);
-
   if (format_any_) {
     convolution_d = has_bias_ ? dnnl::convolution_forward::desc(
                                     prop_kind::forward_inference, algorithm::convolution_auto, any_src_md,
@@ -426,29 +445,23 @@ void ConvolutionOperator::Forward(const vector<Tensor*>& input, const vector<Ten
       LOG(WARNING) << "post tensor will be used by multi node...";
     }
   }
-
   // 0. Alias variables part
   const auto& src_data = src_->data();
   // when change data value please use mutable_data
   auto dst_data = dst_->mutable_data();
-
   // 1. Prepare memory objects with data_ptr
   src_m_.set_data_handle(const_cast<void*>(src_data), eng_stream_);
   dst_m_.set_data_handle(reinterpret_cast<void*>(dst_data), eng_stream_);
-
   memory any_src_m = src_m_;
   memory any_dst_m = dst_m_;
-
   // 2. Reorder the data when the primitive memory and user memory are different
   if (convolution_pd_.src_desc() != src_m_.get_desc()) {
     any_src_m = memory(convolution_pd_.src_desc(), eng_);
     dnnl::reorder(src_m_, any_src_m).execute(eng_stream_, src_m_, any_src_m);
   }
-
   if (convolution_pd_.dst_desc() != dst_m_.get_desc()) {
     any_dst_m = memory(convolution_pd_.dst_desc(), eng_);
   }
-
   // 3. Insert memory args
   memory_args_[DNNL_ARG_SRC_0] = any_src_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
@@ -457,15 +470,12 @@ void ConvolutionOperator::Forward(const vector<Tensor*>& input, const vector<Ten
     binary_m_.set_data_handle(post_ptr, eng_stream_);
     memory_args_[DNNL_ARG_ATTR_MULTIPLE_POST_OP(0) | DNNL_ARG_SRC_1] = binary_m_;
   }
-
   // 4. Execute the primitive
   convolution_p_.execute(eng_stream_, memory_args_);
-
   // 5. Reorder the data of dst memory (When it is format_any)
   if (convolution_pd_.dst_desc() != dst_m_.get_desc()) {
     dnnl::reorder(any_dst_m, dst_m_).execute(eng_stream_, any_dst_m, dst_m_);
   }
-
   // gelu seperate
   if ((gelu_split_ && gelu_tanh_) || (gelu_split_ && gelu_erf_)) {
     dst_m_.set_data_handle(reinterpret_cast<void*>(dst_data), gelu_eng_stream_);
@@ -475,6 +485,7 @@ void ConvolutionOperator::Forward(const vector<Tensor*>& input, const vector<Ten
     gelu_p_.execute(gelu_eng_stream_, gelu_memory_args_);
   }
   eng_stream_.wait();
+  this->unref_tensors(input);
 }
 
 REGISTER_OPERATOR_CLASS(Convolution);
