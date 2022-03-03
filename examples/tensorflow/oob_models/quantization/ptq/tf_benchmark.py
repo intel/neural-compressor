@@ -336,9 +336,9 @@ if __name__ == "__main__":
                 Dataloader = dataloader_dict[args.model_name]
             else:
                 Dataloader = common.DataLoader
-                quantizer.calib_dataloader = Dataloader(dataset=dataset,
-                                                        batch_size=args.batch_size,
-                                                        collate_fn=oob_collate_data_func)
+            quantizer.calib_dataloader = Dataloader(dataset=dataset,
+                                                    batch_size=args.batch_size,
+                                                    collate_fn=oob_collate_data_func)
         quantizer.model = args.model_path
         q_model = quantizer.fit()
         q_model.save(args.output_path)
