@@ -13,20 +13,12 @@
 // limitations under the License.
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DetailsComponent } from './details/details.component';
 import { HomeComponent } from './home/home.component';
-import { ImportModelComponent } from './import-model/import-model.component';
-import { ModelListComponent } from './model-list/model-list.component';
-import { PredefinedModelsComponent } from './predefined-models/predefined-models.component';
 import { ProjectComponent } from './project/project.component';
 
 
 const routes: Routes = [
-  { path: 'config-wizard', component: ImportModelComponent },
   { path: 'home', component: HomeComponent },
-  { path: 'my-models', component: ModelListComponent },
-  { path: 'model-zoo', component: PredefinedModelsComponent },
-  { path: 'details/:id', component: DetailsComponent },
   { path: 'project/:id', component: ProjectComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 ];
