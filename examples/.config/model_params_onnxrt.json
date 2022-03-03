@@ -269,6 +269,15 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "mask_rcnn": {
+      "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
+      "yaml": "mask_rcnn.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     }
   }
 }
