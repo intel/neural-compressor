@@ -94,6 +94,12 @@ export class ProfilingComponent implements OnInit {
   ngOnInit(): void {
     this.token = this.modelService.getToken();
     this.getProfilingList();
+    this.modelService.projectChanged$
+      .subscribe(response => {
+        this.getProfilingList(response['id']);
+        this.activeProfilingId = -1;
+        this.profilingData = [];
+      });
     this.socketService.profilingStart$
       .subscribe(resp => {
         this.getProfilingList();
@@ -101,12 +107,6 @@ export class ProfilingComponent implements OnInit {
     this.socketService.profilingFinish$
       .subscribe(resp => {
         this.getProfilingList();
-      });
-    this.modelService.projectChanged$
-      .subscribe(resp => {
-        this.getProfilingList();
-        this.activeProfilingId = -1;
-        this.profilingData = [];
       });
   }
 
@@ -129,14 +129,23 @@ export class ProfilingComponent implements OnInit {
 
     this.profilingList.find(profiling => profiling.id === profilingId).status = 'wip';
     this.modelService.executeProfiling(profilingId, requestId)
-      .subscribe();
+      .subscribe(
+        response => { },
+        error => {
+          this.modelService.openErrorDialog(error);
+        }
+      );
   }
 
-  getProfilingList() {
-    this.modelService.getProfilingList(this.activatedRoute.snapshot.params.id)
-      .subscribe(response => {
-        this.profilingList = response['profilings'];
-      });
+  getProfilingList(id?: number) {
+    this.modelService.getProfilingList(id ?? this.activatedRoute.snapshot.params.id)
+      .subscribe(
+        response => {
+          this.profilingList = response['profilings'];
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   getProfilingDetails(id) {
@@ -150,6 +159,9 @@ export class ProfilingComponent implements OnInit {
             this.profilingDataHeaders = Object.keys(this.profilingData[0]).filter(key => !key.includes('id'));
             this.showProfilingChart();
           }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
         });
   }
 

@@ -64,9 +64,13 @@ export class GraphComponent implements OnInit {
     this.showSpinner = true;
     this.modelPath = this.modelPath ?? this.data.modelPath;
     this.modelService.getModelGraph(this.modelPath)
-      .subscribe(response => {
-        this.updateGraph(response);
-      });
+      .subscribe(
+        response => {
+          this.updateGraph(response);
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   center() {
@@ -117,7 +121,11 @@ export class GraphComponent implements OnInit {
       this.expandedNodesArray.push(id);
     }
     this.modelService.getModelGraph(this.modelPath, this.expandedNodesArray)
-      .subscribe(graph => this.updateGraph(graph));
+      .subscribe(
+        graph => { this.updateGraph(graph) },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   collapse(id: string) {

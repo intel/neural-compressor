@@ -179,7 +179,7 @@ class ProjectAPIInterface:
     def add_dummy_dataset(db_session: session.Session, data: dict) -> Optional[int]:
         """Add dummy dataset to project."""
         received_shape = data.get("model", {}).get("shape", None)
-        if received_shape is None:
+        if received_shape is None or not received_shape.strip():
             return -1
         shape = ConfigurationParser.parse_value(received_shape, [[int]])  # type: ignore
 

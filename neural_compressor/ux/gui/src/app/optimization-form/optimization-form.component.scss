@@ -13,21 +13,16 @@
 // limitations under the License.
 @import './../../variables.scss';
 
-::ng-deep {
-  .custom-slider {
-    width: 90%;
-    margin: auto;
-  }
+mat-button-toggle-group {
+  border: 3px solid $energy-blue;
+  border-radius: 0.5rem;
+  font-size: 150%;
+}
 
-  .custom-slider .ngx-slider .ngx-slider-selection {
-    background: $energy-blue;
-  }
+mat-button-toggle {
+  padding: 0px 20px 0px 20px;
+}
 
-  .custom-slider .ngx-slider .ngx-slider-pointer {
-    background-color: $energy-blue;
-  }
-
-  .custom-slider .ngx-slider .ngx-slider-pointer:after {
-    display: none;
-  }
+.mat-button-toggle-checked {
+  background-color: $pale-blue;
 }

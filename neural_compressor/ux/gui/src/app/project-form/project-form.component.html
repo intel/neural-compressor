@@ -129,12 +129,10 @@
           <mat-form-field class="form-field long" appearance="outline">
             <mat-label>shape</mat-label>
             <input formControlName="shape" matInput>
+            <mat-icon *ngIf="showShapeWarning" matSuffix matTooltip="Automatically detected (might be changed)">
+              <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
+            </mat-icon>
           </mat-form-field>
-          <br>
-          <a class="shape-warning" *ngIf="showShapeWarning">
-            <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
-            Input shape was detected automatically, it may be incorrect
-          </a>
         </mat-card>
       </ng-container>
     </form>

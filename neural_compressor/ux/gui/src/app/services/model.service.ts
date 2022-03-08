@@ -13,8 +13,10 @@
 // limitations under the License.
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { ErrorComponent } from '../error/error.component';
 import { FullModel } from '../import-model/import-model.component';
 
 @Injectable({
@@ -25,17 +27,20 @@ export class ModelService {
   baseUrl = environment.baseUrl;
   myModels = [];
   workspacePath: string;
+  projectCount = 0;
+
   projectCreated$: Subject<boolean> = new Subject<boolean>();
   datasetCreated$: Subject<boolean> = new Subject<boolean>();
   optimizationCreated$: Subject<boolean> = new Subject<boolean>();
   benchmarkCreated$: Subject<boolean> = new Subject<boolean>();
-  projectChanged$: Subject<boolean> = new Subject<boolean>();
+  projectChanged$: Subject<{}> = new Subject<{}>();
 
   token;
   systemInfo = {};
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    public dialog: MatDialog
   ) { }
 
   getToken(): string {
@@ -57,9 +62,13 @@ export class ModelService {
   getSystemInfo() {
     this.http.get(
       this.baseUrl + 'api/system_info'
-    ).subscribe(resp => {
-      this.systemInfo = resp;
-    }
+    ).subscribe(
+      resp => {
+        this.systemInfo = resp;
+      },
+      error => {
+        this.openErrorDialog(error);
+      }
     );
   }
 
@@ -276,6 +285,12 @@ export class ModelService {
         request_id: requestId,
       }
     );
+  }
+
+  openErrorDialog(error) {
+    const dialogRef = this.dialog.open(ErrorComponent, {
+      data: error
+    });
   }
 }
 

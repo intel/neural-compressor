@@ -57,7 +57,6 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { SystemInfoComponent } from './system-info/system-info.component';
 import { LongNamePipe } from './pipes/long-name.pipe';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { ProjectComponent } from './project/project.component';
 import { OptimizationsComponent } from './optimizations/optimizations.component';
 import { BenchmarksComponent } from './benchmarks/benchmarks.component';
@@ -68,6 +67,9 @@ import { BenchmarkFormComponent } from './benchmark-form/benchmark-form.componen
 import { OptimizationFormComponent } from './optimization-form/optimization-form.component';
 import { DatasetFormComponent } from './dataset-form/dataset-form.component';
 import { ProfilingFormComponent } from './profiling-form/profiling-form.component';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { NotificationComponent } from './notification/notification.component';
+import { JoyrideModule } from 'ngx-joyride';
 
 @NgModule({
   declarations: [
@@ -93,7 +95,8 @@ import { ProfilingFormComponent } from './profiling-form/profiling-form.componen
     BenchmarkFormComponent,
     OptimizationFormComponent,
     DatasetFormComponent,
-    ProfilingFormComponent
+    ProfilingFormComponent,
+    NotificationComponent
   ],
   imports: [
     BrowserModule,
@@ -103,6 +106,7 @@ import { ProfilingFormComponent } from './profiling-form/profiling-form.componen
     FlexLayoutModule,
     FormsModule,
     HttpClientModule,
+    JoyrideModule.forRoot(),
     MatExpansionModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -116,6 +120,7 @@ import { ProfilingFormComponent } from './profiling-form/profiling-form.componen
     MatSidenavModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     MatStepperModule,
     MatTabsModule,
     MatSlideToggleModule,
@@ -124,7 +129,6 @@ import { ProfilingFormComponent } from './profiling-form/profiling-form.componen
     NgDatePipesModule,
     NgxChartsModule,
     NgxGraphModule,
-    NgxSliderModule,
     ReactiveFormsModule,
   ],
   providers: [

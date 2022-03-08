@@ -13,6 +13,7 @@
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router, RoutesRecognized } from '@angular/router';
 import { ErrorComponent } from '../error/error.component';
 import { ProjectFormComponent } from '../project-form/project-form.component';
 import { ModelService } from '../services/model.service';
@@ -26,17 +27,29 @@ export class MenuComponent implements OnInit {
 
   showSpinner = true;
   projectList = [];
+  activeTab = 'optimizations';
 
   constructor(
     private modelService: ModelService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private activatedRoute: ActivatedRoute,
+    private router: Router
   ) { }
 
   ngOnInit() {
+    this.router.events.subscribe(val => {
+      if (val instanceof RoutesRecognized) {
+        this.activeTab = val.state.root.firstChild.params.tab;
+      }
+    });
     this.modelService.getSystemInfo();
     this.getAllProjects();
     this.modelService.projectCreated$
       .subscribe(response => this.getAllProjects());
+  }
+
+  projectChange(id) {
+    this.modelService.projectChanged$.next({ id: id, tab: this.activeTab });
   }
 
   getAllProjects() {
@@ -45,17 +58,12 @@ export class MenuComponent implements OnInit {
         response => {
           this.showSpinner = false;
           this.projectList = response['projects'];
+          this.modelService.projectCount = this.projectList.length;
         },
         error => {
           this.showSpinner = false;
-          this.openErrorDialog(error);
+          this.modelService.openErrorDialog(error);
         });
-  }
-
-  openErrorDialog(error) {
-    const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error
-    });
   }
 
   getDate(date: string) {

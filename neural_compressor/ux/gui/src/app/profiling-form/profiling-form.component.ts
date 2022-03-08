@@ -22,20 +22,28 @@ export class ProfilingFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.modelService.getModelList(this.data.projectId)
-      .subscribe(response => {
-        this.models = response['models'];
-        if (this.models.length > 0) {
-          this.profilingFormGroup.get('model_id').setValue(this.models[0]['id']);
-        }
-      });
+      .subscribe(
+        response => {
+          this.models = response['models'];
+          if (this.models.length > 0) {
+            this.profilingFormGroup.get('model_id').setValue(this.models[0]['id']);
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
 
     this.modelService.getDatasetList(this.data.projectId)
-      .subscribe(response => {
-        this.datasets = response['datasets'];
-        if (this.datasets.length > 0) {
-          this.profilingFormGroup.get('dataset_id').setValue(this.datasets[0].id);
-        }
-      });
+      .subscribe(
+        response => {
+          this.datasets = response['datasets'];
+          if (this.datasets.length > 0) {
+            this.profilingFormGroup.get('dataset_id').setValue(this.datasets[0].id);
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
 
     this.profilingFormGroup = this._formBuilder.group({
       name: ['Profiling' + String(this.data.index + 1)],
@@ -48,7 +56,12 @@ export class ProfilingFormComponent implements OnInit {
 
   addProfiling() {
     this.modelService.addProfiling(this.profilingFormGroup.value)
-      .subscribe();
+      .subscribe(
+        response => { },
+        error => {
+          this.modelService.openErrorDialog(error);
+        }
+      );
   }
 
 }

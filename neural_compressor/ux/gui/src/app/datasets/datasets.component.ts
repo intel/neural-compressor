@@ -37,16 +37,21 @@ export class DatasetsComponent implements OnInit {
   ngOnInit(): void {
     this.getDatasetList();
     this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
-    this.modelService.projectChanged$.subscribe(response => {
-      this.getDatasetList();
-      this.activeDatasetId = -1;
-      this.datasetDetails = {};
-    });
+    this.modelService.projectChanged$
+      .subscribe(response => {
+        this.getDatasetList(response['id']);
+        this.activeDatasetId = -1;
+        this.datasetDetails = {};
+      });
   }
 
-  getDatasetList() {
-    this.modelService.getDatasetList(this.activatedRoute.snapshot.params.id)
-      .subscribe(response => this.datasets = response['datasets']);
+  getDatasetList(id?: number) {
+    this.modelService.getDatasetList(id ?? this.activatedRoute.snapshot.params.id)
+      .subscribe(
+        response => { this.datasets = response['datasets'] },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   addDataset() {
@@ -63,7 +68,11 @@ export class DatasetsComponent implements OnInit {
   getDatasetDetails(id) {
     this.activeDatasetId = id;
     this.modelService.getDatasetDetails(id)
-      .subscribe(response => this.datasetDetails = response);
+      .subscribe(
+        response => { this.datasetDetails = response },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   objectKeys(obj: any): string[] {

@@ -20,6 +20,7 @@ import { ProjectComponent } from './project/project.component';
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'project/:id', component: ProjectComponent },
+  { path: 'project/:id/:tab', component: ProjectComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 ];
 

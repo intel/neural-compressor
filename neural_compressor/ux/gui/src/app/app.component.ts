@@ -13,8 +13,11 @@
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ErrorComponent } from './error/error.component';
+import { NotificationComponent } from './notification/notification.component';
 import { ModelService } from './services/model.service';
+import { SocketService } from './services/socket.service';
 import { SystemInfoComponent } from './system-info/system-info.component';
 
 @Component({
@@ -28,7 +31,9 @@ export class AppComponent implements OnInit {
 
   constructor(
     private modelService: ModelService,
-    public dialog: MatDialog
+    private socketService: SocketService,
+    public dialog: MatDialog,
+    private _snackBar: MatSnackBar
   ) { }
 
   ngOnInit() {
@@ -36,29 +41,38 @@ export class AppComponent implements OnInit {
     this.tokenIsSet = true;
     this.getWorkspace();
     this.modelService.getSystemInfo();
+    this.socketService.showSnackBar$
+      .subscribe(response => {
+        this.openSnackBar(response['tab'], response['id']);
+      });
   }
 
   getWorkspace() {
     this.modelService.getDefaultPath('workspace')
-      .subscribe(repoPath => {
-        this.workspacePath = repoPath['path'];
-        this.modelService.workspacePath = repoPath['path'];
-      },
+      .subscribe(
+        repoPath => {
+          this.workspacePath = repoPath['path'];
+          this.modelService.workspacePath = repoPath['path'];
+        },
         error => {
-          this.openErrorDialog(error);
+          this.modelService.openErrorDialog(error);
         }
       );
-  }
-
-  openErrorDialog(error) {
-    const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error
-    });
   }
 
   showSystemInfo() {
     const dialogRef = this.dialog.open(SystemInfoComponent, {
       data: this.modelService.systemInfo
+    });
+  }
+
+  openSnackBar(tab: string, id: number) {
+    this._snackBar.openFromComponent(NotificationComponent, {
+      duration: 5 * 1000,
+      data: {
+        tab: tab,
+        projectId: id
+      }
     });
   }
 }

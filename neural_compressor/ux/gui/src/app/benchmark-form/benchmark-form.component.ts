@@ -31,6 +31,7 @@ export class BenchmarkFormComponent implements OnInit {
   mode = 'performance';
   modes = ['accuracy', 'performance'];
   benchmarkFormGroup: FormGroup;
+  allSamples = true;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data,
@@ -42,25 +43,33 @@ export class BenchmarkFormComponent implements OnInit {
     this.name = 'Benchmark' + String(this.data.index + 1);
 
     this.modelService.getModelList(this.data.projectId)
-      .subscribe(response => {
-        this.models = response['models'];
-        if (this.models.length > 0) {
-          this.modelId = this.models[0].id;
-        }
-      });
+      .subscribe(
+        response => {
+          this.models = response['models'];
+          if (this.models.length > 0) {
+            this.modelId = this.models[0].id;
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
 
     this.modelService.getDatasetList(this.data.projectId)
-      .subscribe(response => {
-        this.datasets = response['datasets'];
-        if (this.datasets.length > 0) {
-          this.datasetId = this.datasets[0].id;
-        }
-      });
+      .subscribe(
+        response => {
+          this.datasets = response['datasets'];
+          if (this.datasets.length > 0) {
+            this.datasetId = this.datasets[0].id;
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
 
     this.benchmarkFormGroup = this._formBuilder.group({
       batchSize: [1],
       warmup: [5],
-      iterations: [-1],
+      iterations: [10],
       numOfInstance: [this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'] / 4],
       coresPerInstance: [4]
     });
@@ -78,12 +87,18 @@ export class BenchmarkFormComponent implements OnInit {
       dataset_id: this.datasetId,
       model_id: this.modelId,
       batch_size: this.benchmarkFormGroup.get('batchSize').value,
-      iterations: this.benchmarkFormGroup.get('iterations').value,
+      iterations: this.allSamples ? -1 : this.benchmarkFormGroup.get('iterations').value,
       number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
       cores_per_instance: this.benchmarkFormGroup.get('coresPerInstance').value,
       warmup_iterations: this.benchmarkFormGroup.get('warmup').value,
     })
-      .subscribe(response => this.modelService.benchmarkCreated$.next(true));
+      .subscribe(
+        response => {
+          this.modelService.benchmarkCreated$.next(true);
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
 }

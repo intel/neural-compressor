@@ -11,43 +11,74 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ModelService } from '../services/model.service';
+import { JoyrideService } from 'ngx-joyride';
 
 @Component({
   selector: 'app-project',
   templateUrl: './project.component.html',
   styleUrls: ['./project.component.scss', './../error/error.component.scss']
 })
-export class ProjectComponent {
+export class ProjectComponent implements OnInit {
 
   project = {};
+  projectId;
+  selectedTab = 0;
+  tabs = ['optimizations', 'benchmarks', 'profiling', 'datasets', 'graph', 'info'];
 
   constructor(
     private modelService: ModelService,
     public activatedRoute: ActivatedRoute,
-    private router: Router) {
-    router.events.subscribe((val) => {
-      if (val instanceof NavigationEnd) {
-        this.getProject();
-        this.modelService.projectChanged$.next(true);
-      }
-    });
+    private router: Router,
+    private readonly joyrideService: JoyrideService) {
   }
 
-  getProject() {
-    this.modelService.getProjectDetails(this.activatedRoute.snapshot.params.id)
+  ngOnInit() {
+    this.projectId = this.activatedRoute.snapshot.params.id;
+    this.getProject(this.projectId);
+    this.modelService.projectChanged$
+      .subscribe(response => {
+        this.getProject(response['id']);
+      })
+  }
+
+  getProject(id: number) {
+    this.selectedTab = this.tabs.indexOf(this.activatedRoute.snapshot.params.tab);
+    this.modelService.getProjectDetails(id)
       .subscribe(
         response => {
           this.project = response;
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
         }
       )
   }
 
+  onTabChanged(event) {
+    this.selectedTab = event.index;
+    this.router.navigate(['project', this.activatedRoute.snapshot.params.id, this.tabs[this.selectedTab]], { queryParamsHandling: "merge" });
+  }
+
+  onClick() {
+    this.joyrideService.startTour(
+      {
+        steps: ['intro', 'addOptimizationTour', 'datasetTour', 'benchmarkTour', 'profilingTour', 'graphTour'],
+        themeColor: '#005B85',
+      }
+    );
+  }
+
   addNotes() {
     this.modelService.addNotes(this.activatedRoute.snapshot.params.id, this.project['notes'])
-      .subscribe();
+      .subscribe(
+        response => { },
+        error => {
+          this.modelService.openErrorDialog(error);
+        }
+      );
   }
 
   getFileName(path: string): string {

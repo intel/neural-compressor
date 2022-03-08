@@ -62,16 +62,34 @@ export class DatasetFormComponent implements OnInit {
     combineLatest([
       this.metricList$,
       this.metricValue$
-    ]).subscribe(([metricList, metricValue]) => {
-      if (metricList === true && metricValue === true) {
-        this.setDefaultMetricParam(this.datasetFormGroup.get('metric'));
+    ]).subscribe(
+      ([metricList, metricValue]) => {
+        if (metricList === true && metricValue === true) {
+          this.setDefaultMetricParam(this.datasetFormGroup.get('metric'));
+        }
+      },
+      error => {
+        this.modelService.openErrorDialog(error);
       }
-    });
+    );
 
     this.modelService.getDictionaryWithParam('dataloaders', 'framework', { framework: this.data.framework.toLowerCase() })
-      .subscribe(response => this.dataLoaders = response['dataloaders']);
+      .subscribe(
+        response => {
+          this.dataLoaders = response['dataloaders'];
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
     this.modelService.getDictionaryWithParam('transforms', 'framework', { framework: this.data.framework.toLowerCase() })
-      .subscribe(response => this.transformations = response['transforms']);
+      .subscribe(
+        response => {
+          this.transformations = response['transforms'];
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        }
+      );
 
     this.getPossibleValues();
   }
@@ -83,7 +101,7 @@ export class DatasetFormComponent implements OnInit {
           this.metrics = resp['metric'];
           this.metricList$.next(true);
         },
-        error => this.openErrorDialog(error));
+        error => this.modelService.openErrorDialog(error));
   }
 
 
@@ -168,7 +186,11 @@ export class DatasetFormComponent implements OnInit {
     }
 
     this.modelService.addDataset(readyDataset)
-      .subscribe(response => this.modelService.datasetCreated$.next(true));
+      .subscribe(
+        response => { this.modelService.datasetCreated$.next(true) },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   getParams(obj: any[]): {} {
@@ -211,34 +233,38 @@ export class DatasetFormComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(response => {
-      if (response.chosenFile) {
-        if (paramFile && paramFile !== 'datasetLocation') {
-          if (paramFile === 'evaluation') {
-            this.dataLoaderParams.find(x => x.name === fieldName).value = response.chosenFile;
-          } else if (paramFile === 'metric') {
-            this.metricParam = response.chosenFile;
-          } else {
-            paramFile.find(x => x.name === fieldName).value = response.chosenFile;
-          }
-        } else {
-          this[form].get(fieldName).setValue(response.chosenFile);
-        }
-
-        if (response.foundFiles.length) {
-          Object.keys(fileCategories).forEach((fileCategory, categoryIndex) => {
-            const fileName = Object.keys(fileCategories)[categoryIndex];
-            const fieldName = fileCategories[fileCategory];
-            if (fieldName === 'label_file') {
-              this.dataLoaderParams.find(x => x.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
+    dialogRef.afterClosed().subscribe(
+      response => {
+        if (response.chosenFile) {
+          if (paramFile && paramFile !== 'datasetLocation') {
+            if (paramFile === 'evaluation') {
+              this.dataLoaderParams.find(x => x.name === fieldName).value = response.chosenFile;
+            } else if (paramFile === 'metric') {
+              this.metricParam = response.chosenFile;
+            } else {
+              paramFile.find(x => x.name === fieldName).value = response.chosenFile;
             }
-            this.transformationParams
-              .find(transformation => transformation.params.find(param => param.name === fieldName)).params
-              .find(param => param.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
-          });
+          } else {
+            this[form].get(fieldName).setValue(response.chosenFile);
+          }
+
+          if (response.foundFiles.length) {
+            Object.keys(fileCategories).forEach((fileCategory, categoryIndex) => {
+              const fileName = Object.keys(fileCategories)[categoryIndex];
+              const fieldName = fileCategories[fileCategory];
+              if (fieldName === 'label_file') {
+                this.dataLoaderParams.find(x => x.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
+              }
+              this.transformationParams
+                .find(transformation => transformation.params.find(param => param.name === fieldName)).params
+                .find(param => param.name === fieldName).value = response.foundFiles.find(x => x.name.includes(fileName)).name;
+            });
+          }
         }
-      }
-    });;
+      },
+      error => {
+        this.modelService.openErrorDialog(error);
+      });;
   }
 
   isArray(obj: any): boolean {
@@ -248,11 +274,4 @@ export class DatasetFormComponent implements OnInit {
   typeOf(obj: any): string {
     return typeof obj;
   }
-
-  openErrorDialog(error) {
-    const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error
-    });
-  }
-
 }
