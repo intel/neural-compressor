@@ -46,8 +46,8 @@ nbclient==0.5.0
 nbconvert==6.0.1
 nbformat==5.0.7
 nest-asyncio==1.4.0
-notebook==6.1.5
-numpy==1.19.2
+notebook==6.4.1
+numpy==1.21.0
 opencv-python==4.4.0.42
 packaging==20.3
 pandas==1.1.2
@@ -64,13 +64,13 @@ ptyprocess==0.6.0
 pyaml==20.4.0
 pyarrow==1.0.1
 pycparser==2.20
-Pygments==2.6.1
+Pygments==2.7.4
 pyparsing==2.4.6
 pyrsistent==0.16.0
 python-dateutil==2.8.1
 pytoml==0.1.21
 pytz==2020.1
-PyYAML==5.3.1
+PyYAML==5.4
 pyzmq==19.0.2
 qtconsole==4.7.7
 QtPy==1.9.0
@@ -90,7 +90,7 @@ tornado==6.0.4
 tqdm==4.48.2
 traitlets
 git+https://github.com/huggingface/transformers.git
-urllib3==1.25.8
+urllib3==1.26.5
 wcwidth==0.2.5
 webencodings==0.5.1
 wget==3.2
