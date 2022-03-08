@@ -78,13 +78,16 @@
         <input formControlName="batchSize" matInput value="1">
       </mat-form-field>
       <h3>Iterations</h3>
+      <mat-checkbox [checked]="allSamples" (change)="allSamples = $event.checked">
+        Iterate all samples
+      </mat-checkbox>
+      <br>
       <mat-form-field class="form-field" appearance="outline"
         matTooltip="Number of iterations to run before the benchmark">
         <mat-label>warmup</mat-label>
         <input type="number" formControlName="warmup" matInput>
       </mat-form-field>
-      <mat-form-field class="form-field" appearance="outline"
-        [matTooltip]="'Default iteration is -1 (iterate all samples)'">
+      <mat-form-field *ngIf="!allSamples" class="form-field" appearance="outline">
         <mat-label>iterations</mat-label>
         <input type="number" formControlName="iterations" matInput>
       </mat-form-field>
@@ -97,12 +100,11 @@
         <mat-label>number of instances</mat-label>
         <input min=1 step=1 type="number" formControlName="numOfInstance" matInput>
       </mat-form-field>
-      <a class="cores-warning" *ngIf="!coresValidated()">
+      <a class="cores-warning" *ngIf="!coresValidated()" [matTooltip]="'cores_per_instance * num_of_instance should not be greater than number of cores: ' +
+         benchmarkFormGroup.get('coresPerInstance').value 
+        + '*' + benchmarkFormGroup.get('numOfInstance').value +
+        '>' + modelService.systemInfo['sockets'] + '*' + modelService.systemInfo['cores_per_socket']">
         <img class="warning-icon" src="./../../assets/006a-alert-solid-red.svg">
-        cores_per_instance * num_of_instance should not be greater than number of cores
-        ({{ benchmarkFormGroup.get('cores_per_instance').value }}
-        * {{ benchmarkFormGroup.get('num_of_instance').value }}
-        > {{ modelService.systemInfo['sockets'] * modelService.systemInfo['cores_per_socket'] }})
       </a>
       <br>
       <div class="float-right">

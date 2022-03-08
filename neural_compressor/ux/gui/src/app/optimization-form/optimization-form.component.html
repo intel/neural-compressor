@@ -20,9 +20,11 @@
     <h2 matTooltip="Check framework user guide for precision support.">Precision</h2>
     <p>Choose precision of the optimization. Precision determines available optimization types.</p>
     <div class="custom-slider">
-      <ngx-slider *ngIf="precisions.length" [(value)]="precisionIndex" [options]="sliderOptions"
-        (mouseup)="getOptimizationTypes()">
-      </ngx-slider>
+      <mat-button-toggle-group class="toggle-group" [(ngModel)]="precisionId" (change)="getOptimizationTypes()">
+        <mat-button-toggle *ngFor="let precision of precisions" [value]="precision.id">
+          {{ precision.name }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
     </div>
     <br>
     <div class="float-right">
@@ -32,7 +34,7 @@
       </button>
     </div>
   </mat-step>
-  <mat-step [completed]="false" *ngIf="data.framework === 'tensorflow'">
+  <!-- <mat-step [completed]="false" *ngIf="data.framework === 'tensorflow'">
     <ng-template matStepLabel>Optimization type</ng-template>
     <h2>Optimization type</h2>
     <p>Choose optimization type. Quantization is available only for int8 and graph optimization is available for fp32
@@ -53,7 +55,7 @@
         Next
       </button>
     </div>
-  </mat-step>
+  </mat-step> -->
   <mat-step [completed]="false">
     <ng-template matStepLabel>Dataset</ng-template>
     <h2>Dataset</h2>

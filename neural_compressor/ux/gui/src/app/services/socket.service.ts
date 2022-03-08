@@ -37,6 +37,7 @@ export class SocketService {
   public profilingFinish$ = new Subject();
   public tuningHistory$ = new Subject();
   public exampleWorkloadSaved$ = new Subject();
+  public showSnackBar$ = new Subject();
 
   constructor(
     private http: HttpClient
@@ -57,6 +58,7 @@ export class SocketService {
     });
     this.socket.on('optimization_finish', (data) => {
       this.optimizationFinish$.next(data);
+      this.showSnackBar$.next({ tab: 'optimizations', id: data.data.id });
     });
   }
 
@@ -84,6 +86,7 @@ export class SocketService {
     });
     this.socket.on('benchmark_finish', (data) => {
       this.benchmarkFinish$.next(data);
+      this.showSnackBar$.next({ tab: 'benchmarks', id: data.data.id });
     });
   }
 
@@ -93,6 +96,7 @@ export class SocketService {
     });
     this.socket.on('profiling_finish', (data) => {
       this.profilingFinish$.next(data);
+      this.showSnackBar$.next({ tab: 'profiling', id: data.data.id });
     });
   }
 

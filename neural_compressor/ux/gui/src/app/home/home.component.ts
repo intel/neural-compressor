@@ -40,11 +40,15 @@ export class HomeComponent implements OnInit {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
       width: '60%',
     });
-    dialogRef.afterClosed().subscribe(response => {
-      if (response !== undefined) {
-        this.showSpinner = true;
-      }
-    });
+    dialogRef.afterClosed().subscribe(
+      response => {
+        if (response !== undefined) {
+          this.showSpinner = true;
+        }
+      },
+      error => {
+        this.modelService.openErrorDialog(error);
+      });
   }
 
   systemInfo() {

@@ -44,6 +44,9 @@ export class FileBrowserComponent implements OnInit {
 
   getFileSystem(path: string) {
     this.showSpinner = true;
+    if (path[0] !== '/') {
+      path = '/' + path
+    }
     this.modelService.getFileSystem(path, this.filter)
       .subscribe(
         resp => {
@@ -53,15 +56,9 @@ export class FileBrowserComponent implements OnInit {
         },
         error => {
           this.showSpinner = false;
-          this.openErrorDialog(error);
+          this.modelService.openErrorDialog(error);
         }
       );
-  }
-
-  openErrorDialog(error) {
-    const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error
-    });
   }
 
   chooseFile(name: string, close: boolean) {
@@ -90,7 +87,7 @@ export class FileBrowserComponent implements OnInit {
           });
         },
         error => {
-          this.openErrorDialog(error);
+          this.modelService.openErrorDialog(error);
         }
       );
   }

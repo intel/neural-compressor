@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
@@ -19,16 +19,13 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
   templateUrl: './error.component.html',
   styleUrls: ['./error.component.scss', './../import-model/import-model.component.scss']
 })
-export class ErrorComponent implements OnInit {
+export class ErrorComponent {
   counter = 1;
 
   constructor(
     public dialogRef: MatDialogRef<ErrorComponent>,
     @Inject(MAT_DIALOG_DATA) public data
   ) { }
-
-  ngOnInit() {
-  }
 
   typeOf(obj: any): string {
     return typeof obj;

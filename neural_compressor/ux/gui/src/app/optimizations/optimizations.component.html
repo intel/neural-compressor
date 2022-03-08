@@ -37,14 +37,15 @@
       </mat-spinner>
     </td>
     <td class="center"><button mat-raised-button [matTooltip]="'Run tuning of this configuration'" color="accent"
-        class="action-btn" [disabled]="optimization['status'] === 'wip'" (click)="executeOptimization(optimization.id)">
+        class="action-btn" [disabled]="optimization['status'] === 'wip'"
+        (click)="$event.stopPropagation();executeOptimization(optimization.id)">
         <img src="./../../assets/088a-start-solid-white.svg">
         Run
       </button></td>
   </tr>
 </table>
 
-<button mat-raised-button class="create-new-btn" (click)="$event.stopPropagation();addOptimization()">
+<button mat-raised-button class="create-new-btn" (click)="addOptimization()">
   <img src="./../../assets/008a-plus-solid-black.svg">
   Add new optimization
 </button>

@@ -2,8 +2,8 @@
   <br>
   <h3>My projects</h3>
   <div *ngFor="let project of projectList">
-    <button mat-flat-button [routerLink]="['/project', project.id]" class="config-btn" queryParamsHandling="preserve"
-      routerLinkActive="active">
+    <button mat-flat-button [routerLink]="['/project', project.id, activeTab]" class="config-btn"
+      queryParamsHandling="preserve" routerLinkActive="active" (click)="projectChange(project.id)">
       <span class="name">{{ project.name }}</span>
       <br>
       <span class="time"> {{ getDate(project.created_at) | timeAgo }}</span>

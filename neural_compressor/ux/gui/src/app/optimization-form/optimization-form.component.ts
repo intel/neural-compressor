@@ -23,8 +23,7 @@ import { ModelService } from '../services/model.service';
 export class OptimizationFormComponent implements OnInit {
 
   precisions = [];
-  precisionIndex: number;
-  sliderOptions;
+  precisionId: number;
 
   optimizationTypes = [];
   optimizationTypeId: number;
@@ -48,62 +47,61 @@ export class OptimizationFormComponent implements OnInit {
 
   getPrecisions() {
     this.modelService.getDictionary('precisions')
-      .subscribe(response => {
-        this.precisions = response['precisions'];
-        this.precisionIndex = this.precisions.length - 1;
-        this.getOptimizationTypes();
-        this.sliderOptions = {
-          floor: 0,
-          ceil: this.precisions.length ? this.precisions.length - 1 : 2,
-          step: 1,
-          showTicks: true,
-          showTicksValues: false,
-          showTicksTooltips: true,
-          hideLimitLabels: true,
-          hidePointerLabels: true,
-          showSelectionBar: true,
-          getLegend: (value: number): string => {
-            return this.precisions[value].label ?? this.precisions[value].name;
-          },
-          ticksTooltip: (value: number): string => {
-            return this.precisions[value].help;
-          }
-        };
-      });
+      .subscribe(
+        response => {
+          this.precisions = response['precisions'];
+          this.precisionId = this.precisions.find(x => x.name === 'int8').id;
+          this.getOptimizationTypes();
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   getOptimizationTypes() {
-    this.modelService.getDictionaryWithParam('optimization_types', 'precision', { precision: this.precisions[this.precisionIndex]['name'] })
-      .subscribe(response => {
-        this.optimizationTypes = response['optimization_types'];
-        for (let type of this.optimizationTypes) {
-          if (type.is_supported) {
-            this.optimizationTypeId = type.id;
-            break;
-          }
-        };
-      });
+    this.modelService.getDictionaryWithParam('optimization_types', 'precision', { precision: this.precisions.find(x => x.id === this.precisionId).name })
+      .subscribe(
+        response => {
+          this.optimizationTypes = response['optimization_types'];
+          for (let type of this.optimizationTypes) {
+            if (type.is_supported) {
+              this.optimizationTypeId = type.id;
+              break;
+            }
+          };
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   getDatasets() {
     this.modelService.getDatasetList(this.data.projectId)
-      .subscribe(response => {
-        this.datasets = response['datasets'];
-        if (this.datasets.length > 0) {
-          this.datasetId = this.datasets[0].id;
-        }
-      });
+      .subscribe(
+        response => {
+          this.datasets = response['datasets'];
+          if (this.datasets.length > 0) {
+            this.datasetId = this.datasets[0].id;
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   addOptimization() {
     this.modelService.addOptimization({
       project_id: this.data.projectId,
       name: this.name,
-      precision_id: this.precisionIndex + 1,
+      precision_id: this.precisionId,
       optimization_type_id: this.optimizationTypeId,
       dataset_id: this.datasetId
     })
-      .subscribe(response => this.modelService.optimizationCreated$.next(true));
+      .subscribe(
+        response => { this.modelService.optimizationCreated$.next(true) },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
 }

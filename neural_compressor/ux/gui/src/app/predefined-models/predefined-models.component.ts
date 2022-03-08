@@ -67,7 +67,7 @@ export class PredefinedModelsComponent implements OnInit {
     this.socketService.modelDownloadFinish$
       .subscribe(response => {
         if (response['status'] && response['status'] !== 'success') {
-          this.openErrorDialog({
+          this.modelService.openErrorDialog({
             error: response['data']['message'],
           });
         }
@@ -82,7 +82,7 @@ export class PredefinedModelsComponent implements OnInit {
               // this.modelService.configurationSaved.next(true);
             }
           } else {
-            this.openErrorDialog({
+            this.modelService.openErrorDialog({
               error: response['data']['message'],
             });
           }
@@ -111,7 +111,7 @@ export class PredefinedModelsComponent implements OnInit {
         },
         error => {
           this.showSpinner = false;
-          this.openErrorDialog(error);
+          this.modelService.openErrorDialog(error);
         });
   }
 
@@ -166,12 +166,6 @@ export class PredefinedModelsComponent implements OnInit {
     });;
   }
 
-  openErrorDialog(error) {
-    const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error,
-    });
-  }
-
   saveWorkload() {
     const dateTime = Date.now();
     const index = this.getModelIndex();
@@ -187,7 +181,7 @@ export class PredefinedModelsComponent implements OnInit {
       .subscribe(
         response => { },
         error => {
-          this.openErrorDialog(error);
+          this.modelService.openErrorDialog(error);
         }
       );
   }

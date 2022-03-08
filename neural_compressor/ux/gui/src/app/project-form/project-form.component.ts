@@ -81,7 +81,12 @@ export class ProjectFormComponent implements OnInit {
         if (this.projectFormGroup.get('modelLocation').value) {
           this.showSpinner = true;
           this.showGraphButton = false;
-          this.socketService.getBoundaryNodes(this.getNewModel()).subscribe();
+          this.socketService.getBoundaryNodes(this.getNewModel()).subscribe(
+            response => { },
+            error => {
+              this.modelService.openErrorDialog(error);
+            }
+          );
           this.modelService.getModelGraph(this.projectFormGroup.get('modelLocation').value)
             .subscribe(
               graph => {
@@ -144,11 +149,7 @@ export class ProjectFormComponent implements OnInit {
             });
           }
         } else {
-          const dialogRef = this.dialog.open(ErrorComponent, {
-            data: {
-              error: result['data']['message']
-            }
-          });
+          this.modelService.openErrorDialog(result['data']['message']);
         }
       });
   }
@@ -169,12 +170,12 @@ export class ProjectFormComponent implements OnInit {
     this.modelService.getDictionary('domains')
       .subscribe(
         resp => this.domains = resp['domains'],
-        error => this.openErrorDialog(error));
+        error => this.modelService.openErrorDialog(error));
   }
 
   setFormValues() {
     this.projectFormGroup = this._formBuilder.group({
-      name: ['Project1', Validators.required],
+      name: ['Project' + String(this.modelService.projectCount + 1), Validators.required],
       framework: ['', Validators.required],
       modelLocation: ['', Validators.required],
       modelDomain: [''],
@@ -236,12 +237,6 @@ export class ProjectFormComponent implements OnInit {
       if (response.chosenFile) {
         this.projectFormGroup.get(fieldName).setValue(response.chosenFile);
       }
-    });
-  }
-
-  openErrorDialog(error) {
-    const dialogRef = this.dialog.open(ErrorComponent, {
-      data: error
     });
   }
 

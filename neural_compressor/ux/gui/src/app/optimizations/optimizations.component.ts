@@ -73,12 +73,6 @@ export class OptimizationsComponent implements OnInit {
     public activatedRoute: ActivatedRoute,
     public dialog: MatDialog,
     private router: Router) {
-    router.events.subscribe((val) => {
-      if (val instanceof NavigationEnd) {
-        this.initializeOptimizations();
-        this.modelService.projectChanged$.next(true);
-      }
-    });
   }
 
   ngOnInit() {
@@ -86,7 +80,7 @@ export class OptimizationsComponent implements OnInit {
     this.token = this.modelService.getToken();
     this.modelService.projectChanged$
       .subscribe(response => {
-        this.getOptimizations();
+        this.getOptimizations(response['id']);
         this.optimizationDetails = null;
         this.activeOptimizationId = -1;
       });
@@ -98,16 +92,24 @@ export class OptimizationsComponent implements OnInit {
       .subscribe(response => this.getOptimizations());
     this.socketService.optimizationFinish$
       .subscribe(response => {
-        this.getOptimizations();
-        this.getOptimizationDetails(this.activeOptimizationId);
+        if (String(this.activatedRoute.snapshot.params.id) === String(response['data']['project_id'])) {
+          this.getOptimizations();
+          if (this.activeOptimizationId > 0) {
+            this.getOptimizationDetails(this.activeOptimizationId);
+          }
+        }
       });
   }
 
-  getOptimizations() {
-    this.modelService.getOptimizationList(this.activatedRoute.snapshot.params.id)
-      .subscribe(response => {
-        this.optimizations = response['optimizations'];
-      });
+  getOptimizations(id?: number) {
+    this.modelService.getOptimizationList(id ?? this.activatedRoute.snapshot.params.id)
+      .subscribe(
+        response => {
+          this.optimizations = response['optimizations'];
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   getOptimizationDetails(id) {
@@ -116,6 +118,9 @@ export class OptimizationsComponent implements OnInit {
       .subscribe(
         response => {
           this.optimizationDetails = response;
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
         });
   }
 
@@ -138,7 +143,12 @@ export class OptimizationsComponent implements OnInit {
     this.optimizations.find(optimization => optimization.id === optimizationId)['status'] = 'wip';
     this.optimizations.find(optimization => optimization.id === optimizationId)['requestId'] = this.requestId;
     this.modelService.executeOptimization(optimizationId, this.requestId)
-      .subscribe();
+      .subscribe(
+        response => { },
+        error => {
+          this.modelService.openErrorDialog(error);
+        }
+      );
   }
 
   getHistoryData(result) {

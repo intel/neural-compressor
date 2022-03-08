@@ -94,23 +94,34 @@ export class BenchmarksComponent implements OnInit {
     this.modelService.benchmarkCreated$
       .subscribe(response => this.getBenchmarksList());
     this.socketService.benchmarkFinish$
-      .subscribe(response => this.getBenchmarksList());
+      .subscribe(response => {
+        if (String(this.activatedRoute.snapshot.params.id) === String(response['data']['project_id'])) {
+          this.getBenchmarksList();
+          if (this.activeBenchmarkId > 0) {
+            this.getBenchmarkDetails(this.activeBenchmarkId);
+          }
+        }
+      });
     this.modelService.projectChanged$
       .subscribe(response => {
-        this.getBenchmarksList();
+        this.getBenchmarksList(response['id']);
         this.activeBenchmarkId = -1;
         this.benchmarkDetails = null;
       });
   }
 
-  getBenchmarksList() {
-    this.modelService.getBenchmarksList(this.activatedRoute.snapshot.params.id)
-      .subscribe(response => {
-        this.benchmarks = response['benchmarks'];
-        if (this.activeBenchmarkId > 0) {
-          this.getBenchmarkDetails(this.activeBenchmarkId);
-        }
-      });
+  getBenchmarksList(id?: number) {
+    this.modelService.getBenchmarksList(id ?? this.activatedRoute.snapshot.params.id)
+      .subscribe(
+        response => {
+          this.benchmarks = response['benchmarks'];
+          if (this.activeBenchmarkId > 0) {
+            this.getBenchmarkDetails(this.activeBenchmarkId);
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   addBenchmark() {
@@ -131,7 +142,12 @@ export class BenchmarksComponent implements OnInit {
     this.benchmarks.find(benchmark => benchmark.id === benchmarkId)['status'] = 'wip';
     this.benchmarks.find(benchmark => benchmark.id === benchmarkId)['requestId'] = requestId;
     this.modelService.executeBenchmark(benchmarkId, requestId)
-      .subscribe();
+      .subscribe(
+        response => { },
+        error => {
+          this.modelService.openErrorDialog(error);
+        }
+      );
   }
 
   getBenchmarkDetails(id) {
@@ -140,6 +156,9 @@ export class BenchmarksComponent implements OnInit {
       .subscribe(
         response => {
           this.benchmarkDetails = response;
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
         });
   }
 

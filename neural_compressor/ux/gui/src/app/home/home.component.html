@@ -12,7 +12,7 @@
   <p class="intro">Run experiments with optimized models in 2 steps:</p>
 
   <div class="cards">
-    <mat-card class="inline-block">
+    <mat-card [routerLink]="'/model-zoo'" queryParamsHandling="preserve" class="inline-block">
       <div class="img-container">
         <img class="big-icon" src="./../../assets/create-new.png">
       </div>
@@ -20,7 +20,7 @@
       <h3>Create project and choose input model</h3>
     </mat-card>
 
-    <mat-card class="inline-block">
+    <mat-card [routerLink]="'/config-wizard'" queryParamsHandling="preserve" class="inline-block">
       <div class="img-container">
         <img class="big-icon" src="./../../assets/nn.png">
       </div>
@@ -28,7 +28,7 @@
       <h3>Add optimization to get optimized models</h3>
     </mat-card>
 
-    <mat-card class="inline-block">
+    <mat-card [routerLink]="'/config-wizard'" queryParamsHandling="preserve" class="inline-block">
       <div class="img-container">
         <img class="big-icon" src="./../../assets/performance.png">
       </div>

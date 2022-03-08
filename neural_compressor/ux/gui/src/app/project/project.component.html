@@ -1,16 +1,19 @@
 <div class="container">
-  <h1>{{ project['name'] ?? 'Project name' }}
+  <h1 joyrideStep="intro" [stepContent]="intro">{{ project['name'] ?? 'Project name' }}
+    <img class="help-button right pointer" matTooltip="Help" (click)="onClick()"
+      src="./../../assets/383-general-support.svg">
   </h1>
 
   <ng-template #intro>
     Congratulations! You've just created this project.
   </ng-template>
 
-  <mat-tab-group mat-stretch-tabs *ngIf="project['input_model']">
+  <mat-tab-group mat-stretch-tabs *ngIf="project['input_model']" [(selectedIndex)]="selectedTab"
+    (selectedTabChange)="onTabChanged($event)">
     <mat-tab>
       <ng-template mat-tab-label>
         <img class="tab-icon" src="./../../assets/298a-workflow-process-solid.svg">
-        <div>
+        <div joyrideStep="addOptimizationTour" [stepContent]="addOptimizationTour">
           Optimizations
         </div>
       </ng-template>
@@ -23,7 +26,9 @@
     <mat-tab>
       <ng-template mat-tab-label>
         <img class="tab-icon" src="./../../assets/174-gauge.svg">
-        <div>Benchmarks</div>
+        <div joyrideStep="benchmarkTour" [stepContent]="benchmarkTour">
+          Benchmarks
+        </div>
       </ng-template>
       <ng-template #benchmarkTour>
         Add new benchmark to check out the performance and accuracy of initial and optimized model.
@@ -38,9 +43,10 @@
             src="./../../assets/043-organize.svg">
           <img *ngIf="!project['input_model']['supports_profiling']" class="tab-icon"
             src="./../../assets/043-organize-disabled.svg">
-          <div
+          <div joyrideStep="profilingTour" [stepContent]="profilingTour"
             [matTooltip]="!project['input_model']['supports_profiling'] ? 'Profiling is not available for this model.' : null">
-            Profiling</div>
+            Profiling
+          </div>
         </ng-template>
         <ng-template #profilingTour>
           In this tab you can run profiling to find out the performance of each layer of your model.
@@ -53,7 +59,9 @@
     <mat-tab>
       <ng-template mat-tab-label>
         <img class="tab-icon" src="./../../assets/234a-database-solid.svg">
-        <div>Datasets</div>
+        <div joyrideStep="datasetTour" [stepContent]="datasetTour">
+          Datasets
+        </div>
       </ng-template>
       <ng-template #datasetTour>
         Add new datasets to experiment with the model.
@@ -68,9 +76,10 @@
           <img *ngIf="project['input_model']['supports_graph']" class="tab-icon" src="./../../assets/307-org-chart.svg">
           <img *ngIf="!project['input_model']['supports_graph']" class="tab-icon"
             src="./../../assets/307-org-chart-disabled.svg">
-          <div
+          <div joyrideStep="graphTour" [stepContent]="graphTour"
             [matTooltip]="!project['input_model']['supports_graph'] ? 'Graph is not available for this model.' : null">
-            Graph</div>
+            Graph
+          </div>
         </ng-template>
         <ng-template #graphTour>
           Here you can see the graphic visualization of the model.
@@ -89,7 +98,7 @@
         Project info
       </ng-template>
       <mat-card>
-        <div class="item item-row1">
+        <div class="item item-row1" joyrideStep="secondStep">
           <h2>Project details</h2>
           <table class="rounded">
             <tr>
@@ -129,7 +138,10 @@
         </div>
         <div class="item">
           <h2>Notes</h2>
-          <textarea [(ngModel)]="project['notes']" name="notes" cdkTextareaAutosize></textarea>
+          <mat-form-field appearance="fill" class="notes">
+            <mat-label>Notes</mat-label>
+            <textarea matInput [(ngModel)]="project['notes']"></textarea>
+          </mat-form-field>
           <br>
           <button mat-raised-button (click)="addNotes()" color="accent">
             <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
