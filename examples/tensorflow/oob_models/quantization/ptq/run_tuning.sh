@@ -151,7 +151,7 @@ function set_args {
   elif [ "${topology}" == "PNASNet-5" ];then
     extra_cmd+=" --output_name final_layer/FC/BiasAdd "
   elif [ "${topology}" == "VAE-CF" ];then
-    extra_cmd+=" --output_name private_vae_graph/sequential_1/decoder_20104/BiasAdd "
+    extra_cmd+=" --output_name private_vae_graph/sequential_1/decoder_20024/BiasAdd "
   fi
 }
 

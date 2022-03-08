@@ -731,18 +731,16 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def iter_op(self):
-        if self._iter_op is not None:
-            return self._iter_op
-        self._iter_op = []
         if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
-        user_output_node_names = tensor_to_node(self.output_tensor_names)
         graph = self._sess.graph
-        graph_def = self._sess.graph.as_graph_def()
+        graph_def = graph.as_graph_def()
+        user_output_node_names = tensor_to_node(self.output_tensor_names)
         sub_graph_def = tf.compat.v1.graph_util.extract_sub_graph(
                             graph_def=graph_def,
                             dest_nodes=user_output_node_names)
         sub_graph_names = [node_def.name for node_def in sub_graph_def.node]
+        self._iter_op = []
         for node_def in graph_def.node:
             if node_def.op == 'MakeIterator':
                 if not node_def.input:
