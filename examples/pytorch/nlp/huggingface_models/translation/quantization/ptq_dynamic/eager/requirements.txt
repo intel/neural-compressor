@@ -1,5 +1,5 @@
 rouge-score
-nltk==3.6.5
+nltk==3.6.6
 transformers==4.10.0
 accelerate
 datasets >= 1.8.0
