@@ -89,17 +89,18 @@ class PreOptimization():
 
         output_node_names = self.model.output_node_names
         input_node_names = self.model.input_node_names
+        input_output_names = output_node_names + input_node_names
 
         self._tmp_graph_def = ConvertLayoutOptimizer(
             self.model.graph_def, output_node_names).do_transformation()
-
+            
         self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, output_node_names, self.optimization).do_transformation()
-
+            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
+         
         self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=output_node_names).do_transformation()
+            self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 

@@ -279,10 +279,14 @@ def fix_ref_type_of_graph_def(graph_def):
     return graph_def
 
 def strip_unused_nodes(graph_def, input_node_names, output_node_names):
+    """
+    The strip_unused_nodes pass is from tensorflow/python/tools/strip_unused_lib.py 
+    of official tensorflow r1.15 branch
+    """
     cur_graph = GraphAnalyzer()
     cur_graph.graph = graph_def
     graph_info = cur_graph.parse_graph()
-    type_attr = {"Sub": "T", "RealDiv": "T"}
+    type_attr = {"Sub": "T", "RealDiv": "T", "Identity": "T"}
     not_found = {name for name in input_node_names}
     for node_name in list(graph_info.keys()):
         if node_name in not_found:

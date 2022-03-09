@@ -604,9 +604,10 @@ class GraphConverter:
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names)
-
+        
         self._tmp_graph_def, self.quantized_node_info = QuantizeGraphForIntel(
             self._tmp_graph_def,
+            self._tmp_model.input_node_names,
             self._tmp_model.output_node_names,
             self.op_wise_config,
             self.int8_sequences,
@@ -693,14 +694,16 @@ class GraphConverter:
 
             self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
                 self._tmp_graph_def).do_transformation()
+        
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names).do_transformation()
-
+        
+        input_output_names = self._tmp_model.input_node_names + self._tmp_model.output_node_names
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def,
-            protected_nodes=self._tmp_model.output_node_names).do_transformation()
+            protected_nodes=input_output_names).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(
             self._tmp_graph_def).do_transformation()

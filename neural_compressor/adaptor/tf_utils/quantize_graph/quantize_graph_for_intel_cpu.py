@@ -31,7 +31,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
     """
 
-    def __init__(self, input_graph, output_node_names, op_wise_config, op_wise_sequences, device, \
+    def __init__(self, input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, \
                  fake_quant=False):
         """Quantize Graph For Intel Cpu
 
@@ -52,10 +52,11 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
             self.input_graph = graph_pb2.GraphDef()
             with gfile.Open(input_graph, 'rb') as f:
                 self.input_graph.ParseFromString(f.read())
-
+                
+        input_output_names = input_node_names + output_node_names
         self.input_graph = QuantizeGraphHelper().remove_training_nodes(
-            self.input_graph, protected_nodes=output_node_names)
-
+            self.input_graph, protected_nodes=input_output_names)
+        
         self.op_wise_seq = op_wise_sequences
 
         self.device = device

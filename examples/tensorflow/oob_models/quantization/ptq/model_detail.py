@@ -105,7 +105,7 @@ models = [
     # facenet-20180408-102900
     {
         'model_name': 'facenet-20180408-102900',
-        'input': {'image_batch': generate_data([160, 160, 3]), 'phase_train': False},
+        'input': {'input': generate_data([160, 160, 3]), 'phase_train': False},
         'output': ['embeddings']
     },
 
