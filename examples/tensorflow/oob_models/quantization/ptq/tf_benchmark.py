@@ -311,7 +311,7 @@ if __name__ == "__main__":
 
         quantizer = Quantization("./config_tmp.yaml")
         # generate dummy data
-        if  model_detail.get('sparse_d_shape'):
+        if model_detail.get('sparse_d_shape'):
             sparse_input_names = [list(i.keys()) for i in model_detail['sparse_d_shape'].values()]
             sparse_input_seq = sparse_input_names[0]
             for i in range(1, len(sparse_input_names)):
