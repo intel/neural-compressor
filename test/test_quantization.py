@@ -135,6 +135,28 @@ def build_fake_yaml5():
         yaml.dump(y,f)
     f.close()
 
+def build_fake_yaml6():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        tuning:
+          strategy:
+            name: fake
+          accuracy_criterion:
+            relative: 0.01
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml6.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
+
 def build_fake_model():
     try:
         graph = tf.Graph()
@@ -208,6 +230,16 @@ def build_fake_strategy():
         f.writelines(seq)
     f.close()
 
+class Metric:
+    def update(self, predict, label):
+        pass
+
+    def reset(self):
+        pass
+
+    def result(self):
+        return 0.5
+
 class TestQuantization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -217,6 +249,7 @@ class TestQuantization(unittest.TestCase):
         build_fake_yaml3()
         build_fake_yaml4()
         build_fake_yaml5()
+        build_fake_yaml6()
         build_fake_strategy()
 
     @classmethod
@@ -226,6 +259,7 @@ class TestQuantization(unittest.TestCase):
         os.remove('fake_yaml3.yaml')
         os.remove('fake_yaml4.yaml')
         os.remove('fake_yaml5.yaml')
+        os.remove('fake_yaml6.yaml')
         os.remove(os.path.join(os.path.dirname(importlib.util.find_spec('neural_compressor').origin), 'strategy/fake.py'))
         shutil.rmtree('./saved', ignore_errors=True)
 
@@ -300,6 +334,17 @@ class TestQuantization(unittest.TestCase):
           return [1.]
         quantizer.eval_func = invalid_eval_func
         output_graph = quantizer.fit()
+
+    def test_custom_metric(self):
+        from neural_compressor.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml6.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.metric = Metric()
+        quantizer.fit()
+        self.assertEqual(quantizer.strategy.evaluation_result[0], 0.5)
 
 if __name__ == "__main__":
     unittest.main()

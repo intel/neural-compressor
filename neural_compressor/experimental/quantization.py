@@ -280,19 +280,22 @@ class Quantization(Component):
                            " as user defines the value of `metric` attribute by code.")
  
         from .common import Metric as NCMetric
+        from ..metric import METRICS
         if isinstance(user_metric, NCMetric):
-            metric_cfg = {user_metric.name : {**user_metric.kwargs}}
-            deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-            self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-            from ..metric import METRICS
-            metrics = METRICS(self.framework)
-            metrics.register(user_metric.name, user_metric.metric_cls)
+            name = user_metric.name
+            metric_cls = user_metric.metric_cls
+            user_metric = {user_metric.name : {**user_metric.kwargs}}
         else:
             for i in ['reset', 'update', 'result']:
                 assert hasattr(user_metric, i), 'Please realise {} function' \
                                                 'in user defined metric'.format(i)
-            self._metric = user_metric
-
+            metric_cls = type(user_metric)
+            name = 'user_metric'
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", user_metric)
+        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+        metrics = METRICS(self.framework)
+        metrics.register(name, metric_cls)
+ 
     @property
     def postprocess(self, user_postprocess):
         assert False, 'Should not try to get the value of `postprocess` attribute.'
