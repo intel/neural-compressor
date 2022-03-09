@@ -2362,7 +2362,7 @@
     "Deep_Speech_2": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
-      "input_model": "/tf_dataset/tensorflow/tf_oob_models/dpg/Deep_Speech2/model/",
+      "input_model": "/tf_dataset/tensorflow/tf_oob_models/dpg/Deep_Speech2/Deep_Speech_2-Generated_LPOT_OOB_Model.pb",
       "yaml": "config.yaml",
       "strategy": "basic",
       "batch_size": 1,
