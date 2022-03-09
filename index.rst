@@ -1,6 +1,6 @@
 
 Intel® Neural Compressor Documentation
-####################################################
+######################################
 
 Welcome to the project.
 
@@ -13,7 +13,7 @@ Sections
    README.md
    docs/tutorial.md
    examples_readme.md
-   docs/api-introduction.md
+   api-documentation/apis.rst
    docs/doclist.rst
    releases_info.md
    contributions.md

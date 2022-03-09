@@ -209,7 +209,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 * [Using Low-Precision Optimizations for High-Performance DL Inference Applications](https://techdecoded.intel.io/essentials/using-low-precision-optimizations-for-high-performance-dl-inference-applications/#gs.z20k91) (Apr 2021)
 * [DL Boost Quantization with CERN's 3D-GANs model](https://www.nextplatform.com/2021/02/01/cern-uses-dlboost-oneapi-to-juice-inference-without-accuracy-loss/) (Feb 2021)
 
-Full publication list please refers to [here](docs/publication_list.md)
+View the [full publications list](docs/publication_list.md).
 
 ## System Requirements
 
@@ -293,7 +293,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 
 #### Validated MLPerf Models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th>Model</th>
@@ -364,7 +364,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 
 #### Validated Quantized Models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Framework</th>
@@ -730,7 +730,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 
 #### Validated Pruning Models
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Tasks</th>
@@ -777,7 +777,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 </tbody>
 </table>
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Tasks</th>
@@ -848,7 +848,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 </tbody>
 </table>
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th>Framework</th>
@@ -905,7 +905,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 
 #### Validated Knowledge Distillation Examples
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">Example Name</th>
@@ -950,7 +950,7 @@ Intel® Neural Compressor provides numerous examples to show promising accuracy 
 
 #### Validated Engine Examples 
 
-<table>
+<table class="docutils">
 <thead>
   <tr>
     <th rowspan="2">model</th>

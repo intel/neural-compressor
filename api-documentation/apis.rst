@@ -1,20 +1,10 @@
 APIs
 ####
 
-.. automodule:: neural_compressor.benchmark
-   :members:
+The following API information is available:
 
-.. autoclass:: neural_compressor.benchmark.Benchmark
-   :members:
+.. toctree::
+   :maxdepth: 1
 
-.. automodule:: neural_compressor.objective
-   :members:
-
-.. automodule:: neural_compressor.pruning
-   :members:
-
-.. automodule:: neural_compressor.quantization
-   :members:
-
-.. automodule:: neural_compressor.version
-   :members:
+   api-reference
+   ../docs/api-introduction.md
