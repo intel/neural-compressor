@@ -520,6 +520,10 @@ def main():
         if data_args.max_eval_samples is not None:
             # During Feature creation dataset samples might increase, we will select required samples again
             eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
+        if training_args.dataloader_drop_last:
+            data_lens = len(eval_dataset)
+            data_lens -= data_lens % training_args.per_device_eval_batch_size
+            eval_dataset = eval_dataset.select(range(data_lens))
 
     if training_args.do_predict:
         if "test" not in raw_datasets:
