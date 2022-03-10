@@ -32,13 +32,13 @@ class TestBiasCorrection(unittest.TestCase):
                 output_node_names=[relu.name.split(':')[0]])
             output_graph_def = QuantizeGraphHelper.remove_training_nodes(
                 output_graph_def, protected_nodes=[relu.name.split(':')[0]])
-
+            inputs = [x.name.split(':')[0]]
             outputs = [relu.name.split(':')[0]]
             op_wise_config = {
                 "Conv2D": (False, 'minmax', False, 7.0),
             }
 
-            int8_graph_def, _ = QuantizeGraphForIntel(output_graph_def, outputs,
+            int8_graph_def, _ = QuantizeGraphForIntel(output_graph_def, inputs, outputs,
                                                    op_wise_config, op_wise_sequences,
                                                   'cpu').do_transform()
         correct_graph_def = BiasCorrection(
