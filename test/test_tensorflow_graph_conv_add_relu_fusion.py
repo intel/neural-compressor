@@ -34,13 +34,13 @@ class TestConvAddRelu(unittest.TestCase):
                     i.op = 'Add'
             output_graph_def = QuantizeGraphHelper.remove_training_nodes(
                 output_graph_def, protected_nodes=[relu.name.split(':')[0]])
-
+            inputs = [x.name.split(':')[0]]
             outputs = [relu.name.split(':')[0]]
             op_wise_config = {
                 "Conv2D": (False, 'minmax', False, 7.0),
             }
 
-            fold_graph_def, _ = QuantizeGraphForIntel(output_graph_def, outputs,
+            fold_graph_def, _ = QuantizeGraphForIntel(output_graph_def, inputs, outputs,
                                                    op_wise_config, op_wise_sequences,
                                                    'cpu').do_transform()
             found_QuantizedConv2DWithBiasAndRelu = False

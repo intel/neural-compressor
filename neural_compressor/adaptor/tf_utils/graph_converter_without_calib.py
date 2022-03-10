@@ -243,6 +243,7 @@ class GraphConverterWithoutCalib:
 
         self._tmp_graph_def, self.quantized_node_info = QuantizeGraphForIntel(
             self._tmp_graph_def,
+            self._tmp_model.input_node_names,
             self._tmp_model.output_node_names,
             self.op_wise_config,
             self.int8_sequences,
