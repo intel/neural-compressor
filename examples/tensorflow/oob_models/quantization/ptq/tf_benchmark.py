@@ -182,6 +182,14 @@ def oob_collate_sparse_func(batch):
             extract_batch.append(j)
     return tuple(extract_batch[idx] for idx in seq_idxs), 0
 
+def oob_dlrm_collate_func(batch):
+    """Data collation function for DLRM"""
+    dense_features = np.array([[0., 1.3862944, 1.3862944, 1.609438, 8.13798, 5.480639, 0.6931472,
+                               3.218876, 5.187386, 0., 0.6931472, 0., 3.6635616]], dtype=np.float32)
+    sparse_features = np.array([[3, 93, 319, 272, 0, 5, 7898, 1, 0, 2, 3306, 310, 2528, 7,
+                                293, 293, 1, 218, 1, 2, 302, 0, 1, 120, 1, 2]], dtype=np.int32)
+    return (dense_features, sparse_features), 0
+
 class DataLoader(object):
     def __init__(self, inputs_tensor, total_samples, batch_size):
         """dataloader generator
@@ -338,7 +346,9 @@ if __name__ == "__main__":
                 Dataloader = common.DataLoader
             quantizer.calib_dataloader = Dataloader(dataset=dataset,
                                                     batch_size=args.batch_size,
-                                                    collate_fn=oob_collate_data_func)
+                                                    collate_fn=oob_collate_data_func \
+                                                        if model_detail.get('model_name')!='DLRM' \
+                                                            else oob_dlrm_collate_func)
         quantizer.model = args.model_path
         q_model = quantizer.fit()
         q_model.save(args.output_path)

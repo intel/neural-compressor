@@ -81,6 +81,17 @@ models = [
         'output': ['CPM/PoseNet/Mconv7_stage6/Conv2D']
     },
 
+    # DLRM
+    {
+        'model_name': 'DLRM',
+        'input': {'dense_features': np.array([[0., 1.3862944, 1.3862944, 1.609438, 8.13798, 5.480639, 0.6931472,
+                                               3.218876, 5.187386, 0., 0.6931472, 0., 3.6635616]], dtype=np.float32),
+                  'sparse_features': np.array([[3, 93, 319, 272, 0, 5, 7898, 1, 0, 2, 3306, 310, 2528, 7,
+                                                293, 293, 1, 218, 1, 2, 302, 0, 1, 120, 1, 2]], dtype=np.int32)
+                  },
+        'output': ['Identity',]
+    },
+
     # deepvariant_wgs
     {
         'model_name': 'deepvariant_wgs',
