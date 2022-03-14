@@ -67,6 +67,7 @@ function set_args {
   CenterNet
   CharCNN
   COVID-Net
+  DLRM
   Time_series_LSTM
   Hierarchical_LSTM
   MANN
