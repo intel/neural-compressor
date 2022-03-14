@@ -26,20 +26,29 @@ from ..utils import logger
 class GroupLassoPruner(BasicMagnitudePruner):
     def __init__(self, model, local_config, global_config):
         super(GroupLassoPruner, self).__init__(model, local_config, global_config)
+        self.cur_weights = copy.deepcopy(self.weights)
+        self.is_masks_set = False
         self.alpha = local_config.parameters['alpha']
 
     def on_post_grad(self):
-        for weight_name in self.weights:
-            weight_grad = self.model.get_gradient(weight_name)
-            weight = np.array(self.model.get_weight(weight_name))
-            reshaped_weight = self.pattern.reshape(weight)
-            normed = np.linalg.norm(reshaped_weight, 2, axis=(1,3))
-            sparsity_per_layer = (normed.numel() - np.count_nonzero(normed)) / normed.numel()
-            if sparsity_per_layer < self.sparsity:
-                coeff = self.alpha / normed
+        if self.cur_weights:
+            for weight_name in self.weights:
+                weight_grad = self.model.get_gradient(weight_name)
+                weight = np.array(self.model.get_weight(weight_name))
+                reshaped_weight = self.pattern.reshape(weight)
+                coeff = self.alpha / np.linalg.norm(reshaped_weight, 2, axis=(1,3))
                 coeff[np.isinf(coeff)] = 0
                 coeff = self.pattern.repeat_mask(coeff).reshape(weight.shape)
                 weight_grad += coeff * weight
-            else:
-                weight_grad[weight == 0] = 0
-            self.model.update_gradient(weight_name, weight_grad)
+                self.model.update_gradient(weight_name, weight_grad)
+ 
+            for weight_name in self.weights:
+                weight = self.model.get_weight(weight_name)
+                grad = self.model.get_gradient(weight_name)
+                grad[weight == 0] = 0
+                self.model.update_gradient(weight_name, grad)
+        else:
+            for weight_name in self.weights:
+                grad = self.model.get_gradient(weight_name)
+                new_grad = grad * self.masks[weight_name]
+                self.model.update_gradient(weight_name, new_grad)
