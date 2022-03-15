@@ -21,11 +21,11 @@ def build_fake_yaml():
           initial_sparsity: 0.0
           target_sparsity: 0.97
           start_epoch: 0
-          end_epoch: 4
+          end_epoch: 2
           pruners:
             - !Pruner
                 start_epoch: 1
-                end_epoch: 3
+                end_epoch: 2
                 prune_type: basic_magnitude
                 names: ['layer1.0.conv1.weight']
 
@@ -65,8 +65,8 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         def training_func_for_nc(model):
-            epochs = 16
-            iters = 30
+            epochs = 2
+            iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             for nepoch in range(epochs):
@@ -109,8 +109,8 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         def training_func_for_nc(model):
-            epochs = 16
-            iters = 30
+            epochs = 2
+            iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             for nepoch in range(epochs):

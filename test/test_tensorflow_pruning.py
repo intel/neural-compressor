@@ -274,7 +274,7 @@ def train():
 class TrainDataset(object):
     def __init__(self):
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        x_train, y_train = x_train[:100], y_train[:100]
+        x_train, y_train = x_train[:64], y_train[:64]
         x_train = x_train.astype('float32') / 255
         x_test = x_test.astype('float32') / 255
 
@@ -346,7 +346,7 @@ class TestTensorflowPruning(unittest.TestCase):
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         dataloader = common.DataLoader(TrainDataset(), batch_size=32)
-        train_cfg = DotDict({'epoch': 4,
+        train_cfg = DotDict({'epoch': 1,
                              'optimizer': {'AdamW': {'learning_rate': 0.001, 'weight_decay': 0.0001}},
                              'criterion': {'CrossEntropyLoss': {'reduction': 'sum_over_batch_size', 'from_logits': True}},
                              'execution_mode': 'eager',
@@ -368,7 +368,7 @@ class TestTensorflowPruning(unittest.TestCase):
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         dataloader = common.DataLoader(TrainDataset(), batch_size=32)
-        train_cfg = DotDict({'epoch': 100,
+        train_cfg = DotDict({'epoch': 1,
                              'dataloader': {'distributed': False, 'batch_size': 32,
                              'dataset': {'ImageRecord': {'root': './ImageNet'}},
                              'transform': {'ResizeCropImagenet': {'height': 224,
@@ -392,9 +392,9 @@ class TestTensorflowPruning(unittest.TestCase):
         stats, sparsity = pruned_model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
-        self.assertGreater(sparsity, 20)
+        self.assertGreater(sparsity, 10)
         self.assertGreater(prune.baseline_score, 0.72)
-        self.assertGreater(prune.last_score, 0.745)
+        self.assertGreater(prune.last_score, 0.73)
 
 
 if __name__ == '__main__':
