@@ -26,7 +26,7 @@ def build_fake_yaml():
           initial_sparsity: 0.0
           target_sparsity: 0.97
           start_epoch: 0
-          end_epoch: 4
+          end_epoch: 3
           pruners:
             - !Pruner
                 start_epoch: 1
@@ -56,13 +56,13 @@ def build_fake_yaml2():
     pruning:
       train:
         start_epoch: 0
-        end_epoch: 4
+        end_epoch: 3
         iteration: 10
         dataloader:
-          batch_size: 30
+          batch_size: 1
           dataset:
             dummy:
-              shape: [128, 3, 224, 224]
+              shape: [16, 3, 224, 224]
               label: True
         optimizer:
           SGD:
@@ -78,7 +78,7 @@ def build_fake_yaml2():
           initial_sparsity: 0.0
           target_sparsity: 0.97
           start_epoch: 0
-          end_epoch: 4
+          end_epoch: 3
           pruners:
             - !Pruner
                 start_epoch: 1
@@ -88,7 +88,7 @@ def build_fake_yaml2():
 
             - !Pruner
                 start_epoch: 0
-                end_epoch: 4
+                end_epoch: 3
                 target_sparsity: 0.6
                 prune_type: basic_magnitude
                 update_frequency: 2
@@ -99,10 +99,10 @@ def build_fake_yaml2():
         metric:
           topk: 1
         dataloader:
-          batch_size: 30
+          batch_size: 1
           dataset:
             dummy:
-              shape: [128, 3, 224, 224]
+              shape: [16, 3, 224, 224]
               label: True
     """
     with open('fake2.yaml', 'w', encoding="utf-8") as f:
@@ -118,13 +118,13 @@ def build_fake_yaml3():
       approach: quant_aware_training
       train:
         start_epoch: 0
-        end_epoch: 4
+        end_epoch: 3
         iteration: 10
         dataloader:
-          batch_size: 30
+          batch_size: 1
           dataset:
             dummy:
-              shape: [128, 3, 224, 224]
+              shape: [16, 3, 224, 224]
               label: True
         optimizer:
           SGD:
@@ -158,13 +158,13 @@ def build_fake_yaml4():
     pruning:
       train:
         start_epoch: 0
-        end_epoch: 4
+        end_epoch: 3
         iteration: 10
         dataloader:
-          batch_size: 30
+          batch_size: 1
           dataset:
             dummy:
-              shape: [128, 3, 224, 224]
+              shape: [16, 3, 224, 224]
               label: True
         optimizer:
           SGD:
@@ -180,7 +180,7 @@ def build_fake_yaml4():
           initial_sparsity: 0.0
           target_sparsity: 0.97
           start_epoch: 0
-          end_epoch: 4
+          end_epoch: 3
           pruners:
             - !Pruner
                 start_epoch: 1
@@ -190,7 +190,7 @@ def build_fake_yaml4():
 
             - !Pruner
                 start_epoch: 0
-                end_epoch: 4
+                end_epoch: 3
                 target_sparsity: 0.6
                 prune_type: basic_magnitude
                 update_frequency: 2
@@ -201,10 +201,10 @@ def build_fake_yaml4():
         metric:
           topk: 1
         dataloader:
-          batch_size: 30
+          batch_size: 1
           dataset:
             dummy:
-              shape: [128, 3, 224, 224]
+              shape: [16, 3, 224, 224]
               label: True
     """
     with open('fake4.yaml', 'w', encoding="utf-8") as f:
@@ -220,13 +220,13 @@ def build_fake_yaml5():
       approach: quant_aware_training
       train:
         start_epoch: 0
-        end_epoch: 4
+        end_epoch: 3
         iteration: 10
         dataloader:
-          batch_size: 30
+          batch_size: 1
           dataset:
             dummy:
-              shape: [128, 3, 224, 224]
+              shape: [16, 3, 224, 224]
               label: True
         optimizer:
           SGD:
@@ -260,7 +260,7 @@ def build_fake_yaml6():
     distillation:
         train:
             start_epoch: 0
-            end_epoch: 4
+            end_epoch: 3
             iteration: 10
             frequency: 1
             optimizer:
@@ -275,20 +275,20 @@ def build_fake_yaml6():
                     loss_types: ['CE', 'KL']
                     loss_weights: [0.5, 0.5]
             dataloader:
-                batch_size: 30
+                batch_size: 1
                 dataset:
                     dummy:
-                        shape: [128, 3, 224, 224]
+                        shape: [16, 3, 224, 224]
                         label: True
     evaluation:
         accuracy:
             metric:
                 topk: 1
             dataloader:
-                batch_size: 30
+                batch_size: 1
                 dataset:
                     dummy:
-                        shape: [128, 3, 224, 224]
+                        shape: [16, 3, 224, 224]
                         label: True
     """
     with open('fake6.yaml', 'w', encoding="utf-8") as f:
@@ -326,12 +326,12 @@ class TestPruning(unittest.TestCase):
         scheduler = Scheduler()
         scheduler.model = self.model
         datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
+        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         def training_func_for_nc(model):
-            epochs = 16
-            iters = 30
+            epochs = 2
+            iters = 2
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             for nepoch in range(epochs):
@@ -365,6 +365,11 @@ class TestPruning(unittest.TestCase):
         scheduler.model = self.model
         scheduler.append(prune)
         opt_model = scheduler.fit()
+        opt_model.report_sparsity()
+        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+                               0.5,
+                               delta=0.05)
 
     def test_scheduler_qat_distillation(self):
         from neural_compressor.experimental import Quantization, common, Distillation
@@ -378,6 +383,12 @@ class TestPruning(unittest.TestCase):
         scheduler.append(distiller)
         scheduler.append(quantizer)
         opt_model = scheduler.fit()
+        opt_model.report_sparsity()
+        conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+                               0.01,
+                               delta=0.01)
+        
 
     def test_combine_qat_pruning(self):
         from neural_compressor.experimental import Pruning, common, Quantization
@@ -393,8 +404,8 @@ class TestPruning(unittest.TestCase):
         opt_model.report_sparsity()
         conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.97,
-                               delta=0.01)
+                               0.5,
+                               delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
     def test_combine_qat_distillation(self):
@@ -408,6 +419,11 @@ class TestPruning(unittest.TestCase):
         combination = scheduler.combine(distiller, quantizer)
         scheduler.append(combination)
         opt_model = scheduler.fit()
+        opt_model.report_sparsity()
+        conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+                               0.01,
+                               delta=0.01)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
 
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
@@ -424,8 +440,8 @@ class TestPruning(unittest.TestCase):
         opt_model.report_sparsity()
         conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.97,
-                               delta=0.01)
+                               0.5,
+                               delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
 if __name__ == "__main__":

@@ -8,8 +8,8 @@ from neural_compressor.experimental.pruning_recipes.patterns import patterns
 
 class TestPruningPattern(unittest.TestCase):
 
-    tensor_4d = np.random.random([2240,2240, 3, 3])
-    tensor_2d = np.random.random([5120,2560])
+    tensor_4d = np.random.random([560, 560, 3, 3])
+    tensor_2d = np.random.random([1280, 640])
 
     def test_tile_pattern(self):
         for tensor in [self.tensor_2d, self.tensor_4d]:
@@ -21,10 +21,10 @@ class TestPruningPattern(unittest.TestCase):
                 m1 = mask_shape[1]
                 pattern = patterns['tile_pattern_{}x{}'.format(m0, m1)]()
                 new_shape = [shape[0] / m0] + [size // shape[0] / m1]
-                sparse_tensor = self.sparsify_tensor(tensor, [m0,m1], 0.8)
+                sparse_tensor = self.sparsify_tensor(tensor, [m0,m1], 0.2)
                 reduced_tensor = pattern.reduce(sparse_tensor)
                 self.assertEqual(list(reduced_tensor.shape), new_shape)
-                self.assertAlmostEqual(pattern.compute_sparsity(sparse_tensor), 0.8, delta=0.01)
+                self.assertAlmostEqual(pattern.compute_sparsity(sparse_tensor), 0.2, delta=0.01)
                 mask = reduced_tensor == 0
                 repeat_mask = pattern.repeat_mask(mask, ori_shape=tensor.shape)
                 self.assertEqual(repeat_mask.shape, tensor.shape)
