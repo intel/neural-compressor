@@ -19,6 +19,9 @@ def build_fake_yaml():
           inputs: x
           outputs: op_to_store
         device: cpu
+        quantization:
+          calibration:
+            sampling_size: 10
         evaluation:
           accuracy:
             metric:
@@ -62,9 +65,9 @@ def build_fake_yaml2():
           strategy:
             name: bayesian
           exit_policy:
-            timeout: 60
+            max_trials: 3
           accuracy_criterion:
-            relative: -0.01
+            relative: 0.01
           workspace:
             path: saved
         '''
@@ -272,6 +275,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
         output_graph = quantizer.fit()
+        self.assertNotEqual(output_graph, None)
 
     def test_run_bayesian_max_trials(self):
 
@@ -282,6 +286,7 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.test_graph
         output_graph = quantizer.fit()
+        self.assertNotEqual(output_graph, None)
 
     def test_bayesian_opt_class(self):
         from neural_compressor.strategy.bayesian import BayesianOptimization

@@ -47,7 +47,7 @@ def build_fake_yaml2():
           strategy:
             name: basic
           exit_policy:
-            max_trials: 10
+            max_trials: 3
           accuracy_criterion:
             relative: -0.01
           workspace:

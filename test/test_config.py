@@ -288,17 +288,6 @@ class TestConf(unittest.TestCase):
           framework: mxnet
         tuning:
           accuracy_criterion:
-          relative: 0.01
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
-        model:
-          name: tuning_yaml 
-          framework: mxnet
-        tuning:
-          accuracy_criterion:
             relative: 0.01
           strategy:
             name: fake

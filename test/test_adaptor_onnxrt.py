@@ -4,7 +4,6 @@ import unittest
 
 import torch
 import torchvision
-import yaml
 import onnx
 import numpy as np
 from collections import OrderedDict
@@ -450,12 +449,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
         conf.quantization.approach = 'post_training_dynamic_quant'
         conf.quantization.calibration.sampling_size = 1
         conf.evaluation.accuracy.metric = {'Accuracy': {}}
-        quantizer = Quantization()
         quantizer = Quantization(conf)
         quantizer.calib_dataloader = self.rename_dataloader
         quantizer.eval_dataloader = self.rename_dataloader
         quantizer.model = self.rename_model
         q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
 
         for fake_yaml in ["static.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
@@ -463,19 +462,22 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = self.rn50_model
             q_model = quantizer.fit()
-            eval_func(q_model)
+            self.assertNotEqual(q_model, None)
 
         import copy
         tmp_model = copy.deepcopy(self.rn50_model)
         tmp_model.opset_import[0].version = 10
         quantizer.model = tmp_model
         q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
         tmp_model.opset_import.extend([onnx.helper.make_opsetid("", 11)]) 
         quantizer.model = tmp_model
         q_model = quantizer.fit()
+        self.assertEqual(q_model, None)
         model = onnx.load('rn50_9.onnx')
         quantizer.model = model
         q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
 
         framework_specific_info = {"device": "cpu",
                      "approach": "post_training_static_quant",
@@ -502,17 +504,21 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer = Quantization(fake_yaml)
             quantizer.model = self.gather_model
             q_model = quantizer.fit()
+            self.assertNotEqual(q_model, None)
 
             quantizer.model = self.matmul_model
-            q_model = quantizer.fit()
+            q_model = quantizer.fit() # error input shape test
+            self.assertEqual(q_model, None)
 
             quantizer.eval_dataloader = self.matmul_dataloader
-            q_model = quantizer.fit()
+            q_model = quantizer.fit() # error input shape test
+            self.assertEqual(q_model, None)
 
             quantizer.calib_dataloader = self.matmul_dataloader
             quantizer.eval_dataloader = self.matmul_dataloader
             quantizer.model = self.matmul_model
             q_model = quantizer.fit()
+            self.assertNotEqual(q_model, None)
 
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         for fake_yaml in ["non_MSE.yaml"]:
@@ -521,7 +527,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.eval_dataloader = self.cv_dataloader
             quantizer.model = self.mb_v2_model
             q_model = quantizer.fit()
-            eval_func(q_model)
+            self.assertNotEqual(q_model, None)
 
         for fake_yaml in ["static.yaml"]:
             quantizer = Quantization(fake_yaml)
@@ -529,6 +535,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.eval_dataloader = self.ir3_dataloader
             quantizer.model = self.ir3_model
             q_model = quantizer.fit()
+            self.assertNotEqual(q_model, None)
 
             from neural_compressor.utils.utility import recover
             model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)

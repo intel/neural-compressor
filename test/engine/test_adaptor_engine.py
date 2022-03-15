@@ -1,59 +1,38 @@
 import sys
 import os
 import unittest
-import numpy as np
-from neural_compressor.experimental import Quantization, Benchmark, common
-from neural_compressor.model.engine_model import EngineModel
-from neural_compressor.data import DATASETS
+from neural_compressor.experimental import Quantization
 
 def build_yaml():
     fake_yaml = """
         model:
           name: bert
           framework: engine
+          
         quantization:
           calibration:
             sampling_size: 10
             dataloader:
               dataset:
                 dummy_v2:
-                  input_shape: [[324], [324], [324]]
-                  label_shape: [324,2]
+                  input_shape: [[128], [128], [128]]
+                  label_shape: [128,2]
                   low: [1, 0, 0, 0]
                   high: [128, 1, 1, 128]
                   dtype: [int32, int32, int32, float32]
-          op_wise: {
-            'bert/encoder/layer_0/attention/self/query/BiasAdd':{
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32'], 'granularity': ['per_tensor']}
-            }
-          }
+        
         evaluation:
           accuracy:
-            dataloader:
-              dataset:
-                dummy_v2:
-                  input_shape: [[324], [324], [324]]
-                  label_shape: [324,2]
-                  low: [1, 0, 0, 0]
-                  high: [128, 1, 1, 128]
-                  dtype: [int32, int32, int32, float32]
-            postprocess:
-              transform:
-                LabelShift: -1
             metric:
-              MSE:
-                compare_label: False
+              GLUE:
+                task: sst-2
           performance:
+            warmup: 5
             iteration: 10
-            dataloader:
-              dataset:
-                dummy_v2:
-                  input_shape: [[324], [324], [324]]
-                  label_shape: [324,2]
-                  low: [1, 0, 0, 0]
-                  high: [128, 1, 1, 128]
-                  dtype: [int32, int32, int32, float32]
+            configs:
+              num_of_instance: 1
+              cores_per_instance: 28
+        
         tuning:
           exit_policy:
             max_trials: 1
@@ -62,54 +41,35 @@ def build_yaml():
         f.write(fake_yaml)
 
     fake_yaml_bf16 = """
-        model:
+       model:
           name: bert
           framework: engine
-        quantization:
+          
+       quantization:
           dtype: bf16
           calibration:
             sampling_size: 10
             dataloader:
               dataset:
                 dummy_v2:
-                  input_shape: [[324], [324], [324]]
-                  label_shape: [324,2]
+                  input_shape: [[128], [128], [128]]
+                  label_shape: [128,2]
                   low: [1, 0, 0, 0]
                   high: [128, 1, 1, 128]
                   dtype: [int32, int32, int32, float32]
-          op_wise: {
-            'bert/encoder/layer_0/attention/self/query/BiasAdd':{
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32'], 'granularity': ['per_tensor']}
-            }
-          }
-        evaluation:
+       evaluation:
           accuracy:
-            dataloader:
-              dataset:
-                dummy_v2:
-                  input_shape: [[324], [324], [324]]
-                  label_shape: [324,2]
-                  low: [1, 0, 0, 0]
-                  high: [128, 1, 1, 128]
-                  dtype: [int32, int32, int32, float32]
-            postprocess:
-              transform:
-                LabelShift: -1
             metric:
-              MSE:
-                compare_label: False
+              GLUE:
+                task: sst-2
           performance:
+            warmup: 5
             iteration: 10
-            dataloader:
-              dataset:
-                dummy_v2:
-                  input_shape: [[324], [324], [324]]
-                  label_shape: [324,2]
-                  low: [1, 0, 0, 0]
-                  high: [128, 1, 1, 128]
-                  dtype: [int32, int32, int32, float32]
-        tuning:
+            configs:
+              num_of_instance: 1
+              cores_per_instance: 28
+        
+       tuning:
           exit_policy:
             max_trials: 1
     """
@@ -123,13 +83,13 @@ class TestDeepengineAdaptor(unittest.TestCase):
 
     def test_adaptor(self):
         quantizer = Quantization('test.yaml')
-        quantizer.model = "/home/tensorflow/inc_ut/engine/bert_mlperf_2none.pb"
+        quantizer.model = "/home/tensorflow/inc_ut/engine/bert_mini_sst2.onnx"
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
     def test_adaptor_bf16(self):
         quantizer = Quantization('test_bf16.yaml')
-        quantizer.model = "/home/tensorflow/inc_ut/engine/bert_mlperf_2none.pb"
+        quantizer.model = "/home/tensorflow/inc_ut/engine/bert_mini_sst2.onnx"
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
