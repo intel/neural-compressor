@@ -1,0 +1,19 @@
+version: 1.0
+
+model:
+  name: hello_world
+  framework: tensorflow                          # possible values are tensorflow, mxnet and pytorch
+  inputs: x
+  outputs: Identity
+
+evaluation:
+  accuracy:
+    metric:
+      topk: 1
+
+tuning:
+  accuracy_criterion:
+    relative: 0.01                              # the tuning target of accuracy loss percentage: 1%
+  exit_policy:
+    timeout: 0                                   # tuning timeout (seconds)
+  random_seed: 100                               # random seed
