@@ -2,26 +2,21 @@
 
 > **Note**
 
-> Dynamic quantization currently only supports the onnxruntime backend.
+> Dynamic quantization currently supports the pytorch and onnxruntime backend.
 
 As a [quantization](./Quantization.md) class, dynamic quantization allows users to determine the scale factor for activations dynamically based on the data range that's observed at runtime as opposed to using other methods that entail multiplying a float point value by some scale factor and then rounding the result to a whole number. As noted in [PyTorch documentation][PyTorch-Dynamic-Quantization], this "ensures that the scale factor is 'tuned' so that as much signal as possible about each observed dataset is preserved." Since it does not use a lot of tuning parameters, dynamic quantization is a good match for NLP models.
 
 
-The onnxruntime bert_base model provides an example where users can create a specific quantization method like the following yaml:
+The pytorch bert_base model provides an example where users can create a specific quantization method like the following yaml:
 
 
 ```yaml
 model:                                               # mandatory. used to specify model specific information.
   name: bert 
-  framework: onnxrt_integerops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
+  framework: pytorch                                 # mandatory. possible values are pytorch, onnxrt_integerops.
 
 quantization:
   approach: post_training_dynamic_quant              # optional. default value is post_training_static_quant
-                                                     # possible value is post_training_static_quant, 
-                                                     # post_training_dynamic_quant
-                                                     # quant_aware_training                                 
-  calibration:
-    sampling_size: 8, 16, 32
 
 tuning:
   accuracy_criterion:
