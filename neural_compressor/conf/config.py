@@ -841,7 +841,8 @@ quantization_default_schema = Schema({
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
-                                                     'activation': {}}}): dict,
+                                                     'activation': {}},
+                                        'dtype':'int8'}): dict,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},

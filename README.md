@@ -923,15 +923,11 @@ Intel® Neural Compressor provides numerous examples to show the performance gai
     <th rowspan="2">model</th>
     <th colspan="3">Accuracy</th>
     <th colspan="3">Performance<br>1s4c10ins1bs/throughput<br>(samples/sec)<br></th>
-    <th colspan="3">Performance<br>2s4c20ins64bs/throughput<br>(samples/sec)<br></th>
   </tr>
   <tr>
     <th>INT8</th>
     <th>FP32</th>
     <th>Acc Ratio[(INT8-FP32)/FP32]</th>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Preformance<br>Ratio[INT8/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Preformance<br>Ratio[INT8/FP32]</th>
@@ -946,9 +942,6 @@ Intel® Neural Compressor provides numerous examples to show the performance gai
     <td>45.32</td>
     <td>12.53</td>
     <td>3.62x</td>
-    <td>362.21</td>
-    <td>88.38</td>
-    <td>4.10x</td>
   </tr>
   <tr>
     <td>distilbert_base_uncased_sst2</td>
@@ -958,9 +951,6 @@ Intel® Neural Compressor provides numerous examples to show the performance gai
     <td>999.98</td>
     <td>283.96</td>
     <td>3.52x</td>
-    <td>2104.26</td>
-    <td>606.58</td>
-    <td>3.47x</td>
   </tr>
   <tr>
     <td>minilm_l6_h384_uncased_sst2</td>
@@ -970,9 +960,6 @@ Intel® Neural Compressor provides numerous examples to show the performance gai
     <td>2690.5</td>
     <td>1002.7</td>
     <td>2.68x</td>
-    <td>5389.98</td>
-    <td>2333.14</td>
-    <td>2.31x</td>
   </tr>
   <tr>
     <td>roberta_base_mrpc</td>
@@ -982,9 +969,6 @@ Intel® Neural Compressor provides numerous examples to show the performance gai
     <td>508.18</td>
     <td>142.48</td>
     <td>3.57x</td>
-    <td>1167.09</td>
-    <td>311.5</td>
-    <td>3.75x</td>
   </tr>
   <tr>
     <td>bert_base_nli_mean_tokens_stsb</td>
@@ -994,81 +978,6 @@ Intel® Neural Compressor provides numerous examples to show the performance gai
     <td>504.15</td>
     <td>141.5</td>
     <td>3.56x</td>
-    <td>1096.46</td>
-    <td>332.54</td>
-    <td>3.30x</td>
-  </tr>
-  <tr>
-    <td>bert_base_sparse_mrpc</td>
-    <td>70.34%</td>
-    <td>70.59%</td>
-    <td>-0.35%</td>
-    <td>507.59</td>
-    <td>142.88</td>
-    <td>3.55x</td>
-    <td>1133.04</td>
-    <td>339.96</td>
-    <td>3.33x</td>
-  </tr>
-  <tr>
-    <td>distilroberta_base_wnli</td>
-    <td>56.34%</td>
-    <td>56.34%</td>
-    <td>0.00%</td>
-    <td>1032.04</td>
-    <td>291.78</td>
-    <td>3.54x</td>
-    <td>2309.9</td>
-    <td>620.81</td>
-    <td>3.72x</td>
-  </tr>
-  <tr>
-    <td>paraphrase_xlm_r_multilingual_v1_stsb</td>
-    <td>86.71%</td>
-    <td>87.23%</td>
-    <td>-0.60%</td>
-    <td>511.92</td>
-    <td>142.85</td>
-    <td>3.58x</td>
-    <td>1169.45</td>
-    <td>311.59</td>
-    <td>3.75x</td>
-  </tr>
-  <tr>
-    <td>distilbert_base_uncased_mrpc</td>
-    <td>84.07%</td>
-    <td>84.07%</td>
-    <td>0.00%</td>
-    <td>996.79</td>
-    <td>280.88</td>
-    <td>3.55x</td>
-    <td>2107.96</td>
-    <td>606.95</td>
-    <td>3.47x</td>
-  </tr>
-  <tr>
-    <td>finbert_financial_phrasebank</td>
-    <td>82.68%</td>
-    <td>82.80%</td>
-    <td>-0.14%</td>
-    <td>922.88</td>
-    <td>272.75</td>
-    <td>3.38x</td>
-    <td>1101.13</td>
-    <td>331.88</td>
-    <td>3.32x</td>
-  </tr>
-  <tr>
-    <td>distilbert_base_uncased_emotion</td>
-    <td>93.85%</td>
-    <td>94.20%</td>
-    <td>-0.37%</td>
-    <td>999.97</td>
-    <td>283.98</td>
-    <td>3.52x</td>
-    <td>2103.22</td>
-    <td>607.08</td>
-    <td>3.46x</td>
   </tr>
 </tbody>
 </table>
