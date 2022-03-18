@@ -1340,6 +1340,158 @@ Intel technologies may require enabled hardware, software or service activation.
 </tbody>
 </table>
 
+### INC-ENGINE Models
+<table>
+<thead>
+  <tr>
+    <th rowspan="2">Backend</th>
+    <th rowspan="2">model</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>1s4c10ins1bs/throughput<br>(samples/sec)<br></th>
+  </tr>
+  <tr>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>bert_base_mrpc</td>
+    <td>82.35%</td>
+    <td>83.09%</td>
+    <td>-0.89%</td>
+    <td>487.41</td>
+    <td>140.978</td>
+    <td>3.46x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>bert_base_nli_mean_tokens_stsb</td>
+    <td>89.26%</td>
+    <td>89.55%</td>
+    <td>-0.32%</td>
+    <td>504.147</td>
+    <td>141.504</td>
+    <td>3.56x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>bert_base_sparse_mrpc</td>
+    <td>70.34%</td>
+    <td>70.59%</td>
+    <td>-0.35%</td>
+    <td>507.585</td>
+    <td>142.876</td>
+    <td>3.55x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>bert_large_squad</td>
+    <td>90.70</td>
+    <td>90.87</td>
+    <td>-0.19%</td>
+    <td>45.32</td>
+    <td>12.531</td>
+    <td>3.62x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>distilbert_base_uncased_emotion</td>
+    <td>93.85%</td>
+    <td>94.20%</td>
+    <td>-0.37%</td>
+    <td>999.973</td>
+    <td>283.975</td>
+    <td>3.52x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>distilbert_base_uncased_mrpc</td>
+    <td>84.07%</td>
+    <td>84.07%</td>
+    <td>0.00%</td>
+    <td>996.79</td>
+    <td>280.88</td>
+    <td>3.55x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>distilbert_base_uncased_sst2</td>
+    <td>90.14%</td>
+    <td>90.25%</td>
+    <td>-0.12%</td>
+    <td>999.98</td>
+    <td>283.96</td>
+    <td>3.52x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>distilroberta_base_wnli</td>
+    <td>56.34%</td>
+    <td>56.34%</td>
+    <td>0.00%</td>
+    <td>1032.043</td>
+    <td>291.782</td>
+    <td>3.54x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>dlrm</td>
+    <td>78.07%</td>
+    <td>78.10%</td>
+    <td>-0.04%</td>
+    <td>54898.34</td>
+    <td>48331.14</td>
+    <td>1.14x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>finbert_financial_phrasebank</td>
+    <td>82.68%</td>
+    <td>82.80%</td>
+    <td>-0.14%</td>
+    <td>922.877</td>
+    <td>272.751</td>
+    <td>3.38x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>minilm_l6_h384_uncased_sst2</td>
+    <td>89.33%</td>
+    <td>90.14%</td>
+    <td>-0.90%</td>
+    <td>2690.501</td>
+    <td>1002.695</td>
+    <td>2.68x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>paraphrase_xlm_r_multilingual_v1_stsb</td>
+    <td>86.71%</td>
+    <td>87.23%</td>
+    <td>-0.60%</td>
+    <td>511.919</td>
+    <td>142.851</td>
+    <td>3.58x</td>
+  </tr>
+  <tr>
+    <td>INC-ENGINE</td>
+    <td>roberta_base_mrpc</td>
+    <td>89.71%</td>
+    <td>88.97%</td>
+    <td>0.83%</td>
+    <td>508.184</td>
+    <td>142.483</td>
+    <td>3.57x</td>
+  </tr>
+</tbody>
+</table>
+
 ### BACKUP
 <table>
 <tr><th>System Configuration</th><th>Intel Xeon Platinum 8380 Scalable processor</th></tr>
