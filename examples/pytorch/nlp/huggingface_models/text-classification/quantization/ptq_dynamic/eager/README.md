@@ -160,3 +160,11 @@ if model_args.tune:
     exit(0)
 ```
 
+### Using Shapley MSE as Objective
+
+Shapley values originate from cooperative game theory that come with desirable properties, and now are widely used as a tool to fulfill Explainable AI. The run_glue_tune_with_shap.py is designed to help build a bert-based model using Shapley MSE as an objective. Here, the Shapley MSE means that we can get one result from FP32 and several results from INT8 model, so we use MSE to calculate how different between the two shapley values. It can reflect the explainability of INT8 model. 
+> **Note** : run_glue_tune_with_shap.py is the example of "SST2" task. If you want to execute other glue task, you may take some slight change under "ShapleyMSE" class.  
+
+
+
+

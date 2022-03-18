@@ -278,7 +278,7 @@ class Quantization(Component):
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
- 
+
         from .common import Metric as NCMetric
         from ..metric import METRICS
         if isinstance(user_metric, NCMetric):
@@ -296,6 +296,25 @@ class Quantization(Component):
         metrics = METRICS(self.framework)
         metrics.register(name, metric_cls)
  
+    @property
+    def objective(self):
+        assert False, 'Should not try to get the value of `objective` attribute.'
+        return None
+
+    @objective.setter
+    def objective(self, user_objective):
+        if deep_get(self.conf.usr_cfg, "tuning.multi_objective.objective"):
+            logger.warning("Override the value of `objective` field defined in yaml file" \
+                           " as user defines the value of `objective` attribute by code.")
+
+        from ..objective import objective_custom_registry
+        objective_cls = type(user_objective)
+        name = user_objective.__class__.__name__
+        objective_cfg = [name]
+        deep_set(self.conf.usr_cfg, "tuning.multi_objective.objective", objective_cfg)
+        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+        objective_custom_registry(name, objective_cls)
+    
     @property
     def postprocess(self, user_postprocess):
         assert False, 'Should not try to get the value of `postprocess` attribute.'

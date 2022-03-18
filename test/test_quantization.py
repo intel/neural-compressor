@@ -368,5 +368,27 @@ class TestQuantization(unittest.TestCase):
         quantizer.fit()
         self.assertEqual(quantizer.strategy.evaluation_result[0], 0.5)
 
+    def test_custom_objective(self):
+        from neural_compressor.experimental import Quantization, common
+        from neural_compressor.objective import Objective
+        import tracemalloc
+        class MyObjective(Objective):
+          representation = 'MyObj'
+          def __init__(self):
+              super().__init__()
+          def start(self):
+              tracemalloc.start()
+          def end(self):
+              _, peak = tracemalloc.get_traced_memory()
+              tracemalloc.stop()
+              self._result_list.append(peak // 1048576)
+        quantizer = Quantization('fake_yaml.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.objective = MyObjective()
+        output_graph = quantizer.fit()
+        self.assertNotEqual(output_graph, None)
 if __name__ == "__main__":
     unittest.main()
