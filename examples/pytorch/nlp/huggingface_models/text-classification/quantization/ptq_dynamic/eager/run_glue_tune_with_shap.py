@@ -40,6 +40,10 @@ from transformers import (
     set_seed,
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
+from neural_compressor.objective import Objective
+import torch
+import shap
+import scipy as sp
 
 task_to_keys = {
     "cola": ("sentence", None),
@@ -400,7 +404,44 @@ def main():
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
     else:
         data_collator = None
-
+        
+    class ShapleyMSE(Objective):
+        representation = 'Shapley MSE'
+        def __init__(self):
+            super().__init__()
+            self.FP_shap_mean = []
+        def start(self):
+            pass
+        def end(self):
+            def f(x):
+                tv = torch.tensor([tokenizer.encode(v, padding='max_length', max_length=128, truncation=True) for v in x])
+                attention_mask = (tv!=0).type(torch.int64)
+                outputs = self._model(tv,attention_mask=attention_mask)[0].detach().cpu().numpy()
+                scores = (np.exp(outputs).T / np.exp(outputs).sum(-1)).T
+                val = sp.special.logit(scores)
+                return val
+            explainer = shap.Explainer(f, tokenizer)
+            def cal_shap(explainer, n=0, is_MSE=False):
+                total = 0
+                shap_value = explainer(eval_dataset['sentence'][:10]) 
+                shap_value = shap_value.values
+                for i in range(len(shap_value)):
+                    if not is_MSE:
+                        self.FP_shap_mean.append(np.absolute(shap_value[i][1:-1]).mean(axis=0))
+                    else:
+                        INT_shap_mean = np.absolute(shap_value[i][1:-1]).mean(axis=0)
+                        total += np.sum(np.square(self.FP_shap_mean[i] - INT_shap_mean))
+                return shap_value, total
+            if not self.FP_shap_mean:
+                shap_calue, total = cal_shap(explainer)
+            else:
+                shap_value, total = cal_shap(explainer, is_MSE=True)
+                MSE = total / len(shap_value)
+                self._result_list.append(MSE)
+        def result(self, start=None, end=None):
+            if not self._result_list:
+                return 0
+            return self._result_list[-1]
     if model_args.tune:
         trainer = Trainer(
             model=model,
@@ -415,6 +456,7 @@ def main():
             trainer.model = model_tuned
             result = trainer.evaluate(eval_dataset=eval_dataset)
             bert_task_acc_keys = ['eval_f1', 'eval_accuracy', 'mcc', 'spearmanr', 'acc']
+            print(result)
             for key in bert_task_acc_keys:
                 if key in result.keys():
                     logger.info("Finally Eval {}:{}".format(key, result[key]))
@@ -426,6 +468,7 @@ def main():
         calib_dataloader = trainer.get_train_dataloader()
         quantizer.model = common.Model(model)
         quantizer.calib_dataloader = calib_dataloader
+        quantizer.objective = ShapleyMSE()
         quantizer.eval_func = eval_func_for_nc
         q_model = quantizer.fit()
         q_model.save(training_args.output_dir)

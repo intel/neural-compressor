@@ -18,6 +18,7 @@
 from abc import abstractmethod
 import time
 import numpy as np
+
 import tracemalloc
 from .utils.utility import get_size
 
@@ -26,7 +27,7 @@ from .utils.utility import get_size
 """
 OBJECTIVES = {}
 
-def objective_registry(cls):
+def objective_registry(cls):   
     """The class decorator used to register all Objective subclasses.
 
     Args:
@@ -39,7 +40,11 @@ def objective_registry(cls):
         raise ValueError('Cannot have two objectives with the same name')
     OBJECTIVES[cls.__name__.lower()] = cls
     return cls
-
+    
+def objective_custom_registry(name, obj_cls):
+    if name.lower() in OBJECTIVES:
+        raise ValueError('Cannot have two objectives with the same name')
+    OBJECTIVES[name.lower()] = obj_cls
 
 class Objective(object):
     """The base class for precise benchmark supported by neural_compressor.
@@ -119,13 +124,14 @@ class Accuracy(Objective):
     def end(self, acc):
         self._result_list.append(acc)
 
+
+
 @objective_registry
 class Performance(Objective):
     representation = 'duration (seconds)'
 
     def start(self):
         self.start_time = time.time()
-
     def end(self):
         self.duration = time.time() - self.start_time
         assert self.duration > 0, 'please use start() before end()'
@@ -160,7 +166,7 @@ class MultiObjective:
         assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
             'accuracy criterion should set relative or absolute'
         self.higher_is_better = True
-        for k, v in accuracy_criterion.items(): 
+        for k, v in accuracy_criterion.items():
             if k in ['relative', 'absolute']:
                 if k == 'relative':
                     assert float(v) < 1 and float(v) > -1
@@ -197,7 +203,7 @@ class MultiObjective:
             acc_target = base_acc * (1 - float(self.acc_goal)) if self.higher_is_better \
                 else base_acc * (1 + float(self.acc_goal))
         else:
-            acc_target =  base_acc - float(self.acc_goal) if self.higher_is_better \
+            acc_target = base_acc - float(self.acc_goal) if self.higher_is_better \
                 else base_acc + float(self.acc_goal)
 
         if last_measure == 0 or all([x <= y for x, y in zip(perf, last_measure)]):
