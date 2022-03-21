@@ -123,7 +123,6 @@ def main():
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
-        quantizer.calib_dataloader = val_dataloader
         quantizer.eval_func = eval_func
         q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
