@@ -569,8 +569,6 @@ def main():
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
-        calib_dataloader = trainer.get_train_dataloader()
-        quantizer.calib_dataloader = calib_dataloader
         quantizer.eval_func = eval_func_for_nc
         q_model = quantizer.fit()
         q_model.save(training_args.output_dir)
