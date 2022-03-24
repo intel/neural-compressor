@@ -1,6 +1,6 @@
 # RNNT MLPerf Inference v1.1
 
-> Note: not support IPEX 1.10
+> Note: not support IPEX 1.10, 1.11
 
 ## SW requirements
 ###
