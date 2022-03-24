@@ -28,23 +28,54 @@
     valid_mixed_precisions: []
 
   ops: &common_ops
-    fp32: &fp32_ops [
-            '_sg_mkldnn_conv', 'Convolution', 
-            '_sg_mkldnn_fully_connected', 'FullyConnected', 
+    fp32: [ 'Flatten', 'Pooling', 'Convolution', 'FullyConnected',
+            '_sg_mkldnn_conv', '_sg_mkldnn_fully_connected',
             '_sg_mkldnn_selfatt_qk', '_sg_mkldnn_selfatt_valatt',
-            'Flatten', 'Pooling']
-    int8:  ['quantize_output', *fp32_ops]
+            '_sg_onednn_conv', '_sg_onednn_fully_connected',
+            '_sg_onednn_selfatt_qk', '_sg_onednn_selfatt_valatt' ]
+    int8: [ 'quantize_output',
+            'Flatten', 'Pooling', 'Convolution', 'FullyConnected',
+            '_sg_mkldnn_conv', '_sg_mkldnn_fully_connected',
+            '_sg_mkldnn_selfatt_qk', '_sg_mkldnn_selfatt_valatt',
+            '_sg_onednn_conv', '_sg_onednn_fully_connected',
+            '_sg_onednn_selfatt_qk', '_sg_onednn_selfatt_valatt' ]
 
   capabilities: &common_capabilities
     int8: {
-        'quantize_output': {
+        'default': &capability_default {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8', 'fp32'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax']}
+        },
+        'quantize_output': &capability_quantize {
             'activation': {
                 'dtype': ['int8'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']},
         }, 
-        '_sg_mkldnn_conv': {
+        'Flatten': &capability_flatten {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+        },
+        'Pooling': &capability_pooling {
+            'activation': {
+                'dtype': ['int8', 'fp32'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+        },
+        'Convolution': &capability_conv {
             'activation': {
                 'dtype': ['int8', 'fp32'],
                 'scheme': ['sym'],
@@ -56,19 +87,7 @@
                 'granularity': ['per_channel'],
                 'algorithm': ['minmax']}
         },
-        'Convolution': {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']},
-            'weight': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_channel'],
-                'algorithm': ['minmax']}
-        },
-        '_sg_mkldnn_fully_connected': {
+        'FullyConnected': &capability_fc {
             'activation': {
                 'dtype': ['int8', 'fp32'],
                 'scheme': ['sym'],
@@ -80,58 +99,26 @@
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax']}
         },
-        'FullyConnected': {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']},
-            'weight': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax']}
-        },
-        '_sg_mkldnn_selfatt_qk': {
+        '_sg_mkldnn_conv': *capability_conv,
+        '_sg_mkldnn_fully_connected': *capability_fc,
+        '_sg_mkldnn_selfatt_qk': &capability_mkldnn_qk {
             'activation': {
                 'dtype': ['int8', 'fp32'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']},
         },
-        '_sg_mkldnn_selfatt_valatt': {
+        '_sg_mkldnn_selfatt_valatt': &capability_mkldnn_valatt {
             'activation': {
                 'dtype': ['int8', 'fp32'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']}
         },
-        'Flatten': {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']}
-        },
-        'Pooling': {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']}
-        },
-        'default': {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']},
-            'weight': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax']}
-        }
+        '_sg_onednn_conv': *capability_conv,
+        '_sg_onednn_fully_connected': *capability_fc,
+        '_sg_onednn_selfatt_qk': *capability_mkldnn_qk,
+        '_sg_onednn_selfatt_valatt':  *capability_mkldnn_valatt
       }
 
   patterns: &common_patterns
@@ -199,6 +186,22 @@
 -
   version:
     name: '1.9.0'
+
+  precisions:
+    <<: *common_precisions
+
+  ops:
+    <<: *common_ops
+
+  capabilities:
+    << : *common_capabilities
+
+  patterns:
+    << : *common_patterns
+
+-
+  version:
+    name: '2.0.0'
 
   precisions:
     <<: *common_precisions

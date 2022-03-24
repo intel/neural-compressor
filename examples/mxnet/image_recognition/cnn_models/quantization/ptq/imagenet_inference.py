@@ -15,79 +15,97 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import os
+import sys
 import argparse
 import logging
-import os
 import time
-import numpy as np
+
 import mxnet as mx
-from mxnet import nd
-from mxnet.contrib.quantization import *
-from mxnet.contrib import amp
-import sys
+from mxnet import gluon
+from mxnet.gluon.data import DataLoader
+from mxnet.gluon.data.vision import transforms
+
+from neural_compressor.adaptor.mxnet_utils.util import check_mx_version, get_backend_name
+
+if check_mx_version('2.0.0') or not check_mx_version('1.7.0'):  # version >= 2.0.0 or == 1.6.0
+    from mxnet.contrib.quantization import quantize_net
+else:
+    from mxnet.contrib.quantization import quantize_net_v2 as quantize_net
+
+mx.npx.reset_np()
 
 
-def download_dataset(dataset_url, dataset_dir, logger=None):
-    if logger is not None:
-        logger.info('Downloading dataset for inference from %s to %s' % (dataset_url, dataset_dir))
-    mx.test_utils.download(dataset_url, dataset_dir)
+class DataiterWrapper(mx.gluon.data.DataLoader):
+    def __init__(self, dataiter, batch_size, discard_label=False):
+        super().__init__(mx.gluon.data.SimpleDataset([]), batch_size)
+        self.dataiter = dataiter
+        self.batch_size = batch_size
+        self.discard_label = discard_label
+
+    def __iter__(self):
+        self.dataiter.reset()
+        for batch in self.dataiter:
+            if self.discard_label:
+                yield batch.data
+            yield batch.data + batch.label
+
+    def __bool__(self):
+        return bool(self.dataiter.iter_next())
+
+    def without_label(self):  # workaround for an MXNet 1.6 bug in the quantize_net function
+        return DataiterWrapper(self.dataiter, self.batch_size, True)
 
 
-def load_model(symbol_file, param_file, logger=None):
-    cur_path = os.path.dirname(os.path.realpath(__file__))
-    symbol_file_path = os.path.join(cur_path, symbol_file)
-    if logger is not None:
-        logger.info('Loading symbol from file %s' % symbol_file_path)
-    symbol = mx.sym.load(symbol_file_path)
+def quantize(net, ctx, dataloader, batch_size, num_calib_batches, save_path, calib_mode, logger):
+    # quantize and tune
+    if calib_mode in ['naive', 'entropy']:
+        calib_samples = {}
+        if check_mx_version('2.0.0'):
+            calib_samples['num_calib_batches'] = num_calib_batches
+        else:
+            calib_samples['num_calib_examples'] = num_calib_batches*batch_size
+        qnet = quantize_net(net, ctx=ctx, calib_mode=calib_mode,
+                            calib_data=dataloader.without_label(),
+                            quantized_dtype='auto', logger=logger, **calib_samples)
+    elif calib_mode == 'inc':
+        from neural_compressor.experimental import Quantization, common
+        quantizer = Quantization("./cnn.yaml")
+        quantizer.model = common.Model(net)
+        quantizer.calib_dataloader = dataloader
+        quantizer.eval_dataloader = dataloader
+        qnet = quantizer.fit().model
+    else:
+        raise ValueError(
+            'Unknow calibration mode {} received, only supports `naive`, '
+            '`entropy`, and `inc`'.format(calib_mode))
 
-    param_file_path = os.path.join(cur_path, param_file)
-    if logger is not None:
-        logger.info('Loading params from file %s' % param_file_path)
-    save_dict = nd.load(param_file_path)
-    arg_params = {}
-    aux_params = {}
-    for k, v in save_dict.items():
-        tp, name = k.split(':', 1)
-        if tp == 'arg':
-            arg_params[name] = v
-        if tp == 'aux':
-            aux_params[name] = v
-    return symbol, arg_params, aux_params
+    data = next(iter(dataloader))[0].as_in_context(ctx)
+    if check_mx_version('1.7.0'):
+        qnet.optimize_for(data, backend=get_backend_name(ctx), static_alloc=True, static_shape=True)
+    qnet.export(save_path, 0)
+    logger.info('Saved quantized model to: {}'.format(save_path))
 
-
-def advance_data_iter(data_iter, n):
-    assert n >= 0
-    if n == 0:
-        return data_iter
-    has_next_batch = True
-    while has_next_batch:
-        try:
-            data_iter.next()
-            n -= 1
-            if n == 0:
-                return data_iter
-        except StopIteration:
-            has_next_batch = False
+    return qnet
 
 
-def score(sym, arg_params, aux_params, data, devs, label_name, max_num_examples, logger=None):
-    metrics = [mx.metric.create('acc'),
-               mx.metric.create('top_k_accuracy', top_k=5)]
-    if not isinstance(metrics, list):
-        metrics = [metrics, ]
-    mod = mx.mod.Module(symbol=sym, context=devs, label_names=[label_name, ])
-    mod.bind(for_training=False,
-             data_shapes=data.provide_data,
-             label_shapes=data.provide_label)
-    mod.set_params(arg_params, aux_params)
+def score(symblock, ctx, data, max_num_examples, logger=None):
+    if check_mx_version('2.0.0'):
+        metrics = [gluon.metric.create('acc'),
+                   gluon.metric.create('top_k_accuracy', top_k=5)]
+    else:
+        metrics = [mx.metric.create('acc'),
+                   mx.metric.create('top_k_accuracy', top_k=5)]
 
     tic = time.time()
     num = 0
-    for batch in data:
-        mod.forward(batch, is_train=False)
+    for input_data in data:
+        x = input_data[0].as_in_context(ctx)
+        label = input_data[1].as_in_context(ctx)
+        outputs = symblock.forward(x)
         for m in metrics:
-            mod.update_metric(m, batch.label)
-        num += batch_size
+            m.update(label, outputs)
+        num += x.shape[0]  # batch_size
         if max_num_examples is not None and num >= max_num_examples:
             break
 
@@ -96,260 +114,133 @@ def score(sym, arg_params, aux_params, data, devs, label_name, max_num_examples,
     if logger is not None:
         logger.info('Finished inference with %d images' % num)
         logger.info('Finished with %f images per second', speed)
-        logger.warn('Note: GPU performance is expected to be slower than CPU. Please refer quantization/README.md for details')
         for m in metrics:
             logger.info(m.get())
-
     print("Accuracy: %.5f" % metrics[0].get()[1])
 
-def low_precison_convert(model_name, low_precision, sym, arg_params, aux_params, excluded_sym_names=[]):
-    if low_precision == 'bfloat16':
-        if model_name.find('imagenet1k-resnet-152') != -1:
-            excluded_sym_names += ['conv0']
-        elif model_name.find('imagenet1k-inception-bn') != -1:
-            excluded_sym_names += ['conv_1']
-        elif model_name.find('resnet') != -1 and model_name.find('v1') != -1:
-            excluded_sym_names += ['resnetv10_conv0_fwd']
-        elif model_name.find('resnet') != -1 and model_name.find('v2') != -1:
-            excluded_sym_names += ['resnetv20_conv0_fwd']
-        elif model_name.find('vgg') != -1:
-            excluded_sym_names += ['vgg0_conv0_fwd']
-        elif model_name.find('squeezenet1') != -1:
-            excluded_sym_names += ['squeezenet0_conv0_fwd']
-        elif model_name.find('mobilenet') != -1 and model_name.find('v2') == -1:
-            excluded_sym_names += ['mobilenet0_conv0_fwd']
-        elif model_name.find('mobilenet') != -1 and model_name.find('v2') != -1:
-            excluded_sym_names += ['mobilenetv20_conv0_fwd']
-        elif model_name.find('inceptionv3') != -1:
-            excluded_sym_names += ['inception30_conv0_fwd']
-    return amp.convert_model(sym,
-                             arg_params,
-                             aux_params,
-                             target_dtype=low_precision,
-                             excluded_sym_names=excluded_sym_names,
-                             cast_optional_params=True)
 
-def benchmark_score(symbol_file, ctx, batch_size, num_batches, data_layer_type, low_precision, logger=None):
-    # get mod
-    cur_path = os.path.dirname(os.path.realpath(__file__))
-    symbol_file_path = os.path.join(cur_path, symbol_file)
-    if logger is not None:
-        logger.info('Loading symbol from file %s' % symbol_file_path)
-    sym = mx.sym.load(symbol_file_path)
-    mod = mx.mod.Module(symbol=sym, context=ctx)
-    if data_layer_type == "int8":
-        dshape = mx.io.DataDesc(name='data', shape=(
-            batch_size,) + data_shape, dtype=np.int8)
-    elif data_layer_type == 'uint8':
-        dshape = mx.io.DataDesc(name='data', shape=(
-            batch_size,) + data_shape, dtype=np.uint8)
-    else:  # float32
-        dshape = mx.io.DataDesc(name='data', shape=(
-            batch_size,) + data_shape, dtype=np.float32)
-    mod.bind(for_training=False,
-             inputs_need_grad=False,
-             data_shapes=[dshape])
-    mod.init_params(initializer=mx.init.Xavier(magnitude=2.))
-
-    if low_precision:
-        arg_params, aux_params = mod.get_params()
-        sym, arg_params, aux_params = low_precison_convert(symbol_file,
-                                                           low_precision,
-                                                           sym, arg_params,
-                                                           aux_params)
-        mod = mx.mod.Module(symbol=sym, context=ctx)
-        mod.bind(for_training=False,
-                 inputs_need_grad=False,
-                 data_shapes=[dshape],
-                 label_shapes=[['softmax_label', (batch_size,)]])
-        mod.set_params(arg_params, aux_params)
-
-    # get data
-    if data_layer_type == "float32":
-        data = [mx.random.uniform(-1.0, 1.0, shape=shape, ctx=ctx, dtype=data_layer_type)
-                for _, shape in mod.data_shapes]
-    else:
-        data = [mx.nd.full(shape=shape, val=127, ctx=ctx, dtype=data_layer_type)
-                for _, shape in mod.data_shapes]
-    batch = mx.io.DataBatch(data, [])  # empty label
-
-    # run
-    dry_run = 5                 # use 5 iterations to warm up
+def benchmark_score(symblock, ctx, data_shape, num_batches):
+    data = mx.random.uniform(-1.0, 1.0, shape=data_shape, ctx=ctx)
+    dry_run = 5  # use 5 iterations to warm up
     for i in range(dry_run+num_batches):
         if i == dry_run:
             tic = time.time()
-        mod.forward(batch, is_train=False)
-        for output in mod.get_outputs():
+        outs = symblock.forward(data)
+        for output in outs:
             output.wait_to_read()
 
-    # return num images per second
-    return num_batches*batch_size/(time.time() - tic)
+    return num_batches*data_shape[0]/(time.time() - tic)
 
-def save(model, output_path):
-    '''The function is used by tune strategy class for saving model.
 
-        Args:
-            model (object): The model to do calibration.
-    '''
-    if isinstance(model, mx.gluon.HybridBlock):
-        print("Save MXNet HybridBlock quantization model!")
-        model.export(output_path, epoch=0)
-        print('Saving quantized model at %s', output_path)
-    else:
-        symbol, arg_params, aux_params = model
-        symbol.save(output_path+'-symbol.json')
-        save_dict = {('arg:%s' % k): v.as_in_context(mx.cpu()) for k, v in arg_params.items()}
-        save_dict.update({('aux:%s' % k): v.as_in_context(mx.cpu()) for k, v in aux_params.items()})
-        mx.nd.save(output_path+'-0000.params', save_dict)
-        print('Saving symbol into file at %s' % output_path)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Score a model on a dataset')
-    parser.add_argument('--ctx', type=str, default='gpu')
-    parser.add_argument('--benchmark', type=bool, default=False, help='dummy data benchmark')
-    parser.add_argument('--symbol-file', type=str, required=True, help='symbol file path')
-    parser.add_argument('--param-file', type=str, required=False, help='param file path')
-    parser.add_argument('--batch-size', type=int, default=32)
-    parser.add_argument('--label-name', type=str, default='softmax_label')
-    parser.add_argument('--dataset', type=str, required=False, help='dataset path')
-    parser.add_argument('--rgb-mean', type=str, default='0,0,0')
-    parser.add_argument('--rgb-std', type=str, default='1,1,1')
-    parser.add_argument('--image-shape', type=str, default='3,224,224')
-    parser.add_argument('--data-nthreads', type=int, default=60, help='number of threads for data decoding')
-    parser.add_argument('--num-skipped-batches', type=int, default=0, help='skip the number of batches for inference')
-    parser.add_argument('--num-inference-batches', type=int, required=True, help='number of images used for inference')
-    parser.add_argument('--shuffle-dataset', action='store_true', default=True,
-                        help='shuffle the calibration dataset')
-    parser.add_argument('--shuffle-chunk-seed', type=int, default=3982304,
-                        help='shuffling chunk seed, see'
-                             ' https://mxnet.apache.org/api/python/io/io.html?highlight=imager#mxnet.io.ImageRecordIter'
-                             ' for more details')
-    parser.add_argument('--shuffle-seed', type=int, default=48564309,
-                        help='shuffling seed, see'
-                             ' https://mxnet.apache.org/api/python/io/io.html?highlight=imager#mxnet.io.ImageRecordIter'
-                             ' for more details')
-    parser.add_argument('--data-layer-type', type=str, default='float32',
-                        choices=['float32', 'int8', 'uint8'],
-                        help='data type for data layer')
-    parser.add_argument('--low-precision', type=str, default='',
-                        choices=['', 'float16', 'bfloat16'],
-                        help='enable low precision')
-    parser.add_argument('--tune',action='store_true', default=False,
-                        help='Get tuning quantization model with neural_compressor.')
-    parser.add_argument('--accuracy-only', action='store_true', help='accuracy only benchmark')
-    parser.add_argument("--output-graph",
-                         help='Specify tune result model save dir',
-                         dest='output_graph')
-
-    args = parser.parse_args()
-
-    if args.ctx == 'gpu':
-        ctx = mx.gpu(0)
-    elif args.ctx == 'cpu':
-        ctx = mx.cpu(0)
-    else:
-        raise ValueError('ctx %s is not supported in this script' % args.ctx)
-
+def main():
     logging.basicConfig()
     logger = logging.getLogger('logger')
     logger.setLevel(logging.INFO)
 
+    parser = argparse.ArgumentParser(description='Score a model on a dataset')
+    parser.add_argument('--ctx', type=str, default='cpu')  # currently unused
+    parser.add_argument('--symbol-file', type=str, required=True, help='symbol file path')
+    parser.add_argument('--param-file', type=str, required=True, help='param file path')
+    parser.add_argument('--dataset', type=str, required=True, help='dataset path', default=None)
+    parser.add_argument('--rgb-mean', type=str, default='0,0,0')
+    parser.add_argument('--rgb-std', type=str, default='1,1,1')
+    parser.add_argument('--image-shape', type=str, default='3,224,224')
+    parser.add_argument('--data-nthreads', type=int, default=60,
+                        help='number of threads for data decoding')
+    parser.add_argument('--shuffle-dataset', action='store_true', default=False,
+                        help='shuffle the dataset')
+    parser.add_argument('--batch-size', type=int, default=32)
+    parser.add_argument('--num-inference-batches', type=int, required=True,
+                        help='number of images used for inference')
+    parser.add_argument("--output-graph",
+                        help='Specify tune result model save dir',
+                        dest='output_graph')
+    parser.add_argument('--calib-mode', type=str, default='inc',
+                        help="""Possible values:
+                                    "naive": take min and max values of layer outputs as thresholds.
+                                    "entropy": minimize the KL divergence between the f32 and quantized
+                                            output.
+                                    "inc": use Intel Neural Compressor tuning
+                                """)
+    parser.add_argument('--benchmark', action='store_true', help='dummy data benchmark')
+    parser.add_argument('--accuracy-only', action='store_true', help='accuracy only benchmark')
+
+    args = parser.parse_args()
+    calib_mode = args.calib_mode.lower()
+
+    assert args.ctx == 'cpu', 'Currently only cpu is supported'
+    ctx = mx.cpu()
+
     symbol_file = args.symbol_file
     param_file = args.param_file
-    data_nthreads = args.data_nthreads
-
     batch_size = args.batch_size
     logger.info('batch size = %d for inference' % batch_size)
+    try:
+        symblock = gluon.SymbolBlock.imports(symbol_file, ['data'], param_file)
+    except AssertionError:
+        symblock = gluon.SymbolBlock.imports(symbol_file, ['data'])
+        symblock.load_parameters(param_file, allow_missing=True)
+    params = symblock.collect_params()
+    if 'softmax_label' in params:
+        params['softmax_label'].shape = (batch_size,)
+        params['softmax_label'].initialize(force_reinit=True)
+    symblock.hybridize(static_alloc=True, static_shape=True)
 
     rgb_mean = args.rgb_mean
-    logger.info('rgb_mean = %s' % rgb_mean)
-    rgb_mean = [float(i) for i in rgb_mean.split(',')]
-    mean_args = {'mean_r': rgb_mean[0], 'mean_g': rgb_mean[1], 'mean_b': rgb_mean[2]}
     rgb_std = args.rgb_std
+    logger.info('rgb_mean = %s' % rgb_mean)
     logger.info('rgb_std = %s' % rgb_std)
-    rgb_std = [float(i) for i in rgb_std.split(',')]
-    std_args = {'std_r': rgb_std[0], 'std_g': rgb_std[1], 'std_b': rgb_std[2]}
-    combine_mean_std = {}
-    combine_mean_std.update(mean_args)
-    combine_mean_std.update(std_args)
+    rgb_mean = {'mean_' + c: float(i) for c, i in zip(['r', 'g', 'b'], rgb_mean.split(','))}
+    rgb_std = {'std_' + c: float(i) for c, i in zip(['r', 'g', 'b'], rgb_std.split(','))}
 
-    label_name = args.label_name
-    logger.info('label_name = %s' % label_name)
+    combine_mean_std = {}
+    combine_mean_std.update(rgb_mean)
+    combine_mean_std.update(rgb_std)
 
     image_shape = args.image_shape
-    data_shape = tuple([int(i) for i in image_shape.split(',')])
+    data_shape = [int(i) for i in image_shape.split(',')]
     logger.info('Input data shape = %s' % str(data_shape))
 
-    data_layer_type = args.data_layer_type
-
-    if args.low_precision:
-        if args.ctx == 'gpu':
-            assert args.low_precision == 'float16', "Not supported low-precision options for GPU."
-        elif args.ctx == 'cpu':
-            assert args.low_precision == 'bfloat16', "Not supported low-precision options for CPU."
-
-    if args.benchmark == False:
-        dataset = args.dataset
-        download_dataset('http://data.mxnet.io/data/val_256_q90.rec', dataset)
-        logger.info('Dataset for inference: %s' % dataset)
-
-        # creating data iterator
-        data = mx.io.ImageRecordIter(
-            path_imgrec=dataset,
-            label_width=1,
-            preprocess_threads=data_nthreads,
-            batch_size=batch_size,
-            data_shape=data_shape,
-            label_name=label_name,
-            rand_crop=False,
-            rand_mirror=False,
-            shuffle=args.shuffle_dataset,
-            shuffle_chunk_seed=args.shuffle_chunk_seed,
-            seed=args.shuffle_seed,
-            dtype=data_layer_type,
-            ctx=args.ctx,
-            **combine_mean_std)
-
-        if args.tune:
-            from neural_compressor.experimental import Quantization, common
-            # loading model
-            fp32_model = load_model(symbol_file, param_file, logger)
-
-            calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,label_width=1,preprocess_threads=data_nthreads,batch_size=batch_size,data_shape=data_shape,label_name=label_name,rand_crop=False,rand_mirror=False,shuffle=args.shuffle_dataset,shuffle_chunk_seed=args.shuffle_chunk_seed,seed=args.shuffle_seed,dtype=data_layer_type,ctx=args.ctx,**combine_mean_std)    
-            quantizer = Quantization("./cnn.yaml")
-            quantizer.model = common.Model(fp32_model)
-            quantizer.calib_dataloader = calib_data
-            quantizer.eval_dataloader = data
-            q_model = quantizer.fit()
-            q_model.save(args.output_graph)
-            sys.exit()
-        
-        if args.accuracy_only:
-            symbol_file = args.symbol_file
-            param_file = args.param_file
-            sym, arg_params, aux_params = load_model(symbol_file, param_file)
-            score(sym, arg_params, aux_params, data, [ctx], label_name,
-                  max_num_examples=None)
-            sys.exit()
-
-        if args.low_precision:
-            sym, arg_params, aux_params = low_precison_convert(symbol_file,
-                                                               args.low_precision,
-                                                               sym, arg_params,
-                                                               aux_params)
-        # make sure that fp32 inference works on the same images as calibrated quantized model
-        logger.info('Skipping the first %d batches' % args.num_skipped_batches)
-        data = advance_data_iter(data, args.num_skipped_batches)
-
-        num_inference_images = args.num_inference_batches * batch_size
+    if args.benchmark:
         logger.info('Running model %s for inference' % symbol_file)
-        score(sym, arg_params, aux_params, data, [ctx], label_name,
-            max_num_examples=num_inference_images, logger=logger)
-
-    else:
-        logger.info('Running model %s for inference' % symbol_file)
-        speed = benchmark_score(symbol_file, ctx, batch_size,
-                                args.num_inference_batches, data_layer_type, args.low_precision, logger)
+        speed = benchmark_score(symblock, ctx, [batch_size] +
+                                data_shape, args.num_inference_batches)
         logger.info('batch size %2d, image/sec: %f', batch_size, speed)
         print('Latency: %.3f ms' % (1 / speed * 1000))
         print('Throughput: %.3f images/sec' % (speed))
+        sys.exit()
+
+    assert os.path.isfile(args.dataset)
+    dataset_path = args.dataset
+    logger.info('Dataset for inference: %s' % dataset_path)
+
+    data_nthreads = args.data_nthreads
+    dataloader = DataiterWrapper(mx.io.ImageRecordIter(
+        path_imgrec=dataset_path,
+        label_width=1,
+        preprocess_threads=data_nthreads,
+        batch_size=batch_size,
+        data_shape=data_shape,
+        label_name='softmax_label',
+        rand_crop=False,
+        rand_mirror=False,
+        shuffle=args.shuffle_dataset,
+        dtype='float32',
+        ctx=args.ctx,
+        **combine_mean_std), batch_size)
+
+    if args.accuracy_only:
+        score(symblock, ctx, dataloader, None, logger)
+        sys.exit()
+
+    # quantization & tuning
+    symblock = quantize(symblock, ctx, dataloader, batch_size,
+                        10, args.output_graph, calib_mode, logger)
+
+    logger.info('Running tuned model for inference')
+    num_inference_images = args.num_inference_batches * batch_size
+    score(symblock, ctx, dataloader, num_inference_images, logger)
+
+
+if __name__ == '__main__':
+    main()

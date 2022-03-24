@@ -51,7 +51,7 @@ function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
       mode_cmd=" --accuracy-only"
     elif [[ ${mode} == "benchmark" ]]; then
-      mode_cmd=" --num-inference-batches ${iters} --benchmark True"
+      mode_cmd=" --num-inference-batches ${iters} --benchmark"
     else
       echo "Error: No such mode: ${mode}"
       exit 1
@@ -66,25 +66,10 @@ function run_benchmark {
 
     symbol_file=${input_model_prefix}/${topology}"-symbol.json"
     param_file=${input_model_prefix}/${topology}"-0000.params"
-    if [ "${topology}" = "resnet50_v1" ];then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "squeezenet1.0" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "mobilenet1.0" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
 
-    elif [ "${topology}" = "mobilenetv2_1.0" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-
-    elif [ "${topology}" = "inceptionv3" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --image-shape=3,299,299'
-
-    elif [ "${topology}" = "resnet18_v1" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "resnet152_v1" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
+    if [ "${topology}" = "inceptionv3" ]; then
+        extra_cmd="${extra_cmd} --image-shape=3,299,299"
     fi
-
     python -u imagenet_inference.py \
             --symbol-file=${symbol_file} \
             --param-file=${param_file} \

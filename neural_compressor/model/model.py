@@ -1322,6 +1322,9 @@ class MXNetModel(BaseModel):
             logger.info("Save quantized hybrid block model to {}.".format(root))
         else:
             symnet, args, auxs = self._model
+            symnet = symnet.as_nd_ndarray()
+            args = {k:v.as_nd_ndarray() for k, v in args.items()}
+            auxs = {k:v.as_nd_ndarray() for k, v in auxs.items()}
             mx.model.save_checkpoint(root, 0, symnet, args, auxs)
             logger.info("Save quantized symbol model to {}.".format(root))
 

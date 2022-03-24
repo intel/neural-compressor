@@ -21,6 +21,7 @@ import json
 import ctypes
 import numpy as np
 
+from enum import Enum
 from tempfile import TemporaryDirectory
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.model.model import MXNetModel as NCModel
@@ -29,24 +30,18 @@ mx = LazyImport("mxnet")
 
 
 QUANTIZE_OP_NAME = 'quantize_output'
+QUANTIZE_OP_NAMES = ['_contrib_quantize_v2']
 QUANTIZE_DEFAULT_ALGORITHM = 'minmax'
+QUANTIZE_NODE_POSTFIX = '_quantize'
+QUANTIZED_NODE_PREFIX = 'quantized_'
 QUANTIZATION_DTYPES = [np.int8, np.uint8]
+NULL_OP_NAMES = ['null']
 
 
-def check_mx_version(version):
-    """Checks MXNet version.
-
-    Args:
-        version (str): version to check.
-
-    Returns:
-        boolean: True if mx.__version__ >= version, else False.
-    """
-    d1 = re.split(r'\.', mx.__version__)
-    d2 = re.split(r'\.', version)
-    d1 = [int(d1[i]) for i in range(len(d1))]
-    d2 = [int(d2[i]) for i in range(len(d2))]
-    return d1 >= d2
+class OpType(Enum):
+    NORMAL = 0
+    QUANTIZE = 1
+    QUANTIZED = 2
 
 
 def isiterable(obj) -> bool:
@@ -69,6 +64,22 @@ def ensure_list(x):
     """Ensures that object is a list.
     """
     return x if isinstance(x, (tuple, list)) else [x]
+
+
+def check_mx_version(version):
+    """Checks MXNet version.
+
+    Args:
+        version (str): version to check.
+
+    Returns:
+        boolean: True if mx.__version__ >= version, else False.
+    """
+    d1 = re.split(r'\.', mx.__version__)
+    d2 = re.split(r'\.', version)
+    d1 = [int(d1[i]) for i in range(len(d1))]
+    d2 = [int(d2[i]) for i in range(len(d2))]
+    return d1 >= d2
 
 
 def make_nc_model(target, sym_model, ctx, input_desc):
@@ -101,9 +112,22 @@ def fuse(sym_model, ctx):
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
-    if ctx == mx.cpu():
-        symnet = symnet.get_backend_symbol('MKLDNN_QUANTIZE')
+    backend = get_backend_name(ctx)
+    if backend is not None:
+        if check_mx_version('2.0.0'):
+            symnet = symnet.optimize_for(backend)
+        else:
+            symnet = symnet.get_backend_symbol(backend)
     return (symnet, args, auxs)
+
+
+def get_backend_name(ctx):
+    if 'cpu' in ctx.device_type:
+        if check_mx_version('2.0.0'):
+            return 'ONEDNN_QUANTIZE'
+        else:
+            return 'MKLDNN_QUANTIZE'
+    return None
 
 
 def prepare_model_data(nc_model, ctx, data_x):
@@ -126,10 +150,9 @@ def prepare_model(nc_model, ctx, input_desc):
 
     model_x = nc_model.model
     if isinstance(model_x, mx.gluon.HybridBlock):
-        if len(model_x._cached_graph) == 0:
-            model_x.hybridize()
-        data_example = [mx.nd.zeros(d.shape, ctx, d.dtype) for d in input_desc]
-        model_x(*data_example)
+        if not model_x._active and not isinstance(model_x, mx.gluon.SymbolBlock):
+            model_x.hybridize(static_alloc=False, static_shape=False)
+        model_x(*create_data_example(ctx, input_desc))
         with TemporaryDirectory() as tmpdirname:
             prefix = os.path.join(tmpdirname, 'tmp')
             model_x.export(prefix, epoch=0)
@@ -140,6 +163,25 @@ def prepare_model(nc_model, ctx, input_desc):
         raise TypeError('Wrong model type')
     if not is_model_quantized(sym_model):
         sym_model = fuse(sym_model, ctx)
+    return _match_array_semantics(sym_model)
+
+
+def create_data_example(ctx, input_desc):
+    if mx.is_np_array():
+        return [mx.np.zeros(d.shape, ctx=ctx, dtype=d.dtype) for d in input_desc]
+    else:
+        return [mx.nd.zeros(d.shape, ctx=ctx, dtype=d.dtype) for d in input_desc]
+
+
+def _match_array_semantics(sym_model):
+    if check_mx_version('2.0.0') and mx.util.is_np_array():
+        symnet, args, auxs = sym_model
+        symnet = symnet.as_np_ndarray()
+        for k, v in args.items():
+            args[k] = v.as_np_ndarray()
+        for k, v in auxs.items():
+            auxs[k] = v.as_np_ndarray()
+        sym_model = (symnet, args, auxs)
     return sym_model
 
 
@@ -157,9 +199,9 @@ def prepare_dataloader(nc_model, ctx, data_x):
     model_x = nc_model.model
     if isinstance(model_x, mx.gluon.HybridBlock):
         data = ensure_list(next(iter(dataloader)))  # data example
-        data = [d.as_in_context(ctx) for d in data]
-        if len(model_x._cached_graph) == 0:
-            model_x.hybridize()
+        data = [ndarray_to_device(d, ctx) for d in data]
+        if not model_x._active and not isinstance(model_x, mx.gluon.SymbolBlock):
+            model_x.hybridize(static_alloc=False, static_shape=False)
         while True:
             try:
                 model_x(*data)
@@ -172,11 +214,18 @@ def prepare_dataloader(nc_model, ctx, data_x):
                       for i, d in zip(inputs, data)]
     elif isinstance(model_x, tuple) and isinstance(model_x[0], mx.symbol.Symbol):
         assert hasattr(data_x, 'provide_data'), \
-            'Dataloader must provide data information (mx.data.DataDesc for each input)'
+            'Dataloader must provide data information (mx.io.DataDesc for each input)'
         input_desc = data_x.provide_data
     else:
         raise TypeError('Wrong model type')
     return DataLoaderWrap(dataloader, input_desc)
+
+
+def ndarray_to_device(ndarray, device):
+    try:
+        return ndarray.to_device(device)  # 2.x version
+    except AttributeError:
+        return ndarray.as_in_context(device)  # 1.x version
 
 
 def is_model_quantized(sym_model):
@@ -190,21 +239,25 @@ def is_model_quantized(sym_model):
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     for sym in sym_model[0].get_internals():
-        _, was_quantized = _dequantize_op_sym_name(sym)
-        if was_quantized:
+        _, op_type = _dequantize_sym_name(sym.name)
+        if op_type != OpType.NORMAL:
             return True
     return False
 
 
-def _dequantize_op_sym_name(sym, check_list=None):
-    QUANTIZED_PREFIX = 'quantized_'
-    name = sym.name
-    if name.startswith(QUANTIZED_PREFIX):
-        name = name[len(QUANTIZED_PREFIX):]
+def _dequantize_sym_name(sym_name, check_list=None):
+    name = sym_name
+    op_type = OpType.NORMAL
+    if sym_name.endswith(QUANTIZE_NODE_POSTFIX):
+        op_type = OpType.QUANTIZE
+        name = sym_name[:-len(QUANTIZE_NODE_POSTFIX)]
+    elif sym_name.startswith(QUANTIZED_NODE_PREFIX):
+        op_type = OpType.QUANTIZED
+        name = sym_name[len(QUANTIZED_NODE_PREFIX):]
         assert check_list is None or name in check_list, \
             'name of the quantized symbol must be in the following format: ' \
-            '({}_<fp32_sym_name>). Symbol: {}'.format(QUANTIZED_PREFIX, name)
-    return (name, sym.name != name)
+            '"{}_<fp32_sym_name>". Symbol: {}'.format(QUANTIZED_NODE_PREFIX, name)
+    return (name, op_type)
 
 
 def query_quantizable_nodes(sym_model, ctx, dataloader):
@@ -221,39 +274,26 @@ def query_quantizable_nodes(sym_model, ctx, dataloader):
     assert isinstance(dataloader, DataLoaderWrap)
 
     symnet = sym_model[0]
-    nodes_ops = {n['name']: n['op'] for n in json.loads(symnet.tojson())['nodes']}
+    nodes_ops = {n['name']: n['op'].lower() for n in json.loads(symnet.tojson())['nodes']}
 
     qmodel, calib_tensors = quantize_sym_model(sym_model, ctx, {'quantized_dtype': 'auto',
                                                                 'quantize_mode': 'smart'})
     qsymnet = qmodel[0]
-    qnodes_ops = {n['name']: n['op'] for n in json.loads(qsymnet.tojson())['nodes']}
+    qnodes_ops = {n['name']: n['op'].lower() for n in json.loads(qsymnet.tojson())['nodes']}
 
-    QUANTIZE_OP_NAMES = ['_contrib_quantize_v2']
-
-    # Getting quantizable nodes:
-    # 1. Get nodes that has been quantized
-    # 2. Get nodes whose outputs has been quantized (by 'quantize' nodes) - these are
-    #    inputs of the nodes that has been quantized
     quantizable = {}
     for qsym in qsymnet.get_internals():
-        sym_name, was_quantized = _dequantize_op_sym_name(qsym, nodes_ops.keys())
-        if was_quantized:
-            quantizable[sym_name] = nodes_ops[sym_name]
-        elif qnodes_ops[qsym.name] in QUANTIZE_OP_NAMES:
-            assert qsym.name not in nodes_ops.keys(), \
-                'quantize nodes must not be present in the fp32 model'
-
-            assert len(qsym.get_children()) == 1, \
-                '`quantize` node should only have one input'
-
-            q_in_sym = qsym.get_children()[0]
-            assert q_in_sym.name in nodes_ops.keys(), \
-                'name of the `quantize` input node must be the same' \
-                'as the name of the corresponding node in the fp32 model'
-
-            # quantize nodes do not exist in the fp32 model, so
-            # we treat their input nodes as their fp32 equivalent
-            quantizable[q_in_sym.name] = QUANTIZE_OP_NAME
+        if qnodes_ops[qsym.name] in NULL_OP_NAMES:
+            continue
+        sym_name, op_type = _dequantize_sym_name(qsym.name, nodes_ops.keys())
+        node_name = _tensor_to_node(sym_name, nodes_ops.keys())
+        node_name = sym_name if node_name == '' else node_name
+        assert qnodes_ops[qsym.name] not in QUANTIZE_OP_NAMES or (op_type == OpType.QUANTIZE), \
+            'Quantize node was not recognised properly. Node name: "{}"'.format(node_name)
+        if op_type == OpType.QUANTIZE:
+            quantizable[node_name] = QUANTIZE_OP_NAME
+        elif op_type == OpType.QUANTIZED:
+            quantizable[node_name] = nodes_ops[node_name]
 
     quantizable_nodes = [{'name': name, 'type': op}
                          for (name, op) in quantizable.items()]
@@ -267,14 +307,12 @@ def query_quantizable_nodes(sym_model, ctx, dataloader):
 
     # map tensors to nodes
     tensor_to_node = {}
-    nodes = set(nodes_ops.keys())
+    nodes = set(quantizable.keys())
     for tensor in tensors:
         node = _tensor_to_node(tensor, nodes)
         if node != '':
             tensor_to_node[tensor] = node
-
     assert set(calib_tensors).issubset(set(tensor_to_node.keys()))
-    assert set(quantizable.keys()).issubset(set(tensor_to_node.values()))
 
     return quantizable_nodes, tensor_to_node
 
@@ -295,8 +333,14 @@ def quantize_sym_model(sym_model, ctx, qconfig):
     symnet, args, auxs = sym_model
     if not check_mx_version('1.7.0'):
         qconfig.pop('quantize_granularity', None)
-    qsymnet, calib_tensors = mx.contrib.quantization._quantize_symbol(
-        sym=symnet, ctx=ctx, offline_params=list(args.keys()), **qconfig)
+
+    arguments = {'sym': symnet, 'offline_params': list(args.keys())}
+    arguments.update(qconfig)
+    if check_mx_version('2.0.0'):
+        arguments['device'] = ctx
+    else:
+        arguments['ctx'] = ctx
+    qsymnet, calib_tensors = mx.contrib.quantization._quantize_symbol(**arguments)
     # args = mx.contrib.quantization._quantize_params(qsymnet, args, {})
     return ((qsymnet, args, auxs), calib_tensors)
 
@@ -327,7 +371,8 @@ def _qtensor_to_tensor(qtensor, tensors):
     """
     assert len(tensors) > 0, '`tensors` cannot be empty'
 
-    PATTERNS = {'_quantize_output0': '',
+    PATTERNS = {'quantize': '',
+                '_quantize_output0': '',
                 '_quantize_0': '',
                 '_0_quantize_output0': '_output',
                 '_0_quantize_0': '_output',
@@ -364,10 +409,16 @@ def run_forward(sym_model, ctx, dataloader, b_filter,
     assert collector is None or (hasattr(collector, 'collect_gluon') and
                                  hasattr(collector, 'collect_module'))
 
-    mod = make_module(sym_model, ctx, dataloader.input_desc)
-    if collector is not None:
-        mod._exec_group.execs[0].set_monitor_callback(
-            collector.collect_module, monitor_all=True)
+    if check_mx_version('2.0.0'):
+        sym_block = make_symbol_block(sym_model, ctx, dataloader.input_desc)
+        if collector is not None:
+            sym_block.register_op_hook(collector.collect_gluon, monitor_all=True)
+        return _gluon_forward(sym_block, ctx, dataloader, b_filter, pre_batch, post_batch)
+    else:
+        mod = make_module(sym_model, ctx, dataloader.input_desc)
+        if collector is not None:
+            mod._exec_group.execs[0].set_monitor_callback(
+                collector.collect_module, monitor_all=True)
     return _module_forward(mod, dataloader, b_filter, pre_batch, post_batch)
 
 
@@ -389,12 +440,35 @@ def make_symbol_block(sym_model, ctx, input_desc):
     sym_block = mx.gluon.SymbolBlock(symnet, inputs)
     param_dict = args
     param_dict.update(auxs)
-    # params = {'arg:' + name: param for name, param in args.items()}
-    # params.update({'aux:' + name: param for name, param in auxs.items()})
-    sym_block.collect_params().load_dict(param_dict, ctx=ctx, cast_dtype=True,
-                                         dtype_source='saved')
-    sym_block.hybridize()
+    if check_mx_version('2.0.0'):
+        sym_block.load_dict(param_dict, cast_dtype=True, dtype_source='saved', allow_missing=True)
+    else:
+        # params = {'arg:' + name: param for name, param in args.items()}
+        # params.update({'aux:' + name: param for name, param in auxs.items()})
+        sym_block.collect_params().load_dict(param_dict, ctx=ctx, cast_dtype=True,
+                                             dtype_source='saved')
     return sym_block
+
+
+def _gluon_forward(net, ctx, dataloader, b_filter, pre_batch=None, post_batch=None):
+    batch_num = 0
+    for run, batch in zip(b_filter, dataloader):
+        if not run:
+            continue
+        batch_num += 1
+        batch = ensure_list(batch)
+        batch = [ndarray_to_device(d, ctx) for d in batch]
+        data = batch[:len(dataloader.input_desc)]
+        label = batch[len(dataloader.input_desc):]
+
+        if pre_batch is not None:
+            pre_batch(net, (data, label))
+
+        out = net(*data)
+
+        if post_batch is not None:
+            post_batch(net, (data, label), out)
+    return batch_num
 
 
 def make_module(sym_model, ctx, input_desc):
@@ -525,15 +599,14 @@ def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
     return (kl_tensors, minmax_tensors)
 
 
-def calib_model(qsym_model, collector, calib_cfg, logger=None):
+def calib_model(qsym_model, calib_data, calib_cfg):
     """Calibrate the quantized symbol model using data gathered by
        the collector.
 
     Args:
         qsym_model (tuple): quantized symbol model (symnet, args, auxs).
-        collector (object): collector filled with calibration thresholds.
+        calib_data (CalibData): data needed for calibration (thresholds).
         calib_cfg (dict): calibration configuration.
-        logger (Object): a logging object for printing information.
 
     Returns:
         tuple: quantized calibrated symbol model (symnet, args, auxs).
@@ -542,9 +615,13 @@ def calib_model(qsym_model, collector, calib_cfg, logger=None):
     assert isinstance(qsym_model, tuple) and isinstance(qsym_model[0], mx.symbol.Symbol)
 
     qsymnet, qargs, auxs = qsym_model
-    return mx.contrib.quantization.calib_graph(
-        qsymnet, qargs, auxs, collector, calib_cfg['calib_mode'],
-        quantized_dtype=calib_cfg['quantized_dtype'], logger=logger)
+    if check_mx_version('2.0.0'):
+        return mx.contrib.quantization.calib_graph(
+            qsymnet, qargs, auxs, calib_data, calib_cfg['calib_mode'])
+    else:
+        return mx.contrib.quantization.calib_graph(
+            qsymnet, qargs, auxs, calib_data, calib_cfg['calib_mode'],
+            quantized_dtype=calib_cfg['quantized_dtype'])
 
 
 class DataLoaderWrap:
@@ -587,7 +664,7 @@ class CollectorBase:
     def pre_batch(self, m, b):
         pass
 
-    def post_batch(self, m, b):
+    def post_batch(self, m, b, o):
         pass
 
 
@@ -600,14 +677,6 @@ class CalibCollector(CollectorBase):
         self.num_bins = num_bins
         self.include_tensors_minmax = include_tensors_minmax
         self.include_tensors_kl = include_tensors_kl
-
-    @property
-    def th_dict(self):
-        return self.min_max_dict
-
-    @th_dict.setter
-    def th_dict(self, value):
-        self.min_max_dict = value
 
     def collect_gluon(self, name, _, arr):
         if name in self.include_tensors_kl:
@@ -639,13 +708,21 @@ class CalibCollector(CollectorBase):
 
     @staticmethod
     def _combine_histogram(old_hist, arr, new_min, new_max, new_th):
-        return mx.contrib.quantization.combine_histogram(old_hist, arr, new_min,
-                                                         new_max, new_th)
+        if check_mx_version('2.0.0'):
+            return mx.contrib.quantization._LayerHistogramCollector.combine_histogram(
+                old_hist, arr, new_min, new_max, new_th)
+        else:
+            return mx.contrib.quantization.combine_histogram(old_hist, arr, new_min,
+                                                             new_max, new_th)
 
-    def calc_kl_th_dict(self, quantized_dtype, logger):
+    def calc_kl_th_dict(self, quantized_dtype):
         if len(self.hist_dict) > 0:
-            return mx.contrib.quantization._get_optimal_thresholds(
-                self.hist_dict, quantized_dtype, logger=logger)
+            if check_mx_version('2.0.0'):
+                return mx.contrib.quantization._LayerHistogramCollector.get_optimal_thresholds(
+                    self.hist_dict, quantized_dtype)
+            else:
+                return mx.contrib.quantization._get_optimal_thresholds(
+                    self.hist_dict, quantized_dtype)
         return {}
 
 
@@ -692,3 +769,19 @@ class NameCollector(CollectorBase):
 
     def collect_gluon(self, name, _, arr):
         self.names.append(name)
+
+
+class CalibData:
+    def __init__(self, cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[]):
+        self.th_dict = {}
+        self.th_dict.update({t: cache_kl[t] for t in tensors_kl})
+        self.th_dict.update({t: cache_minmax[t] for t in tensors_minmax})
+
+    # `min_max_dict` is used as a thresholds dictionary when `calib_mode` == 'naive'
+    @property
+    def min_max_dict(self):
+        return self.th_dict
+
+    # for mxnet version >= 2.0.0
+    def post_collect(self):
+        return self.th_dict

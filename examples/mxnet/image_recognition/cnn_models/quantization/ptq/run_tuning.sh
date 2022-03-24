@@ -37,7 +37,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    extra_cmd=''
+    extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
     batch_size=64
     num_inference_batches=100
     dataset=${dataset_location}
@@ -45,22 +45,12 @@ function run_tuning {
     symbol_file=${input_model_prefix}/${topology}"-symbol.json"
     param_file=${input_model_prefix}/${topology}"-0000.params"
 
-    if [ "${topology}" = "resnet50_v1" ];then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "squeezenet1.0" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "mobilenet1.0" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "mobilenetv2_1.0" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "inceptionv3" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --image-shape=3,299,299'
-    elif [ "${topology}" = "resnet18_v1" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
-    elif [ "${topology}" = "resnet152_v1" ]; then
-        extra_cmd='--rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375'
+    if [ "${topology}" = "inceptionv3" ]; then
+        extra_cmd="${extra_cmd} --image-shape=3,299,299"
     fi
-
+    if [ "$(basename "$dataset" )" = "val_256_q90.rec" ]; then
+        python -u prepare_dataset.py --dataset_location="$(dirname "$dataset")"
+    fi
     python -u imagenet_inference.py \
             --symbol-file=${symbol_file} \
             --param-file=${param_file} \
@@ -68,7 +58,6 @@ function run_tuning {
             --num-inference-batches=${num_inference_batches} \
             --dataset=${dataset} \
             --ctx=${ctx} \
-            --tune \
             --output-graph=${output_model} \
             ${extra_cmd}
 
