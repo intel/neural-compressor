@@ -750,13 +750,30 @@ if __name__ == '__main__':
             warnings.warn('INT8 Quantization for BERT need mxnet-mkl >= 1.6.0b20200115')
     elif args.tune:
         # neural_compressor auto-tuning
+        class FixedDataloader:
+            def __init__(self):
+                self.dataloader = dev_data_list[0][1]
+                self.batch_size = batch_size
+                self.iter = None
+
+            def __iter__(self):
+                self.iter = iter(self.dataloader)
+                return self
+            
+            def __next__(self):
+                input_ids, segment_ids, valid_length, label = next(self.iter)
+                input_ids = input_ids.as_in_context(ctx)
+                segment_ids = segment_ids.as_in_context(ctx)
+                valid_length = valid_length.as_in_context(ctx).astype('float32')
+                label = label.as_in_context(ctx)
+                return input_ids, segment_ids, valid_length, label
+
         if only_inference:
             calib_data = dev_data_list[0][1]
             from neural_compressor.experimental import Quantization, common
             quantizer = Quantization("./bert.yaml")
             quantizer.model = common.Model(model)
-            quantizer.calib_dataloader = calib_data 
-            quantizer.eval_dataloader = calib_data
+            quantizer.calib_dataloader = FixedDataloader() 
             quantizer.eval_func = test_func
             q_model = quantizer.fit()
             q_model.save(args.output_dir)

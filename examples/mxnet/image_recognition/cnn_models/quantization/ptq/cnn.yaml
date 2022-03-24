@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0
+
 model:                                               # mandatory. used to specify model specific information.
   name: cnn
   framework: mxnet                                   # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
@@ -21,6 +23,11 @@ evaluation:                                          # optional. required if use
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    iteration: 640
+
+quantization:
+  calibration:                                       # optional. used to specify calibration behavior of post-training-static-quant. other quantization approachs are not necessary.
+    sampling_size: 320
 
 tuning:
   accuracy_criterion:

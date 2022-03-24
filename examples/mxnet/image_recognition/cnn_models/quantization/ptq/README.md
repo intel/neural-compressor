@@ -8,46 +8,25 @@ This document is used to list steps of reproducing MXNet ResNet18_v1/ResNet50_v1
 
 ### 1. Installation
 
-  ```Shell
+  ```bash
   pip install -r requirements.txt
-
   ```
 > Note: Supported MXNet [Version](../../../../../../README.md#supported-frameworks).
 
 ### 2. Prepare Dataset
-  You can use `prepare_dataset.sh` to download dataset for this example. like below:
-
+  You can use `prepare_dataset.py` to download dataset for this example. like below:
   ```bash
-  bash ./prepare_dataset.sh --dataset_location=./data
+  python prepare_dataset.py --dataset_location=./data
   ```
-  
-  This will download validation dataset val_256_q90.rec, it will put to the directory **./data/**
+  This will download the val_256_q90.rec validation dataset to the **./data/** directory. 
 
-### 3. Prepare Pre-trained model
+### 2. Prepare Pre-trained model
   You can use `prepare_model.py` to download model for this example. like below:
-  ```python
+  ```bash
   python prepare_model.py --model_name mobilenet1.0 --model_path ./model
   ```
 
-  This will download the pre-trained model **mobilenet1.0**, and then put to the directory **./model/**. For more details, see below:
-
-  ```python
-  python prepare_model.py -h
-
-  usage: prepare_model.py [-h]
-                          [--model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3,resnet152_v1}]
-                          [--model_path MODEL_PATH]
-
-  Prepare pre-trained model for MXNet ImageNet Classifier
-
-  optional arguments:
-    -h, --help            show this help message and exit
-    --model_name {resnet18_v1,resnet50_v1,squeezenet1.0,mobilenet1.0,mobilenetv2_1.0,inceptionv3,resnet152_v1}
-                          model to download, default is resnet18_v1
-    --model_path MODEL_PATH
-                          directory to put models, default is ./model
-  ```
-  
+  This will download the pre-trained **mobilenet1.0** model to the **./model/** directory.
 
 
 # Run
@@ -82,13 +61,10 @@ bash run_tuning.sh --topology=inceptionv3 --dataset_location=./data/val_256_q90.
 ```
 
 # Benchmark
-
 Use resnet18 as an example:
-
 ```bash
 # accuracy mode, run the whole test dataset and get accuracy
 bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=./model --batch_size=32 --mode=accuracy
-
 # benchmark mode, specify iteration number and batch_size in option, get throughput and latency
 bash run_benchmark.sh --topology=resnet18_v1 --dataset_location=./data/val_256_q90.rec --input_model=./model --batch_size=32 --iters=100 --mode=benchmark
 ```
