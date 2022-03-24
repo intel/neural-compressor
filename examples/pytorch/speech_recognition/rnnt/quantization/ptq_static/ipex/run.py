@@ -116,7 +116,6 @@ def main():
         return accu
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
         import shutil
         shutil.rmtree('nc_workspace', ignore_errors=True)
         sut = PytorchSUT(args.pytorch_config_toml, args.pytorch_checkpoint,
@@ -144,7 +143,8 @@ def main():
                         assert feature_length.ndim == 1
                         feature = feature.permute(2, 0, 1)
                     yield (feature, feature_length), None
-
+        
+        from neural_compressor.experimental import Quantization, common
         calib_dataloader = NC_dataloader(sut)
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)

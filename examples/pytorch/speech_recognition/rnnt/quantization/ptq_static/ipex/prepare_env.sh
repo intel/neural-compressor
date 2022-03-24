@@ -60,6 +60,7 @@
   bash prepare_loadgen.sh ${WORKDIR}
 
   echo "Install dependencies for pytorch_SUT.py"
-  pip install toml unidecode inflect librosa
+  pip install toml text-unidecode inflect 
+  pip install librosa==0.8.1
 
   set +x
