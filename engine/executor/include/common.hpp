@@ -35,6 +35,8 @@
 #include <unordered_map>
 #include <utility>  // pair
 #include <vector>
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
 
 #include "memory_allocator.hpp"
 
@@ -49,6 +51,7 @@ using std::min;
 using std::set;
 using std::unordered_map;
 using std::vector;
+namespace ipc = boost::interprocess;
 
 void GlobalInit(int* pargc, char*** pargv);
 
@@ -57,6 +60,9 @@ extern unordered_map<string, int> type2bytes;
 // read weight file to data
 void* read_file_to_type(const string& root, const string& type, const vector<int64_t>& shape,
                         const vector<int64_t>& location);
+
+ipc::managed_shared_memory::handle_t load_shared_weight(const string& root, const string& type,
+                                                        const vector<int64_t>& shape, const vector<int64_t>& location);
 
 void InitVector(float* v, int buffer_size);
 

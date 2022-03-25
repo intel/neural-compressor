@@ -16,3 +16,30 @@
 [submodule "engine/executor/third_party/yaml-cpp"]
 	path = engine/executor/third_party/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "engine/executor/third_party/boost/libs/assert"]
+	path = engine/executor/third_party/boost/libs/assert
+	url = https://github.com/boostorg/assert.git
+[submodule "engine/executor/third_party/boost/libs/core"]
+	path = engine/executor/third_party/boost/libs/core
+	url = https://github.com/boostorg/core.git
+[submodule "engine/executor/third_party/boost/libs/move"]
+	path = engine/executor/third_party/boost/libs/move
+	url = https://github.com/boostorg/move.git
+[submodule "engine/executor/third_party/boost/libs/config"]
+	path = engine/executor/third_party/boost/libs/config
+	url = https://github.com/boostorg/config.git
+[submodule "engine/executor/third_party/boost/libs/container"]
+	path = engine/executor/third_party/boost/libs/container
+	url = https://github.com/boostorg/container.git
+[submodule "engine/executor/third_party/boost/libs/intrusive"]
+	path = engine/executor/third_party/boost/libs/intrusive
+	url = https://github.com/boostorg/intrusive.git
+[submodule "engine/executor/third_party/boost/libs/static_assert"]
+	path = engine/executor/third_party/boost/libs/static_assert
+	url = https://github.com/boostorg/static_assert.git
+[submodule "engine/executor/third_party/boost/libs/type_traits"]
+	path = engine/executor/third_party/boost/libs/type_traits
+	url = https://github.com/boostorg/type_traits.git
+[submodule "engine/executor/third_party/boost/libs/interprocess"]
+	path = engine/executor/third_party/boost/libs/interprocess
+	url = https://github.com/boostorg/interprocess.git
