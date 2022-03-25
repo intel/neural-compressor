@@ -867,11 +867,15 @@ class TemplateAdaptor(Adaptor):
         """
         self.pre_optimized_model = model
         tmp_model = model.model
+        tmp_model.eval()
         if isinstance(self, PyTorch_FXAdaptor) and \
           self.approach != "post_training_dynamic_quant":
-            tmp_model = self.fuse_fx_model(model)
+            # pylint: disable=no-member
+            tmp_model = self.fuse_fx_model(model, 
+                                           is_qat=(self.approach=="quant_aware_training"))
         quantizable_ops = []
-        self.non_quant_dict = self.get_non_quant_modules(model.kwargs)
+        if isinstance(self, PyTorchAdaptor):
+            self.non_quant_dict = self.get_non_quant_modules(model.kwargs)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
             if self.approach == "post_training_dynamic_quant" else \
@@ -891,114 +895,6 @@ class TemplateAdaptor(Adaptor):
                     if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
 
         return q_capability
-
-    def fuse_fx_model(self, model):
-        """This is a helper function to get fused fx model for PyTorch_FXAdaptor.
-
-        Args:
-            model (object): input model which is Neural Compressor model.
-
-        Returns:
-            fused_model (GraphModule): fused GraphModule model from torch.fx.
-        """
-        try:
-            tmp_model = copy.deepcopy(model.model)
-        except Exception as e:   # pragma: no cover
-            tmp_model = model.model
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
-        from torch.fx import GraphModule
-        from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
-        if model.kwargs is not None:
-            prepare_custom_config_dict = model.kwargs.get(
-                                            'prepare_custom_config_dict', {})
-        else:
-            prepare_custom_config_dict = {}
-        skipped_module_names = prepare_custom_config_dict.get(\
-                                            'non_traceable_module_name', [])
-        skipped_module_classes = prepare_custom_config_dict.get(\
-                                            'non_traceable_module_class', [])
-        try:
-            tracer = QuantizationTracer(
-                skipped_module_names, skipped_module_classes)
-            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
-        except:
-            self.sub_module_list = []
-            self._fuse_sub_graph(tmp_model, prefix='')
-            fused_model = tmp_model
-        return fused_model
-
-    def _fuse_sub_graph(self, model, prefix):
-        """This is a helper function to get fused fx sub modules recursively for PyTorch_FXAdaptor.
-
-        Args:
-            model (object): input model which is PyTorch model.
-            prefix (string): prefix of op name.
-
-        Returns:
-            fused_model (GraphModule): fused GraphModule model from torch.fx.
-        """
-        from torch.quantization.quantize_fx import _fuse_fx
-        import torch.quantization.quantization_mappings as tqqm
-        fx_white_list = tqqm.get_default_qconfig_propagation_list()
-        for name, module in model.named_children():
-            op_name = prefix + '.' + name if prefix != '' else name
-            if type(module) in fx_white_list:
-                module = torch.quantization.QuantWrapper(module)
-            if self._check_dynamic_control(module):
-                self._fuse_sub_graph(module, op_name)
-            else:
-                try:
-                    graph_module = torch.fx.symbolic_trace(module)
-                    fused_model = _fuse_fx(graph_module)
-                    setattr(model, name, fused_model)
-                    self.sub_module_list.append(op_name)
-                except:
-                    self._fuse_sub_graph(module, op_name)
-
-    def _check_dynamic_control(self, module):
-        """This is a helper function to check dynamic control in forward function of module.
-
-        Args:
-            module (object): input module which is PyTorch Module.
-
-        Returns:
-            fused_model (GraphModule): fused GraphModule model from torch.fx.
-        """
-        import inspect
-        import re
-        try:
-            lines = inspect.getsource(module.forward)
-            # Proxy obj. will always be detectd as `not None`.
-            # Other situations could be detected by prepare_fx function.
-            pattern = "is( not)? None"
-            anws = re.search(pattern, lines)
-            if anws:
-                return True
-        except:  # pragma: no cover
-            logger.info('Module has no forward function')
-        return False
-
-    def get_non_quant_modules(self, model_kwargs):
-        """This is a helper function to get all non_quant_modules from customer and default.
-
-        Args:
-            model_kwargs (dictionary): keyword args from Neural Compressor model
-
-        Returns:
-            custom_non_quant_dict (dictionary): non_quant_modules for model.
-        """
-        if model_kwargs is None:
-            model_kwargs = {}
-        skipped_module_names = model_kwargs.get("non_quant_module_name", [])
-        skipped_module_classes = model_kwargs.get("non_quant_module_class", [])
-        custom_non_quant_dict = {'skipped_module_names': skipped_module_names,
-                                 'skipped_module_classes': skipped_module_classes}
-        # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops, 
-        # due to huge accuracy regression in PyTorch.
-        custom_non_quant_dict['skipped_module_classes'] += \
-                                    ['LayerNorm', 'InstanceNorm3d', 'Embedding']
-        return custom_non_quant_dict
 
 
 unify_op_type_mapping = {
@@ -1964,6 +1860,29 @@ class PyTorchAdaptor(TemplateAdaptor):
                 state_dict[tensor_name] = tensor
         model.model.load_state_dict(state_dict)
 
+    def get_non_quant_modules(self, model_kwargs):
+        """This is a helper function to get all non_quant_modules from customer and default.
+
+        Args:
+            model_kwargs (dictionary): keyword args from Neural Compressor model
+
+        Returns:
+            custom_non_quant_dict (dictionary): non_quant_modules for model.
+        """
+        if model_kwargs is None:
+            model_kwargs = {}
+        skipped_module_names = model_kwargs.get("non_quant_module_name", [])
+        skipped_module_classes = model_kwargs.get("non_quant_module_class", [])
+        custom_non_quant_dict = {'skipped_module_names': skipped_module_names,
+                                 'skipped_module_classes': skipped_module_classes}
+        # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops, 
+        # due to huge accuracy regression in PyTorch.
+        custom_non_quant_dict['skipped_module_classes'] += ['LayerNorm', 
+                                                            'InstanceNorm3d', 
+                                                            'Embedding', 
+                                                            'Dropout']
+        return custom_non_quant_dict
+
 
 unify_op_type_mapping_ipex = {
     "Convolution_Relu": "Conv2d",
@@ -2532,7 +2451,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                     observer=torch.quantization.MovingAverageMinMaxObserver),
                             weight=torch.quantization.default_weight_fake_quant)
         quantizable_ops = []
-        tmp_model = self.fuse_fx_model(self.model)
+        tmp_model = self.fuse_fx_model(self.model, 
+                                       is_qat=(self.approach=="quant_aware_training"))
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         quantized_ops = {op[0]:q_cfgs for op in quantizable_ops}
         if self.version < PyTorchVersionMode.PT111.value:
@@ -2879,6 +2799,106 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
                                                     module, op_name)
 
+    def fuse_fx_model(self, model, is_qat):
+        """This is a helper function to get fused fx model for PyTorch_FXAdaptor.
+
+        Args:
+            model (object): input model which is Neural Compressor model.
+            is_qat (bool): check quantization approach is qat or not.
+
+        Returns:
+            fused_model (GraphModule): fused GraphModule model from torch.fx.
+        """
+        try:
+            tmp_model = copy.deepcopy(model.model)
+        except Exception as e:   # pragma: no cover
+            tmp_model = model.model
+            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+        from torch.fx import GraphModule
+        from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
+        if model.kwargs is not None:
+            prepare_custom_config_dict = model.kwargs.get(
+                                            'prepare_custom_config_dict', {})
+        else:
+            prepare_custom_config_dict = {}
+        skipped_module_names = prepare_custom_config_dict.get(\
+                                            'non_traceable_module_name', [])
+        skipped_module_classes = prepare_custom_config_dict.get(\
+                                            'non_traceable_module_class', [])
+        try:
+            tracer = QuantizationTracer(
+                skipped_module_names, skipped_module_classes)
+            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
+            if self.version >= PyTorchVersionMode.PT111.value:   # pragma: no cover
+                # pylint: disable=E1124
+                fused_model = _fuse_fx(graph_module, is_qat,
+                                       fuse_custom_config_dict=prepare_custom_config_dict)
+            else:
+                fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
+        except:
+            self.sub_module_list = []
+            self._fuse_sub_graph(tmp_model, prefix='', is_qat=is_qat)
+            fused_model = tmp_model
+        return fused_model
+
+    def _fuse_sub_graph(self, model, prefix, is_qat):
+        """This is a helper function to get fused fx sub modules recursively for PyTorch_FXAdaptor.
+
+        Args:
+            model (object): input model which is PyTorch model.
+            prefix (string): prefix of op name.
+            is_qat (bool): check quantization approach is qat or not.
+
+        Returns:
+            fused_model (GraphModule): fused GraphModule model from torch.fx.
+        """
+        from torch.quantization.quantize_fx import _fuse_fx
+        import torch.quantization.quantization_mappings as tqqm
+        fx_white_list = tqqm.get_default_qconfig_propagation_list()
+        for name, module in model.named_children():
+            # FX QAT cannot fallback nn.Dropout from train mode to eval
+            if type(module) == torch.nn.Dropout:  # pragma: no cover
+                continue
+            op_name = prefix + '.' + name if prefix != '' else name
+            if type(module) in fx_white_list:
+                module = torch.quantization.QuantWrapper(module)
+            if self._check_dynamic_control(module):
+                self._fuse_sub_graph(module, op_name, is_qat=is_qat)
+            else:
+                try:
+                    graph_module = torch.fx.symbolic_trace(module)
+                    if self.version >= PyTorchVersionMode.PT111.value:  # pragma: no cover
+                        fused_model = _fuse_fx(graph_module, is_qat)
+                    else:
+                        fused_model = _fuse_fx(graph_module)
+                    setattr(model, name, fused_model)
+                    self.sub_module_list.append(op_name)
+                except:
+                    self._fuse_sub_graph(module, op_name, is_qat)
+
+    def _check_dynamic_control(self, module):
+        """This is a helper function to check dynamic control in forward function of module.
+
+        Args:
+            module (object): input module which is PyTorch Module.
+
+        Returns:
+            fused_model (GraphModule): fused GraphModule model from torch.fx.
+        """
+        import inspect
+        import re
+        try:
+            lines = inspect.getsource(module.forward)
+            # Proxy obj. will always be detectd as `not None`.
+            # Other situations could be detected by prepare_fx function.
+            pattern = "is( not)? None"
+            anws = re.search(pattern, lines)
+            if anws:
+                return True
+        except:  # pragma: no cover
+            logger.info('Module has no forward function')
+        return False
+
 
 class PyTorchQuery(QueryBackendCapability):
 
@@ -2916,8 +2936,8 @@ class PyTorchQuery(QueryBackendCapability):
             except Exception as e:   # pragma: no cover
                 logger.info("Fail to parse {} due to {}".format(self.cfg, str(e)))
                 self.cur_config = None
-                raise ValueError("Please check if the format of {} follows Neural Compressor yaml scheme.".
-                                 format(self.cfg))
+                raise ValueError("Please check if the format of {} follows "
+                                 "Neural Compressor yaml scheme.".format(self.cfg))
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
