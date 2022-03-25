@@ -64,6 +64,28 @@ void* read_file_to_type(const string& root, const string& type, const vector<int
   return p;
 }
 
+ipc::managed_shared_memory::handle_t load_shared_weight(const string& root, const string& type,
+                                                        const vector<int64_t>& shape, const vector<int64_t>& location) {
+  int64_t size = Product(shape);
+  int64_t bytes = size * type2bytes[type];
+  string weight_name = std::to_string(location[0]) + std::to_string(location[1]);
+  std::ifstream inFile(root, std::ios::in | std::ios::binary);
+  size_t file_size =
+      inFile ? static_cast<size_t>(inFile.seekg(0, std::ios::end).tellg()) : static_cast<size_t>(root.size());
+  // set redundent memory for shared buffer
+  static ipc::managed_shared_memory managed_shm(ipc::open_or_create, "SharedWeight", 3 * file_size);
+  auto shm_ptr = managed_shm.find_or_construct<char>(weight_name.c_str())[bytes](0);
+  if (inFile) {
+    inFile.seekg(location[0], std::ios::beg);
+    inFile.read(reinterpret_cast<char*>(shm_ptr), location[1]);
+    inFile.close();
+  } else {
+    std::memcpy(shm_ptr, &root[location[0]], location[1]);
+  }
+  const auto& handle = managed_shm.get_handle_from_address(shm_ptr);
+  return handle;
+}
+
 void InitVector(float* v, int buffer_size) {
   std::mt19937 gen;
   static int seed = 0;

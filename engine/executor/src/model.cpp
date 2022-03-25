@@ -26,6 +26,7 @@ Model::Model(const string& conf_file, const string& weight_root) : weight_root_(
 
 void Model::Init(const ModelConfig& conf) {
   name_ = conf.name();
+  ipc::shared_memory_object::remove("SharedWeight");
   MemoryAllocator::InitStrategy();
   // For each operator, set up its input and output
   auto op_configs = conf.operators();
@@ -108,8 +109,16 @@ void Model::SetOutput(const vector<OperatorConfig*>& conf, const int operator_id
   // have output and the output is MODEL's input
   const string& op_type = op_conf->type();
   if (op_type == "Input") {
+    bool is_shared_weight = (getenv("SHARED_WEIGHT") != NULL);
     // parse weight here
     if (tensor_config->location().size() != 0) {
+      LOG(INFO) << tensor_config->name() << " is using shared weight: " << is_shared_weight;
+      if (is_shared_weight) {
+        auto handle =
+            load_shared_weight(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
+        tensor_ptr->set_shm_handle(handle);
+        return;
+      }
       void* weight_ptr =
           read_file_to_type(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
       tensor_ptr->set_data(weight_ptr);

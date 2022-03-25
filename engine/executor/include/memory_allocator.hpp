@@ -22,6 +22,8 @@
 #include <string>
 #include <thread>  // NOLINT
 #include <vector>
+#include <boost/interprocess/allocators/allocator.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
 
 #include "i_malloc.hpp"
 
@@ -30,6 +32,7 @@ using std::map;
 using std::shared_ptr;
 using std::string;
 using std::vector;
+namespace ipc = boost::interprocess;
 class MemoryAllocator {
  public:
   // vector will contain the used counts and size of a memory
@@ -100,6 +103,11 @@ class MemoryAllocator {
     static StrategyList* m_strategy_ =
         new StrategyList({{"cycle_buffer", false}, {"direct_buffer", false}, {"unified_buffer", false}});
     return *m_strategy_;
+  }
+
+  static shared_ptr<ipc::managed_shared_memory> ManagedShm() {
+    static auto shm_ptr = std::make_shared<ipc::managed_shared_memory>(ipc::open_only, "SharedWeight");
+    return shm_ptr;
   }
 
   static void InitStrategy() {

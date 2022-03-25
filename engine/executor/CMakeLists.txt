@@ -89,6 +89,15 @@ target_include_directories(engine
         ./include/sparse_operators
         ./include/operators
         ./include
+        ./third_party/boost/libs/assert/include
+        ./third_party/boost/libs/core/include
+        ./third_party/boost/libs/move/include
+        ./third_party/boost/libs/config/include
+        ./third_party/boost/libs/container/include
+        ./third_party/boost/libs/intrusive/include
+        ./third_party/boost/libs/static_assert/include
+        ./third_party/boost/libs/type_traits/include
+        ./third_party/boost/libs/interprocess/include
 )
 
 ## link against the third party libraries
@@ -99,6 +108,7 @@ target_link_libraries(engine
         yaml-cpp
         gflags
         glog
+        rt
 )
 
 ## pybind11
