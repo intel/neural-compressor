@@ -366,7 +366,10 @@ class TestPruning(unittest.TestCase):
         scheduler.append(prune)
         opt_model = scheduler.fit()
         opt_model.report_sparsity()
-        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
+        try:
+          conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
+        except:
+          conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
