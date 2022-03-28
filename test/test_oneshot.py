@@ -423,7 +423,7 @@ class TestPruning(unittest.TestCase):
         print(20*'=' + 'test_prune_qat_oneshot_fx' + 20*'=')
         print(opt_model.model)
 
-        conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
