@@ -86,7 +86,6 @@ function run_tuning {
         --output_dir ${tuned_checkpoint} \
         --tune \
         --overwrite_output_dir \
-        --dataloader_drop_last \
         ${extra_cmd}
 }
 

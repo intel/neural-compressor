@@ -19,8 +19,6 @@ if sys.version_info[0] == 3 and sys.version_info[1] >= 7:
     import importlib
     import importlib.util
     import sys
-
-
     # from https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
     def import_file(module_name, file_path, make_importable=False):
         spec = importlib.util.spec_from_file_location(module_name, file_path)
