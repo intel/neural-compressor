@@ -329,11 +329,11 @@ class M(torch.nn.Module):
 class FP32Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv = nn.Conv2d(1, 1, 1)
+
     def forward(self, x):
         times = x.size(1)
-        for _ in range(times):
-            x = self.conv(x)
+        if times == 1:
+            return x + x
         return x
 
 
@@ -527,16 +527,17 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer.fit()
+            eval_func(q_model)
             q_model.save('./saved')
             # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
-            # recover int8 model with only tune_cfg
-            tune_cfg_file = './saved/best_configure.yaml'
-            with open(tune_cfg_file, 'r') as f:
-                history_cfg = yaml.safe_load(f)
-            saved_model = load(model=model, \
-                                history_cfg=history_cfg)
             eval_func(saved_model)
+            # recover int8 model from history
+            history_file = './saved/history.snapshot'
+            model_recover = recover(model, history_file, 0)
+            eval_func(model_recover)
+            self.assertEqual(type(saved_model.conv), \
+                             type(model_recover.conv))
             shutil.rmtree('./saved', ignore_errors=True)
         from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ptq_yaml.yaml')
@@ -564,13 +565,28 @@ class TestPytorchAdaptor(unittest.TestCase):
             q_model.save('./saved')
             # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
-            # recover int8 model with only tune_cfg
-            tune_cfg_file = './saved/best_configure.yaml'
-            with open(tune_cfg_file, 'r') as f:
-                history_cfg = yaml.safe_load(f)
-            saved_model = load(model=model, \
-                                history_cfg=history_cfg)
             eval_func(saved_model)
+            shutil.rmtree('./saved', ignore_errors=True)
+
+    def test_quantization_new_saved(self):
+        for fake_yaml in ['dynamic_yaml.yaml', 'qat_yaml.yaml', 'ptq_yaml.yaml']:
+            model = M()
+            quantizer = Quantization(fake_yaml)
+            quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
+            dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+            quantizer.model = model
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            q_model = quantizer.fit()
+            eval_func(q_model)
+            torch.save(q_model.quantized_state_dict(), './saved/model.pt')
+            # Load configure and weights by neural_compressor.utils
+            from neural_compressor.experimental.common import Model
+            common_model = Model(model)
+            common_model.load_quantized_state_dict(torch.load('./saved/model.pt'))
+            eval_func(common_model)
+            self.assertEqual(type(q_model._model.linear), \
+                             type(common_model._model.linear))
             shutil.rmtree('./saved', ignore_errors=True)
 
     def test_non_quant_module(self):
@@ -592,6 +608,32 @@ class TestPytorchAdaptor(unittest.TestCase):
             saved_model = load("./saved", model, **non_quant_dict)
             eval_func(saved_model)
             shutil.rmtree('./saved', ignore_errors=True)
+
+    def test_workspace_path(self):
+        model = M()
+        quantizer = Quantization('ptq_yaml.yaml')
+        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        quantizer.model = model
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        q_model = quantizer.fit()
+        eval_func(q_model)
+        torch.save(q_model.quantized_state_dict(), './saved/best_model.pt')
+        # Load configure and weights by workspace_path
+        from neural_compressor.experimental.common import Model
+        common_model = Model(model)
+        common_model.workspace_path = './saved'
+        eval_func(common_model)
+        self.assertEqual(type(q_model._model.linear), \
+                          type(common_model._model.linear))
+        shutil.rmtree('./saved', ignore_errors=True)
+
+    def test_get_graph_info(self):
+        from neural_compressor.model.torch_model import PyTorchModel
+        model = PyTorchModel(self.model)
+        op_map = model.graph_info
+        self.assertTrue(op_map['conv1'] == 'Conv2d')
 
     def test_tensorboard(self):
         model = copy.deepcopy(self.nc_model)
@@ -829,6 +871,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'preserved_attributes': []}
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+            shutil.rmtree('./saved', ignore_errors=True)
 
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
@@ -918,7 +961,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             q_model = quantizer.fit()
             q_model.save('./saved')
             # Load configure and weights with neural_compressor.utils
-            model_fx = load('./saved', model_origin,
+            model_fx = load('./saved/best_model.pt', model_origin,
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \

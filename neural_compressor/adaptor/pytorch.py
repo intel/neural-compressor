@@ -855,27 +855,18 @@ class TemplateAdaptor(Adaptor):
 
         raise NotImplementedError
 
-    @dump_elapsed_time("Pass query framework capability")
-    def query_fw_capability(self, model):
+    def _get_quantizable_ops(self, model):
         """This is a helper function to get all quantizable ops from model.
 
         Args:
-            model (object): input model which is Neural Compressor model
+            model (object): input model which is PyTorch model
 
         Returns:
             q_capability (dictionary): tuning capability for each op from model.
         """
-        self.pre_optimized_model = model
-        tmp_model = model.model
+        tmp_model = model
         tmp_model.eval()
-        if isinstance(self, PyTorch_FXAdaptor) and \
-          self.approach != "post_training_dynamic_quant":
-            # pylint: disable=no-member
-            tmp_model = self.fuse_fx_model(model, 
-                                           is_qat=(self.approach=="quant_aware_training"))
         quantizable_ops = []
-        if isinstance(self, PyTorchAdaptor):
-            self.non_quant_dict = self.get_non_quant_modules(model.kwargs)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         capability = self.query_handler.get_quantization_capability()['dynamic'] \
             if self.approach == "post_training_dynamic_quant" else \
@@ -983,7 +974,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             (object): quantized model
         """
 
-        assert isinstance(model.model, torch.nn.Module), \
+        assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
 
         # For tensorboard display
@@ -1000,53 +991,53 @@ class PyTorchAdaptor(TemplateAdaptor):
             q_model = model
 
         if self.approach == 'quant_aware_training':
-            q_model.model.train()
+            q_model._model.train()
         else:
-            q_model.model.eval()
+            q_model._model.eval()
         if self.version < PyTorchVersionMode.PT17.value or \
                     self.approach != 'quant_aware_training':
-            _propagate_qconfig(q_model.model, op_cfgs, approach=self.approach)
+            _propagate_qconfig(q_model._model, op_cfgs, approach=self.approach)
             # sanity check common API misusage
-            if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.model.modules()):
+            if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model._model.modules()):
                 logger.warn("None of the submodule got qconfig applied. Make sure you "
                             "passed correct configuration through `qconfig_dict` or "
                             "by assigning the `.qconfig` attribute directly on submodules.")
 
         if self.approach == 'post_training_static_quant':
-            torch.quantization.add_observer_(q_model.model)
+            torch.quantization.add_observer_(q_model._model)
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(
-                q_model.model, dataloader, iterations,
+                q_model._model, dataloader, iterations,
                 calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         elif self.approach == 'quant_aware_training':
             if self.version >= PyTorchVersionMode.PT17.value:
-                _propagate_qconfig(q_model.model, op_cfgs, is_qat_convert=True)
-                torch.quantization.convert(q_model.model, mapping=self.q_mapping,
+                _propagate_qconfig(q_model._model, op_cfgs, is_qat_convert=True)
+                torch.quantization.convert(q_model._model, mapping=self.q_mapping,
                                            inplace=True, remove_qconfig=False)
-                _propagate_qconfig(q_model.model, op_cfgs)
-                torch.quantization.add_observer_(q_model.model, self.white_list,
+                _propagate_qconfig(q_model._model, op_cfgs)
+                torch.quantization.add_observer_(q_model._model, self.white_list,
                                                  set(self.q_mapping.values()))
             else:   # pragma: no cover
-                torch.quantization.add_observer_(q_model.model)
-                torch.quantization.convert(q_model.model, self.q_mapping, inplace=True)
+                torch.quantization.add_observer_(q_model._model)
+                torch.quantization.convert(q_model._model, self.q_mapping, inplace=True)
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept neural_compressor
             # model and user defined func should accept framework model.
-            q_model.model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
-            assert q_model.model is not None, "Please return a trained model in train function!"
-            q_model.model.eval()
+            q_model._model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model._model)
+            assert q_model._model is not None, "Please return a trained model in train function!"
+            q_model._model.eval()
 
         if self.approach == 'quant_aware_training':
-            torch.quantization.convert(q_model.model, inplace=True)
+            torch.quantization.convert(q_model._model, inplace=True)
         else:
-            torch.quantization.convert(q_model.model, mapping=self.q_mapping, inplace=True)
+            torch.quantization.convert(q_model._model, mapping=self.q_mapping, inplace=True)
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
-            self._get_scale_zeropoint(q_model.model, self.tune_cfg)
+            self._get_scale_zeropoint(q_model._model, self.tune_cfg)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         q_model.is_quantized = True
 
-        self._dump_model_op_stats(q_model.model, q_model.tune_cfg)
+        self._dump_model_op_stats(q_model._model, q_model.tune_cfg)
 
         return q_model
 
@@ -1072,7 +1063,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         if tensorboard:
             model = self._pre_eval_hook(model)
 
-        model_ = model.model
+        model_ = model._model
         assert isinstance(
             model_, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model_.eval()
@@ -1091,26 +1082,26 @@ class PyTorchAdaptor(TemplateAdaptor):
         return acc
 
     def _pre_hook_for_qat(self):
-        # self.model.model is needed here.
-        self.model.model.qconfig = torch.quantization.QConfig(
+        # self.model._model is needed here.
+        self.model._model.qconfig = torch.quantization.QConfig(
                             activation=torch.quantization.FakeQuantize.with_args(
                                     dtype=torch.quint8,
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE),
                             weight=torch.quantization.default_weight_fake_quant)
         self.model.model.training = True
-        torch.quantization.prepare_qat(self.model.model, inplace=True)
+        torch.quantization.prepare_qat(self.model._model, inplace=True)
 
     def _post_hook_for_qat(self):
-        torch.quantization.convert(self.model.model, inplace=True)
+        torch.quantization.convert(self.model._model, inplace=True)
 
     def _pre_hook_for_hvd(self):
         # TODO: lazy init here
         hvd.init()
-        hvd.broadcast_parameters(self.model.model.state_dict(), root_rank=0)
+        hvd.broadcast_parameters(self.model._model.state_dict(), root_rank=0)
         hvd.broadcast_optimizer_state(self.optimizer, root_rank=0)
         self.optimizer = hvd.DistributedOptimizer(
-            self.optimizer, named_parameters=self.model.model.named_parameters())
+            self.optimizer, named_parameters=self.model._model.named_parameters())
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
@@ -1125,7 +1116,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        model_ = model.model
+        model_ = model._model
         device = "cuda:0" if self.device != "GPU" and torch.cuda.is_available() else self.device
         # self.model is set to neural_compressor model here to hold the inplace change in FWK model.
         self.model = model
@@ -1515,10 +1506,10 @@ class PyTorchAdaptor(TemplateAdaptor):
             white_list = torch.quantization.get_default_compare_output_module_list()
 
         model = model if model.is_quantized else copy.deepcopy(model)
-        model.model.qconfig = torch.quantization.QConfig(
+        model._model.qconfig = torch.quantization.QConfig(
             weight=torch.quantization.default_debug_observer,
             activation=_RecordingObserver.with_args(iteration_list=iteration_list))
-        _prepare(model.model, op_list=op_list, white_list=white_list)
+        _prepare(model._model, op_list=op_list, white_list=white_list)
 
         return model
 
@@ -1583,7 +1574,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         from torch.utils.tensorboard import SummaryWriter
         from torch.quantization import get_observer_dict
 
-        model = model.model
+        model = model._model
 
         if args is not None and 'accuracy' in args:
             accuracy = args['accuracy']
@@ -1681,7 +1672,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                        inspect_type='activation', save_to_disk=False):
         if self.version > PyTorchVersionMode.PT17.value:
             from torch.fx import GraphModule
-            if type(model.model) == GraphModule:
+            if type(model._model) == GraphModule:
                 assert False, "Inspect_tensor didn't support fx graph model now!"
         from torch import dequantize
         import numpy as np
@@ -1712,7 +1703,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         if inspect_type == 'activation' or inspect_type == 'all':
             from torch.quantization import get_observer_dict
             ret['activation'] = []
-            get_observer_dict(new_model.model, observer_dict)
+            get_observer_dict(new_model._model, observer_dict)
             if iteration_list is None:
                 iteration_list = [1]
             for i in iteration_list:
@@ -1779,7 +1770,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         if inspect_type == 'weight' or inspect_type == 'all':
             ret['weight'] = {}
-            state_dict = new_model.model.state_dict()
+            state_dict = new_model._model.state_dict()
 
             for key in state_dict:
                 if not isinstance(state_dict[key], torch.Tensor):
@@ -1824,7 +1815,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         return ret
 
     def set_tensor(self, model, tensor_dict):
-        state_dict = model.model.state_dict()
+        state_dict = model._model.state_dict()
         tensor_name = None
         for key in tensor_dict.keys():
             end = key.rfind('.')
@@ -1859,7 +1850,22 @@ class PyTorchAdaptor(TemplateAdaptor):
                                                                         zero_points, dtype)
             else:
                 state_dict[tensor_name] = tensor
-        model.model.load_state_dict(state_dict)
+        model._model.load_state_dict(state_dict)
+
+    @dump_elapsed_time("Pass query framework capability")
+    def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model which is Neural Compressor model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
+        self.pre_optimized_model = model
+        self.non_quant_dict = self.get_non_quant_modules(model.kwargs)
+        tmp_model = model._model
+        return self._get_quantizable_ops(tmp_model)
 
     def get_non_quant_modules(self, model_kwargs):
         """This is a helper function to get all non_quant_modules from customer and default.
@@ -1941,18 +1947,18 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             model_ = model
         try:
             if not IPEX_110:
-                q_model = torch.jit.script(model_.model.eval().to(ipex.DEVICE))
+                q_model = torch.jit.script(model_._model.eval().to(ipex.DEVICE))
             else:
-                q_model = model_.model.eval()
+                q_model = model_._model.eval()
         except:
             try:
                 for input, _ in dataloader:
-                    q_model = torch.jit.trace(model_.model.eval().to(ipex.DEVICE),
+                    q_model = torch.jit.trace(model_._model.eval().to(ipex.DEVICE),
                                               input.to(ipex.DEVICE)).to(ipex.DEVICE)
                     break
             except:
                 logger.info("Fail to convert this model to PyTorch Script model.")
-                q_model = model_.model.eval().to(ipex.DEVICE)
+                q_model = model_._model.eval().to(ipex.DEVICE)
         qscheme = self._cfg_to_qconfig(tune_cfg)
 
         if self.approach == 'post_training_static_quant':
@@ -1972,7 +1978,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
-        model_.model = q_model
+        model_._model = q_model
         with open(self.ipex_config_path, 'r') as f:
             model_.tune_cfg = json.load(f)
         return model_
@@ -2108,7 +2114,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         assert not tensorboard, "Intel PyTorch Extension didn't tensor dump"
         self.is_baseline = fp32_baseline
 
-        model_ = model.model
+        model_ = model._model
         model_.eval()
         if self.is_baseline and not IPEX_110:
             model_.eval()
@@ -2146,6 +2152,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         return self.model_eval(
             model_, dataloader, postprocess, metric, measurer, iteration, conf
         )
+
+    @dump_elapsed_time("Pass query framework capability")
+    def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model which is Neural Compressor model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
+        self.pre_optimized_model = model
+        tmp_model = model._model
+        return self._get_quantizable_ops(tmp_model)
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
@@ -2335,7 +2355,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             (object): quantized model
         """
 
-        assert isinstance(model.model, torch.nn.Module), \
+        assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
 
         self.tune_cfg = tune_cfg
@@ -2356,7 +2376,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
                            format(repr(e)))
             q_model = model
-        q_model.model.eval()
+        q_model._model.eval()
         if q_model.kwargs is not None:
             self.prepare_custom_config_dict = q_model.kwargs.get(
                                               'prepare_custom_config_dict', None)
@@ -2367,46 +2387,46 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
-            q_model.model.train()
+            q_model._model.train()
             if self.sub_module_list is None:
-                q_model.model = prepare_qat_fx(q_model.model, self.fx_op_cfgs,
+                q_model._model = prepare_qat_fx(q_model._model, self.fx_op_cfgs,
                   prepare_custom_config_dict=self.prepare_custom_config_dict)
             else:
                 logger.info('Fx trace of the entire model failed. ' + \
                             'We will conduct auto quantization')
                 PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list, self.fx_op_cfgs, \
-                                                    q_model.model, prefix='', is_qat=True)
+                                                    q_model._model, prefix='', is_qat=True)
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept 
             # neural_compressor model and user defined func should accept framework model.
-            q_model.model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model.model)
-            assert q_model.model is not None, "Please return a trained model in train function!"
-            q_model.model.eval()
+            q_model._model = q_func(q_model if getattr(q_func, 'builtin', None) else q_model._model)
+            assert q_model._model is not None, "Please return a trained model in train function!"
+            q_model._model.eval()
         else:
             if self.sub_module_list is None:
-                q_model.model = prepare_fx(q_model.model, self.fx_op_cfgs,
+                q_model._model = prepare_fx(q_model._model, self.fx_op_cfgs,
                   prepare_custom_config_dict=self.prepare_custom_config_dict)
             else:
                 logger.info('Fx trace of the entire model failed, ' + \
                             'We will conduct auto quantization')
                 PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list, self.fx_op_cfgs, \
-                                                    q_model.model, prefix='')
+                                                    q_model._model, prefix='')
             if self.approach == 'post_training_static_quant':
                 iterations = tune_cfg.get('calib_iteration', 1)
-                self.model_calibration(q_model.model, dataloader, iterations,
+                self.model_calibration(q_model._model, dataloader, iterations,
                   calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         if self.sub_module_list is None:
-            q_model.model = convert_fx(q_model.model,
+            q_model._model = convert_fx(q_model._model,
               convert_custom_config_dict=self.convert_custom_config_dict)
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
-                                                q_model.model, prefix='')
+                                                q_model._model, prefix='')
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
-            self._get_scale_zeropoint(q_model.model, self.tune_cfg)
+            self._get_scale_zeropoint(q_model._model, self.tune_cfg)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
 
-        self._dump_model_op_stats(q_model.model, q_model.tune_cfg, self.approach)
+        self._dump_model_op_stats(q_model._model, q_model.tune_cfg, self.approach)
         return q_model
 
 
@@ -2432,7 +2452,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             assert False, "PyTorch FX mode didn't support tensorboard flag now!"
         self.is_baseline = fp32_baseline
 
-        model_ = model.model
+        model_ = model._model
         assert isinstance(
             model_, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
         model_.eval()
@@ -2460,14 +2480,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             quantized_ops["default_qconfig"] = None
         from torch.quantization.quantize_fx import prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
-        self.model.model.train()
-        self.model.model = prepare_qat_fx(self.model.model, fx_op_cfgs,
+        self.model._model.train()
+        self.model._model = prepare_qat_fx(self.model._model, fx_op_cfgs,
             prepare_custom_config_dict=self.model.kwargs.get('prepare_custom_config_dict', None)
             if self.model.kwargs is not None else None)
 
     def _post_hook_for_qat(self):   # pragma: no cover
         from torch.quantization.quantize_fx import convert_fx
-        self.model.model = convert_fx(self.model.model,
+        self.model._model = convert_fx(self.model._model,
           convert_custom_config_dict=self.model.kwargs.get('convert_custom_config_dict', None)
           if self.model.kwargs is not None else None)
 
@@ -2486,7 +2506,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         device = "cuda:0" if self.device != "GPU" and torch.cuda.is_available() else self.device
         self.model = model
-        optimizer = optimizer_tuple[0](model.model.parameters(), **optimizer_tuple[1])
+        optimizer = optimizer_tuple[0](model._model.parameters(), **optimizer_tuple[1])
         criterion = criterion_tuple[0](**criterion_tuple[1])
         # prepare hooks first to ensure model will be converted correctly
         if hooks is not None:   # pragma: no cover
@@ -2497,13 +2517,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             on_batch_begin = hooks['on_batch_begin']
             on_batch_end = hooks['on_batch_end']
             on_post_grad = hooks['on_post_grad']
-        model.model.train()
+        model._model.train()
         if hooks is not None:
             pre_epoch_begin()
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
-        model.model.to(device)
+        model._model.to(device)
         for nepoch in range(start_epochs, end_epochs):
             cnt = 0
             if hooks is not None:
@@ -2514,7 +2534,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     on_batch_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
-                output = pytorch_forward_wrapper(model.model, input, device=device)
+                output = pytorch_forward_wrapper(model._model, input, device=device)
                 loss = criterion(output, target)
                 if hooks is not None:
                     on_post_grad()
@@ -2529,12 +2549,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 on_epoch_end()
 
         if device != self.device:  # pragma: no cover
-            model.model.to(self.device)
+            model._model.to(self.device)
 
         if hooks is not None:
             post_epoch_end()
 
-        return model.model
+        return model._model
 
     def _get_module_op_stats(self, model, tune_cfg, approach):
         """This is a function to get quantizable ops of model to user.
@@ -2800,6 +2820,23 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
                                                     module, op_name)
 
+    @dump_elapsed_time("Pass query framework capability")
+    def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model which is Neural Compressor model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
+        self.pre_optimized_model = model
+        tmp_model = model._model
+        if self.approach != "post_training_dynamic_quant":
+            tmp_model = self.fuse_fx_model(model, 
+                                           is_qat=(self.approach=="quant_aware_training"))
+        return self._get_quantizable_ops(tmp_model)
+
     def fuse_fx_model(self, model, is_qat):
         """This is a helper function to get fused fx model for PyTorch_FXAdaptor.
 
@@ -2811,10 +2848,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             fused_model (GraphModule): fused GraphModule model from torch.fx.
         """
         try:
-            tmp_model = copy.deepcopy(model.model)
+            tmp_model = copy.deepcopy(model._model)
         except Exception as e:   # pragma: no cover
-            tmp_model = model.model
+            tmp_model = model._model
             logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+        tmp_model.train() if is_qat else tmp_model.eval()
         from torch.fx import GraphModule
         from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
         if model.kwargs is not None:
