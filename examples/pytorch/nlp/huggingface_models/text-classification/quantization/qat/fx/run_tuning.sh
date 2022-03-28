@@ -51,10 +51,9 @@ function run_tuning {
         --per_device_train_batch_size ${batch_size} \
         --learning_rate 2e-5 \
         --num_train_epochs 3 \
-        --dataloader_drop_last \
         --output_dir ${output_model} --overwrite_output_dir \
-        --eval_steps 100 \
-        --save_steps 100 \
+        --eval_steps 300 \
+        --save_steps 300 \
         --greater_is_better True \
         --load_best_model_at_end True \
         --evaluation_strategy steps \

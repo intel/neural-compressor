@@ -44,7 +44,6 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
-from transformers.utils.fx import symbolic_trace
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
 
@@ -601,17 +600,6 @@ def main():
 
     eval_dataloader = trainer.get_eval_dataloader()
     batch_size = eval_dataloader.batch_size
-    for input in eval_dataloader:
-        input_names = input.keys()
-        break
-
-    model = symbolic_trace(
-        model,
-        input_names=input_names,
-        batch_size=training_args.per_device_eval_batch_size,
-        sequence_length=max_seq_length,
-    )
-
     metric_name = "eval_f1"
 
     def take_eval_steps(model, trainer, metric_name, save_metrics=False):
@@ -641,16 +629,6 @@ def main():
 
         if not training_args.do_eval:
             raise ValueError("do_eval must be set to True for quantization.")
-
-        # TODO : Remove when dynamic axes support
-        if (
-            not training_args.dataloader_drop_last
-            and eval_dataset.shape[0] % training_args.per_device_eval_batch_size != 0
-        ):
-            raise ValueError(
-                "The number of samples of the dataset is not a multiple of the batch size."
-                "Use --dataloader_drop_last to overcome."
-            )
 
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('conf.yaml')

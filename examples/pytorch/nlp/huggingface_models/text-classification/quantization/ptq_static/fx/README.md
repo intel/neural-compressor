@@ -143,15 +143,10 @@ trainer = Trainer(
     tokenizer=tokenizer,
     data_collator=data_collator,
 )
-from transformers.utils.fx import symbolic_trace
+
 eval_dataloader = trainer.get_eval_dataloader()
 batch_size = eval_dataloader.batch_size
-for input in eval_dataloader:
-    input_names = input.keys()
-    break
-model = symbolic_trace(model, input_names=input_names, \
-                        batch_size=batch_size, \
-                        sequence_length=max_seq_length)
+
 metric_name = "eval_f1"
 def take_eval_steps(model, trainer, metric_name, save_metrics=False):
     trainer.model = model

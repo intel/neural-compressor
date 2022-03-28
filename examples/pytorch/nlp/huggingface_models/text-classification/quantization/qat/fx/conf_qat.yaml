@@ -6,13 +6,6 @@ model:                                               # mandatory. used to specif
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: quant_aware_training
-  op_wise: {
-            # PyTorch limitation: PyTorch unsupport specific qconfig for function when version <1.10
-            'default_qconfig': {
-              'activation':  {'dtype': ['fp32']},
-              'weight': {'dtype': ['fp32']}
-            },
-           }
 
 tuning:
   accuracy_criterion:

@@ -44,7 +44,6 @@ from transformers import (
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
-from transformers.utils.fx import symbolic_trace
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -462,15 +461,8 @@ def main():
         data_collator=data_collator,
     )
 
-    from transformers.utils.fx import symbolic_trace
     eval_dataloader = trainer.get_eval_dataloader()
     batch_size = eval_dataloader.batch_size
-    for input in eval_dataloader:
-        input_names = input.keys()
-        break
-    model = symbolic_trace(model, input_names=input_names, \
-                            batch_size=batch_size, \
-                            sequence_length=max_seq_length)
 
     def take_eval_steps(model, trainer, save_metrics=False):
         trainer.model = model
@@ -496,14 +488,6 @@ def main():
     # optimize and quantize with Neural Compressor
     if model_args.tune:
         from neural_compressor.experimental import Quantization, common
-        if (
-            not training_args.dataloader_drop_last
-            and eval_dataset.shape[0] % training_args.per_device_eval_batch_size != 0
-        ):
-            raise ValueError(
-                "The number of samples of the dataset is not a multiple of the batch size."
-                "Use --dataloader_drop_last to overcome."
-            )
         calib_dataloader = eval_dataloader
         quantizer = Quantization('conf.yaml')
         quantizer.eval_func = eval_func

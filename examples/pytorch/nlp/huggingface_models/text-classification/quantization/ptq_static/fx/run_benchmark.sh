@@ -107,7 +107,6 @@ function run_benchmark {
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
         --overwrite_output_dir \
-        --dataloader_drop_last \
         ${mode_cmd} \
         ${extra_cmd}
 }
