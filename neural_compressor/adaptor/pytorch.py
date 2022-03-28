@@ -1098,6 +1098,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE),
                             weight=torch.quantization.default_weight_fake_quant)
+        self.model.model.training = True
         torch.quantization.prepare_qat(self.model.model, inplace=True)
 
     def _post_hook_for_qat(self):
