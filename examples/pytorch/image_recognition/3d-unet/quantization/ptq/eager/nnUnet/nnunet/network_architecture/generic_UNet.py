@@ -403,15 +403,21 @@ class Generic_UNet(SegmentationNetwork):
         x = self.quant(x)
         for d in range(len(self.conv_blocks_context) - 1):
             x = self.conv_blocks_context[d](x)
-            skips.append(self.dequant(x))
+            skips.append(x)
             if not self.convolutional_pooling:
                 x = self.td[d](x)
 
         x = self.conv_blocks_context[-1](x)
 
         for u in range(len(self.tu)):
-            x = self.tu[u](self.dequant(x))
-            x = torch.cat((x, skips[-(u + 1)]), dim=1)
+            version = get_torch_version()
+            if version >= PyTorchVersionMode.PT111.value:
+                x = self.tu[u](x)
+                x = torch.cat((x, skips[-(u + 1)]), dim=1)
+                x = self.dequant(x)
+            else:
+                x = self.tu[u](self.dequant(x))
+                x = torch.cat((x, self.dequant(skips[-(u + 1)])), dim=1)
             x = self.conv_blocks_localization[u](getattr(self, 'cat_quant' + str(u))(x))
             seg_outputs.append(self.dequant(self.final_nonlin(self.seg_outputs[u](x))))
 
