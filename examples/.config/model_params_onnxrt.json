@@ -279,6 +279,15 @@
       "batch_size": 1,
       "new_benchmark": true
     },
+    "mnist": {
+      "model_src_dir": "image_recognition/onnx_model_zoo/mnist/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/mnist_recognition/",
+      "input_model": "/tf_dataset2/models/onnx/mnist/mnist-12.onnx",
+      "yaml": "mnist.yaml",
+       "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    }
     "yolov3": {
       "model_src_dir": "object_detection/onnx_model_zoo/yolov3/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
