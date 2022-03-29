@@ -279,6 +279,15 @@
       "batch_size": 1,
       "new_benchmark": true
     },
+    "densenet": {
+      "model_src_dir": "image_recognition/onnx_model_zoo/densenet/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "input_model": "/tf_dataset2/models/onnx/densenet/densenet-12.onnx",
+      "yaml": "densenet.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    }
     "mnist": {
       "model_src_dir": "image_recognition/onnx_model_zoo/mnist/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/mnist_recognition/",
