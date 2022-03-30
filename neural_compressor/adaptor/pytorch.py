@@ -2583,6 +2583,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             quantized_mode = False
             for node in model.graph.nodes:
                 if node.op == 'call_module':
+                    if node.target not in modules: # pragma: no cover
+                        continue
                     op_class = type(modules[node.target])
                     op_type = str(op_class.__name__)
                     if 'quantized' in str(op_class) or quantized_mode:
