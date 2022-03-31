@@ -71,6 +71,15 @@ target_include_directories(host_operators
         ${HOST_SRC_DIR}/include/operators
         ${HOST_SRC_DIR}/include
         ${HOST_SRC_DIR}/third_party/googletest/googletest/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/assert/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/core/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/move/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/config/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/container/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/intrusive/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/static_assert/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/type_traits/include
+        ${HOST_SRC_DIR}/third_party/boost/libs/interprocess/include
 )
 
 # link against the third party libraries
@@ -81,6 +90,7 @@ target_link_libraries(host_operators
         yaml-cpp
         gflags
         glog
+        rt
 )
 
 
