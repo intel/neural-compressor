@@ -284,17 +284,19 @@ class Quantization(Component):
         if isinstance(user_metric, NCMetric):
             name = user_metric.name
             metric_cls = user_metric.metric_cls
-            user_metric = {user_metric.name : {**user_metric.kwargs}}
+            metric_cfg = {name: {**user_metric.kwargs}}
         else:
             for i in ['reset', 'update', 'result']:
                 assert hasattr(user_metric, i), 'Please realise {} function' \
                                                 'in user defined metric'.format(i)
-            metric_cls = type(user_metric)
-            name = 'user_metric'
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", user_metric)
+            metric_cls = type(user_metric).__name__
+            name = 'user_' + metric_cls
+            metric_cfg = {name: id(user_metric)}
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         metrics = METRICS(self.framework)
         metrics.register(name, metric_cls)
+        self._metric = user_metric
  
     @property
     def objective(self):

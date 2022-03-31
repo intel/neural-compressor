@@ -20,6 +20,7 @@ from neural_compressor.experimental.data import DATASETS, TRANSFORMS, FILTERS, D
 from neural_compressor.experimental.common import Optimizers, Criterions
 from collections import OrderedDict
 import copy
+import gc
 
 DEFAULT_BATCH_SIZE = 64
 
@@ -125,8 +126,14 @@ def create_eval_func(framework, dataloader, adaptor,
     if isinstance(metric, dict):
         assert len(metric) == 1, "Only one metric should be specified!"
         metrics = METRICS(framework)
-        # if not do compose will only return the first metric
-        metric = get_metrics(metrics, metric, compose=False)
+        for name, val in metric.items():
+            if isinstance(val, int) and \
+                len([i for i in gc.get_objects() if id(i) == val]) > 0 and \
+                'user_' + type([i for i in gc.get_objects() if id(i) == val][0]).__name__ == name:
+                metric = [i for i in gc.get_objects() if id(i) == val][0]
+            else:
+                # if not do compose will only return the first metric
+                metric = get_metrics(metrics, metric, compose=False)
 
     def eval_func(model, measurer=None):
         return adaptor.evaluate(model, dataloader, postprocess,
