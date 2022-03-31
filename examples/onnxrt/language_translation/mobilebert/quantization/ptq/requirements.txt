@@ -4,3 +4,4 @@ onnx>=1.7.0
 onnxruntime>=1.6.0
 coloredlogs
 sympy
+onnxruntime-extensions

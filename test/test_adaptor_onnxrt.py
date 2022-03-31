@@ -16,6 +16,7 @@ from neural_compressor.experimental import Benchmark, common
 from neural_compressor import options
 from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
 from neural_compressor import conf
+from onnxruntime_extensions import onnx_op
 
 def build_static_yaml():
     fake_yaml = """
@@ -305,6 +306,27 @@ def build_rename_model():
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
 
+@onnx_op(op_type="PyReverseMatrix")
+def reverse_matrix(x):
+    # The user custom op implementation here.
+    return np.flip(x, axis=0).astype(np.float32)
+
+def build_ext_model():
+    nodes = []
+    nodes[0:] = [helper.make_node('Identity', ['input_1'], ['identity1'])]
+    nodes[1:] = [helper.make_node('PyReverseMatrix',
+                                  ['identity1'], ['reversed'],
+                                  domain='ai.onnx.contrib')]
+
+    input0 = helper.make_tensor_value_info(
+            'input_1', onnx_proto.TensorProto.FLOAT, [None, 2])
+    output0 = helper.make_tensor_value_info(
+            'reversed', onnx_proto.TensorProto.FLOAT, [None, 2])
+
+    graph = helper.make_graph(nodes, 'test0', [input0], [output0])
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
 class MatmulDataset:
     def __init__(self):
         self.data = []
@@ -337,6 +359,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
     gather_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 100, 4), label=True)
     gather_dataloader = DATALOADERS['onnxrt_qlinearops'](gather_dataset)
 
+    ext_dataset = datasets['dummy'](shape=(10, 2), low=0., high=1., label=True)
+    ext_dataloader = DATALOADERS['onnxrt_qlinearops'](ext_dataset)
+
     rename_dataloader = gather_dataloader
 
     matmul_dataset = MatmulDataset()
@@ -359,6 +384,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.gather_model = build_model_with_gather()
         self.matmul_model = build_matmul_model()
         self.rename_model = build_rename_model()
+        self.ext_model = build_ext_model()
 
     @classmethod
     def tearDownClass(self):
@@ -375,6 +401,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("runs", ignore_errors=True)
         shutil.rmtree("./nc_workspace", ignore_errors=True)
+
+    def test_ext_model(self):
+        from neural_compressor.experimental import Benchmark
+        conf.model.framework = 'onnxrt_qlinearops'
+        evaluator = Benchmark(conf)
+        evaluator.b_dataloader = self.ext_dataloader
+        evaluator.model = self.ext_model
+        evaluator('performance')
 
     def test_adaptor_register(self):
         from neural_compressor.adaptor.adaptor import adaptor_registry
