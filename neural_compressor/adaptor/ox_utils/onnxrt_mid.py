@@ -201,7 +201,11 @@ class ONNXRTAugment:
         '''
 
         # conduct inference session and get intermediate outputs
-        session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), None)
+        from onnxruntime_extensions import get_library_path
+        so = onnxruntime.SessionOptions()
+        so.register_custom_ops_library(get_library_path())
+
+        session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so)
 
         intermediate_outputs = []
         len_inputs = len(session.get_inputs())

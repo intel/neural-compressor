@@ -4,3 +4,4 @@ onnxruntime==1.8.0
 coloredlogs
 torch
 sympy
+onnxruntime-extensions

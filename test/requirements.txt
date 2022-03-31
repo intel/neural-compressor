@@ -15,3 +15,4 @@ tensorflow_model_optimization
 sigopt
 horovod
 tensorflow-addons
+onnxruntime-extensions

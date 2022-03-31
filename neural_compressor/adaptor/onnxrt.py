@@ -34,6 +34,7 @@ import math
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
+ort_ext = LazyImport("onnxruntime_extensions")
 ONNXRT152_VERSION = StrictVersion("1.5.2")
 
 logger = logging.getLogger()
@@ -404,6 +405,7 @@ class ONNXRTAdaptor(Adaptor):
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
+        sess_options.register_custom_ops_library(ort_ext.get_library_path())
         _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
@@ -601,7 +603,11 @@ class ONNXRTAdaptor(Adaptor):
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
-        session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
+        try:
+            session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
+        except:
+            sess_options.register_custom_ops_library(ort_ext.get_library_path())
+            session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         if metric:
             metric.reset()
             if hasattr(metric, "compare_label") and not metric.compare_label:
