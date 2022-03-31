@@ -355,6 +355,77 @@ class TestConf(unittest.TestCase):
         config = conf.Conf('fake_conf.yaml')
         self.assertEqual(config.usr_cfg.model.inputs, ['x', 'y'])
 
+    def test_objective(self):
+        test = '''
+        model:
+          name: inout_yaml 
+          framework: mxnet
+          inputs: x, y
+        tuning:
+          multi_objectives:
+            objective: accuracy
+            higher_is_better: True
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.tuning.multi_objectives.higher_is_better, [True])
+
+        test = '''
+        model:
+          name: inout_yaml 
+          framework: mxnet
+          inputs: x, y
+        tuning:
+          multi_objectives:
+            objective: accuracy, performance
+            higher_is_better: True, False
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.tuning.multi_objectives.higher_is_better, [True, False])
+
+        test = '''
+        model:
+          name: inout_yaml 
+          framework: mxnet
+          inputs: x, y
+        tuning:
+          multi_objectives:
+            objective: accuracy, performance
+            higher_is_better: True False
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.tuning.multi_objectives.higher_is_better, [True, False])
+
+        test = '''
+        model:
+          name: inout_yaml 
+          framework: mxnet
+          inputs: x, y
+        tuning:
+          multi_objectives:
+            objective: accuracy, performance
+            higher_is_better: [True, False]
+        '''
+        helper(test)
+        config = conf.Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.tuning.multi_objectives.higher_is_better, [True, False])
+
+        test = '''
+        model:
+          name: inout_yaml 
+          framework: mxnet
+          inputs: x, y
+        tuning:
+          multi_objectives:
+            objective: accuracy, performance
+            higher_is_better: True False
+            weight: [0.2, 0.1, 0.7]
+        '''
+        helper(test)
+        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
+
     def test_modelwise_conf_merge(self):
         test = '''
         model:
@@ -613,7 +684,7 @@ class TestConf(unittest.TestCase):
                 dummy:
                   shape: [[224,224], [256,256]]
                   high: [128., 127]
-                  low: 1
+                  low: 1, 0
                   dtype: ['float32', 'int8']
         '''
         helper(test)
@@ -623,7 +694,7 @@ class TestConf(unittest.TestCase):
         self.assertTrue(isinstance(dataset['shape'], list))
         self.assertTrue(isinstance(dataset['high'][1], float))
         self.assertTrue(isinstance(dataset['high'][0], float))
-        self.assertTrue(isinstance(dataset['low'], float))
+        self.assertTrue(isinstance(dataset['low'][0], float))
 
         test = '''
         model:
@@ -712,7 +783,7 @@ class TestConf(unittest.TestCase):
               batch_size: 1
               dataset:
                 dummy:
-                  shape: [224,224]
+                  shape: 224,224
               transform:
                 BilinearImagenet:
                   height: 224

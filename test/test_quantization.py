@@ -370,7 +370,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_custom_objective(self):
         from neural_compressor.experimental import Quantization, common
-        from neural_compressor.objective import Objective
+        from neural_compressor.objective import Objective, objective_registry
         import tracemalloc
         class MyObjective(Objective):
           representation = 'MyObj'
@@ -390,5 +390,33 @@ class TestQuantization(unittest.TestCase):
         quantizer.objective = MyObjective()
         output_graph = quantizer.fit()
         self.assertNotEqual(output_graph, None)
+
+        class MyObjective(Objective):
+          representation = 'Accuracy'
+          def __init__(self):
+              super().__init__()
+          def start(self):
+              tracemalloc.start()
+          def end(self):
+              _, peak = tracemalloc.get_traced_memory()
+              tracemalloc.stop()
+              self._result_list.append(peak // 1048576)
+        quantizer = Quantization()
+        with self.assertRaises(ValueError):
+            quantizer.objective = MyObjective()
+
+        with self.assertRaises(ValueError):
+            @objective_registry
+            class MyObjective(Objective):
+              representation = 'Accuracy'
+              def __init__(self):
+                  super().__init__()
+              def start(self):
+                  tracemalloc.start()
+              def end(self):
+                  _, peak = tracemalloc.get_traced_memory()
+                  tracemalloc.stop()
+                  self._result_list.append(peak // 1048576)
+ 
 if __name__ == "__main__":
     unittest.main()

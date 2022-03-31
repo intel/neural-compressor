@@ -92,9 +92,9 @@ def _valid_prune_sparsity(key, scope, error):
     elif "target_sparsity" in scope[key]:
         assert scope[key]["target_sparsity"] < 1
 
-def _valid_multi_objective(key, scope, error):
-    if 'weight' in scope and scope['weight'] is not None:
-        assert len(scope['objective']) == len(scope['weight'])
+def _valid_multi_objectives(key, scope, error):
+    if 'weight' in scope[key] and scope[key]['weight'] is not None:
+        assert len(scope[key]['objective']) == len(scope[key]['weight'])
 
 # used for '123.68 116.78 103.94' style to float list
 def input_to_list_float(data):
@@ -106,6 +106,19 @@ def input_to_list_float(data):
 
     assert isinstance(data, list)
     return [float(d) for d in data]
+
+def input_to_list_bool(data):
+    if isinstance(data, str):
+        if ',' in data:
+            return [s.strip() == 'True' for s in data.split(',')]
+        else:
+            return [s.strip() == 'True' for s in data.split()]
+
+    if isinstance(data, bool):
+        return [data]
+
+    assert isinstance(data, list) and all([isinstance(i, bool) for i in data])
+    return data
 
 def input_int_to_float(data):
     if isinstance(data, str):
@@ -728,7 +741,7 @@ schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'multi_objective': {'objective': ['performance']},
+        'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): {
@@ -745,11 +758,14 @@ schema = Schema({
             Optional('absolute'): And(Or(str, int, float), Use(percent_to_float)),
             Optional('higher_is_better', default=True): bool,
         },
-        Hook('multi_objective', handler=_valid_multi_objective): object,
-        Optional('multi_objective', default={'objective': ['performance']}): {
-            Optional('objective', default=['performance']): And(
+        Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
+        Hook('multi_objectives', handler=_valid_multi_objectives): object,
+        Optional('multi_objectives'):{ 
+            Optional('objective'): And(
                 Or(str, list), Use(input_to_list), lambda s: all(i in OBJECTIVES for i in s)),
-            Optional('weight', default=None): And(Or(str, list), Use(input_to_list_float)),
+            Optional('weight'): And(Or(str, list), Use(input_to_list_float)),
+            Optional('higher_is_better'): And(
+                Or(str, bool, list), Use(input_to_list_bool)),
         },
         Optional('exit_policy', default={'timeout': 0,
                                          'max_trials': 100,
@@ -867,7 +883,7 @@ quantization_default_schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'multi_objective': {'objective': ['performance']},
+        'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
@@ -915,7 +931,7 @@ graph_optimization_default_schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'multi_objective': {'objective': ['performance']},
+        'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
@@ -945,7 +961,7 @@ benchmark_default_schema = Schema({
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
-        'multi_objective': {'objective': ['performance']},
+        'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,

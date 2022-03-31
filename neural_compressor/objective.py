@@ -161,7 +161,8 @@ class ModelSize(Objective):
         self._result_list.append(model_size)
 
 class MultiObjective:
-    def __init__(self, objectives, accuracy_criterion, weight=None, is_measure=False):
+    def __init__(self, objectives, accuracy_criterion, weight=None, 
+        obj_criterion=None, is_measure=False):
         assert isinstance(accuracy_criterion, dict), 'accuracy criterian should be dict'
         assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
             'accuracy criterion should set relative or absolute'
@@ -180,6 +181,14 @@ class MultiObjective:
         self.baseline = None
         self.val = None
         self.weight = weight
+        if obj_criterion:
+            if len(self.objectives) != len(obj_criterion) and len(obj_criterion) == 1:
+                self.obj_criterion = np.array(obj_criterion * len(self.objectives))
+            else:
+                assert len(self.objectives) == len(obj_criterion)
+                self.obj_criterion = np.array(obj_criterion)
+        else:
+            self.obj_criterion = [False] * len(self.objectives)
         self.is_measure = is_measure
 
     def compare(self, last, baseline):
@@ -206,7 +215,8 @@ class MultiObjective:
             acc_target = base_acc - float(self.acc_goal) if self.higher_is_better \
                 else base_acc + float(self.acc_goal)
 
-        if last_measure == 0 or all([x <= y for x, y in zip(perf, last_measure)]):
+        if last_measure == 0 or \
+            all([(x<=y)^z for x,y,z in zip(perf, last_measure, self.obj_criterion)]):
             return acc >= acc_target if self.higher_is_better else acc < acc_target
         else:
             return False
@@ -290,9 +300,10 @@ class MultiObjective:
         max_val = np.max(obj_data, axis=0)
         zero_mask = max_val != min_val
 
-        if idx is not None and self.higher_is_better:
-            # convert higher-is-better acc objective to lower-is-better
-            obj_data[:, idx] = max_val[idx] + min_val[idx] - obj_data[:, idx]
+        # convert higher-is-better to lower-is-better
+        obj_data[:, self.obj_criterion] = \
+            max_val[self.obj_criterion] + min_val[self.obj_criterion] \
+            - obj_data[:, self.obj_criterion]
 
         obj_data[:, zero_mask] = (obj_data[:, zero_mask] - min_val[zero_mask]) / \
                                         (max_val[zero_mask] - min_val[zero_mask])
