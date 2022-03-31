@@ -62,11 +62,6 @@ function run_benchmark {
         mode_cmd=$mode_cmd"--int8"
     fi
 
-    if [ ${iters} ]; then
-        samples=`expr $iters \* $batch_size`
-        mode_cmd=$mode_cmd" --max_eval_samples="${samples}" --max_train_samples="${samples}
-    fi
-
     python run_glue_tune.py \
         --model_name_or_path ${input_model} \
         --task_name ${task_name} \
