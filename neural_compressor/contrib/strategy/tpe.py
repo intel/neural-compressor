@@ -214,13 +214,13 @@ class TpeTuneStrategy(TuneStrategy):
 
             baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
                 ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-                self.multi_objective.representation, self.baseline[1]) if x != 'Accuracy']) \
+                self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) \
                 + ']' if self.baseline else 'n/a'
             logger.info("FP32 baseline is: {}".format(baseline_msg))
 
-            if not self.multi_objective.relative:
+            if not self.objectives.relative:
                 self.loss_function_config['acc_th'] =\
-                    (self.baseline[0] - self.multi_objective.acc_goal) / self.baseline[0]
+                    (self.baseline[0] - self.objectives.acc_goal) / self.baseline[0]
             # start trials
             exit = False
             while not exit:
@@ -431,7 +431,7 @@ class TpeTuneStrategy(TuneStrategy):
         """
         need_stop = False
         if not self.cfg_evaluated:
-            if self.multi_objective.compare(self.best_tune_result, self.baseline):
+            if self.objectives.compare(self.best_tune_result, self.baseline):
                 del self.best_tune_result
                 del self.best_qmodel
                 self.best_tune_result = self.last_tune_result
@@ -443,13 +443,13 @@ class TpeTuneStrategy(TuneStrategy):
         last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
             self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
             ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,self.cfg.quantization.dtype,y,z) \
-            for x,y,z in zip(self.multi_objective.representation, \
+            for x,y,z in zip(self.objectives.representation, \
             self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
             if self.last_tune_result else 'n/a'
 
         best_tune_msg = '[Accuracy: {:.4f}'.format(self.best_tune_result[0]) + \
             ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-            self.multi_objective.representation, self.best_tune_result[1]) if x != 'Accuracy']) \
+            self.objectives.representation, self.best_tune_result[1]) if x != 'Accuracy']) \
             + ']' if self.best_tune_result else 'n/a'
 
         logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
