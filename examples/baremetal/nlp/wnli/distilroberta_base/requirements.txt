@@ -8,3 +8,4 @@ protobuf
 torch==1.10.0
 onnx
 onnxruntime
+onnxruntime_extensions
