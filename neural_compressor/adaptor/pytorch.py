@@ -2911,7 +2911,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     if self.version >= PyTorchVersionMode.PT111.value:  # pragma: no cover
                         fused_model = _fuse_fx(graph_module, is_qat)
                     else:
-                        fused_model = _fuse_fx(graph_module)
+                        fused_model = _fuse_fx(graph_module)  # pylint: disable=E1120
                     setattr(model, name, fused_model)
                     self.sub_module_list.append(op_name)
                 except:
