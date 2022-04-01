@@ -90,7 +90,7 @@ class EngineAdaptor(Adaptor):
         # bf16
         else:
             from neural_compressor.adaptor.engine_utils.bf16_util import EngineBf16Quantizer
-            assert not quantize_config[
+            assert quantize_config[
                 'static'], "dynamic quantization only support int8 now"
             quantizer = EngineBf16Quantizer(tmp_model, data_loader, iterations,
                                             quantize_config,
