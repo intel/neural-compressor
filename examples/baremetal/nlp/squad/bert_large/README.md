@@ -23,6 +23,7 @@ export LD_PRELOAD=<path_to_libiomp5.so>
   ```shell
   bash prepare_dataset.sh
   ```
+  Note: Replace the data path in bert.yaml
 
 ### 2.2 Download TensorFlow model (The model will be in build/data/bert_tf_v1_1_large_fp32_384_v2 folder):
   ```shell

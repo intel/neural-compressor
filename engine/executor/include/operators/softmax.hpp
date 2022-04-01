@@ -44,6 +44,7 @@ class SoftmaxOperator : public Operator {
  private:
   int axis_;
   string output_dtype_ = "fp32";
+  bool is_dynamic_ = false;
   dnnl::engine eng_ = engine(engine::kind::cpu, 0);
   dnnl::softmax_forward softmax_p_;
   memory src_m_;
@@ -65,6 +66,7 @@ class SoftmaxOperator : public Operator {
 #endif
   void Reshape_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output);
   void Forward_dnnl(const vector<Tensor*>& input, const vector<Tensor*>& output);
+  void RuntimeMinmax(dnnl::stream& s);
 };
 }  // namespace executor
 #endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_SOFTMAX_HPP_

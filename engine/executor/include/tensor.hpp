@@ -25,7 +25,6 @@
 #include "memory_allocator.hpp"
 
 namespace executor {
-
 /**
  * @brief A wrapper around Memory holders serving as the basic
  *        computational unit through which Operator%s, Model%s interact.
@@ -85,6 +84,7 @@ class Tensor {
     return status;
   }
 
+  void set_name(const string& name) { name_ = name; }
   void set_shape(const vector<int64_t>& shape) { shape_ = shape; }
   void set_dtype(const string& dtype) { dtype_ = dtype; }
   void add_tensor_life(const int count) { life_count_ += count; }
@@ -116,7 +116,6 @@ class Tensor {
   // If shm_handle_ not equal to 0, which means it is on shared memory
   ipc::managed_shared_memory::handle_t shm_handle_ = 0;
 };  // class Tensor
-
 }  // namespace executor
 
 #endif  // ENGINE_EXECUTOR_INCLUDE_TENSOR_HPP_

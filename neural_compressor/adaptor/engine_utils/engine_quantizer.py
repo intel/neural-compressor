@@ -23,8 +23,11 @@
 
 import copy
 
+
 class EngineQuantizer:
-    def __init__(self, model, dataloader, iterations, q_config, op_types_to_quantize):
+
+    def __init__(self, model, dataloader, iterations, q_config,
+                 op_types_to_quantize):
         self.model = model
         self.dataloader = dataloader
         self.iterations = iterations
@@ -46,7 +49,6 @@ class EngineQuantizer:
         self._quant_pattern_fusion()
         # 4. insert quant info to each tensor
         self._insert_quantize_info()
-
         return self.model
 
     # 0. get min/max of tensor
@@ -61,7 +63,7 @@ class EngineQuantizer:
     def _insert_quantize_op(self):
         pass
 
-    # 3. quant parttern fusion
+    # 3. quant pattern fusion
     def _quant_pattern_fusion(self):
         for node in self.model.nodes:
             if (node.op_type in self._quantize_op and \
@@ -71,8 +73,8 @@ class EngineQuantizer:
                 is_quantize_fusion, pre_quantize_op, quantize_op = self._is_quantize_fusion(
                     node, is_quantize_fusion)
                 for idx, input_tensor in enumerate(node.input_tensors):
-                    if 'append_op' in node.attr and \
-                        (node.attr['append_op'] == 'sum' \
+                    if 'append_op' in node.attr \
+                        and (node.attr['append_op'] == 'sum' \
                         or node.attr['append_op'] == 'binary_add' ) \
                         and idx == len(node.input_tensors) - 1 and \
                         input_tensor.dtype == 'fp32':
@@ -81,11 +83,18 @@ class EngineQuantizer:
                 if pre_quantize_op and pre_quantize_op.op_type in self._quantize_op and \
                     self.config[pre_quantize_op.name] == 'fp32':
                     is_quantize_fusion &= False
+                # copy output tensors during fusion
                 if is_quantize_fusion:
                     self.model.remove_nodes([quantize_op.name])
-                    pre_quantize_op.output_tensors[0] = quantize_op.output_tensors[0]
+                    for idx in range(len(quantize_op.output_tensors)):
+                        if idx < len(pre_quantize_op.output_tensors):
+                            pre_quantize_op.output_tensors[
+                                idx] = quantize_op.output_tensors[idx]
+                        else:
+                            pre_quantize_op.output_tensors.append(
+                                quantize_op.output_tensors[idx])
                     node.attr['output_dtype'] = quantize_op.attr['output_dtype']
-    
+
     # 4. insert quant info to each tensor
     def _insert_quantize_info(self):
         pass
@@ -102,7 +111,8 @@ class EngineQuantizer:
                         input_tensor_new = copy.deepcopy(input_tensor)
                         input_tensor_new.name = node.name + '_' + input_tensor.name
                         input_tensor_new.dest_op = [node.name]
-                        self.model.nodes[node_id].input_tensors[tensor_id] = input_tensor_new
+                        self.model.nodes[node_id].input_tensors[
+                            tensor_id] = input_tensor_new
 
     def _remove_duplicate_quantize_op(self):
         visit_tensors = []
@@ -112,8 +122,8 @@ class EngineQuantizer:
                 input_name = node.input_tensors[0].name
                 if input_name in visit_tensors:
                     self.model.remove_nodes([node.name])
-                else:    
-                    visit_tensors.append(input_name) 
+                else:
+                    visit_tensors.append(input_name)
 
     # if quantize_output_op can fuse quantize
     def _is_quantize_fusion(self, node, is_qunatize_fusion):
@@ -125,7 +135,8 @@ class EngineQuantizer:
                     is_qunatize_fusion &= True
                     return is_qunatize_fusion, node, next_node
                 elif next_node.op_type in self._no_quantize_op:
-                    return self._is_quantize_fusion(next_node, is_qunatize_fusion)
+                    return self._is_quantize_fusion(next_node,
+                                                    is_qunatize_fusion)
                 # TODO
                 # elif next_node.op_type in ['InnerProduct']:
                 #     continue

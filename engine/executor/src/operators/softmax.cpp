@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "softmax.hpp"
+
 #include "common.hpp"
 
 namespace executor {
@@ -205,6 +206,10 @@ SoftmaxOperator::SoftmaxOperator(const OperatorConfig& conf) : Operator(conf) {
 void SoftmaxOperator::MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   int input_size = input.size();
   dst_ = output[0];
+  if (output.size() > 1) {
+    dst_min_ = output[1];
+    dst_max_ = output[2];
+  }
   switch (input_size) {
     case 1: {
       src_ = input[0];
@@ -235,10 +240,12 @@ void SoftmaxOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*
   if (dst_min_ != nullptr && dst_max_ != nullptr) {
     dst_scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
   }
+  is_dynamic_ = output.size() > 1;
 }
 
 void SoftmaxOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  if (output_dtype_ == "fp32" || output_dtype_ == "bf16") {
+  if (output_dtype_ == "fp32" || output_dtype_ == "bf16" || is_dynamic_) {
+    // dynamic quantization will calculate the softmax result with fp32 and then quantization in runtime.
     Reshape_dnnl(input, output);
   } else if (output_dtype_ == "u8") {
     Reshape_u8(input, output);
@@ -248,7 +255,7 @@ void SoftmaxOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*
 }
 
 void SoftmaxOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  if (output_dtype_ == "fp32" || output_dtype_ == "bf16") {
+  if (output_dtype_ == "fp32" || output_dtype_ == "bf16" || is_dynamic_) {
     Forward_dnnl(input, output);
   } else if (output_dtype_ == "u8") {
 #if __AVX512F__
@@ -274,11 +281,14 @@ void SoftmaxOperator::Reshape_dnnl(const vector<Tensor*>& input, const vector<Te
 
   // 1.4 Prepare memory descriptors
   memory::desc src_md(src_shape_origin, type2mem[src_->dtype()], src_stride);
-  memory::desc dst_md(dst_shape, type2mem[dst_->dtype()], dst_stride);
+  memory::desc dst_md(dst_shape, type2mem[is_dynamic_ ? "fp32" : dst_->dtype()], dst_stride);
 
   // 1.5 Set dst tensor shape
-  auto& dst_tensor_ptr = output[0];
-  dst_tensor_ptr->set_shape(dst_shape);
+  output[0]->set_shape(dst_shape);
+  if (is_dynamic_) {
+    dst_min_->set_shape({1});
+    dst_max_->set_shape({1});
+  }
 
   //// Part2: Derive operator's format_any memory::desc and memory.
   // 2.1 Prepare format_any memory descriptors
@@ -309,7 +319,14 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
   const auto& src_data = input[0]->data();
   // when change data value please use mutable_data
   // Inplace Op
+  // create a dynamic quantization output with fp32.
+  Tensor fp32_res;
   Tensor* dst_ptr = output[0];
+  if (is_dynamic_) {
+    fp32_res = *dst_;
+    fp32_res.set_dtype("fp32");
+    dst_ptr = &fp32_res;
+  }
   vector<Tensor*> inputs(input);
   if ((input.size() == 1) && (input[0] != nullptr) && (input[0]->size() >= dst_ptr->size())) {
     void* input_ptr = input[0]->mutable_data();
@@ -317,7 +334,7 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
     dst_ptr->set_data(input_ptr);
     inputs = {};
   }
-  auto dst_data = output[0]->mutable_data();
+  auto dst_data = dst_ptr->mutable_data();
 
   // 1. Prepare memory objects with data_ptr
   dnnl::stream s(eng_);
@@ -335,6 +352,24 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
   // 5. Reorder the data of dst memory (When it is format_any)
   // 6. unref tensors
   this->unref_tensors(inputs);
+
+  if (output.size() > 1) {
+    // quantize the fp32 result of softmax
+    RuntimeMinmax(s);
+    // quantize
+    if (output_dtype_ == "u8") {
+      auto scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
+#if __AVX512F__
+      Quantize_avx512(fp32_res.size(), dst_->dtype(), fp32_res.data(), static_cast<const float*>(dst_min_->data()),
+                      scales_, dst_->mutable_data());
+#else
+      Quantize(fp32_res.size(), dst_->dtype(), fp32_res.data(), static_cast<const float*>(dst_min_->data()), scales_,
+               dst_->mutable_data());
+#endif
+    } else {
+      LOG(ERROR) << "Output dtype in Softmax is: " << output_dtype_ << ", not supported!";
+    }
+  }
 }
 #if __AVX512F__
 void SoftmaxOperator::Forward_u8(const vector<Tensor*>& input, const vector<Tensor*>& output) {
@@ -359,6 +394,21 @@ void SoftmaxOperator::Forward_u8(const vector<Tensor*>& input, const vector<Tens
   this->unref_tensors(input);
 }
 #endif
-
+void SoftmaxOperator::RuntimeMinmax(dnnl::stream& s) {
+  // use onednn reduction calculate min/max
+  vector<int64_t> reduce_shape(dst_->shape().size(), 1);
+  vector<int64_t> reduce_stride = GetStrides(reduce_shape);
+  memory::desc dst_md(reduce_shape, memory::data_type::f32, reduce_stride);
+  memory reduce_min(dst_md, eng_);
+  memory reduce_max(dst_md, eng_);
+  reduce_min.set_data_handle(dst_min_->mutable_data());
+  reduce_max.set_data_handle(dst_max_->mutable_data());
+  dnnl::reduction::desc reduce_min_d(algorithm::reduction_min, dst_m_.get_desc(), dst_md, 0.f, 0.f);
+  dnnl::reduction::primitive_desc reduce_min_pd(reduce_min_d, eng_);
+  dnnl::reduction(reduce_min_pd).execute(s, {{DNNL_ARG_SRC, dst_m_}, {DNNL_ARG_DST, reduce_min}});
+  dnnl::reduction::desc reduce_max_d(algorithm::reduction_max, dst_m_.get_desc(), dst_md, 0.f, 0.f);
+  dnnl::reduction::primitive_desc reduce_max_pd(reduce_max_d, eng_);
+  dnnl::reduction(reduce_max_pd).execute(s, {{DNNL_ARG_SRC, dst_m_}, {DNNL_ARG_DST, reduce_max}});
+}
 REGISTER_OPERATOR_CLASS(Softmax);
 }  // namespace executor

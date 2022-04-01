@@ -43,10 +43,13 @@ class MatmulOperator : public Operator {
 
  private:
   void MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output);
-
+  void DynamicForward(vector<int32_t>* src0_zero_points_ptr, vector<float>* rescales_ptr,
+                      vector<float>* dynamic_bias_ptr);
+  void RuntimeMinmax();
   // Converting string variables from operators attrs to boolean, or int/float
  protected:
   // Matrix can optionally be adjointed (to adjoint a matrix means to transpose and conjugate it).
+  bool has_bias_;
   bool is_asymm_;
   bool format_any_;
   bool append_sum_;
@@ -56,11 +59,15 @@ class MatmulOperator : public Operator {
   bool append_eltwise_;
   bool cache_weight_;
   bool binary_add_;
+  bool is_dynamic_ = false;
   float output_scale_ = 1.f;
   string output_dtype_ = "fp32";
+  vector<float> dst_scales_;
   vector<int64_t> src0_perm_;
   vector<int64_t> src1_perm_;
   vector<int64_t> dst_perm_;
+  dnnl::primitive_attr attr_;
+  memory::desc scale_md_;
 
   dnnl::engine eng_ = engine(engine::kind::cpu, 0);
   dnnl::stream eng_stream_ = dnnl::stream(eng_);
