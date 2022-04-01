@@ -17,7 +17,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ErrorComponent } from '../error/error.component';
-import { FullModel } from '../import-model/import-model.component';
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +24,6 @@ import { FullModel } from '../import-model/import-model.component';
 export class ModelService {
 
   baseUrl = environment.baseUrl;
-  myModels = [];
   workspacePath: string;
   projectCount = 0;
 
@@ -49,14 +47,6 @@ export class ModelService {
 
   setToken(token: string) {
     this.token = token;
-  }
-
-  setWorkspacePath(path: string) {
-    this.workspacePath = path;
-    return this.http.post(
-      this.baseUrl + 'api/set_workspace',
-      { path: path }
-    );
   }
 
   getSystemInfo() {
@@ -109,61 +99,6 @@ export class ModelService {
     );
   }
 
-  getAllModels() {
-    return this.http.post(
-      this.baseUrl + 'api/get_workloads_list',
-      { workspace_path: this.workspacePath }
-    );
-  }
-
-  getProfile(newModel, modelType: 'optimized_model' | 'input_model') {
-    return this.http.post(
-      this.baseUrl + 'api/profile',
-      {
-        id: newModel.id,
-        model_path: newModel.model_path,
-        model_type: modelType
-      }
-    );
-  }
-
-  getConfiguration(newModel: NewModel) {
-    return this.http.post(
-      this.baseUrl + 'api/configuration',
-      {
-        id: newModel.id,
-        model_path: newModel.model_path,
-        domain: newModel.domain,
-        domain_flavour: newModel.domain_flavour
-      });
-  }
-
-  optimize(newModel: NewModel) {
-    return this.http.post(
-      this.baseUrl + 'api/optimize',
-      {
-        workspace_path: this.workspacePath,
-        id: newModel.id
-      }
-    );
-  }
-
-  saveWorkload(fullModel: FullModel | {}) {
-    fullModel['workspace_path'] = this.workspacePath;
-    return this.http.post(
-      this.baseUrl + 'api/save_workload',
-      fullModel
-    );
-  }
-
-  saveExampleWorkload(fullModel: FullModel | {}) {
-    fullModel['workspace_path'] = this.workspacePath;
-    return this.http.post(
-      this.baseUrl + 'api/save_example_workload',
-      fullModel
-    );
-  }
-
   getFileSystem(path: string, filter: FileBrowserFilter) {
     if (filter === 'all') {
       return this.http.get(this.baseUrl + 'api/filesystem', {
@@ -180,8 +115,12 @@ export class ModelService {
     });
   }
 
-  listModelZoo() {
-    return this.http.get(this.baseUrl + 'api/list_model_zoo');
+  getExamplesList() {
+    return this.http.get(this.baseUrl + 'api/examples/list');
+  }
+
+  addExample(newProject) {
+    return this.http.post(this.baseUrl + 'api/examples/add', newProject);
   }
 
   getProjectList() {
@@ -198,12 +137,29 @@ export class ModelService {
     );
   }
 
+  removeProject(projectId, projectName) {
+    return this.http.post(this.baseUrl + 'api/project/delete',
+      {
+        id: projectId,
+        name: projectName
+      }
+    );
+  }
+
   getDatasetList(id) {
     return this.http.post(this.baseUrl + 'api/dataset/list', { project_id: id });
   }
 
   getDatasetDetails(id) {
     return this.http.post(this.baseUrl + 'api/dataset', { id: id });
+  }
+
+  getPredefinedDatasets(framework: FrameworkName, domain: DomainName, domainFlavour: DomainFlavourName) {
+    return this.http.post(this.baseUrl + '/api/dataset/predefined', {
+      framework: framework,
+      domain: domain,
+      domain_flavour: domainFlavour
+    });
   }
 
   addDataset(dataset) {
@@ -230,6 +186,22 @@ export class ModelService {
         optimization_id: optimizationId,
       }
     );
+  }
+
+  pinBenchmark(optimizationId: number, benchmarkId: number, mode: string) {
+    if (mode === 'accuracy') {
+      return this.http.post(this.baseUrl + 'api/optimization/pin_accuracy_benchmark',
+        {
+          optimization_id: optimizationId,
+          benchmark_id: benchmarkId
+        });
+    } else if (mode === 'performance') {
+      return this.http.post(this.baseUrl + 'api/optimization/pin_performance_benchmark',
+        {
+          optimization_id: optimizationId,
+          benchmark_id: benchmarkId
+        });
+    }
   }
 
   addNotes(id, notes) {
@@ -305,3 +277,6 @@ export interface NewModel {
 }
 
 export type FileBrowserFilter = 'models' | 'datasets' | 'directories' | 'all';
+export type DomainName = 'Image Recognition' | 'Object Detection' | 'Neural Language Processing' | 'Recommendation';
+export type DomainFlavourName = 'SSD' | 'Yolo' | '' | null;
+export type FrameworkName = 'TensorFlow' | 'ONNXRT';

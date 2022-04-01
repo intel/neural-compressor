@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 """Tuning class."""
 
 import os
-from typing import List
+import shutil
+from typing import List, Optional
 
 from neural_compressor.ux.components.config_generator.quantization_config_generator import (
     QuantizationConfigGenerator,
@@ -24,6 +25,7 @@ from neural_compressor.ux.components.optimization.optimization import Optimizati
 from neural_compressor.ux.utils.consts import Strategies
 from neural_compressor.ux.utils.exceptions import InternalException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
+from neural_compressor.ux.utils.utils import replace_with_values
 
 
 class Tuning(Optimization):
@@ -39,8 +41,21 @@ class Tuning(Optimization):
         super().__init__(optimization_data, project_data, dataset_data)
         self.sampling_size = optimization_data["sampling_size"]
         self.tuning_details: TuningDetails = TuningDetails(optimization_data["tuning_details"])
-        if dataset_data["template_path"]:
-            self.command = ["python", dataset_data["template_path"]]
+        self.template_path = dataset_data["template_path"]
+        self.script_path: Optional[str] = None
+        if self.template_path:
+            correct_paths = {
+                "config_path": self.config_path,
+                "model_path": self.input_graph,
+                "model_output_path": self.output_graph,
+            }
+            self.script_path = os.path.join(self.workdir, "optimize_model.py")
+
+            os.makedirs(os.path.dirname(self.script_path), exist_ok=True)
+            shutil.copyfile(self.template_path, self.script_path)
+            replace_with_values(correct_paths, self.script_path)
+
+            self.command = ["python", self.script_path]
 
     def execute(self) -> None:
         """Execute tuning."""
@@ -73,6 +88,7 @@ class Tuning(Optimization):
     def generate_config(self) -> None:
         """Generate yaml config."""
         config_generator: QuantizationConfigGenerator = QuantizationConfigGenerator(
+            workload_directory=self.workdir,
             configuration_path=self.config_path,
             data=self.configuration_data,
         )

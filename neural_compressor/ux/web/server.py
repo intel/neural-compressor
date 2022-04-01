@@ -28,7 +28,10 @@ from werkzeug.serving import make_ssl_devcert
 from werkzeug.wrappers import Response as WebResponse
 
 from neural_compressor.ux.components.db_manager.db_manager import DBManager
-from neural_compressor.ux.components.db_manager.db_operations import initialize_associations
+from neural_compressor.ux.components.db_manager.db_operations import (
+    initialize_associations,
+    set_database_version,
+)
 from neural_compressor.ux.utils.exceptions import InternalException
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.web.communication import MessageQueue, Request
@@ -68,6 +71,7 @@ def run_server(configuration: Configuration) -> None:
     db_manager = DBManager()
     db_manager.initialize_database()
     db_manager.create_all()
+    set_database_version()
     initialize_associations()
 
     socketio.run(app, host=addr, port=server_port, **tls_args)

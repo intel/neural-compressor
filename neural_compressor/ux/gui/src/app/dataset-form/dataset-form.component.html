@@ -34,7 +34,8 @@
       <span class="inline">
         <ng-container *ngFor="let param of dataLoaderParams">
           <ng-container *ngIf="param.name !== 'root'">
-            <mat-form-field class="form-field" appearance="outline">
+            <mat-form-field [ngClass]="{'form-field' : true, 'long': fileBrowserParams.includes(param.name)}"
+              appearance="outline">
               <mat-label>{{ param.label || param.name }}</mat-label>
               <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}" matTooltipPosition="right"
                 [matTooltip]="param.help">
@@ -161,7 +162,8 @@
           </mat-form-field>
         </ng-container>
         <ng-container *ngIf="typeOf(param.value) === 'string'">
-          <mat-form-field class="form-field" appearance="outline">
+          <mat-form-field [ngClass]="{'form-field' : true, 'long': fileBrowserParams.includes(param.name)}"
+            appearance="outline">
             <mat-label>{{ param.label || param.name }}</mat-label>
             <input [(ngModel)]="metricParam" matInput [ngModelOptions]="{standalone: true}" matTooltipPosition="right"
               [matTooltip]="param.help">

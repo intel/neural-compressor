@@ -162,10 +162,6 @@ export class BenchmarksComponent implements OnInit {
         });
   }
 
-  comparisonCheck(id: number, state: boolean) {
-    this.comparison[id] = state;
-  }
-
   compare() {
     let accuracySeries = [];
     let throughputSeries = [];
@@ -177,20 +173,22 @@ export class BenchmarksComponent implements OnInit {
     this.throughputColors = new ColorHelper(this.customColor, ScaleType.Ordinal, this.throughputLegend, this.customColor);
 
     Object.keys(this.comparison).forEach(benchmarkId => {
-      record = this.benchmarks.find(benchmark => String(benchmark.id) === String(benchmarkId));
-      if (record.result?.accuracy || record.result?.accuracy === 0) {
-        this.accuracyLegend.push(record.name);
-        accuracySeries.push({
-          value: record.result.accuracy,
-          name: record.name
-        });
-      }
-      if (record.result?.performance) {
-        this.throughputLegend.push(record.name);
-        throughputSeries.push({
-          value: record.result.performance,
-          name: record.name
-        });
+      if (this.comparison[benchmarkId]) {
+        record = this.benchmarks.find(benchmark => String(benchmark.id) === String(benchmarkId));
+        if (record.result?.accuracy || record.result?.accuracy === 0) {
+          this.accuracyLegend.push(record.name);
+          accuracySeries.push({
+            value: record.result.accuracy,
+            name: record.name
+          });
+        }
+        if (record.result?.performance) {
+          this.throughputLegend.push(record.name);
+          throughputSeries.push({
+            value: record.result.performance,
+            name: record.name
+          });
+        }
       }
     });
 

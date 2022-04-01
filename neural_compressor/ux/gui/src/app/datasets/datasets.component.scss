@@ -27,7 +27,7 @@ img {
   transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   border-radius: 4px;
-  min-width: 40vh
+  flex-grow: 1;
 }
 
 th {
@@ -51,9 +51,11 @@ tr:hover {
 .container {
   width: 100%;
   margin-top: 20px;
-  display: inline-grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  grid-template-areas: "a b"
-    "c c";
-  justify-content: stretch;
+  // grid-template-areas: "a b"
+  //   "c c";
+  // align-content: stretch;
+  // justify-content: space-evenly;
 }

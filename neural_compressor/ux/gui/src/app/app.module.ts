@@ -34,8 +34,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { PredefinedModelsComponent } from './predefined-models/predefined-models.component';
-import { ImportModelComponent } from './import-model/import-model.component';
-import { ModelListComponent } from './model-list/model-list.component';
 import { ModelListPipe } from './pipes/model-list.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModelService } from './services/model.service';
@@ -49,7 +47,6 @@ import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { CommonModule } from '@angular/common';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { DetailsComponent } from './details/details.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { HomeComponent } from './home/home.component';
 import { NgDatePipesModule } from 'ngx-pipes';
@@ -70,6 +67,9 @@ import { ProfilingFormComponent } from './profiling-form/profiling-form.componen
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NotificationComponent } from './notification/notification.component';
 import { JoyrideModule } from 'ngx-joyride';
+import { MatRadioModule } from '@angular/material/radio';
+import { PinBenchmarkComponent } from './pin-benchmark/pin-benchmark.component';
+import { ProjectRemoveComponent } from './project-remove/project-remove.component';
 
 @NgModule({
   declarations: [
@@ -77,13 +77,10 @@ import { JoyrideModule } from 'ngx-joyride';
     MenuComponent,
     ErrorComponent,
     PredefinedModelsComponent,
-    ImportModelComponent,
-    ModelListComponent,
     ModelListPipe,
     LongNamePipe,
     FileBrowserComponent,
     GraphComponent,
-    DetailsComponent,
     HomeComponent,
     SystemInfoComponent,
     ProjectComponent,
@@ -96,7 +93,9 @@ import { JoyrideModule } from 'ngx-joyride';
     OptimizationFormComponent,
     DatasetFormComponent,
     ProfilingFormComponent,
-    NotificationComponent
+    NotificationComponent,
+    PinBenchmarkComponent,
+    ProjectRemoveComponent
   ],
   imports: [
     BrowserModule,
@@ -116,6 +115,7 @@ import { JoyrideModule } from 'ngx-joyride';
     MatFormFieldModule,
     MatInputModule,
     MatMenuModule,
+    MatRadioModule,
     MatSelectModule,
     MatSidenavModule,
     MatProgressBarModule,
@@ -147,7 +147,8 @@ import { JoyrideModule } from 'ngx-joyride';
   ],
   entryComponents: [
     ErrorComponent,
-    FileBrowserComponent
+    FileBrowserComponent,
+    ProjectRemoveComponent
   ],
   bootstrap: [AppComponent]
 })

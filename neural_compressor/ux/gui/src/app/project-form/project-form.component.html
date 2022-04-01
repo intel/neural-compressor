@@ -2,15 +2,37 @@
   <mat-step [stepControl]="projectFormGroup" [completed]="false">
     <ng-template matStepLabel>Project name</ng-template>
     <h2>Project</h2>
-    <p>Choose a name for your project.</p>
-    <form [formGroup]="projectFormGroup">
-      <mat-card>
+    <mat-card>
+      <p>Choose a name for your project.</p>
+      <form [formGroup]="projectFormGroup">
         <mat-form-field class="form-field long" appearance="outline">
           <mat-label>project name</mat-label>
           <input required formControlName="name" matInput>
         </mat-form-field>
-      </mat-card>
-    </form>
+      </form>
+    </mat-card>
+    <br />
+    <div class="float-right">
+      <button mat-raised-button matStepperNext>
+        <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
+        Next
+      </button>
+    </div>
+  </mat-step>
+
+  <mat-step [completed]="false">
+    <ng-template matStepLabel>Project type</ng-template>
+    <h2>Choose custom or predefined project</h2>
+    <mat-card>
+      <mat-radio-group [(ngModel)]="showExamples">
+        <mat-radio-button [value]="true">
+          <b>predefined model</b> - choose model from predefined quantization configurations (basic)
+        </mat-radio-button><br><br>
+        <mat-radio-button [value]="false">
+          <b>custom model</b> - create new quantization configuration using wizard (advanced)
+        </mat-radio-button>
+      </mat-radio-group>
+    </mat-card>
     <br />
     <div class="float-right">
       <button mat-raised-button matStepperNext>
@@ -22,124 +44,133 @@
 
   <mat-step [stepControl]="projectFormGroup" [completed]="false">
     <ng-template matStepLabel>Select model</ng-template>
-    <h2>Model</h2>
-    <p>Choose input model that you would like to use.</p>
-    <form [formGroup]="projectFormGroup">
-      <mat-card>
-        <span class="spinner-wrapper">
-          <mat-form-field class="form-field long" appearance="outline">
-            <mat-label>model path</mat-label>
-            <input required formControlName="modelLocation" matInput>
-          </mat-form-field>
-          <button id="choose-file-btn" mat-raised-button color="primary" class="fixed-height choose-file-btn"
-            (click)="openDialog('modelLocation', 'models')">
-            <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
-            Choose file
-          </button>
-          <button id="show-graph-btn" *ngIf="showGraphButton" mat-raised-button color="accent" class="fixed-height"
-            (click)="showGraph()">
-            <img class="icon" src="./../../assets/307-org-chart-white.svg">
-            Show graph
-          </button>
-          <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="30"></mat-spinner>
-        </span>
 
-        <div *ngIf="boundaryNodesVisible()">
-          <ng-container *ngIf="boundaryNodes.inputs === 'select'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>graph input </mat-label>
-              <mat-select formControlName="input" multiple>
-                <mat-option *ngFor="let input of inputs" [value]="input"
-                  [ngClass]="input === 'custom' ? 'custom-option' : null"
-                  [disabled]="order['input'][0] === 'custom' && input !== 'custom'"
-                  (onSelectionChange)="boundaryNodesChanged($event.source.value, 'input')">
-                  {{ input === 'custom' ? '(Add your custom input node)' : input }}
-                  {{ inputs.length > 1 && order['input'].indexOf(input) !== -1 && input !== 'custom' ?
-                  '(' + (order['input'].indexOf(input) + 1) + ')' : null }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </ng-container>
-          <ng-container *ngIf="boundaryNodes.inputs === 'custom'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>graph input </mat-label>
-              <input formControlName="input" matInput>
-            </mat-form-field>
-          </ng-container>
-          <ng-container *ngIf="boundaryNodes.outputs === 'select'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>graph output </mat-label>
-              <mat-select formControlName="output" multiple>
-                <mat-option *ngFor="let output of outputs" [value]="output"
-                  [ngClass]="output === 'custom' ? 'custom-option' : null"
-                  [disabled]="order['output'][0] === 'custom' && output !== 'custom'"
-                  (onSelectionChange)="boundaryNodesChanged($event.source.value, 'output')">
-                  {{ output === 'custom' ? '(Add your custom output node)' : output }}
-                  {{ outputs.length > 1 && order['output'].indexOf(output) !== -1 && output !== 'custom' ?
-                  '(' + (order['output'].indexOf(output) + 1) + ')' : null }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <ng-container
-              *ngIf="projectFormGroup.get('output').value.length === 1 && projectFormGroup.get('output').value[0] === 'custom'">
-              <mat-form-field class="form-field" appearance="outline"
-                matTooltip="Multiple custom nodes should be separated by comma">
-                <mat-label>graph output </mat-label>
-                <input formControlName="outputOther" matInput>
-              </mat-form-field>
-            </ng-container>
-          </ng-container>
-          <ng-container *ngIf="boundaryNodes.outputs === 'custom'">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>graph output </mat-label>
-              <input formControlName="output" matInput>
-            </mat-form-field>
-          </ng-container>
-          <br>
-          <a *ngIf="boundaryNodesVisible()" class="info">
-            Order of the inputs and outputs matters.
-          </a>
-        </div>
-      </mat-card>
+    <ng-container *ngIf="showExamples">
+      <h2>Predefined models</h2>
+      <p>Choose input model from predefined examples.</p>
+      <app-predefined-models [name]="projectFormGroup.get('name').value"></app-predefined-models>
+    </ng-container>
 
-      <ng-container *ngIf="projectFormGroup.get('framework').value">
-        <ng-container *ngIf="showDomain">
-          <h2>Model domain</h2>
-          <p>Model domain helps to set up basic parameters for the model.</p>
-          <mat-card>
-            <div class="spinner-wrapper">
+    <ng-container *ngIf="!showExamples">
+      <h2>Custom model</h2>
+      <p>Choose input model that you would like to use.</p>
+      <form [formGroup]="projectFormGroup">
+        <mat-card>
+          <span class="spinner-wrapper">
+            <mat-form-field class="form-field long" appearance="outline">
+              <mat-label>model path</mat-label>
+              <input required formControlName="modelLocation" matInput>
+            </mat-form-field>
+            <button id="choose-file-btn" mat-raised-button color="primary" class="fixed-height choose-file-btn"
+              (click)="openDialog('modelLocation', 'models')">
+              <img class="icon" src="./../../assets/145b-document-outlined-white.svg">
+              Choose file
+            </button>
+            <button id="show-graph-btn" *ngIf="showGraphButton" mat-raised-button color="accent" class="fixed-height"
+              (click)="showGraph()">
+              <img class="icon" src="./../../assets/307-org-chart-white.svg">
+              Show graph
+            </button>
+            <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="30"></mat-spinner>
+          </span>
+
+          <div *ngIf="boundaryNodesVisible()">
+            <ng-container *ngIf="boundaryNodes.inputs === 'select'">
               <mat-form-field class="form-field" appearance="outline">
-                <mat-label>model domain</mat-label>
-                <mat-select formControlName="modelDomain" required>
-                  <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
-                    [matTooltip]="domain.help">
-                    <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
-                    <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}
-                    </ng-container>
+                <mat-label>graph input </mat-label>
+                <mat-select formControlName="input" multiple>
+                  <mat-option *ngFor="let input of inputs" [value]="input"
+                    [ngClass]="input === 'custom' ? 'custom-option' : null"
+                    [disabled]="order['input'][0] === 'custom' && input !== 'custom'"
+                    (onSelectionChange)="boundaryNodesChanged($event.source.value, 'input')">
+                    {{ input === 'custom' ? '(Add your custom input node)' : input }}
+                    {{ inputs.length > 1 && order['input'].indexOf(input) !== -1 && input !== 'custom' ?
+                    '(' + (order['input'].indexOf(input) + 1) + ')' : null }}
                   </mat-option>
                 </mat-select>
               </mat-form-field>
-            </div>
+            </ng-container>
+            <ng-container *ngIf="boundaryNodes.inputs === 'custom'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph input </mat-label>
+                <input formControlName="input" matInput>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="boundaryNodes.outputs === 'select'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph output </mat-label>
+                <mat-select formControlName="output" multiple>
+                  <mat-option *ngFor="let output of outputs" [value]="output"
+                    [ngClass]="output === 'custom' ? 'custom-option' : null"
+                    [disabled]="order['output'][0] === 'custom' && output !== 'custom'"
+                    (onSelectionChange)="boundaryNodesChanged($event.source.value, 'output')">
+                    {{ output === 'custom' ? '(Add your custom output node)' : output }}
+                    {{ outputs.length > 1 && order['output'].indexOf(output) !== -1 && output !== 'custom' ?
+                    '(' + (order['output'].indexOf(output) + 1) + ')' : null }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <ng-container
+                *ngIf="projectFormGroup.get('output').value.length === 1 && projectFormGroup.get('output').value[0] === 'custom'">
+                <mat-form-field class="form-field" appearance="outline"
+                  matTooltip="Multiple custom nodes should be separated by comma">
+                  <mat-label>graph output </mat-label>
+                  <input formControlName="outputOther" matInput>
+                </mat-form-field>
+              </ng-container>
+            </ng-container>
+            <ng-container *ngIf="boundaryNodes.outputs === 'custom'">
+              <mat-form-field class="form-field" appearance="outline">
+                <mat-label>graph output </mat-label>
+                <input formControlName="output" matInput>
+              </mat-form-field>
+            </ng-container>
+            <br>
+            <a *ngIf="boundaryNodesVisible()" class="info">
+              Order of the inputs and outputs matters.
+            </a>
+          </div>
+        </mat-card>
+
+        <ng-container *ngIf="projectFormGroup.get('framework').value">
+          <ng-container *ngIf="showDomain">
+            <h2>Model domain</h2>
+            <mat-card>
+              <p>Model domain helps to set up basic parameters for the model.</p>
+              <div class="spinner-wrapper">
+                <mat-form-field class="form-field" appearance="outline">
+                  <mat-label>model domain</mat-label>
+                  <mat-select formControlName="modelDomain" required>
+                    <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
+                      [matTooltip]="domain.help">
+                      <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
+                      <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}
+                      </ng-container>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </mat-card>
+          </ng-container>
+
+          <h2>Dummy dataset</h2>
+          <mat-card>
+            <p>This is artificial dataset that can be used for fast experiments.</p>
+            <mat-form-field class="form-field long" appearance="outline">
+              <mat-label>shape</mat-label>
+              <input formControlName="shape" matInput>
+              <mat-icon *ngIf="showShapeWarning" matSuffix matTooltip="Automatically detected (might be changed)">
+                <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
+              </mat-icon>
+            </mat-form-field>
           </mat-card>
         </ng-container>
-
-        <h2>Dummy dataset</h2>
-        <p>This is artificial dataset that can be used for fast experiments.</p>
-        <mat-card>
-          <mat-form-field class="form-field long" appearance="outline">
-            <mat-label>shape</mat-label>
-            <input formControlName="shape" matInput>
-            <mat-icon *ngIf="showShapeWarning" matSuffix matTooltip="Automatically detected (might be changed)">
-              <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
-            </mat-icon>
-          </mat-form-field>
-        </mat-card>
-      </ng-container>
-    </form>
+      </form>
+    </ng-container>
 
 
     <br />
-    <div class="float-right">
+    <div *ngIf="!showExamples" class="float-right">
       <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent"
         [disabled]="projectFormGroup.status === 'INVALID'" (click)="createProject()" queryParamsHandling="preserve">
         <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">

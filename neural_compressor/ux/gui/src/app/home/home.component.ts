@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ProjectFormComponent } from '../project-form/project-form.component';
 import { ModelService } from '../services/model.service';
@@ -21,7 +21,7 @@ import { ModelService } from '../services/model.service';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss', './../error/error.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent {
 
   clicked: 'systemInfo' | 'details';
   chosenRow = {};
@@ -33,13 +33,11 @@ export class HomeComponent implements OnInit {
     public dialog: MatDialog
   ) { }
 
-  ngOnInit(): void {
-  }
-
   createNewProject() {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
       width: '60%',
     });
+
     dialogRef.afterClosed().subscribe(
       response => {
         if (response !== undefined) {
@@ -49,6 +47,10 @@ export class HomeComponent implements OnInit {
       error => {
         this.modelService.openErrorDialog(error);
       });
+
+    this.modelService.projectCreated$.subscribe(
+      response => dialogRef.close()
+    );
   }
 
   systemInfo() {

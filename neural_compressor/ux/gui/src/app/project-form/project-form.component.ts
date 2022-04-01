@@ -16,7 +16,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
-import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { GraphComponent } from '../graph/graph.component';
 import { FileBrowserFilter, ModelService, NewModel } from '../services/model.service';
@@ -35,12 +34,28 @@ export class ProjectFormComponent implements OnInit {
   showSpinner = false;
   showGraphButton = false;
   showDomain = false;
+  showExamples = true;
   showShapeWarning: boolean;
 
   projectFormGroup: FormGroup;
   domains = [];
   graph = {};
   id: string;
+
+  modelList = [];
+  frameworks = [];
+  models = [];
+
+  model = {
+    id: '',
+    framework: '',
+    model: '',
+    domain: '',
+    model_path: '',
+    yaml: '',
+    project_name: '',
+    dataset_path: '',
+  };
 
   boundaryNodes: {
     inputs: 'none' | 'custom' | 'select',
@@ -234,7 +249,7 @@ export class ProjectFormComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(response => {
-      if (response.chosenFile) {
+      if (response && response.chosenFile) {
         this.projectFormGroup.get(fieldName).setValue(response.chosenFile);
       }
     });

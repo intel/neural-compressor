@@ -14,43 +14,30 @@
 # limitations under the License.
 """Get available models from Examples."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from neural_compressor.ux.components.model.repository import ModelRepository
-from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.consts import Frameworks
+from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.templates.workdir import Workdir
-from neural_compressor.ux.utils.utils import (
-    get_model_zoo_config_path,
-    get_model_zoo_model_path,
-    get_module_version,
-    load_model_config,
-)
+from neural_compressor.ux.utils.utils import get_module_version, load_model_config
 
 
 def list_models(data: dict) -> List[Dict[str, Any]]:
     """Process download model request."""
-    workspace_path = Workdir().get_active_workspace()
-    model_list = get_available_models(workspace_path)
+    model_list = get_available_models()
     return model_list
 
 
-def get_available_models(workspace_path: Optional[str]) -> List[Dict[str, Any]]:
+def get_available_models() -> List[Dict[str, Any]]:
     """Get available models from Examples."""
     model_list = []
     full_list = load_model_config()
+    installed_frameworks = get_installed_frameworks()
 
-    supported_frameworks = ModelRepository.get_supported_frameworks()
+    for framework, framework_version in installed_frameworks.items():
+        framework_dict = full_list.get(framework, {})
 
-    for framework in supported_frameworks:
-        try:
-            framework_version = get_module_version(framework)
-        except Exception:
-            log.debug(f"Framework {framework} not installed.")
-            continue
-        log.debug(f"{framework} version is {framework_version}")
-
-        framework_dict = full_list[framework]
         for domain, domain_dict in framework_dict.items():
             if not isinstance(domain_dict, dict):
                 continue
@@ -66,20 +53,6 @@ def get_available_models(workspace_path: Optional[str]) -> List[Dict[str, Any]]:
                             "framework": framework,
                             "domain": domain,
                             "model": model,
-                            "yaml": get_model_zoo_config_path(
-                                workspace_path,
-                                framework,
-                                domain,
-                                model,
-                                model_dict,
-                            ),
-                            "model_path": get_model_zoo_model_path(
-                                workspace_path,
-                                framework,
-                                domain,
-                                model,
-                                model_dict,
-                            ),
                         },
                     )
 
@@ -100,3 +73,34 @@ def validate_model_list(model_list: List[dict]) -> None:
             "Please install TensorFlow in one of following versions: "
             "2.0.x, 2.3.x or 2.4.x, 2.5.x, 2.6.x or 2.7.x.",
         )
+
+
+def get_framework_module_name(framework_name: str) -> str:
+    """Get name of python module."""
+    modules_map: Dict[str, str] = {
+        Frameworks.TF.value: "tensorflow",
+        Frameworks.ONNX.value: "onnx",
+    }
+    module_name = modules_map.get(framework_name, None)
+    if module_name is None:
+        raise InternalException(
+            f"Could not find framework module name. Framework {framework_name} not recognized.",
+        )
+    return module_name
+
+
+def get_installed_frameworks() -> dict:
+    """Check environment for installed frameworks."""
+    installed_frameworks = {}
+    supported_frameworks = ModelRepository.get_supported_frameworks()
+
+    for framework in supported_frameworks:
+        try:
+            framework_module_name = get_framework_module_name(framework)
+            framework_version = get_module_version(framework_module_name)
+        except ClientErrorException:
+            log.debug(f"Framework {framework} not installed.")
+            continue
+        log.debug(f"{framework} version is {framework_version}")
+        installed_frameworks.update({framework: framework_version})
+    return installed_frameworks

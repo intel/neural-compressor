@@ -11,12 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ErrorComponent } from '../error/error.component';
-import { FileBrowserComponent } from '../file-browser/file-browser.component';
-import { FileBrowserFilter, ModelService } from '../services/model.service';
+import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 declare var require: any;
 var shajs = require('sha.js')
@@ -28,6 +25,8 @@ var shajs = require('sha.js')
 })
 export class PredefinedModelsComponent implements OnInit {
 
+  @Input() name;
+
   showSpinner = true;
   showProgressBar = false;
   progressBarValue = 0;
@@ -38,31 +37,24 @@ export class PredefinedModelsComponent implements OnInit {
   models = [];
 
   model: PredefinedModel = {
-    id: '',
-    framework: 'tensorflow',
+    request_id: '',
+    framework: 'TensorFlow',
     model: '',
     domain: '',
-    model_path: '',
-    yaml: '',
-    project_name: '',
-    dataset_path: '',
+    name: '',
+    progress_steps: 10
   };
+
+  downloadMessage = 'Downloading model and config. It may take a few minutes...';
 
   constructor(
     private modelService: ModelService,
     private socketService: SocketService,
-    public dialog: MatDialog,
     private router: Router
   ) { }
 
   ngOnInit() {
-    this.listModelZoo();
-
-    // this.modelService.workspacePathChange.subscribe(
-    //   response => {
-    //     this.listModelZoo();
-    //   }
-    // );
+    this.getExamplesList();
 
     this.socketService.modelDownloadFinish$
       .subscribe(response => {
@@ -73,13 +65,21 @@ export class PredefinedModelsComponent implements OnInit {
         }
       });
 
-    this.socketService.exampleWorkloadSaved$
+    this.socketService.modelDownloadProgress$
+      .subscribe(response => {
+        if (response['status']) {
+          this.progressBarValue = response['data']['progress'];
+        }
+      });
+
+    this.socketService.exampleFinish$
       .subscribe(response => {
         if (response['status']) {
           if (response['status'] === 'success') {
-            if (this.model.id) {
-              this.router.navigate(['/details', this.model['id']], { queryParamsHandling: "merge" });
-              // this.modelService.configurationSaved.next(true);
+            if (response['data']['project_id']) {
+              this.router.navigate(['project', response['data']['project_id'], 'optimizations'], { queryParamsHandling: "merge" });
+              this.modelService.projectCreated$.next(true);
+              this.modelService.projectChanged$.next({ id: response['data']['project_id'], tab: 'optimization' });
             }
           } else {
             this.modelService.openErrorDialog({
@@ -89,20 +89,14 @@ export class PredefinedModelsComponent implements OnInit {
         }
       });
 
-    this.socketService.modelDownloadProgress$
+    this.socketService.exampleProgress$
       .subscribe(response => {
-        if (response['status']) {
-          this.progressBarValue = response['data']['progress'];
-        }
+        this.downloadMessage = response['data']['message'];
       });
   }
 
-  systemInfo() {
-    return this.modelService.systemInfo;
-  }
-
-  listModelZoo() {
-    this.modelService.listModelZoo()
+  getExamplesList() {
+    this.modelService.getExamplesList()
       .subscribe(
         (resp: []) => {
           this.showSpinner = false;
@@ -145,39 +139,12 @@ export class PredefinedModelsComponent implements OnInit {
     return found.length;
   }
 
-  objectKeys(obj): string[] {
-    return Object.keys(obj);
-  }
-
-  openDialog(filter: FileBrowserFilter, index: number) {
-    const dialogRef = this.dialog.open(FileBrowserComponent, {
-      width: '60%',
-      height: '60%',
-      data: {
-        path: this.modelService.workspacePath,
-        filter: filter
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(response => {
-      if (response.chosenFile) {
-        this.model.dataset_path = response.chosenFile;
-      }
-    });;
-  }
-
-  saveWorkload() {
-    const dateTime = Date.now();
-    const index = this.getModelIndex();
-    this.model.id = shajs('sha384').update(String(dateTime)).digest('hex');
-    this.model.project_name = this.model['model'];
-    this.model['progress_steps'] = 20;
-    this.saveReadyWorkload();
-  }
-
-  saveReadyWorkload() {
+  addExample() {
     this.showProgressBar = true;
-    this.modelService.saveExampleWorkload(this.model)
+    const dateTime = Date.now();
+    this.model.request_id = shajs('sha384').update(String(dateTime)).digest('hex');
+    this.model.name = this.name;
+    this.modelService.addExample(this.model)
       .subscribe(
         response => { },
         error => {
@@ -185,24 +152,13 @@ export class PredefinedModelsComponent implements OnInit {
         }
       );
   }
-
-  getModelIndex(): number {
-    return this.modelList.indexOf(x => x.model === this.model.model);
-  }
-
-  getFileNameFromPath(path: string): string {
-    return path.replace(/^.*[\\\/]/, '');
-  }
-
 }
 
 type PredefinedModel = {
-  id: string;
+  request_id: string;
   framework: string;
   model: string;
   domain: string;
-  model_path?: string;
-  yaml?: string;
-  project_name: string;
-  dataset_path: string;
+  name: string;
+  progress_steps: number;
 };

@@ -24,6 +24,8 @@ import { ModelService } from '../services/model.service';
 })
 export class DatasetsComponent implements OnInit {
   @Input() framework;
+  @Input() domain;
+  @Input() domainFlavour;
   datasets = [];
   activeDatasetId = 0;
   datasetDetails = {};
@@ -60,7 +62,9 @@ export class DatasetsComponent implements OnInit {
       data: {
         projectId: this.activatedRoute.snapshot.params.id,
         index: this.datasets.length,
-        framework: this.framework
+        framework: this.framework,
+        domain: this.domain,
+        domainFlavour: this.domainFlavour
       }
     });
   }

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,27 @@ import unittest
 from copy import deepcopy
 from unittest.mock import MagicMock, mock_open, patch
 
+import schema
 import yaml
 
+from neural_compressor.conf.config import Pruner
+from neural_compressor.conf.config import schema as inc_config_schema
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.workload.config import Config
+from neural_compressor.ux.utils.yaml_utils import float_representer, pruner_representer
+
+pruner_config = {
+    "initial_sparsity": 0.0,
+    "target_sparsity": 0.97,
+    "start_epoch": 0,
+    "end_epoch": 2,
+    "prune_type": "basic_magnitude",
+    "update_frequency": 0.1,
+    "names": ["layer1.0.conv1.weight"],
+}
+pruner = Pruner(**pruner_config)
+
+yaml.add_constructor("!Pruner", Pruner, yaml.SafeLoader)
 
 
 class TestConfig(unittest.TestCase):
@@ -30,8 +47,6 @@ class TestConfig(unittest.TestCase):
         """Prepare test."""
         super().setUp()
         self.predefined_config = {
-            "model_path": "/path/to/model",
-            "domain": "image_recognition",
             "device": "cpu",
             "model": {
                 "name": "resnet50_v1_5",
@@ -71,9 +86,7 @@ class TestConfig(unittest.TestCase):
                     },
                     "postprocess": {
                         "transform": {
-                            "LabelShift": {
-                                "Param1": True,
-                            },
+                            "LabelShift": -1,
                         },
                     },
                 },
@@ -101,33 +114,82 @@ class TestConfig(unittest.TestCase):
                 "precisions": "bf16, fp32",
                 "op_wise": {
                     "weight": {
-                        "granularity": "per_channel",
-                        "scheme": "asym",
                         "dtype": "bf16",
-                        "algorithm": "minmax",
                     },
                     "activation": {
-                        "granularity": "per_tensor",
-                        "scheme": "sym",
-                        "dtype": "int8",
-                        "algorithm": "minmax",
+                        "dtype": "fp32",
                     },
                 },
             },
             "pruning": {
-                "magnitude": {
-                    "weights": [1, 2, 3],
-                    "method": "per_tensor",
-                    "init_sparsity": 0.42,
-                    "target_sparsity": 0.1337,
-                    "start_epoch": 13,
-                    "end_epoch": 888,
+                "train": {
+                    "optimizer": {
+                        "Adam": {
+                            "learning_rate": 0.123,
+                            "beta_1": 0.99,
+                            "beta_2": 0.9999,
+                            "epsilon": 1e-06,
+                            "amsgrad": True,
+                        },
+                    },
+                    "criterion": {
+                        "CrossEntropyLoss": {
+                            "reduction": "auto",
+                            "from_logits": True,
+                        },
+                        "SparseCategoricalCrossentropy": {
+                            "reduction": "sum",
+                            "from_logits": True,
+                        },
+                        "KnowledgeDistillationLoss": {
+                            "temperature": 1.0,
+                            "loss_types": ["CE"],
+                            "loss_weights": [0.3, 0.7],
+                        },
+                    },
+                    "dataloader": {
+                        "batch_size": 32,
+                        "dataset": {"ImageRecord": {"root": "/path/to/pruning/dataset"}},
+                        "transform": {
+                            "ResizeCropImagenet": {
+                                "height": 224,
+                                "width": 224,
+                                "mean_value": [123.68, 116.78, 103.94],
+                            },
+                        },
+                    },
+                    "epoch": 5,
+                    "start_epoch": 1,
+                    "end_epoch": 2,
+                    "iteration": 10,
+                    "frequency": 3,
+                    "execution_mode": "graph",
+                    "postprocess": {
+                        "transform": {
+                            "LabelShift": -1,
+                            "Collect": {
+                                "length": 1,
+                            },
+                            "SquadV1": {
+                                "label_file": "/path/to/label_file",
+                                "vocab_file": "/path/to/vocab_file",
+                                "do_lower_case": False,
+                            },
+                        },
+                    },
+                    "hostfile": "/some/file",
                 },
-                "start_epoch": 1,
-                "end_epoch": 2,
-                "frequency": 3,
-                "init_sparsity": 0.4,
-                "target_sparsity": 0.5,
+                "approach": {
+                    "weight_compression": {
+                        "initial_sparsity": 0.042,
+                        "target_sparsity": 0.1337,
+                        "start_epoch": 13,
+                        "end_epoch": 888,
+                        "pruners": [
+                            pruner,
+                        ],
+                    },
+                },
             },
         }
 
@@ -135,8 +197,6 @@ class TestConfig(unittest.TestCase):
         """Test Config constructor."""
         config = Config(self.predefined_config)
 
-        self.assertEqual(config.model_path, "/path/to/model")
-        self.assertEqual(config.domain, "image_recognition")
         self.assertEqual(config.device, "cpu")
 
         self.assertEqual(config.model.name, "resnet50_v1_5")
@@ -226,10 +286,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.evaluation.accuracy.dataloader.filter)
         self.assertIsNotNone(config.evaluation.accuracy.postprocess)
         self.assertIsNotNone(config.evaluation.accuracy.postprocess.transform)
-        self.assertEqual(
-            {"Param1": True},
-            config.evaluation.accuracy.postprocess.transform.LabelShift,
-        )
+        self.assertEqual(-1, config.evaluation.accuracy.postprocess.transform.LabelShift)
 
         self.assertIsNotNone(config.evaluation.performance)
         self.assertEqual(config.evaluation.performance.warmup, 5)
@@ -274,26 +331,79 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.evaluation.performance.postprocess)
 
         self.assertIsNotNone(config.pruning)
-        self.assertIsNotNone(config.pruning.magnitude)
-        self.assertEqual(config.pruning.start_epoch, 1)
-        self.assertEqual(config.pruning.end_epoch, 2)
-        self.assertEqual(config.pruning.frequency, 3)
-        self.assertEqual(config.pruning.init_sparsity, 0.4)
-        self.assertEqual(config.pruning.target_sparsity, 0.5)
+        self.assertIsNotNone(config.pruning.train)
+        self.assertIsNotNone(config.pruning.train.optimizer)
+        self.assertIsNotNone(config.pruning.train.optimizer.Adam)
+        self.assertEqual(config.pruning.train.optimizer.Adam.learning_rate, 0.123)
+        self.assertEqual(config.pruning.train.optimizer.Adam.beta_1, 0.99)
+        self.assertEqual(config.pruning.train.optimizer.Adam.beta_2, 0.9999)
+        self.assertEqual(config.pruning.train.optimizer.Adam.epsilon, 1e-06)
+        self.assertEqual(config.pruning.train.optimizer.Adam.amsgrad, True)
+        self.assertIsNotNone(config.pruning.train.criterion)
+        self.assertIsNotNone(config.pruning.train.criterion.CrossEntropyLoss)
+        self.assertEqual(config.pruning.train.criterion.CrossEntropyLoss.reduction, "auto")
+        self.assertEqual(config.pruning.train.criterion.CrossEntropyLoss.from_logits, True)
+        self.assertIsNotNone(config.pruning.train.criterion.SparseCategoricalCrossentropy)
+        self.assertEqual(
+            config.pruning.train.criterion.SparseCategoricalCrossentropy.reduction,
+            "sum",
+        )
+        self.assertEqual(
+            config.pruning.train.criterion.SparseCategoricalCrossentropy.from_logits,
+            True,
+        )
+        self.assertIsNotNone(config.pruning.train.criterion.KnowledgeDistillationLoss)
+        self.assertEqual(config.pruning.train.criterion.KnowledgeDistillationLoss.temperature, 1.0)
+        self.assertListEqual(
+            config.pruning.train.criterion.KnowledgeDistillationLoss.loss_types,
+            ["CE"],
+        )
+        self.assertListEqual(
+            config.pruning.train.criterion.KnowledgeDistillationLoss.loss_weights,
+            [0.3, 0.7],
+        )
+        self.assertIsNotNone(config.pruning.train.dataloader)
+        self.assertEqual(
+            config.pruning.train.dataloader.dataset.name,
+            "ImageRecord",
+        )
+        self.assertDictEqual(
+            config.pruning.train.dataloader.dataset.params,
+            {"root": "/path/to/pruning/dataset"},
+        )
+        transform_name, transform = list(
+            config.pruning.train.dataloader.transform.items(),
+        )[0]
+        self.assertEqual(transform_name, "ResizeCropImagenet")
+        self.assertDictEqual(
+            transform.parameters,
+            {"height": 224, "width": 224, "mean_value": [123.68, 116.78, 103.94]},
+        )
+        self.assertIsNone(config.pruning.train.dataloader.filter)
+        self.assertEqual(config.pruning.train.epoch, 5)
+        self.assertEqual(config.pruning.train.start_epoch, 1)
+        self.assertEqual(config.pruning.train.end_epoch, 2)
+        self.assertEqual(config.pruning.train.iteration, 10)
+        self.assertEqual(config.pruning.train.frequency, 3)
+        self.assertEqual(config.pruning.train.execution_mode, "graph")
+        self.assertIsNotNone(config.pruning.train.postprocess)
+        self.assertEqual(config.pruning.train.hostfile, "/some/file")
 
-        self.assertEqual(config.pruning.magnitude.weights, [1, 2, 3])
-        self.assertEqual(config.pruning.magnitude.method, "per_tensor")
-        self.assertEqual(config.pruning.magnitude.init_sparsity, 0.42)
-        self.assertEqual(config.pruning.magnitude.target_sparsity, 0.1337)
-        self.assertEqual(config.pruning.magnitude.start_epoch, 13)
-        self.assertEqual(config.pruning.magnitude.end_epoch, 888)
+        self.assertIsNotNone(config.pruning.approach)
+        self.assertIsNotNone(config.pruning.approach.weight_compression)
+        self.assertEqual(config.pruning.approach.weight_compression.initial_sparsity, 0.042)
+        self.assertEqual(config.pruning.approach.weight_compression.target_sparsity, 0.1337)
+        self.assertEqual(config.pruning.approach.weight_compression.start_epoch, 13)
+        self.assertEqual(config.pruning.approach.weight_compression.end_epoch, 888)
+        self.assertEqual(len(config.pruning.approach.weight_compression.pruners), 1)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_config_constructor_with_empty_data(self) -> None:
         """Test Config constructor with empty data."""
         config = Config()
 
-        self.assertEqual(config.model_path, "")
-        self.assertIsNone(config.domain)
         self.assertIsNone(config.device)
 
         self.assertIsNone(config.model.name)
@@ -321,6 +431,10 @@ class TestConfig(unittest.TestCase):
 
         self.assertIsNone(config.pruning)
 
+        serialized_config = config.serialize()
+        with self.assertRaises(schema.SchemaError):
+            inc_config_schema.validate(serialized_config)
+
     def test_config_serializer(self) -> None:
         """Test Config serializer."""
         config = Config(self.predefined_config)
@@ -329,7 +443,6 @@ class TestConfig(unittest.TestCase):
         self.assertDictEqual(
             result,
             {
-                "domain": "image_recognition",
                 "device": "cpu",
                 "model": {
                     "name": "resnet50_v1_5",
@@ -378,9 +491,7 @@ class TestConfig(unittest.TestCase):
                         },
                         "postprocess": {
                             "transform": {
-                                "LabelShift": {
-                                    "Param1": True,
-                                },
+                                "LabelShift": -1,
                             },
                         },
                     },
@@ -421,33 +532,82 @@ class TestConfig(unittest.TestCase):
                     "precisions": "bf16,fp32",
                     "op_wise": {
                         "weight": {
-                            "granularity": "per_channel",
-                            "scheme": "asym",
                             "dtype": "bf16",
-                            "algorithm": "minmax",
                         },
                         "activation": {
-                            "granularity": "per_tensor",
-                            "scheme": "sym",
-                            "dtype": "int8",
-                            "algorithm": "minmax",
+                            "dtype": "fp32",
                         },
                     },
                 },
                 "pruning": {
-                    "magnitude": {
-                        "weights": [1, 2, 3],
-                        "method": "per_tensor",
-                        "init_sparsity": 0.42,
-                        "target_sparsity": 0.1337,
-                        "start_epoch": 13,
-                        "end_epoch": 888,
+                    "train": {
+                        "optimizer": {
+                            "Adam": {
+                                "learning_rate": 0.123,
+                                "beta_1": 0.99,
+                                "beta_2": 0.9999,
+                                "epsilon": 1e-06,
+                                "amsgrad": True,
+                            },
+                        },
+                        "criterion": {
+                            "CrossEntropyLoss": {
+                                "reduction": "auto",
+                                "from_logits": True,
+                            },
+                            "SparseCategoricalCrossentropy": {
+                                "reduction": "sum",
+                                "from_logits": True,
+                            },
+                            "KnowledgeDistillationLoss": {
+                                "temperature": 1.0,
+                                "loss_types": ["CE"],
+                                "loss_weights": [0.3, 0.7],
+                            },
+                        },
+                        "dataloader": {
+                            "batch_size": 32,
+                            "dataset": {"ImageRecord": {"root": "/path/to/pruning/dataset"}},
+                            "transform": {
+                                "ResizeCropImagenet": {
+                                    "height": 224,
+                                    "width": 224,
+                                    "mean_value": [123.68, 116.78, 103.94],
+                                },
+                            },
+                        },
+                        "epoch": 5,
+                        "start_epoch": 1,
+                        "end_epoch": 2,
+                        "iteration": 10,
+                        "frequency": 3,
+                        "execution_mode": "graph",
+                        "postprocess": {
+                            "transform": {
+                                "LabelShift": -1,
+                                "Collect": {
+                                    "length": 1,
+                                },
+                                "SquadV1": {
+                                    "label_file": "/path/to/label_file",
+                                    "vocab_file": "/path/to/vocab_file",
+                                    "do_lower_case": False,
+                                },
+                            },
+                        },
+                        "hostfile": "/some/file",
                     },
-                    "start_epoch": 1,
-                    "end_epoch": 2,
-                    "frequency": 3,
-                    "init_sparsity": 0.4,
-                    "target_sparsity": 0.5,
+                    "approach": {
+                        "weight_compression": {
+                            "initial_sparsity": 0.042,
+                            "target_sparsity": 0.1337,
+                            "start_epoch": 13,
+                            "end_epoch": 888,
+                            "pruners": [
+                                pruner,
+                            ],
+                        },
+                    },
                 },
             },
         )
@@ -465,6 +625,9 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.evaluation.accuracy.dataloader)
         self.assertIsNone(config.evaluation.performance.dataloader)
         self.assertIsNone(config.quantization.calibration.dataloader)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_remove_dataloader_on_empty_config(self) -> None:
         """Test remove_dataloader on empty config."""
@@ -484,6 +647,9 @@ class TestConfig(unittest.TestCase):
         config.remove_accuracy_metric()
 
         self.assertIsNone(config.evaluation.accuracy)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_remove_accuracy_metric_on_empty_config(self) -> None:
         """Test remove_accuracy_metric on empty config."""
@@ -537,6 +703,9 @@ class TestConfig(unittest.TestCase):
             config.quantization.calibration.dataloader.dataset.params.get("root"),
         )
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_evaluation_dataset_path_skips_no_dataset_location(self) -> None:
         """Test set_evaluation_dataset_path."""
         config = Config(self.predefined_config)
@@ -555,6 +724,9 @@ class TestConfig(unittest.TestCase):
             "/path/to/calibration/dataset",
             config.quantization.calibration.dataloader.dataset.params.get("root"),
         )
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_evaluation_dataset_path_on_empty_config(self) -> None:
         """Test set_evaluation_dataset_path on empty config."""
@@ -676,6 +848,9 @@ class TestConfig(unittest.TestCase):
             config.quantization.calibration.dataloader.dataset.params.get("root"),
         )
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_quantization_dataset_path_skips_no_dataset_location(self) -> None:
         """Test set_quantization_dataset_path."""
         config = Config(self.predefined_config)
@@ -695,6 +870,9 @@ class TestConfig(unittest.TestCase):
             config.quantization.calibration.dataloader.dataset.params.get("root"),
         )
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_quantization_dataset_path_on_empty_config(self) -> None:
         """Test set_quantization_dataset_path on empty config."""
         config = Config()
@@ -711,6 +889,9 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(31337, config.quantization.calibration.dataloader.batch_size)
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_workspace(self) -> None:
         """Test set_workspace."""
         config = Config(self.predefined_config)
@@ -718,6 +899,9 @@ class TestConfig(unittest.TestCase):
         config.set_workspace("new/workspace/path")
 
         self.assertEqual("new/workspace/path", config.tuning.workspace.path)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_goal(self) -> None:
         """Test set_accuracy_goal."""
@@ -727,6 +911,9 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(1234, config.tuning.accuracy_criterion.relative)
         self.assertIsNone(config.tuning.accuracy_criterion.absolute)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_absolute_accuracy_goal(self) -> None:
         """Test set_accuracy_goal with absolute value."""
@@ -740,6 +927,9 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.tuning.accuracy_criterion.relative)
         self.assertEqual(0.1234, config.tuning.accuracy_criterion.absolute)
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_accuracy_goal_to_negative_value(self) -> None:
         """Test set_accuracy_goal."""
         config = Config(self.predefined_config)
@@ -749,6 +939,9 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(ClientErrorException):
             config.set_accuracy_goal(-1234)
         self.assertEqual(original_accuracy_goal, config.tuning.accuracy_criterion.relative)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_goal_on_empty_config(self) -> None:
         """Test set_accuracy_goal."""
@@ -762,10 +955,13 @@ class TestConfig(unittest.TestCase):
         """Test set_accuracy_metric."""
         config = Config(self.predefined_config)
 
-        config.set_accuracy_metric({"metric": "new metric", "metric_param": {"param1": True}})
+        config.set_accuracy_metric({"metric": "topk", "metric_param": 1})
 
-        self.assertEqual("new metric", config.evaluation.accuracy.metric.name)
-        self.assertEqual({"param1": True}, config.evaluation.accuracy.metric.param)
+        self.assertEqual("topk", config.evaluation.accuracy.metric.name)
+        self.assertEqual(1, config.evaluation.accuracy.metric.param)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_metric_on_empty_config(self) -> None:
         """Test set_accuracy_metric."""
@@ -807,7 +1003,7 @@ class TestConfig(unittest.TestCase):
             list(config.evaluation.performance.dataloader.transform.keys()),
         )
 
-    def test_set_transform_without_suqadV1(self) -> None:
+    def test_set_transform_without_squadV1(self) -> None:
         """Test set_transform."""
         config = Config(self.predefined_config)
 
@@ -818,10 +1014,7 @@ class TestConfig(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(
-            {"Param1": True},
-            config.evaluation.accuracy.postprocess.transform.LabelShift,
-        )
+        self.assertEqual(-1, config.evaluation.accuracy.postprocess.transform.LabelShift)
 
         self.assertEqual(
             ["Some transform1", "Some transform2"],
@@ -855,9 +1048,12 @@ class TestConfig(unittest.TestCase):
         """Test set_quantization_approach."""
         config = Config(self.predefined_config)
 
-        config.set_quantization_approach("Some quantization approach")
+        config.set_quantization_approach("quant_aware_training")
 
-        self.assertEqual("Some quantization approach", config.quantization.approach)
+        self.assertEqual("quant_aware_training", config.quantization.approach)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_quantization_approach_on_empty_config(self) -> None:
         """Test set_quantization_approach."""
@@ -867,16 +1063,8 @@ class TestConfig(unittest.TestCase):
 
         self.assertIsNone(config.quantization)
 
-    def test_set_model_path(self) -> None:
-        """Test set_model_path."""
-        config = Config()
-
-        config.set_model_path("new/model/path")
-
-        self.assertEqual("new/model/path", config.model_path)
-
     def test_set_inputs(self) -> None:
-        """Test set_model_path."""
+        """Test set_inputs."""
         config = Config()
 
         config.set_inputs(["input1", "input2"])
@@ -884,7 +1072,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(["input1", "input2"], config.model.inputs)
 
     def test_set_outputs(self) -> None:
-        """Test set_model_path."""
+        """Test set_outputs."""
         config = Config()
 
         config.set_outputs(["output1", "output2"])
@@ -892,15 +1080,18 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(["output1", "output2"], config.model.outputs)
 
     def test_set_quantization_sampling_size(self) -> None:
-        """Test set_model_path."""
+        """Test set_quantization_sampling_size."""
         config = Config(self.predefined_config)
 
         config.set_quantization_sampling_size("new sampling size")
 
         self.assertEqual("new sampling size", config.quantization.calibration.sampling_size)
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_quantization_sampling_size_on_empty_config(self) -> None:
-        """Test set_model_path."""
+        """Test set_quantization_sampling_size."""
         config = Config()
 
         config.set_quantization_sampling_size("new sampling size")
@@ -915,6 +1106,9 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(1234, config.evaluation.performance.warmup)
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_performance_warmup_to_negative_value(self) -> None:
         """Test set_performance_warmup."""
         config = Config(self.predefined_config)
@@ -924,6 +1118,9 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(ClientErrorException):
             config.set_performance_warmup(-1234)
         self.assertEqual(original_performance_warmup, config.evaluation.performance.warmup)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_performance_warmup_on_empty_config(self) -> None:
         """Test set_performance_warmup."""
@@ -941,6 +1138,9 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(1234, config.evaluation.performance.iteration)
 
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_set_performance_iterations_to_negative_value(self) -> None:
         """Test set_performance_iterations."""
         config = Config(self.predefined_config)
@@ -950,6 +1150,9 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(ClientErrorException):
             config.set_performance_iterations(-1234)
         self.assertEqual(original_performance_iterations, config.evaluation.performance.iteration)
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_set_performance_iterations_on_empty_config(self) -> None:
         """Test set_performance_iterations."""
@@ -1095,8 +1298,10 @@ class TestConfig(unittest.TestCase):
     def test_load(self) -> None:
         """Test load."""
         config = Config()
+        predefined_config = deepcopy(self.predefined_config)
+        del predefined_config["pruning"]["approach"]["weight_compression"]["pruners"]
 
-        read_yaml = yaml.dump(self.predefined_config, sort_keys=False)
+        read_yaml = yaml.dump(predefined_config, sort_keys=False)
 
         with patch(
             "neural_compressor.ux.utils.workload.config.open",
@@ -1106,21 +1311,28 @@ class TestConfig(unittest.TestCase):
 
             mocked_open.assert_called_once_with("path to yaml file")
 
-        expected = Config(self.predefined_config)
+        expected = Config(predefined_config)
 
         self.assertEqual(expected.serialize(), config.serialize())
+
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     @patch("os.makedirs")
     def test_dump(self, mocked_makedirs: MagicMock) -> None:
         """Test dump."""
         config = Config(self.predefined_config)
 
+        yaml.add_representer(float, float_representer)  # type: ignore
+        yaml.add_representer(Pruner, pruner_representer)  # type: ignore
         expected_yaml = yaml.dump(
             config.serialize(),
             indent=4,
             default_flow_style=None,
             sort_keys=False,
         )
+        print("expected_yaml")
+        print(expected_yaml)
 
         with patch("neural_compressor.ux.utils.workload.config.open", mock_open()) as mocked_open:
             config.dump("path to yaml file")

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from neural_compressor.conf.config import Pruner
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.logger import log
@@ -31,7 +32,7 @@ from neural_compressor.ux.utils.workload.model import Model
 from neural_compressor.ux.utils.workload.pruning import Pruning
 from neural_compressor.ux.utils.workload.quantization import Quantization
 from neural_compressor.ux.utils.workload.tuning import Tuning, Workspace
-from neural_compressor.ux.utils.yaml_utils import float_representer
+from neural_compressor.ux.utils.yaml_utils import float_representer, pruner_representer
 
 
 class Config(JsonSerializer):
@@ -40,10 +41,7 @@ class Config(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration class."""
         super().__init__()
-        self._skip.append("model_path")
-        self.model_path: str = data.get("model_path", "")
         self.model: Model = Model()
-        self.domain: Optional[str] = data.get("domain", None)
         self.device: Optional[str] = None
         self.quantization: Optional[Quantization] = None
         self.tuning: Tuning = Tuning()
@@ -55,9 +53,6 @@ class Config(JsonSerializer):
 
     def initialize(self, data: Dict[str, Any] = {}) -> None:
         """Initialize config from dict."""
-        self.model_path = data.get("model_path", self.model_path)
-        self.domain = data.get("domain", self.domain)
-
         if isinstance(data.get("model"), dict):
             self.model = Model(data.get("model", {}))
 
@@ -314,10 +309,6 @@ class Config(JsonSerializer):
         if self.quantization:
             self.quantization.approach = str(approach)
 
-    def set_model_path(self, path: str) -> None:
-        """Update model_path in config."""
-        self.model_path = str(path)
-
     def set_inputs(self, inputs: List[str]) -> None:
         """Update inputs in config."""
         self.model.inputs = inputs
@@ -376,6 +367,7 @@ class Config(JsonSerializer):
     def load(self, path: str) -> None:
         """Load configuration from file."""
         log.debug(f"Loading predefined config from {path}")
+        yaml.add_constructor("!Pruner", Pruner, yaml.SafeLoader)
         with open(path) as yaml_config:
             config = yaml.safe_load(yaml_config)
         self.initialize(config)
@@ -383,6 +375,7 @@ class Config(JsonSerializer):
     def dump(self, yaml_path: str) -> None:
         """Dump configuration to file."""
         yaml.add_representer(float, float_representer)  # type: ignore
+        yaml.add_representer(Pruner, pruner_representer)  # type: ignore
 
         yaml_content = yaml.dump(
             data=self.serialize(),

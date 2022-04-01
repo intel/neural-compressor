@@ -1,13 +1,20 @@
 <div class="project-list">
   <br>
   <h3>My projects</h3>
-  <div *ngFor="let project of projectList">
-    <button mat-flat-button [routerLink]="['/project', project.id, activeTab]" class="config-btn"
-      queryParamsHandling="preserve" routerLinkActive="active" (click)="projectChange(project.id)">
+  <div *ngFor="let project of projectList" (mouseleave)="showDeleteButtonId = 0">
+    <div mat-flat-button [routerLink]="['/project', project.id, activeTab]" class="config-btn pointer"
+      queryParamsHandling="preserve" routerLinkActive="active" (click)="projectChange(project.id)"
+      (mouseenter)="showDeleteButtonId = project.id">
       <span class="name">{{ project.name }}</span>
+      <button *ngIf="showDeleteButtonId === project.id" mat-icon-button class="right"
+        (click)="removeProject(project.id, project.name)">
+        <img class="plus-icon" [src]="imgSrc" (mouseover)="imgSrc = './../../assets/057b-trash-outlined.svg'"
+          (mouseout)="imgSrc = './../../assets/057b-trash-outlined-gray.svg'">
+      </button>
+      <br>
       <br>
       <span class="time"> {{ getDate(project.created_at) | timeAgo }}</span>
-    </button>
+    </div>
   </div>
   <br>
   <button mat-raised-button class="create-new-btn" (click)="createNewProject()">

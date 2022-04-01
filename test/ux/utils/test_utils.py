@@ -210,6 +210,15 @@ class TestUtils(unittest.TestCase):
             expected_filename="image_recognition.yaml",
         )
 
+    def test_get_predefined_onnx_object_detection_config_path(self) -> None:
+        """Test getting predefined config path for onnx object detection models."""
+        self._assert_predefined_config_path(
+            framework=Frameworks.ONNX.value,
+            domain=Domains.OBJECT_DETECTION.value,
+            domain_flavour=DomainFlavours.NONE.value,
+            expected_filename="object_detection.yaml",
+        )
+
     def test_get_predefined_onnx_nlp_config_path(self) -> None:
         """Test getting predefined config path for onnx NLP models."""
         self._assert_predefined_config_path(
@@ -232,7 +241,7 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(Exception):
             get_predefined_config_path(
                 framework=Frameworks.ONNX.value,
-                domain="object_detection",
+                domain="recommendation",
             )
 
     def test_check_module(self) -> None:
@@ -631,9 +640,6 @@ class TestUtils(unittest.TestCase):
         }
 
         actual = get_metrics_dict()
-
-        print("\n\nactual")
-        print(actual)
 
         mocked_load_help_nc_params.assert_called_once_with("metrics")
         self.assertEqual(expected, actual)

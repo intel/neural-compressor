@@ -17,6 +17,7 @@
 import unittest
 from unittest.mock import MagicMock, call, patch
 
+from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.model.onnxrt.model import OnnxrtModel
 from neural_compressor.ux.utils.consts import Frameworks
 
@@ -73,14 +74,21 @@ class TestOnnxrtModel(unittest.TestCase):
         ):
             OnnxrtModel("/path/to/model.pb")
 
-    def test_get_model_graph(self) -> None:
+    @patch(
+        "neural_compressor.ux.components.model.onnxrt.model.OnnxrtReader",
+        autospec=True,
+    )
+    def test_get_model_graph(self, mocked_onnxrt_graph_reader: MagicMock) -> None:
         """Test getting Graph of a model."""
-        with self.assertRaisesRegex(
-            NotImplementedError,
-            "Reading graph for model /path/to/model.onnx is not supported.",
-        ):
-            model = OnnxrtModel("/path/to/model.onnx")
-            model.get_model_graph()
+        expected = Graph()
+
+        mocked_onnxrt_graph_reader.return_value.read.return_value = expected
+
+        model = OnnxrtModel("/path/to/model.onnx")
+
+        self.assertEqual(expected, model.get_model_graph())
+
+        mocked_onnxrt_graph_reader.assert_called_once_with(model)
 
     def test_shape_elements_order(self) -> None:
         """Test getting shape elements order."""

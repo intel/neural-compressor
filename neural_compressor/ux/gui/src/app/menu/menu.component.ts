@@ -14,8 +14,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RoutesRecognized } from '@angular/router';
-import { ErrorComponent } from '../error/error.component';
 import { ProjectFormComponent } from '../project-form/project-form.component';
+import { ProjectRemoveComponent } from '../project-remove/project-remove.component';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -28,6 +28,8 @@ export class MenuComponent implements OnInit {
   showSpinner = true;
   projectList = [];
   activeTab = 'optimizations';
+  showDeleteButtonId = 0;
+  imgSrc = './../../assets/057b-trash-outlined.svg';
 
   constructor(
     private modelService: ModelService,
@@ -66,6 +68,16 @@ export class MenuComponent implements OnInit {
         });
   }
 
+  removeProject(projectId: number, projectName: string) {
+    const dialogRef = this.dialog.open(ProjectRemoveComponent, {
+      width: '60%',
+      data: {
+        projectId: projectId,
+        projectName: projectName,
+      }
+    });
+  }
+
   getDate(date: string) {
     return new Date(date);
   }
@@ -74,11 +86,16 @@ export class MenuComponent implements OnInit {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
       width: '60%',
     });
+
     dialogRef.afterClosed().subscribe(response => {
       if (response !== undefined) {
         this.showSpinner = true;
       }
     });
+
+    this.modelService.projectCreated$.subscribe(
+      response => dialogRef.close()
+    );
   }
 
 }

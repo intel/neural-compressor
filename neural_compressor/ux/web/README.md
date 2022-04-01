@@ -4,6 +4,7 @@
 - [Endpoints](#endpoints)
   - [Project](#project)
     - [Create project](#create-project)
+    - [Delete project](#delete-project)
     - [Get project details](#get-project-details)
     - [Add notes to project](#add-notes-to-project)
     - [List projects](#list-projects)
@@ -28,6 +29,9 @@
     - [Get profiling details](#get-profiling-details)
     - [List profilings](#list-profilings)
     - [Execute profiling](#execute-profiling)
+  - [Examples](#examples)
+    - [List example models](#list-example-models)
+    - [Create project from examples](#create-project-from-examples)
   - [Model](#model)
     - [List models](#list-models)
     - [Get model's boundary nodes](#get-models-boundary-nodes)
@@ -112,6 +116,50 @@
 {
     "project_id": 1,
     "model_id": 1
+}
+```
+
+#### Delete project
+**Path**: `api/project/delete`<br>
+**Method**: `POST`<br>
+**Returns**: id of removed project or null when project not found
+
+**Parameters description:**
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+    <tr>
+            <td><b>id</b></td>
+            <td>Project id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>name</b></td>
+            <td>Project name</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "id": 1,
+    "name": "Project1"
+}
+```
+
+
+**Example response**:
+```json
+{
+    "id": 1,
 }
 ```
 
@@ -578,9 +626,10 @@
         "supports_profiling": true,
         "created_at": "2022-01-28 12:37:32"
     },
-    "accuracy_benchmark": null,
-    "performance_benchmark": null,
+    "accuracy_benchmark_id": 1,
+    "performance_benchmark_id": null,
     "tuning_details": {
+        "id": 1,
         "strategy": "basic",
         "accuracy_criterion_type": "relative",
         "accuracy_criterion_threshold": 0.1,
@@ -590,6 +639,80 @@
         },
         "random_seed": 9527,
         "created_at": "2022-01-28 12:37:01",
+        "tuning_history": {
+            "id": 1,
+            "minimal_accuracy": 0.6999299999999999,
+            "baseline_accuracy": [
+                0.7
+            ],
+            "baseline_performance": [
+                48.57273483276367
+            ],
+            "last_tune_accuracy": [
+                0.706
+            ],
+            "last_tune_performance": [
+                21.251153230667114
+            ],
+            "best_tune_accuracy": [
+                0.706
+            ],
+            "best_tune_performance": [
+                21.251153230667114
+            ],
+            "history": [
+                {
+                    "accuracy": [
+                        0.699
+                    ],
+                    "performance": [
+                        23.758240222930908
+                    ]
+                },
+                {
+                    "accuracy": [
+                        0.679
+                    ],
+                    "performance": [
+                        21.93209171295166
+                    ]
+                },
+                {
+                    "accuracy": [
+                        0.699
+                    ],
+                    "performance": [
+                        21.257209062576294
+                    ]
+                },
+                {
+                    "accuracy": [
+                        0.679
+                    ],
+                    "performance": [
+                        22.67054533958435
+                    ]
+                },
+                {
+                    "accuracy": [
+                        0.697
+                    ],
+                    "performance": [
+                        20.60370635986328
+                    ]
+                },
+                {
+                    "accuracy": [
+                        0.706
+                    ],
+                    "performance": [
+                        21.251153230667114
+                    ]
+                }
+            ]
+        }
+    }
+}
         "modified_at": null
     }
 }
@@ -687,8 +810,8 @@
                 "supports_profiling": true,
                 "created_at": "2022-01-28 12:23:16"
             },
-            "accuracy_benchmark": null,
-            "performance_benchmark": null,
+            "accuracy_benchmark_id": 1,
+            "performance_benchmark_id": 2,
             "tuning_details": null
         },
         {
@@ -750,8 +873,8 @@
                 "supports_profiling": true,
                 "created_at": "2022-01-28 12:37:32"
             },
-            "accuracy_benchmark": null,
-            "performance_benchmark": null,
+            "accuracy_benchmark_id": null,
+            "performance_benchmark_id": null,
             "tuning_details": null
         }
     ]
@@ -804,92 +927,450 @@
 [
     "optimization_start",
     {
-        "status": "success",
-        "data": {
-            "message": "started",
-            "request_id": "asd",
-            "size_input_model": 98,
-            "config_path": "/path/to/config.yaml",
-            "output_path": "/path/to/output.txt"
-        }
+        "message": "started",
+        "request_id": "asd",
+        "size_input_model": 16,
+        "config_path": "/path/to/config.yaml",
+        "output_path": "/path/to/output.txt"
     }
 ]
 ```
+
+**Tuning history** <details><br><br>
+
+
+```json
+[
+    "tuning_history",
+    {
+        "request_id": "asd",
+        "optimization_id": 1,
+        "accuracy_criterion_type": "relative",
+        "accuracy_criterion_value": 0.0001,
+        "minimal_accuracy": 0.6999299999999999,
+        "baseline_accuracy": [
+            0.7
+        ],
+        "baseline_performance": [
+            48.57273483276367
+        ],
+        "last_tune_accuracy": null,
+        "last_tune_performance": null,
+        "best_tune_accuracy": null,
+        "best_tune_performance": null,
+        "history": [],
+    }
+]
+```
+
+```json
+[
+    "tuning_history",
+    {
+        "request_id": "asd",
+        "optimization_id": 1,
+        "accuracy_criterion_type": "relative",
+        "accuracy_criterion_value": 0.0001,
+        "minimal_accuracy": 0.6999299999999999,
+        "baseline_accuracy": [
+            0.7
+        ],
+        "baseline_performance": [
+            48.57273483276367
+        ],
+        "last_tune_accuracy": [
+            0.699
+        ],
+        "last_tune_performance": [
+            23.758240222930908
+        ],
+        "best_tune_accuracy": null,
+        "best_tune_performance": null,
+        "history": [
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    23.758240222930908
+                ]
+            }
+        ]
+    }
+]
+```
+
+```json
+[
+    "tuning_history",
+    {
+        "request_id": "asd",
+        "optimization_id": 1,
+        "accuracy_criterion_type": "relative",
+        "accuracy_criterion_value": 0.0001,
+        "minimal_accuracy": 0.6999299999999999,
+        "baseline_accuracy": [
+            0.7
+        ],
+        "baseline_performance": [
+            48.57273483276367
+        ],
+        "last_tune_accuracy": [
+            0.679
+        ],
+        "last_tune_performance": [
+            21.93209171295166
+        ],
+        "best_tune_accuracy": null,
+        "best_tune_performance": null,
+        "history": [
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    23.758240222930908
+                ]
+            },
+            {
+                "accuracy": [
+                    0.679
+                ],
+                "performance": [
+                    21.93209171295166
+                ]
+            }
+        ]
+    }
+]
+```
+
+```json
+[
+    "tuning_history",
+    {
+        "request_id": "asd",
+        "optimization_id": 1,
+        "accuracy_criterion_type": "relative",
+        "accuracy_criterion_value": 0.0001,
+        "minimal_accuracy": 0.6999299999999999,
+        "baseline_accuracy": [
+            0.7
+        ],
+        "baseline_performance": [
+            48.57273483276367
+        ],
+        "last_tune_accuracy": [
+            0.699
+        ],
+        "last_tune_performance": [
+            21.257209062576294
+        ],
+        "best_tune_accuracy": null,
+        "best_tune_performance": null,
+        "history": [
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    23.758240222930908
+                ]
+            },
+            {
+                "accuracy": [
+                    0.679
+                ],
+                "performance": [
+                    21.93209171295166
+                ]
+            },
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    21.257209062576294
+                ]
+            }
+        ]
+    }
+]
+```
+
+```json
+[
+    "tuning_history",
+    {
+        "request_id": "asd",
+        "optimization_id": 1,
+        "accuracy_criterion_type": "relative",
+        "accuracy_criterion_value": 0.0001,
+        "minimal_accuracy": 0.6999299999999999,
+        "baseline_accuracy": [
+            0.7
+        ],
+        "baseline_performance": [
+            48.57273483276367
+        ],
+        "last_tune_accuracy": [
+            0.679
+        ],
+        "last_tune_performance": [
+            22.67054533958435
+        ],
+        "best_tune_accuracy": null,
+        "best_tune_performance": null,
+        "history": [
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    23.758240222930908
+                ]
+            },
+            {
+                "accuracy": [
+                    0.679
+                ],
+                "performance": [
+                    21.93209171295166
+                ]
+            },
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    21.257209062576294
+                ]
+            },
+            {
+                "accuracy": [
+                    0.679
+                ],
+                "performance": [
+                    22.67054533958435
+                ]
+            }
+        ]
+    }
+]
+```
+
+```json
+[
+    "tuning_history",
+    {
+        "request_id": "asd",
+        "optimization_id": 1,
+        "accuracy_criterion_type": "relative",
+        "accuracy_criterion_value": 0.0001,
+        "minimal_accuracy": 0.6999299999999999,
+        "baseline_accuracy": [
+            0.7
+        ],
+        "baseline_performance": [
+            48.57273483276367
+        ],
+        "last_tune_accuracy": [
+            0.697
+        ],
+        "last_tune_performance": [
+            20.60370635986328
+        ],
+        "best_tune_accuracy": null,
+        "best_tune_performance": null,
+        "history": [
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    23.758240222930908
+                ]
+            },
+            {
+                "accuracy": [
+                    0.679
+                ],
+                "performance": [
+                    21.93209171295166
+                ]
+            },
+            {
+                "accuracy": [
+                    0.699
+                ],
+                "performance": [
+                    21.257209062576294
+                ]
+            },
+            {
+                "accuracy": [
+                    0.679
+                ],
+                "performance": [
+                    22.67054533958435
+                ]
+            },
+            {
+                "accuracy": [
+                    0.697
+                ],
+                "performance": [
+                    20.60370635986328
+                ]
+            }
+        ]
+    }
+]
+```
+
+</details>
+
 ```json
 [
     "optimization_finish",
     {
-        "status": "success",
-        "data": {
-            "request_id": "asd",
-            "project_id": 1,
+        "request_id": "asd",
+        "project_id": 1,
+        "id": 3,
+        "name": "Optimization3",
+        "precision": {
+            "id": 3,
+            "name": "int8"
+        },
+        "optimization_type": {
             "id": 1,
-            "name": "My optimization",
-            "precision": {
+            "name": "Quantization"
+        },
+        "dataset": {
+            "id": 2,
+            "name": "Dataset2"
+        },
+        "config_path": "/path/to/config.yaml",
+        "log_path": "/path/to/output.txt",
+        "execution_command": "python /path/to/tune_model.py --input-graph /path/to/model.pb --output-graph /path/to/optimized_model.pb --config /path/to/config.yaml --framework tensorflow",
+        "batch_size": 100,
+        "sampling_size": 100,
+        "status": "success",
+        "created_at": "2022-03-14 17:52:07",
+        "last_run_at": "2022-03-14 18:22:40",
+        "duration": 1231,
+        "optimized_model": {
+            "id": 4,
+            "name": "optimization3",
+            "path": "/path/to/optimized_model.pb",
+            "framework": {
                 "id": 1,
+                "name": "TensorFlow"
+            },
+            "size": 4,
+            "precision": {
+                "id": 3,
                 "name": "int8"
             },
-            "optimization_type": {
+            "domain": {
                 "id": 1,
-                "name": "Quantization"
+                "name": "Image Recognition"
             },
-            "dataset": {
+            "domain_flavour": {
                 "id": 1,
-                "name": "dummy"
+                "name": ""
             },
-            "config_path": "/path/to/config.yaml",
-            "log_path": "/path/to/output.txt",
-            "execution_command": "python tune_model.py --input-graph /path/to/model.pb --output-graph /home/workdir/models/my_optimization_1/my_optimization.pb --config /path/to/config.yaml --framework tensorflow",
-            "batch_size": 100,
-            "sampling_size": 100,
-            "status": "success",
-            "created_at": "2022-01-28 12:37:01",
-            "last_run_at": "2022-01-28 12:37:32",
-            "duration": 16,
-            "optimized_model": {
-                "id": 2,
-                "name": "my_optimization",
-                "path": "/home/workdir/models/my_optimization_1/my_optimization.pb",
-                "framework": {
-                    "id": 1,
-                    "name": "TensorFlow"
-                },
-                "size": 25.0,
-                "precision": {
-                    "id": 1,
-                    "name": "int8"
-                },
-                "domain": {
-                    "id": 1,
-                    "name": "Image Recognition"
-                },
-                "domain_flavour": {
-                    "id": 1,
-                    "name": ""
-                },
-                "input_nodes": [
-                    "input_tensor"
-                ],
-                "output_nodes": [
-                    "softmax_tensor"
-                ],
-                "supports_graph": true,
-                "supports_profiling": true,
-                "created_at": "2022-01-28 12:37:32"
+            "input_nodes": [],
+            "output_nodes": [],
+            "supports_profiling": true,
+            "supports_graph": true,
+            "created_at": "2022-03-14 18:22:40"
+        },
+        "accuracy_benchmark_id": null,
+        "performance_benchmark_id": null,
+        "tuning_details": {
+            "id": 3,
+            "strategy": "basic",
+            "accuracy_criterion_type": "relative",
+            "accuracy_criterion_threshold": 0.0001,
+            "multi_objective": "performance",
+            "exit_policy": {
+                "timeout": 0
             },
-            "accuracy_benchmark": null,
-            "performance_benchmark": null,
-            "tuning_details": {
-                "strategy": "basic",
-                "accuracy_criterion_type": "relative",
-                "accuracy_criterion_threshold": 0.1,
-                "multi_objective": "performance",
-                "exit_policy": {
-                    "timeout": 0
-                },
-                "random_seed": 9527,
-                "created_at": "2022-01-28 12:37:01",
-                "modified_at": null
+            "random_seed": 9527,
+            "created_at": "2022-03-14 17:52:07",
+            "modified_at": "2022-03-14 18:22:40",
+            "tuning_history": {
+                "id": 3,
+                "minimal_accuracy": 0.6999299999999999,
+                "baseline_accuracy": [
+                    0.7
+                ],
+                "baseline_performance": [
+                    48.57273483276367
+                ],
+                "last_tune_accuracy": [
+                    0.706
+                ],
+                "last_tune_performance": [
+                    21.251153230667114
+                ],
+                "best_tune_accuracy": [
+                    0.706
+                ],
+                "best_tune_performance": [
+                    21.251153230667114
+                ],
+                "history": [
+                    {
+                        "accuracy": [
+                            0.699
+                        ],
+                        "performance": [
+                            23.758240222930908
+                        ]
+                    },
+                    {
+                        "accuracy": [
+                            0.679
+                        ],
+                        "performance": [
+                            21.93209171295166
+                        ]
+                    },
+                    {
+                        "accuracy": [
+                            0.699
+                        ],
+                        "performance": [
+                            21.257209062576294
+                        ]
+                    },
+                    {
+                        "accuracy": [
+                            0.679
+                        ],
+                        "performance": [
+                            22.67054533958435
+                        ]
+                    },
+                    {
+                        "accuracy": [
+                            0.697
+                        ],
+                        "performance": [
+                            20.60370635986328
+                        ]
+                    },
+                    {
+                        "accuracy": [
+                            0.706
+                        ],
+                        "performance": [
+                            21.251153230667114
+                        ]
+                    }
+                ]
             }
         }
     }
@@ -1707,6 +2188,490 @@
 ]
 ```
 
+### Examples
+#### List example models
+**Path**: `api/examples/list`<br>
+**Method**: `GET`
+
+**Example response**:
+
+```json
+[
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "inception_v3"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "inception_v4"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "mobilenetv1"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "resnet50_v1_5"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "resnet101"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "faster_rcnn_inception_resnet_v2"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "faster_rcnn_resnet101"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "mask_rcnn_inception_v2"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "ssd_mobilenet_v1"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "ssd_resnet50_v1"
+    }
+]
+```
+
+#### Create project from examples
+**Path**: `api/examples/add`<br>
+**Method**: `POST`
+
+**Parameters description:**
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>request_id</b></td>
+            <td>Request id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>name</b></td>
+            <td>New project name</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>framework</b></td>
+            <td>Framework of example model</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>domain</b></td>
+            <td>Domain of example model</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>model</b></td>
+            <td>Example model name</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>progress_steps</b></td>
+            <td>Number of steps to show in model's percentage download progress</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "request_id": "abc",
+    "name": "Predefined model test 2",
+    "framework": "TensorFlow",
+    "domain": "Image Recognition",
+    "model": "inception_v3",
+    "progress_steps": 4
+}
+```
+
+**Example response**:
+```json
+{
+    "exit_code": 102,
+    "message": "processing"
+}
+```
+**Responses over WebSockets**:
+```json
+[
+    "create_example_project_start",
+    {
+        "status": "success",
+        "data": {
+            "message": "Creating project from examples.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_progress",
+    {
+        "status": "success",
+        "data": {
+            "message": "Downloading example model.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+```json
+[
+    "download_start",
+    {
+        "status": "success",
+        "data": {
+            "message": "started",
+            "request_id": "abc",
+            "url": "https://url/to/model.pb"
+        }
+    }
+]
+```
+
+```json
+[
+    "download_progress",
+    {
+        "status": "success",
+        "data": {
+            "request_id": "abc",
+            "progress": 25
+        }
+    }
+]
+```
+
+```json
+[
+    "download_progress",
+    {
+        "status": "success",
+        "data": {
+            "request_id": "abc",
+            "progress": 50
+        }
+    }
+]
+```
+
+```json
+[
+    "download_progress",
+    {
+        "status": "success",
+        "data": {
+            "request_id": "abc",
+            "progress": 75
+        }
+    }
+]
+```
+
+```json
+[
+    "download_progress",
+    {
+        "status": "success",
+        "data": {
+            "request_id": "abc",
+            "progress": 100
+        }
+    }
+]
+```
+
+```json
+[
+    "download_finish",
+    {
+        "status": "success",
+        "data": {
+            "request_id": "abc",
+            "path": "/path/to/model.pb"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_progress",
+    {
+        "status": "success",
+        "data": {
+            "message": "Adding project for example model.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_progress",
+    {
+        "status": "success",
+        "data": {
+            "message": "Adding example model to project.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_progress",
+    {
+        "status": "success",
+        "data": {
+            "message": "Adding dummy dataset to project.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_progress",
+    {
+        "status": "success",
+        "data": {
+            "message": "Adding optimization to project.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_progress",
+    {
+        "status": "success",
+        "data": {
+            "message": "Adding benchmark to project.",
+            "request_id": "abc"
+        }
+    }
+]
+```
+
+```json
+[
+    "create_example_project_finish",
+    {
+        "status": "success",
+        "data": {
+            "message": "Example project has been added.",
+            "request_id": "abc",
+            "project_id": 1,
+            "model_id": 1,
+            "dataset_id": 1,
+            "optimization_id": 1,
+            "benchmark_id": 1
+        }
+    }
+]
+```
+
+### Examples
+#### List example models
+**Path**: `api/examples/list`<br>
+**Method**: `GET`
+
+**Example response**:
+
+```json
+[
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "inception_v3"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "inception_v4"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "mobilenetv1"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "resnet50_v1_5"
+    },
+    {
+        "domain": "Image Recognition",
+        "framework": "TensorFlow",
+        "model": "resnet101"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "faster_rcnn_inception_resnet_v2"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "faster_rcnn_resnet101"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "mask_rcnn_inception_v2"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "ssd_mobilenet_v1"
+    },
+    {
+        "domain": "Object Detection",
+        "framework": "TensorFlow",
+        "model": "ssd_resnet50_v1"
+    }
+]
+```
+
+#### Create project from examples
+**Path**: `api/examples/add`<br>
+**Method**: `POST`
+
+**Parameters description:**
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>request_id</b></td>
+            <td>Request id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>name</b></td>
+            <td>New project name</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>framework</b></td>
+            <td>Framework of example model</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>domain</b></td>
+            <td>Domain of example model</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>model</b></td>
+            <td>Example model name</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "request_id": "abc",
+    "name": "Predefined model test 2",
+    "framework": "TensorFlow",
+    "domain": "Image Recognition",
+    "model": "inception_v3"
+}
+```
+
+**Example response**:
+```json
+{
+    "exit_code": 102,
+    "message": "processing"
+}
+```
+**Responses over WebSockets**:
+```json
+[
+    "download_start",
+    {
+        "status": "success",
+        "data": {
+            "message": "started",
+            "request_id": "abc",
+            "url": "https://url.to/model.pb"
+        }
+    }
+]
+```
+
+```json
+[
+    "download_finish",
+    {
+        "status": "success",
+        "data": {
+            "request_id": "abc",
+            "path": "/path/to/model.pb"
+        }
+    }
+]
+```
+
+```json
+[
+    "example_finish",
+    {
+      "status": "success",
+      "data": {
+        "message": "Example project has been added.",
+        "request_id": "abc",
+        "project_id": 1,
+        "model_id": 1,
+        "dataset_id": 1,
+        "optimization_id": 1,
+        "benchmark_id": 1
+      }
+    }
+  ]
+```
+
 ### Model
 #### List models
 **Path**: `api/model/list`<br>
@@ -1944,7 +2909,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 ### Dictionaries
 #### Domains
-**Path**: `dict/domains`<br>
+**Path**: `api/dict/domains`<br>
 **Method**: `GET`<br>
 **Example response**:
 ```json
@@ -1971,7 +2936,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 #### Domain flavours
-**Path**: `dict/domain_flavours`<br>
+**Path**: `api/dict/domain_flavours`<br>
 **Method**: `GET`<br>
 **Example response**:
 ```json
@@ -1994,7 +2959,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 #### Optimization Types
-**Path**: `dict/optimization_types`<br>
+**Path**: `api/dict/optimization_types`<br>
 **Method**: `GET`<br>
 **Example response**:
 ```json
@@ -2013,7 +2978,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 #### Optimization Types and support for specific precision
-**Path**: `dict/optimization_types/precision`<br>
+**Path**: `api/dict/optimization_types/precision`<br>
 **Method**: `GET`<br>
 **Parameters description:**
 <table>
@@ -2058,7 +3023,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 #### Precisions
-**Path**: `dict/precisions`<br>
+**Path**: `api/dict/precisions`<br>
 **Method**: `GET`<br>
 **Example response**:
 ```json
@@ -2083,7 +3048,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 #### Dataloaders
 
 ##### Get all dataloaders
-**Path**: `dict/dataloaders`<br>
+**Path**: `api/dict/dataloaders`<br>
 **Method**: `GET`<br>
 **Example response**:
 ```json
@@ -2111,7 +3076,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 ##### Get dataloaders for specified framework
-**Path**: `dict/dataloaders/framework`<br>
+**Path**: `api/dict/dataloaders/framework`<br>
 **Method**: `GET`<br>
 **Parameters description:**
 <table>
@@ -2169,7 +3134,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 #### Transforms
 
 ##### Get all transforms
-**Path**: `dict/transforms`<br>
+**Path**: `api/dict/transforms`<br>
 **Method**: `GET`<br>
 **Example response**:
 ```json
@@ -2196,7 +3161,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 ##### Get transforms for specified framework
-**Path**: `dict/transforms/framework`<br>
+**Path**: `api/dict/transforms/framework`<br>
 **Method**: `GET`<br>
 **Parameters description:**
 <table>
@@ -2247,7 +3212,7 @@ https://localhost:5000/api/model/graph?path=/path/to/model.pb
 ```
 
 ##### Get transforms for specified domain
-**Path**: `dict/transforms/domain`<br>
+**Path**: `api/dict/transforms/domain`<br>
 **Method**: `GET`<br>
 **Parameters description:**
 <table>

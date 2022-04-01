@@ -39,6 +39,7 @@ quantizer = Quantization('{{config_path}}')
 quantizer.model = '{{model_path}}'
 dataset = Dataset()
 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
+quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
 quantizer.metric = common.Metric(metric_cls=MyMetric, name='my_metric')
 quantized_model = quantizer.fit()
 quantized_model.save('{{model_output_path}}')

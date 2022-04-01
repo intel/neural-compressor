@@ -23,9 +23,18 @@
         "__help__anno_path": "annotation path",
         "__label__anno_path": "annotation path"
     },
+    "__help__COCOmAPv2": null,
+    "COCOmAPv2": {
+        "__help__anno_path": "Annotation path. The annotation file should be a yaml file, please refer to label_map for its format.",
+        "__label__anno_path": "Annotation path"
+    },
     "__help__BLEU": null,
     "__help__custom": "Create your own metric. After you choose this option code template will be generated on the server",
     "custom": "",
     "__help__SquadF1": null,
-    "SquadF1": ""
+    "SquadF1": "",
+    "__help__GLUE": null,
+    "GLUE": {
+        "__help__task": "The name of the task. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli."
+    }
 }

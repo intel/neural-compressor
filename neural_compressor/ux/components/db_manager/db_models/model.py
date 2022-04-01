@@ -54,6 +54,7 @@ class Model(Base):
         "Optimization",
         back_populates="optimized_model",
         primaryjoin="Optimization.optimized_model_id == Model.id",
+        cascade="all, delete",
     )
 
     framework: Any = relationship(

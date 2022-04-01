@@ -28,6 +28,7 @@ from neural_compressor.ux.components.db_manager.db_operations import (
     BenchmarkAPIInterface,
     DatasetAPIInterface,
     DictionariesAPIInterface,
+    ExamplesAPIInterface,
     ModelAPIInterface,
     OptimizationAPIInterface,
     ProfilingAPIInterface,
@@ -36,7 +37,7 @@ from neural_compressor.ux.components.db_manager.db_operations import (
 from neural_compressor.ux.components.file_browser.file_browser import get_directory_entries
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.graph_reader import GraphReader
-from neural_compressor.ux.components.manage_workspace import get_default_path, set_workspace
+from neural_compressor.ux.components.manage_workspace import get_default_path
 from neural_compressor.ux.components.model_zoo.list_models import list_models
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
 from neural_compressor.ux.components.profiling.execute_profiling import execute_profiling
@@ -79,17 +80,20 @@ class Router:
         self.routes: Dict[str, RoutingDefinition] = {
             "filesystem": RealtimeRoutingDefinition(get_directory_entries),
             "get_default_path": RealtimeRoutingDefinition(get_default_path),
-            "set_workspace": RealtimeRoutingDefinition(set_workspace),
             "get_possible_values": RealtimeRoutingDefinition(get_possible_values),
             "list_model_zoo": RealtimeRoutingDefinition(list_models),
             "system_info": RealtimeRoutingDefinition(get_system_info),
             "project": RealtimeRoutingDefinition(ProjectAPIInterface.get_project_details),
             "project/create": RealtimeRoutingDefinition(ProjectAPIInterface.create_project),
+            "project/delete": RealtimeRoutingDefinition(ProjectAPIInterface.delete_project),
             "project/list": RealtimeRoutingDefinition(ProjectAPIInterface.list_projects),
             "project/note": RealtimeRoutingDefinition(ProjectAPIInterface.update_project_notes),
             "dataset": RealtimeRoutingDefinition(DatasetAPIInterface.get_dataset_details),
             "dataset/add": RealtimeRoutingDefinition(DatasetAPIInterface.add_dataset),
             "dataset/list": RealtimeRoutingDefinition(DatasetAPIInterface.list_datasets),
+            "dataset/predefined": RealtimeRoutingDefinition(
+                DatasetAPIInterface.get_predefined_dataset,
+            ),
             "optimization": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.get_optimization_details,
             ),
@@ -121,6 +125,7 @@ class Router:
             "profiling/config.yaml": RealtimeRoutingDefinition(ProfilingService.get_config),
             "profiling/output.log": RealtimeRoutingDefinition(ProfilingService.get_output),
             "examples/list": RealtimeRoutingDefinition(list_models),
+            "examples/add": DeferredRoutingDefinition(ExamplesAPIInterface.create_project),
             "model/list": RealtimeRoutingDefinition(ModelAPIInterface.list_models),
             "model/boundary_nodes": DeferredRoutingDefinition(get_boundary_nodes),
             "model/graph": RealtimeRoutingDefinition(get_model_graph),
@@ -211,8 +216,3 @@ def get_system_info(data: Dict[str, Any]) -> dict:
     if "cores" in hw_info:
         del hw_info["cores"]
     return hw_info
-
-
-def not_implemented(data: dict) -> None:
-    """Temporary method to mark not implemented endpoints."""
-    raise NotImplementedError

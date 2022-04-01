@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 """Optimization class."""
 
 import os
-from typing import List, Optional
+from typing import List
 
 from neural_compressor.ux.components.config_generator.graph_optimization_config_generator import (
     GraphOptimizationConfigGenerator,
@@ -36,10 +36,9 @@ class GraphOptimization(Optimization):
         optimization_data: dict,
         project_data: dict,
         dataset_data: dict,
-        template_path: Optional[str] = None,
     ) -> None:
         """Initialize Optimization class."""
-        super().__init__(optimization_data, project_data, dataset_data, template_path)
+        super().__init__(optimization_data, project_data, dataset_data)
         self.joined_input_nodes: str = ""
         self.joined_output_nodes: str = ""
         if isinstance(self.input_nodes, list):
@@ -49,6 +48,11 @@ class GraphOptimization(Optimization):
 
         if not self.tune:
             self.config_path = None
+
+        if dataset_data["template_path"]:
+            raise InternalException(
+                "Custom datasets and metrics are not supported in Graph Optimization.",
+            )
 
     def execute(self) -> None:
         """Execute graph optimization."""
@@ -119,6 +123,7 @@ class GraphOptimization(Optimization):
         """Generate yaml config."""
         if self.tune:
             config_generator: GraphOptimizationConfigGenerator = GraphOptimizationConfigGenerator(
+                workload_directory=self.workdir,
                 configuration_path=self.config_path,
                 data=self.configuration_data,
             )

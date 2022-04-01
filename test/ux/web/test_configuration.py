@@ -15,11 +15,11 @@
 """UX Configuration test."""
 
 import logging
-import os
 import socket
 import unittest
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
+from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION
 from neural_compressor.ux.web.configuration import Configuration
 from neural_compressor.ux.web.exceptions import NotFoundException
 
@@ -214,45 +214,12 @@ class TestConfiguration(unittest.TestCase):
         self.assertNotEqual(original_token, configuration.token)
 
     @patch("sys.argv", ["inc_bench.py"])
-    @patch.dict(os.environ, {"HOME": "/foo/bar"})
-    @patch("neural_compressor.ux.web.configuration.os.path.isfile")
-    def test_default_workdir_when_no_existing_config(self, mocked_isfile: MagicMock) -> None:
+    def test_default_workdir(self) -> None:
         """Test that when no existing config given, default will be used."""
-        workloads_list_filepath = os.path.join(
-            "/foo/bar",
-            ".neural_compressor",
-            "workloads_list.json",
-        )
-
         configuration = Configuration()
-        mocked_isfile.return_value = False
         configuration.set_up()
 
-        self.assertEqual(os.path.join("/foo/bar", "workdir"), configuration.workdir)
-        mocked_isfile.assert_called_once_with(workloads_list_filepath)
-
-    @patch("sys.argv", ["inc_bench.py"])
-    @patch.dict(os.environ, {"HOME": "/foo/bar"})
-    @patch("neural_compressor.ux.web.configuration.os.path.isfile")
-    def test_default_workdir_uses_existing_config(self, mocked_isfile: MagicMock) -> None:
-        """Test that when existing config given, its value is used."""
-        workloads_list_filepath = os.path.join(
-            "/foo/bar",
-            ".neural_compressor",
-            "workloads_list.json",
-        )
-
-        configuration = Configuration()
-        mocked_isfile.return_value = True
-        with patch(
-            "neural_compressor.ux.web.configuration.open",
-            mock_open(read_data='{"active_workspace_path": "/existing/path"}'),
-        ) as mocked_open:
-            configuration.set_up()
-            mocked_open.assert_called_once_with(workloads_list_filepath, encoding="utf-8")
-
-        self.assertEqual("/existing/path", configuration.workdir)
-        mocked_isfile.assert_called_once_with(workloads_list_filepath)
+        self.assertEqual(WORKSPACE_LOCATION, configuration.workdir)
 
 
 if __name__ == "__main__":

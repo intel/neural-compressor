@@ -28,12 +28,15 @@
     <td class="cell">{{ benchmark.mode }} </td>
     <td class="cell">{{ benchmark.model.precision.name }}</td>
     <td class="cell">{{ benchmark.dataset.name }}</td>
-    <td class="cell">{{ benchmark.batch_size }}</td>
-    <td class="cell">{{ benchmark.cores_per_instance }}</td>
-    <td class="cell">{{ benchmark.number_of_instance }}</td>
-    <td class="cell">{{ (benchmark.result?.accuracy || benchmark.result?.accuracy === 0) ? benchmark.result?.accuracy +
-      '%' : '' }}</td>
-    <td class="cell">{{ benchmark.result?.performance ? benchmark.result?.performance + ' FPS' : '' }} </td>
+    <td class="cell align-right">{{ benchmark.batch_size }}</td>
+    <td class="cell align-right">{{ benchmark.cores_per_instance }}</td>
+    <td class="cell align-right">{{ benchmark.number_of_instance }}</td>
+    <td class="cell align-right">
+      {{ (benchmark.result?.accuracy || benchmark.result?.accuracy === 0) ? benchmark.result?.accuracy + '%' : '' }}
+    </td>
+    <td class="cell align-right">
+      {{ benchmark.result?.performance ? (benchmark.result?.performance | number: '1.2-2') + ' FPS' : '' }}
+    </td>
     <td class="cell center" [matTooltip]="benchmark['status']">
       <img *ngIf="benchmark['status'] === 'success'" class="icon-button"
         src="./../../assets/010a-passed-completed-solid.svg">
@@ -52,8 +55,7 @@
       </button>
     </td>
     <td class="center">
-      <mat-checkbox [checked]="false" (change)="comparisonCheck(benchmark.id, $event.checked)"
-        (click)="$event.stopPropagation();"></mat-checkbox>
+      <mat-checkbox [(ngModel)]="comparison[benchmark.id]" (click)="$event.stopPropagation();"></mat-checkbox>
     </td>
   </tr>
 </table>
@@ -108,7 +110,7 @@
         <tr>
           <td class="cell">
             <p class="big-number">
-              {{ benchmarkDetails.result.accuracy ? benchmarkDetails.result.accuracy + '%' : '-' }}
+              {{ benchmarkDetails.result.accuracy !== null ? benchmarkDetails.result.accuracy + '%' : '-' }}
             </p>
             <p class="label">
               Accuracy
@@ -125,7 +127,7 @@
           </td>
           <td class="cell">
             <p class="big-number">
-              {{benchmarkDetails.result.duration ? benchmarkDetails.result.duration + ' s' : '-' }}
+              {{benchmarkDetails.duration ? benchmarkDetails.duration + ' s' : '-' }}
             </p>
             <p class="label">
               Duration
@@ -171,7 +173,7 @@
       <h2>Model</h2>
       <table class="rounded">
         <ng-container *ngFor="let detail of benchmarkDetails['model'] | keyvalue">
-          <tr *ngIf="detail.value && !detail.key.includes('id')">
+          <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports')">
             <th>{{ detail.key | modelList }}</th>
             <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
               {{ detail.value }}

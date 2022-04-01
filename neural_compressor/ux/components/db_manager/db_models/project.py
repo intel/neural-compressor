@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Project package contains project class representing single project."""
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship, session
@@ -47,30 +47,35 @@ class Project(Base):
         "Model",
         order_by=Model.id,
         back_populates="project",
+        cascade="all, delete",
     )
 
     optimizations: Any = relationship(
         "Optimization",
         order_by=Optimization.id,
         back_populates="project",
+        cascade="all, delete",
     )
 
     benchmarks: Any = relationship(
         "Benchmark",
         order_by=Benchmark.id,
         back_populates="project",
+        cascade="all, delete",
     )
 
     profilings: Any = relationship(
         "Profiling",
         order_by=Profiling.id,
         back_populates="project",
+        cascade="all, delete",
     )
 
     datasets: Any = relationship(
         "Dataset",
         order_by=Dataset.id,
         back_populates="project",
+        cascade="all, delete",
     )
 
     @staticmethod
@@ -85,6 +90,26 @@ class Project(Base):
         db_session.flush()
 
         return int(new_project.id)
+
+    @staticmethod
+    def delete_project(
+        db_session: session.Session,
+        project_id: int,
+        project_name: str,
+    ) -> Optional[int]:
+        """Remove project from database."""
+        project = (
+            db_session.query(Project)
+            .filter(Project.id == project_id)
+            .filter(Project.name == project_name)
+            .one_or_none()
+        )
+        if project is None:
+            return None
+        db_session.delete(project)
+        db_session.flush()
+
+        return int(project.id)
 
     @staticmethod
     def project_details(db_session: session.Session, project_id: int) -> dict:

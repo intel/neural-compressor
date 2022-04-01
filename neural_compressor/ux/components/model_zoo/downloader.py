@@ -21,12 +21,17 @@ from typing import Any, Dict, Optional, Tuple
 
 import requests
 
+from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION
 from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.github_info import GithubInfo
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.utils import is_development_env, load_model_config
+from neural_compressor.ux.utils.utils import (
+    is_development_env,
+    load_model_config,
+    normalize_domain,
+    normalize_framework,
+)
 from neural_compressor.ux.web.communication import MessageQueue
-from neural_compressor.ux.web.configuration import Configuration
 
 
 class Downloader:
@@ -34,12 +39,11 @@ class Downloader:
 
     def __init__(self, data: Dict[str, Any]) -> None:
         """Initialize Downloader class."""
-        configuration = Configuration()
         self.request_id: str = str(data.get("request_id", ""))
         self.framework: str = data.get("framework", "")
         self.domain: str = data.get("domain", "")
         self.model: str = data.get("model", "")
-        self.workspace_path: str = configuration.workdir
+        self.workspace_path: str = WORKSPACE_LOCATION
         self.progress_steps: Optional[int] = data.get("progress_steps", None)
         self.download_dir: str = ""
         self.mq = MessageQueue()
@@ -119,8 +123,8 @@ class Downloader:
         self.download_dir = os.path.join(
             self.workspace_path,
             "examples",
-            self.framework,
-            self.domain,
+            normalize_framework(self.framework),
+            normalize_domain(self.domain),
             self.model,
         )
 

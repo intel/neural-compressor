@@ -269,8 +269,8 @@ def get_size(path: str, unit: str = "MB", add_unit: bool = False) -> Union[str, 
     supported_units = {
         "B": 1,
         "KB": 1024,
-        "MB": 1024 ** 2,
-        "GB": 1024 ** 3,
+        "MB": 1024**2,
+        "GB": 1024**3,
     }
     unit_modifier = supported_units.get(unit, None)
     if unit_modifier is None:

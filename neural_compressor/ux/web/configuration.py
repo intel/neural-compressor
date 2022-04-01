@@ -16,7 +16,6 @@
 """Configuration module for UX server."""
 
 import argparse
-import json
 import logging
 import os
 import secrets
@@ -26,6 +25,7 @@ from typing import Dict
 from numpy.random import randint
 
 from neural_compressor.utils.utility import singleton
+from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION
 from neural_compressor.ux.utils.exceptions import NotFoundException
 from neural_compressor.ux.utils.utils import determine_ip
 
@@ -54,7 +54,6 @@ class Configuration:
     def set_up(self) -> None:
         """Reset variables."""
         self.determine_values_from_environment()
-        self.determine_values_from_existing_config()
 
     def determine_values_from_environment(self) -> None:
         """Set variables based on environment values."""
@@ -68,7 +67,7 @@ class Configuration:
         self.tls_certificate = args.get("cert", "")
         self.tls_key = args.get("key", "")
         self.scheme = "http" if self.allow_insecure_connections else "https"
-        self.workdir = os.path.join(os.environ.get("HOME", ""), "workdir")
+        self.workdir = WORKSPACE_LOCATION
 
     @property
     def global_config_directory(self) -> str:
@@ -77,17 +76,6 @@ class Configuration:
             os.environ.get("HOME", ""),
             ".neural_compressor",
         )
-
-    def determine_values_from_existing_config(self) -> None:
-        """Set variables based on existing files."""
-        workloads_list_filepath = os.path.join(
-            self.global_config_directory,
-            "workloads_list.json",
-        )
-        if os.path.isfile(workloads_list_filepath):
-            with open(workloads_list_filepath, encoding="utf-8") as workloads_list:
-                workloads_data = json.load(workloads_list)
-                self.workdir = workloads_data.get("active_workspace_path", self.workdir)
 
     def get_command_line_args(self) -> Dict:
         """Return arguments passed in command line."""
