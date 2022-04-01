@@ -96,6 +96,51 @@ def build_fake_yaml_1():
     with open('fake_1.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_fake_yaml_2():
+    fake_yaml = """
+    model:
+        name: imagenet_distillation
+        framework: pytorch
+
+    distillation:
+        train:
+            start_epoch: 0
+            end_epoch: 3
+            iteration: 10
+            optimizer:
+                SGD:
+                    learning_rate: 0.001
+                    momentum: 0.1
+                    nesterov: True
+                    weight_decay: 0.001
+            criterion:
+                IntermediateLayersKnowledgeDistillationLoss:
+                    layer_mappings: [
+                        ['layer1.0', 'layer1.0'],
+                        ['layer1.1.conv1', '', 'layer1.1.conv1', '0'],
+                                        ]
+                    loss_types: ['KL', 'MSE']
+                    loss_weights: [0.5, 0.5]
+            dataloader:
+                batch_size: 30
+                dataset:
+                    dummy:
+                        shape: [128, 3, 224, 224]
+                        label: True
+    evaluation:
+        accuracy:
+            metric:
+                topk: 1
+            dataloader:
+                batch_size: 30
+                dataset:
+                    dummy:
+                        shape: [128, 3, 224, 224]
+                        label: True
+    """
+    with open('fake_2.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
+
 class TestDistillation(unittest.TestCase):
 
     student_model = torchvision.models.resnet18()
@@ -108,11 +153,13 @@ class TestDistillation(unittest.TestCase):
     def setUpClass(cls):
         build_fake_yaml()
         build_fake_yaml_1()
+        build_fake_yaml_2()
 
     @classmethod
     def tearDownClass(cls):
         os.remove('fake.yaml')
         os.remove('fake_1.yaml')
+        os.remove('fake_2.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
@@ -133,6 +180,19 @@ class TestDistillation(unittest.TestCase):
         conf.distillation.train.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
         conf.evaluation.accuracy.dataloader.batch_size = 30
         conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [128, 3, 224, 224], 'label': True}}
+        distiller = Distillation(conf)
+        distiller.student_model = self.student_model
+        distiller.teacher_model = self.teacher_model
+        print('student model: {}'.format(distiller.student_model))
+        _ = distiller.fit()
+
+    def test_distillation_intermediate_layers(self):
+        from neural_compressor.experimental import Distillation, common
+        from neural_compressor.conf.config import Distillation_Conf
+        conf = Distillation_Conf('fake_2.yaml')
+        conf.usr_cfg.distillation.train.criterion.\
+            IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][-1] = \
+                lambda x: x[:, :2,...]
         distiller = Distillation(conf)
         distiller.student_model = self.student_model
         distiller.teacher_model = self.teacher_model
