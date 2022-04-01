@@ -584,6 +584,15 @@ criterion_schema = Schema({
         Optional('temperature'): And(float, lambda s: s > 0),
         Optional('loss_types'): And(list, lambda s: all(i in ['CE', 'KL'] for i in s)),
         Optional('loss_weights'): And(list, lambda s: all(i >= 0 for i in s) and sum(s) == 1.0),
+    },
+    Optional('IntermediateLayersKnowledgeDistillationLoss'): {
+        'layer_mappings':
+            And(Or(tuple, list), lambda s: all(len(i) in [2, 4] for i in s)),
+        Optional('loss_types'):
+            And(Or(tuple, list), lambda s: all(i in ['MSE', 'KL', 'L1'] for i in s)),
+        Optional('loss_weights'):
+            And(Or(tuple, list), lambda s: all(i >= 0 for i in s) and sum(s) == 1.0),
+        Optional('add_origin_loss'): bool,
     }
 })
 
@@ -857,6 +866,35 @@ schema = Schema({
 
     Optional('distillation'): {
         Optional("train"): train_schema
+    },
+
+    Optional('auto_distillation'): {
+        "search": {
+            "search_space": dict,
+            Optional("search_algorithm", default=""): str,
+            Optional("metrics", default=[]): list,
+            Optional("higher_is_better", default=[]): list,
+            Optional("max_trials", default=1): int,
+            Optional("seed", default=42): int,
+            },
+        Optional("flash_distillation"): {
+            Optional("knowledge_transfer"): {
+                Optional("block_names", default=[]): list,
+                "layer_mappings_for_knowledge_transfer": list,
+                Optional("loss_types", default=[]): list,
+                Optional("loss_weights", default=[]): list,
+                Optional("add_origin_loss", default=[]): list,
+                Optional("train_steps", default=[]): list,
+                },
+            Optional("regular_distillation"): {
+                Optional("block_names", default=[]): list,
+                "layer_mappings_for_knowledge_transfer": list,
+                Optional("loss_types", default=[]): list,
+                Optional("loss_weights", default=[]): list,
+                Optional("add_origin_loss", default=[]): list,
+                Optional("train_steps", default=[]): list,
+                },
+            },
     },
 
     Optional("train"): train_schema
