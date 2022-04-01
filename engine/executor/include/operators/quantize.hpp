@@ -23,6 +23,7 @@
 
 namespace executor {
 using dnnl::algorithm;
+using dnnl::engine;
 using dnnl::memory;
 using dnnl::prop_kind;
 
@@ -41,7 +42,10 @@ class QuantizeOperator : public Operator {
   void Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) override;
 
  private:
+  dnnl::engine eng_ = engine(engine::kind::cpu, 0);
+  dnnl::stream eng_stream_ = dnnl::stream(eng_);
   void MapTensors(const vector<Tensor*>& input, const vector<Tensor*>& output);
+  void RuntimeMinmax();
 
  protected:
   string output_dtype_ = "fp32";
@@ -51,6 +55,10 @@ class QuantizeOperator : public Operator {
   Tensor* src_min_ = nullptr;
   Tensor* src_max_ = nullptr;
   Tensor* dst_ = nullptr;
+  Tensor* dst_min_ = nullptr;
+  Tensor* dst_max_ = nullptr;
+  bool is_dynamic_ = false;
+  int channel_ = -1;  // -1 represent per_tensor
 };
 }  // namespace executor
 #endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_QUANTIZE_HPP_

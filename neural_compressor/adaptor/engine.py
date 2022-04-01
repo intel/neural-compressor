@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 import copy
 import logging
@@ -41,9 +40,13 @@ class EngineAdaptor(Adaptor):
         super().__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []
+        self.static = framework_specific_info[
+            "approach"] == "post_training_static_quant"
         self.work_space = framework_specific_info["workspace_path"]
-        self.q_dtype = framework_specific_info['q_dtype'] # default int8
-        assert self.q_dtype in ['int8', 'bf16'], 'Engine only supports int8 or bf16 quantization.'
+        self.q_dtype = framework_specific_info['q_dtype']  # default int8
+        assert self.q_dtype in [
+            'int8', 'bf16'
+        ], 'Engine only supports int8 or bf16 quantization.'
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
         self.query_handler = EngineQuery(local_config_file=os.path.join(
@@ -51,8 +54,9 @@ class EngineAdaptor(Adaptor):
         self.quantizable_op_types = self._query_quantizable_op_types()
         self.fp32_results = []
         self.fp32_preds_as_label = False
-        self.quantize_config = {} # adaptor should know current configs at any time
-        
+        self.quantize_config = {
+        }  # adaptor should know current configs at any time
+
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
@@ -78,33 +82,31 @@ class EngineAdaptor(Adaptor):
         # int8
         if self.q_dtype == 'int8':
             from neural_compressor.adaptor.engine_utils.int8_util import EngineInt8Quantizer
-            quantizer = EngineInt8Quantizer(tmp_model,
-                data_loader,
-                iterations,
-                quantize_config,
-                self.quantizable_op_types)
+            quantizer = EngineInt8Quantizer(tmp_model, data_loader, iterations,
+                                            quantize_config,
+                                            self.quantizable_op_types)
             tmp_model = quantizer.quantize_model()
 
         # bf16
         else:
             from neural_compressor.adaptor.engine_utils.bf16_util import EngineBf16Quantizer
-            quantizer = EngineBf16Quantizer(tmp_model,
-                data_loader,
-                iterations,
-                quantize_config,
-                self.quantizable_op_types)
+            assert not quantize_config[
+                'static'], "dynamic quantization only support int8 now"
+            quantizer = EngineBf16Quantizer(tmp_model, data_loader, iterations,
+                                            quantize_config,
+                                            self.quantizable_op_types)
             tmp_model = quantizer.quantize_model()
 
-        self.quantize_config = quantize_config # update so other methods can know current configs
+        self.quantize_config = quantize_config  # update so other methods can know current configs
         self._dump_model_op_stats(tmp_model, quantize_config)
         return tmp_model
 
     def _dump_model_op_stats(self, model, config):
-        quant_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
+        quant_op_list = self.query_handler.get_op_types_by_precision(  # pylint: disable=no-member
             precision=self.q_dtype)
         res = {}
         for op_type in quant_op_list:
-            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+            res[op_type] = {'INT8': 0, 'BF16': 0, 'FP32': 0}
         for node in model.graph.nodes:
             if node.name in config and node.op_type in res:
                 capa_info = config[node.name]
@@ -115,8 +117,11 @@ class EngineAdaptor(Adaptor):
                 else:
                     dtype = capa_info
                 res[node.op_type][dtype.upper()] += 1
-        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-            res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
+        output_data = [[
+            op_type,
+            sum(res[op_type].values()), res[op_type]['INT8'],
+            res[op_type]['BF16'], res[op_type]['FP32']
+        ] for op_type in res.keys()]
         OpPrecisionStatistics(output_data).print_stat()
 
     def query_fw_capability(self, model):
@@ -148,22 +153,26 @@ class EngineAdaptor(Adaptor):
             if op.op_type not in optype_wise.keys():
                 optype_wise[op.op_type] = copy.deepcopy(op_capability)
 
-            op_wise.update(
-                {(op.name, op.op_type): copy.deepcopy(op_capability)})
+            op_wise.update({
+                (op.name, op.op_type): copy.deepcopy(op_capability)
+            })
 
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _cfg_to_quantize_config(self, tune_cfg):
         quantize_config = {}
+        quantize_config['static'] = self.static
         quantize_config['calib_iteration'] = tune_cfg['calib_iteration']
 
         for _, op in enumerate(self.quantizable_ops):
-            if tune_cfg['op'][(op.name, op.op_type)
-                              ]['activation']['dtype'] == 'fp32':
+            if tune_cfg['op'][(op.name,
+                               op.op_type)]['activation']['dtype'] == 'fp32':
                 quantize_config[op.name] = 'fp32'
             else:
-                node_config = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
-                for tensor, config in tune_cfg['op'][(op.name, op.op_type)].items():
+                node_config = copy.deepcopy(tune_cfg['op'][(op.name,
+                                                            op.op_type)])
+                for tensor, config in tune_cfg['op'][(op.name,
+                                                      op.op_type)].items():
                     if config['dtype'] == "int8":
                         node_config[tensor]['dtype'] = 'int8'
                     elif config['dtype'] == "uint8":
@@ -190,9 +199,15 @@ class EngineAdaptor(Adaptor):
 
         return quantizable_op_types
 
-    def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
-                 tensorboard=False, fp32_baseline=False):
+    def evaluate(self,
+                 input_graph,
+                 dataloader,
+                 postprocess=None,
+                 metric=None,
+                 measurer=None,
+                 iteration=-1,
+                 tensorboard=False,
+                 fp32_baseline=False):
         """The function is for evaluation if no given eval func
 
         Args:
@@ -229,7 +244,8 @@ class EngineAdaptor(Adaptor):
                 if len(list(predictions.values())) == 1:
                     predictions = list(predictions.values())[0]
                 elif len(list(predictions.values())) > 1:
-                    predictions = list(predictions.values())[:len(list(predictions.values()))]
+                    predictions = list(
+                        predictions.values())[:len(list(predictions.values()))]
 
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
@@ -254,6 +270,7 @@ class EngineAdaptor(Adaptor):
     def save(self, model, path):
         pass
 
+
 class EngineQuery(QueryBackendCapability):
 
     def __init__(self, local_config_file=None):
@@ -268,8 +285,9 @@ class EngineQuery(QueryBackendCapability):
             content = yaml.safe_load(f)
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
-            except Exception as e: # pragma: no cover
-                logger.info("Failed to parse {} due to {}".format(self.cfg, str(e)))
+            except Exception as e:  # pragma: no cover
+                logger.info("Failed to parse {} due to {}".format(
+                    self.cfg, str(e)))
                 self.cur_config = None
                 raise ValueError("Please check the {} format.".format(self.cfg))
 

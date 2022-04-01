@@ -52,9 +52,9 @@ void run_net() {
   float duration = 0;
   for (auto i = 0; i < FLAGS_iterations; i++) {
     auto raw_data = dataloader->prepare_batch(i);
-    for (int i = 0; i < input_tensors.size(); ++i) {
-      input_tensors[i].set_data(raw_data[i]);
-      input_tensors[i].set_shape(input_shape[i]);
+    for (int j = 0; j < input_tensors.size(); ++j) {
+      input_tensors[j].set_data(raw_data[j]);
+      input_tensors[j].set_shape(input_shape[j]);
     }
     // float* src_0 = static_cast<float*>(input_tensors[0]->mutable_data());
     // float* src_1 = static_cast<float*>(input_tensors[1]->mutable_data());
