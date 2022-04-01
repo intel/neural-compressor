@@ -37,7 +37,8 @@ requirements:
     - sigopt
     - prettytable
     - cryptography
-    - sqlalchemy
+    - sqlalchemy ==1.4.27
+    - alembic ==1.7.7
 test:
   imports:
     - neural_compressor

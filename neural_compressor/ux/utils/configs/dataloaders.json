@@ -96,6 +96,38 @@
                 ]
             },
             {
+                "name": "dummy_v2",
+                "help": "Dataset used for dummy data generation",
+                "show_dataset_location": false,
+                "params": [
+                    {
+                        "name": "input_shape",
+                        "help": "Support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor.",
+                        "value": []
+                    },
+                    {
+                        "name": "label_shape",
+                        "help": "Support create single or multi label tensors list represent the simple shape of the label.",
+                        "value": []
+                    },
+                    {
+                        "name": "low",
+                        "help": "Low out the tensor value range from [0, 1] to [0, low] or [low, 0] if low < 0, if float, will implement all tensors with same low value.",
+                        "value": -128.0
+                    },
+                    {
+                        "name": "high",
+                        "help": "High the tensor value by add all tensor element value high. If list, length of list should be same with shape list.",
+                        "value": 127.0
+                    },
+                    {
+                        "name": "dtype",
+                        "help": "Support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool'.",
+                        "value": "float32"
+                    }
+                ]
+            },
+            {
                 "name": "FashionMNIST",
                 "help": null,
                 "show_dataset_location": true,
@@ -158,6 +190,43 @@
                         "value": "False"
                     }
 
+                ]
+            },
+            {
+                "name": "GLUE",
+                "help": null,
+                "show_dataset_location": false,
+                "params": [
+                    {
+                        "name": "data_dir",
+                        "help": "The input data dir",
+                        "value": ""
+                    },
+                    {
+                        "name": "max_seq_length",
+                        "help": "The maximum total input sequence length after tokenization.",
+                        "value": 128
+                    },
+                    {
+                        "name": "do_lower_case",
+                        "help": "Whether or not to lowercase the input.",
+                        "value": true
+                    },
+                    {
+                        "name": "task",
+                        "help": "The name of the task to fine-tune. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli.",
+                        "value": "mrpc"
+                    },
+                    {
+                        "name": "model_type",
+                        "help": "Model type, support 'distilbert', 'bert', 'mobilebert', 'roberta'.",
+                        "value": "bert"
+                    },
+                    {
+                        "name": "dynamic_length",
+                        "help": "Whether to use fixed sequence length.",
+                        "value": false
+                    }
                 ]
             },
             {
@@ -240,6 +309,38 @@
                         "name": "root",
                         "help": null,
                         "value": ""
+                    }
+                ]
+            },
+             {
+                "name": "dummy_v2",
+                "help": "Dataset used for dummy data generation",
+                "show_dataset_location": false,
+                "params": [
+                    {
+                        "name": "input_shape",
+                        "help": "Support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor.",
+                        "value": []
+                    },
+                    {
+                        "name": "label_shape",
+                        "help": "Support create single or multi label tensors list represent the simple shape of the label.",
+                        "value": []
+                    },
+                    {
+                        "name": "low",
+                        "help": "Low out the tensor value range from [0, 1] to [0, low] or [low, 0] if low < 0, if float, will implement all tensors with same low value.",
+                        "value": -128.0
+                    },
+                    {
+                        "name": "high",
+                        "help": "High the tensor value by add all tensor element value high. If list, length of list should be same with shape list.",
+                        "value": 127.0
+                    },
+                    {
+                        "name": "dtype",
+                        "help": "Support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool'.",
+                        "value": "float32"
                     }
                 ]
             },
@@ -370,11 +471,6 @@
                 ]
             },
             {
-                "name": "custom",
-                "help": "Create your own dataset. After you choose this option code template will be generated on the server.",
-                "value": ""
-            },
-            {
                 "name": "bert",
                 "help": "Dataset for bert.",
                 "value": "",
@@ -391,7 +487,13 @@
                         "value": "/path/to/dev-v1.1.json"
                     }
                 ]
+            },
+            {
+                "name": "custom",
+                "help": "Create your own dataset. After you choose this option code template will be generated on the server.",
+                "value": ""
             }
+
         ]
     }
 ]

@@ -114,6 +114,7 @@ class Profiling:
     def generate_config(self) -> None:
         """Generate json config for profiling."""
         config_generator = ProfilingConfigGenerator(
+            workload_directory=self.workdir,
             configuration_path=self.config_path,
             data=self.profiling_data,
         )
@@ -140,6 +141,7 @@ class Profiling:
                 "metric": self.dataloader.metric,
             },
             "num_threads": self.num_threads,
+            "dataset_type": self.dataloader.dataset_type,
         }
         return profiling_data
 

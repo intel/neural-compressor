@@ -31,6 +31,7 @@ from neural_compressor.ux.components.config_generator.profiling_config_generator
 from neural_compressor.ux.components.profiling.profiler import Profiler as Parent
 from neural_compressor.ux.components.profiling.tensorflow_profiler import utils
 from neural_compressor.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.utils.logger import log
 
 
 class Profiler(Parent):
@@ -152,7 +153,13 @@ class Profiler(Parent):
 
     def build_dataloader(self) -> TensorflowDataLoader:
         """Build dataloader based on config."""
+        dataset_type = ""
+        try:
+            dataset_type = list(self.dataloader_data.get("dataset", {}).keys())[0]
+        except IndexError:
+            log.debug("Could not get dataset type.")
         config_generator = ProfilingConfigGenerator(
+            workload_directory="",
             configuration_path="",
             data={
                 "framework": "tensorflow",
@@ -167,6 +174,7 @@ class Profiler(Parent):
                 "batch_size": self.batch_size,
                 "dataloader": self.dataloader_data,
                 "num_threads": self.num_threads,
+                "dataset_type": dataset_type,
             },
         )
         dataloader_config = config_generator.generate_dataloader_config()

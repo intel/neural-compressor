@@ -15,8 +15,8 @@
 """The TuningDetails class."""
 import json
 
-from sqlalchemy import Column, DateTime, Float, Integer, String
-from sqlalchemy.orm import session
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship, session
 from sqlalchemy.sql import func
 
 from neural_compressor.ux.components.db_manager.db_manager import Base
@@ -34,8 +34,15 @@ class TuningDetails(Base):
     objective = Column(String(50))
     exit_policy = Column(String)
     random_seed = Column(Integer)
+    tuning_history_id = Column(Integer, ForeignKey("tuning_history.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=func.now())
     modified_at = Column(DateTime, nullable=True, onupdate=func.now())
+
+    tuning_history = relationship(
+        "TuningHistory",
+        foreign_keys=[tuning_history_id],
+        cascade="all, delete",
+    )
 
     @staticmethod
     def add(
@@ -64,3 +71,22 @@ class TuningDetails(Base):
         db_session.flush()
 
         return int(new_tuning_details.id)
+
+    @staticmethod
+    def update_tuning_history(
+        db_session: session.Session,
+        tuning_details_id: int,
+        tuning_history_id: int,
+    ) -> dict:
+        """Update status of optimization."""
+        tuning_details = (
+            db_session.query(TuningDetails).filter(TuningDetails.id == tuning_details_id).one()
+        )
+        tuning_details.tuning_history_id = tuning_history_id
+        db_session.add(tuning_details)
+        db_session.flush()
+
+        return {
+            "id": tuning_details.id,
+            "tuning_history_id": tuning_details.tuning_history_id,
+        }

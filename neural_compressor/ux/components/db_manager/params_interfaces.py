@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Parameters interfaces for DB."""
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.ux.components.optimization.tune.tuning import (
     TuningDetails as TuningDetailsInterface,
@@ -106,3 +106,51 @@ class ProfilingResultAddParamsInterface:
     cpu_execution_time: int
     op_run: int
     op_defined: int
+
+
+class TuningHistoryItemInterface:
+    """Interface for single tuning history item."""
+
+    def __init__(self) -> None:
+        """Initialize Tuning History Item Interface."""
+        self.accuracy: Optional[List[float]] = None
+        self.performance: Optional[List[float]] = None
+
+    def serialize(self) -> Dict[str, Any]:
+        """Serialize tuning history item."""
+        result = {}
+        for key, value in self.__dict__.items():
+            result.update({key: value})
+        return result
+
+
+class TuningHistoryInterface:
+    """Interface for tuning history data."""
+
+    def __init__(self) -> None:
+        """Initialize Tuning History Interface."""
+        self._skip = ["_skip", "history"]
+        self.minimal_accuracy: Optional[float] = None
+        self.baseline_accuracy: Optional[List[float]] = None
+        self.baseline_performance: Optional[List[float]] = None
+        self.last_tune_accuracy: Optional[List[float]] = None
+        self.last_tune_performance: Optional[List[float]] = None
+        self.best_tune_accuracy: Optional[List[float]] = None
+        self.best_tune_performance: Optional[List[float]] = None
+        self.history: List[TuningHistoryItemInterface] = []
+
+    def serialize(self) -> Dict[str, Any]:
+        """Serialize history snapshot to dict."""
+        result = {}
+        for key, value in self.__dict__.items():
+            if key in self._skip:
+                continue
+            # if value is None:
+            #     continue
+            # if isinstance(value, list) and len(value) < 1:
+            #     continue
+            result.update({key: value})
+        serialized_history = [history_item.serialize() for history_item in self.history]
+        # if len(serialized_history) > 0:
+        result.update({"history": serialized_history})
+        return result

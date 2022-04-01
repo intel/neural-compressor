@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -192,3 +192,9 @@ class Tuning(JsonSerializer):
                 "The random seed value is not valid. " "Random seed should be an integer.",
             )
         self.random_seed = random_seed
+
+    def set_workspace(self, path: str) -> None:
+        """Update tuning workspace path in config."""
+        if self.workspace is None:
+            self.workspace = Workspace()
+        self.workspace.path = path

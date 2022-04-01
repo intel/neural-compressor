@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -149,12 +149,14 @@ class Benchmark:
             "iterations": self.iterations,
             "number_of_instance": self.num_of_instance,
             "cores_per_instance": self.cores_per_instance,
+            "dataset_type": self.dataloader.dataset_type,
         }
         return configuration_data
 
     def generate_config(self) -> None:
         """Generate yaml config for benchmark."""
         config_generator: BenchmarkConfigGenerator = BenchmarkConfigGenerator(
+            workload_directory=self.workdir,
             configuration_path=self.config_path,
             data=self.configuration_data,
         )

@@ -1,13 +1,16 @@
 <h2>Optimizations</h2>
 <p>Here you can create optimized models. You can see all of them in the table below.
   When you click on the row, you can see the details of each optimization.
-  When you click "Run" you can run tuning of given optimization.</p>
+  When you click "Run" you can run tuning of given optimization. When clicking table cell in "Accuracy" or
+  "Performance" column you can pin benchmark results to the optimizations.</p>
 <table class="rounded">
   <tr>
     <td class="header">Optimization name</td>
     <td class="header">Optimization type</td>
     <td class="header">Precision</td>
     <td class="header">Dataset</td>
+    <td class="header">Accuracy</td>
+    <td class="header">Performance</td>
     <td class="header">Size</td>
     <td class="header">Created at</td>
     <td class="header">Last run</td>
@@ -22,7 +25,42 @@
     <td class="cell">{{ optimization.optimization_type.name }}</td>
     <td class="cell">{{ optimization.precision.name }}</td>
     <td class="cell">{{ optimization.dataset.name }}</td>
-    <td class="cell">{{ optimization.optimized_model?.size }} {{ optimization.duration ? 'MB' : null }}</td>
+
+    <td class="cell" [ngClass]="pinnedAccuracyBenchmarks[optimization.id] ? 'align-right' : 'center'"
+      (click)="$event.stopPropagation();openPinDialog('accuracy', optimization.id)">
+      <a *ngIf="pinnedAccuracyBenchmarks[optimization.id]" class="big-number-table">
+        {{ pinnedAccuracyBenchmarks[optimization.id].result.accuracy }} %
+      </a>
+      <ng-container *ngIf="!pinnedAccuracyBenchmarks[optimization.id]">
+        <a class="pin" matTooltip="Click to choose benchmark results to pin"
+          *ngIf="availableAccuracyBenchmarks[optimization.id] && availableAccuracyBenchmarks[optimization.id].length">
+          Click to pin benchmark
+        </a>
+        <a matTooltip="Add and execute benchmarks for this configuration to see the results" class="label-table"
+          *ngIf="!(availableAccuracyBenchmarks[optimization.id] && availableAccuracyBenchmarks[optimization.id].length)">
+          *
+        </a>
+      </ng-container>
+    </td>
+
+    <td class="cell" [ngClass]="pinnedPerformanceBenchmarks[optimization.id] ? 'align-right' : 'center'"
+      (click)="$event.stopPropagation();openPinDialog('performance', optimization.id)">
+      <a *ngIf="pinnedPerformanceBenchmarks[optimization.id]" class="big-number-table">
+        {{ pinnedPerformanceBenchmarks[optimization.id].result.performance | number: '1.2-2' }} FPS
+      </a>
+      <ng-container *ngIf="!pinnedPerformanceBenchmarks[optimization.id]">
+        <a class="pin" matTooltip="Click to choose benchmark results to pin"
+          *ngIf="availablePerformanceBenchmarks[optimization.id] && availablePerformanceBenchmarks[optimization.id].length">
+          Click to pin benchmark
+        </a>
+        <a matTooltip="Add and execute benchmarks for this configuration to see the results" class="label-table"
+          *ngIf="!(availablePerformanceBenchmarks[optimization.id] && availablePerformanceBenchmarks[optimization.id].length)">
+          *
+        </a>
+      </ng-container>
+    </td>
+
+    <td class="cell align-right">{{ optimization.optimized_model?.size }} {{ optimization.duration ? 'MB' : null }}</td>
     <td class="cell">{{ optimization.created_at }}</td>
     <td class="cell">{{ optimization.last_run_at }}</td>
     <td class="cell">{{ optimization.duration }} {{ optimization.duration ? 's' : null }} </td>
@@ -45,6 +83,10 @@
   </tr>
 </table>
 
+<p class="label-table">
+  * - Add and execute <a class="pin" (click)="goToBenchmarks()">benchmarks</a> for this configuration to see the results
+</p>
+
 <button mat-raised-button class="create-new-btn" (click)="addOptimization()">
   <img src="./../../assets/008a-plus-solid-black.svg">
   Add new optimization
@@ -57,6 +99,39 @@
 
 <ng-container *ngIf="optimizationDetails">
   <div class="container">
+    <div class="item">
+      <h2>Results</h2>
+      <table class="comparison-table"
+        *ngIf="pinnedAccuracyBenchmarks[activeOptimizationId] || pinnedPerformanceBenchmarks[activeOptimizationId]">
+        <tr>
+          <td class="cell">
+            <p class="big-number">
+              {{ pinnedAccuracyBenchmarks[activeOptimizationId] ?
+              pinnedAccuracyBenchmarks[activeOptimizationId].result.accuracy + '%' : '-' }}
+            </p>
+            <p class="label">
+              Accuracy
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td class="cell">
+            <p class="big-number">
+              {{ pinnedPerformanceBenchmarks[activeOptimizationId] ?
+              (pinnedPerformanceBenchmarks[activeOptimizationId].result.performance | number: '1.1-1') + ' FPS'
+              : '-' }}
+            </p>
+            <p class="label">
+              Performance
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p *ngIf="!(pinnedAccuracyBenchmarks[activeOptimizationId] || pinnedPerformanceBenchmarks[activeOptimizationId])">
+        Run benchmark to get accuracy and performance results.
+      </p>
+    </div>
+
     <div class="item" *ngIf="optimizationDetails['tuning_details']">
       <h2>Tuning details</h2>
       <table class="rounded">
@@ -68,12 +143,14 @@
           <th>sampling size</th>
           <td>{{ optimizationDetails['sampling_size'] }}</td>
         </tr>
-        <tr *ngFor="let detail of optimizationDetails['tuning_details'] | keyvalue">
-          <th>{{ detail.key | modelList }}</th>
-          <td *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">{{
-            detail.value }}</td>
-          <td *ngIf="typeOf(detail.value) === 'object' && detail.value">{{ detail.value | json }}</td>
-        </tr>
+        <ng-container *ngFor="let detail of optimizationDetails['tuning_details'] | keyvalue">
+          <tr *ngIf="!['id', 'tuning_history'].includes(detail.key)">
+            <th>{{ detail.key | modelList }}</th>
+            <td *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">{{
+              detail.value }}</td>
+            <td *ngIf="typeOf(detail.value) === 'object' && detail.value">{{ detail.value | json }}</td>
+          </tr>
+        </ng-container>
       </table>
     </div>
 
@@ -81,7 +158,7 @@
       <h2>Model</h2>
       <table class="rounded">
         <ng-container *ngFor="let detail of optimizationDetails['optimized_model'] | keyvalue">
-          <tr *ngIf="detail.value && !detail.key.includes('id')">
+          <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports')">
             <th>{{ detail.key | modelList }}</th>
             <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
               {{ detail.value }} {{ detail.key === 'size' ? 'MB' : null }}
@@ -93,71 +170,70 @@
         </ng-container>
       </table>
     </div>
-  </div>
 
-  <div class="item" *ngIf="optimizationDetails['log_path']">
-    <h2>Other</h2>
-    <table class="rounded">
-      <tr>
-        <th>created at</th>
-        <td>{{ optimizationDetails['created_at'] }}</td>
-      </tr>
-      <tr>
-        <th>last run at</th>
-        <td>{{ optimizationDetails['last_run_at'] }}</td>
-      </tr>
-      <tr>
-        <th>config path</th>
-        <td class="pointer">
-          <a *ngIf="optimizationDetails['config_path']" class="file-button"
-            href="{{ apiBaseUrl }}api/optimization/config.yaml?id={{ optimizationDetails.id }}&token={{ token }}"
-            target="_blank">
-            Show config</a>
-        </td>
-      </tr>
-      <tr>
-        <th>log path</th>
-        <td class="pointer">
-          <a *ngIf="optimizationDetails['log_path']" class="file-button"
-            href="{{ apiBaseUrl }}api/optimization/output.log?id={{ optimizationDetails.id}}&token={{ token }}"
-            target="_blank">
-            Show output</a>
-        </td>
-      </tr>
-      <tr>
-        <th>execution command</th>
-        <td class="pointer" (click)="copyToClipboard(optimizationDetails['execution_command'])"
-          [matTooltip]="'Copy execution command to clipboard'">
-          {{ optimizationDetails['execution_command'] }}
-        </td>
-      </tr>
-    </table>
-  </div>
-
-  <ng-container *ngIf="historyData['data'] 
-    && historyData['data']['last_tune_accuracy'] 
-    && historyData['data']['history']
-    && historyData['data']['history'].length > 1">
-    <div class="item">
-      <h2>Accuracy - tuning history</h2>
-      <p>
-        <ngx-charts-line-chart class="inline" (window:resize)="onResize()" [view]="viewLine" [scheme]="colorScheme"
-          [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
-          [yScaleMin]="yScaleMin" [yScaleMax]="yScaleMax" [results]="historyData['accuracy']"
-          [xAxisTickFormatting]="axisFormat" [referenceLines]="accuracyReferenceLines" [showRefLines]="true"
-          [showRefLabels]="true">
-        </ngx-charts-line-chart>
-      </p>
+    <div class="item" *ngIf="optimizationDetails['log_path']">
+      <h2>Other</h2>
+      <table class="rounded">
+        <tr>
+          <th>created at</th>
+          <td>{{ optimizationDetails['created_at'] }}</td>
+        </tr>
+        <tr>
+          <th>last run at</th>
+          <td>{{ optimizationDetails['last_run_at'] }}</td>
+        </tr>
+        <tr>
+          <th>config path</th>
+          <td class="pointer">
+            <a *ngIf="optimizationDetails['config_path']" class="file-button"
+              href="{{ apiBaseUrl }}api/optimization/config.yaml?id={{ optimizationDetails.id }}&token={{ token }}"
+              target="_blank">
+              Show config</a>
+          </td>
+        </tr>
+        <tr>
+          <th>log path</th>
+          <td class="pointer">
+            <a *ngIf="optimizationDetails['log_path']" class="file-button"
+              href="{{ apiBaseUrl }}api/optimization/output.log?id={{ optimizationDetails.id}}&token={{ token }}"
+              target="_blank">
+              Show output</a>
+          </td>
+        </tr>
+        <tr>
+          <th>execution command</th>
+          <td class="pointer" (click)="copyToClipboard(optimizationDetails['execution_command'])"
+            [matTooltip]="'Copy execution command to clipboard'">
+            {{ optimizationDetails['execution_command'] }}
+          </td>
+        </tr>
+      </table>
     </div>
 
-    <div class="item">
-      <h2>Duration - tuning history</h2>
-      <p *ngIf="historyData['data']['baseline_performance']">
-        <ngx-charts-line-chart class="inline" (window:resize)="onResize()" [view]="viewLine" [scheme]="colorScheme"
-          [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
-          [results]="historyData['performance']" [xAxisTickFormatting]="axisFormat" [yAxisLabel]="'[ms]'">
-        </ngx-charts-line-chart>
-      </p>
-    </div>
-  </ng-container>
+    <ng-container *ngIf="chartsReady">
+      <div class="item">
+        <h2>Accuracy - tuning history</h2>
+        <p class="chart">
+          <ngx-charts-line-chart #accChart class="inline" [view]="viewLine" [scheme]="colorScheme"
+            [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
+            [results]="historyData['accuracy']" [xAxisTickFormatting]="axisFormat"
+            [referenceLines]="referenceLines.accuracy" [showRefLines]="true" [showRefLabels]="true">
+          </ngx-charts-line-chart>
+        </p>
+      </div>
+
+      <div class="item">
+        <h2>Performance - tuning history</h2>
+        <p class="chart">
+          <ngx-charts-line-chart #perfChart class="inline" [view]="viewLine" [scheme]="colorScheme"
+            [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
+            [results]="historyData['performance']" [xAxisTickFormatting]="axisFormat"
+            [referenceLines]="referenceLines.performance" [showRefLines]="true" [showRefLabels]="true"
+            [yAxisLabel]="'[ms]'">
+          </ngx-charts-line-chart>
+        </p>
+      </div>
+    </ng-container>
+
+  </div>
 </ng-container>

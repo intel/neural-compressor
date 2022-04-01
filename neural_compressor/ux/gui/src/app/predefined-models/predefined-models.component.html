@@ -1,6 +1,3 @@
-<br>
-<h1 class="wizard-container"> Choose predefined model </h1>
-
 <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
   [style.display]="showSpinner ? 'block' : 'none'">
 </mat-spinner>
@@ -19,31 +16,12 @@
     <mat-step [completed]="false">
       <ng-template matStepLabel>Select model</ng-template>
       <ng-container *ngFor="let availableModel of models">
-        <button *ngIf="configExists('tensorflow', model.domain, availableModel)"
+        <button *ngIf="configExists(model.framework, model.domain, availableModel)"
           [ngClass]="{'chip model-btn': true, 'active': model.model === availableModel}" mat-flat-button
           (click)="model.model = availableModel"> {{ availableModel | modelList }} </button>
       </ng-container>
     </mat-step>
 
-    <mat-step [completed]="false">
-      <ng-template matStepLabel>Select dataset</ng-template>
-      <mat-form-field class="form-field">
-        <input matInput class="input" placeholder="set location" [(ngModel)]="model.dataset_path">
-      </mat-form-field>
-      <button id="choose-dataset-btn" mat-raised-button color="primary" class="browse"
-        (click)="openDialog('datasets', 0)">
-        <img src="./../../assets/050a-folder-solid-white.svg">
-        Choose dataset
-      </button>
-      <br>
-      <div class="float-right">
-        <button id="finish-basic-btn" mat-raised-button color="accent" queryParamsHandling="preserve"
-          (click)="saveWorkload()" [disabled]="!(model.dataset_path && model.domain && model.model)">
-          <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
-          Finish
-        </button>
-      </div>
-    </mat-step>
   </mat-vertical-stepper>
 </mat-card>
 
@@ -51,5 +29,13 @@
 <mat-progress-bar color="accent" [value]="progressBarValue" mode="buffer"
   [style.display]="showProgressBar ? 'block' : 'none'"></mat-progress-bar>
 <div *ngIf="showProgressBar" class="center">
-  Downloading model and config. It may take a few minutes...
+  {{ downloadMessage }}
+</div>
+
+<div class="float-right">
+  <button id="finish-basic-btn" mat-raised-button color="accent" queryParamsHandling="preserve" (click)="addExample()"
+    [disabled]="!(model.domain && model.model)">
+    <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
+    Finish
+  </button>
 </div>

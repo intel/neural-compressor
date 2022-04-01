@@ -14,7 +14,7 @@
 # limitations under the License.
 # pylint: disable=no-member
 """The Benchmark class."""
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from sqlalchemy import DDL, Column, DateTime, ForeignKey, Integer, String, event
 from sqlalchemy.orm import relationship, session
@@ -61,6 +61,7 @@ class Benchmark(Base):
     result: Any = relationship(
         "BenchmarkResult",
         back_populates="benchmark",
+        cascade="all, delete",
     )
 
     @staticmethod
@@ -182,6 +183,24 @@ class Benchmark(Base):
         return {
             "id": benchmark.id,
             "config_path": benchmark.config_path,
+        }
+
+    @staticmethod
+    def clean_status(
+        db_session: session.Session,
+        status_to_clean: ExecutionStatus,
+    ) -> dict:
+        """Clean specified benchmark status from benchmark table."""
+        benchmark_ids: List[int] = []
+        benchmarks = db_session.query(Benchmark).filter(Benchmark.status == status_to_clean.value)
+        for benchmark in benchmarks:
+            benchmark.status = None
+            benchmark_ids.append(benchmark.id)
+            db_session.add(benchmark)
+            db_session.flush()
+
+        return {
+            "benchmarks_id": benchmark_ids,
         }
 
     @staticmethod

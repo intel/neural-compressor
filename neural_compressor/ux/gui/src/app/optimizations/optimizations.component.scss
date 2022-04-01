@@ -31,6 +31,16 @@ img {
   color: $dark-gray;
 }
 
+.big-number-table {
+  font-size: 120% !important;
+  color: $blue;
+}
+
+.label-table {
+  font-size: 80% !important;
+  color: $gray;
+}
+
 .action-btn {
   width: 100%;
 }
@@ -41,4 +51,28 @@ img {
 
 td {
   padding: 5px;
+}
+
+th {
+  min-width: 100px;
+}
+
+.wrap {
+  overflow-wrap: anywhere;
+}
+
+.pin {
+  text-decoration: underline;
+  color: $dark-blue;
+  cursor: pointer;
+}
+
+.pin:hover {
+  color: $energy-blue;
+}
+
+.chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

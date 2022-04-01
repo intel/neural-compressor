@@ -16,9 +16,16 @@
 import os
 import sys
 
+from alembic import command
+from alembic.config import Config
+from sqlalchemy.exc import OperationalError
+
+from neural_compressor.ux.components.db_manager import DBManager
+from neural_compressor.ux.utils.consts import ExecutionStatus
+from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.templates.workdir import Workdir
-from neural_compressor.ux.utils.workload.workload import WorkloadMigrator
-from neural_compressor.ux.utils.workload.workloads_list import WorkloadsListMigrator
+
+db_manager = DBManager()
 
 
 class Environment:
@@ -44,43 +51,34 @@ class Environment:
             sys.exit(2)
 
     @staticmethod
-    def migrate_workloads_list() -> None:
-        """Migrate workloads list to latest format version."""
-        workload_list_migrator = WorkloadsListMigrator()
-        if workload_list_migrator.require_migration:
-            workload_list_migrator.migrate()
-            workload_list_migrator.dump()
-
-    @staticmethod
-    def migrate_workloads() -> None:
-        """Migrate workloads to latest format version."""
-        workload_list_migrator = WorkloadsListMigrator()
-        if not os.path.isfile(workload_list_migrator.workloads_json):
-            return
-        workload_list_migrator.load_workloads_data()
-        updated_workloads = {}
-        for workload_id, workload_data in workload_list_migrator.workloads_data.get(
-            "workloads",
-            {},
-        ).items():
-            try:
-                workload_path = workload_data.get("workload_path", None)
-                if workload_path is None:
-                    continue
-                workload_json_path = os.path.join(workload_path, "workload.json")
-                workload_migrator = WorkloadMigrator(
-                    workload_json_path=workload_json_path,
-                )
-                workload_migrator.migrate()
-                workload_migrator.dump()
-                updated_workloads[workload_id] = workload_data
-            except Exception:
-                pass
-        workload_list_migrator.workloads_data["workloads"] = updated_workloads
-        workload_list_migrator.dump()
-
-    @staticmethod
     def clean_workloads_wip_status() -> None:
         """Clean WIP status for workloads in workloads_list.json."""
-        workdir = Workdir()
-        workdir.clean_status(status_to_clean="wip")
+        try:
+            workdir = Workdir()
+            workdir.clean_status(status_to_clean=ExecutionStatus.WIP)
+        except OperationalError:
+            log.debug("Could not clean WIP status.")
+
+    @staticmethod
+    def migrate_database() -> None:
+        """Perform database migration to latest version using alembic."""
+        if not os.path.isfile(db_manager.database_location):
+            log.debug("No database found. Skipping migration.")
+            return
+
+        alembic_config_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "components",
+            "db_manager",
+            "alembic.ini",
+        )
+        alembic_scripts_location = os.path.join(
+            os.path.dirname(alembic_config_path),
+            "alembic",
+        )
+        alembic_cfg = Config(alembic_config_path)
+        alembic_cfg.set_main_option("sqlalchemy.url", db_manager.database_entrypoint)
+        alembic_cfg.set_main_option("script_location", alembic_scripts_location)
+        log.debug("Executing DB migration...")
+        command.upgrade(alembic_cfg, "head")

@@ -31,11 +31,17 @@
 .config-btn {
   background-color: $dark-gray;
   text-align: left;
+  font-size: 70%;
+  padding: 10px;
 }
 
 .name {
   color: white;
   font-size: 120%;
+}
+
+.right {
+  float: right;
 }
 
 .name:hover {
@@ -70,7 +76,6 @@ img {
 
 .active {
   background-color: $darker-gray;
-  width: 100%;
 }
 
 .project-list {

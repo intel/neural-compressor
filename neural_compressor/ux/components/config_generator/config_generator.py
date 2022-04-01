@@ -27,9 +27,10 @@ from neural_compressor.ux.utils.workload.model import Model
 class ConfigGenerator(JsonSerializer):
     """Configuration generator class."""
 
-    def __init__(self, configuration_path: str, data: dict):
+    def __init__(self, workload_directory: str, configuration_path: str, data: dict):
         """Initialize configuration generator."""
         super().__init__()
+        self.workdir: str = workload_directory
         self.config_path: str = configuration_path
         self.framework: str = data["framework"]
         self.model_name: str = data["model"]["name"]
@@ -40,6 +41,7 @@ class ConfigGenerator(JsonSerializer):
         self.model_outputs: List[str] = data.get("model", {}).get("output_nodes", [])
         self.batch_size: int = data["batch_size"]
         self.dataset: dict = data["dataloader"]["dataset"]
+        self.dataset_type = data["dataset_type"]
         self.transforms: List[dict] = data["dataloader"]["transforms"]
         self.filter: dict = data["dataloader"]["filter"]
         self.metric: dict = data["dataloader"]["metric"]

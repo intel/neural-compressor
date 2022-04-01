@@ -15,7 +15,7 @@
 # pylint: disable=no-member
 """The Optimization class."""
 import json
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import DDL, Column, DateTime, ForeignKey, Integer, String, event
 from sqlalchemy.orm import relationship, session
@@ -30,6 +30,7 @@ from neural_compressor.ux.components.db_manager.db_models.model import Model
 from neural_compressor.ux.components.db_manager.db_models.optimization_type import OptimizationType
 from neural_compressor.ux.components.db_manager.db_models.precision import Precision
 from neural_compressor.ux.components.db_manager.db_models.tuning_details import TuningDetails
+from neural_compressor.ux.components.db_manager.db_models.tuning_history import TuningHistory
 from neural_compressor.ux.utils.consts import ExecutionStatus
 from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 
@@ -63,13 +64,24 @@ class Optimization(Base):
     precision = relationship("Precision", foreign_keys=[precision_id])
     optimization_type = relationship("OptimizationType", foreign_keys=[optimization_type_id])
     dataset = relationship("Dataset", foreign_keys=[dataset_id])
-    tuning_details = relationship("TuningDetails", foreign_keys=[tuning_details_id])
+    tuning_details = relationship(
+        "TuningDetails",
+        foreign_keys=[tuning_details_id],
+        cascade="all, delete",
+    )
+    tuning_history = relationship(
+        "TuningHistory",
+        secondary="join(TuningDetails, TuningHistory, "
+        "TuningDetails.tuning_history_id == TuningHistory.id)",
+        viewonly=True,
+    )
     accuracy_benchmark = relationship("Benchmark", foreign_keys=[accuracy_benchmark_id])
     performance_benchmark = relationship("Benchmark", foreign_keys=[performance_benchmark_id])
     optimized_model = relationship(
         "Model",
         foreign_keys=[optimized_model_id],
         back_populates="optimization",
+        cascade="all, delete",
     )
 
     @staticmethod
@@ -219,6 +231,26 @@ class Optimization(Base):
         }
 
     @staticmethod
+    def clean_status(
+        db_session: session.Session,
+        status_to_clean: ExecutionStatus,
+    ) -> dict:
+        """Clean specified optimization status from optimization table."""
+        optimization_ids: List[int] = []
+        optimizations = db_session.query(Optimization).filter(
+            Optimization.status == status_to_clean.value,
+        )
+        for optimization in optimizations:
+            optimization.status = None
+            optimization_ids.append(optimization.id)
+            db_session.add(optimization)
+            db_session.flush()
+
+        return {
+            "optimizations_id": optimization_ids,
+        }
+
+    @staticmethod
     def pin_accuracy_benchmark(
         db_session: session.Session,
         optimization_id: int,
@@ -288,13 +320,22 @@ class Optimization(Base):
     @staticmethod
     def details(db_session: session.Session, optimization_id: int) -> dict:
         """Get optimization details."""
-        (optimization, precision, optimization_type, dataset, tuning_details, optimized_model) = (
+        (
+            optimization,
+            precision,
+            optimization_type,
+            dataset,
+            tuning_details,
+            tuning_history,
+            optimized_model,
+        ) = (
             db_session.query(
                 Optimization,
                 Precision,
                 OptimizationType,
                 Dataset,
                 TuningDetails,
+                TuningHistory,
                 Model,
             )
             .join(Optimization.precision)
@@ -302,40 +343,10 @@ class Optimization(Base):
             .join(Optimization.dataset)
             .outerjoin(Optimization.tuning_details)
             .outerjoin(Optimization.optimized_model)
+            .outerjoin(Optimization.tuning_history)
             .filter(Optimization.id == optimization_id)
             .one()
         )
-
-        (results) = (
-            db_session.query(
-                Benchmark,
-                BenchmarkResult,
-                Model,
-                Dataset,
-            )
-            .outerjoin(Benchmark.result)
-            .join(Benchmark.model)
-            .join(Benchmark.dataset)
-            .filter(
-                Benchmark.id.in_(
-                    [
-                        optimization.performance_benchmark_id,
-                        optimization.accuracy_benchmark_id,
-                    ],
-                ),
-            )
-            .all()
-        )
-
-        accuracy_benchmark = None
-        performance_benchmark = None
-        for result in results:
-            benchmark, benchmark_result, model, dataset = result
-            benchmark_info = Benchmark.build_info(benchmark, benchmark_result, model, dataset)
-            if benchmark.mode == Benchmarks.PERF:
-                performance_benchmark = benchmark_info
-            if benchmark.mode == Benchmarks.ACC:
-                accuracy_benchmark = benchmark_info
 
         optimization_info = Optimization.build_info(
             optimization=optimization,
@@ -343,9 +354,8 @@ class Optimization(Base):
             optimization_type=optimization_type,
             dataset=dataset,
             tuning_details=tuning_details,
+            tuning_history=tuning_history,
             optimized_model=optimized_model,
-            accuracy_benchmark=accuracy_benchmark,
-            performance_benchmark=performance_benchmark,
         )
         return optimization_info
 
@@ -385,9 +395,8 @@ class Optimization(Base):
         optimization_type: OptimizationType,
         dataset: Dataset,
         tuning_details: Optional[TuningDetails] = None,
+        tuning_history: Optional[TuningHistory] = None,
         optimized_model: Optional[Model] = None,
-        accuracy_benchmark: Optional[dict] = None,
-        performance_benchmark: Optional[dict] = None,
     ) -> dict:
         """Get optimization info."""
         optimization_info: dict = {
@@ -416,8 +425,8 @@ class Optimization(Base):
             "last_run_at": str(optimization.last_run_at),
             "duration": optimization.duration,
             "optimized_model": None,
-            "accuracy_benchmark": None,
-            "performance_benchmark": None,
+            "accuracy_benchmark_id": optimization.accuracy_benchmark_id,
+            "performance_benchmark_id": optimization.performance_benchmark_id,
             "tuning_details": None,
         }
         if optimized_model is not None:
@@ -428,34 +437,72 @@ class Optimization(Base):
                 },
             )
 
-        if accuracy_benchmark is not None:
-            optimization_info.update(
-                {"accuracy_benchmark": accuracy_benchmark},
-            )
-
-        if performance_benchmark is not None:
-            optimization_info.update(
-                {"performance_benchmark": performance_benchmark},
-            )
-
         if tuning_details is not None:
             acc_criterion_type = tuning_details.accuracy_criterion_type
             acc_criterion_threshold = tuning_details.accuracy_criterion_threshold
-            optimization_info.update(
-                {
-                    "tuning_details": {
-                        "strategy": tuning_details.strategy,
-                        "accuracy_criterion_type": acc_criterion_type,
-                        "accuracy_criterion_threshold": acc_criterion_threshold,
-                        "multi_objective": tuning_details.objective,
-                        "exit_policy": json.loads(tuning_details.exit_policy),
-                        "random_seed": tuning_details.random_seed,
-                        "created_at": str(tuning_details.created_at),
-                        "modified_at": str(tuning_details.modified_at),
-                    },
+            optimization_data = {
+                "tuning_details": {
+                    "id": tuning_details.id,
+                    "strategy": tuning_details.strategy,
+                    "accuracy_criterion_type": acc_criterion_type,
+                    "accuracy_criterion_threshold": acc_criterion_threshold,
+                    "multi_objective": tuning_details.objective,
+                    "exit_policy": json.loads(tuning_details.exit_policy),
+                    "random_seed": tuning_details.random_seed,
+                    "created_at": str(tuning_details.created_at),
+                    "modified_at": str(tuning_details.modified_at),
+                    "tuning_history": None,
                 },
+            }
+            if tuning_history is not None:
+                optimization_data["tuning_details"].update(
+                    {"tuning_history": TuningHistory.build_info(tuning_history)},
+                )
+            optimization_info.update(
+                optimization_data,
             )
         return optimization_info
+
+    @staticmethod
+    def get_pinned_benchmarks(
+        db_session: session.Session,
+        optimization: Any,
+    ) -> Dict[str, Optional[dict]]:
+        """Get pinned benchmarks for optimization."""
+        (results) = (
+            db_session.query(
+                Benchmark,
+                BenchmarkResult,
+                Model,
+                Dataset,
+            )
+            .outerjoin(Benchmark.result)
+            .join(Benchmark.model)
+            .join(Benchmark.dataset)
+            .filter(
+                Benchmark.id.in_(
+                    [
+                        optimization.performance_benchmark_id,
+                        optimization.accuracy_benchmark_id,
+                    ],
+                ),
+            )
+            .all()
+        )
+        accuracy_benchmark = None
+        performance_benchmark = None
+        for result in results:
+            benchmark, benchmark_result, model, dataset = result
+            benchmark_info = Benchmark.build_info(benchmark, benchmark_result, model, dataset)
+            if benchmark.mode == Benchmarks.PERF:
+                performance_benchmark = benchmark_info
+            if benchmark.mode == Benchmarks.ACC:
+                accuracy_benchmark = benchmark_info
+
+        return {
+            "accuracy": accuracy_benchmark,
+            "performance": performance_benchmark,
+        }
 
 
 update_last_run_date_trigger = """

@@ -55,6 +55,7 @@ class Profiling(Base):
         "ProfilingResult",
         order_by=ProfilingResult.id,
         back_populates="profiling",
+        cascade="all, delete",
     )
 
     @staticmethod
@@ -149,6 +150,24 @@ class Profiling(Base):
         return {
             "id": profiling.id,
             "log_path": profiling.log_path,
+        }
+
+    @staticmethod
+    def clean_status(
+        db_session: session.Session,
+        status_to_clean: ExecutionStatus,
+    ) -> dict:
+        """Clean specified profiling status from profiling table."""
+        profiling_ids: List[int] = []
+        profilings = db_session.query(Profiling).filter(Profiling.status == status_to_clean.value)
+        for profiling in profilings:
+            profiling.status = None
+            profiling_ids.append(profiling.id)
+            db_session.add(profiling)
+            db_session.flush()
+
+        return {
+            "profilings_id": profiling_ids,
         }
 
     @staticmethod

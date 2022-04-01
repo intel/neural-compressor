@@ -19,15 +19,24 @@ import logging
 import os
 from typing import Any, Optional
 
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import registry
+from sqlalchemy.orm import declarative_base
 
 from neural_compressor.ux.utils.consts import WORKDIR_LOCATION
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.singleton import Singleton
 
-Base: Any = registry().generate_base()
+naming_convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+meta = MetaData(naming_convention=naming_convention)
+Base: Any = declarative_base(metadata=meta)
 
 
 class DBManager(metaclass=Singleton):
@@ -43,6 +52,8 @@ class DBManager(metaclass=Singleton):
         if database_location is not None:
             self.database_location = database_location
 
+        self.database_entrypoint = f"{self.dialect}:///{self.database_location}"
+
         if log_level == logging.DEBUG:
             self.debug = True
 
@@ -52,9 +63,8 @@ class DBManager(metaclass=Singleton):
 
     def create_sqlalchemy_engine(self) -> Engine:
         """Create SQLAlchemy engine."""
-        database_entrypoint = f"{self.dialect}:///{self.database_location}"
-        log.debug(f"Making engine with database: {database_entrypoint}")
-        return create_engine(database_entrypoint, echo=self.debug)
+        log.debug(f"Making engine with database: {self.database_entrypoint}")
+        return create_engine(self.database_entrypoint, echo=self.debug)
 
     @property
     def engine(self) -> Engine:

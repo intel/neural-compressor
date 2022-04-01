@@ -18,7 +18,7 @@
 import os
 import threading
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from neural_compressor.ux.components.db_manager.db_operations import (
     DatasetAPIInterface,
@@ -29,9 +29,10 @@ from neural_compressor.ux.components.db_manager.db_operations import (
 from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
 from neural_compressor.ux.components.optimization.factory import OptimizationFactory
 from neural_compressor.ux.components.optimization.optimization import Optimization
+from neural_compressor.ux.components.optimization.tune.tuning import Tuning
 from neural_compressor.ux.components.optimization.tuning_history import Watcher
 from neural_compressor.ux.utils.consts import ExecutionStatus
-from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.executor import Executor
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.parser import OptimizationParser
@@ -55,6 +56,7 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
     request_id: str = str(data["request_id"])
     optimization_id: int = int(data["optimization_id"])
 
+    project_id: Optional[int] = None
     try:
         optimization_details = OptimizationAPIInterface.get_optimization_details(
             {"id": optimization_id},
@@ -111,67 +113,51 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
             log_name="output",
         )
 
-        tuning_history_watcher = Watcher(optimization)
-        threading.Thread(target=tuning_history_watcher, daemon=True).start()
+        collect_tuning_history: bool = check_if_collect_tuning_history(optimization)
+
+        if collect_tuning_history:
+            tuning_history_watcher = Watcher(request_id, optimization)
+            threading.Thread(target=tuning_history_watcher, daemon=True).start()
 
         proc = executor.call(
             optimization.command,
         )
 
-        tuning_history_watcher.stop()
+        if collect_tuning_history:
+            tuning_history_watcher.stop(process_succeeded=proc.is_ok)
 
         optimization_time = executor.process_duration
         if optimization_time:
             optimization_time = round(optimization_time, 2)
         log.debug(f"Elapsed time: {optimization_time}")
         logs = [os.path.join(optimization.workdir, "output.txt")]
-        parser = OptimizationParser(logs)
         if proc.is_ok:
-            parsed_log = parser.process()
-
-            optimized_model_path = parsed_log.get(
-                "path_optimized_model",
-                optimization.output_graph,
+            optimized_model_data = parse_logs(
+                optimization=optimization,
+                optimization_details=optimization_details,
+                project_details=project_details,
+                logs=logs,
             )
-            optimization.output_graph = optimized_model_path
 
-            if isinstance(parsed_log, dict):
-                optimized_model_data: dict = {
-                    "project_id": optimization.project_id,
-                    "model_name": normalize_string(optimization_details["name"]),
-                    "model_path": optimized_model_path,
-                    "framework": optimization.framework,
-                    "size": get_size(optimized_model_path),
-                    "precision_id": optimization_details["precision"]["id"],
-                    "domain_id": project_details["input_model"]["domain"]["id"],
-                    "domain_flavour_id": project_details["input_model"]["domain_flavour"]["id"],
-                    "input_nodes": optimization.input_nodes,
-                    "output_nodes": optimization.output_nodes,
-                    "supports_profiling": project_details["input_model"]["supports_profiling"],
-                    "supports_graph": project_details["input_model"]["supports_graph"],
-                }
-
-                optimized_model_data = parse_model_data_to_bench_names(optimized_model_data)
-
-                optimized_model_id = ModelAPIInterface.add_model(optimized_model_data)
-                OptimizationAPIInterface.update_optimized_model(
-                    {
-                        "id": optimization_id,
-                        "optimized_model_id": optimized_model_id,
-                    },
-                )
-                OptimizationAPIInterface.update_optimization_duration(
-                    {
-                        "id": optimization_id,
-                        "duration": optimization_time,
-                    },
-                )
-                OptimizationAPIInterface.update_optimization_status(
-                    {
-                        "id": optimization_id,
-                        "status": ExecutionStatus.SUCCESS,
-                    },
-                )
+            optimized_model_id = ModelAPIInterface.add_model(optimized_model_data)
+            OptimizationAPIInterface.update_optimized_model(
+                {
+                    "id": optimization_id,
+                    "optimized_model_id": optimized_model_id,
+                },
+            )
+            OptimizationAPIInterface.update_optimization_duration(
+                {
+                    "id": optimization_id,
+                    "duration": optimization_time,
+                },
+            )
+            OptimizationAPIInterface.update_optimization_status(
+                {
+                    "id": optimization_id,
+                    "status": ExecutionStatus.SUCCESS,
+                },
+            )
 
             optimization_data = OptimizationAPIInterface.get_optimization_details(
                 {
@@ -195,7 +181,15 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
             )
             raise ClientErrorException("Optimization failed during execution.")
     except Exception as err:
-        mq.post_failure("optimization_finish", {"message": str(err), "request_id": request_id})
+        mq.post_failure(
+            "optimization_finish",
+            {
+                "message": str(err),
+                "request_id": request_id,
+                "id": optimization_id,
+                "project_id": project_id,
+            },
+        )
         optimization_status = OptimizationAPIInterface.get_optimization_details(
             {"id": optimization_id},
         ).get("status")
@@ -220,5 +214,50 @@ def parse_model_data_to_bench_names(data: dict) -> dict:
             parameter_type="framework",
             value=framework,
         )
-    model_data.update({"framework": mapped_framework})
+        model_data.update({"framework": mapped_framework})
     return model_data
+
+
+def parse_logs(
+    optimization: Optimization,
+    optimization_details: dict,
+    project_details: dict,
+    logs: List[str],
+) -> dict:
+    """Parse optimization logs."""
+    parser = OptimizationParser(logs)
+    parsed_log = parser.process()
+
+    optimized_model_path = parsed_log.get(
+        "path_optimized_model",
+        optimization.output_graph,
+    )
+    optimization.output_graph = optimized_model_path
+
+    if not isinstance(parsed_log, dict):
+        raise InternalException("Failure with parsing logs.")
+    optimized_model_data: dict = {
+        "project_id": optimization.project_id,
+        "model_name": normalize_string(optimization_details["name"]),
+        "model_path": optimized_model_path,
+        "framework": optimization.framework,
+        "size": get_size(optimized_model_path),
+        "precision_id": optimization_details["precision"]["id"],
+        "domain_id": project_details["input_model"]["domain"]["id"],
+        "domain_flavour_id": project_details["input_model"]["domain_flavour"]["id"],
+        "input_nodes": optimization.input_nodes,
+        "output_nodes": optimization.output_nodes,
+        "supports_profiling": project_details["input_model"]["supports_profiling"],
+        "supports_graph": project_details["input_model"]["supports_graph"],
+    }
+
+    optimized_model_data = parse_model_data_to_bench_names(optimized_model_data)
+    return optimized_model_data
+
+
+def check_if_collect_tuning_history(optimization: Optimization) -> bool:
+    """Check whether tuning history can be collected for specified optimization."""
+    collect_tuning_history: bool = False
+    if isinstance(optimization, Tuning):
+        collect_tuning_history = True
+    return collect_tuning_history

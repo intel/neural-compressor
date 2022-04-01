@@ -40,19 +40,23 @@ export class ProjectComponent implements OnInit {
     this.getProject(this.projectId);
     this.modelService.projectChanged$
       .subscribe(response => {
-        this.getProject(response['id']);
+        this.getProject(response['id'], response['tab']);
       })
   }
 
-  getProject(id: number) {
-    this.selectedTab = this.tabs.indexOf(this.activatedRoute.snapshot.params.tab);
+  getProject(id: number, tab?: string) {
+    this.selectedTab = this.tabs.indexOf(tab ?? this.activatedRoute.snapshot.params.tab);
     this.modelService.getProjectDetails(id)
       .subscribe(
         response => {
           this.project = response;
         },
         error => {
-          this.modelService.openErrorDialog(error);
+          if (error.error === 'list index out of range') {
+            this.router.navigate(['home'], { queryParamsHandling: "merge" });
+          } else {
+            this.modelService.openErrorDialog(error);
+          }
         }
       )
   }

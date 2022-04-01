@@ -34,7 +34,6 @@ class Optimization(JsonSerializer):
         optimization_data: dict,
         project_data: dict,
         dataset_data: dict,
-        template_path: Optional[str] = None,
     ) -> None:
         """Initialize Optimization class."""
         super().__init__()
@@ -58,7 +57,7 @@ class Optimization(JsonSerializer):
         self.input_nodes: Optional[List[str]] = project_data["input_model"]["input_nodes"]
         self.output_nodes: Optional[List[str]] = project_data["input_model"]["output_nodes"]
         self.input_precision: str = project_data["input_model"]["precision"]["name"]
-        normalized_model_name = normalize_string(self.output_model_dir)
+        normalized_model_name = self.output_model_dir
         self.output_graph: str = os.path.join(normalized_model_name, self.output_model_name)
 
         self.framework: str = names_mapper.map_name(
@@ -141,6 +140,7 @@ class Optimization(JsonSerializer):
                 "filter": self.dataloader.filter,
                 "metric": self.dataloader.metric,
             },
+            "dataset_type": self.dataloader.dataset_type,
         }
         return configuration_data
 

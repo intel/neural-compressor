@@ -16,7 +16,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { combineLatest, Subject } from 'rxjs';
-import { ErrorComponent } from '../error/error.component';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { FileBrowserFilter, ModelService } from '../services/model.service';
 
@@ -41,7 +40,7 @@ export class DatasetFormComponent implements OnInit {
   transformationParams = [];
 
   useEvaluationData = true;
-  fileBrowserParams = ['label_file', 'vocab_file', 'anno_path'];
+  fileBrowserParams = ['label_file', 'vocab_file', 'anno_path', 'annotation_path'];
 
   resizeValues;
   resizeCustom;
@@ -95,15 +94,36 @@ export class DatasetFormComponent implements OnInit {
   }
 
   getPossibleValues() {
-    this.modelService.getPossibleValues('metric', { framework: 'tensorflow' })
+    this.modelService.getPossibleValues('metric', { framework: this.data.framework.toLowerCase() })
       .subscribe(
         resp => {
           this.metrics = resp['metric'];
           this.metricList$.next(true);
+          this.getPredefinedDatasets();
         },
         error => this.modelService.openErrorDialog(error));
   }
 
+  getPredefinedDatasets() {
+    this.modelService.getPredefinedDatasets(this.data.framework, this.data.domain, this.data.domainFlavour)
+      .subscribe(response => {
+
+        for (let i = 0; i < response['transform'].length; i++) {
+          this.addNewTransformation(response['transform'][i]['name']);
+          this.transformations = response['transform'];
+          this.setDefaultTransformationParam({ value: response['transform'][i]['name'] }, i);
+        }
+
+        this.datasetFormGroup.get('dataLoaderEvaluation').setValue(response['dataloader']['name']);
+        this.setDefaultDataLoaderParam({ value: response['dataloader']['name'] });
+        if (response['dataloader']['params'][0].name === 'root') {
+          this.datasetFormGroup.get('datasetLocationEvaluation').setValue(response['dataloader']['params'][0].value);
+        }
+
+        this.datasetFormGroup.get('metric').setValue(response['metric']);
+        this.setDefaultMetricParam({ value: response['metric'] });
+      });
+  }
 
   setFormValues() {
     this.datasetFormGroup = this._formBuilder.group({

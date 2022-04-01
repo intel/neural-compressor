@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,12 @@
 # limitations under the License.
 
 """History Snapshot Parser Service."""
-from typing import Optional
+from typing import List, Optional
+
+from neural_compressor.ux.components.db_manager.params_interfaces import (
+    TuningHistoryInterface,
+    TuningHistoryItemInterface,
+)
 
 
 class HistorySnapshotParser:
@@ -25,45 +30,78 @@ class HistorySnapshotParser:
         self.history_snapshot = history_snapshot
         self.provide_performance = provide_performance
 
-    def parse_history_snapshot(self) -> dict:
+    def parse_history_snapshot(self) -> TuningHistoryInterface:
         """Parse provided history snapshot."""
+        tuning_history: TuningHistoryInterface = TuningHistoryInterface()
         if not self.history_snapshot:
-            return {}
+            return tuning_history
 
         if 1 != len(self.history_snapshot):
             raise ValueError("Expected history snapshot with one entry only")
 
         first_item = self.history_snapshot[0]
-        return {
-            "baseline_accuracy": self.extract_accuracy(first_item.get("baseline")),
-            "baseline_performance": self.extract_performance(first_item.get("baseline")),
-            "last_tune_accuracy": self.extract_accuracy(first_item.get("last_tune_result")),
-            "last_tune_performance": self.extract_performance(first_item.get("last_tune_result")),
-            "best_tune_accuracy": self.extract_accuracy(first_item.get("best_tune_result")),
-            "best_tune_performance": self.extract_performance(first_item.get("best_tune_result")),
-            "history": [
-                self.parse_history_item(history_item)
-                for history_item in first_item.get("history", [])
-            ],
-        }
 
-    def parse_history_item(self, history_item: dict) -> dict:
+        tuning_history.baseline_accuracy = self.extract_accuracy(
+            first_item.get("baseline"),
+        )  # type: ignore
+        tuning_history.baseline_performance = self.extract_performance(
+            first_item.get("baseline"),
+        )  # type: ignore
+        tuning_history.last_tune_accuracy = self.extract_accuracy(
+            first_item.get("last_tune_result"),
+        )  # type: ignore
+        tuning_history.last_tune_performance = self.extract_performance(
+            first_item.get("last_tune_result"),
+        )  # type: ignore
+        tuning_history.best_tune_accuracy = self.extract_accuracy(
+            first_item.get("best_tune_result"),
+        )  # type: ignore
+        tuning_history.best_tune_performance = self.extract_performance(
+            first_item.get("best_tune_result"),
+        )  # type: ignore
+        tuning_history.history = [
+            self.parse_history_item(history_item) for history_item in first_item.get("history", [])
+        ]
+        return tuning_history
+
+    def parse_history_item(self, history_item: dict) -> TuningHistoryItemInterface:
         """Parse single item from history."""
-        return {
-            "accuracy": self.extract_accuracy(history_item.get("tune_result")),
-            "performance": self.extract_performance(history_item.get("tune_result")),
-        }
+        tuning_history_item: TuningHistoryItemInterface = TuningHistoryItemInterface()
+        tuning_history_item.accuracy = self.extract_accuracy(
+            history_item.get("tune_result"),
+        )  # type: ignore
+        tuning_history_item.performance = self.extract_performance(
+            history_item.get("tune_result"),
+        )  # type: ignore
 
-    def extract_accuracy(self, measurements: Optional[tuple]) -> Optional[float]:
+        return tuning_history_item
+
+    def extract_accuracy(
+        self,
+        measurements: Optional[tuple],
+    ) -> Optional[List[float]]:
         """Extract accuracy metric from result."""
         if not measurements:
             return None
-        return measurements[0]
+        accuracy = measurements[0]
+        if isinstance(accuracy, float):
+            return [accuracy]
+        if isinstance(accuracy, list):
+            return accuracy
+        return None
 
-    def extract_performance(self, measurements: Optional[tuple]) -> Optional[float]:
+    def extract_performance(
+        self,
+        measurements: Optional[tuple],
+    ) -> Optional[List[float]]:
         """Extract performance metric from result if needed."""
         if not self.provide_performance:
             return None
         if not measurements:
             return None
-        return measurements[1]
+        performance = measurements[1]
+        if isinstance(performance, float):
+            return [performance]
+        if isinstance(performance, list):
+            return performance
+        return None

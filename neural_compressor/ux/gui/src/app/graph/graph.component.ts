@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Inject, Input, OnInit, Optional, ViewChild } from '@angular/core';
+import { Component, Inject, Input, OnChanges, Optional, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject } from 'rxjs';
@@ -22,7 +22,7 @@ import { ModelService } from '../services/model.service';
   templateUrl: './graph.component.html',
   styleUrls: ['./graph.component.scss']
 })
-export class GraphComponent implements OnInit {
+export class GraphComponent implements OnChanges {
 
   @Input() modelPath: string;
 
@@ -60,8 +60,14 @@ export class GraphComponent implements OnInit {
     private modelService: ModelService
   ) { }
 
-  ngOnInit(): void {
+  ngOnChanges(): void {
     this.showSpinner = true;
+    this.getGraph();
+  }
+
+  getGraph() {
+    this.edges = [];
+    this.nodes = [];
     this.modelPath = this.modelPath ?? this.data.modelPath;
     this.modelService.getModelGraph(this.modelPath)
       .subscribe(

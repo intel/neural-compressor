@@ -60,6 +60,7 @@ class QuantizationConfigGenerator(ConfigGenerator):
         tuning.multi_objective = MultiObjective({"objective": self.objective})
         tuning.exit_policy = ExitPolicy(self.exit_policy)
         tuning.random_seed = self.random_seed
+        tuning.set_workspace(self.workdir)
         return tuning
 
     def generate_quantization_config(self) -> Quantization:
@@ -67,7 +68,8 @@ class QuantizationConfigGenerator(ConfigGenerator):
         quantization = Quantization()
         quantization.calibration = Calibration()
         quantization.calibration.sampling_size = self.sampling_size
-        quantization.calibration.dataloader = self.generate_dataloader_config()
+        if self.dataset_type != "custom":
+            quantization.calibration.dataloader = self.generate_dataloader_config()
         return quantization
 
     def generate_evaluation_config(self) -> Evaluation:
@@ -75,9 +77,10 @@ class QuantizationConfigGenerator(ConfigGenerator):
         evaluation = Evaluation()
         evaluation.accuracy = Accuracy()
 
-        if self.metric:
+        if self.metric and self.metric.get("name") != "custom":
             evaluation.accuracy.metric = Metric(self.metric)
 
-        evaluation.accuracy.dataloader = self.generate_dataloader_config(batch_size=1)
-        evaluation.set_accuracy_postprocess_transforms(self.transforms)
+        if self.dataset_type != "custom":
+            evaluation.accuracy.dataloader = self.generate_dataloader_config(batch_size=1)
+            evaluation.set_accuracy_postprocess_transforms(self.transforms)
         return evaluation

@@ -16,7 +16,6 @@
 
 from typing import Any, Dict
 
-from neural_compressor.ux.utils.templates.workdir import Workdir
 from neural_compressor.ux.web.configuration import Configuration
 
 
@@ -24,15 +23,3 @@ def get_default_path(data: Dict[str, Any]) -> Dict[str, Any]:
     """Get paths repository or workspace."""
     configuration = Configuration()
     return {"path": configuration.workdir}
-
-
-def set_workspace(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Set workspace."""
-    return {"message": "SUCCESS"}
-
-
-def get_workloads_list(data: dict) -> Dict[str, Any]:
-    """Return workloads list."""
-    workdir = Workdir()
-
-    return workdir.map_to_response()

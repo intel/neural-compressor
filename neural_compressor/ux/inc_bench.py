@@ -60,8 +60,7 @@ def prepare_environment() -> None:
     """Prepare environment for Intel® Neural Compressor Bench."""
     environment = Environment()
     environment.ensure_workdir_exists_and_writeable()
-    environment.migrate_workloads_list()
-    environment.migrate_workloads()
+    environment.migrate_database()
     environment.clean_workloads_wip_status()
 
 

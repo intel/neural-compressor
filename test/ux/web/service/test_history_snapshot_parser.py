@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,18 +23,18 @@ class TestWorkloadService(unittest.TestCase):
     """Test HistorySnapshotParser."""
 
     HISTORY_SNAPSHOT = {
-        "baseline": (0.12, 0.34),
-        "last_tune_result": (0.56, 0.78),
-        "best_tune_result": (0.90, 0.10),
+        "baseline": (0.12, [0.34]),
+        "last_tune_result": (0.56, [0.78]),
+        "best_tune_result": (0.90, [0.10]),
         "history": [
             {
-                "tune_result": (0.11, 0.12),
+                "tune_result": (0.11, [0.12]),
             },
             {
-                "there_is_no_tune_result_here": (0.13, 0.14),
+                "there_is_no_tune_result_here": (0.13, [0.14]),
             },
             {
-                "tune_result": (0.15, 0.16),
+                "tune_result": (0.15, [0.16]),
             },
         ],
     }
@@ -42,7 +42,20 @@ class TestWorkloadService(unittest.TestCase):
     def test_parsing_empty_history(self) -> None:
         """Test parsing history."""
         parser = HistorySnapshotParser([])
-        self.assertEqual({}, parser.parse_history_snapshot())
+        result = parser.parse_history_snapshot().serialize()
+
+        expected: dict = {
+            "minimal_accuracy": None,
+            "baseline_accuracy": None,
+            "baseline_performance": None,
+            "last_tune_accuracy": None,
+            "last_tune_performance": None,
+            "best_tune_accuracy": None,
+            "best_tune_performance": None,
+            "history": [],
+        }
+
+        self.assertDictEqual(expected, result)
 
     def test_parsing_history_with_many_entries_fails(self) -> None:
         """Test parsing history."""
@@ -54,6 +67,7 @@ class TestWorkloadService(unittest.TestCase):
         """Test parsing history."""
         parser = HistorySnapshotParser([{}])
         expected: dict = {
+            "minimal_accuracy": None,
             "baseline_accuracy": None,
             "baseline_performance": None,
             "last_tune_accuracy": None,
@@ -62,48 +76,55 @@ class TestWorkloadService(unittest.TestCase):
             "best_tune_performance": None,
             "history": [],
         }
-        self.assertEqual(expected, parser.parse_history_snapshot())
+        result = parser.parse_history_snapshot().serialize()
+        self.assertIs(type(result), dict)
+        self.assertDictEqual(expected, result)
 
     def test_parsing_history_with_performance(self) -> None:
         """Test parsing history."""
         parser = HistorySnapshotParser([self.HISTORY_SNAPSHOT], True)
         expected = {
-            "baseline_accuracy": 0.12,
-            "baseline_performance": 0.34,
-            "last_tune_accuracy": 0.56,
-            "last_tune_performance": 0.78,
-            "best_tune_accuracy": 0.90,
-            "best_tune_performance": 0.10,
+            "minimal_accuracy": None,
+            "baseline_accuracy": [0.12],
+            "baseline_performance": [0.34],
+            "last_tune_accuracy": [0.56],
+            "last_tune_performance": [0.78],
+            "best_tune_accuracy": [0.90],
+            "best_tune_performance": [0.10],
             "history": [
                 {
-                    "accuracy": 0.11,
-                    "performance": 0.12,
+                    "accuracy": [0.11],
+                    "performance": [0.12],
                 },
                 {
                     "accuracy": None,
                     "performance": None,
                 },
                 {
-                    "accuracy": 0.15,
-                    "performance": 0.16,
+                    "accuracy": [0.15],
+                    "performance": [0.16],
                 },
             ],
         }
-        self.assertEqual(expected, parser.parse_history_snapshot())
+
+        result = parser.parse_history_snapshot().serialize()
+        self.assertIs(type(result), dict)
+        self.assertDictEqual(expected, result)
 
     def test_parsing_history_without_performance(self) -> None:
         """Test parsing history."""
         parser = HistorySnapshotParser([self.HISTORY_SNAPSHOT], False)
         expected = {
-            "baseline_accuracy": 0.12,
+            "minimal_accuracy": None,
+            "baseline_accuracy": [0.12],
             "baseline_performance": None,
-            "last_tune_accuracy": 0.56,
+            "last_tune_accuracy": [0.56],
             "last_tune_performance": None,
-            "best_tune_accuracy": 0.90,
+            "best_tune_accuracy": [0.90],
             "best_tune_performance": None,
             "history": [
                 {
-                    "accuracy": 0.11,
+                    "accuracy": [0.11],
                     "performance": None,
                 },
                 {
@@ -111,12 +132,15 @@ class TestWorkloadService(unittest.TestCase):
                     "performance": None,
                 },
                 {
-                    "accuracy": 0.15,
+                    "accuracy": [0.15],
                     "performance": None,
                 },
             ],
         }
-        self.assertEqual(expected, parser.parse_history_snapshot())
+
+        result = parser.parse_history_snapshot().serialize()
+        self.assertIs(type(result), dict)
+        self.assertDictEqual(expected, result)
 
 
 if __name__ == "__main__":

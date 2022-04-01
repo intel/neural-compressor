@@ -15,10 +15,14 @@
 # pylint: disable=no-member
 """INC Bench database operations."""
 import os
+import shutil
 from copy import copy
 from shutil import copy as copy_file
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, OrderedDict, Union
 
+from alembic import command
+from alembic.config import Config as AlembicConfig
+from alembic.script import ScriptDirectory
 from sqlalchemy.orm import session, sessionmaker
 
 from neural_compressor.ux.components.benchmark import Benchmarks
@@ -46,6 +50,7 @@ from neural_compressor.ux.components.db_manager.db_models.profiling_result impor
 from neural_compressor.ux.components.db_manager.db_models.project import Project
 from neural_compressor.ux.components.db_manager.db_models.transform import Transform
 from neural_compressor.ux.components.db_manager.db_models.tuning_details import TuningDetails
+from neural_compressor.ux.components.db_manager.db_models.tuning_history import TuningHistory
 from neural_compressor.ux.components.db_manager.params_interfaces import (
     BenchmarkAddParamsInterface,
     DatasetAddParamsInterface,
@@ -53,8 +58,12 @@ from neural_compressor.ux.components.db_manager.params_interfaces import (
     OptimizationAddParamsInterface,
     ProfilingAddParamsInterface,
     ProfilingResultAddParamsInterface,
+    TuningHistoryInterface,
+    TuningHistoryItemInterface,
 )
 from neural_compressor.ux.components.model.repository import ModelRepository
+from neural_compressor.ux.components.model_zoo.download_model import download_model
+from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
 from neural_compressor.ux.components.optimization.tune.tuning import (
     TuningDetails as TuningDetailsInterface,
 )
@@ -62,11 +71,21 @@ from neural_compressor.ux.utils.consts import (
     WORKSPACE_LOCATION,
     ExecutionStatus,
     OptimizationTypes,
+    Precisions,
     precision_optimization_types,
 )
 from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.utils import normalize_string
+from neural_compressor.ux.utils.utils import (
+    get_predefined_config_path,
+    load_model_config,
+    normalize_string,
+)
+from neural_compressor.ux.utils.workload.config import Config
+from neural_compressor.ux.utils.workload.dataloader import Dataloader as DataloaderConfig
+from neural_compressor.ux.utils.workload.dataloader import Dataset as DatasetConfig
+from neural_compressor.ux.utils.workload.dataloader import Transform as TransformConfig
+from neural_compressor.ux.web.communication import MessageQueue
 
 db_manager = DBManager()
 Session = sessionmaker(bind=db_manager.engine)
@@ -117,6 +136,33 @@ class ProjectAPIInterface:
             "model_id": model_id,
             "dataset_id": dataset_id,
         }
+
+    @staticmethod
+    def delete_project(data: dict) -> dict:
+        """Delete project details from database and clean workspace."""
+        try:
+            project_id: int = int(data.get("id", None))
+            project_name: str = str(data.get("name", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value.")
+        except TypeError:
+            raise ClientErrorException("Missing project id or project name.")
+        with Session.begin() as db_session:
+            removed_project_id = Project.delete_project(
+                db_session=db_session,
+                project_id=project_id,
+                project_name=project_name,
+            )
+
+        if removed_project_id is not None:
+            normalized_project_name = normalize_string(project_name)
+            project_location = os.path.join(
+                WORKSPACE_LOCATION,
+                f"{normalized_project_name}_{removed_project_id}",
+            )
+            shutil.rmtree(project_location, ignore_errors=True)
+
+        return {"id": removed_project_id}
 
     @staticmethod
     def add_model(db_session: session.Session, data: dict) -> int:
@@ -176,12 +222,14 @@ class ProjectAPIInterface:
         return model_id
 
     @staticmethod
-    def add_dummy_dataset(db_session: session.Session, data: dict) -> Optional[int]:
+    def add_dummy_dataset(db_session: session.Session, data: dict) -> int:
         """Add dummy dataset to project."""
         received_shape = data.get("model", {}).get("shape", None)
-        if received_shape is None or not received_shape.strip():
+        if received_shape is None:
             return -1
         shape = ConfigurationParser.parse_value(received_shape, [[int]])  # type: ignore
+        if len(shape[0]) <= 0:
+            return -1
 
         project_id = data.get("project_id", None)
         if project_id is None:
@@ -384,6 +432,11 @@ class DatasetAPIInterface:
     @staticmethod
     def set_template_path(dataset_id: int, parsed_dataset_data: DatasetAddParamsInterface) -> None:
         """Set template path for dataset."""
+        project_id = parsed_dataset_data.project_id
+        with Session.begin() as db_session:
+            project_name = Project.project_details(db_session, project_id).get("name", None)
+        if project_name is None:
+            raise ClientErrorException(f"Could not find project with id {project_id}")
         template_path = None
         custom_templates = DatasetAPIInterface.check_if_custom_metric_or_dataloader(
             parsed_dataset_data,
@@ -391,6 +444,8 @@ class DatasetAPIInterface:
 
         if any(custom_templates.values()):
             dataloader_path = DatasetAPIInterface.dataloader_path(
+                project_id=project_id,
+                project_name=project_name,
                 dataset_id=dataset_id,
                 dataset_name=parsed_dataset_data.dataset_name,
             )
@@ -450,11 +505,21 @@ class DatasetAPIInterface:
         return generated_template_path
 
     @staticmethod
-    def dataloader_path(dataset_name: str, dataset_id: int) -> str:
+    def dataloader_path(
+        project_name: str,
+        project_id: int,
+        dataset_name: str,
+        dataset_id: int,
+    ) -> str:
         """Get path for dataset templates."""
+        normalized_project_name = normalize_string(project_name)
+        project_location = os.path.join(
+            WORKSPACE_LOCATION,
+            f"{normalized_project_name}_{project_id}",
+        )
         normalized_dataset_name = normalize_string(dataset_name)
         return os.path.join(
-            WORKSPACE_LOCATION,
+            project_location,
             "custom_datasets",
             f"{normalized_dataset_name}_{dataset_id}",
         )
@@ -484,6 +549,114 @@ class DatasetAPIInterface:
         dataset_parameters.metric = {"name": metric_name, "param": metric_param}
 
         return dataset_parameters
+
+    @staticmethod
+    def get_predefined_dataset(data: dict) -> dict:
+        """Get predefined dataset for specified configuration."""
+        required_keys = ["framework", "domain", "domain_flavour"]
+        if not all(key in data.keys() for key in required_keys):
+            raise ClientErrorException(
+                f"Could not find required parameter. Required keys are {required_keys}",
+            )
+        try:
+            framework = str(data.get("framework", None))
+            domain = str(data.get("domain", None))
+            domain_flavour = str(data.get("domain_flavour", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value")
+        except TypeError:
+            raise ClientErrorException("Could not find required parameter.")
+
+        names_mapper = NamesMapper(MappingDirection.ToCore)
+        framework = names_mapper.map_name("framework", framework)
+        domain = names_mapper.map_name("domain", domain)
+        domain_flavour = names_mapper.map_name("domain_flavour", domain_flavour)
+
+        predefined_config_path = get_predefined_config_path(framework, domain, domain_flavour)
+
+        config = Config()
+        config.load(predefined_config_path)
+
+        predefined_data: dict = {
+            "transform": {},
+            "dataloader": {},
+            "metric": {},
+            "metric_param": {},
+        }
+        if (
+            config.quantization
+            and config.quantization.calibration
+            and config.quantization.calibration.dataloader
+        ):
+            dataloader_config: DataloaderConfig = config.quantization.calibration.dataloader
+            if dataloader_config.dataset is not None:
+                predefined_data.update(
+                    {
+                        "dataloader": DatasetAPIInterface.prepare_predefined_dataloader(
+                            dataloader_config.dataset,
+                        ),
+                    },
+                )
+            if dataloader_config.transform is not None:
+                predefined_data.update(
+                    {
+                        "transform": DatasetAPIInterface.prepare_predefined_transform(
+                            dataloader_config.transform,
+                        ),
+                    },
+                )
+
+        if config.evaluation and config.evaluation.accuracy and config.evaluation.accuracy.metric:
+            predefined_data.update(
+                {
+                    "metric": config.evaluation.accuracy.metric.name,
+                    "metric_param": config.evaluation.accuracy.metric.param,
+                },
+            )
+        return predefined_data
+
+    @staticmethod
+    def prepare_predefined_dataloader(
+        dataloader_data: DatasetConfig,
+    ) -> dict:
+        """Prepare predefined transform data."""
+        parameters = []
+        for param_name, param_value in dataloader_data.params.items():
+            parameters.append(
+                {
+                    "name": param_name,
+                    "value": param_value,
+                },
+            )
+
+        return {
+            "name": dataloader_data.name,
+            "params": parameters,
+        }
+
+    @staticmethod
+    def prepare_predefined_transform(
+        transforms_data: OrderedDict[str, TransformConfig],
+    ) -> List[dict]:
+        """Prepare predefined transform data."""
+        transforms: List[dict] = []
+
+        for _, transform in transforms_data.items():
+            parameters = []
+            for param_name, param_value in transform.parameters.items():
+                parameters.append(
+                    {
+                        "name": param_name,
+                        "value": param_value,
+                    },
+                )
+            transforms.append(
+                {
+                    "name": transform.name,
+                    "params": parameters,
+                },
+            )
+        return transforms
 
 
 class OptimizationAPIInterface:
@@ -709,58 +882,123 @@ class OptimizationAPIInterface:
                 OptimizationTypes.QUANTIZATION.value,
             )
 
-        add_optimization_method = OptimizationAPIInterface.add_standard_optimization
-        if parsed_optimization_data.optimization_type_id == quantization_id:
-            add_optimization_method = OptimizationAPIInterface.add_quantization_optimization
+            add_optimization_method = OptimizationAPIInterface.add_standard_optimization
+            if parsed_optimization_data.optimization_type_id == quantization_id:
+                add_optimization_method = OptimizationAPIInterface.add_quantization_optimization
 
-        optimization_id = add_optimization_method(parsed_optimization_data)
+            optimization_id = add_optimization_method(db_session, parsed_optimization_data)
         return {
             "optimization_id": optimization_id,
         }
 
     @staticmethod
-    def add_quantization_optimization(optimization_data: OptimizationAddParamsInterface) -> int:
+    def add_quantization_optimization(
+        db_session: session.Session,
+        optimization_data: OptimizationAddParamsInterface,
+    ) -> int:
         """Add quantization optimization to database."""
         tuning_details = optimization_data.tuning_details
-        with Session.begin() as db_session:
-            tuning_details_id = TuningDetails.add(
-                db_session=db_session,
-                strategy=tuning_details.strategy,
-                accuracy_criterion_type=tuning_details.accuracy_criterion.type,
-                accuracy_criterion_threshold=tuning_details.accuracy_criterion.threshold,
-                objective=tuning_details.objective,
-                exit_policy=tuning_details.exit_policy,
-                random_seed=tuning_details.random_seed,
-            )
+        tuning_details_id = TuningDetails.add(
+            db_session=db_session,
+            strategy=tuning_details.strategy,
+            accuracy_criterion_type=tuning_details.accuracy_criterion.type,
+            accuracy_criterion_threshold=tuning_details.accuracy_criterion.threshold,
+            objective=tuning_details.objective,
+            exit_policy=tuning_details.exit_policy,
+            random_seed=tuning_details.random_seed,
+        )
 
-            optimization_id = Optimization.add(
-                db_session=db_session,
-                project_id=optimization_data.project_id,
-                name=optimization_data.name,
-                precision_id=optimization_data.precision_id,
-                optimization_type_id=optimization_data.optimization_type_id,
-                dataset_id=optimization_data.dataset_id,
-                batch_size=optimization_data.batch_size,
-                sampling_size=optimization_data.sampling_size,
-                tuning_details_id=tuning_details_id,
-            )
+        optimization_id = Optimization.add(
+            db_session=db_session,
+            project_id=optimization_data.project_id,
+            name=optimization_data.name,
+            precision_id=optimization_data.precision_id,
+            optimization_type_id=optimization_data.optimization_type_id,
+            dataset_id=optimization_data.dataset_id,
+            batch_size=optimization_data.batch_size,
+            sampling_size=optimization_data.sampling_size,
+            tuning_details_id=tuning_details_id,
+        )
         return optimization_id
 
     @staticmethod
-    def add_standard_optimization(optimization_data: OptimizationAddParamsInterface) -> int:
+    def add_standard_optimization(
+        db_session: session.Session,
+        optimization_data: OptimizationAddParamsInterface,
+    ) -> int:
         """Add optimization to database."""
-        with Session.begin() as db_session:
-            optimization_id = Optimization.add(
-                db_session=db_session,
-                project_id=optimization_data.project_id,
-                name=optimization_data.name,
-                precision_id=optimization_data.precision_id,
-                optimization_type_id=optimization_data.optimization_type_id,
-                dataset_id=optimization_data.dataset_id,
-                batch_size=optimization_data.batch_size,
-                sampling_size=optimization_data.sampling_size,
-            )
+        optimization_id = Optimization.add(
+            db_session=db_session,
+            project_id=optimization_data.project_id,
+            name=optimization_data.name,
+            precision_id=optimization_data.precision_id,
+            optimization_type_id=optimization_data.optimization_type_id,
+            dataset_id=optimization_data.dataset_id,
+            batch_size=optimization_data.batch_size,
+            sampling_size=optimization_data.sampling_size,
+        )
         return optimization_id
+
+    @staticmethod
+    def add_tuning_history(
+        optimization_id: int,
+        tuning_history: dict,
+    ) -> int:
+        """Add tuning history to database."""
+        tuning_data: TuningHistoryInterface = OptimizationAPIInterface.parse_tuning_history(
+            tuning_history,
+        )
+
+        history: List[dict] = [
+            history_item.serialize() for history_item in tuning_data.history  # type: ignore
+        ]
+        with Session.begin() as db_session:
+            optimization = Optimization.details(
+                db_session,
+                optimization_id,
+            )
+            tuning_details_id = optimization.get("tuning_details", {}).get("id", None)
+            tuning_history_id = TuningHistory.add(
+                db_session=db_session,
+                minimal_accuracy=tuning_data.minimal_accuracy,
+                baseline_accuracy=tuning_data.baseline_accuracy,
+                baseline_performance=tuning_data.baseline_performance,
+                last_tune_accuracy=tuning_data.last_tune_accuracy,
+                last_tune_performance=tuning_data.last_tune_performance,
+                best_tune_accuracy=tuning_data.best_tune_accuracy,
+                best_tune_performance=tuning_data.best_tune_performance,
+                history=history,
+            )
+
+            TuningDetails.update_tuning_history(db_session, tuning_details_id, tuning_history_id)
+        return tuning_history_id
+
+    @staticmethod
+    def parse_tuning_history(tuning_history: dict) -> TuningHistoryInterface:
+        """Parse input data for tuning history."""
+        tuning_data: TuningHistoryInterface = TuningHistoryInterface()
+        try:
+            tuning_data.minimal_accuracy = tuning_history.get("minimal_accuracy", None)
+            tuning_data.baseline_accuracy = tuning_history.get("baseline_accuracy", None)
+            tuning_data.baseline_performance = tuning_history.get("baseline_performance", None)
+            tuning_data.last_tune_accuracy = tuning_history.get("last_tune_accuracy", None)
+            tuning_data.last_tune_performance = tuning_history.get("last_tune_performance", None)
+            tuning_data.best_tune_accuracy = tuning_history.get("best_tune_accuracy", None)
+            tuning_data.best_tune_performance = tuning_history.get("best_tune_performance", None)
+
+            history = tuning_history.get("history", [])
+            tuning_data.history = []
+            for history_item in history:
+                parsed_history_item = TuningHistoryItemInterface()
+                parsed_history_item.accuracy = history_item.get("accuracy", None)
+                parsed_history_item.performance = history_item.get("performance", None)
+                tuning_data.history.append(parsed_history_item)
+        except ValueError:
+            raise ClientErrorException("Could not parse value")
+        except TypeError:
+            raise ClientErrorException("Could not find required parameter.")
+
+        return tuning_data
 
     @staticmethod
     def parse_optimization_data(data: dict) -> OptimizationAddParamsInterface:
@@ -783,6 +1021,16 @@ class OptimizationAPIInterface:
         optimization_data.sampling_size = int(data.get("sampling_size", 100))
 
         return optimization_data
+
+    @staticmethod
+    def clean_status(status_to_clean: ExecutionStatus) -> dict:
+        """Clean specified optimization status."""
+        with Session.begin() as db_session:
+            response = Optimization.clean_status(
+                db_session=db_session,
+                status_to_clean=status_to_clean,
+            )
+        return response
 
 
 class BenchmarkAPIInterface:
@@ -1041,8 +1289,9 @@ class BenchmarkAPIInterface:
         except TypeError:
             raise ClientErrorException("Could not find required parameter.")
 
-        benchmark_data.number_of_instance = int(data.get("number_of_instance", None))
-        if benchmark_data.number_of_instance is None:
+        try:
+            benchmark_data.number_of_instance = int(data.get("number_of_instance", None))
+        except TypeError:
             from neural_compressor.ux.utils.hw_info import HWInfo
 
             hw_info = HWInfo()
@@ -1051,6 +1300,16 @@ class BenchmarkAPIInterface:
             )
 
         return benchmark_data
+
+    @staticmethod
+    def clean_status(status_to_clean: ExecutionStatus) -> dict:
+        """Clean specified optimization status."""
+        with Session.begin() as db_session:
+            response = Benchmark.clean_status(
+                db_session=db_session,
+                status_to_clean=status_to_clean,
+            )
+        return response
 
 
 class ProfilingAPIInterface:
@@ -1139,7 +1398,6 @@ class ProfilingAPIInterface:
     @staticmethod
     def update_log_path(data: dict) -> dict:
         """Update config path and output log path."""
-        response = {}
         try:
             profiling_id: int = int(data.get("id", None))
         except ValueError:
@@ -1285,6 +1543,16 @@ class ProfilingAPIInterface:
 
         return profiling_result_data
 
+    @staticmethod
+    def clean_status(status_to_clean: ExecutionStatus) -> dict:
+        """Clean specified optimization status."""
+        with Session.begin() as db_session:
+            response = Profiling.clean_status(
+                db_session=db_session,
+                status_to_clean=status_to_clean,
+            )
+        return response
+
 
 class DictionariesAPIInterface:
     """Interface for queries connected with dictonaries."""
@@ -1397,6 +1665,206 @@ class DictionariesAPIInterface:
         return fw_metrics
 
 
+class ExamplesAPIInterface:
+    """Interface for queries connected with predefined models."""
+
+    @staticmethod
+    def create_project(data: dict) -> None:
+        """Create new project for predefined model."""
+        mq = MessageQueue()
+
+        try:
+            request_id: str = str(data["request_id"])
+            mq.post_success(
+                "create_example_project_start",
+                {"message": "Creating project from examples.", "request_id": request_id},
+            )
+
+            framework = str(data.get("framework"))
+            model = str(data.get("model"))
+            domain = str(data.get("domain"))
+
+            models_config = load_model_config()
+            model_info = models_config.get(framework, {}).get(domain, {}).get(model, None)
+            if model_info is None:
+                raise InternalException(
+                    f"Could not find information about {framework} {domain} {model} model",
+                )
+            try:
+                mq.post_success(
+                    "create_example_project_progress",
+                    {"message": "Downloading example model.", "request_id": request_id},
+                )
+                model_path = download_model(data)
+            except Exception as e:
+                mq.post_error(
+                    "create_example_project_finish",
+                    {"message": str(e), "code": 404, "request_id": request_id},
+                )
+                raise
+
+            project_name = data.get("name", None)
+            if project_name is None:
+                ClientErrorException("Project name not provided.")
+
+            with Session.begin() as db_session:
+                mq.post_success(
+                    "create_example_project_progress",
+                    {"message": "Adding project for example model.", "request_id": request_id},
+                )
+                project_id = Project.create_project(db_session, project_name)
+                data.update({"project_id": project_id})
+                data.update(
+                    {
+                        "model": {
+                            "model_name": "Input model",
+                            "path": model_path,
+                            "domain": domain,
+                            "shape": model_info.get("input_shape"),
+                            "input_nodes": model_info.get("inputs", []),
+                            "output_nodes": model_info.get("outputs", []),
+                        },
+                    },
+                )
+                mq.post_success(
+                    "create_example_project_progress",
+                    {"message": "Adding example model to project.", "request_id": request_id},
+                )
+                model_id = ProjectAPIInterface.add_model(db_session, data)
+                mq.post_success(
+                    "create_example_project_progress",
+                    {"message": "Adding dummy dataset to project.", "request_id": request_id},
+                )
+                dataset_id = ProjectAPIInterface.add_dummy_dataset(
+                    db_session,
+                    data,
+                )
+
+                mq.post_success(
+                    "create_example_project_progress",
+                    {"message": "Adding optimization to project.", "request_id": request_id},
+                )
+                optimization_data = ExamplesAPIInterface.get_optimization_data(
+                    db_session=db_session,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    optimization_name=f"{model} quantization",
+                    precision=Precisions.INT8.value,
+                    optimization=OptimizationTypes.QUANTIZATION.value,
+                )
+                optimization_id = OptimizationAPIInterface.add_quantization_optimization(
+                    db_session,
+                    optimization_data,
+                )
+
+                mq.post_success(
+                    "create_example_project_progress",
+                    {"message": "Adding benchmark to project.", "request_id": request_id},
+                )
+                benchmark_data: BenchmarkAddParamsInterface = (
+                    BenchmarkAPIInterface.parse_benchmark_data(
+                        {
+                            "name": f"{model} benchmark",
+                            "project_id": project_id,
+                            "model_id": model_id,
+                            "dataset_id": dataset_id,
+                            "mode": "performance",
+                            "batch_size": 1,
+                            "iterations": -1,
+                            "warmup_iterations": 5,
+                        },
+                    )
+                )
+                benchmark_id = Benchmark.add(
+                    db_session=db_session,
+                    project_id=benchmark_data.project_id,
+                    name=benchmark_data.name,
+                    model_id=benchmark_data.model_id,
+                    dataset_id=benchmark_data.dataset_id,
+                    mode=benchmark_data.mode,
+                    batch_size=benchmark_data.batch_size,
+                    iterations=benchmark_data.iterations,
+                    number_of_instance=benchmark_data.number_of_instance,
+                    cores_per_instance=benchmark_data.cores_per_instance,
+                    warmup_iterations=benchmark_data.warmup_iterations,
+                )
+        except Exception as e:
+            mq.post_failure(
+                "create_example_project_finish",
+                {"message": str(e), "code": 404, "request_id": request_id},
+            )
+        mq.post_success(
+            "create_example_project_finish",
+            {
+                "message": "Example project has been added.",
+                "request_id": request_id,
+                "project_id": project_id,
+                "model_id": model_id,
+                "dataset_id": dataset_id,
+                "optimization_id": optimization_id,
+                "benchmark_id": benchmark_id,
+            },
+        )
+
+    @staticmethod
+    def get_optimization_data(
+        db_session: session.Session,
+        project_id: int,
+        dataset_id: int,
+        optimization_name: str,
+        precision: str,
+        optimization: str,
+    ) -> OptimizationAddParamsInterface:
+        """Get data to add optimization."""
+        quantization_id = OptimizationType.get_optimization_type_id(
+            db_session,
+            optimization,
+        )
+        int8_precision_id = Precision.get_precision_id(
+            db_session,
+            precision,
+        )
+
+        optimization_data: OptimizationAddParamsInterface = (
+            OptimizationAPIInterface.parse_optimization_data(
+                {
+                    "project_id": project_id,
+                    "name": optimization_name,
+                    "precision_id": int8_precision_id,
+                    "optimization_type_id": quantization_id,
+                    "dataset_id": dataset_id,
+                },
+            )
+        )
+        return optimization_data
+
+
+def set_database_version() -> None:
+    """Set version_num in alembic_version table."""
+    alembic_config_path = os.path.join(
+        os.path.dirname(__file__),
+        "alembic.ini",
+    )
+
+    alembic_scripts_location = os.path.join(
+        os.path.dirname(alembic_config_path),
+        "alembic",
+    )
+    alembic_cfg = AlembicConfig(alembic_config_path)
+    alembic_cfg.set_main_option("sqlalchemy.url", db_manager.database_entrypoint)
+    alembic_cfg.set_main_option("script_location", alembic_scripts_location)
+    command.ensure_version(alembic_cfg)
+
+    script = ScriptDirectory.from_config(alembic_cfg)
+    revision = script.get_revision("head")
+    latest_revision = revision.revision
+    with db_manager.engine.connect() as conn:
+        conn.execute(
+            f"INSERT INTO alembic_version(version_num) VALUES ('{latest_revision}') "
+            f"ON CONFLICT(version_num) DO UPDATE SET version_num='{latest_revision}';",
+        )
+
+
 def initialize_associations() -> None:
     """Initialize association tables in database."""
     initialize_precision_optimization_types_association()
@@ -1441,7 +1909,7 @@ def search_in_list_of_dict_for_unique_value(
 ) -> Dict[str, Any]:
     """Search for dictionaries with specific unique parameter value."""
     search_results: List[dict] = search_in_list_of_dict(list_of_dicts, parameter, value)
-    if len(search_results) != 1:
+    if len(search_results) > 1:
         raise InternalException("Search result is not unique.")
     return search_results[0]
 

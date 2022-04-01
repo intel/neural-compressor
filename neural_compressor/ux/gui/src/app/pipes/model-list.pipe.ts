@@ -16,7 +16,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'modelList' })
 export class ModelListPipe implements PipeTransform {
   transform(value: string): string {
-    value = value.replace(/_/g, ' ');
+    if (typeof value === 'string') {
+      value = value.replace(/_/g, ' ');
+    }
     return value;
   }
 }

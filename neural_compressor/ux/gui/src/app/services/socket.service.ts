@@ -36,7 +36,9 @@ export class SocketService {
   public profilingStart$ = new Subject();
   public profilingFinish$ = new Subject();
   public tuningHistory$ = new Subject();
-  public exampleWorkloadSaved$ = new Subject();
+  public exampleStart$ = new Subject();
+  public exampleProgress$ = new Subject();
+  public exampleFinish$ = new Subject();
   public showSnackBar$ = new Subject();
 
   constructor(
@@ -48,8 +50,8 @@ export class SocketService {
     this.setupModelDownload();
     this.setupBenchmark();
     this.setupTuningHistory();
-    this.setupExampleWorkloadSaved();
     this.setupProfiling();
+    this.setupExample();
   }
 
   setupOptimizationConnection() {
@@ -58,7 +60,7 @@ export class SocketService {
     });
     this.socket.on('optimization_finish', (data) => {
       this.optimizationFinish$.next(data);
-      this.showSnackBar$.next({ tab: 'optimizations', id: data.data.id });
+      this.showSnackBar$.next({ tab: 'optimizations', id: data.data.project_id });
     });
   }
 
@@ -86,7 +88,7 @@ export class SocketService {
     });
     this.socket.on('benchmark_finish', (data) => {
       this.benchmarkFinish$.next(data);
-      this.showSnackBar$.next({ tab: 'benchmarks', id: data.data.id });
+      this.showSnackBar$.next({ tab: 'benchmarks', id: data.data.project_id });
     });
   }
 
@@ -96,7 +98,7 @@ export class SocketService {
     });
     this.socket.on('profiling_finish', (data) => {
       this.profilingFinish$.next(data);
-      this.showSnackBar$.next({ tab: 'profiling', id: data.data.id });
+      this.showSnackBar$.next({ tab: 'profiling', id: data.data.project_id });
     });
   }
 
@@ -106,9 +108,15 @@ export class SocketService {
     });
   }
 
-  setupExampleWorkloadSaved() {
-    this.socket.on('example_workload_saved', (data) => {
-      this.exampleWorkloadSaved$.next(data);
+  setupExample() {
+    this.socket.on('create_example_project_start', (data) => {
+      this.exampleStart$.next(data);
+    });
+    this.socket.on('create_example_project_progress', (data) => {
+      this.exampleProgress$.next(data);
+    });
+    this.socket.on('create_example_project_finish', (data) => {
+      this.exampleFinish$.next(data);
     });
   }
 
