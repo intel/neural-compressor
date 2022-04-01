@@ -174,24 +174,26 @@ class CpuInfo(object):
     def __init__(self):
         self._bf16 = False
         self._vnni = False
-        cpuid = cpuinfo.CPUID()
-        max_extension_support = cpuid.get_max_extension_support()
-        if max_extension_support >= 7:
-            ecx = cpuid._run_asm(
-                b"\x31\xC9",             # xor ecx, ecx
-                b"\xB8\x07\x00\x00\x00"  # mov eax, 7
-                b"\x0f\xa2"              # cpuid
-                b"\x89\xC8"              # mov ax, cx
-                b"\xC3"                  # ret
-            )
-            self._vnni = bool(ecx & (1 << 11))
-            eax = cpuid._run_asm(
-                b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                b"\xB8\x07\x00\x00\x00"  # mov eax, 7
-                b"\x0f\xa2"              # cpuid
-                b"\xC3"                  # ret
-            )
-            self._bf16 = bool(eax & (1 << 5))
+        info = cpuinfo.get_cpu_info()
+        if 'arch' in info and 'X86' in info['arch']:
+            cpuid = cpuinfo.CPUID()
+            max_extension_support = cpuid.get_max_extension_support()
+            if max_extension_support >= 7:
+                ecx = cpuid._run_asm(
+                    b"\x31\xC9",             # xor ecx, ecx
+                    b"\xB8\x07\x00\x00\x00"  # mov eax, 7
+                    b"\x0f\xa2"              # cpuid
+                    b"\x89\xC8"              # mov ax, cx
+                    b"\xC3"                  # ret
+                )
+                self._vnni = bool(ecx & (1 << 11))
+                eax = cpuid._run_asm(
+                    b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
+                    b"\xB8\x07\x00\x00\x00"  # mov eax, 7
+                    b"\x0f\xa2"              # cpuid
+                    b"\xC3"                  # ret
+                )
+                self._bf16 = bool(eax & (1 << 5))
         self._sockets = self.get_number_of_sockets()
         self._cores = psutil.cpu_count(logical=False)
         self._cores_per_socket = int(self._cores / self._sockets)

@@ -124,17 +124,14 @@ def get_model_fwk_name(model):
                         then return 'NA'.
     """
     def _is_onnxruntime(model):
-        from onnxruntime_extensions import get_library_path
-        so = ort.SessionOptions()
-        so.register_custom_ops_library(get_library_path())
         try:
-            ort.InferenceSession(model.SerializeToString(), so)
-        except:
-            pass
-        else:
-            return 'onnxruntime'
-        try:
-            ort.InferenceSession(model, so)
+            from onnxruntime_extensions import get_library_path
+            so = ort.SessionOptions()
+            so.register_custom_ops_library(get_library_path())
+            if isinstance(model, str):
+                ort.InferenceSession(model, so)
+            else:
+                ort.InferenceSession(model.SerializeToString(), so)
         except:
             pass
         else:
