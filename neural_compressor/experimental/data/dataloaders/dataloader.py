@@ -30,5 +30,6 @@ DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "pytorch_fx": PyTorchDataLoader,
                "onnxrt_qlinearops": ONNXRTDataLoader,
                "onnxrt_integerops": ONNXRTDataLoader,
+               "onnxrt_qdqops": ONNXRTDataLoader,
                "engine": EngineDataLoader}
 

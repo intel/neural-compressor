@@ -18,6 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
         attribute_to_kwarg, ms_domain
 from onnx import onnx_pb as onnx_proto
@@ -67,3 +68,12 @@ class QLinearConcat(QuantOperatorBase):
 
         self.quantizer.new_nodes += nodes
         self.quantizer.new_nodes += [qlconcat_node]
+
+class QDQConcat(QDQOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        if all([inp not in self.quantizer.quantized_value_map for inp in self.node.input]):
+            return
+        super().quantize()

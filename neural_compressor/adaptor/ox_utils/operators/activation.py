@@ -18,6 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
                                                  attribute_to_kwarg, ms_domain
 from onnx import onnx_pb as onnx_proto
@@ -88,4 +89,17 @@ class QLinearActivation(QuantOperatorBase):
 
         nodes.append(qlinear_activation_node)
         self.quantizer.new_nodes += nodes
+
+class QDQRemovableActivation(QDQOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        node = self.node
+        if node.input[0] not in self.quantizer.quantized_value_map or \
+            node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
+            self.quantizer.quantize_tensor(node.input[0])
+        else:
+            self.quantizer.model.replace_input_of_all_nodes(node.output[0], node.input[0])
+            self.quantizer.remove_nodes.append(node)
 

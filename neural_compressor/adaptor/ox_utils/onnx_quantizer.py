@@ -214,6 +214,7 @@ class ONNXQuantizer:
 
         # Remove weights which are already quantized from graph.
         self._remove_quantized_weights()
+        self.model.remove_unused_constant()
 
         self.model.model.producer_name = __producer__
         self.model.model.producer_version = __version__
@@ -647,18 +648,17 @@ class ONNXQuantizer:
 
         return
 
-    def quantize_bias(self, node, new_node_list):
+    def quantize_bias(self, bias_name, input_name, weight_name, new_node_list=[]):
         '''
         Quantized the bias. Zero Point == 0 and Scale == Input_Scale * Weight_Scale
         '''
 
         # get scale for weight
-        weight_scale_name = self.quantized_value_map[node.input[1]].scale_name
+        weight_scale_name = self.quantized_value_map[weight_name].scale_name
         weight_initializer = find_by_name(weight_scale_name, self.model.initializer())
         weight_scale = self.tensor_proto_to_array(weight_initializer)
 
         # get bias
-        bias_name = node.input[2]
         bias_initializer = find_by_name(bias_name, self.model.initializer())
         bias_data = self.tensor_proto_to_array(bias_initializer)
         quantized_bias_name = bias_name + "_quantized"
@@ -666,19 +666,19 @@ class ONNXQuantizer:
         # input scale is not provided and this input is dynamically quantized 
         # so it is not pre-computed at this point
         # so resort to dynamic quantization for bias
-        if self.quantization_params is None or node.input[0] not in self.quantization_params and \
-           node.input[0] not in self.quantized_value_map:
-            self._dynamic_quantize_bias(node.input[0], weight_scale_name, bias_name, 
+        if self.quantization_params is None or input_name not in self.quantization_params and \
+           input_name not in self.quantized_value_map:
+            self._dynamic_quantize_bias(input_name, weight_scale_name, bias_name, 
                                         quantized_bias_name, new_node_list)
         else:
             # get scale for input
-            if node.input[0] in self.quantized_value_map:
-                input_scale_name = self.quantized_value_map[node.input[0]].scale_name
-            elif node.input[0] in self.quantization_params:
-                _, input_scale_name, _, _, _ = self._get_quantization_params(node.input[0])
+            if input_name in self.quantized_value_map:
+                input_scale_name = self.quantized_value_map[input_name].scale_name
+            elif input_name in self.quantization_params:
+                _, input_scale_name, _, _, _ = self._get_quantization_params(input_name)
             else:
                 raise ValueError("Expected {} to be in quantized value map \
-                                  for static quantization".format(node.input[0]))
+                                  for static quantization".format(input_name))
 
             inputscale_initializer = find_by_name(input_scale_name, self.model.initializer())
             input_scale = self.tensor_proto_to_array(inputscale_initializer)
@@ -697,6 +697,19 @@ class ONNXQuantizer:
                                                                    quantized_bias_name)
             self.model.initializer().extend([packed_bias_initializer])
 
+            # update scale initializer
+            quantized_bias_scale_name = quantized_bias_name + "_scale"
+            bias_scale_data = np.asarray(bias_scale, dtype=np.float32).reshape(-1)
+            packed_bias_scale_initializer = onnx.numpy_helper.from_array(bias_scale_data,
+                                                             quantized_bias_scale_name)
+            self.model.initializer().extend([packed_bias_scale_initializer])
+
+            # update zero initializer
+            quantized_bias_zp_name = quantized_bias_name + "_zero_point"
+            bias_zp_data = np.zeros(bias_scale.shape, dtype=np.int32).reshape(-1)
+            packed_bias_zp_initializer = onnx.numpy_helper.from_array(bias_zp_data, quantized_bias_zp_name)
+            self.model.initializer().extend([packed_bias_zp_initializer])
+
             # log entries for this quantized bias value
             quantized_bias_entry = QuantizedInitializer(bias_name,
                                                         bias_initializer, [0], [0], [0], 
@@ -707,7 +720,9 @@ class ONNXQuantizer:
             self._quantized_weights.append(quantized_bias_entry)
 
             assert (bias_name not in self.quantized_value_map)
-            quantized_value = QuantizedValue(bias_name, quantized_bias_name, "", "", 
+            quantized_value = QuantizedValue(bias_name, quantized_bias_name, 
+                                             quantized_bias_scale_name,
+                                             quantized_bias_zp_name, 
                                              QuantizedValueType.Initializer,
                                              None, onnx_proto.TensorProto.INT32)
             self.quantized_value_map[bias_name] = quantized_value

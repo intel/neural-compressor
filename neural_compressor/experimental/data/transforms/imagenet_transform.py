@@ -70,7 +70,7 @@ class QuantizedInput(BaseTransform):
 
 @transform_registry(transform_type="LabelShift", \
     process="postprocess", framework="tensorflow, onnxrt_qlinearops, \
-    onnxrt_integerops, engine")
+    onnxrt_qdqops, onnxrt_integerops, engine")
 class LabelShift(BaseTransform):
     """Convert label to label - label_shift.
 

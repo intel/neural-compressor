@@ -17,21 +17,23 @@
 #
 from onnxruntime.quantization.quant_utils import QuantizationMode
 from .operators.base_operator import QuantOperatorBase
-from .operators.matmul import MatMulInteger, QLinearMatMul
+from .operators.qdq_base_operator import QDQOperatorBase
+from .operators.matmul import MatMulInteger, QLinearMatMul, QDQMatMul
 from .operators.attention import AttentionQuant
 from .operators.embed_layernorm import EmbedLayerNormalizationQuant
 from .operators.gather import GatherQuant
-from .operators.conv import QLinearConv, ConvInteger
-from .operators.activation import QLinearActivation
+from .operators.conv import QLinearConv, ConvInteger, QDQConv
+from .operators.activation import QLinearActivation, QDQRemovableActivation
 from .operators.binary_op import QLinearBinaryOp
-from .operators.maxpool import QMaxPool
+from .operators.maxpool import QMaxPool, QDQMaxPool
 from .operators.gavgpool import QGlobalAveragePool
 from .operators.lstm import LSTMQuant
 from .operators.split import QSplit
 from .operators.pad import QPad
-from .operators.concat import QLinearConcat
+from .operators.concat import QLinearConcat, QDQConcat
 from .operators.pooling import QLinearPool
-from .operators.direct_q8 import Direct8BitOp
+from .operators.direct_q8 import Direct8BitOp, QDQDirect8BitOp
+from .operators.resize import QDQResize, QResize
 
 CommonOpsRegistry = {"Gather": GatherQuant, \
                      "EmbedLayerNormalization": EmbedLayerNormalizationQuant}
@@ -65,10 +67,26 @@ QLinearOpsRegistry = {
     "Squeeze": Direct8BitOp,
     "Unsqueeze" : Direct8BitOp,
     "Transpose" : Direct8BitOp,
-    "AveragePool" : QLinearPool
+    "AveragePool" : QLinearPool,
+    "Resize": QResize
 }
 QLinearOpsRegistry.update(CommonOpsRegistry)
 
+QDQRegistry = {
+    "FusedConv": QDQConv,
+    "Conv": QDQConv,
+    "Clip": QDQRemovableActivation,
+    "Relu": QDQRemovableActivation,
+    "Reshape": QDQDirect8BitOp,
+    "Transpose" : QDQDirect8BitOp,
+    "Squeeze" : QDQDirect8BitOp,
+    "Unsqueeze" : QDQDirect8BitOp,
+    "Resize": QDQResize,
+    "MaxPool": QDQMaxPool,
+    "AveragePool" : QDQDirect8BitOp,
+    "Concat": QDQConcat,
+    "MatMul": QDQMatMul,
+}
 
 def CreateDefaultOpQuantizer(onnx_quantizer, node):
     return QuantOperatorBase(onnx_quantizer, node)
@@ -80,3 +98,8 @@ def CreateOpQuantizer(onnx_quantizer, node):
     if node.op_type in registry.keys():
         return registry[node.op_type](onnx_quantizer, node)
     return QuantOperatorBase(onnx_quantizer, node)
+
+def CreateQDQQuantizer(onnx_quantizer, node):
+    if node.op_type in QDQRegistry.keys():
+        return QDQRegistry[node.op_type](onnx_quantizer, node)
+    return QDQOperatorBase(onnx_quantizer, node)

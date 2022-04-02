@@ -36,6 +36,7 @@ onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
 ort_ext = LazyImport("onnxruntime_extensions")
 ONNXRT152_VERSION = StrictVersion("1.5.2")
+ONNXRT170_VERSION = StrictVersion("1.7.0")
 
 logger = logging.getLogger()
 
@@ -90,8 +91,13 @@ class ONNXRTAdaptor(Adaptor):
             logger.warning("Quantize input needs model opset 11 or newer.")
         from neural_compressor.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
-        backend = QuantizationMode.QLinearOps if self.backend == \
-            "qlinearops" else QuantizationMode.IntegerOps
+        if self.backend == "qlinearops":
+            backend = QuantizationMode.QLinearOps
+        elif self.backend == "qdqops":
+            assert ort_version >= ONNXRT170_VERSION, 'QDQ mode needs onnxruntime1.7.0 or newer'
+            backend = self.backend
+        else:
+            backend = QuantizationMode.IntegerOps
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         tmp_model = copy.deepcopy(model)
@@ -137,7 +143,12 @@ class ONNXRTAdaptor(Adaptor):
         else:
             quantize_params = None
         self.quantize_params = quantize_params
-        quantizer = ONNXQuantizer(tmp_model.model,
+        if self.backend == "qlinearops" or self.backend == "integerops":
+            quantizer_cls = ONNXQuantizer
+        else:
+            from neural_compressor.adaptor.ox_utils.qdq_quantizer import QDQQuantizer
+            quantizer_cls = QDQQuantizer
+        quantizer = quantizer_cls(tmp_model.model,
             quantize_config,
             backend,
             self.static,
@@ -195,13 +206,23 @@ class ONNXRTAdaptor(Adaptor):
 
         from neural_compressor.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
-        backend = QuantizationMode.QLinearOps if self.backend == \
-            "qlinearops" else QuantizationMode.IntegerOps
+        if self.backend == "qlinearops":
+            backend = QuantizationMode.QLinearOps
+        elif self.backend == "qdqops":
+            assert ort_version >= ONNXRT170_VERSION, 'QDQ mode needs onnxruntime1.7.0 or newer'
+            backend = self.backend
+        else:
+            backend = QuantizationMode.IntegerOps
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
-        quantizer = ONNXQuantizer(model.model,
+        if self.backend == "qlinearops" or self.backend == "integerops":
+            quantizer_cls = ONNXQuantizer
+        else:
+            from neural_compressor.adaptor.ox_utils.qdq_quantizer import QDQQuantizer
+            quantizer_cls = QDQQuantizer
+        quantizer = quantizer_cls(model.model,
             quantize_config,
             backend,
             self.static,
@@ -236,8 +257,14 @@ class ONNXRTAdaptor(Adaptor):
     def _dump_model_op_stats(self, model):
         fp32_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
             precision='int8')
+        res = {}
+        for op_type in fp32_op_list:
+            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+        for op_type in ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]:
+            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
 
-        if self.backend == "qlinearops":
+
+        if self.backend in ["qlinearops", "qdqops"] :
             int8_op_list = ["QLinearConv", "QLinearMatMul", "QAttention",
                             "QLinearMul", "QLinearRelu", "QLinearClip",
                             "QLinearLeakyRelu", "QLinearSigmoid", "MaxPool","Squeeze",
@@ -252,17 +279,11 @@ class ONNXRTAdaptor(Adaptor):
                             "DynamicQuantizeLinear"
             ]
 
-        res = {}
-        for op_type in fp32_op_list:
-            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
-        for op_type in ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]:
-            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
-
         for node in model.model.graph.node:
             possible_int8_res = [name for name in int8_op_list if node.op_type.find(name) != -1]
-
+ 
             if any(possible_int8_res):
-                if self.backend == "qlinearops":
+                if self.backend in ["qlinearops", 'qdqops']:
                     if node.op_type == "QuantizeLinear" or node.op_type == "DequantizeLinear" \
                             or node.op_type == "DynamicQuantizeLinear":
                         origin_op_type = node.op_type
@@ -273,7 +294,8 @@ class ONNXRTAdaptor(Adaptor):
 
                 if node.op_type in ["Pad", "Split", "Gather", "Concat", "Reshape", "Unsqueeze", 
                     "Squeeze", "Transpose"]:
-                    if any([output.endswith('_quantized') for output in node.output]):
+                    if any([output.endswith('_quantized') for output in node.output]) or \
+                        any(['_DequantizeLinear' in inp for inp in node.input]):
                         origin_op_type = node.op_type
                     else:
                         if node.op_type in res:
@@ -283,6 +305,10 @@ class ONNXRTAdaptor(Adaptor):
                 if origin_op_type == "QAttention":
                     origin_op_type = "Attention"
                 res[origin_op_type]['INT8'] += 1
+
+            elif node.op_type in fp32_op_list and \
+                any(['_DequantizeLinear' in inp for inp in node.input]):
+                res[node.op_type]['INT8'] += 1
 
             elif node.op_type in fp32_op_list:
                 res[node.op_type]['FP32'] += 1
@@ -720,6 +746,20 @@ class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
         self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), "onnxrt_integer.yaml"))
         self.backend = "integerops"
+        super().__init__(framework_specific_info)
+
+@adaptor_registry
+class ONNXRT_QDQOpsAdaptor(ONNXRTAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "onnxrt_qdq.yaml"))
+        self.backend = "qdqops"
         super().__init__(framework_specific_info)
 
 class ONNXRTQuery(QueryBackendCapability):

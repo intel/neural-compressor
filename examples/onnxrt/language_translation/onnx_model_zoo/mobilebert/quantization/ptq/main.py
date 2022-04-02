@@ -47,7 +47,7 @@ class squadDataset(Dataset):
         self.bs = bs
     
     def __getitem__(self, index):
-        return self.input_ids[index:index + self.bs], self.input_mask[index:index + self.bs], self.segment_ids[index:index + self.bs]
+        return (self.input_ids[index:index + self.bs][0], self.input_mask[index:index + self.bs][0], self.segment_ids[index:index + self.bs][0]), 0
 
     def __len__(self):
         assert len(self.input_ids) == len(self.input_mask)
@@ -64,10 +64,10 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
     bs = 1
     all_results = []
     start = timer()
-    for idx, batch in tqdm.tqdm(enumerate(dataloader), desc="eval"):
-        data = {"input_ids": np.array(batch[0])[0],
-                "input_mask": np.array(batch[1])[0],
-                "segment_ids": np.array(batch[2])[0]}
+    for idx, (batch, label) in tqdm.tqdm(enumerate(dataloader), desc="eval"):
+        data = {"input_ids": np.array(batch[0]),
+                "input_mask": np.array(batch[1]),
+                "segment_ids": np.array(batch[2])}
         result = session.run(["end_logits","start_logits"], data)
         in_batch = result[0].shape[0]
         start_logits = [float(x) for x in result[1][0].flat]

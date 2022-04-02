@@ -71,7 +71,7 @@ class TensorflowImagenetDataset(IterableDataset):
         return ds
 
 @dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
-                   onnxrt_integerops", dataset_format='')
+                   onnxrt_qdqops, onnxrt_integerops", dataset_format='')
 class ONNXRTImagenetDataset(Dataset):
     """Configuration for Imagenet dataset."""
 
