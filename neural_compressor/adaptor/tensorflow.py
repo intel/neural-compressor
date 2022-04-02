@@ -103,7 +103,7 @@ class TensorFlowAdaptor(Adaptor):
         import horovod.tensorflow as hvd
         self.hvd = hvd
         self.hvd.init()
-    
+
     @dump_elapsed_time(customized_msg="Model training")
     def train(self, model, dataloader, optimizer_tuple,
               criterion_tuple, hooks, postprocess, **kwargs):
@@ -142,7 +142,7 @@ class TensorFlowAdaptor(Adaptor):
                     for i in range(len(list_len_dataloader)-1):
                         if list_len_dataloader[i] != list_len_dataloader[i+1]:
                             raise AttributeError("The traning dataloader's iteration is"
-                                                "different between processes, please reset dataloader's batch_size.") 
+                                                "different between processes, please reset dataloader's batch_size.")
 
         def training_step(x, y, first_batch):
             with tf.GradientTape() as tape:
@@ -158,7 +158,7 @@ class TensorFlowAdaptor(Adaptor):
                 self.hvd.broadcast_variables(input_model.variables, root_rank=0)
                 self.hvd.broadcast_variables(optimizer.variables(), root_rank=0)
             return loss_value
-        
+
         training_step = training_step if execution_mode=='eager' else tf.function(training_step)
         if start_epochs is not None and end_epochs is not None:
             epochs = end_epochs - start_epochs
@@ -599,6 +599,18 @@ class TensorFlowAdaptor(Adaptor):
                    header='Mixed Precision Statistics',
                    field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
+    def _query_bf16_ops(self, matched_nodes):
+        self.bf16_op_details = OrderedDict()
+
+        valid_precision = self.query_handler.get_mixed_precision_combination()
+        if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
+            for details in matched_nodes:
+                node_op = details[-1][0]
+                node_name = details[0]
+
+                self.bf16_op_details[(node_name, node_op)] = {'weight': {'dtype': ['bf16']}, \
+                                                              'activation': {'dtype': ['bf16']}}
+
     def _query_quantizable_ops(self, matched_nodes):
         """Collect the op-wise configuration for quantization.
 
@@ -718,7 +730,9 @@ class TensorFlowAdaptor(Adaptor):
 
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
         patterns = self.query_handler.generate_internal_patterns()
+        bf16_patterns = self.query_handler.get_bf16_patterns()
         matched_nodes = self.pre_optimizer_handle.get_matched_nodes(patterns)
+        matched_bf16_nodes = self.pre_optimizer_handle.get_matched_nodes(bf16_patterns)
         original_graph_node_name = [i.name for i in model.graph_def.node]
         matched_nodes = sorted(matched_nodes, reverse=True, key=lambda i: (
             original_graph_node_name.index(i[0]), len(i[-1])))
@@ -742,11 +756,21 @@ class TensorFlowAdaptor(Adaptor):
 
         del copied_matched_nodes
 
+        copied_matched_nodes = copy.deepcopy(matched_bf16_nodes)
+        for i in copied_matched_nodes:
+            for j in matched_nodes:
+                if i[0] in j and i in matched_bf16_nodes:
+                    matched_bf16_nodes.remove(i)
+
+        del copied_matched_nodes
+
         self._query_quantizable_ops(matched_nodes)
+        self._query_bf16_ops(matched_bf16_nodes)
         capability = {
             'optypewise': self.get_optype_wise_ability(),
         }
         capability['opwise'] = copy.deepcopy(self.quantizable_op_details)
+        capability['opwise'].update(self.bf16_op_details)
         logger.debug("Dump framework quantization capability:")
         logger.debug(capability)
 
@@ -989,6 +1013,9 @@ class TensorFlowAdaptor(Adaptor):
                 res[op[1]] = {'activation': self.quantizable_op_details[op]['activation']}
                 if 'weight' in self.quantizable_op_details[op]:
                     res[op[1]]['weight'] = self.quantizable_op_details[op]['weight']
+        for op in self.bf16_op_details:
+            if op[1] not in res:
+                res[op[1]] = {'activation': {'dtype': ['bf16']}, 'weight': {'dtype': ['bf16']}}
         return res
 
     def _pre_eval_hook(self, model):
@@ -1290,6 +1317,15 @@ class TensorflowQuery(QueryBackendCapability):
 
     def get_grappler_optimization_cfg(self):
         return self.cur_config['grappler_optimization']
+
+    def get_bf16_patterns(self):
+        int8_op_types = self.get_op_types_by_precision('int8') + self.get_op_types_by_precision('uint8')
+        bf16_op_types = [i for i in self.get_op_types_by_precision('bf16') if i not in int8_op_types]
+        res = []
+        for i in bf16_op_types:
+            res.append([[i]])
+
+        return res
 
     def get_eightbit_patterns(self):
         """Get eightbit op wise sequences information.
