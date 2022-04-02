@@ -60,6 +60,67 @@ def build_fake_yaml2():
         yaml.dump(y,f)
     f.close()
 
+def build_fake_yaml3():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            multi_metrics:
+              topk: 1
+              MSE:
+                compare_label: False
+        tuning:
+            strategy:
+              name: mse
+            exit_policy:
+              max_trials: 5
+              timeout: 50
+            accuracy_criterion:
+              relative: 0.01
+            workspace:
+              path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml3.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
+def build_fake_yaml4():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            multi_metrics:
+              topk: 1
+              MSE:
+                compare_label: False
+              weight: [1, 0]
+        tuning:
+            strategy:
+              name: mse
+            exit_policy:
+              max_trials: 5
+              timeout: 50
+            accuracy_criterion:
+              relative: 0.01
+            workspace:
+              path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml4.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
 def build_ox_yaml():
     fake_yaml = '''
         model:
@@ -159,14 +220,18 @@ class TestQuantization(unittest.TestCase):
         build_fake_yaml2()
         build_ox_model()
         build_ox_yaml()
-
+        build_fake_yaml3()
+        build_fake_yaml4()
+ 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
         os.remove('ox_yaml.yaml')
         os.remove('mb_v2.onnx')
-
+        os.remove('fake_yaml4.yaml')
+        os.remove('fake_yaml3.yaml')
+ 
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_ru_mse_one_trial(self):
@@ -181,6 +246,24 @@ class TestQuantization(unittest.TestCase):
     def test_ru_mse_max_trials(self):
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml2.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.fit()
+
+    def test_ru_mse_max_trials_multimetric(self):
+        from neural_compressor.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml3.yaml')
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.fit()
+
+    def test_ru_mse_max_trials_multimetric_weight(self):
+        from neural_compressor.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml4.yaml')
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)

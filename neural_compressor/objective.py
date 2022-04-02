@@ -161,8 +161,8 @@ class ModelSize(Objective):
         self._result_list.append(model_size)
 
 class MultiObjective:
-    def __init__(self, objectives, accuracy_criterion, weight=None, 
-        obj_criterion=None, is_measure=False):
+    def __init__(self, objectives, accuracy_criterion, metric_criterion=[True], \
+        metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False):
         assert isinstance(accuracy_criterion, dict), 'accuracy criterian should be dict'
         assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
             'accuracy criterion should set relative or absolute'
@@ -180,15 +180,17 @@ class MultiObjective:
         self.representation = [str(i).capitalize() for i in self.objectives]
         self.baseline = None
         self.val = None
-        self.weight = weight
         if obj_criterion:
             if len(self.objectives) != len(obj_criterion) and len(obj_criterion) == 1:
-                self.obj_criterion = np.array(obj_criterion * len(self.objectives))
+                self.obj_criterion = obj_criterion * len(self.objectives)
             else:
                 assert len(self.objectives) == len(obj_criterion)
-                self.obj_criterion = np.array(obj_criterion)
+                self.obj_criterion = obj_criterion
         else:
             self.obj_criterion = [False] * len(self.objectives)
+        self.metric_weight = metric_weight
+        self.metric_criterion = metric_criterion
+        self.obj_weight = obj_weight
         self.is_measure = is_measure
 
     def compare(self, last, baseline):
@@ -207,17 +209,43 @@ class MultiObjective:
             last_measure = 0
 
         base_acc, _ = baseline
+
+        if not isinstance(acc, list):
+            acc = [acc]
+            base_acc = [base_acc]
+
+        if self.metric_weight is not None and len(base_acc) > 1:
+            base_acc = [np.mean(np.array(base_acc) * self.metric_weight)]
         
         if self.relative:
-            acc_target = base_acc * (1 - float(self.acc_goal)) if self.higher_is_better \
-                else base_acc * (1 + float(self.acc_goal))
+            if len(base_acc) == 1:
+                acc_target = [base_acc[0] * (1 - float(self.acc_goal)) if self.higher_is_better \
+                    else base_acc[0] * (1 + float(self.acc_goal))]
+            else:
+                # use metric_criterion to replace acc_criterion
+                acc_target = [b_acc * (1 - float(self.acc_goal)) if higher_is_better \
+                    else b_acc * (1 + float(self.acc_goal)) \
+                    for b_acc, higher_is_better in zip(base_acc, self.metric_criterion)]
         else:
-            acc_target = base_acc - float(self.acc_goal) if self.higher_is_better \
-                else base_acc + float(self.acc_goal)
+            if len(base_acc) == 1:
+                acc_target =  [base_acc[0] - float(self.acc_goal) if self.higher_is_better \
+                    else base_acc[0] + float(self.acc_goal)]
+            else:
+                # use metric_criterion to replace acc_criterion
+                acc_target = [b_acc - float(self.acc_goal) if higher_is_better \
+                    else b_acc + float(self.acc_goal) \
+                    for b_acc, higher_is_better in zip(base_acc, self.metric_criterion)]
 
         if last_measure == 0 or \
             all([(x<=y)^z for x,y,z in zip(perf, last_measure, self.obj_criterion)]):
-            return acc >= acc_target if self.higher_is_better else acc < acc_target
+            if len(base_acc) == 1:
+                return acc[0] >= acc_target[0] if self.higher_is_better \
+                    else acc[0] < acc_target[0]
+            else: 
+                # use metric_criterion to replace acc_criterion
+                return all([sub_acc >= target if higher_is_better else sub_acc < target \
+                            for sub_acc, target, higher_is_better in \
+                            zip(acc, acc_target, self.metric_criterion)])
         else:
             return False
 
@@ -264,51 +292,114 @@ class MultiObjective:
             objective.model = model
 
     def best_result(self, tune_data, baseline):
-        """ tune_data = [
+        """ metric + multi-objectives case:
+            tune_data = [
                 [acc1, [obj1, obj2, ...]],
                 [acc2, [obj1, obj2, ...]],
                 ...
             ]
+            multi-metrics + multi-objectives case:
+            tune_data = [
+                [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
+                [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
+            ]
         """
+        higher_is_better = self.higher_is_better
+        obj_weight = self.obj_weight
+        obj_criterion = self.obj_criterion
+
         base_acc, base_obj = baseline
+        acc_data = [i[0] for i in tune_data]
+        obj_data = [i[1] for i in tune_data]
+
+        idx = self.representation.index('Accuracy') if 'Accuracy' in self.representation \
+                    else None
+        if isinstance(base_acc, list) and len(base_acc) > 1 and idx is not None:
+            if self.metric_weight is not None:
+                for i in range(len(obj_data)):
+                    obj_data[i][idx] = np.mean(np.array(obj_data[i][idx]) * self.metric_weight)
+                base_obj[idx] = np.mean(np.array(base_obj[idx]) * self.metric_weight)
+                assert obj_criterion[idx] == self.higher_is_better, "Accuracy criterion and " \
+                    "objective criterion have conflict on whether weighted accuracy is " \
+                    "higher-is-better"
+            else:
+                # use metric_criterion to replace acc_criterion
+                higher_is_better = self.metric_criterion
+                for i in range(len(obj_data)):
+                    tmp = obj_data[i].pop(idx)
+                    obj_data[i].extend(tmp) 
+                tmp = base_obj.pop(idx)
+                base_obj.extend(tmp)
+                obj_criterion.pop(idx)
+                # use metric_criterion to replace acc_criterion in obj_criterion
+                obj_criterion.extend(self.metric_criterion)
+                if obj_weight:
+                    # convert 1 acc_weight to acc_num (acc_weight/acc_num)s
+                    tmp = obj_weight.pop(idx)
+                    tmp = [tmp / len(base_acc)] * len(base_acc)
+                    obj_weight.extend(tmp)
+
         base_obj = np.array(base_obj)
         base_obj[base_obj==0] = 1e-20
 
-        acc_data = np.array([i[0] for i in tune_data])
-        obj_data = np.array([i[1] for i in tune_data])
+        acc_data = np.array(acc_data)
+        obj_data = np.array(obj_data)
         obj_data[obj_data==0] = 1e-20
 
-        if self.relative:
-            acc_target = base_acc * (1 - float(self.acc_goal)) if self.higher_is_better \
-                else base_acc * (1 + float(self.acc_goal))
+        if not isinstance(base_acc, list):
+            base_acc = [base_acc]
+        elif len(base_acc) > 1 and self.metric_weight is not None:
+            base_acc = [np.mean(np.array(base_acc) * self.metric_weight)]
+            acc_data = np.mean(acc_data * self.metric_weight, axis=1)
+      
+        if len(base_acc) == 1:
+            if self.relative:
+                acc_target = [base_acc[0] * (1 - float(self.acc_goal)) if self.higher_is_better \
+                    else base_acc[0] * (1 + float(self.acc_goal))]
+            else:
+                acc_target =  [base_acc[0] - float(self.acc_goal) if self.higher_is_better \
+                    else base_acc[0] + float(self.acc_goal)]
+            acc_mask = acc_data >= acc_target if self.higher_is_better else acc_data < acc_target
         else:
-            acc_target =  base_acc - float(self.acc_goal) if self.higher_is_better \
-                else base_acc + float(self.acc_goal)
-
-        acc_mask = acc_data >= acc_target if self.higher_is_better else acc_data < acc_target
+            if self.relative:
+                acc_target = [b_acc * (1 - float(self.acc_goal)) if higher_is_better \
+                    else b_acc * (1 + float(self.acc_goal)) \
+                    for b_acc, higher_is_better in zip(base_acc, self.metric_criterion)]
+            else: 
+                acc_target = [b_acc - float(self.acc_goal) if higher_is_better \
+                    else b_acc + float(self.acc_goal) \
+                    for b_acc, higher_is_better in zip(base_acc, self.metric_criterion)]
+            acc_mask = np.all([[item >= target if higher_is_better else \
+                    item < target for item, target, higher_is_better in \
+                    zip(acc_item, acc_target, self.metric_criterion)] for \
+                    acc_item in acc_data], axis=1)
 
         obj_data = base_obj / obj_data
 
         # normalize data
-        idx = self.representation.index('Accuracy') if 'Accuracy' in self.representation \
-                    else None
-
         if idx is not None and not self.relative:
-            obj_data[:, idx] = base_obj[idx] - 1 / (obj_data[:, idx] / base_obj[idx])
-            
+            if not isinstance(higher_is_better, list):
+                obj_data[:, idx] = base_obj[idx] - 1 / (obj_data[:, idx] / base_obj[idx])
+            else:
+                for i in range(len(higher_is_better)):
+                    if higher_is_better[i]:
+                        k = i - len(higher_is_better)
+                        obj_data[:, k] = base_obj[k] - 1 / (obj_data[:, k] / base_obj[k])
+
+           
         min_val = np.min(obj_data, axis=0)
         max_val = np.max(obj_data, axis=0)
         zero_mask = max_val != min_val
 
         # convert higher-is-better to lower-is-better
-        obj_data[:, self.obj_criterion] = \
-            max_val[self.obj_criterion] + min_val[self.obj_criterion] \
-            - obj_data[:, self.obj_criterion]
+        obj_criterion = np.array(obj_criterion)
+        obj_data[:, obj_criterion] = \
+            max_val[obj_criterion] + min_val[obj_criterion] - obj_data[:, obj_criterion]
 
         obj_data[:, zero_mask] = (obj_data[:, zero_mask] - min_val[zero_mask]) / \
                                         (max_val[zero_mask] - min_val[zero_mask])
-        if self.weight:
-            weighted_result = np.sum(self.weight * obj_data, axis=1)
+        if obj_weight:
+            weighted_result = np.sum(obj_weight * obj_data, axis=1)
         else:
             weighted_result = np.sum(obj_data, axis=1)
 

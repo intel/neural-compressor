@@ -463,6 +463,52 @@ class TestConf(unittest.TestCase):
         tune_space = config.modelwise_tune_space(framework_modelwise_capability)
         self.assertEqual(tune_space['CONV2D']['activation']['algorithm'], ['minmax'])
 
+    def test_metric(self):
+        test = '''
+        model:
+          name: metric_yaml 
+          framework: mxnet
+        evaluation:
+          accuracy:
+            multi_metrics:
+              topk: 1
+              MSE: {}
+        '''
+        helper(test)
+
+        metrics = {'topk': 1, 'MSE': {}}
+        config = conf.Quantization_Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.evaluation.accuracy.multi_metrics, metrics)
+
+        test = '''
+        model:
+          name: metric_yaml 
+          framework: mxnet
+        evaluation:
+          accuracy:
+            multi_metrics:
+              weight: 0.5 0.5 0.6
+              topk: 1
+              MSE: {}
+        '''
+        helper(test)
+        self.assertRaises((AssertionError, RuntimeError), conf.Conf, 'fake_conf.yaml')
+
+        test = '''
+        model:
+          name: metric_yaml 
+          framework: mxnet
+        evaluation:
+          accuracy:
+            multi_metrics:
+              higher_is_better: True, False
+              topk: 1
+              MSE: {}
+        '''
+        helper(test)
+        config = conf.Quantization_Conf('fake_conf.yaml')
+        self.assertEqual(config.usr_cfg.evaluation.accuracy.multi_metrics.higher_is_better, [True, False])
+
     def test_modelwise_conf_merge2(self):
         test = '''
         model:

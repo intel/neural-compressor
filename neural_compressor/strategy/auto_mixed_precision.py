@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import copy
+import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
@@ -82,7 +83,11 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         # Model wise tuning
         op_cfgs = {}
         best_cfg = None
-        best_acc = float('-inf') if self.higher_is_better else float('inf')
+        if len(self.metric_name) == 1 or self.metric_weight is not None:
+            best_acc = float('-inf') if self.higher_is_better else float('inf')
+        else:
+            best_acc = [float('-inf') if higher_is_better else float('inf') for \
+                higher_is_better in self.metric_criterion]
 
         logger.debug("Start AutoMixedPrecision strategy by model-wise tuning")
         for i, iterations in enumerate(self.calib_iter):
@@ -104,10 +109,22 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 yield op_cfgs
                 acc, _ = self.last_tune_result
                 # if acc >= best_acc or self.eval_dataloader is None:
-                if (self.higher_is_better and acc >= best_acc) or \
-                    (not self.higher_is_better and acc <= best_acc):
+                if not isinstance(acc, list) and ((self.higher_is_better and acc >= best_acc) \
+                    or (not self.higher_is_better and acc <= best_acc)):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
+                elif len(self.metric_name) > 1 and self.metric_weight is not None:
+                    acc = np.mean(np.array(acc) * self.metric_weight)
+                    if (self.higher_is_better and acc >= best_acc) or \
+                        (not self.higher_is_better and acc <= best_acc):
+                        best_acc = acc
+                        best_cfg = copy.deepcopy(op_cfgs)
+                elif len(self.metric_name) > 1 and self.metric_weight is None:
+                    if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
+                        acc_i, best_i, higher_is_better in \
+                        zip(acc, best_acc, self.metric_criterion)]):
+                        best_acc = acc
+                        best_cfg = copy.deepcopy(op_cfgs)
 
         if best_cfg is not None:
             fallback_dtypes = []
@@ -152,11 +169,20 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
                         acc, _ = self.last_tune_result
-                        if (self.higher_is_better and acc <= best_acc) or \
-                            (not self.higher_is_better and acc >= best_acc):
-                            op_cfgs['op'][op] = copy.deepcopy(old_cfg)
-                        else:
-                            best_acc = acc
+
+                        if not isinstance(acc, list):
+                            if ((self.higher_is_better and acc <= best_acc) \
+                                or (not self.higher_is_better and acc >= best_acc)):
+                                op_cfgs['op'][op] = copy.deepcopy(old_cfg)
+                            else:
+                                best_acc = acc
+                        elif len(self.metric_name) > 1 and self.metric_weight is not None:
+                            if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
+                                acc_i, best_i, higher_is_better in \
+                                zip(acc, best_acc, self.metric_criterion)]):
+                                op_cfgs['op'][op] = copy.deepcopy(old_cfg)
+                            else:
+                                best_acc = acc
 
                     op_cfgs = copy.deepcopy(best_cfg)
                     for op in ordered_ops:
@@ -185,10 +211,32 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
-            baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
-                ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-                self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) \
-                + ']' if self.baseline else 'n/a'
+
+            if self.baseline:
+                self.tune_data['baseline'] = self.baseline[0] if \
+                    isinstance(self.baseline[0], list) else [self.baseline[0]]
+
+                for name, data in zip(self.metric_name, self.tune_data['baseline']):
+                    self.tune_data[name] = [data]
+
+                if self.metric_weight:
+                    self.tune_data['Weighted accuracy'] = \
+                        [np.mean(np.array(self.tune_data['baseline']) * self.metric_weight)]
+                    self.tune_data['baseline'] = self.tune_data['Weighted accuracy']
+
+                baseline_msg = '[Accuracy:' + \
+                    ''.join([' {:.4f}'.format(i) for i in self.tune_data['baseline']]) + \
+                    ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+                    self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) + ']'
+            else: # pragma: no cover
+                if self.metric_weight:
+                    self.tune_data['Weighted accuracy'] = ['n/a']
+                self.tune_data['baseline'] = ['n/a']
+
+                for name, data in zip(self.metric_name, self.tune_data['baseline']):
+                    self.tune_data[name] = ['n/a']
+                baseline_msg = 'n/a'
+
             logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0

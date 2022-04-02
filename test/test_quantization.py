@@ -352,10 +352,17 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
         def invalid_eval_func(model):
-            return [1.]
+            return [[1.]]
         quantizer.eval_func = invalid_eval_func
         output_graph = quantizer.fit()
         self.assertEqual(output_graph, None)
+
+        def invalid_eval_func(model):
+            return '0.1'
+        quantizer.eval_func = invalid_eval_func
+        output_graph = quantizer.fit()
+        self.assertEqual(output_graph, None)
+
 
     def test_custom_metric(self):
         from neural_compressor.experimental import Quantization, common

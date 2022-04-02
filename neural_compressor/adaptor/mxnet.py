@@ -185,7 +185,7 @@ class MxNetAdaptor(Adaptor):
         return CalibData(cache_kl, cache_minmax, tensors_kl, tensors_minmax)
 
     def evaluate(self, nc_model, data_x, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+                 metrics=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """The function is used to run evaluation on validation dataset.
 
@@ -193,7 +193,7 @@ class MxNetAdaptor(Adaptor):
             nc_model (object): model to evaluate.
             data_x (object): data iterator/loader.
             postprocess (object, optional): process the result from the model
-            metric (metric object): evaluate metric.
+            metrics (list): list of evaluate metric.
             measurer (object, optional): for precise benchmark measurement.
             iteration(int, optional): control steps of mini-batch
             tensorboard (boolean, optional): for tensorboard inspect tensor.
@@ -225,8 +225,9 @@ class MxNetAdaptor(Adaptor):
             label = labels[0].asnumpy()
             if postprocess is not None:
                 out, label = postprocess((out, label))
-            if metric is not None:
-                metric.update(out, label)
+            if metrics is not None:
+                for metric in metrics:
+                    metric.update(out, label)
 
         if isinstance(data_x, BaseDataLoader) and not self.benchmark:
             try:
@@ -245,7 +246,8 @@ class MxNetAdaptor(Adaptor):
             sym_model, dataloader = prepare_model_data(nc_model, self.ctx, data_x)
             run_forward(sym_model, self.ctx, dataloader, b_filter(),
                         pre_batch=pre_batch, post_batch=post_batch)
-        return metric.result() if metric is not None else 0
+        acc = [metric.result() for metric in metrics] if metrics is not None else 0
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     @dump_elapsed_time('Query quantizable operators')
     def query_fw_capability(self, nc_model):

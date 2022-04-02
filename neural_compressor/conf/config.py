@@ -96,6 +96,17 @@ def _valid_multi_objectives(key, scope, error):
     if 'weight' in scope[key] and scope[key]['weight'] is not None:
         assert len(scope[key]['objective']) == len(scope[key]['weight'])
 
+def _valid_multi_metrics(key, scope, error):
+    if 'metric' in scope and 'multi_metrics' in scope:
+        assert False
+
+def _valid_metric_length(key, scope, error):
+    metrics = [i for i in scope[key] if i != 'weight' and i != 'higher_is_better']
+    if 'weight' in scope[key] and scope[key]['weight'] is not None:
+        assert len(input_to_list_float(scope[key]['weight'])) == len(metrics)
+    if 'higher_is_better' in scope[key] and scope[key]['higher_is_better'] is not None:
+        assert len(input_to_list_bool(scope[key]['higher_is_better'])) == len(metrics)
+
 # used for '123.68 116.78 103.94' style to float list
 def input_to_list_float(data):
     if isinstance(data, str):
@@ -791,7 +802,61 @@ schema = Schema({
         }
     },
     Optional('evaluation'): {
+        Hook('accuracy', handler=_valid_multi_metrics): object,
         Optional('accuracy'): {
+            Hook('multi_metrics', handler=_valid_metric_length): object,
+            Optional('multi_metrics', default=None): {
+                Optional('weight'): And(Or(str, list), Use(input_to_list_float)),
+                Optional('higher_is_better'): And(
+                    Or(str, list), Use(input_to_list_bool)),
+                Optional('topk'): And(int, lambda s: s in [1, 5]),
+                Optional('mAP'): {
+                    Optional('anno_path'): str,
+                    Optional('iou_thrs', default=0.5):
+                            Or(And(str, lambda s: s in ['0.5:0.05:0.95']),
+                               And(float, lambda s: s <= 1.0 and s >= 0.0)),
+                    Optional('map_points', default=0): And(int, lambda s: s in [0, 11, 101])
+                },
+                Optional('COCOmAP'): {
+                    Optional('anno_path'): str,
+                    Optional('map_key', default='DetectionBoxes_Precision/mAP'): str
+                },
+                Optional('COCOmAPv2'): {
+                    Optional('anno_path'): str,
+                    Optional('map_key', default='DetectionBoxes_Precision/mAP'): str,
+                    Optional('output_index_mapping', default={'num_detections': -1, 
+                                                      'boxes': 0, 
+                                                      'scores': 1, 
+                                                      'classes': 2}): COCOmAP_input_order_schema
+                },
+                Optional('VOCmAP'): {
+                    Optional('anno_path'): str
+                },
+                Optional('SquadF1'): Or({}, None),
+                Optional('MSE'): {
+                    Optional('compare_label'): bool
+                },
+                Optional('RMSE'): {
+                    Optional('compare_label'): bool
+                },
+                Optional('MAE'): {
+                    Optional('compare_label'): bool
+                },
+                Optional('Accuracy'): Or({}, None),
+                Optional('Loss'): Or({}, None),
+                Optional('BLEU'): Or({}, None),
+                Optional('SquadF1'): Or({}, None),
+                Optional('F1'): Or({}, None),
+                Optional('mIOU'): {
+                    Optional('num_classes'): int
+                },
+                Optional('GLUE'): {
+                    Optional('task'): str
+                },
+                Optional('ROC'): {
+                    Optional('task'): str
+                },
+            }, 
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
                 Optional('mAP'): {
@@ -1100,9 +1165,11 @@ class Conf(object):
                         'criterion', 'optimizer']:
                         # accuracy_criterion can only have one of absolute and relative
                         # others can only have one item
-                        inter_key = src[key].keys() & dst[key].keys() - 'higher_is_better'
+                        inter_key = src[key].keys() & dst[key].keys()-{'higher_is_better'}
                         if len(inter_key) == 0:
                             dst[key] = {}
+                    if key == 'accuracy' and src[key].get('multi_metrics', None):
+                        dst[key].pop('metric', None)
                     self._convert_cfg(src[key], dst[key])
                 elif dst[key] == src[key]:
                     pass  # same leaf value

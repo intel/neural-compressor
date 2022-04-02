@@ -93,7 +93,8 @@ class Distillation(Component):
             score = self._eval_func(self._model \
                     if getattr(self._eval_func, 'builtin', None) else self._model.model)
             logger.info("model score of epoch {} is {}.".format(self._epoch_runned, str(score)))
-            if score > self.best_score:
+            if (isinstance(score, list) and all([s > b_s for s, b_s in \
+                zip(score, self.best_score)])) or score > self.best_score:
                 self.best_score = score
                 if self.framework == "pytorch":
                     self.best_model = copy.deepcopy(self._model)

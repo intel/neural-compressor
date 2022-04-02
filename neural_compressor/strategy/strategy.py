@@ -26,6 +26,7 @@ import yaml
 import numpy as np
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
+from ..utils.utility import Statistics
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
@@ -190,11 +191,27 @@ class TuneStrategy(object):
             len(self.cfg.tuning.multi_objectives.objective) > 1
         objectives = [i.lower() for i in self.cfg.tuning.multi_objectives.objective] if \
             self.use_multi_objective else [self.cfg.tuning.objective.lower()]
+        self.metric_weight = deep_get(self.cfg, 'evaluation.accuracy.multi_metrics.weight')
+        self.metric_name = ['Accuracy'] if \
+            not deep_get(self.cfg, 'evaluation.accuracy.multi_metrics') else \
+            self.cfg.evaluation.accuracy.multi_metrics.keys()-{'weight','higher_is_better'}
+        if len(self.metric_name) == 1:
+            self.metric_criterion = [self.higher_is_better]
+        elif not deep_get(self.cfg, 'evaluation.accuracy.multi_metrics.higher_is_better'):
+            # default is True
+            self.metric_criterion = [True] * len(self.metric_name)
+        else:
+            self.metric_criterion = \
+                deep_get(self.cfg, 'evaluation.accuracy.multi_metrics.higher_is_better')
+ 
+        self.tune_data = {}
         self.tune_result_record = []
         self.objectives = MultiObjective(objectives, 
                              self.cfg.tuning.accuracy_criterion,
-                             deep_get(self.cfg, 'tuning.multi_objectives.weight'),
-                             deep_get(self.cfg, 'tuning.multi_objectives.higher_is_better'))
+                             self.metric_criterion,
+                             self.metric_weight,
+                             deep_get(self.cfg, 'tuning.multi_objectives.higher_is_better'),
+                             deep_get(self.cfg, 'tuning.multi_objectives.weight'))
         self.capability = self.adaptor.query_fw_capability(model)
         self.graph_optimization_mode = bool('graph_optimization' in self.cfg)
 
@@ -313,7 +330,8 @@ class TuneStrategy(object):
            more hooks.
         """
         if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-            self.cfg.evaluation.accuracy.metric) and self.eval_func is None:
+            (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)) \
+            and self.eval_func is None:
             logger.info("Neither evaluation function nor metric is defined." \
                         " Generate a quantized model with default quantization configuration.")
             self.cfg.tuning.exit_policy.performance_only = True
@@ -326,10 +344,34 @@ class TuneStrategy(object):
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
-        baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
-            ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-            self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) + ']' \
-            if self.baseline else 'n/a'
+
+        if self.baseline:
+            self.tune_data['baseline'] = self.baseline[0] if \
+                isinstance(self.baseline[0], list) else [self.baseline[0]]
+
+            for name, data in zip(self.metric_name, self.tune_data['baseline']):
+                self.tune_data[name] = [data]
+ 
+            if self.metric_weight:
+                # baseline is weighted accuracy
+                self.tune_data['Weighted accuracy'] = \
+                    [np.mean(np.array(self.tune_data['baseline']) * self.metric_weight)]
+                self.tune_data['baseline'] = self.tune_data['Weighted accuracy']
+
+            baseline_msg = '[Accuracy:' + \
+                ''.join([' {:.4f}'.format(i) for i in self.tune_data['baseline']]) + \
+                ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
+                self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) + ']'
+        else: # pragma: no cover
+            if self.metric_weight:
+                self.tune_data['Weighted accuracy'] = ['n/a']
+            self.tune_data['baseline'] = ['n/a']
+
+            for name, data in zip(self.metric_name, self.tune_data['baseline']):
+                self.tune_data[name] = ['n/a']
+ 
+            baseline_msg = 'n/a'
+
         logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0
@@ -465,18 +507,23 @@ class TuneStrategy(object):
                 self.adaptor._post_eval_hook(model, accuracy=val[0])
         else:
             assert self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-                self.cfg.evaluation.accuracy.metric, \
-                'metric field of accuracy field of evaluation section should not be empty'
+                (self.cfg.evaluation.accuracy.metric or \
+                self.cfg.evaluation.accuracy.multi_metrics), \
+                "metric or multi_metrics field of accuracy field of evaluation" \
+                " section should not be empty"
 
             postprocess_cfg = self.cfg.evaluation.accuracy.postprocess
-            eval_func = create_eval_func(self.framework, \
-                                         self.eval_dataloader, \
-                                         self.adaptor, \
-                                         self.cfg.evaluation.accuracy.metric, \
-                                         postprocess_cfg, \
-                                         self.cfg.evaluation.accuracy.iteration, \
-                                         tensorboard = self.cfg.tuning.tensorboard, \
-                                         fp32_baseline = self.baseline == None)
+            metric_cfg = self.cfg.evaluation.accuracy.metric if \
+                self.cfg.evaluation.accuracy.metric else \
+                self.cfg.evaluation.accuracy.multi_metrics
+            eval_func = create_eval_func(self.framework,
+                self.eval_dataloader,
+                self.adaptor,
+                metric_cfg,
+                postprocess_cfg,
+                self.cfg.evaluation.accuracy.iteration,
+                tensorboard = self.cfg.tuning.tensorboard,
+                fp32_baseline = self.baseline == None)
 
             if getattr(self.eval_dataloader, 'distributed', False):
                 if self.framework in ['tensorflow','tensorflow_itex']:
@@ -501,9 +548,16 @@ class TuneStrategy(object):
                                 raise AttributeError("The evaluation dataloader's iteration is"
                                                      "different between processes, please reset "
                                                      "dataloader's batch_size.")
-            val = self.objectives.evaluate(eval_func, model)
-        assert np.isscalar(val[0]), \
-            "The eval_func should return a scalar, but not {}!".format(str(type(val[0])))
+            val = self.objectives.evaluate(eval_func, model) 
+        if isinstance(val[0], list):
+            assert all([np.isscalar(i) for i in val[0]]), \
+                "The eval_func should return a scalar or list of scalar, " \
+                "but not {}!".format(str([type(i) for i in val[0]]))
+        else:
+            assert np.isscalar(val[0]), \
+                "The eval_func should return a scalar or list of scalar, " \
+                "but not {}!".format(str(type(val[0])))
+            
         return val
 
     def __getstate__(self):
@@ -539,21 +593,97 @@ class TuneStrategy(object):
         else:
             del self.last_qmodel
 
-        last_tune_msg = '[Accuracy ({}|fp32): {:.4f}|{:.4f}'.format( \
-            self.cfg.quantization.dtype, self.last_tune_result[0], self.baseline[0]) + \
-            ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(x,self.cfg.quantization.dtype,y,z) \
-            for x,y,z in zip(self.objectives.representation, \
-            self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']' \
-            if self.last_tune_result else 'n/a'
+        if self.last_tune_result:
+            last_tune = self.last_tune_result[0] if \
+                isinstance(self.last_tune_result[0], list) else [self.last_tune_result[0]]
 
-        best_tune_msg = '[Accuracy: {:.4f}'.format(self.best_tune_result[0]) + \
-            ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-            self.objectives.representation, self.best_tune_result[1]) if x != 'Accuracy']) \
-            + ']' if self.best_tune_result else 'n/a'
+            for name, data in zip(self.metric_name, last_tune):
+                if len(self.tune_data[name]) == 1:
+                    self.tune_data[name].append(data)
+                else:
+                    self.tune_data[name][1] = data
+
+            if self.metric_weight and len(last_tune) > 1:
+                weighted_acc = np.mean(np.array(last_tune) * self.metric_weight)
+                    
+                if len(self.tune_data['Weighted accuracy']) == 1:
+                    self.tune_data['Weighted accuracy'].append(weighted_acc)
+                else:
+                    self.tune_data['Weighted accuracy'][1] = weighted_acc
+
+                last_tune = [weighted_acc]
+
+            last_tune_msg = '[Accuracy ({}|fp32):'.format(self.cfg.quantization.dtype) + \
+                ''.join([' {:.4f}|{:.4f}'.format(last, base) for last, base in \
+                zip(last_tune, self.tune_data['baseline'])]) + \
+                ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format( \
+                x, self.cfg.quantization.dtype, y, z) for x, y, z in zip( \
+                self.objectives.representation, self.last_tune_result[1], self.baseline[1]) \
+                if x != 'Accuracy']) + ']'
+        else: # pragma: no cover
+            last_tune_msg = 'n/a'
+            for name in self.tune_data.keys() - {'baseline'}:
+                if len(self.tune_data[name]) == 1:
+                    self.tune_data[name].append('n/a')
+                else:
+                    self.tune_data[name][1] = 'n/a'
+
+        if self.best_tune_result:
+            best_tune = self.best_tune_result[0] if isinstance(self.best_tune_result[0], list) \
+                        else [self.best_tune_result[0]]
  
+            for name, data in zip(self.metric_name, best_tune):
+                if len(self.tune_data[name]) == 2:
+                     self.tune_data[name].append(data)
+                else:
+                    self.tune_data[name][2] = data
+
+            if self.metric_weight and len(best_tune) > 1:
+                weighted_acc = np.mean(np.array(best_tune) * self.metric_weight)
+
+                if len(self.tune_data['Weighted accuracy']) == 2:
+                    self.tune_data['Weighted accuracy'].append(weighted_acc)
+                else: # pragma: no cover
+                    self.tune_data['Weighted accuracy'][2] = weighted_acc
+
+                best_tune = [weighted_acc]
+
+            best_tune_msg = '[Accuracy:' + ''.join([' {:.4f}'.format(best) \
+                for best in best_tune]) + ''.join([', {}: {:.4f}'.format(x,y) \
+                for x,y in zip(self.objectives.representation, \
+                self.best_tune_result[1]) if x != 'Accuracy']) + ']'
+
+        else:
+            best_tune_msg = 'n/a'
+            for name in self.tune_data.keys() - {'baseline'}:
+                if len(self.tune_data[name]) == 2:
+                    self.tune_data[name].append('n/a')
+                else:
+                    self.tune_data[name][2] = 'n/a'
+
         logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))
+        output_data = [[info_type, 
+            '{:.4f} '.format(self.tune_data[info_type][0]) if \
+            not isinstance(self.tune_data[info_type][0], str) else self.tune_data[info_type][0], 
+            '{:.4f} '.format(self.tune_data[info_type][1]) if \
+            not isinstance(self.tune_data[info_type][1], str) else self.tune_data[info_type][1],
+            '{:.4f} '.format(self.tune_data[info_type][2]) if \
+            not isinstance(self.tune_data[info_type][2], str) else self.tune_data[info_type][2]] \
+            for info_type in self.tune_data.keys() if info_type != 'baseline']
+
+        output_data.extend([[obj, 
+            '{:.4f} '.format(self.baseline[1][i]) if self.baseline else 'n/a',
+            '{:.4f} '.format(self.last_tune_result[1][i]) if self.last_tune_result else 'n/a',
+            '{:.4f} '.format(self.best_tune_result[1][i]) if self.best_tune_result else 'n/a'] \
+            for i, obj in enumerate(self.objectives.representation)])
+
+        Statistics(output_data,
+                   header='Tune Result Statistics',
+                   field_names=['Info Type', 'Baseline', 'Tune {} result'.format(trials_count), \
+                                                                'Best tune result']).print_stat()
+
 
         if self.cfg.tuning.exit_policy.performance_only:
             need_stop = True

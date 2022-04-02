@@ -25,7 +25,7 @@ from functools import partial
 from neural_compressor.utils.utility import dump_elapsed_time
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
-from ..utils.utility import OpPrecisionStatistics
+from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
@@ -779,7 +779,7 @@ class TemplateAdaptor(Adaptor):
 
                 self.calib_func(q_model, dataloader, iterations, conf)
 
-    def eval_func(self, model, dataloader, postprocess, metric, measurer, iteration, conf=None):
+    def eval_func(self, model, dataloader, postprocess, metrics, measurer, iteration, conf=None):
         results = []
         for idx, (input, label) in enumerate(dataloader):
             if measurer is not None:
@@ -793,14 +793,20 @@ class TemplateAdaptor(Adaptor):
                 measurer.end()
             if postprocess is not None:
                 output, label = postprocess((output, label))
-            if metric is not None and not self.fp32_preds_as_label:
+            if metrics:
+                for metric in metrics:
+                    if not hasattr(metric, "compare_label") or \
+                        (hasattr(metric, "compare_label") and metric.compare_label):
+                        metric.update(output, label)
+
                 # If distributed dataloader, gather all outputs to update metric
                 if getattr(dataloader, 'distributed', False) or \
                   isinstance(dataloader.sampler, \
                   torch.utils.data.distributed.DistributedSampler):
                     hvd.init()
-                    metric.hvd = hvd
-                metric.update(output, label)
+                    for metric in metrics:
+                        metric.hvd = hvd
+
             if self.fp32_preds_as_label:
                 self.fp32_results.append(output) if self.is_baseline else \
                     results.append(output)
@@ -809,36 +815,40 @@ class TemplateAdaptor(Adaptor):
         return results
 
     def model_eval(self, model, dataloader, postprocess=None,
-                   metric=None, measurer=None, iteration=-1, conf=None):
+                   metrics=None, measurer=None, iteration=-1, conf=None):
         with torch.no_grad():
-            if metric:
-                metric.reset()
+            if metrics:
+                for metric in metrics:
+                    metric.reset()
             if isinstance(dataloader, BaseDataLoader) and not self.benchmark:
                 try:
                     results = self.eval_func(
-                        model, dataloader, postprocess, metric, measurer, iteration, conf)
+                        model, dataloader, postprocess, metrics, measurer, iteration, conf)
                 except Exception:  # pragma: no cover
                     logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
                         format(dataloader.batch_size, 1))
                     dataloader.batch(1)
                     results = self.eval_func(
-                        model, dataloader, postprocess, metric, measurer, iteration, conf)
+                        model, dataloader, postprocess, metrics, measurer, iteration, conf)
             else:  # pragma: no cover
                 results = self.eval_func(
-                        model, dataloader, postprocess, metric, measurer, iteration, conf)
+                        model, dataloader, postprocess, metrics, measurer, iteration, conf)
 
         if self.fp32_preds_as_label:
             from .torch_utils.util import collate_torch_preds
             if self.is_baseline:
                 results = collate_torch_preds(self.fp32_results)
-                metric.update(results, results)
+                reference = results
             else:
                 reference = collate_torch_preds(self.fp32_results)
                 results = collate_torch_preds(results)
-                metric.update(results, reference)
+            for metric in metrics:
+                if hasattr(metric, "compare_label") and not metric.compare_label:
+                    metric.update(results, reference)
 
-        return metric.result() if metric is not None else 0
+        acc = 0 if metrics is None else [metric.result() for metric in metrics]
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
@@ -1042,7 +1052,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         return q_model
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+                 metrics=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Execute the evaluate process on the specified model.
 
@@ -1050,7 +1060,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             model (object): model to run evaluation.
             dataloader (object): evaluation dataset.
             postprocess (object, optional): process function after evaluation.
-            metric (object, optional): metric function.
+            metrics (list, optional): list of metric function.
             measurer (object, optional): measurer function.
             iteration (int, optional): number of iterations to evaluate.
             tensorboard (bool, optional): dump output tensor to tensorboard summary files.
@@ -1073,13 +1083,14 @@ class PyTorchAdaptor(TemplateAdaptor):
             if self.is_baseline:
                 model_.to("dpcpp")
 
-        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
-            self.fp32_preds_as_label = True
-        acc = self.model_eval(model_, dataloader, postprocess, metric, measurer, iteration)
+        if metrics:
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics])
+        acc = self.model_eval(model_, dataloader, postprocess, metrics, measurer, iteration)
 
         if tensorboard:
             self._post_eval_hook(model, accuracy=acc)
-        return acc
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def _pre_hook_for_qat(self):
         # self.model._model is needed here.
@@ -1223,7 +1234,9 @@ class PyTorchAdaptor(TemplateAdaptor):
                         " due to accuracy issue in PyTorch.")
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
-        OpPrecisionStatistics(output_data).print_stat()
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -2092,7 +2105,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
     
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+                 metrics=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Execute the evaluate process on the specified model.
 
@@ -2100,7 +2113,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             model (object): Neural Compressor model to run evaluation.
             dataloader (object): evaluation dataset.
             postprocess (object, optional): process function after evaluation.
-            metric (object, optional): metric function.
+            metrics (list, optional): list of metric function.
             measurer (object, optional): measurer function.
             iteration (int, optional): number of iterations to evaluate.
             tensorboard (bool, optional): dump output tensor to tensorboard summary
@@ -2120,8 +2133,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             model_.eval()
             model_.to(ipex.DEVICE)
 
-        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
-            self.fp32_preds_as_label = True
+        if metrics:
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics])
 
         ipex_config = (
             self.ipex_config_path
@@ -2150,7 +2164,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                     y = model_(x)
 
         return self.model_eval(
-            model_, dataloader, postprocess, metric, measurer, iteration, conf
+            model_, dataloader, postprocess, metrics, measurer, iteration, conf
         )
 
     @dump_elapsed_time("Pass query framework capability")
@@ -2431,7 +2445,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
 
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+                 metrics=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Execute the evaluate process on the specified model.
 
@@ -2458,10 +2472,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         model_.eval()
         model_.to(self.device)
 
-        if metric and hasattr(metric, "compare_label") and not metric.compare_label:
-            self.fp32_preds_as_label = True
+        if metrics:
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics])
 
-        return self.model_eval(model_, dataloader, postprocess, metric, measurer, iteration)
+        return self.model_eval(model_, dataloader, postprocess, metrics, measurer, iteration)
 
     def _pre_hook_for_qat(self):   # pragma: no cover
         q_cfgs = torch.quantization.QConfig(
@@ -2658,7 +2673,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
 
-        OpPrecisionStatistics(output_data).print_stat()
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
