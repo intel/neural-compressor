@@ -28,7 +28,7 @@ class LabelBalanceCOCORecordFilter(Filter):
         return tf.math.equal(len(label[0]), self.size)
 
 @filter_registry(filter_type="LabelBalanceCOCORaw", framework="tensorflow, \
-    pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+    pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
 class LabelBalanceCOCORawFilter(Filter):
     def __init__(self, size=1):
         self.size = size

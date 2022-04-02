@@ -19,6 +19,9 @@ from ..conf.dotdict import DotDict
 
 class onnxrt:
     graph_optimization = DotDict({'level': None, 'gemm2matmul': True})
+    qdq_setting = DotDict({'OpTypesToExcludeOutputQuantizatioin': None, 
+                           'AddQDQPairToWeight': False,
+                           'DedicatedQDQPair': False})
 
 OPTIONS = {'tensorflow': None,
            'tensorflow_itex': None,
@@ -28,6 +31,7 @@ OPTIONS = {'tensorflow': None,
            'mxnet': None,
            'onnxrt_integerops': onnxrt,
            'onnxrt_qlinearops': onnxrt,
+           'onnxrt_qdqops': onnxrt,
            'engine': None}
 
 

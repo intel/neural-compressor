@@ -42,12 +42,12 @@ class ONNXModel(BaseModel):
     def __init__(self, model, **kwargs):
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self.node_name_counter = {}
+        self._output_name_to_node = {}
+        self._input_name_to_nodes = {}
+        self._get_input_name_to_nodes(self._model.graph.node)
+        self._get_output_name_to_node(self._model.graph.node)
         self._graph_info = {}
         self._get_graph_info()
-        self._input_name_to_nodes = {}
-        self._get_input_name_to_nodes()
-        self._output_name_to_node = {}
-        self._get_output_name_to_node()
         self._q_config = None
 
     def framework(self):
@@ -70,9 +70,11 @@ class ONNXModel(BaseModel):
         self._model = model
         self._graph_info = {}
         self._get_graph_info()
-        self._get_input_name_to_nodes()             
-        self._get_output_name_to_node()             
-
+        self._output_name_to_node = {}
+        self._input_name_to_nodes = {}
+        self._get_input_name_to_nodes(self._model.graph.node)
+        self._get_output_name_to_node(self._model.graph.node)
+ 
     @property
     def graph_info(self):
         return self._graph_info
@@ -145,9 +147,13 @@ class ONNXModel(BaseModel):
     def input_name_to_nodes(self):
         return self._input_name_to_nodes
     
-    def _get_input_name_to_nodes(self):
-        self._input_name_to_nodes = {}
-        for node in self._model.graph.node:
+    def _get_input_name_to_nodes(self, nodes):
+        for node in nodes:
+            attrs = [attr for attr in node.attribute if attr.type == onnx.AttributeProto.GRAPH \
+                or attr.type == onnx.AttributeProto.GRAPHS]
+            if len(attrs) > 0:
+                for attr in attrs:
+                    self._get_input_name_to_nodes(attr.g.node)
             for input_name in node.input:
                 if input_name not in self._input_name_to_nodes:
                     self._input_name_to_nodes[input_name] = [node]
@@ -158,9 +164,13 @@ class ONNXModel(BaseModel):
     def output_name_to_node(self):
         return self._output_name_to_node
 
-    def _get_output_name_to_node(self):
-        self._output_name_to_node = {}
-        for node in self._model.graph.node:
+    def _get_output_name_to_node(self, nodes):
+        for node in nodes:
+            attrs = [attr for attr in node.attribute if attr.type == onnx.AttributeProto.GRAPH \
+                or attr.type == onnx.AttributeProto.GRAPHS]
+            if len(attrs) > 0:
+                for attr in attrs:
+                    self._get_output_name_to_node(attr.g.node)
             for output_name in node.output:
                 self._output_name_to_node[output_name] = node
 
@@ -249,3 +259,51 @@ class ONNXModel(BaseModel):
                                                     all_tensors_to_one_file=True,
                                                     location=Path(output_path).name + ".data")
         onnx.save_model(self._model, output_path)
+
+    @staticmethod
+    def replace_node_input(node, old_input_name, new_input_name):
+        assert isinstance(old_input_name, str) and isinstance(new_input_name, str)
+        for j in range(len(node.input)):
+            if node.input[j] == old_input_name:
+                node.input[j] = new_input_name
+
+    def replace_input_of_all_nodes(self, old_input_name, new_input_name, excluded_optype=[]):
+        for node in self.model.graph.node:
+            if node.op_type not in excluded_optype:
+                ONNXModel.replace_node_input(node, old_input_name, new_input_name)
+
+    @staticmethod
+    def replace_node_output(node, old_output_name, new_output_name):
+        assert isinstance(old_output_name, str) and isinstance(new_output_name, str)
+        for j in range(len(node.output)):
+            if node.output[j] == old_output_name:
+                node.output[j] = new_output_name
+
+    def replace_output_of_all_nodes(self, old_output_name, new_output_name, excluded_optype=[]):
+        for node in self.model.graph.node:
+            if node.op_type not in excluded_optype:
+                ONNXModel.replace_node_output(node, old_output_name, new_output_name)
+
+    def remove_unused_constant(self):
+        self._input_name_to_nodes = {}
+        self._get_input_name_to_nodes(self._model.graph.node)
+ 
+        unused_nodes = []
+        nodes = self.nodes()
+        for node in nodes:
+            if node.op_type == "Constant" and node.output[0] not in self._model.graph.output \
+                and node.output[0] not in self._input_name_to_nodes:
+                unused_nodes.append(node)
+
+        self.remove_nodes(unused_nodes)
+
+        ununsed_weights = []
+        for w in self._model.graph.initializer:
+            if w.name not in self._input_name_to_nodes and w.name not in self._model.graph.output:
+                ununsed_weights.append(w)
+                # Remove from graph.input
+                for graph_input in self.graph().input:
+                    if graph_input.name == w.name:
+                        self.graph().input.remove(graph_input)
+
+        self.remove_initializers(ununsed_weights)

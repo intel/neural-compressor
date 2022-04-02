@@ -18,6 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
+from .direct_q8 import Direct8BitOp, QDQDirect8BitOp
 from onnxruntime.quantization.quant_utils import QuantizedValueType
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
@@ -55,3 +56,18 @@ class QMaxPool(QuantOperatorBase):
         node.input[0] = quantized_input_value.q_name
         node.output[0] = quantized_output_value.q_name
         self.quantizer.new_nodes += [node]
+
+class QDQMaxPool(QDQDirect8BitOp):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        node = self.node
+        assert (node.op_type == "MaxPool")
+
+        # if version is less than 12, just no change
+        if self.quantizer.opset_version < 12:
+            return
+
+        # Direct 8bits op
+        return super().quantize()

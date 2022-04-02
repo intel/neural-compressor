@@ -40,7 +40,7 @@ mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops", dataset_format='')
+                    onnxrt_qdqops, onnxrt_integerops", dataset_format='')
 class ImagenetRaw(Dataset):
     """Configuration for Imagenet Raw dataset.
 

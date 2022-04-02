@@ -18,6 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import find_by_name, get_mul_node, \
                                                  QuantizedValueType
 from onnx import onnx_pb as onnx_proto
@@ -145,3 +146,22 @@ class QLinearMatMul(QuantOperatorBase):
         self.quantizer.quantized_value_map[node.output[0]] = q_output
 
         self.quantizer.new_nodes += nodes
+
+class QDQMatMul(QDQOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        node = self.node
+        assert (node.op_type == "MatMul")
+
+        self.quantizer.quantize_tensor(node.input[0])
+        if self.quantizer.is_input_a_weight(node.input[1]) and self.per_channel:
+            self.quantizer.quantize_weights_per_channel(node.input[1], 
+                                       self.weight_dtype, self.weight_scheme, -1)
+        else:
+            self.quantizer.quantize_tensor(node.input[1])
+
+        if not self.disable_qdq_for_node_output:
+            self.quantizer.quantize_tensor(node.output[0])
+

@@ -49,7 +49,40 @@ def build_static_yaml():
           workspace: 
             path: ./nc_workspace/recover/
         """
-    with open("static.yaml", "w", encoding="utf-8") as f:
+    with open("qlinear.yaml", "w", encoding="utf-8") as f:
+        f.write(fake_yaml)
+
+    fake_yaml = """
+        model:
+          name: imagenet
+          framework: onnxrt_qdqops
+
+        quantization:                                        
+          approach: post_training_static_quant  
+          calibration:
+            sampling_size: 50
+          op_wise: {
+            'Gather_*': {
+            'activation':  {'dtype': ['fp32'], 'scheme':['sym']},
+            'weight': {'dtype': ['fp32'], 'scheme':['sym']}
+            }
+          }
+ 
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+
+        tuning:
+          accuracy_criterion:
+            relative:  0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+          workspace: 
+            path: ./nc_workspace/recover/
+        """
+    with open("qdq.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 def build_benchmark_yaml():
@@ -388,7 +421,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove("static.yaml")
+        os.remove("qlinear.yaml")
+        os.remove("qdq.yaml")
         os.remove("dynamic.yaml")
         os.remove("non_MSE.yaml")
         os.remove("benchmark.yaml")
@@ -447,7 +481,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_set_tensor(self):
         options.onnxrt.graph_optimization.level = 'ENABLE_EXTENDED'
         options.onnxrt.graph_optimization.gemm2matmul = False
-        quantizer = Quantization("static.yaml")
+        quantizer = Quantization("qlinear.yaml")
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.eval_dataloader = self.cv_dataloader
         quantizer.model = self.mb_v2_model
@@ -490,7 +524,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
-        for fake_yaml in ["static.yaml", "dynamic.yaml"]:
+        
+        for fake_yaml in ["qlinear.yaml", "qdq.yaml", "dynamic.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
@@ -563,7 +598,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
 
-        for fake_yaml in ["static.yaml"]:
+        options.onnxrt.qdq_setting.AddQDQPairToWeight = True
+        for fake_yaml in ["qlinear.yaml", "qdq.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.ir3_dataloader
             quantizer.eval_dataloader = self.ir3_dataloader
@@ -574,6 +610,16 @@ class TestAdaptorONNXRT(unittest.TestCase):
             from neural_compressor.utils.utility import recover
             model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)
             self.assertTrue(model.model == q_model.model)
+
+        options.onnxrt.qdq_setting.DedicatedQDQPair = True
+        options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = ['Conv']
+        for fake_yaml in ["qdq.yaml"]:
+            quantizer = Quantization(fake_yaml)
+            quantizer.calib_dataloader = self.cv_dataloader
+            quantizer.eval_dataloader = self.cv_dataloader
+            quantizer.model = self.rn50_model
+            q_model = quantizer.fit()
+            self.assertNotEqual(q_model, None)
 
         for mode in ["performance", "accuracy"]:
             fake_yaml = "benchmark.yaml"

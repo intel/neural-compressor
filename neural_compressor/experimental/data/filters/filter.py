@@ -31,6 +31,12 @@ class ONNXRTQLFilters(object):
         self.filters.update(ONNXRT_QL_FILTERS)
 
 @singleton
+class ONNXRTQDQFilters(object):
+    def __init__(self):
+        self.filters = {}
+        self.filters.update(ONNXRT_QDQ_FILTERS)
+
+@singleton
 class ONNXRTITFilters(object):
     def __init__(self):
         self.filters = {}
@@ -51,6 +57,7 @@ class MXNetFilters(object):
 TENSORFLOW_FILTERS = {}
 ONNXRT_IT_FILTERS = {}
 ONNXRT_QL_FILTERS = {}
+ONNXRT_QDQ_FILTERS = {}
 PYTORCH_FILTERS = {}
 MXNET_FILTERS = {}
 
@@ -61,6 +68,7 @@ framework_filters = {"tensorflow": TensorflowFilters,
                      "pytorch_fx": PyTorchFilters,
                      "mxnet": MXNetFilters,
                      "onnxrt_qlinearops": ONNXRTQLFilters,
+                     "onnxrt_qdqops": ONNXRTQDQFilters,
                      "onnxrt_integerops": ONNXRTITFilters,
                      }
 
@@ -71,11 +79,12 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
                     "pytorch_fx": PYTORCH_FILTERS,
                     "mxnet": MXNET_FILTERS,
                     "onnxrt_integerops": ONNXRT_IT_FILTERS,
+                    "onnxrt_qdqops": ONNXRT_QDQ_FILTERS,
                     "onnxrt_qlinearops": ONNXRT_QL_FILTERS}
 
 class FILTERS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "tensorflow_itex",
+        assert framework in ["tensorflow", "tensorflow_itex", "onnxrt_qdqops",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "mxnet",
                              "onnxrt_integerops", "onnxrt_qlinearops"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
@@ -110,6 +119,7 @@ def filter_registry(filter_type, framework):
                 "pytorch_fx",
                 "mxnet",
                 "onnxrt_integerops",
+                "onnxrt_qdqops",
                 "onnxrt_qlinearops"
             ], "The framework support tensorflow mxnet pytorch onnxrt"
             if filter_type in registry_filters[single_framework].keys():
