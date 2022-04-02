@@ -48,7 +48,6 @@ def get_preprocess(preprocesses, cfg, compose=True):
 def get_metrics(metrics, cfg, compose=True):
     return get_func_from_config(metrics, cfg, compose)
 
-
 def get_postprocess(postprocesses, cfg, compose=True):
     return get_func_from_config(postprocesses, cfg, compose)
 
@@ -124,20 +123,21 @@ def create_eval_func(framework, dataloader, adaptor,
         postprocesses = TRANSFORMS(framework, "postprocess")
         postprocess = get_postprocess(postprocesses, postprocess_cfg['transform'])
     if isinstance(metric, dict):
-        assert len(metric) == 1, "Only one metric should be specified!"
-        metrics = METRICS(framework)
+        fwk_metrics = METRICS(framework)
+        metrics = []
         for name, val in metric.items():
             if isinstance(val, int) and \
                 len([i for i in gc.get_objects() if id(i) == val]) > 0 and \
                 'user_' + type([i for i in gc.get_objects() if id(i) == val][0]).__name__ == name:
-                metric = [i for i in gc.get_objects() if id(i) == val][0]
-            else:
-                # if not do compose will only return the first metric
-                metric = get_metrics(metrics, metric, compose=False)
+                metrics.extend([i for i in gc.get_objects() if id(i) == val])
+            elif name not in ['weight', 'higher_is_better']:
+                metrics.append(get_metrics(fwk_metrics, {name: val}, compose=False))
+    else:
+        metrics = metric
 
     def eval_func(model, measurer=None):
         return adaptor.evaluate(model, dataloader, postprocess,
-                                metric, measurer, iteration,
+                                metrics, measurer, iteration,
                                 tensorboard, fp32_baseline)
     # TODO: to find a better way
     eval_func.builtin = True

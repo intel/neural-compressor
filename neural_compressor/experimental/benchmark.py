@@ -229,9 +229,7 @@ class Benchmark(object):
         assert len(objectives) == 1, 'benchmark supports one objective at a time'
         self.objectives = MultiObjective(objectives,
                               cfg.tuning.accuracy_criterion,
-                              deep_get(cfg, 'tuning.multi_objectives.weight'),
                               is_measure=True)
-
 
         val = self.objectives.evaluate(b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
@@ -256,7 +254,10 @@ class Benchmark(object):
             logger.debug("Iteration {} result {}:".format(i, res))
         if mode == 'accuracy':
             logger.info("Batch size = {}".format(batch_size))
-            logger.info("Accuracy is {:.4f}".format(acc))
+            if isinstance(acc, list):
+                logger.info("Accuracy is" + "".join([" {:.4f}".format(i) for i in acc]))
+            else:
+                logger.info("Accuracy is {:.4f}".format(acc))
         elif mode == 'performance':
             logger.info("Batch size = {}".format(batch_size))
             logger.info("Latency: {:.3f} ms".format(latency * 1000))

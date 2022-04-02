@@ -28,7 +28,7 @@ from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
                                             GLOBAL_STATE, MODE
-from ..utils.utility import OpPrecisionStatistics
+from ..utils.utility import Statistics
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 import math
 
@@ -315,7 +315,9 @@ class ONNXRTAdaptor(Adaptor):
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
             res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
-        OpPrecisionStatistics(output_data).print_stat()
+        Statistics(output_data, 
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
         from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
@@ -606,7 +608,7 @@ class ONNXRTAdaptor(Adaptor):
         return quantizable_op_types
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+                 metrics=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """The function is for evaluation if no given eval func
 
@@ -634,11 +636,12 @@ class ONNXRTAdaptor(Adaptor):
         except:
             sess_options.register_custom_ops_library(ort_ext.get_library_path())
             session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
-        if metric:
-            metric.reset()
-            if hasattr(metric, "compare_label") and not metric.compare_label:
-                self.fp32_preds_as_label = True
-                results = []
+        results = []
+        if metrics:
+            for metric in metrics:
+                metric.reset()
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics]) 
 
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
@@ -679,8 +682,11 @@ class ONNXRTAdaptor(Adaptor):
 
                 if postprocess is not None:
                     predictions, labels = postprocess((predictions, labels))
-                if metric is not None and not self.fp32_preds_as_label:
-                    metric.update(predictions, labels)
+                if metrics:
+                    for metric in metrics:
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(predictions, labels)
                 if idx + 1 == iteration:
                     break
 
@@ -700,14 +706,16 @@ class ONNXRTAdaptor(Adaptor):
             from neural_compressor.adaptor.ox_utils.util import collate_preds
             if fp32_baseline:
                 results = collate_preds(self.fp32_results)
-                metric.update(results, results)
+                reference = results
             else:
                 reference = collate_preds(self.fp32_results)
                 results = collate_preds(results)
-                metric.update(results, reference)
+            for metric in metrics:
+                if hasattr(metric, "compare_label") and not metric.compare_label:
+                    metric.update(results, reference)
 
-        acc = metric.result() if metric is not None else 0
-        return acc
+        acc = 0 if metrics is None else [metric.result() for metric in metrics]
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def save(self, model, path):
         """ save model

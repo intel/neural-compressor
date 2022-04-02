@@ -25,7 +25,7 @@ from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time
 from neural_compressor.utils import logger
-from ..utils.utility import OpPrecisionStatistics
+from ..utils.utility import Statistics
 
 
 @adaptor_registry
@@ -122,7 +122,9 @@ class EngineAdaptor(Adaptor):
             sum(res[op_type].values()), res[op_type]['INT8'],
             res[op_type]['BF16'], res[op_type]['FP32']
         ] for op_type in res.keys()]
-        OpPrecisionStatistics(output_data).print_stat()
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def query_fw_capability(self, model):
         """The function is used to query framework capability.
@@ -203,7 +205,7 @@ class EngineAdaptor(Adaptor):
                  input_graph,
                  dataloader,
                  postprocess=None,
-                 metric=None,
+                 metrics=None,
                  measurer=None,
                  iteration=-1,
                  tensorboard=False,
@@ -223,11 +225,12 @@ class EngineAdaptor(Adaptor):
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
-        if metric:
-            metric.reset()
-            if hasattr(metric, "compare_label") and not metric.compare_label:
-                self.fp32_preds_as_label = True
-                results = []
+        results = []
+        if metrics: # pragma: no cover
+            for metric in metrics:
+                metric.reset()
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics])
 
         for idx, (inputs, labels) in enumerate(dataloader):
             if measurer is not None:
@@ -249,23 +252,28 @@ class EngineAdaptor(Adaptor):
 
             if postprocess is not None:
                 predictions, labels = postprocess((predictions, labels))
-            if metric is not None and not self.fp32_preds_as_label:
-                metric.update(predictions, labels)
+            if metrics: # pragma: no cover
+                for metric in metrics:
+                    if not hasattr(metric, "compare_label") or \
+                        (hasattr(metric, "compare_label") and metric.compare_label):
+                        metric.update(predictions, labels)
             if idx + 1 == iteration:
                 break
 
-        if self.fp32_preds_as_label:
+        if self.fp32_preds_as_label: # pragma: no cover
             from neural_compressor.adaptor.engine_utils.util import collate_preds
             if fp32_baseline:
                 results = collate_preds(self.fp32_results)
-                metric.update(results, results)
+                reference = results
             else:
                 reference = collate_preds(self.fp32_results)
                 results = collate_preds(results)
-                metric.update(results, reference)
+            for metric in metrics:
+                if hasattr(metric, "compare_label") and not metric.compare_label:
+                    metric.update(results, reference)
 
-        acc = metric.result() if metric is not None else 0
-        return acc
+        acc = 0 if metrics is None else [metric.result() for metric in metrics]
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def save(self, model, path):
         pass

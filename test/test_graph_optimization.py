@@ -87,6 +87,68 @@ def build_fake_yaml_4():
         yaml.dump(y, f)
     f.close()
 
+def build_fake_yaml_5():
+    fake_yaml = '''
+        model:
+          name: fake_yaml_5
+          framework: tensorflow
+          inputs: input
+          outputs: op_to_store
+        device: cpu
+        graph_optimization:
+          precisions: [bf16]
+        evaluation:
+          accuracy:
+            multi_metrics:
+              topk: 1
+              MSE:
+                compare_label: False
+              weight: [1, 0]
+        tuning:
+            accuracy_criterion:
+              relative: 0.0001
+            workspace:
+              path: saved
+            exit_policy:
+              max_trials: 3
+              timeout: 50
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_5.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
+def build_fake_yaml_6():
+    fake_yaml = '''
+        model:
+          name: fake_yaml_6
+          framework: tensorflow
+          inputs: input
+          outputs: op_to_store
+        device: cpu
+        graph_optimization:
+          precisions: [bf16]
+        evaluation:
+          accuracy:
+            multi_metrics:
+              topk: 1
+              MSE:
+                compare_label: False
+              weight: [1, 0]
+        tuning:
+            accuracy_criterion:
+              relative: 0.0001
+            workspace:
+              path: saved
+            exit_policy:
+              max_trials: 3
+              timeout: 50
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_6.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
 class MyMetric(object):
     def __init__(self, *args):
         self.pred_list = []
@@ -174,6 +236,8 @@ class TestGraphOptimization(unittest.TestCase):
         build_fake_yaml_2()
         build_fake_yaml_3()
         build_fake_yaml_4()
+        build_fake_yaml_5()
+        build_fake_yaml_6()
 
     @classmethod
     def tearDownClass(self):
@@ -182,6 +246,8 @@ class TestGraphOptimization(unittest.TestCase):
         os.remove('fake_yaml_2.yaml')
         os.remove('fake_yaml_3.yaml')
         os.remove('fake_yaml_4.yaml')
+        os.remove('fake_yaml_5.yaml')
+        os.remove('fake_yaml_6.yaml')
 
     def test_not_supported_model(self):
         import neural_compressor.adaptor.pytorch as nc_torch
@@ -556,6 +622,100 @@ class TestGraphOptimization(unittest.TestCase):
                     found_cast_op = True
                     break
             self.assertEqual(found_cast_op, True)
+
+    @disable_random()
+    def test_graph_optimization_multimetric_noweight(self):
+
+        x = tf.compat.v1.placeholder(tf.float32, [1, 300, 300, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        relu = tf.nn.relu(conv)
+
+        max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.math.add(conv_1, conv_bias)
+        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Graph_Optimization, common
+            graph_optimizer = Graph_Optimization('fake_yaml_5.yaml')
+
+            dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
+            graph_optimizer.eval_dataloader = common.DataLoader(dataset)
+            graph_optimizer.model = output_graph_def
+            graph_optimizer.eval_func = None
+
+            output_graph = graph_optimizer.fit()
+            found_cast_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Cast':
+                    found_cast_op = True
+                    break
+            self.assertEqual(found_cast_op, True)
+
+    @disable_random()
+    def test_graph_optimization_multimetric_weight(self):
+
+        x = tf.compat.v1.placeholder(tf.float32, [1, 300, 300, 16], name="input")
+        top_relu = tf.nn.relu(x)
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(top_relu, paddings, "CONSTANT")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv_weights_2 = tf.compat.v1.get_variable("weight_2", [3, 8, 16, 16],
+                                                   initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        relu = tf.nn.relu(conv)
+
+        max_pool = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
+        conv_bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+        conv_1 = tf.nn.conv2d(max_pool, conv_weights_2, strides=[
+                              1, 2, 2, 1], padding="VALID", name='conv1_3')
+        conv_bias = tf.math.add(conv_1, conv_bias)
+        relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
+
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Graph_Optimization, common
+            graph_optimizer = Graph_Optimization('fake_yaml_6.yaml')
+
+            dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
+            graph_optimizer.eval_dataloader = common.DataLoader(dataset)
+            graph_optimizer.model = output_graph_def
+            graph_optimizer.eval_func = None
+
+            output_graph = graph_optimizer.fit()
+            found_cast_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Cast':
+                    found_cast_op = True
+                    break
+            self.assertEqual(found_cast_op, True)
+
+
 
     @disable_random()
     def test_graph_optimization_with_force_bf16(self):

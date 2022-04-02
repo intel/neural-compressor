@@ -23,7 +23,7 @@ import numpy as np
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
-from ..utils.utility import OpPrecisionStatistics, GLOBAL_STATE, MODE
+from ..utils.utility import Statistics, GLOBAL_STATE, MODE
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
@@ -205,7 +205,7 @@ class TensorFlowAdaptor(Adaptor):
 
     @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1,
+                 metrics=None, measurer=None, iteration=-1,
                  tensorboard=False, fp32_baseline=False):
         """Evaluate the model for specified metric on validation dataset.
 
@@ -214,7 +214,7 @@ class TensorFlowAdaptor(Adaptor):
                         graph_def object, the frozen pb or ckpt/savedmodel folder path.
             dataloader (generator): generate the data and labels.
             postprocess (object, optional): process the result from the model
-            metric (object, optional): Depends on model category. Defaults to None.
+            metrics (list, optional): Depends on model category. Defaults to None.
             measurer (object, optional): for precise benchmark measurement.
             iteration(int, optional): control steps of mini-batch
             tensorboard (boolean, optional): for tensorboard inspect tensor.
@@ -231,7 +231,8 @@ class TensorFlowAdaptor(Adaptor):
             import horovod.tensorflow as hvd
             hvd.init()
             # If metric.hvd is not None then run distributed inference
-            metric.hvd = hvd
+            for metric in metrics:
+                metric.hvd = hvd
             try:
                 len_dataloader = len(dataloader)
             except:
@@ -309,10 +310,11 @@ class TensorFlowAdaptor(Adaptor):
                 output_postfix = "_int8.output"
                 outputs.extend(int8_inspect_node_name)
 
-        if metric:
-            metric.reset()
-            if hasattr(metric, "compare_label") and not metric.compare_label:
-                self.fp32_preds_as_label = True
+        if metrics:
+            for metric in metrics:
+                metric.reset()
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics])
 
         origin_output_tensor_names = model.output_tensor_names
         model.output_tensor_names = outputs
@@ -362,8 +364,11 @@ class TensorFlowAdaptor(Adaptor):
                         predictions = predictions[:len(origin_output_tensor_names)]
                 if postprocess is not None:
                     predictions, labels = postprocess((predictions, labels))
-                if metric is not None and not self.fp32_preds_as_label:
-                    metric.update(predictions, labels)
+                if metrics:
+                    for metric in metrics:
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(predictions, labels)
                 if idx + 1 == iteration:
                     break
             return results
@@ -384,13 +389,15 @@ class TensorFlowAdaptor(Adaptor):
             from .tf_utils.util import collate_tf_preds
             if fp32_baseline:
                 results = collate_tf_preds(self.fp32_results)
-                metric.update(results, results)
+                reference = results
             else:
                 reference = collate_tf_preds(self.fp32_results)
                 results = collate_tf_preds(results)
-                metric.update(results, reference)
+            for metric in metrics:
+                if hasattr(metric, "compare_label") and not metric.compare_label:
+                    metric.update(results, reference)
 
-        acc = metric.result() if metric is not None else 0
+        acc = 0 if metrics is None else [metric.result() for metric in metrics]
         if tensorboard:
             new_dir = temp_dir + "_acc_" + str(acc)
             writer.close()
@@ -400,7 +407,7 @@ class TensorFlowAdaptor(Adaptor):
             os.rename(temp_dir, new_dir)
             self.dump_times += 1
         model.output_tensor_names = origin_output_tensor_names
-        return acc
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         """Parse the neural_compressor wrapped configuration to Tensorflow.
@@ -588,7 +595,9 @@ class TensorFlowAdaptor(Adaptor):
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in fp32_op_list]
 
-        OpPrecisionStatistics(output_data).print_stat()
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
 
     def _query_quantizable_ops(self, matched_nodes):
         """Collect the op-wise configuration for quantization.

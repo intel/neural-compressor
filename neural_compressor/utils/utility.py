@@ -385,9 +385,10 @@ class CaptureOutputToFile(object):
         self.tmp_file.close()
 
 
-class OpPrecisionStatistics():
-    def __init__(self, data, output_handle=logger.info):
-        self.field_names = ["Op Type", "Total", "INT8", "BF16", "FP32"]
+class Statistics():
+    def __init__(self, data, header, field_names, output_handle=logger.info):
+        self.field_names = field_names
+        self.header = header
         self.data = data
         self.output_handle = output_handle
         self.tb = pt.PrettyTable(min_table_width=40)
@@ -410,7 +411,7 @@ class OpPrecisionStatistics():
             if any(tmp_data[1:]):
                 self.tb.add_row(tmp_data)
         lines = self.tb.get_string().split('\n')
-        self.output_handle('|' + 'Mixed Precision Statistics'.center(len(lines[0]) - 2, "*") + '|')
+        self.output_handle('|' + self.header.center(len(lines[0]) - 2, "*") + '|')
         for i in lines:
             self.output_handle(i)
 

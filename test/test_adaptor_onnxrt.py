@@ -657,5 +657,77 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertTrue('add' in node_names)
         self.assertTrue('add2_quant' in node_names)
     
+    def test_multi_metrics(self):
+        conf.model.framework = 'onnxrt_qlinearops'
+        conf.quantization.approach = 'post_training_static_quant'
+        conf.evaluation.accuracy.multi_metrics = {'Accuracy': {}, 'MSE': {'compare_label': False}}
+        conf.evaluation.accuracy.pop('metric', None)
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        conf.evaluation.accuracy.multi_metrics = {
+            'Accuracy': {}, 'MSE': {'compare_label': False}, 'higher_is_better': [False, False]}
+        conf.tuning.exit_policy.max_trials = 1
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertEqual(q_model, None)
+
+        conf.tuning.accuracy_criterion.higher_is_better = True
+        conf.evaluation.accuracy.multi_metrics = {
+            'Accuracy': {}, 'MSE': {'compare_label': False}, 'weight': [0.5, 0.5]}
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        conf.evaluation.accuracy.multi_metrics = {
+            'Accuracy': {}, 'MSE': {'compare_label': False}, 'weight': [0.5, 0.5], 
+            'higher_is_better': [False, False]}
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        conf.evaluation.accuracy.multi_metrics = {
+            'Accuracy': {}, 'MSE': {'compare_label': False}, 'weight': [0.5, 0.5], 
+            'higher_is_better': [False, False]}
+        conf.tuning.accuracy_criterion.higher_is_better = False
+        conf.tuning.exit_policy.max_trials = 2
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertEqual(q_model, None)
+
+        conf.evaluation.accuracy.multi_metrics = {
+            'Accuracy': {}, 'MSE': {'compare_label': False}, 'higher_is_better': [False, False]}
+        conf.tuning.exit_policy.max_trials = 1
+        conf.tuning.accuracy_criterion = {'absolute': 0.01, 'higher_is_better': False}
+        from neural_compressor.experimental import Quantization
+        quantizer = Quantization(conf)
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertEqual(q_model, None)
+
+
 if __name__ == "__main__":
     unittest.main()
