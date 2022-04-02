@@ -25,110 +25,20 @@ import copy
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
+from tensorflow.python.framework import op_def_registry
+from tensorflow.python.framework.kernels import get_registered_kernels_for_op
 
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
 
+DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
 
 class BF16Convert(GraphRewriterBase):
     """
     BF16 node convert transformation.
     """
-
-    # TODO: Analysis all of OPs, consider more structures
-    # the set of ops that are considered numerically-safe (for execution
-    # in bf16), performance-critical, and can run in bf16. These ops are always
-    # converted to bf16.
-    WHITE_LIST = ["Conv2D",
-                  "Conv2DBackpropFilter",
-                  "Conv2DBackpropInput",
-                  "Conv3D",
-                  "Conv3DBackpropFilterV2",
-                  "Conv3DBackpropInputV2",
-                  "DepthwiseConv2dNative",
-                  "DepthwiseConv2dNativeBackpropFilter",
-                  "DepthwiseConv2dNativeBackpropInput",
-                  "MatMul",
-                  "BatchMatMul",
-                  "BatchMatMulV2",
-                  ]
-    # the set of ops that can run in bf16 and are considered numerically-
-    # safe (for execution in bf16), but which may be made unsafe by an upstream
-    # blacklist op.
-    GRAY_LIST = ["Add",
-                 "AddN",
-                 "AddV2",
-                 "AvgPool",
-                 "AvgPool3D",
-                 "AvgPool3DGrad",
-                 "AvgPoolGrad",
-                 "BiasAdd",
-                 "BiasAddGrad",
-                 "BiasAddV1",
-                 "FusedBatchNormV2",
-                 "FusedBatchNormGradV2",
-                #  "FusedBatchNormV3",
-                 "FusedBatchNormGradV3",
-                 "LeakyRelu",
-                 "LeakyReluGrad",
-                 "Mul",
-                 "Sub",
-                 ]
-    # the set of ops that are considered numerically-dangerous (i.e.,
-    # unsafe for execution in bf16) and whose effects may also be observed in
-    # downstream nodes (e.g. for f16, in Exp -> Add, the Add is unsafe due to
-    # the Exp).
-    BLACK_LIST = ["Exp",
-                  "Expm1",
-                  "L2Loss",
-                  "Mean",
-                  "Pow",
-                  "SaveV2",
-                  "Softmax",
-                  "SoftmaxCrossEntropyWithLogits",
-                  "SparseSoftmaxCrossEntropyWithLogits",
-                  "Sum",
-                  ]
-    # the set of ops that do not have numerically-significant effects
-    # (i.e., they are always considered safe for execution in bf16 precision), and
-    # can run in bf16.
-    CLEAR_LIST = ["Concat",
-                  "ConcatV2",
-                  "Enter",
-                  "EnsureShape",
-                  "Equal",
-                  "Exit",
-                  "ExpandDims",
-                  "Identity",
-                  "MaxPool",
-                  "MaxPool3D",
-                  "MaxPool3DGrad",
-                  "MaxPoolGrad",
-                  "MaxPoolV2",
-                  "Maximum",
-                  "Merge",
-                  "NextIteration",
-                  "PreventGradient",
-                  "Relu",
-                  "Relu6",
-                  "Relu6Grad",
-                  "ReluGrad",
-                  "Reshape",
-                  # "Select",
-                  # "SelectV2",
-                  # "Shape",
-                  # "ShapeN",
-                  # "Slice",
-                  # "Split",
-                  # "SplitV",
-                  # "Squeeze",
-                  # "StopGradient",
-                  # "Switch",
-                  # "Transpose",
-                  # "ZerosLike",
-                  ]
-
     def __init__(self,
                  model,
                  fp32_ops=[],
@@ -140,168 +50,200 @@ class BF16Convert(GraphRewriterBase):
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         self.converted_ops = []
+        self.device = "CPU"  #TODO support differnt device type
+
+    def _dtype(self, node):
+        op_def = op_def_registry.get(node.op)
+        inputs_dt = []
+        outputs_dt = []
+        for i in op_def.input_arg:
+            inputs_num = node.attr[i.number_attr].i if i.number_attr else 1
+            for j in range(inputs_num):
+                if i.type:
+                    inputs_dt.append('')
+                else:
+                    inputs_dt.append(i.type_attr)
+        for i in op_def.output_arg:
+            outputs_num = node.attr[i.number_attr].i if i.number_attr else 1
+            for j in range(outputs_num):
+                if i.type:
+                    outputs_dt.append('')
+                else:
+                    outputs_dt.append(i.type_attr)
+        return inputs_dt, outputs_dt
+
+    def _dtype_val(self, node):
+        op_def = op_def_registry.get(node.op)
+        inputs_dt_val = []
+        outputs_dt_val = []
+        for i in op_def.input_arg:
+            inputs_num = node.attr[i.number_attr].i if i.number_attr else 1
+            for j in range(inputs_num):
+                if i.type:
+                    inputs_dt_val.append(copy.deepcopy(attr_value_pb2.AttrValue(type=i.type)))
+                else:
+                    inputs_dt_val.append(copy.deepcopy(node.attr[i.type_attr]))
+        for i in op_def.output_arg:
+            outputs_num = node.attr[i.number_attr].i if i.number_attr else 1
+            for j in range(outputs_num):
+                if i.type:
+                    outputs_dt_val.append(copy.deepcopy(attr_value_pb2.AttrValue(type=i.type)))
+                else:
+                    outputs_dt_val.append(copy.deepcopy(node.attr[i.type_attr]))
+        return inputs_dt_val, outputs_dt_val
+
+    def _allowed_dtype_val(self, node):
+        op_def = op_def_registry.get(node.op)
+        allowed_dt_val = {}
+        for attr_def in op_def.attr:
+            if attr_def.type != "type":
+              continue
+            if attr_def.HasField("allowed_values"):
+                allowed_dt_val[attr_def.name] = attr_def.allowed_values.list.type
+        # The supported data type in op_def may be different with registered kernels.
+        # Use the registered one if exists.
+        registered_dt_val = {}
+        registered_kernels = get_registered_kernels_for_op(node.op)
+        for kernel in registered_kernels.kernel:
+            if kernel.device_type == self.device:
+                for constraint in kernel.constraint:
+                    if constraint.name in allowed_dt_val and constraint.HasField("allowed_values"):
+                        if constraint.name not in registered_dt_val:
+                            registered_dt_val[constraint.name] = constraint.allowed_values.list.type
+                        else:
+                            registered_dt_val[constraint.name].extend(constraint.allowed_values.list.type)
+        for dt_val in registered_dt_val:
+            if registered_dt_val[dt_val] != [] and dt_val in allowed_dt_val:
+                allowed_dt_val[dt_val] = registered_dt_val[dt_val]
+        return allowed_dt_val
 
     def _bf16_convert(self, bf16_node_name):
-        self.converted_ops.append(bf16_node_name)
         bf16_node_detail = self.cur_graph.node_name_details[bf16_node_name]
         bf16_node = bf16_node_detail.node
-        bf16_node_inputs = [i for i in list(bf16_node.input) if not i.startswith('^')]
-
-        if 'T' in bf16_node.attr and bf16_node.attr['T'] != \
-                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum) and \
-                    bf16_node.op != 'Dequantize':
-            return
-        for each_input in bf16_node_inputs:
-            each_input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
-                each_input)]
-
-            each_input_node = each_input_detail.node
-            # Const + Cast => Const optimization
-
-            if each_input_node.op == "Const":
-                if each_input_node.attr["dtype"] == attr_value_pb2.AttrValue(
-                        type=dtypes.float32.as_datatype_enum):
-                    fp32_value = tensor_util.MakeNdarray(each_input_node.attr.get('value').tensor)
-                    Helper.set_attr_dtype(each_input_node, "dtype", dtypes.bfloat16)
-                    each_input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
-                        tensor=tensor_util.make_tensor_proto(
-                            fp32_value, dtypes.bfloat16, fp32_value.shape)))
-                    self.converted_ops.append(each_input)
-            elif 'T' in each_input_node.attr and each_input_node.attr['T'] != \
-                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum) and \
-                    each_input_node.op != 'Dequantize':
-                continue
-            # Cast + Cast => O optimization
-            elif (each_input_node.op == "Cast" and
-                  each_input_node.attr["SrcT"] == attr_value_pb2.AttrValue(
-                      type=dtypes.bfloat16.as_datatype_enum)):
-                cast_input_name = each_input_node.input[0]
-                for index, input_name in enumerate(bf16_node.input):
-                    if input_name == each_input_node.name:
-                        bf16_node.input[index] = cast_input_name
-                self.cur_graph.node_name_details[cast_input_name].outputs.append(bf16_node_name)
-                if len(each_input_detail.outputs) == 1:
-                    self.cur_graph.remove_node(each_input)
-                    self.cur_graph.node_name_details[cast_input_name].outputs.remove(each_input)
-            elif (each_input not in self.fp32_ops + self.converted_ops and
-                    each_input_node.op in BF16Convert.WHITE_LIST + \
-                    BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST and
-                    len(each_input_detail.outputs) == 1):
-                self._bf16_convert(each_input)
-                # TODO: Consider multi-output case
-            elif each_input in self.converted_ops:
-                pass
-            else:
-                if each_input + "_FP32toBF16" not in list(self.cur_graph.node_name_details.keys()):
-                    input_cast_node = Helper.create_node(
-                        "Cast", each_input.replace(':', '__') + "_FP32toBF16", [each_input])
-                    Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
-                    Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
-                    Helper.set_attr_bool(input_cast_node, "Truncate", False)
-                    self.cur_graph.add_node(input_cast_node, each_input, [bf16_node_name])
-                else:
-                    input_cast_node = self.cur_graph.node_name_details[each_input +
-                                                                       "_FP32toBF16"].node
-                    for index, input_name in enumerate(bf16_node.input):
-                        if Helper.node_name_from_input(input_name) == each_input:
-                            bf16_node.input[index] = input_cast_node.name
-                    self.cur_graph.node_name_details[input_cast_node.name].outputs.append(
-                        bf16_node_name)
-
-        # TODO: Need consider different op type
-        Helper.set_attr_dtype(bf16_node, "T", dtypes.bfloat16)
-
         bf16_node_outputs = copy.deepcopy(bf16_node_detail.outputs)
-        for each_output in bf16_node_outputs:
-            each_output_detail = self.cur_graph.node_name_details[each_output]
-            each_output_node = each_output_detail.node
-            # Need consider output node op type
 
-            if (each_output_node.op == "Cast" and
-                    each_output_node.attr["DstT"] == attr_value_pb2.AttrValue(
-                    type=dtypes.bfloat16.as_datatype_enum)):
-                for cast_output in each_output_detail.outputs:
-                    cast_output_node = self.cur_graph.node_name_details[cast_output].node
-                    for index, input_name in enumerate(cast_output_node.input):
-                        if each_output == input_name:
-                            cast_output_node.input[index] = bf16_node.name
-                bf16_node_detail.outputs.remove(each_output)
-                bf16_node_detail.outputs.extend(each_output_detail.outputs)
-                self.cur_graph.remove_node(each_output)
-            elif (each_output not in self.fp32_ops + self.converted_ops and
-                    each_output_node.op in BF16Convert.WHITE_LIST + \
-                    BF16Convert.GRAY_LIST + BF16Convert.CLEAR_LIST) :
-                # TODO: Consider multi node inputs case, check others inputs whether
-                # converted to BF16
-                self._bf16_convert(each_output)
-            elif each_output in self.converted_ops:
-                pass
+        if bf16_node.name in self.converted_ops:
+            return
+        elif 'Dequantize' in bf16_node.op:
+            return
+        else:
+            self.converted_ops.append(bf16_node.name)
+
+        inputs_dt, outputs_dt = self._dtype(bf16_node)
+        inputs_dt_val, outputs_dt_val = self._dtype_val(bf16_node)
+        allowed_dt_val = self._allowed_dtype_val(bf16_node)
+
+        # skip bf16 node whose inputs are all not FP32 data type
+        if all([True if i != DT_FLOAT32 else False for i in inputs_dt_val]):
+            return
+
+        for index, input_name in enumerate(bf16_node.input):
+            if input_name.startswith('^'):
+                continue
+
+            input_detail = self.cur_graph.node_name_details[Helper.node_name_from_input(
+                input_name)]
+            input_node = input_detail.node
+            input_node_outputs = input_detail.outputs
+
+            #print(bf16_node.op, bf16_node.name, input_node.op, input_node.name, allowed_dt_val, inputs_dt[index])
+            if inputs_dt[index] in allowed_dt_val and dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
+                continue
+
+            if inputs_dt_val[index] != DT_FLOAT32:
+                continue
+
+            if input_node.op == 'Cast' and \
+                 input_node.attr["SrcT"] == DT_BFLOAT16 and \
+                 input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
+                    parent_input_name = Helper.node_name_from_input(input_node.input[0])
+                    bf16_node.input[index] = input_node.input[0]
+                    outputs = self.cur_graph.node_name_details[parent_input_name].outputs
+                    outputs = list(map(lambda x: x.replace(input_name, bf16_node.name), outputs))
+                    self.cur_graph.remove_node(input_name)
+            elif input_node.op == 'Cast' and \
+                 input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
+                input_node.attr["DstT"].CopyFrom(DT_BFLOAT16)
+            elif input_node.op == "Const" and len(input_node_outputs) == 1:
+                fp32_value = tensor_util.MakeNdarray(input_node.attr.get('value').tensor)
+                Helper.set_attr_dtype(input_node, "dtype", dtypes.bfloat16)
+                input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
+                    tensor=tensor_util.make_tensor_proto(
+                        fp32_value, dtypes.bfloat16, fp32_value.shape)))
+            elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op:
+                self._bf16_convert(input_node.name)
             else:
-                if bf16_node_name + \
-                        "_BF16toFP32" not in list(self.cur_graph.node_name_details.keys()):
+                cast_node_name = input_name.replace(':', '_') + "/" + bf16_node_name + "_FP32toBF16"
+                assert cast_node_name not in list(self.cur_graph.node_name_details.keys())
+                input_cast_node = Helper.create_node(
+                    "Cast", cast_node_name, [input_name])
+                Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
+                Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
+                Helper.set_attr_bool(input_cast_node, "Truncate", False)
+                bf16_node.input[index] = input_cast_node.name
+                outputs = self.cur_graph.node_name_details[ \
+                                  Helper.node_name_from_input(input_name)].outputs
+                outputs = list(map(lambda x: x.replace(bf16_node.name, cast_node_name), outputs))
+                self.cur_graph.add_node(input_cast_node, input_name, [bf16_node_name])
+
+            bf16_node.attr[inputs_dt[index]].CopyFrom(
+                               attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+        if all([True if i != DT_FLOAT32 else False for i in outputs_dt_val]):
+            return
+
+        for output_name in bf16_node_outputs:
+            output_detail = self.cur_graph.node_name_details[output_name]
+            output_node = output_detail.node
+            inputs_dt_input_node, _ = self._dtype(output_node)
+            allowed_output_node_dt_val = self._allowed_dtype_val(output_node)
+
+            for i, input_name in enumerate(output_node.input):
+                if input_name.startswith('^'):
+                    continue
+
+                if bf16_node.name != input_name.split(':')[0]:
+                    continue
+
+                index = int(input_name.split(':')[-1]) if ':' in input_name else 0
+                if outputs_dt_val[index] != DT_FLOAT32:
+                    continue
+
+                if output_node.op == 'Cast':
+                    output_node.attr["SrcT"].CopyFrom(DT_BFLOAT16)
+                elif output_node.op == 'QuantizeV2' and 'dtype' in output_node.attr:
+                    if 'dtype' in allowed_output_node_dt_val and \
+                         dtypes.bfloat16.as_datatype_enum in allowed_output_node_dt_val['dtype']:
+                        output_node.attr["dtype"].CopyFrom(DT_BFLOAT16)
+                elif output_node.name not in self.bf16_ops or \
+                         inputs_dt_input_node[i] in allowed_output_node_dt_val and \
+                         dtypes.bfloat16.as_datatype_enum not in allowed_output_node_dt_val[inputs_dt_input_node[i]]:
+                    cast_node_name = bf16_node_name + "/" + output_node.name + "_BF16toFP32"
+                    assert cast_node_name not in list(self.cur_graph.node_name_details.keys())
                     output_cast_node = Helper.create_node(
-                        "Cast", bf16_node_name + "_BF16toFP32", [bf16_node_name])
+                        "Cast", cast_node_name, [input_name])
                     Helper.set_attr_dtype(output_cast_node, "DstT", dtypes.float32)
                     Helper.set_attr_dtype(output_cast_node, "SrcT", dtypes.bfloat16)
                     Helper.set_attr_bool(output_cast_node, "Truncate", False)
-                    self.cur_graph.add_node(output_cast_node, bf16_node_name, [each_output])
-                else:
-                    output_cast_node = self.cur_graph.node_name_details[bf16_node_name +
-                                                                        "_BF16toFP32"].node
-                    for index, input_name in enumerate(each_output_node.input):
-                        if bf16_node_name == input_name:
-                            each_output_node.input[index] = output_cast_node.name
-                    self.cur_graph.node_name_details[bf16_node_name +
-                                                     "_BF16toFP32"].outputs.append(each_output)
-
-        return
+                    index = [i for i in output_node.input].index(input_name)
+                    output_node.input[index] = output_cast_node.name
+                    self.cur_graph.add_node(output_cast_node, bf16_node_name, [output_name])
 
     def _model_bf16_convert(self):
         logging.debug("start convert bf16 graph")
         self.cur_graph.parse_graph()
         for bf16_node_name in set(self.bf16_ops):
-            if bf16_node_name not in self.converted_ops:
-                self._bf16_convert(bf16_node_name)
-
-    def _convert_bf16_bnv3(self, input_graph):
-        g = GraphAnalyzer()
-        g.graph = input_graph
-        graph_info = g.parse_graph()
-
-        bn_pattern= [['FusedBatchNormV3']]
-
-        target_nodes = g.query_fusion_pattern_nodes(bn_pattern)
-        for i in target_nodes:
-            node_name = i[0]
-            bn_node = graph_info[node_name].node
-            bn_node_outputs = graph_info[node_name].outputs
-
-            x_input_name = bn_node.input[0]
-            x_input_node =graph_info[x_input_name].node
-            if x_input_node.op == 'Cast' and x_input_node.attr['SrcT'].type == dtypes.bfloat16 \
-                and x_input_node.attr['DstT'].type == dtypes.float32:
-                g.remove_node_with_single_input_output(x_input_name)
-                Helper.set_attr_dtype(bn_node, "T", dtypes.bfloat16)
-                output_y_node = graph_info[bn_node_outputs[0]].node
-                if output_y_node.attr["T"].type == dtypes.float32:
-                    input_cast_node = Helper.create_node(
-                        "Cast", node_name.replace(':', '__') + "_BF16toFP32", [node_name])
-                    Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.bfloat16)
-                    Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.float32)
-                    Helper.set_attr_bool(input_cast_node, "Truncate", False)
-                    g.add_node(input_cast_node, node_name, bn_node_outputs)
-                else:
-                    g.remove_node_with_single_input_output(bn_node_outputs[0])
-
-        return g.dump_graph()
+            if bf16_node_name not in self.cur_graph.node_name_details:
+                self.bf16_ops.remove(bf16_node_name)
+                continue
+        for bf16_node_name in set(self.bf16_ops):
+            self._bf16_convert(bf16_node_name)
+        return self.cur_graph.dump_graph()
 
     def do_transformation(self):
         """
         Execute BF16 convert.
         :return: Transformed graph
         """
-        self._model_bf16_convert()
-        converted_graph_def = self._convert_bf16_bnv3(self.cur_graph.dump_graph())
-
+        converted_graph_def = self._model_bf16_convert()
         converted_graph_def.library.CopyFrom(self.model.library)
         return converted_graph_def

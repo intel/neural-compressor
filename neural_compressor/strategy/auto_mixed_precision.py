@@ -190,7 +190,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                             if fallback_dtype == cfg['activation']['dtype']:
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if ('weight' in op_cfgs['op'][op] and 
+                                if ('weight' in op_cfgs['op'][op] and
                                         op_cfgs['op'][op]['weight'] is not None):
                                     op_cfgs['op'][op]['weight'].clear()
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype

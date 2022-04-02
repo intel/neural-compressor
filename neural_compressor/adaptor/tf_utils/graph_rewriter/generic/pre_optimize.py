@@ -26,6 +26,7 @@ from .strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_cse_optimizer import GraphCseOptimizer
 from .fold_constant import GraphFoldConstantOptimizer
 from .fold_batch_norm import FoldBatchNormNodesOptimizer
+from .rename_batch_norm import RenameBatchNormOptimizer
 from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
@@ -96,10 +97,10 @@ class PreOptimization():
 
         self._tmp_graph_def = ConvertLayoutOptimizer(
             self.model.graph_def, output_node_names).do_transformation()
-            
+
         self._tmp_graph_def = GrapplerOptimizer(
             self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
-         
+
         self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
@@ -121,6 +122,9 @@ class PreOptimization():
         self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(
+            self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = RenameBatchNormOptimizer(
             self._tmp_graph_def).do_transformation()
 
         #TODO we should handle all control ops elegantly not bypass it.
@@ -148,7 +152,7 @@ class PreOptimization():
         # matmul op quantization
         self._tmp_graph_def = InjectDummyBiasAddOptimizer(
             self._tmp_graph_def, output_node_names).do_transformation()
-            
+
         self._tmp_graph_def = FuseBiasAddAndAddOptimizer(
             self._tmp_graph_def).do_transformation()
 

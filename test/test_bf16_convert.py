@@ -15,15 +15,9 @@ def build_fake_yaml():
         model:
           name: fake_yaml
           framework: tensorflow
-          inputs: input 
+          inputs: input
           outputs: final
         device: cpu
-        quantization: 
-          op_wise: {
-                     \"conv1\": {
-                       \"activation\":  {\"dtype\": [\"fp32\"]},
-                     },
-                   }
         evaluation:
           accuracy:
             metric:
@@ -32,7 +26,7 @@ def build_fake_yaml():
             strategy:
               name: basic
             exit_policy:
-              timeout: 200
+              max_trials: 2
             accuracy_criterion:
               relative: 0.01
             workspace:
@@ -48,9 +42,9 @@ def build_fake_bf16_rnn_yaml():
           name: fake_yaml
           framework: tensorflow
           inputs: input_1
-          outputs: dense/BiasAdd 
+          outputs: dense/BiasAdd
         device: cpu
-        quantization: 
+        quantization:
           op_wise: {
                      \"lstm/while/MatMul\": {
                        \"activation\":  {\"dtype\": [\"bf16\"]},
@@ -91,7 +85,7 @@ def build_fake_bf16_rnn_yaml():
         f.write(fake_yaml)
     f.close()
 
-def create_test_graph():
+def create_test_graph(bf16_graph=True):
     input_node = node_def_pb2.NodeDef()
     input_node.name = "input"
     input_node.op = "Placeholder"
@@ -135,25 +129,27 @@ def create_test_graph():
     bias_add_node.input.extend([conv1_node.name, bias_node.name])
     bias_add_node.attr['data_format'].CopyFrom(attr_value_pb2.AttrValue(s=b'NHWC'))
 
-    cast_node = node_def_pb2.NodeDef()
-    cast_node.op = "Cast"
-    cast_node.name = "cast"
-    cast_node.attr['SrcT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
-    cast_node.attr['DstT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
-    cast_node.input.extend([bias_add_node.name])
+    if bf16_graph:
+        cast_node = node_def_pb2.NodeDef()
+        cast_node.op = "Cast"
+        cast_node.name = "cast"
+        cast_node.attr['SrcT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+        cast_node.attr['DstT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+        cast_node.input.extend([bias_add_node.name])
 
     relu_node = node_def_pb2.NodeDef()
     relu_node.op = "Relu"
     relu_node.name = "relu"
-    relu_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
-    relu_node.input.extend([cast_node.name])
+    relu_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum if bf16_graph else dtypes.float32.as_datatype_enum))
+    relu_node.input.extend([cast_node.name if bf16_graph else bias_add_node.name])
 
-    cast2_node = node_def_pb2.NodeDef()
-    cast2_node.op = "Cast"
-    cast2_node.name = "cast2"
-    cast2_node.attr['SrcT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
-    cast2_node.attr['DstT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
-    cast2_node.input.extend([relu_node.name])
+    if bf16_graph:
+        cast2_node = node_def_pb2.NodeDef()
+        cast2_node.op = "Cast"
+        cast2_node.name = "cast2"
+        cast2_node.attr['SrcT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
+        cast2_node.attr['DstT'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+        cast2_node.input.extend([relu_node.name])
 
     conv2_weight_node = node_def_pb2.NodeDef()
     conv2_weight_node.name = "conv2_weights"
@@ -169,7 +165,7 @@ def create_test_graph():
     conv2_node.op = "Conv2D"
     conv2_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(
         type=dtypes.float32.as_datatype_enum))
-    conv2_node.input.extend([cast2_node.name, conv2_weight_node.name])
+    conv2_node.input.extend([cast2_node.name if bf16_graph else relu_node.name, conv2_weight_node.name])
     conv2_node.attr['strides'].CopyFrom(attr_value_pb2.AttrValue(
         list=attr_value_pb2.AttrValue.ListValue(i=[1,1,1,1])))
     conv2_node.attr['dilations'].CopyFrom(attr_value_pb2.AttrValue(
@@ -198,6 +194,12 @@ def create_test_graph():
     relu_node2.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
     relu_node2.input.extend([bias_add_node2.name])
 
+    log_node = node_def_pb2.NodeDef()
+    log_node.name = "log1"
+    log_node.op = "Log"
+    log_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+    log_node.input.extend([relu_node2.name])
+
     conv3_weight_node = node_def_pb2.NodeDef()
     conv3_weight_node.name = "conv3_weights"
     conv3_weight_node.op = "Const"
@@ -212,7 +214,7 @@ def create_test_graph():
     conv3_node.op = "Conv2D"
     conv3_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(
         type=dtypes.float32.as_datatype_enum))
-    conv3_node.input.extend([relu_node2.name, conv3_weight_node.name])
+    conv3_node.input.extend([log_node.name, conv3_weight_node.name])
     conv3_node.attr['strides'].CopyFrom(attr_value_pb2.AttrValue(
         list=attr_value_pb2.AttrValue.ListValue(i=[1,1,1,1])))
     conv3_node.attr['dilations'].CopyFrom(attr_value_pb2.AttrValue(
@@ -229,23 +231,42 @@ def create_test_graph():
 
     test_graph = graph_pb2.GraphDef()
 
-    test_graph.node.extend([input_node,
-                            conv1_weight_node,
-                            conv1_node,
-                            bias_node,
-                            bias_add_node,
-                            cast_node,
-                            relu_node,
-                            cast2_node,
-                            conv2_weight_node,
-                            conv2_node,
-                            bias_node2,
-                            bias_add_node2,
-                            relu_node2,
-                            conv3_weight_node,
-                            conv3_node,
-                            identity_node
-                            ])
+    if bf16_graph:
+        test_graph.node.extend([input_node,
+                                 conv1_weight_node,
+                                 conv1_node,
+                                 bias_node,
+                                 bias_add_node,
+                                 cast_node,
+                                 relu_node,
+                                 cast2_node,
+                                 conv2_weight_node,
+                                 conv2_node,
+                                 bias_node2,
+                                 bias_add_node2,
+                                 log_node,
+                                 relu_node2,
+                                 conv3_weight_node,
+                                 conv3_node,
+                                 identity_node
+                                ])
+    else:
+        test_graph.node.extend([input_node,
+                                 conv1_weight_node,
+                                 conv1_node,
+                                 bias_node,
+                                 bias_add_node,
+                                 relu_node,
+                                 conv2_weight_node,
+                                 conv2_node,
+                                 bias_node2,
+                                 bias_add_node2,
+                                 log_node,
+                                 relu_node2,
+                                 conv3_weight_node,
+                                 conv3_node,
+                                 identity_node
+                                ])
     return test_graph
 
 class TestBF16Convert(unittest.TestCase):
@@ -260,6 +281,7 @@ class TestBF16Convert(unittest.TestCase):
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())
         self.test_graph = create_test_graph()
+        self.test_fp32_graph = create_test_graph(False)
         build_fake_yaml()
         build_fake_bf16_rnn_yaml()
 
@@ -282,16 +304,15 @@ class TestBF16Convert(unittest.TestCase):
 
 
     def test_do_transform(self):
-        bf16_converter = BF16Convert(self.test_graph, ["conv3"], ["conv2"])
+        bf16_converter = BF16Convert(self.test_graph, ["conv3"], ["conv2", "relu2"])
         new_graph = bf16_converter.do_transformation()
-        new_conv1 = bf16_converter.cur_graph.node_name_details["conv1"].node
-        new_relu2 = bf16_converter.cur_graph.node_name_details["relu2"].node
+        new_conv2 = bf16_converter.cur_graph.node_name_details["conv2"].node
         new_conv3 = bf16_converter.cur_graph.node_name_details["conv3"].node
+        new_relu2 = bf16_converter.cur_graph.node_name_details["relu2"].node
+        self.assertEqual(new_conv2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
-        self.assertTrue("relu2_BF16toFP32" in new_conv3.input)
+        self.assertEqual(new_conv3.attr["T"].type, dtypes.float32)
 
-
-    @unittest.skipIf(tf.version.VERSION > '2.5.0', " Skip test_bf16_fallback case for tf 2.6.0 and above.")
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
 
@@ -300,12 +321,14 @@ class TestBF16Convert(unittest.TestCase):
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.test_graph
+        quantizer.model = self.test_fp32_graph
         output_graph = quantizer.fit()
         cast_op_count = 0
         for node in output_graph.graph_def.node:
             if node.op == 'Cast':
                 cast_op_count += 1
+            if node.op == 'Log':
+                self.assertEqual(node.attr["T"].type, dtypes.bfloat16.as_datatype_enum)
         self.assertTrue(cast_op_count >= 1)
 
     @unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.x")

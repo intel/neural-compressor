@@ -253,6 +253,7 @@ class GraphConverter:
         self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
         # to keep temp model
         self._tmp_model = Model(self.model._model, **self.model.kwargs)
+        self._tmp_model.graph_def = self.model.graph_def
         self._tmp_model.output_tensor_names = self.output_tensor_names
         self._tmp_model.input_tensor_names = self.input_tensor_names
 
@@ -620,6 +621,8 @@ class GraphConverter:
                 self.bf16_ops).do_transformation()
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self._tmp_model = None
             logger.error("Fail to convert graph due to {}.".format(str(e)))
         finally:
@@ -643,7 +646,7 @@ class GraphConverter:
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names)
-        
+
         self._tmp_graph_def, self.quantized_node_info = QuantizeGraphForIntel(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
@@ -733,12 +736,12 @@ class GraphConverter:
 
             self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
                 self._tmp_graph_def).do_transformation()
-        
+
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names).do_transformation()
-        
+
         input_output_names = self._tmp_model.input_node_names + self._tmp_model.output_node_names
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def,
