@@ -575,6 +575,15 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "yolov4": {
+      "model_src_dir": "object_detection/onnx_model_zoo/yolov4/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "input_model": "/tf_dataset2/models/onnx/yolov4/yolov4-12.onnx",
+      "yaml": "yolov4.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     }
   }
 }
