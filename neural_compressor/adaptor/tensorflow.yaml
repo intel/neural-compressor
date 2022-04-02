@@ -25,7 +25,30 @@
   ops: &common_ops
     int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
-    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    bf16: ['Conv2D', 'Conv2DBackpropFilter', 'Conv2DBackpropInput', 'Conv3D', 'Conv3DBackpropFilterV2',
+           'Conv3DBackpropInputV2', 'DepthwiseConv2dNative', 'DepthwiseConv2dNativeBackpropFilter',
+           'DepthwiseConv2dNativeBackpropInput', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', # allow_list
+           'Add', 'AddN', 'AddV2', 'AvgPool', 'AvgPool3D', 'AvgPool3DGrad', 'AvgPoolGrad', 'BiasAdd',
+           'BiasAddGrad', 'BiasAddV1', 'FusedBatchNormV2', 'FusedBatchNormGradV2', 'FusedBatchNormV3',
+           'FusedBatchNormGradV3', 'LeakyRelu', 'LeakyReluGrad', 'Mul', 'Sub', 'Elu', 'EluGrad', 'FloorDiv',
+           '_FusedBatchNormEx', 'Log', 'Log1p', 'LogSoftmax', 'Prod', 'RealDiv', 'Reciprocal', 'Selu',
+           'SeluGrad', 'Sigmoid', 'SigmoidGrad', 'Softmax', 'Softplus', 'SoftplusGrad', 'Softsign',
+           'SoftsignGrad', 'Sqrt', 'Tanh', 'TanhGrad', #infer_list
+           'Abs', 'ArgMax', 'ArgMin', 'BatchToSpace', 'BatchToSpaceND', 'BroadcastTo', 'Ceil', 'CheckNumerics',
+           'ClipByValue', 'Concat', 'ConcatV2', 'DepthToSpace', 'DynamicPartition', 'DynamicStitch',
+           'EnsureShape', 'Enter', #'Range',
+           'Equal', 'Exit', 'ExpandDims', 'Fill', 'Floor',
+            'Gather', 'GatherNd', 'GatherV2', 'Greater', 'GreaterEqual',
+           'Identity', 'IsFinite', 'IsInf', 'IsNan', 'Less', 'LessEqual',
+           'Max', 'Maximum', 'MaxPool', 'MaxPool3D', 'MaxPool3DGrad', 'MaxPoolGrad', 'MaxPoolGradGrad',
+           'MaxPoolGradGradV2', 'MaxPoolGradV2', 'MaxPoolV2', 'Merge', 'Min', 'Minimum', 'MirrorPad', 'MirrorPadGrad',
+           'Neg', 'NextIteration', 'NotEqual', 'OnesLike', 'Pack', 'Pad', 'PadV2', 'PreventGradient', 'Rank',
+           'Relu', 'Relu6', 'Relu6Grad', 'ReluGrad', 'Reshape',
+           'ResizeNearestNeighbor', 'ResizeNearestNeighborGrad',
+           'Reverse', 'ReverseSequence', 'ReverseV2', 'Round', 'Select', 'SelectV2', 'Shape', 'ShapeN', 'Sign',
+           'Slice', 'Snapshot', 'SpaceToBatch', 'SpaceToBatchND', 'SpaceToDepth', 'Split', 'SplitV', 'Squeeze',
+           'StopGradient', 'StridedSlice', 'StridedSliceGrad', #'Switch',
+           'Tile', 'TopK', 'TopKV2', 'Transpose', 'Where', 'Unpack', 'ZerosLike']  #clear_list
     fp32: ['*'] # '*' means all op types
 
   capabilities: &common_capabilities
