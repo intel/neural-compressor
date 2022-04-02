@@ -736,24 +736,12 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def iter_op(self):
+        self._iter_op = []
         if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
-        graph = self._sess.graph
-        graph_def = graph.as_graph_def()
-        user_output_node_names = tensor_to_node(self.output_tensor_names)
-        sub_graph_def = tf.compat.v1.graph_util.extract_sub_graph(
-                            graph_def=graph_def,
-                            dest_nodes=user_output_node_names)
-        sub_graph_names = [node_def.name for node_def in sub_graph_def.node]
-        self._iter_op = []
-        for node_def in graph_def.node:
-            if node_def.op == 'MakeIterator':
-                if not node_def.input:
-                    raise ValueError(f"Graph error, the node '{node_def.name}'"
-                                     f" in the graph has no predecessor node."
-                                     f" Please check the model under '{self._model}'.")
-                if set(node_def.input).intersection(sub_graph_names):
-                    self._iter_op.append(graph.get_operation_by_name(node_def.name))
+        op_list = [node.op for node in self._sess.graph.as_graph_def().node]
+        if 'MakeIterator' in op_list:
+            self._iter_op.append(self._sess.graph.get_operation_by_name('MakeIterator'))
         return self._iter_op
 
     @property
