@@ -13,7 +13,9 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
+
                 ],
                 "inputs":  ["input"],
                 "outputs": ["predict"]
@@ -30,7 +32,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["input"],
                 "outputs": ["InceptionV4/Logits/Predictions"]
@@ -47,7 +50,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["input"],
                 "outputs": ["MobilenetV1/Predictions/Reshape_1"]
@@ -64,7 +68,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["input_tensor"],
                 "outputs": ["softmax_tensor"]
@@ -81,7 +86,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["input"],
                 "outputs": ["resnet_v1_101/predictions/Reshape_1"]
@@ -101,7 +107,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["image_tensor"],
                 "outputs": ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
@@ -119,7 +126,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["image_tensor"],
                 "outputs": ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
@@ -137,7 +145,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["image_tensor"],
                 "outputs": ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
@@ -155,7 +164,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["image_tensor"],
                 "outputs": ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
@@ -173,7 +183,8 @@
                     "2.4",
                     "2.5",
                     "2.6",
-                    "2.7"
+                    "2.7",
+                    "2.8"
                 ],
                 "inputs":  ["image_tensor"],
                 "outputs": ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]

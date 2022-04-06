@@ -83,4 +83,19 @@ export class DatasetsComponent implements OnInit {
     return Object.keys(obj);
   }
 
+  copyToClipboard(text: string) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Unable to copy', err);
+    }
+
+    document.body.removeChild(textArea);
+  }
+
 }

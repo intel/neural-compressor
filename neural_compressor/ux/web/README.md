@@ -633,7 +633,7 @@
         "strategy": "basic",
         "accuracy_criterion_type": "relative",
         "accuracy_criterion_threshold": 0.1,
-        "multi_objective": "performance",
+        "multi_objectives": "performance",
         "exit_policy": {
             "timeout": 0
         },
@@ -1293,7 +1293,7 @@
             "strategy": "basic",
             "accuracy_criterion_type": "relative",
             "accuracy_criterion_threshold": 0.0001,
-            "multi_objective": "performance",
+            "multi_objectives": "performance",
             "exit_policy": {
                 "timeout": 0
             },

@@ -22,7 +22,7 @@ from neural_compressor.ux.utils.workload.quantization import Calibration, Quanti
 from neural_compressor.ux.utils.workload.tuning import (
     AccCriterion,
     ExitPolicy,
-    MultiObjective,
+    MultiObjectives,
     Strategy,
     Tuning,
 )
@@ -57,7 +57,7 @@ class QuantizationConfigGenerator(ConfigGenerator):
         tuning = Tuning()
         tuning.strategy = Strategy({"name": self.tuning_strategy})
         tuning.accuracy_criterion = AccCriterion(self.accuracy_criterion)
-        tuning.multi_objective = MultiObjective({"objective": self.objective})
+        tuning.multi_objectives = MultiObjectives({"objective": self.objective})
         tuning.exit_policy = ExitPolicy(self.exit_policy)
         tuning.random_seed = self.random_seed
         tuning.set_workspace(self.workdir)

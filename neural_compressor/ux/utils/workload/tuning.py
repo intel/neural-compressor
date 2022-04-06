@@ -39,11 +39,11 @@ class Strategy(JsonSerializer):
         self.latency_weight: Optional[float] = data.get("latency_weight", None)
 
 
-class MultiObjective(JsonSerializer):
-    """Configuration MultiObjective class."""
+class MultiObjectives(JsonSerializer):
+    """Configuration MultiObjectives class."""
 
     def __init__(self, data: Dict[str, Any] = {}) -> None:
-        """Initialize configuration MultiObjective class."""
+        """Initialize configuration MultiObjectives class."""
         super().__init__()
         self._objective: List[str] = data.get("objective", [])
         self._weight: List[float] = data.get("weight", [])
@@ -84,6 +84,10 @@ class AccCriterion(JsonSerializer):
             None,
         )  # [Optional] INT8-FP32
 
+        # Set default accuracy criterion to relative
+        if self.relative is None and self.absolute is None:
+            self.relative = 0.1
+
 
 class ExitPolicy(JsonSerializer):
     """Configuration ExitPolicy class."""
@@ -123,9 +127,9 @@ class Tuning(JsonSerializer):
             data.get("accuracy_criterion", {}),
         )
 
-        self.multi_objective: Optional[MultiObjective] = None
-        if data.get("multi_objective"):
-            self.multi_objective = MultiObjective(data.get("multi_objective", {}))
+        self.multi_objectives: Optional[MultiObjectives] = None
+        if data.get("multi_objectives"):
+            self.multi_objectives = MultiObjectives(data.get("multi_objectives", {}))
 
         self.exit_policy: Optional[ExitPolicy] = None
         if data.get("exit_policy"):

@@ -211,7 +211,7 @@
     </div>
 
     <ng-container *ngIf="chartsReady">
-      <div class="item">
+      <div class="item" *ngIf="this.historyData['accuracy'][0]['series'].length > 1">
         <h2>Accuracy - tuning history</h2>
         <p class="chart">
           <ngx-charts-line-chart #accChart class="inline" [view]="viewLine" [scheme]="colorScheme"
@@ -222,7 +222,7 @@
         </p>
       </div>
 
-      <div class="item">
+      <div class="item" *ngIf="this.historyData['performance'][0]['series'].length > 1">
         <h2>Performance - tuning history</h2>
         <p class="chart">
           <ngx-charts-line-chart #perfChart class="inline" [view]="viewLine" [scheme]="colorScheme"

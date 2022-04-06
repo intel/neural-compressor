@@ -181,6 +181,11 @@
             <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
               {{ detail.value.name ?? (detail.value | json) }}
             </td>
+            <td>
+              <img *ngIf="detail.key.includes('path')" class="icon-button right"
+                src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
+                (click)="copyToClipboard(detail.value)">
+            </td>
           </tr>
         </ng-container>
       </table>
