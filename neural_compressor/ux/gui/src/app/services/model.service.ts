@@ -155,7 +155,7 @@ export class ModelService {
   }
 
   getPredefinedDatasets(framework: FrameworkName, domain: DomainName, domainFlavour: DomainFlavourName) {
-    return this.http.post(this.baseUrl + '/api/dataset/predefined', {
+    return this.http.post(this.baseUrl + 'api/dataset/predefined', {
       framework: framework,
       domain: domain,
       domain_flavour: domainFlavour

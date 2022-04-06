@@ -212,7 +212,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.tuning.accuracy_criterion)
         self.assertEqual(config.tuning.accuracy_criterion.relative, 0.01)
         self.assertIsNone(config.tuning.accuracy_criterion.absolute)
-        self.assertIsNone(config.tuning.multi_objective)
+        self.assertIsNone(config.tuning.multi_objectives)
         self.assertIsNotNone(config.tuning.exit_policy)
         self.assertEqual(config.tuning.exit_policy.timeout, 0)
         self.assertIsNone(config.tuning.exit_policy.max_trials)
@@ -417,9 +417,9 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.tuning.strategy.accuracy_weight)
         self.assertIsNone(config.tuning.strategy.latency_weight)
         self.assertIsNotNone(config.tuning.accuracy_criterion)
-        self.assertIsNone(config.tuning.accuracy_criterion.relative)
+        self.assertEqual(config.tuning.accuracy_criterion.relative, 0.1)
         self.assertIsNone(config.tuning.accuracy_criterion.absolute)
-        self.assertIsNone(config.tuning.multi_objective)
+        self.assertIsNone(config.tuning.multi_objectives)
         self.assertIsNone(config.tuning.exit_policy)
         self.assertIsNone(config.tuning.random_seed)
         self.assertIsNone(config.tuning.tensorboard)
@@ -949,7 +949,8 @@ class TestConfig(unittest.TestCase):
 
         config.set_accuracy_goal(1234)
 
-        self.assertIsNone(config.tuning.accuracy_criterion.relative)
+        self.assertEqual(config.tuning.accuracy_criterion.relative, 1234)
+        self.assertIsNone(config.tuning.accuracy_criterion.absolute)
 
     def test_set_accuracy_metric(self) -> None:
         """Test set_accuracy_metric."""

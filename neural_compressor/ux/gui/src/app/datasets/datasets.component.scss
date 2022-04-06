@@ -54,8 +54,15 @@ tr:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  // grid-template-areas: "a b"
-  //   "c c";
-  // align-content: stretch;
-  // justify-content: space-evenly;
+}
+
+.warning-icon-small{
+  max-width: 20px;
+  position: relative;
+  top: 2px;
+}
+
+.text-up {
+  position: relative;
+  top: -7px;
 }

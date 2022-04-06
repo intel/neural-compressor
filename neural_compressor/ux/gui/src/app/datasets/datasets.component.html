@@ -10,7 +10,15 @@
     <tr [ngClass]="{'hover active': dataset.id === activeDatasetId, 'pointer': true}" *ngFor="let dataset of datasets"
       (click)="getDatasetDetails(dataset.id)" matTooltip="Click to see details">
       <td class="center cell">{{ dataset.name }}</td>
-      <td class="center cell">{{ dataset.dataset_type }}</td>
+      <td class="center cell">
+        <a [ngClass]="{'text-up' : dataset.dataset_type === 'custom'}">
+          {{ dataset.dataset_type }}
+        </a>
+        <a *ngIf="dataset.dataset_type === 'custom'" class="warning">
+          <img class="warning-icon-small" src="./../../assets/006a-alert-solid-orange.svg"
+            matTooltip="Fill the code template before using this dataset">
+        </a>
+      </td>
     </tr>
   </table>
 
@@ -33,7 +41,19 @@
       <ng-container *ngFor="let detail of datasetDetails | keyvalue">
         <tr *ngIf="!['metric', 'parameters', 'transforms', 'id', 'project_id'].includes(detail.key)">
           <th>{{ detail.key | modelList}}</th>
-          <td>{{ detail.value }}</td>
+          <td class="cell">
+            <a [ngClass]="{'text-up' : detail.key.includes('template')}">
+              {{ detail.value }}
+            </a>
+            <img *ngIf="detail.key.includes('template')" class="warning-icon-small"
+              src="./../../assets/006a-alert-solid-orange.svg"
+              matTooltip="Fill the code template before using this dataset">
+          </td>
+          <td>
+            <img *ngIf="detail.key.includes('template')" class="icon-button right"
+              src="./../../assets/146a-copy-solid.svg" matTooltip="Copy template path to clipboard"
+              matTooltipPosition="after" (click)="copyToClipboard(detail.value)">
+          </td>
         </tr>
       </ng-container>
     </table>

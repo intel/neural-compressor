@@ -19,6 +19,10 @@
           </mat-select>
         </mat-form-field>
       </span>
+      <a *ngIf="datasetFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="warning">
+        <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
+        Fill the code template before tuning
+      </a>
       <span *ngIf="showDatasetLocation" class="inline">
         <mat-form-field class="form-field long" appearance="outline">
           <mat-label>dataset location</mat-label>
@@ -48,10 +52,6 @@
           </ng-container>
         </ng-container>
       </span>
-      <br>
-      <a *ngIf="datasetFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="custom">
-        Fill the code template before tuning
-      </a>
     </mat-card>
 
     <ng-container *ngIf="datasetFormGroup.get('dataLoaderEvaluation').value !== 'custom'">
@@ -140,7 +140,8 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <a *ngIf="datasetFormGroup.get('metric').value === 'custom'" class="custom">
+      <a *ngIf="datasetFormGroup.get('metric').value === 'custom'" class="warning">
+        <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
         Fill the code template before tuning
       </a>
       <ng-container *ngFor="let param of metricParams">

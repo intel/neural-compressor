@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 import unittest
 
+from neural_compressor.conf.config import schema as inc_config_schema
 from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.workload.config import Config
 from neural_compressor.ux.utils.workload.tuning import (
     AccCriterion,
     ExitPolicy,
@@ -101,7 +103,7 @@ class TestAccCriterionConfig(unittest.TestCase):
         """Test AccCriterion config constructor defaults."""
         acc_critetion = AccCriterion()
 
-        self.assertIsNone(acc_critetion.relative)
+        self.assertEqual(acc_critetion.relative, 0.1)
         self.assertIsNone(acc_critetion.absolute)
 
     def test_acc_critetion_serializer(self) -> None:
@@ -226,9 +228,8 @@ class TestTuningConfig(unittest.TestCase):
             },
             "accuracy_criterion": {
                 "relative": 0.01,
-                "absolute": 0.02,
             },
-            "multi_objective": {
+            "multi_objectives": {
                 "objective": ["performance"],
             },
             "exit_policy": {
@@ -251,10 +252,10 @@ class TestTuningConfig(unittest.TestCase):
 
         self.assertIsNotNone(tuning.accuracy_criterion)
         self.assertEqual(tuning.accuracy_criterion.relative, 0.01)
-        self.assertEqual(tuning.accuracy_criterion.absolute, 0.02)
+        self.assertIsNone(tuning.accuracy_criterion.absolute)
 
-        self.assertIsNotNone(tuning.multi_objective)
-        self.assertEqual(tuning.multi_objective.objective, ["performance"])
+        self.assertIsNotNone(tuning.multi_objectives)
+        self.assertEqual(tuning.multi_objectives.objective, ["performance"])
 
         self.assertIsNotNone(tuning.exit_policy)
         self.assertEqual(tuning.exit_policy.timeout, 60)
@@ -268,6 +269,19 @@ class TestTuningConfig(unittest.TestCase):
         self.assertEqual(tuning.workspace.path, "/path/to/workspace")
         self.assertEqual(tuning.workspace.resume, "/path/to/snapshot/file")
 
+        config = Config(
+            {
+                "model": {
+                    "name": "resnet50_v1_5",
+                    "framework": "tensorflow",
+                    "outputs": "softmax_tensor",
+                },
+            },
+        )
+        config.tuning = tuning
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_tuning_constructor_defaults(self) -> None:
         """Test Tuning config constructor defaults."""
         tuning = Tuning()
@@ -278,10 +292,10 @@ class TestTuningConfig(unittest.TestCase):
         self.assertIsNone(tuning.strategy.latency_weight)
 
         self.assertIsNotNone(tuning.accuracy_criterion)
-        self.assertIsNone(tuning.accuracy_criterion.relative)
+        self.assertEqual(tuning.accuracy_criterion.relative, 0.1)
         self.assertIsNone(tuning.accuracy_criterion.absolute)
 
-        self.assertIsNone(tuning.multi_objective)
+        self.assertIsNone(tuning.multi_objectives)
         self.assertIsNone(tuning.exit_policy)
         self.assertIsNone(tuning.random_seed)
         self.assertIsNone(tuning.tensorboard)
@@ -436,9 +450,8 @@ class TestTuningConfig(unittest.TestCase):
             },
             "accuracy_criterion": {
                 "relative": 0.01,
-                "absolute": 0.02,
             },
-            "multi_objective": {
+            "multi_objectives": {
                 "objective": ["performance"],
             },
             "exit_policy": {
@@ -466,9 +479,8 @@ class TestTuningConfig(unittest.TestCase):
                 },
                 "accuracy_criterion": {
                     "relative": 0.01,
-                    "absolute": 0.02,
                 },
-                "multi_objective": {
+                "multi_objectives": {
                     "objective": ["performance"],
                 },
                 "exit_policy": {
@@ -484,6 +496,19 @@ class TestTuningConfig(unittest.TestCase):
             },
         )
 
+        config = Config(
+            {
+                "model": {
+                    "name": "resnet50_v1_5",
+                    "framework": "tensorflow",
+                    "outputs": "softmax_tensor",
+                },
+            },
+        )
+        config.tuning = tuning
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
+
     def test_tuning_serializer_optional_fields(self) -> None:
         """Test Tuning config serializer."""
         data = {
@@ -491,10 +516,9 @@ class TestTuningConfig(unittest.TestCase):
                 "name": "basic",
             },
             "accuracy_criterion": {
-                "relative": 0.01,
                 "absolute": 0.02,
             },
-            "multi_objective": {
+            "multi_objectives": {
                 "objective": ["performance"],
             },
             "exit_policy": {
@@ -514,10 +538,9 @@ class TestTuningConfig(unittest.TestCase):
                     "name": "basic",
                 },
                 "accuracy_criterion": {
-                    "relative": 0.01,
                     "absolute": 0.02,
                 },
-                "multi_objective": {
+                "multi_objectives": {
                     "objective": ["performance"],
                 },
                 "exit_policy": {
@@ -527,6 +550,19 @@ class TestTuningConfig(unittest.TestCase):
                 "random_seed": 12345,
             },
         )
+
+        config = Config(
+            {
+                "model": {
+                    "name": "resnet50_v1_5",
+                    "framework": "tensorflow",
+                    "outputs": "softmax_tensor",
+                },
+            },
+        )
+        config.tuning = tuning
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
 
 if __name__ == "__main__":

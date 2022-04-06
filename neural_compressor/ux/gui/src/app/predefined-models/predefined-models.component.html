@@ -34,7 +34,7 @@
 
 <div class="float-right">
   <button id="finish-basic-btn" mat-raised-button color="accent" queryParamsHandling="preserve" (click)="addExample()"
-    [disabled]="!(model.domain && model.model)">
+    [disabled]="!(model.domain && model.model) || showProgressBar">
     <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
     Finish
   </button>

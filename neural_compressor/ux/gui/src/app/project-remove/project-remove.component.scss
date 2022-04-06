@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-.browse {
-  position: relative;
-  top: -5px;
-  font-size: 120%;
-}
-
-mat-card {
-  padding-bottom: 0px;
-}
+@import './../../variables.scss';
 
 .warning-icon {
   position: relative;
   top: 5px;
   width: 20px;
+}
+
+.mat-dialog-container {
+  margin: -24px;
+  box-sizing: unset;
+  width: unset !important;
 }

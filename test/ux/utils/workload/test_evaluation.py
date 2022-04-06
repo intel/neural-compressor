@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2021-2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+from neural_compressor.conf.config import schema as inc_config_schema
+from neural_compressor.ux.utils.workload.config import Config
 from neural_compressor.ux.utils.workload.evaluation import (
     Accuracy,
     Configs,
@@ -360,17 +362,15 @@ class TestAccuracyConfig(unittest.TestCase):
                 "last_batch": "rollover",
                 "batch_size": 2,
                 "dataset": {
-                    "TestDataset": {
-                        "dataset_param": "/some/path",
-                        "bool_param": True,
-                        "list_param": ["item1", "item2"],
+                    "ImageRecord": {
+                        "root": "/some/path",
                     },
                 },
                 "transform": {
-                    "TestTransform": {"shape": [1000, 224, 224, 3], "some_op": True},
-                    "AnotherTestTransform": {
-                        "shape": [10, 299, 299, 3],
-                        "some_op": False,
+                    "ResizeCropImagenet": {
+                        "height": 224,
+                        "width": 224,
+                        "mean_value": [123.68, 116.78, 103.94],
                     },
                 },
                 "filter": {
@@ -413,31 +413,23 @@ class TestAccuracyConfig(unittest.TestCase):
             2,
         )
         self.assertIsNotNone(accuracy.dataloader.dataset)
-        self.assertEqual(accuracy.dataloader.dataset.name, "TestDataset")
+        self.assertEqual(accuracy.dataloader.dataset.name, "ImageRecord")
         self.assertDictEqual(
             accuracy.dataloader.dataset.params,
             {
-                "dataset_param": "/some/path",
-                "bool_param": True,
-                "list_param": ["item1", "item2"],
+                "root": "/some/path",
             },
         )
         transform_name, transform = list(accuracy.dataloader.transform.items())[0]
-        self.assertEqual(transform_name, "TestTransform")
-        self.assertEqual(transform.name, "TestTransform")
+        self.assertEqual(transform_name, "ResizeCropImagenet")
+        self.assertEqual(transform.name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
             {
-                "shape": [1000, 224, 224, 3],
-                "some_op": True,
+                "height": 224,
+                "width": 224,
+                "mean_value": [123.68, 116.78, 103.94],
             },
-        )
-        transform_name, transform = list(accuracy.dataloader.transform.items())[1]
-        self.assertEqual(transform_name, "AnotherTestTransform")
-        self.assertEqual(transform.name, "AnotherTestTransform")
-        self.assertDictEqual(
-            transform.parameters,
-            {"shape": [10, 299, 299, 3], "some_op": False},
         )
         self.assertIsNotNone(accuracy.dataloader.filter)
         self.assertIsNotNone(accuracy.dataloader.filter.LabelBalance)
@@ -490,17 +482,15 @@ class TestPerformanceConfig(unittest.TestCase):
                 "last_batch": "rollover",
                 "batch_size": 2,
                 "dataset": {
-                    "TestDataset": {
-                        "dataset_param": "/some/path",
-                        "bool_param": True,
-                        "list_param": ["item1", "item2"],
+                    "ImageRecord": {
+                        "root": "/some/path",
                     },
                 },
                 "transform": {
-                    "TestTransform": {"shape": [1000, 224, 224, 3], "some_op": True},
-                    "AnotherTestTransform": {
-                        "shape": [10, 299, 299, 3],
-                        "some_op": False,
+                    "ResizeCropImagenet": {
+                        "height": 224,
+                        "width": 224,
+                        "mean_value": [123.68, 116.78, 103.94],
                     },
                 },
                 "filter": {
@@ -542,31 +532,23 @@ class TestPerformanceConfig(unittest.TestCase):
             2,
         )
         self.assertIsNotNone(performance.dataloader.dataset)
-        self.assertEqual(performance.dataloader.dataset.name, "TestDataset")
+        self.assertEqual(performance.dataloader.dataset.name, "ImageRecord")
         self.assertDictEqual(
             performance.dataloader.dataset.params,
             {
-                "dataset_param": "/some/path",
-                "bool_param": True,
-                "list_param": ["item1", "item2"],
+                "root": "/some/path",
             },
         )
         transform_name, transform = list(performance.dataloader.transform.items())[0]
-        self.assertEqual(transform_name, "TestTransform")
-        self.assertEqual(transform.name, "TestTransform")
+        self.assertEqual(transform_name, "ResizeCropImagenet")
+        self.assertEqual(transform.name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
             {
-                "shape": [1000, 224, 224, 3],
-                "some_op": True,
+                "height": 224,
+                "width": 224,
+                "mean_value": [123.68, 116.78, 103.94],
             },
-        )
-        transform_name, transform = list(performance.dataloader.transform.items())[1]
-        self.assertEqual(transform_name, "AnotherTestTransform")
-        self.assertEqual(transform.name, "AnotherTestTransform")
-        self.assertDictEqual(
-            transform.parameters,
-            {"shape": [10, 299, 299, 3], "some_op": False},
         )
         self.assertIsNotNone(performance.dataloader.filter)
         self.assertIsNotNone(performance.dataloader.filter.LabelBalance)
@@ -633,20 +615,15 @@ class TestEvaluationConfig(unittest.TestCase):
                     "last_batch": "rollover",
                     "batch_size": 2,
                     "dataset": {
-                        "TestDataset": {
-                            "dataset_param": "/some/path",
-                            "bool_param": True,
-                            "list_param": ["item1", "item2"],
+                        "ImageRecord": {
+                            "root": "/some/path",
                         },
                     },
                     "transform": {
-                        "TestTransform": {
-                            "shape": [1000, 224, 224, 3],
-                            "some_op": True,
-                        },
-                        "AnotherTestTransform": {
-                            "shape": [10, 299, 299, 3],
-                            "some_op": False,
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [123.68, 116.78, 103.94],
                         },
                     },
                     "filter": {
@@ -677,20 +654,15 @@ class TestEvaluationConfig(unittest.TestCase):
                     "last_batch": "rollover",
                     "batch_size": 2,
                     "dataset": {
-                        "TestDataset": {
-                            "dataset_param": "/some/path",
-                            "bool_param": True,
-                            "list_param": ["item1", "item2"],
+                        "ImageRecord": {
+                            "root": "/some/path",
                         },
                     },
                     "transform": {
-                        "TestTransform": {
-                            "shape": [1000, 224, 224, 3],
-                            "some_op": True,
-                        },
-                        "AnotherTestTransform": {
-                            "shape": [10, 299, 299, 3],
-                            "some_op": False,
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [123.68, 116.78, 103.94],
                         },
                     },
                     "filter": {
@@ -735,35 +707,25 @@ class TestEvaluationConfig(unittest.TestCase):
             2,
         )
         self.assertIsNotNone(evaluation.accuracy.dataloader.dataset)
-        self.assertEqual(evaluation.accuracy.dataloader.dataset.name, "TestDataset")
+        self.assertEqual(evaluation.accuracy.dataloader.dataset.name, "ImageRecord")
         self.assertDictEqual(
             evaluation.accuracy.dataloader.dataset.params,
             {
-                "dataset_param": "/some/path",
-                "bool_param": True,
-                "list_param": ["item1", "item2"],
+                "root": "/some/path",
             },
         )
         transform_name, transform = list(
             evaluation.accuracy.dataloader.transform.items(),
         )[0]
-        self.assertEqual(transform_name, "TestTransform")
-        self.assertEqual(transform.name, "TestTransform")
+        self.assertEqual(transform_name, "ResizeCropImagenet")
+        self.assertEqual(transform.name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
             {
-                "shape": [1000, 224, 224, 3],
-                "some_op": True,
+                "height": 224,
+                "width": 224,
+                "mean_value": [123.68, 116.78, 103.94],
             },
-        )
-        transform_name, transform = list(
-            evaluation.accuracy.dataloader.transform.items(),
-        )[1]
-        self.assertEqual(transform_name, "AnotherTestTransform")
-        self.assertEqual(transform.name, "AnotherTestTransform")
-        self.assertDictEqual(
-            transform.parameters,
-            {"shape": [10, 299, 299, 3], "some_op": False},
         )
         self.assertIsNotNone(evaluation.accuracy.dataloader.filter)
         self.assertIsNotNone(evaluation.accuracy.dataloader.filter.LabelBalance)
@@ -806,36 +768,26 @@ class TestEvaluationConfig(unittest.TestCase):
         self.assertIsNotNone(evaluation.performance.dataloader.dataset)
         self.assertEqual(
             evaluation.performance.dataloader.dataset.name,
-            "TestDataset",
+            "ImageRecord",
         )
         self.assertDictEqual(
             evaluation.performance.dataloader.dataset.params,
             {
-                "dataset_param": "/some/path",
-                "bool_param": True,
-                "list_param": ["item1", "item2"],
+                "root": "/some/path",
             },
         )
         transform_name, transform = list(
             evaluation.performance.dataloader.transform.items(),
         )[0]
-        self.assertEqual(transform_name, "TestTransform")
-        self.assertEqual(transform.name, "TestTransform")
+        self.assertEqual(transform_name, "ResizeCropImagenet")
+        self.assertEqual(transform.name, "ResizeCropImagenet")
         self.assertDictEqual(
             transform.parameters,
             {
-                "shape": [1000, 224, 224, 3],
-                "some_op": True,
+                "height": 224,
+                "width": 224,
+                "mean_value": [123.68, 116.78, 103.94],
             },
-        )
-        transform_name, transform = list(
-            evaluation.performance.dataloader.transform.items(),
-        )[1]
-        self.assertEqual(transform_name, "AnotherTestTransform")
-        self.assertEqual(transform.name, "AnotherTestTransform")
-        self.assertDictEqual(
-            transform.parameters,
-            {"shape": [10, 299, 299, 3], "some_op": False},
         )
         self.assertIsNotNone(evaluation.performance.dataloader.filter)
         self.assertIsNotNone(evaluation.performance.dataloader.filter.LabelBalance)
@@ -854,6 +806,19 @@ class TestEvaluationConfig(unittest.TestCase):
                 "vocab_file": "/path/to/vocab.txt",
             },
         )
+
+        config = Config(
+            {
+                "model": {
+                    "name": "resnet50_v1_5",
+                    "framework": "tensorflow",
+                    "outputs": "softmax_tensor",
+                },
+            },
+        )
+        config.evaluation = evaluation
+        serialized_config = config.serialize()
+        inc_config_schema.validate(serialized_config)
 
     def test_evaluation_constructor_defaults(self) -> None:
         """Test Evaluation config constructor defaults."""
@@ -880,20 +845,15 @@ class TestEvaluationConfig(unittest.TestCase):
                         "last_batch": "rollover",
                         "batch_size": 2,
                         "dataset": {
-                            "TestDataset": {
-                                "dataset_param": "/some/path",
-                                "bool_param": True,
-                                "list_param": ["item1", "item2"],
+                            "ImageRecord": {
+                                "root": "/some/path",
                             },
                         },
                         "transform": {
-                            "TestTransform": {
-                                "shape": [1000, 224, 224, 3],
-                                "some_op": True,
-                            },
-                            "AnotherTestTransform": {
-                                "shape": [10, 299, 299, 3],
-                                "some_op": False,
+                            "ResizeCropImagenet": {
+                                "height": 224,
+                                "width": 224,
+                                "mean_value": [123.68, 116.78, 103.94],
                             },
                         },
                         "filter": {
@@ -928,20 +888,15 @@ class TestEvaluationConfig(unittest.TestCase):
                     "last_batch": "rollover",
                     "batch_size": 2,
                     "dataset": {
-                        "TestDataset": {
-                            "dataset_param": "/some/path",
-                            "bool_param": True,
-                            "list_param": ["item1", "item2"],
+                        "ImageRecord": {
+                            "root": "/some/path",
                         },
                     },
                     "transform": {
-                        "TestTransform": {
-                            "shape": [1000, 224, 224, 3],
-                            "some_op": True,
-                        },
-                        "AnotherTestTransform": {
-                            "shape": [10, 299, 299, 3],
-                            "some_op": False,
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [123.68, 116.78, 103.94],
                         },
                     },
                     "filter": {

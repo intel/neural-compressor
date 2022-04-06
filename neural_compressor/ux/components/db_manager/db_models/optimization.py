@@ -446,7 +446,7 @@ class Optimization(Base):
                     "strategy": tuning_details.strategy,
                     "accuracy_criterion_type": acc_criterion_type,
                     "accuracy_criterion_threshold": acc_criterion_threshold,
-                    "multi_objective": tuning_details.objective,
+                    "multi_objectives": tuning_details.objective,
                     "exit_policy": json.loads(tuning_details.exit_policy),
                     "random_seed": tuning_details.random_seed,
                     "created_at": str(tuning_details.created_at),
