@@ -15,7 +15,7 @@ Please refer to the official website for detailed info and news: [https://github
 
 ## Introduction
 
-This is a demo to show an End-To-End pipeline to build up a CNN model to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
+This is a demo to show an End-To-End pipeline to build up a CNN model by Pytorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
 
 1. Train a CNN AlexNet model by PyTorch based on dataset Fashion-MNIST.
 
