@@ -123,7 +123,7 @@ class Component(object):
                                                     self.cfg.train,
                                                     hooks=self.hooks)
         if self._eval_func is None:
-            metric = self._metric if self._metric else self.cfg.evaluation.accuracy.metric
+            metric = [self._metric] if self._metric else self.cfg.evaluation.accuracy.metric
             self._eval_func = create_eval_func(self.framework,
                                                self._eval_dataloader,
                                                self.adaptor,

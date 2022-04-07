@@ -200,7 +200,7 @@ class Benchmark(object):
         iteration = -1 if deep_get(cfg, 'evaluation.{}.iteration'.format(mode)) is None \
             else deep_get(cfg, 'evaluation.{}.iteration'.format(mode))
 
-        metric = self._metric if self._metric else \
+        metric = [self._metric] if self._metric else \
                     deep_get(cfg, 'evaluation.{}.metric'.format(mode))
         b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
 

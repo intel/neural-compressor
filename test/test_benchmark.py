@@ -134,6 +134,15 @@ def build_fake_model():
         write_graph(graph_def, graph_path)
     return graph_path
 
+class Metric:
+    def update(self, pred, label):
+        pass
+
+    def reset(self):
+        pass
+
+    def result(self):
+        return 1.
 
 class TestObjective(unittest.TestCase):
     @classmethod
@@ -209,6 +218,15 @@ class TestObjective(unittest.TestCase):
         benchmarker = Benchmark(conf)
         benchmarker.model = self.graph_path
         benchmarker.fit()
+ 
+    def test_benchmark_with_custom_metric(self):
+        from neural_compressor import conf
+        from neural_compressor.experimental import Benchmark, common
+        conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [100,256,256,1], 'label':True}}
+        benchmarker = Benchmark(conf)
+        benchmarker.model = self.graph_path
+        benchmarker.metric = Metric()
+        benchmarker.fit('accuracy')
  
 if __name__ == "__main__":
     unittest.main()
