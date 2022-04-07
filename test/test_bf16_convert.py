@@ -313,6 +313,7 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_conv3.attr["T"].type, dtypes.float32)
 
+    @unittest.skipIf(tf.version.VERSION.find('up') != -1, "Only supports tf 2.x")
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
 
