@@ -108,7 +108,7 @@ class ModelConversion():
 
         # when eval_func is None but metric or _eval_dataloader is set by yaml or code,
         # it means Neural Compressor will create the eval_func from these info.
-        metric_cfg = self._metric if self._metric else \
+        metric_cfg = [self._metric] if self._metric else \
             deep_get(cfg, 'evaluation.accuracy.metric')
         postprocess_cfg = deep_get(cfg, 'evaluation.accuracy.postprocess')
         if self._eval_func is None and metric_cfg:
