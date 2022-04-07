@@ -110,6 +110,7 @@ float Time(string state) {
     return millisec_end.count() - millis_start.count();
   } else {
     LOG(FATAL) << "not supported state for time, only start and end...";
+    return 0;
   }
 }
 

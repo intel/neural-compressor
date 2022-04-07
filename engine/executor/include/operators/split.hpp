@@ -34,9 +34,9 @@ class SplitOperator : public Operator {
   void Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) override;
 
  private:
-  int64_t axis_;
+  int64_t axis_ = -1;
   std::vector<int64_t> split_;
-  int dst_num_;
+  int dst_num_ = -1;
   std::vector<int64_t> src_shape_;
 };
 }  // namespace executor

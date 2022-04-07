@@ -106,21 +106,23 @@ void emb_pooling_ker(T* out, T* in, const size_t pool_begin, const size_t pool_e
     // add if there is more than 1 indice in this bag, need accumulate to float
     // buffer
     T* temp_out = reinterpret_cast<T*>(malloc(vector_size * sizeof(T)));
-    zero_ker(temp_out, vector_size);
-    for (auto p = pool_begin; p < pool_end; ++p) {
-      idx = indices_data[p];
-      weight_ptr = &in[idx * vector_size];
-      add_ker(temp_out, weight_ptr, vector_size);
-    }
-    if (mode == "mean") {
-      auto L = pool_end - pool_begin;
-      const uint8_t scale_factor = 1.0 / L;
-#pragma omp simd
-      for (int d = 0; d < vector_size; ++d) {
-        temp_out[d] = scale_factor * temp_out[d];
+    if (temp_out != nullptr) {
+      zero_ker(temp_out, vector_size);
+      for (auto p = pool_begin; p < pool_end; ++p) {
+        idx = indices_data[p];
+        weight_ptr = &in[idx * vector_size];
+        add_ker(temp_out, weight_ptr, vector_size);
       }
+      if (mode == "mean") {
+        auto L = pool_end - pool_begin;
+        const uint8_t scale_factor = 1.0 / L;
+#pragma omp simd
+        for (int d = 0; d < vector_size; ++d) {
+          temp_out[d] = scale_factor * temp_out[d];
+        }
+      }
+      move_ker(out, temp_out, vector_size);
     }
-    move_ker(out, temp_out, vector_size);
     free(temp_out);
   }
 }

@@ -199,6 +199,7 @@ class MemoryAllocator {
       return UnifiedBufferGetMemory(size, life_count);
     } else {
       LOG(ERROR) << "please set the memory strategy";
+      return nullptr;
     }
   }
 

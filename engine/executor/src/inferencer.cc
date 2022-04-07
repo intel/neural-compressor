@@ -78,6 +78,7 @@ void run_net() {
     //   executor::PrintToFile(data, output_data[0].name() + "_" + FLAGS_mode, 200);
     // }
   }
+  delete dataloader;
 
   float latency = duration / ((FLAGS_iterations - FLAGS_w) * FLAGS_batch_size);
   // LOG(INFO) << " Batch Size is " << FLAGS_batch_size;

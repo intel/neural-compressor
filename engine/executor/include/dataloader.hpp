@@ -31,7 +31,7 @@ namespace executor {
 
 class DataLoader {
  public:
-  ~DataLoader() {}
+  virtual ~DataLoader() {}
   virtual void* load_sample(size_t* index_list, size_t size) { return NULL; }
   virtual vector<void*>& prepare_batch(const int index, const int seq_len = -1) = 0;
   virtual vector<vector<int64_t>> prepare_shape() = 0;
@@ -138,7 +138,7 @@ class ConstDataLoader : public DataLoader {
       }
     }
   }
-  ~ConstDataLoader() {
+  virtual ~ConstDataLoader() {
     for (int i = 0; i < batch_data_.size(); ++i) {
       delete batch_data_[i];
     }
@@ -209,7 +209,7 @@ class DummyDataLoader : public DataLoader {
       }
     }
   }
-  ~DummyDataLoader() {
+  virtual ~DummyDataLoader() {
     for (int i = 0; i < batch_data_.size(); ++i) {
       delete batch_data_[i];
     }

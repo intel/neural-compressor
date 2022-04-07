@@ -98,26 +98,29 @@ BSRMatrix<T>* create_bsr_matrix(const T* dense_matrix, const vector<int64_t>& sh
     bsr_matrix->rowptr[i] = rowptr[i];
   }
   // init bsr_matrix->colidxs array
-  bsr_matrix->nnz = colidxs.size();
-  bsr_matrix->colidxs = new int64_t[colidxs.size()];
-  for (int64_t i = 0; i < bsr_matrix->nnz; i++) {
-    bsr_matrix->colidxs[i] = colidxs[i];
-  }
-  int64_t nnz_idx = 0;
-  bsr_matrix->data = reinterpret_cast<T*>(aligned_alloc(64, (bsr_matrix->nnz * blksize * sizeof(T) / 64 + 1) * 64));
-  for (int64_t b_row = 0; b_row < bsr_matrix->nrowptr - 1; b_row++) {
-    for (int64_t b_col_idx = bsr_matrix->rowptr[b_row]; b_col_idx < bsr_matrix->rowptr[b_row + 1];
-         b_col_idx++, nnz_idx++) {
-      int64_t b_col = bsr_matrix->colidxs[b_col_idx];
-      T* blkstart = bsr_matrix->data + nnz_idx * blksize;
-      const T* dense_start = dense_matrix + b_row * blocksize[0] * shape[1] + b_col * blocksize[1];
-      for (int64_t i = 0; i < bsr_matrix->blocksize[0]; i++) {
-        for (int64_t j = 0; j < bsr_matrix->blocksize[1]; j++) {
-          blkstart[i * bsr_matrix->blocksize[1] + j] = dense_start[i * shape[1] + j];
+  if (!colidxs.empty()) {
+    bsr_matrix->nnz = colidxs.size();
+    bsr_matrix->colidxs = new int64_t[colidxs.size()];
+    for (int64_t i = 0; i < bsr_matrix->nnz; i++) {
+      bsr_matrix->colidxs[i] = colidxs[i];
+    }
+    int64_t nnz_idx = 0;
+    bsr_matrix->data = reinterpret_cast<T*>(aligned_alloc(64, (bsr_matrix->nnz * blksize * sizeof(T) / 64 + 1) * 64));
+    for (int64_t b_row = 0; b_row < bsr_matrix->nrowptr - 1; b_row++) {
+      for (int64_t b_col_idx = bsr_matrix->rowptr[b_row]; b_col_idx < bsr_matrix->rowptr[b_row + 1];
+           b_col_idx++, nnz_idx++) {
+        int64_t b_col = bsr_matrix->colidxs[b_col_idx];
+        T* blkstart = bsr_matrix->data + nnz_idx * blksize;
+        const T* dense_start = dense_matrix + b_row * blocksize[0] * shape[1] + b_col * blocksize[1];
+        for (int64_t i = 0; i < bsr_matrix->blocksize[0]; i++) {
+          for (int64_t j = 0; j < bsr_matrix->blocksize[1]; j++) {
+            blkstart[i * bsr_matrix->blocksize[1] + j] = dense_start[i * shape[1] + j];
+          }
         }
       }
     }
   }
+
   return bsr_matrix;
 }
 template BSRMatrix<float>* create_bsr_matrix(const float* dense_matrix, const vector<int64_t>& shape,
@@ -416,7 +419,7 @@ void sparse_gemm_bsc_bias_sum_f32(int64_t M, int64_t N, int64_t K, const float* 
       __m512 output[kTailCnt];
       for (int64_t i = 0; i < tail_row_num; i++) {
         output[i] = _mm512_add_ps(_mm512_load_ps(&bias[b_col * 16]),
-                             _mm512_load_ps(post + (tail_row_bgn + i) * N + b_col * 16));
+                                  _mm512_load_ps(post + (tail_row_bgn + i) * N + b_col * 16));
       }
       for (int64_t b_row_idx = colptr[b_col]; b_row_idx < colptr[b_col + 1]; b_row_idx++) {
         int64_t b_row = rowidxs[b_row_idx];

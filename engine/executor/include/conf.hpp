@@ -52,7 +52,8 @@ class AttrConfig {
 
 class TensorConfig {
  public:
-  TensorConfig(const string& name, const YAML::Node& node) : name_(name), dtype_("fp32"), strides_({}), location_({}) {
+  TensorConfig(const string& name, const YAML::Node& node)
+      : name_(name), dtype_("fp32"), strides_({}), count_(0), location_({}) {
     for (auto it = node.begin(); it != node.end(); ++it) {
       YAML::Node key = it->first;
       YAML::Node value = it->second;
