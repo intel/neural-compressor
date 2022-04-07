@@ -866,6 +866,8 @@ class TestGraphOptimization(unittest.TestCase):
         for i in output_graph.graph_def.node:
             if i.op == 'FusedBatchNormV3' and i.attr['T'].type == dtypes.bfloat16:
                 bn_bf16 = True
+            if i.op == 'Conv2D' and i.attr['T'].type == dtypes.bfloat16:
+                bn_bf16 = True
         self.assertEqual(bn_bf16, True)
 class TestGraphOptmizationFP32(unittest.TestCase):
 
