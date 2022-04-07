@@ -68,7 +68,6 @@ class InnerProductOperator : public Operator {
   // Matrix can optionally be adjointed (to adjoint a matrix means to transpose and conjugate it).
   // So "adj_" decide the highest two dimensions, and is the built-in operation of InnerProduct OP.
   // While "perm" decide all dimensions, and is the external Trans OP. Both are transpose.
-  bool is_asymm_;
   bool weight_cached_;
   bool has_bias_;
   bool format_any_;

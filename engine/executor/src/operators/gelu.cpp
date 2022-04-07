@@ -50,7 +50,7 @@ void GeluOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>& 
 
   //// Part2: Prepare primitive
   // 2.1 Prepare op descriptors
-  algorithm gelu_algorithm;
+  algorithm gelu_algorithm = algorithm::eltwise_gelu_tanh;
   if (algorithm_ == "gelu_erf") {
     gelu_algorithm = algorithm::eltwise_gelu_erf;
   } else if (algorithm_ == "gelu_tanh") {

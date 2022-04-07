@@ -47,7 +47,7 @@ class GroupNormOperator : public Operator {
  private:
   float epsilon_ = 1e-05;
   int64_t group_ = 1;
-  int64_t channels_;
+  int64_t channels_ = -1;
   bool affine_ = false;
 };
 }  // namespace executor

@@ -52,10 +52,6 @@ InnerProductOperator::InnerProductOperator(const OperatorConfig& conf)
   if (iter != attrs_map.end()) {
     format_any_ = attrs_map["format_any"] == "true";
   }
-  iter = attrs_map.find("is_symm");
-  if (iter != attrs_map.end()) {
-    is_asymm_ = attrs_map["is_symm"] == "true";
-  }
   iter = attrs_map.find("output_dtype");
   if (iter != attrs_map.end()) {
     output_dtype_ = attrs_map["output_dtype"];
@@ -693,7 +689,7 @@ void InnerProductOperator::ForwardDense(const vector<Tensor*>& input, const vect
   // 3. Insert memory args
   memory_args_[DNNL_ARG_SRC_0] = any_src0_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
-  if (binary_add_) {
+  if (binary_add_ && post_->mutable_data() != nullptr) {
     void* post_ptr = post_->mutable_data();
     binary_m_.set_data_handle(post_ptr, eng_stream_);
     // dynamic quantization inserts additional post_ops

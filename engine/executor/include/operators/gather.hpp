@@ -34,8 +34,8 @@ class GatherOperator : public Operator {
   void Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) override;
 
  private:
-  int64_t axis_;
-  int64_t batch_dims_;
+  int64_t axis_ = -1;
+  int64_t batch_dims_ = -1;
   vector<int64_t> flat_params_stride_;
   vector<int64_t> flat_dst_shape_;
   vector<int64_t> flat_dst_stride_;

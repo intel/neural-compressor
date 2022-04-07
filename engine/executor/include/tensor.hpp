@@ -49,7 +49,10 @@ class Tensor {
   // use data after set_shape
   inline const void* data() {
     if (shm_handle_ != 0) {
-      return reinterpret_cast<const void*>(MemoryAllocator::ManagedShm()->get_address_from_handle(shm_handle_));
+      auto shm = MemoryAllocator::ManagedShm();
+      if (shm != nullptr) {
+        return reinterpret_cast<const void*>(shm->get_address_from_handle(shm_handle_));
+      }
     }
     if (data_ == nullptr) {
       data_ = MemoryAllocator::get().GetMemory(this->size() * type2bytes[this->dtype()], this->life());
@@ -59,7 +62,10 @@ class Tensor {
   }
   inline void* mutable_data() {
     if (shm_handle_ != 0) {
-      return reinterpret_cast<void*>(MemoryAllocator::ManagedShm()->get_address_from_handle(shm_handle_));
+      auto shm = MemoryAllocator::ManagedShm();
+      if (shm != nullptr) {
+        return reinterpret_cast<void*>(shm->get_address_from_handle(shm_handle_));
+      }
     }
     if (data_ == nullptr) {
       data_ = MemoryAllocator::get().GetMemory(this->size() * type2bytes[this->dtype()], this->life());

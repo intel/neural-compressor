@@ -83,7 +83,7 @@ void QuantizeOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor
 }
 
 void QuantizeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
-  const void* src_data = static_cast<const float*>(src_->data());
+  const void* src_data = src_->data();
   void* dst_data = dst_->mutable_data();
   const float* min_data = src_min_ != nullptr ? static_cast<const float*>(src_min_->data()) : nullptr;
   if (is_dynamic_) {
@@ -92,11 +92,13 @@ void QuantizeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor
     min_data = static_cast<const float*>(dst_min_->data());
   }
   // quantize
+  if (src_data != nullptr && dst_data != nullptr && min_data != nullptr) {
 #if __AVX512F__
-  Quantize_avx512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+    Quantize_avx512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
 #else
-  Quantize(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+    Quantize(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
 #endif
+  }
   this->unref_tensors(input);
 }
 void QuantizeOperator::RuntimeMinmax() {

@@ -254,7 +254,7 @@ void ConvolutionOperator::Prepare(const vector<Tensor*>& input, const vector<Ten
   weight_md_ = memory::desc(weight_group_shape, type2mem[weight_->dtype()], weight_group_stride);
   weight_m_ = memory(weight_md_, eng_, weight_->mutable_data());
 
-  if (has_bias_) {
+  if (has_bias_ && bias_->mutable_data() != nullptr) {
     const vector<int64_t> bias_shape = bias_->shape();
     const vector<int64_t> bias_stride = GetStrides(bias_shape);
     bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
@@ -465,7 +465,7 @@ void ConvolutionOperator::Forward(const vector<Tensor*>& input, const vector<Ten
   // 3. Insert memory args
   memory_args_[DNNL_ARG_SRC_0] = any_src_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
-  if (binary_add_) {
+  if (binary_add_ && post_->mutable_data() != nullptr) {
     void* post_ptr = post_->mutable_data();
     binary_m_.set_data_handle(post_ptr, eng_stream_);
     memory_args_[DNNL_ARG_ATTR_MULTIPLE_POST_OP(0) | DNNL_ARG_SRC_1] = binary_m_;

@@ -53,10 +53,6 @@ MatmulOperator::MatmulOperator(const OperatorConfig& conf)
   if (iter != attrs_map.end()) {
     format_any_ = attrs_map["format_any"] == "true";
   }
-  iter = attrs_map.find("is_symm");
-  if (iter != attrs_map.end()) {
-    is_asymm_ = attrs_map["is_symm"] == "true";
-  }
   iter = attrs_map.find("output_dtype");
   if (iter != attrs_map.end()) {
     output_dtype_ = attrs_map["output_dtype"];
@@ -335,7 +331,7 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
     auto op_beta = 0.0;
     po.append_eltwise(op_scale, algorithm::eltwise_tanh, op_alpha, op_beta);
   }
-  if (!is_dynamic_ && dst_->dtype() == "u8") {
+  if (!is_dynamic_ && dst_->dtype() == "u8" && dst_min_->data() != nullptr) {
     if (append_eltwise_) {
       float zero_point = -1 * static_cast<const float*>(dst_min_->data())[0];
       po.append_eltwise(dst_scales_[0], algorithm::eltwise_linear, 1., zero_point);
@@ -454,7 +450,7 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   if (!cache_weight_) memory_args_[DNNL_ARG_WEIGHTS] = any_src1_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
 
-  if (binary_add_) {
+  if (binary_add_ && post_->mutable_data() != nullptr) {
     void* post_ptr = post_->mutable_data();
     binary_m_.set_data_handle(reinterpret_cast<void*>(post_ptr), eng_stream_);
     // dynamic quantization inserts additional post_ops

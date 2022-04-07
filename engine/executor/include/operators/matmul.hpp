@@ -50,7 +50,6 @@ class MatmulOperator : public Operator {
  protected:
   // Matrix can optionally be adjointed (to adjoint a matrix means to transpose and conjugate it).
   bool has_bias_;
-  bool is_asymm_;
   bool format_any_;
   bool append_sum_;
   bool gelu_erf_;
