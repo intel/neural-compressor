@@ -203,8 +203,10 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         print(20*'=' + 'test_prune_qat_oneshot' + 20*'=')
         print(opt_model.model)
-
-        conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        try:
+          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        except:
+          conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
@@ -309,8 +311,10 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         print(20*'=' + 'test_distillation_prune_oneshot' + 20*'=')
         print(opt_model.model)
-
-        conv_weight = opt_model.model.layer1[0].conv1.weight
+        try:
+          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        except:
+          conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
@@ -367,8 +371,10 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         print(20*'=' + 'test_prune_qat_distillation_oneshot' + 20*'=')
         print(opt_model.model)
-
-        conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        try:
+          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        except:
+          conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
@@ -422,8 +428,10 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         print(20*'=' + 'test_prune_qat_oneshot_fx' + 20*'=')
         print(opt_model.model)
-
-        conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
+        try:
+          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+        except:
+          conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
@@ -526,8 +534,10 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         print(20*'=' + 'test_distillation_prune_oneshot_fx' + 20*'=')
         print(opt_model.model)
-
-        conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
+        try:
+          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+        except:
+          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
@@ -582,8 +592,10 @@ class TestPruning(unittest.TestCase):
         opt_model = scheduler()
         print(20*'=' + 'test_prune_qat_distillation_oneshot_fx' + 20*'=')
         print(opt_model.model)
-
-        conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+        try:
+          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+        except:
+          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.5,
                                delta=0.05)
