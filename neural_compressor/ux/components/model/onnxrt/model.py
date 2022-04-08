@@ -206,3 +206,4 @@ class OnnxrtModel(Model):
         """Ensure all requirements are installed."""
         check_module("onnx")
         check_module("onnxruntime")
+        check_module("onnxruntime_extensions")
