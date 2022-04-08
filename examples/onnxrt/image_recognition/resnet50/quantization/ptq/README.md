@@ -4,8 +4,8 @@
 This example load an image classification model exported from PyTorch and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads). You need to download this dataset yourself.
 
 ### Environment
-onnx: 1.7.0
-onnxruntime: 1.6.0+
+onnx: 1.9.0
+onnxruntime: 1.10.0
 
 ### Prepare model
 
@@ -42,21 +42,28 @@ wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
 python -m tf2onnx.convert --input resnet50_v1.pb --output resnet50_v1.onnx --inputs-as-nchw input_tensor:0 --inputs input_tensor:0 --outputs softmax_tensor:0 --opset 11
 ```
 
-### Evaluating
-To evaluate the model, run `main.py` with the path to the model:
+### Quantization
+
+Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
                    --config=resnet50_v1_5.yaml \  # or resnet50_v1_5_mlperf.yaml for ResNet50 from MLPerf
                    --output_model=path/to/save
 ```
-### Advanced 
-Usually we need to bind the program to specific cores like 4 cores to get performance under real production environments.   
-**for linux**
+
+Quantize model with QDQ mode:
+
 ```bash
-export KMP_AFFINITY=granularity=fine,noduplicates,compact,1,0
-export OMP_NUM_THREADS=4
-numactl --physcpubind=0-3 --membind=0 python main.py --model_path path/to/model --benchmark \ 
---tune --config resnet50_v1_5.yaml 
+bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+                   --config=resnet50_v1_5_qdq.yaml \  # or resnet50_v1_5_mlperf_qdq.yaml for ResNet50 from MLPerf
+                   --output_model=path/to/save
 ```
 
+### Benchmark
+
+```bash
+bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
+                      --config=resnet50_v1_5.yaml \  # or resnet50_v1_5_mlperf.yaml for ResNet50 from MLPerf
+                      --mode=performance # or accuracy
+```

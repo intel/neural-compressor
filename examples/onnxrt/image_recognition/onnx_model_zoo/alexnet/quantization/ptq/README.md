@@ -16,6 +16,8 @@ wget https://github.com/onnx/models/blob/master/vision/classification/alexnet/mo
 
 ### Quantization
 
+Quantize model with QLinearOps:
+
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
                    --config=alexnet.yaml \
@@ -24,13 +26,23 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
                    --output_model=path/to/save
 ```
 
-### Performance 
+Quantize model with QDQ mode:
+
+```bash
+bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+                   --config=alexnet_qdq.yaml \
+                   --data_path=/path/to/imagenet \
+                   --label_path=/path/to/imagenet/label \
+                   --output_model=path/to/save
+```
+
+### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --config=alexnet.yaml \
                       --data_path=/path/to/imagenet \
                       --label_path=/path/to/imagenet/label \
-                      --mode=performance
+                      --mode=performance # or accuracy
 ```
 

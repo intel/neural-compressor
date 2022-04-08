@@ -40,18 +40,53 @@ class Metric(object):
 
 The result() function returns a higher-is-better scalar to reflect model accuracy on an evaluation dataset.
 
-After defining the metric class, users need to register it with a user-defined metric name and the metric class:
+After defining the metric class, users can initialize it and pass it to quantizer:
 
 ```python
 
-from neural_compressor.quantization import Quantization, common
+from neural_compressor.quantization import Quantization
 quantizer = Quantization(yaml_file)
 quantizer.model = graph
-quantizer.metric = common.Metric(NewMetric, 'metric_name')
+quantizer.metric = NewMetric()
 quantizer.calib_dataloader = dataloader
 q_model = quantizer.fit()
 
 ```
+
+## Multi-metrics support
+
+In some cases, users want to use more than one metric to evaluate the performance of a specific model and they can realize it with multi_metrics of Neural Compressor. Currently multi_metrics supports built-in metrics.
+
+
+### Usage
+
+There are two usages for multi_metrics of Neural Compressor:
+
+1. Evaluate performance of a model with metrics one by one
+
+```yaml
+evaluation:
+  accuracy:
+    multi_metrics:
+      topk: 1
+      MSE:
+        compare_label: False
+      higher_is_better: [True, False] # length of higher_is_better should be equal to num of metric, default is True
+```
+
+2. Evaluate performance of a model with weighted metric results
+
+```yaml
+evaluation:
+  accuracy:
+    multi_metrics:
+      topk: 1
+      MSE:
+        compare_label: False
+      weight: [0.5, 0.5] # length of weight should be equal to num of metric
+      higher_is_better: [True, False] # length of higher_is_better should be equal to num of metric, default is True
+```
+
 
 ## Built-in metric support list
 

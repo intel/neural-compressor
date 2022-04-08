@@ -5,7 +5,7 @@ This example load an image classification model from [ONNX Model Zoo](https://gi
 
 ### Environment
 onnx: 1.9.0
-onnxruntime: 1.8.0
+onnxruntime: 1.10.0
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
@@ -15,7 +15,8 @@ wget https://github.com/onnx/models/tree/master/vision/classification/vgg/model/
 ```
 
 ### Quantization
-To quantize the model, run `main.py` with the path to the model:
+
+Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
@@ -23,12 +24,18 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
                    --output_model=path/to/save
 ```
 
-### Performance 
-Usually we need to bind the program to specific cores like 4 cores to get performance under real production environments.   
-**for linux**
+Quantize model with QDQ mode:
+
 ```bash
-export KMP_AFFINITY=granularity=fine,noduplicates,compact,1,0
-export OMP_NUM_THREADS=4
-numactl --physcpubind=0-3 --membind=0 python main.py --model_path path/to/model --config vgg16.yaml --benchmark
+bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+                   --config=vgg16_qdq.yaml \
+                   --output_model=path/to/save
 ```
 
+### Benchmark
+
+```bash
+bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
+                      --config=vgg16.yaml \
+                      --mode=performance # or accuracy
+```

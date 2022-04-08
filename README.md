@@ -172,6 +172,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 * [Transform](docs/transform.md) introduces how to utilize Neural Compressor's built-in data processing and how to develop a custom data processing method. 
 * [Dataset](docs/dataset.md) introduces how to utilize Neural Compressor's built-in dataset and how to develop a custom dataset.
 * [Metric](docs/metric.md) introduces how to utilize Neural Compressor's built-in metrics and how to develop a custom metric.
+* [Objective](docs/objective.md) introduces how to utilize Neural Compressor's built-in objectives and how to develop a custom objective.
 * [Tutorial](docs/tutorial.md) provides comprehensive instructions on how to utilize Neural Compressor's features with examples. 
 * [Examples](/examples) are provided to demonstrate the usage of Neural Compressor in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime.
 * [Intel oneAPI AI Analytics Toolkit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) explains the AI Kit components, installation and configuration guides, and instructions for building and running sample apps.

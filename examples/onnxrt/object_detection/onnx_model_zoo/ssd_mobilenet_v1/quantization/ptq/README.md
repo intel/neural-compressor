@@ -5,7 +5,7 @@ This example load an object detection model converted from [ONNX Model Zoo](http
 
 ### Environment
 onnx: 1.9.0
-onnxruntime: 1.8.0
+onnxruntime: 1.10.0
 
 ### Prepare model
 Please refer to [Converting SSDMobilenet To ONNX Tutorial](https://github.com/onnx/tensorflow-onnx/blob/master/tutorials/ConvertingSSDMobilenetToONNX.ipynb) for detailed model converted. The following is a simple example command:
@@ -16,6 +16,8 @@ wget https://github.com/onnx/models/raw/master/vision/object_detection_segmentat
 
 ### Quantization
 
+Quantize model with QLinearOps:
+
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --config=ssd_mobilenet_v1.yaml \ 
@@ -23,9 +25,18 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 ```
 Make sure **anno_path** in ssd_mobilenet_v1.yaml is the path of label_map.yaml.
 
-### Performance
+Quantize model with QDQ mode:
+
+```bash
+bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+                   --config=ssd_mobilenet_v1_qdq.yaml \ 
+                   --output_model=path/to/save
+```
+Make sure **anno_path** in ssd_mobilenet_v1_qdq.yaml is the path of label_map.yaml.
+
+### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --config=ssd.yaml \
-                      --mode=performance
+                      --mode=performance # or accuracy

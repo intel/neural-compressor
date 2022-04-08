@@ -49,8 +49,9 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
                       --output_model=path/to/model # model path as *.onnx
 ```
 
-### Evaluating
-To evaluate the model, run `main.py` with the path to the model:
+### Quantization
+
+Dynamic quantize:
 
 ```bash
 bash run_tuning.sh --config=distilbert.yaml \ 
@@ -58,4 +59,18 @@ bash run_tuning.sh --config=distilbert.yaml \
                    --output_model=path/to/model_tune
 ```
 
+QDQ mode:
 
+```bash
+bash run_tuning.sh --config=distilbert_qdq.yaml \ 
+                   --input_model=path/to/model \ # model path as *.onnx
+                   --output_model=path/to/model_tune
+```
+
+### Benchmark
+
+```bash
+bash run_benchmark.sh --config=distilbert.yaml \ 
+                      --input_model=path/to/model \ # model path as *.onnx
+                      --mode=performance # or accuracy
+```
