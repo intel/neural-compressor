@@ -34,23 +34,20 @@ log = logging.getLogger("DISTILBERT")
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", default=8,
-                        type=int, help="Batch size")
-    parser.add_argument("--input_model", default="distilbert_base_uncased_sst2.onnx",
-                         type=str, help="input_model_path")
+    parser.add_argument("--batch_size", default=8, type=int, help="Batch size")
+    parser.add_argument("--input_model", default="distilbert_base_uncased_sst2.onnx", type=str, help="input_model_path")
     parser.add_argument("--output_model", default="./ir/", type=str, help="output_model_path")
-    parser.add_argument("--data_dir", default="./data", type=str,
-                        help="The input data dir.")
+    parser.add_argument("--data_dir", default="./data", type=str, help="The input data dir.")
     parser.add_argument("--tokenizer_dir", default= \
                         "distilbert-base-uncased-finetuned-sst-2-english", type=str,
                         help="pre-trained model tokenizer name or path")
-    parser.add_argument("--config", default="./bert.yaml", type=str, help="yaml path")
+    parser.add_argument("--config", default="./bert_static.yaml", type=str, help="yaml path")
     parser.add_argument('--benchmark', action='store_true', default=False)
-    parser.add_argument('--tune', action='store_true',
-                        default=False, help="whether quantize the model")
+    parser.add_argument('--tune', action='store_true', default=False, help="whether quantize the model")
     parser.add_argument('--mode', type=str, help="benchmark mode of performance or accuracy")
     args = parser.parse_args()
     return args
+
 
 def main():
 
@@ -72,6 +69,7 @@ def main():
         quantizer.calib_dataloader = common.DataLoader(ds, args.batch_size)
         q_model = quantizer.fit()
         q_model.save(args.output_model)
+
 
 if __name__ == '__main__':
     main()

@@ -42,33 +42,27 @@ from eval_util import *
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("TensoFlow-BERT")
 
-RawResult = collections.namedtuple("RawResult",
-                                   ["unique_id", "start_logits", "end_logits"])
+RawResult = collections.namedtuple("RawResult", ["unique_id", "start_logits", "end_logits"])
+
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", default=1,
-                        type=int, help="Batch size")
-    parser.add_argument("--input_model", default="build/data/model.pb",
-                        type=str, help="Input model path")
+    parser.add_argument("--batch_size", default=1, type=int, help="Batch size")
+    parser.add_argument("--input_model", default="build/data/model.pb", type=str, help="Input model path")
     parser.add_argument("--output_model", default="ir/", type=str, help="Output model path")
-    parser.add_argument("--vocab_file", default="build/data/vocab.txt",
-                         type=str, help="vocab_file_path")
+    parser.add_argument("--vocab_file", default="build/data/vocab.txt", type=str, help="vocab_file_path")
     parser.add_argument("--perf_count", default=None, help="perf count")
-    parser.add_argument("--data_dir", default="build/data/dev-v1.1.json",
-                        help="Path to validation data")
-    parser.add_argument("--features_cache_file", default="eval_features.pickle",
-                        help="Path to features' cache file")
-    parser.add_argument("--do_lower_case", type=bool, default=True,
-                        help="vocab whether all lower case")
-    parser.add_argument("--config", default="bert.yaml", type=str, help="yaml")
+    parser.add_argument("--data_dir", default="build/data/dev-v1.1.json", help="Path to validation data")
+    parser.add_argument("--features_cache_file", default="eval_features.pickle", help="Path to features' cache file")
+    parser.add_argument("--do_lower_case", type=bool, default=True, help="vocab whether all lower case")
+    parser.add_argument("--config", default="bert_static.yaml", type=str, help="yaml")
     parser.add_argument('--benchmark', action='store_true', default=False)
-    parser.add_argument('--tune', action='store_true',
-                        default=False, help="whether quantize the model")
+    parser.add_argument('--tune', action='store_true', default=False, help="whether quantize the model")
     parser.add_argument('--mode', type=str, help="benchmark mode of performance or accuracy")
 
     args = parser.parse_args()
     return args
+
 
 def main():
     args = get_args()
@@ -91,6 +85,6 @@ def main():
         q_model = quantizer.fit()
         q_model.save(args.output_model)
 
+
 if __name__ == '__main__':
     main()
-
