@@ -105,6 +105,8 @@ export class BenchmarksComponent implements OnInit {
     this.modelService.projectChanged$
       .subscribe(response => {
         this.getBenchmarksList(response['id']);
+        this.comparison = {};
+        this.showComparison = false;
         this.activeBenchmarkId = -1;
         this.benchmarkDetails = null;
       });

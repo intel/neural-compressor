@@ -23,6 +23,8 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+from werkzeug.utils import secure_filename
+
 from neural_compressor.experimental.metric.metric import registry_metrics
 from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
 from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, Domains, Frameworks
@@ -145,8 +147,8 @@ def normalize_framework(framework: str) -> str:
 
 def normalize_string(string_to_normalize: str) -> str:
     """Normalize string for usage in path."""
-    normalized = string_to_normalize.lower().replace(" ", "_")
-    return re.escape(normalized)
+    lowered_string = string_to_normalize.lower()
+    return secure_filename(lowered_string)
 
 
 def get_model_zoo_config_path(

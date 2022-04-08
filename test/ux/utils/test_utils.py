@@ -41,6 +41,7 @@ from neural_compressor.ux.utils.utils import (
     load_help_nc_params,
     load_model_config,
     load_transforms_config,
+    normalize_string,
     parse_to_string_list,
     release_tag,
     verify_file_path,
@@ -667,6 +668,12 @@ class TestUtils(unittest.TestCase):
         nodes = ["input_1", "input_2"]
         result = parse_to_string_list(nodes)
         self.assertEqual(result, ["input_1", "input_2"])
+
+    def test_normalize_string(self) -> None:
+        """Test string normalization."""
+        string = "/Some string with extra / characters: éèà'çëöāãñę"
+        result = normalize_string(string)
+        self.assertEqual(result, "some_string_with_extra_characters_eeaceoaane")
 
 
 if __name__ == "__main__":
