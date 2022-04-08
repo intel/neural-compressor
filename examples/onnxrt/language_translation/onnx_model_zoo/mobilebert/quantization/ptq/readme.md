@@ -4,8 +4,8 @@
 This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
 
 ### Environment
-onnx: 1.7.0
-onnxruntime: 1.6.0+
+onnx: 1.9.0
+onnxruntime: 1.10.0
 
 ### Prepare dataset
 Download pretrained bert model. We will refer to `vocab.txt` file.
@@ -23,15 +23,33 @@ wget https://github.com/fatihcakirs/mobile_models/blob/main/v0_7/tflite/mobilebe
 python -m tf2onnx.convert --opset 11 --tflite mobilebert_float_384_20200602.tflite --output mobilebert_SQuAD.onnx
 ```
 
+### Quantization
 
-### Evaluating
-To evaluate the model, run `main.py` with the path to the model:
+Dynamic quantize:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --dataset_location=/path/to/SQuAD/dataset \
                    --config=mobilebert.yaml
+```
+
+QDQ mode:
+
+```bash
+bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+                   --output_model=/path/to/model_tune \
+                   --dataset_location=/path/to/SQuAD/dataset \
+                   --config=mobilebert_qdq.yaml
+```
+
+### Benchmark
+
+```bash
+bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+                   --dataset_location=/path/to/SQuAD/dataset \
+                   --config=mobilebert.yaml
+                   --mode=performance # or accuracy
 ```
 
 

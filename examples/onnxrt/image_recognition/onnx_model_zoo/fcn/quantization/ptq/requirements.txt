@@ -1,5 +1,5 @@
 onnx==1.9.0
-onnxruntime==1.8.0
+onnxruntime==1.10.0
 torchvision
 pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
 onnxruntime-extensions

@@ -4,8 +4,8 @@
 This example load a language translation model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/). 
 
 ### Environment
-onnx: 1.7.0
-onnxruntime: 1.6.0+
+onnx: 1.9.0
+onnxruntime: 1.10.0
 
 ### Prepare dataset
 download the GLUE data with `prepare_data.sh` script.
@@ -49,13 +49,31 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
                       --output_model=path/to/model # model path as *.onnx
 ```
 
-### Evaluating
-To evaluate the model, run `main.py` with the path to the model:
+### Benchmark
+
+Dynamic quantize:
 
 ```bash
 bash run_tuning.sh --config=mobilebert.yaml \ 
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```
+
+QDQ mode:
+
+```bash
+bash run_tuning.sh --config=mobilebert_qdq.yaml \ 
+                   --input_model=path/to/model \ # model path as *.onnx
+                   --output_model=path/to/model_tune
+```
+
+### Benchmark
+
+```bash
+bash run_benchmark.sh --config=mobilebert.yaml \ 
+                      --input_model=path/to/model \ # model path as *.onnx
+                      --mode=performance # or accuracy
+```
+
 
 

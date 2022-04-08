@@ -4,8 +4,8 @@
 This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
 
 ### Environment
-onnx: 1.7.0
-onnxruntime: 1.6.0+
+onnx: 1.9.0
+onnxruntime: 1.10.0
 
 ### Prepare dataset
 You should download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
@@ -23,13 +23,32 @@ Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/ma
 wget https://github.com/onnx/models/blob/master/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx
 ```
 
-### Evaluating
-To evaluate the model, run `main.py` with the path to the model:
+### Quantization
+
+Dynamic quantize:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --dataset_location=/path/to/SQuAD/dataset \
                    --config=bert.yaml
+```
+
+QDQ mode:
+
+```bash
+bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+                   --output_model=/path/to/model_tune \
+                   --dataset_location=/path/to/SQuAD/dataset \
+                   --config=bert_qdq.yaml
+```
+
+### Benchmark
+
+```bash
+bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
+                      --dataset_location=/path/to/SQuAD/dataset \
+                      --config=bert.yaml
+                      --mode=performance # or accuracy
 ```
 

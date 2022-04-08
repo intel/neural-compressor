@@ -5,7 +5,7 @@ This example load an image classification model from [ONNX Model Zoo](https://gi
 
 ### Environment
 onnx: 1.9.0
-onnxruntime: 1.8.0
+onnxruntime: 1.10.0
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
@@ -16,17 +16,27 @@ wget https://github.com/onnx/models/raw/master/vision/classification/efficientne
 
 ### Quantization
 
+Quantize model with QLinearOps:
+
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
                    --config=efficientnet.yaml \
                    --output_model=path/to/save
 ```
 
-### Performance 
+Quantize model with QDQ mode:
+
+```bash
+bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
+                   --config=efficientnet_qdq.yaml \
+                   --output_model=path/to/save
+```
+
+### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --config=efficientnet.yaml \
-                      --mode=performance
+                      --mode=performance # or accuracy
 ```
 

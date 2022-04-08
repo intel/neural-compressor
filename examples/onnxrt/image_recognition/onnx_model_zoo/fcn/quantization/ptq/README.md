@@ -5,7 +5,7 @@ This example load an object detection model converted from [ONNX Model Zoo](http
 
 ### Environment
 onnx: 1.9.0
-onnxruntime: 1.8.0
+onnxruntime: 1.10.0
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
@@ -16,6 +16,8 @@ wget https://github.com/onnx/models/raw/master/vision/object_detection_segmentat
 
 ### Quantization
 
+Quantize model with QLinearOps:
+
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --config=fcn_rn50.yaml \ 
@@ -24,12 +26,22 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save
 ```
 
-### Performance
+Quantize model with QDQ mode:
+
+```bash
+bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
+                   --config=fcn_rn50_qdq.yaml \ 
+                   --data_path=path/to/coco/val2017 \
+                   --label_path=path/to/coco/annotations/instances_val2017.json \
+                   --output_model=path/to/save
+```
+
+### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --config=fcn_rn50.yaml \
                       --data_path=path/to/coco/val2017 \
                       --label_path=path/to/coco/annotations/instances_val2017.json \
-                      --mode=performance
+                      --mode=performance # or accuracy
 ```

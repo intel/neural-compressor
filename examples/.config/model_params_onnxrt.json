@@ -432,16 +432,7 @@
       "batch_size": 1,
       "new_benchmark": true
     },
-    "gpt2_lm_head_wikitext_model_zoo_qdq": {
-      "model_src_dir": "language_translation/onnx_model_zoo/gpt2/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/",
-      "input_model": "/tf_dataset2/models/onnx/gpt2/gpt2_lm_head_wikitext_model_zoo.onnx",
-      "yaml": "gpt2_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
-    },
-    "vgg16_model_zoo_qdq": {
+   "vgg16_model_zoo_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/vgg16/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/vgg16-12/vgg16-13.onnx",
