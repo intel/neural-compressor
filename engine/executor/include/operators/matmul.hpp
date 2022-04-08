@@ -49,7 +49,7 @@ class MatmulOperator : public Operator {
   // Converting string variables from operators attrs to boolean, or int/float
  protected:
   // Matrix can optionally be adjointed (to adjoint a matrix means to transpose and conjugate it).
-  bool has_bias_;
+  bool has_bias_ = false;
   bool format_any_;
   bool append_sum_;
   bool gelu_erf_;

@@ -94,6 +94,7 @@ void ConvolutionOperator::MapTensors(const vector<Tensor*>& input, const vector<
       weight_ = input[1];
       bias_ = (append_sum_ || binary_add_) ? nullptr : input[2];
       post_ = (append_sum_ || binary_add_) ? input[2] : nullptr;
+      has_bias_ = !(append_sum_ || binary_add_);
       break;
     }
     case 4: {
@@ -101,6 +102,7 @@ void ConvolutionOperator::MapTensors(const vector<Tensor*>& input, const vector<
       weight_ = input[1];
       bias_ = input[2];
       post_ = (append_sum_ || binary_add_) ? input[3] : nullptr;
+      has_bias_ = true;
       break;
     }
     case 6: {
@@ -121,6 +123,7 @@ void ConvolutionOperator::MapTensors(const vector<Tensor*>& input, const vector<
       src_max_ = input[4];
       weight_min_ = input[5];
       weight_max_ = input[6];
+      has_bias_ = !(append_sum_ || binary_add_);
       break;
     }
     case 8: {
@@ -145,6 +148,7 @@ void ConvolutionOperator::MapTensors(const vector<Tensor*>& input, const vector<
       weight_max_ = input[6];
       dst_min_ = input[7];
       dst_max_ = input[8];
+      has_bias_ = !(append_sum_ || binary_add_);
       break;
     }
     case 10: {
@@ -158,6 +162,7 @@ void ConvolutionOperator::MapTensors(const vector<Tensor*>& input, const vector<
       weight_max_ = input[7];
       dst_min_ = input[8];
       dst_max_ = input[9];
+      has_bias_ = true;
       break;
     }
   }
@@ -165,10 +170,6 @@ void ConvolutionOperator::MapTensors(const vector<Tensor*>& input, const vector<
 
 void ConvolutionOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   MapTensors(input, output);
-  has_bias_ = (input.size() == 4 || input.size() == 10) ||
-                      ((input.size() == 3 || input.size() == 9) && !append_sum_ && !binary_add_)
-                  ? true
-                  : false;
   if (has_bias_) {
     LOG(INFO) << "Convolution has bias";
   }
@@ -254,7 +255,7 @@ void ConvolutionOperator::Prepare(const vector<Tensor*>& input, const vector<Ten
   weight_md_ = memory::desc(weight_group_shape, type2mem[weight_->dtype()], weight_group_stride);
   weight_m_ = memory(weight_md_, eng_, weight_->mutable_data());
 
-  if (has_bias_ && bias_->mutable_data() != nullptr) {
+  if (has_bias_) {
     const vector<int64_t> bias_shape = bias_->shape();
     const vector<int64_t> bias_stride = GetStrides(bias_shape);
     bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
@@ -429,6 +430,7 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
 
 // 2. inference kernel(for int8 and f32)
 void ConvolutionOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
+  // has post_op: append_sum
   if (post_ != nullptr && !binary_add_) {
     LOG(INFO) << "Convolution has post op " << post_->name();
     void* post_data_ptr = const_cast<void*>(post_->data());
@@ -465,7 +467,8 @@ void ConvolutionOperator::Forward(const vector<Tensor*>& input, const vector<Ten
   // 3. Insert memory args
   memory_args_[DNNL_ARG_SRC_0] = any_src_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
-  if (binary_add_ && post_->mutable_data() != nullptr) {
+  // has post_op: binary_add
+  if (post_ != nullptr && binary_add_) {
     void* post_ptr = post_->mutable_data();
     binary_m_.set_data_handle(post_ptr, eng_stream_);
     memory_args_[DNNL_ARG_ATTR_MULTIPLE_POST_OP(0) | DNNL_ARG_SRC_1] = binary_m_;

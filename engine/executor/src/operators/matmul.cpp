@@ -83,7 +83,6 @@ void MatmulOperator::MapTensors(const vector<Tensor*>& input, const vector<Tenso
     case 2: {
       src0_ = input[0];
       src1_ = input[1];
-      has_bias_ = false;
       break;
     }
     case 3: {
@@ -109,7 +108,6 @@ void MatmulOperator::MapTensors(const vector<Tensor*>& input, const vector<Tenso
       src0_max_ = input[3];
       src1_min_ = input[4];
       src1_max_ = input[5];
-      has_bias_ = false;
       break;
     }
     case 7: {
@@ -395,6 +393,7 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   } else {
     dst_data = dst_->mutable_data();
   }
+  // has post_op: append_sum
   if (post_ != nullptr && !binary_add_) {
     LOG(INFO) << "matmul has post op " << post_->name();
     void* post_data_ptr = const_cast<void*>(post_->data());
@@ -450,7 +449,8 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   if (!cache_weight_) memory_args_[DNNL_ARG_WEIGHTS] = any_src1_m;
   memory_args_[DNNL_ARG_DST] = any_dst_m;
 
-  if (binary_add_ && post_->mutable_data() != nullptr) {
+  // has post_op: binary_add
+  if (post_ != nullptr && binary_add_) {
     void* post_ptr = post_->mutable_data();
     binary_m_.set_data_handle(reinterpret_cast<void*>(post_ptr), eng_stream_);
     // dynamic quantization inserts additional post_ops
@@ -525,14 +525,12 @@ void MatmulOperator::DynamicForward(vector<int32_t>* src0_zero_points_ptr, vecto
   auto& dynamic_bias = *dynamic_bias_ptr;
   memory scale_f32_mem(scale_md_, eng_);
   memory zp_src0_mem({{1}, memory::data_type::s32, {1}}, eng_);
-  int channel_size = src1_min_ != nullptr ? src1_min_->size() : 1;  // channel_size=1 represent per_tensor
+  int channel_size = src1_min_->size();  // channel_size=1 represent per_tensor
   rescales.resize(channel_size);
   vector<float> src0_scales;
   vector<float> src1_scales;
-  if (src0_min_ != nullptr && src1_max_ != nullptr) {
-    src0_scales = GetScales(src0_min_->data(), src0_max_->data(), src0_min_->size(), src0_->dtype());
-    src1_scales = GetScales(src1_min_->data(), src1_max_->data(), src1_min_->size(), src1_->dtype());
-  }
+  src0_scales = GetScales(src0_min_->data(), src0_max_->data(), src0_min_->size(), src0_->dtype());
+  src1_scales = GetScales(src1_min_->data(), src1_max_->data(), src1_min_->size(), src1_->dtype());
   if (channel_size == 1) {
     rescales[0] = output_scale_ / src0_scales[0] / src1_scales[0];
   } else {
