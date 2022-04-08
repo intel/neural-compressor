@@ -23,7 +23,7 @@ export LD_PRELOAD=<path_to_libiomp5.so>
   ```shell
   bash prepare_dataset.sh
   ```
-  Note: Replace the data path in bert.yaml
+  Note: Replace the data path in bert_static.yaml and bert_dynamic.yaml
 
 ### 2.2 Download TensorFlow model (The model will be in build/data/bert_tf_v1_1_large_fp32_384_v2 folder):
   ```shell
@@ -44,7 +44,7 @@ export LD_PRELOAD=<path_to_libiomp5.so>
   ```
   or run shell
   ```shell
-  bash run_tuning.sh --config=bert.yaml --input_model=build/data/model.pb --output_model=ir --dataset_location=build/data
+  bash run_tuning.sh --config=bert_static.yaml --input_model=build/data/model.pb --output_model=ir --dataset_location=build/data
   ```
 
 ### 2. To get the benchmark of tuned model:
@@ -55,7 +55,7 @@ export LD_PRELOAD=<path_to_libiomp5.so>
   ```
   or run shell
   ```shell
-  bash run_benchmark.sh --config=bert.yaml --input_model=ir --dataset_location=build/data --batch_size=1 --mode=accuracy
+  bash run_benchmark.sh --config=bert_static.yaml --input_model=ir --dataset_location=build/data --batch_size=1 --mode=accuracy
   ```
 
   2.2 performance
@@ -65,7 +65,7 @@ export LD_PRELOAD=<path_to_libiomp5.so>
   ```
   or run shell
   ```shell
-  bash run_benchmark.sh --config=bert.yaml --input_model=ir --dataset_location=build/data --batch_size=1 --mode=performance
+  bash run_benchmark.sh --config=bert_static.yaml --input_model=ir --dataset_location=build/data --batch_size=1 --mode=performance
   ```
   or run C++
   The warmup below is recommended to be 1/10 of iterations and no less than 3.

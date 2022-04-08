@@ -39,7 +39,7 @@ bash prepare_model.sh
   ```
   or run shell
   ```shell
-  bash run_tuning.sh --config=bert.yaml --input_model=bert_mini_sst2.onnx --output_model=ir --dataset_location=data
+  bash run_tuning.sh --config=bert_static.yaml --input_model=bert_mini_sst2.onnx --output_model=ir --dataset_location=data
   ```
 
 ### 2. To get the benchmark of tuned model:
@@ -50,7 +50,7 @@ bash prepare_model.sh
   ```
   or run shell
   ```shell
-  bash run_benchmark.sh --config=bert.yaml --input_model=ir --dataset_location=data --batch_size=8 --mode=accuracy
+  bash run_benchmark.sh --config=bert_static.yaml --input_model=ir --dataset_location=data --batch_size=8 --mode=accuracy
   ```
 
   2.2 performance
@@ -60,7 +60,7 @@ bash prepare_model.sh
   ```
   or run shell
   ```shell
-  bash run_benchmark.sh --config=bert.yaml --input_model=ir --dataset_location=data --batch_size=8 --mode=performance
+  bash run_benchmark.sh --config=bert_static.yaml --input_model=ir --dataset_location=data --batch_size=8 --mode=performance
   ```
   or run C++
   The warmup below is recommended to be 1/10 of iterations and no less than 3.
