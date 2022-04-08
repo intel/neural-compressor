@@ -105,8 +105,8 @@ class MemoryAllocator {
     return *m_strategy_;
   }
 
-  static shared_ptr<ipc::managed_shared_memory> ManagedShm() {
-    static auto shm_ptr = std::make_shared<ipc::managed_shared_memory>(ipc::open_only, "SharedWeight");
+  static ipc::managed_shared_memory& ManagedShm() {
+    static ipc::managed_shared_memory shm_ptr(ipc::open_only, "SharedWeight");
     return shm_ptr;
   }
 
