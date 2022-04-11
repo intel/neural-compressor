@@ -29,7 +29,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/gflags ./gflag
 set(WITH_GFLAGS OFF CACHE BOOL "disable gflags for glog")
 add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/glog ./glog)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/oneDNN ./oneDNN)
-add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/pybind11 ./pybind11)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/yaml-cpp ./yaml)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../../executor/third_party/googletest ./googletest)
 
