@@ -64,22 +64,48 @@ or specify different port that is already opened, for example 8080:
     You are forfeiting security, confidentiality and integrity of all client-server communication. Your server is exposed to external threats.
 
 ## Home screen
-This view shows introduction to Intel® Neural Compressor Bench and a button for creating new project.
+This view shows introduction to Intel® Neural Compressor Bench and a button for creating new project. After clicking this button, popup with project wizard will be shown.
 
 ![Home](imgs/bench/home.png "Home")
 
 # Create new project
-To create a new project, you need to choose its name and input model.
+To create a new project, in first step you need to choose its name.
 
 ![Project1](imgs/bench/project1.png "Project1")
 
-When the model is chosen, you can also edit its input and output nodes, see the model graph (for Tensorflow models) and set shape for synthetic dataset. It is also possible that you will have to choose model domain if it was not auto detected. It is used to set some default parameters.
+In second step there are 2 possible options to choose from: 
+* *predefined model* - you choose model from predefined examples list, you don't need to set any additional parameters,
+* *custom model* - in this scenario you can set more parameters and customize your model. 
 
 ![Project2](imgs/bench/project2.png "Project2")
 
-On the left hand side there is a panel with list of created projects. When  you click on the project name, you can see its details. "Create new project" button goes to new project wizard described in previous section.
+## Predefined model
+First you need to choose domain for the model (image recognition or object detection). For each domain there are few available models to choose from. When you click *Finish* the chosen model will be downloaded.
+
+![Project3-predefined](imgs/bench/project3-predefined.png "Project3-predefined")
+
+## Custom model
+
+First you have to choose the model path. When it is chosen, in most cases all other fields will be completed automatically. You can edit its input and output nodes, see the model graph (if it is available for this model) and set shape for synthetic dataset. If model domain was not detected, you need to choose it from the list. Model domain is used to set some default parameters for the model.
+
+![Project3-custom](imgs/bench/project3-custom.png "Project3-custom")
+
+# Project list
+On the left hand side there is a panel with list of created projects. When you click on the project name, you can see its details. "Create new project" button navigates to new project wizard popup described in previous section.
 
 ![Menu](imgs/bench/menu.png "Menu")
+
+## Remove project
+
+If you want to remove project, you have to click the trash icon next to project name (it is visible when the cursor is on the project name).
+
+![Remove1](imgs/bench/remove1.png "Remove1")
+
+Then you will be prompted to confirm your choice by typing the project name. Project removal is not reversible.
+
+![Remove2](imgs/bench/remove2.png "Remove2")
+
+# Develop the project
 
 ## Add optimization
 ### Optimization table
@@ -138,6 +164,12 @@ New dataset can be defined by clicking "Add new profiling" button at the bottom 
 ### Dataset details
 Dataset details can be inspected by clicking specific row.
 ![Dataset-details](imgs/bench/dataset-details.png "Dataset-details")
+
+### Custom dataset
+When adding the dataset, you can choose *custom* in dataloader and metric field. In that case a template file will be created. The path to the template file will be available in dataset details. You should edit this file to add your custom configuration before using this dataset in optimizations or benchmarks. Small yellow warning will remind about it. 
+
+![Custom dataset](imgs/bench/custom-dataset.png "Custom dataset")
+
 ## Project information
 
 Last tab is called "Project info". You can find here details about the project, when it was created and modified, what is the framework and some details about input model. It is also possible to add some notes about the project.
