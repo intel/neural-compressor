@@ -439,6 +439,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_ext_model(self):
         from neural_compressor.experimental import Benchmark
         conf.model.framework = 'onnxrt_qlinearops'
+        conf.evaluation.accuracy.metric = {'Accuracy': {}}
         evaluator = Benchmark(conf)
         evaluator.b_dataloader = self.ext_dataloader
         evaluator.model = self.ext_model
@@ -516,7 +517,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         conf.model.framework = 'onnxrt_integerops'
         conf.quantization.approach = 'post_training_dynamic_quant'
         conf.quantization.calibration.sampling_size = 1
-        conf.evaluation.accuracy.metric = {'Accuracy': {}}
+        conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
         quantizer = Quantization(conf)
         quantizer.calib_dataloader = self.rename_dataloader
         quantizer.eval_dataloader = self.rename_dataloader
