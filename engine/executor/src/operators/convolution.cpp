@@ -254,14 +254,6 @@ void ConvolutionOperator::Prepare(const vector<Tensor*>& input, const vector<Ten
   any_weight_md_ = memory::desc(weight_group_shape, type2mem[weight_->dtype()], memory::format_tag::any);
   weight_md_ = memory::desc(weight_group_shape, type2mem[weight_->dtype()], weight_group_stride);
   weight_m_ = memory(weight_md_, eng_, weight_->mutable_data());
-
-  if (has_bias_) {
-    const vector<int64_t> bias_shape = bias_->shape();
-    const vector<int64_t> bias_stride = GetStrides(bias_shape);
-    bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
-    any_bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
-    bias_m_ = memory(bias_md_, eng_, bias_->mutable_data());
-  }
 }
 
 // 1. Create primitive
@@ -356,6 +348,14 @@ void ConvolutionOperator::Reshape(const vector<Tensor*>& input, const vector<Ten
 
   // 1.5 Set dst shape and strides
   dst_->set_shape(dst_shape);
+
+  if (has_bias_) {
+    const vector<int64_t> bias_shape = bias_->shape();
+    const vector<int64_t> bias_stride = GetStrides(bias_shape);
+    bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
+    any_bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
+    bias_m_ = memory(bias_md_, eng_, bias_->mutable_data());
+  }
 
   // 2.2 Prepare op descriptors
   dnnl::convolution_forward::desc convolution_d =
