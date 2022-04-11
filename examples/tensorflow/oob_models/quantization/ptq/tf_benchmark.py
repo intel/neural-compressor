@@ -279,9 +279,6 @@ if __name__ == "__main__":
 
     # benchmark with input/output
     elif args.model_name:
-        # handle the case that the original input is deleted
-        if args.benchmark and args.model_name == 'deepspeech':
-            args.model_name = 'deepspeech-tuned'
         assert args.model_path is not None, "Model path is undefined."
         from model_detail import models
         model_detail = None
