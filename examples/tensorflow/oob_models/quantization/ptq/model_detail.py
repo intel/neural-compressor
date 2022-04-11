@@ -329,12 +329,6 @@ models = [
         'input': {'previous_state_c/read': generate_data([2048]), 'previous_state_h/read': generate_data([2048]), 'input_node': generate_data([16, 19, 26]),"input_lengths":np.array([16],dtype=np.int32)},
         'output': ['raw_logits','lstm_fused_cell/GatherNd','lstm_fused_cell/GatherNd_1']
     },
-    # deepspeech-tuned
-    { 
-        'model_name': 'deepspeech-tuned',
-        'input': {'previous_state_c': generate_data([2048]), 'previous_state_h': generate_data([2048]), 'input_node': generate_data([16, 19, 26]),"input_lengths":np.array([16],dtype=np.int32)},
-        'output': ['raw_logits','lstm_fused_cell/GatherNd','lstm_fused_cell/GatherNd_1']
-    },
     # AttRec
     {
         'model_name': 'AttRec',
