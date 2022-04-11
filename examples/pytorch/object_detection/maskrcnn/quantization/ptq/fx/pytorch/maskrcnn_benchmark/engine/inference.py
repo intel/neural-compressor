@@ -83,8 +83,12 @@ def inference(
         else 1
     )
     logger = logging.getLogger("maskrcnn_benchmark.inference")
-    dataset = data_loader.dataset
-    logger.info("Start evaluation on {} dataset({} images).".format(dataset_name, len(dataset)))
+    if hasattr(data_loader.batch_sampler, 'num_iterations'):
+        len_dataset = data_loader.batch_sampler.num_iterations * \
+                      data_loader.batch_sampler.batch_sampler.batch_size
+    else:
+        len_dataset = len(data_loader.dataset)
+    logger.info("Start evaluation on {} dataset({} images).".format(dataset_name, len_dataset))
     start_time = time.time()
     predictions = compute_on_dataset(model, data_loader, device)
     # wait for all processes to complete before measuring the time
@@ -92,8 +96,18 @@ def inference(
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=total_time))
     logger.info(
-        "Total inference time: {} (Latency: {} ms / img per device, on {} devices)".format(
-            total_time_str, total_time * num_devices / len(dataset) * 1000, num_devices
+        "Total inference time: {}".format(
+            total_time_str
+        )
+    )
+    logger.info(
+        "Latency: {} ms / img per device, on {} devices".format(
+            total_time * num_devices / len_dataset * 1000, num_devices
+        )
+    )
+    logger.info(
+        "Throughput: {} img/s per device, on {} devices".format(
+            len_dataset / total_time / num_devices, num_devices
         )
     )
 
@@ -111,7 +125,7 @@ def inference(
         expected_results_sigma_tol=expected_results_sigma_tol,
     )
 
-    return evaluate(dataset=dataset,
+    return evaluate(dataset=data_loader.dataset,
                     predictions=predictions,
                     output_folder=output_folder,
                     **extra_args)

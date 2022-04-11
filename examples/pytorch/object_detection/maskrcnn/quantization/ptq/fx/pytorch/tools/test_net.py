@@ -145,8 +145,9 @@ def main():
                 output_folder=output_folder,
             )
             synchronize()
-        print('Batch size = %d' % cfg.TEST.IMS_PER_BATCH)
-        print('Accuracy: %.3f ' % (results.results['bbox']['AP']))
+        if not args.benchmark:
+            print('Batch size = %d' % cfg.TEST.IMS_PER_BATCH)
+            print('Accuracy: %.3f ' % (results.results['bbox']['AP']))
         return results.results['bbox']['AP']
 
     model.eval()
