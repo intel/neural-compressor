@@ -90,14 +90,21 @@ def get_torch_white_list(approach):
 
 
 def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
-    if device == "ipex" and IPEX_110: # pragma: no cover
-        if running_mode == "calibration":
-            with ipex.quantization.calibrate(conf, default_recipe=True):
+    if device == "ipex" and IPEX_110: # pragma: no cover 
+        if isinstance(input, torch.Tensor):
+            if running_mode == "calibration":
+                with ipex.quantization.calibrate(conf, default_recipe=True):
+                    input = input.contiguous(memory_format=torch.channels_last)
+                    output = model(input)
+            else:
                 input = input.contiguous(memory_format=torch.channels_last)
                 output = model(input)
-        if running_mode == "inference":
-            input = input.contiguous(memory_format=torch.channels_last)
-            output = model(input)
+        elif isinstance(input, dict):
+            if running_mode == "calibration":
+                with ipex.quantization.calibrate(conf, default_recipe=True):
+                    output = model(**input)
+            else:
+                output = model(**input)
     else:
         if isinstance(input, dict) or isinstance(input, UserDict):
             if device=='cpu':
@@ -1937,6 +1944,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         except:
             logger.warning('Fail to remove {}.'.format(self.ipex_config_path))
         self.device = 'ipex'
+        self.qscheme = torch.per_tensor_symmetric
+            
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
@@ -1983,7 +1992,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 ipex_conf = ipex.quantization.QuantConf(
                     configure_file=self.ipex_config_path, qscheme = qscheme
                 )
-                q_model = optimization.fuse(q_model)
+                try:
+                    q_model = optimization.fuse(q_model)
+                except:
+                    q_model = q_model
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model, dataloader, iterations,
                                    ipex_conf, tune_cfg.get('calib_sampling_size', 1))
@@ -2155,7 +2167,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 else ipex.quantization.QuantConf(None)
             )
             if not self.is_baseline:
-                model_ = optimization.fuse(model_, inplace=True)
+                try:
+                    model_ = optimization.fuse(model_, inplace=True)
+                except:
+                    model_ = model_
                 for idx, (input, label) in enumerate(dataloader):
                     x = input.contiguous(memory_format=torch.channels_last)
                     break
@@ -2221,10 +2236,21 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             if not IPEX_110: 
                 ipex_conf = ipex.AmpConf(torch.int8)
             else:
+                try:
+                    assert 'BertForQuestionAnswering' in init_model.config.architectures
+                    self.qscheme = torch.per_tensor_affine
+                
+                except:
+                    self.qscheme = torch.per_tensor_symmetric
+                
                 ipex_conf = ipex.quantization.QuantConf(
-                    qscheme=torch.per_tensor_symmetric
+                          qscheme=self.qscheme
                 )
-                init_model = optimization.fuse(init_model)
+                
+                try:
+                    init_model = optimization.fuse(init_model)
+                except:
+                    init_model = init_model
             self.model_calibration(
                 init_model,
                 self.q_dataloader,
