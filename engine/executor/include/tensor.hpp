@@ -92,6 +92,7 @@ class Tensor {
   inline size_t size() { return std::accumulate(shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>()); }
 
   void set_shm_handle(const ipc::managed_shared_memory::handle_t& h) { shm_handle_ = h; }
+  bool is_shared() { return shm_handle_ != 0; }
 
   inline const string& name() const { return name_; }
   inline const int life() const { return life_count_; }
