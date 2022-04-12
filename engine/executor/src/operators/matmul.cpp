@@ -182,7 +182,8 @@ void MatmulOperator::MapTensors(const vector<Tensor*>& input, const vector<Tenso
 void MatmulOperator::Prepare(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   MapTensors(input, output);
   dst_->set_dtype(output_dtype_);
-  is_dynamic_ = output.size() > 1 || (src0_min_ != nullptr && src0_min_->raw_data() == nullptr);
+  is_dynamic_ =
+      output.size() > 1 || (src0_min_ != nullptr && src0_min_->raw_data() == nullptr && !src0_min_->is_shared());
   if (is_dynamic_) LOG(INFO) << this->name() << " is DYNAMIC!!!";
   if (!is_dynamic_ && (output_scale_ != 1.f || src0_min_ != nullptr || src1_min_ != nullptr)) {
     int ic_dim = 0;

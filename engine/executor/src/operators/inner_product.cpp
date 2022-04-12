@@ -218,7 +218,8 @@ void InnerProductOperator::Prepare(const vector<Tensor*>& input, const vector<Te
     }
   }
 #endif
-  is_dynamic_ = output.size() > 1 || (src0_min_ != nullptr && src0_min_->raw_data() == nullptr);
+  is_dynamic_ =
+      output.size() > 1 || (src0_min_ != nullptr && src0_min_->raw_data() == nullptr && !src0_min_->is_shared());
   if (is_dynamic_) LOG(INFO) << this->name() << " is DYNAMIC!!!";
   if (dense_flag_) {
     PrepareDense(input, output);
