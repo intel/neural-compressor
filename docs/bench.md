@@ -64,7 +64,7 @@ or specify different port that is already opened, for example 8080:
     You are forfeiting security, confidentiality and integrity of all client-server communication. Your server is exposed to external threats.
 
 ## Home screen
-This view shows introduction to Intel® Neural Compressor Bench and a button for creating new project. After clicking this button, popup with project wizard will be shown.
+This view shows introduction to Intel® Neural Compressor Bench and a button for creating new project. After clicking this button, pop-up with project wizard will be shown.
 
 ![Home](imgs/bench/home.png "Home")
 
@@ -91,7 +91,7 @@ First you have to choose the model path. When it is chosen, in most cases all ot
 ![Project3-custom](imgs/bench/project3-custom.png "Project3-custom")
 
 # Project list
-On the left hand side there is a panel with list of created projects. When you click on the project name, you can see its details. "Create new project" button navigates to new project wizard popup described in previous section.
+On the left hand side there is a panel with list of created projects. When you click on the project name, you can see its details. "Create new project" button navigates to new project wizard pop-up described in previous section.
 
 ![Menu](imgs/bench/menu.png "Menu")
 

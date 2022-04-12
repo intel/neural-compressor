@@ -26,6 +26,16 @@ if args.tune:
     return
 ```
 
+## Note
+Right now, we support auto quantization method and can avoid below common problem.   
+For users, you will see log output below if you model failed on symbolic trace method.
+```
+[INFO] Fx trace of the entire model failed. We will conduct auto quantization
+```
+
+### Details
+ - We combine GraphModule from symbolic_trace and imperative control flow. Therefore, the INT8 model consists of lots of GraphModules.
+
 -----------------------------------------
 
 ## Common Problem
