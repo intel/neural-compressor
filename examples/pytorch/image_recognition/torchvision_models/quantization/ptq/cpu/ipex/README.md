@@ -17,28 +17,27 @@ pip install -r requirements.txt
 
 refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com/intel/intel-extension-for-pytorch/tree/v1.8.0)
 
-1. install PyTorch1.8 and TorchVision0.9
+1. install PyTorch and TorchVision
 
    refer [PyTorch install](https://pytorch.org/get-started/locally/)
    ```shell position-relative
-   pip3 install torch==1.8.0+cpu torchvision==0.9.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+    pip install requirements.txt
    ```
-2. Get Intel PyTorch Extension source and install
+2. Get  Intel® Extension for PyTorch* source and install
     > **Note**
     >
     > GCC9 compiler is recommended
     >
 
    ```shell position-relative
-   git clone https://github.com/intel/intel-extension-for-pytorch
-   cd intel-extension-for-pytorch
-   git checkout v1.8.0
-   git submodule sync
-   git submodule update --init --recursive
-
-   python setup.py install
+   python -m pip install intel_extension_for_pytorch -f https://software.intel.com/ipex-whl-stable
    ```
-
+  
+   > Note: Intel® Extension for PyTorch* has PyTorch version > requirement. Please check more detailed information via > the URL below.
+   >
+   > GCC9 compiler is recommended
+   >
+   > Support IPEX version >= 1.8.0
 
 ### 3. Prepare Dataset
 
@@ -73,15 +72,15 @@ bash run_tuning.sh --topology=resnet50_ipex --dataset_location=/path/to/imagenet
 bash run_benchmark.sh --topology=resnet50_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
-### 3. ResNext101_32x8d With Intel PyTorch Extension
+### 3. ResNext101_32x16d With Intel PyTorch Extension
 
 ```shell
-python main.py -t -a resnext101_32x8d --ipex --pretrained /path/to/imagenet
+python main.py -t -a resnext101_32x16d_wsl --hub --ipex --pretrained /path/to/imagenet
 ```
 or
 ```shell
-bash run_tuning.sh --topology=resnext101_32x8d_ipex --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --topology=resnext101_32x8d_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
+bash run_tuning.sh --topology=resnext101_32x16d_wsl_ipex --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnext101_32x16d_wsl_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
 ### 4. Mobilenet_v2 With Intel PyTorch Extension

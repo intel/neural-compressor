@@ -42,7 +42,10 @@ function run_tuning {
     fi
     extra_cmd=""
     if [ -n "$output_model" ];then
-        extra_cmd = $extra_cmd"--tuned_checkpoint ${output_model}"
+        extra_cmd=$extra_cmd"--tuned_checkpoint ${output_model}"
+    fi
+    if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
+        extra_cmd=$extra_cmd" --hub "
     fi
     result=$(echo $topology | grep "ipex")
     if [[ "$result" != "" ]];then

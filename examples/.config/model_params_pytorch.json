@@ -36,6 +36,15 @@
       "batch_size": 100,
       "new_benchmark": false
     },
+    "resnext101_32x16d_wsl_ipex": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf_ipex.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
     "rnnt_ipex": {
       "model_src_dir": "speech_recognition/rnnt/quantization/ptq_static/ipex",
       "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
