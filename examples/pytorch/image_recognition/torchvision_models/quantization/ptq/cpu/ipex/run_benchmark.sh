@@ -62,6 +62,9 @@ function run_benchmark {
     fi
 
     extra_cmd=""
+    if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
+        extra_cmd=$extra_cmd" --hub"
+    fi
     result=$(echo $topology | grep "ipex")
     if [[ "$result" != "" ]];then
         sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml

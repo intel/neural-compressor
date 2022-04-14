@@ -24,8 +24,6 @@ import torchvision.models.quantization as quantize_models
 import torchvision.models as models
 from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
 
-import subprocess
-
 try:
     try:
         import intel_pytorch_extension as ipex
@@ -45,9 +43,19 @@ except:
         if name.islower() and not name.startswith("__")
         and callable(quantize_models.__dict__[name]))
 
+model_names = sorted(name for name in models.__dict__
+    if name.islower() and not name.startswith("__")
+    and callable(models.__dict__[name]))
+
+torch.hub._validate_not_a_forked_repo=lambda a,b,c: True
+hub_model_names = torch.hub.list('facebookresearch/WSL-Images')
+model_names += hub_model_names
+
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
                     help='path to dataset')
+parser.add_argument('--hub', action='store_true', default=False,
+                    help='use model with torch hub')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
@@ -64,6 +72,8 @@ parser.add_argument('-b', '--batch-size', default=256, type=int,
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
+parser.add_argument('--steps', default=-1, type=int,
+                    help='steps for validation')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -184,19 +194,24 @@ def main_worker(gpu, ngpus_per_node, args):
             args.rank = args.rank * ngpus_per_node + gpu
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
-    # create model
-    if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.arch))
-        if args.ipex or pytorch_version >= PyTorchVersionMode.PT17.value:
-            model = models.__dict__[args.arch](pretrained=True)
-        else:
-            model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
+    
+    if args.hub:
+        torch.set_flush_denormal(True)
+        model = torch.hub.load('facebookresearch/WSL-Images', args.arch)
     else:
-        print("=> creating model '{}'".format(args.arch))
-        if args.ipex:
-            model = models.__dict__[args.arch]()
+        # create model
+        if args.pretrained:
+            print("=> using pre-trained model '{}'".format(args.arch))
+            if args.ipex or pytorch_version >= PyTorchVersionMode.PT17.value:
+                model = models.__dict__[args.arch](pretrained=True)
+            else:
+                model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
         else:
-            model = quantize_models.__dict__[args.arch]()
+            print("=> creating model '{}'".format(args.arch))
+            if args.ipex:
+                model = models.__dict__[args.arch]()
+            else:
+                model = quantize_models.__dict__[args.arch]()
 
     if not torch.cuda.is_available():
         print('using CPU...')
