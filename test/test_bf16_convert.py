@@ -290,6 +290,7 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertTrue("relu2_BF16toFP32" in new_conv3.input)
 
+
     @unittest.skipIf(tf.version.VERSION > '2.5.0', " Skip test_bf16_fallback case for tf 2.6.0 and above.")
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
