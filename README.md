@@ -39,7 +39,7 @@ Supported deep learning frameworks are:
 
 >  **Note**: From the official TensorFlow 2.6.0, oneDNN support has been upstreamed. Download the official TensorFlow 2.6.0 binary for the CPU device and set the environment variable TF_ENABLE_ONEDNN_OPTS=1 before running the quantization process or deploying the quantized model.
 
-* [PyTorch\*](https://pytorch.org/), including [1.8.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.10.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
+* [PyTorch\*](https://pytorch.org/), including [1.9.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.10.0+cpu](https://download.pytorch.org/whl/torch_stable.html), [1.11.0+cpu](https://download.pytorch.org/whl/torch_stable.html)
 * [Apache\* MXNet](https://mxnet.apache.org), including [1.6.0](https://github.com/apache/incubator-mxnet/tree/1.6.0), [1.7.0](https://github.com/apache/incubator-mxnet/tree/1.7.0), [1.8.0](https://github.com/apache/incubator-mxnet/tree/1.8.0)
 * [ONNX\* Runtime](https://github.com/microsoft/onnxruntime), including [1.8.0](https://github.com/microsoft/onnxruntime/tree/v1.8.0), [1.9.0](https://github.com/microsoft/onnxruntime/tree/v1.9.0), [1.10.0](https://github.com/microsoft/onnxruntime/tree/v1.10.0)
 * [Execution Engine](./docs/engine.md), a reference bare metal solution(./engine) for domain-specific NLP models.
@@ -59,7 +59,7 @@ library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.7 or 3.8 or 3.9
+- Python version: 3.7 or 3.8 or 3.9 or 3.10
 
 - C++ compiler: 7.2.1 or above
 
@@ -254,13 +254,13 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
   </tr>
   <tr>
     <td class="tg-7zrl" rowspan="4">PyTorch</td>
+    <td class="tg-7zrl">1.11.0+cpu</td>
+  </tr>
+  <tr>
     <td class="tg-7zrl">1.10.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">1.9.0+cpu</td>
-  </tr>
-  <tr>
-    <td class="tg-7zrl">1.8.0+cpu</td>
   </tr>
   <tr>
     <td class="tg-7zrl">IPEX</td>
