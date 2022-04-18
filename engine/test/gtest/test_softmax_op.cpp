@@ -107,6 +107,7 @@ bool CheckResult(const TestParams& t) {
   const auto& q = t.args.second;
   try {
     executor::SoftmaxOperator smax_op(p.conf);
+    smax_op.Prepare(p.input, p.output);
     smax_op.Reshape(p.input, p.output);
     smax_op.Forward(p.input, p.output);
   } catch (const dnnl::error& e) {
