@@ -103,7 +103,9 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   // Step 1: Construct Tensor config ptr
   const auto& src_shape = input_shape[0];
   TensorConfig* src_config = new TensorConfig("src", src_shape);
-  std::vector<TensorConfig*> input_config = {src_config};
+  const auto& slice_shape = input_shape[1];
+  TensorConfig* slice_config = new TensorConfig("slice", slice_shape);
+  std::vector<TensorConfig*> input_config = {src_config, slice_config};
   std::vector<int64_t> dst_shape = {};
   TensorConfig* dst_config = new TensorConfig("dst", dst_shape);
   std::vector<TensorConfig*> output_config = {dst_config};
@@ -134,13 +136,14 @@ std::pair<OpArgs, OpArgs> GenerateFp32Case(const std::vector<std::vector<int64_t
   };
 
   auto src_tensors = make_tensor_obj(src_config);
+  auto slice_tensors = make_tensor_obj(slice_config);
   Tensor* dst_tensor = new Tensor(*dst_config);
   dst_tensor->add_tensor_life(1);
   Tensor* dst_tensor_copy = new Tensor(*dst_config);
   dst_tensor_copy->add_tensor_life(1);
 
-  OpArgs op_args = {{src_tensors.first}, {dst_tensor}, op_config};
-  OpArgs op_args_copy = {{src_tensors.second}, {dst_tensor_copy}, op_config};
+  OpArgs op_args = {{src_tensors.first, slice_tensors.first}, {dst_tensor}, op_config};
+  OpArgs op_args_copy = {{src_tensors.second, slice_tensors.second}, {dst_tensor_copy}, op_config};
 
   return {op_args, op_args_copy};
 }
@@ -152,10 +155,12 @@ static auto CasesFp32 = []() {
 
   // Config
   std::vector<int64_t> src_shape;
+  std::vector<int64_t> slice_shape;
 
   // case: roberta
   src_shape = {2, 128};
-  cases.push_back({GenerateFp32Case({src_shape}, "roberta")});
+  slice_shape = {128};
+  cases.push_back({GenerateFp32Case({src_shape, slice_shape}, "roberta")});
 
   return ::testing::ValuesIn(cases);
 };
