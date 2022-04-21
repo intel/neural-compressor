@@ -38,7 +38,8 @@ def build_static_yaml():
         evaluation:
           accuracy:
             metric:
-              topk: 1
+              MSE:
+                compare_label: False
 
         tuning:
           accuracy_criterion:
@@ -71,7 +72,8 @@ def build_static_yaml():
         evaluation:
           accuracy:
             metric:
-              topk: 1
+              MSE:
+                compare_label: False
 
         tuning:
           accuracy_criterion:
@@ -130,7 +132,8 @@ def build_dynamic_yaml():
         evaluation:
           accuracy:
             metric:
-              topk: 1
+              MSE:
+                compare_label: False
 
         tuning:
           accuracy_criterion:
