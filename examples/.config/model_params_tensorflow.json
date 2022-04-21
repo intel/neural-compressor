@@ -624,7 +624,7 @@
     "densenet-161": {
       "model_src_dir": "oob_models/quantization/ptq",
       "dataset_location": "",
-      "input_model": "/tf_dataset/tensorflow/tf_oob_models/ov/all_tf_models/densenet/161/tf/densenet-161.pb",
+      "input_model": "/tf_dataset/tensorflow/tf_oob_models/ov/all_tf_models/classification/densenet/161/tf/densenet-161.pb",
       "yaml": "config.yaml",
       "strategy": "basic",
       "batch_size": 100,
