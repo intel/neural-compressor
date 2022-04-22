@@ -175,15 +175,25 @@ def main():
     param_file = args.param_file
     batch_size = args.batch_size
     logger.info('batch size = %d for inference' % batch_size)
+
+    symnet = mx.sym.load(symbol_file)
+    if check_mx_version('2.0.0'):
+        symnet = symnet.optimize_for('ONEDNN')
+    else:
+        symnet = symnet.get_backend_symbol('MKLDNN')
+
+    symblock = gluon.SymbolBlock(symnet, [mx.sym.var('data')])
     try:
-        symblock = gluon.SymbolBlock.imports(symbol_file, ['data'], param_file)
+        symblock.load_parameters(param_file, cast_dtype=True, dtype_source='saved')
     except AssertionError:
-        symblock = gluon.SymbolBlock.imports(symbol_file, ['data'])
-        symblock.load_parameters(param_file, allow_missing=True)
+        symblock.load_parameters(param_file, cast_dtype=True, dtype_source='saved',
+                                 allow_missing=True)
     params = symblock.collect_params()
     if 'softmax_label' in params:
         params['softmax_label'].shape = (batch_size,)
         params['softmax_label'].initialize(force_reinit=True)
+    for param in params.values():
+        param.grad_req = 'null'
     symblock.hybridize(static_alloc=True, static_shape=True)
 
     rgb_mean = args.rgb_mean
