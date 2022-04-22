@@ -92,7 +92,7 @@ void QuantizeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor
     min_data = static_cast<const float*>(dst_min_->data());
   }
   // quantize
-  if (src_data != nullptr && dst_data != nullptr && min_data != nullptr) {
+  if (src_data != nullptr && dst_data != nullptr) {
 #if __AVX512F__
     Quantize_avx512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
 #else
