@@ -39,10 +39,11 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
 
         target_nodes = cur_graph.query_fusion_pattern_nodes(
-            [["Pad"], ["Conv2D"], ('BiasAdd', 'Add')])
+            [["Pad"], ["Conv2D", "Conv3D", "DepthwiseConv2dNative"], ('BiasAdd', 'Add', 'AddV2')])
 
         for node_combination in target_nodes:
             conv_name = node_combination[1]
+
             pattern = node_combination[-1]
 
             if conv_name not in self.cfg:
@@ -68,13 +69,14 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
-            if any(padding_tensor) and tf.version.VERSION != '1.15.0-up3' : # pragma: no cover
+            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or tf.version.VERSION >= '2.8')
+            if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)
             cur_graph.remove_node(pad_node.input[1])
             conv_node = graph_info[node_combination[1]].node
             Helper.set_attr_int_list(conv_node, "padding_list", padding_tensor)
-            if any(padding_tensor) and tf.version.VERSION == '1.15.0-up3': # pragma: no cover
+            if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
                 Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
 
         return cur_graph.dump_graph()

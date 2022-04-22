@@ -138,6 +138,8 @@ class GraphConverter:
         self._itex_model.output_tensor_names = self.output_tensor_names
         self._itex_model.input_tensor_names = self.input_tensor_names
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
+        self._use_new_api = bool(tf.version.VERSION >= '2.8.0')
+
     # pylint: disable=no-member
     def _inference(self, model):
         """Run the calibration on the input graph
@@ -714,7 +716,7 @@ class GraphConverter:
 
         self._tmp_graph_def = FuseConvRequantizeTransformer(
             self._tmp_graph_def,
-            self.device).do_transformation()
+            self.device, self._use_new_api).do_transformation()
 
         if not self.fake_quant:
             self._tmp_graph_def = FuseMatMulRequantizeTransformer(

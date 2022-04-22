@@ -258,6 +258,20 @@ class QuantizeGraphHelper():
                 tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
 
     @staticmethod
+    def set_attr_string_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
+        list_value = attr_value_pb2.AttrValue.ListValue(s=value)
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+
+    @staticmethod
+    def set_attr_type_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
+        list_value = attr_value_pb2.AttrValue.ListValue(type=value)
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+
+    @staticmethod
     def set_attr_string(node, key, value):
         """Set the node's attr which data type is string.
         """
@@ -335,9 +349,13 @@ class QuantizeGraphHelper():
         float_tensor = tensor_util.MakeNdarray(input_node.attr["value"].tensor)
         epsilon = 1e-4  # Needs to be set empirically if accuracy is not satisfactory
         range_coefficent = 127 / (2 ** weight_bit - 1)
-        if host_op_type in ("Conv2D", "MatMul"):
+        if host_op_type in ("Conv2D", "MatMul", "Conv3D"):
             if per_channel:
-                ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
+                if host_op_type == 'Conv3D':
+                    ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
+                else:
+                    ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
+
                 ranges *= range_coefficent
                 min_value = -ranges
                 max_value = ranges

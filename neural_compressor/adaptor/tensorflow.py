@@ -35,8 +35,10 @@ tensorflow = LazyImport('tensorflow')
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
         "Conv2D": "conv2d",
+        "Conv3D": "conv3d",
         "DepthwiseConv2dNative": "conv2d",
         "MaxPool": "pooling",
+        "MaxPool3D": "pooling",
         "AvgPool": "pooling",
         "ConcatV2": "concat",
         "MatMul": "matmul",
@@ -577,7 +579,7 @@ class TensorFlowAdaptor(Adaptor):
     def _dump_model_op_stats(self, model_graphdef):
         fp32_op_list = copy.deepcopy(
             self.query_handler.get_op_types_by_precision(precision='uint8'))
-        int8_op_prefix_list = ['QuantizedConv2D', 'QuantizedDepthwise',
+        int8_op_prefix_list = ['QuantizedConv2D', '_QuantizedConv3D', 'QuantizedDepthwise',
                                'QuantizedMaxPool', 'QuantizedAvgPool',
                                'QuantizedConcatV2', 'QuantizedMatMul']
         from tensorflow.python.framework import dtypes
@@ -634,6 +636,7 @@ class TensorFlowAdaptor(Adaptor):
         valid_precision = self.query_handler.get_mixed_precision_combination()
         op_capability = self.query_handler.get_quantization_capability()
         conv_config = copy.deepcopy(op_capability['uint8']['Conv2D'])
+        conv3d_config = copy.deepcopy(op_capability['uint8']['Conv3D'])
         matmul_config = copy.deepcopy(op_capability['uint8']['MatMul'])
         other_config = copy.deepcopy(op_capability['uint8']['default'])
         if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
@@ -675,6 +678,12 @@ class TensorFlowAdaptor(Adaptor):
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
                     )] = conv2d_int8_config
+                elif self.unify_op_type_mapping[node_op].find("conv3d") != -1:
+                    conv3d_int8_config = copy.deepcopy(conv3d_config)
+                    conv3d_int8_config['pattern'] = pattern_info
+                    self.quantizable_op_details[(
+                        node_name, self.unify_op_type_mapping[node_op]
+                    )] = conv3d_int8_config
                 elif self.unify_op_type_mapping[node_op].find("matmul") != -1:
 
                     matmul_int8_config = copy.deepcopy(matmul_config)

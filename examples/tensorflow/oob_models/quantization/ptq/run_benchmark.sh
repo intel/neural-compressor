@@ -114,8 +114,15 @@ function set_args {
   efficientnet-b5
   efficientnet-b7_auto_aug
   vggvox
+  ava-person-vehicle-detection-stage2-2_0_0
   --------
   )
+
+  models_need_use_nc_optimizer=(
+  --------
+  ava-person-vehicle-detection-stage2-2_0_0
+  --------
+  )  
 
   # neural_compressor graph_def
   models_need_nc_graphdef=(
@@ -176,6 +183,10 @@ function run_benchmark {
     if [[ "${models_need_nc_graphdef[@]}"  =~ " ${topology} " ]]; then
       echo "$topology need neural_compressor graph_def!"
       extra_cmd+=" --use_nc "
+    fi
+    if [[ "${models_need_use_nc_optimizer[@]}"  =~ " ${topology} " ]]; then
+      echo "$topology need to use pre optimizer!"
+      extra_cmd+=" --use_nc_optimize "
     fi
 
     python tf_benchmark.py \

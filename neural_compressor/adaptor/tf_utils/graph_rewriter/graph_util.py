@@ -75,8 +75,8 @@ class GraphAnalyzer():
                 if not has_relu:
                     return False
             return True
-        elif op_type in ("Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
-                         "MaxPool", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
+        elif op_type in ("Conv3D", "Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
+                         "MaxPool", "MaxPool3D", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
                          "Mean", "MatMul"):
             return self._has_positive_input(
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(
@@ -715,7 +715,30 @@ class GraphRewriterHelper():
         node.attr[key].CopyFrom(
             attr_value_pb2.AttrValue(
                 tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
-
+    @staticmethod
+    def set_attr_type_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
+        list_value = attr_value_pb2.AttrValue.ListValue(type=value)
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+    @staticmethod
+    def set_attr_string_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
+        list_value = attr_value_pb2.AttrValue.ListValue(s=value)
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+    @staticmethod
+    def set_attr_type_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
+        list_value = attr_value_pb2.AttrValue.ListValue(type=value)
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+    @staticmethod
+    def set_attr_string_list(node, key, value):
+        """Set the node's attr which data type is int list.
+        """
+        list_value = attr_value_pb2.AttrValue.ListValue(s=value)
+        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
     @staticmethod
     def set_attr_string(node, key, value):
         """Set the node's attr which data type is string.

@@ -37,7 +37,17 @@ class RerangeQuantizedConcat(GraphTransformBase):
         "QuantizedConv2DWithBiasAndReluAndRequantize",
         "QuantizedConv2DWithBiasSumAndReluAndRequantize",
         "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize")
-
+    fuse_requantized_bias_op_new_api =(
+        [b'BiasAdd', b'Requantize'],
+        [b'BiasAdd', b'Relu', b'Requantize'],
+        [b'BiasAdd', b'LeakyRelu', b'Requantize'],
+        [b'BiasAdd', b'Sum',  b'Relu',  b'Requantize']
+    )
+    fuse_requantized_relu_op_new_api =(
+        [b'BiasAdd', b'Relu', b'Requantize'],
+        [b'BiasAdd', b'LeakyRelu', b'Requantize'],
+        #[b'BiasAdd', b'Sum',  b'Relu',  b'Requantize']
+    )
     offset_map = {
         "QuantizedConv2DAndRequantize": 6,
         "QuantizedConv2DAndReluAndRequantize": 6,
@@ -45,7 +55,17 @@ class RerangeQuantizedConcat(GraphTransformBase):
         "QuantizedConv2DWithBiasAndReluAndRequantize": 7,
         "QuantizedConv2DWithBiasSumAndReluAndRequantize": 7,
         "QuantizedConv2DWithBiasSignedSumAndReluAndRequantize": 7
+    }    
+    offset_map_new_api = {
+        str([b'Requantize']): 6,
+        str([b'Relu', b'Requantize']): 6,
+        str([b'LeakyRelu', b'Requantize']): 6,
+        str([b'BiasAdd', b'Requantize']): 7,
+        str([b'BiasAdd', b'Relu', b'Requantize']): 7,
+        str([b'BiasAdd', b'LeakyRelu', b'Requantize']): 7,
+        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']): 10
     }
+   
 
     def __init__(self, input_pb, device):
         super().__init__(input_pb)
@@ -67,6 +87,10 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 concat_input_node_op_type = concat_input_node.op
                 if concat_input_node_op_type in self.offset_map:
                     quantized_conv_nodes.append(concat_input_node)
+                elif concat_input_node.op == "_QuantizedConv2D" and \
+                      'fused_ops' in concat_input_node.attr and \
+                      str(concat_input_node.attr['fused_ops'].list.s) in self.offset_map_new_api:
+                    quantized_conv_nodes.append(concat_input_node) 
                 elif concat_input_node_op_type in ("QuantizedMaxPool",
                                                    "QuantizedAvgPool"):
                     another_concat_node = self.node_mapping[
@@ -86,7 +110,10 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     break
 
             return can_rerange
-        elif op_type == "QuantizedConv2DWithBiasAndReluAndRequantize":
+        elif op_type == "QuantizedConv2DWithBiasAndReluAndRequantize" or \
+              (input_node.op == "_QuantizedConv2D" and \
+              'fused_ops' in input_node.attr and \
+              input_node.attr['fused_ops'].list.s in self.fuse_requantized_relu_op_new_api):
             can_rerange = True
             quantized_conv_nodes.append(input_node)
             return can_rerange
@@ -109,7 +136,13 @@ class RerangeQuantizedConcat(GraphTransformBase):
 
             for node in quantized_conv_nodes:
 
-                offset_value = self.offset_map[node.op]
+                offset_value = 6 
+                if node.op == "_QuantizedConv2D" and \
+                      'fused_ops' in node.attr and \
+                      str(node.attr['fused_ops'].list.s) in self.offset_map_new_api:
+                    offset_value = self.offset_map_new_api[str(node.attr['fused_ops'].list.s)]
+                else:
+                    offset_value = self.offset_map[node.op]
                 min_value_node = self.node_mapping[node.input[offset_value]]
                 max_value_node = self.node_mapping[node.input[offset_value +
                                                               1]]
@@ -121,7 +154,14 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     combined_max = max_value
 
             for node in quantized_conv_nodes:
-                offset_value = self.offset_map[node.op]
+                offset_value = 6
+                if node.op == "_QuantizedConv2D" and \
+                   'fused_ops' in node.attr and \
+                   str(node.attr['fused_ops'].list.s) in self.offset_map_new_api:
+                    offset_value = self.offset_map_new_api[str(node.attr['fused_ops'].list.s)]
+                else:
+                    offset_value = self.offset_map[node.op]
+
                 min_value_node = self.node_mapping[node.input[offset_value]]
                 max_value_node = self.node_mapping[node.input[offset_value +
                                                               1]]
@@ -145,7 +185,10 @@ class RerangeQuantizedConcat(GraphTransformBase):
         for node_name in self.node_mapping:
             current_node = self.node_mapping[node_name]
             current_node_op = current_node.op
-            if current_node_op in self.fused_requantized_bias_op:
+            if (current_node_op in self.fused_requantized_bias_op) or \
+              (current_node_op == "_QuantizedConv2D" and \
+              'fused_ops' in current_node.attr and \
+              current_node.attr['fused_ops'].list.s in self.fuse_requantized_bias_op_new_api):
                 done = False
                 another_conv_node = None
                 original_conv_node = current_node
@@ -153,6 +196,11 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     current_node = self.node_mapping[
                         self.get_node_name_from_input(current_node.input[0])]
                     if current_node.op in self.offset_map:
+                        another_conv_node = current_node
+                        done = True
+                    elif current_node.op == "_QuantizedConv2D" and \
+                          'fused_ops' in current_node.attr and \
+                          str(current_node.attr['fused_ops'].list.s) in self.offset_map_new_api:
                         another_conv_node = current_node
                         done = True
                     elif current_node.op == "QuantizedConcatV2":
@@ -171,9 +219,14 @@ class RerangeQuantizedConcat(GraphTransformBase):
 
                 if bias_node_type.type != dtypes.float32 or bias_node_type.type == dtypes.qint32:
                     continue
-
-                min_filter_node = self.node_mapping[original_conv_node.input[5]]
-                max_filter_node = self.node_mapping[original_conv_node.input[6]]
+                sum_off_set = 0 
+                if original_conv_node.op == "_QuantizedConv2D":
+                    if str(original_conv_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
+                        sum_off_set = 1
+                    #else:
+                    #    print(str(original_conv_node.attr['fused_ops'].list.s))
+                min_filter_node = self.node_mapping[original_conv_node.input[5+sum_off_set]]
+                max_filter_node = self.node_mapping[original_conv_node.input[6+sum_off_set]]
 
                 channel_size = 1 if not min_filter_node.attr[
                     'value'].tensor.tensor_shape.dim else min_filter_node.attr[
@@ -191,8 +244,15 @@ class RerangeQuantizedConcat(GraphTransformBase):
                         max_filter_node.attr['value'].tensor)
                     min_filter_tensor = tensor_util.MakeNdarray(
                         min_filter_node.attr['value'].tensor)
+               
+                offset_value = 6
+                if another_conv_node.op == "_QuantizedConv2D" and \
+                      'fused_ops' in another_conv_node.attr and \
+                      str(another_conv_node.attr['fused_ops'].list.s) in self.offset_map_new_api:
+                    offset_value = self.offset_map_new_api[str(another_conv_node.attr['fused_ops'].list.s)]
+                else:
+                    offset_value = self.offset_map[another_conv_node.op]
 
-                offset_value = self.offset_map[another_conv_node.op]
                 min_freezed_output_node = self.node_mapping[
                     another_conv_node.input[offset_value]]
                 max_freezed_output_node = self.node_mapping[
@@ -219,3 +279,5 @@ class RerangeQuantizedConcat(GraphTransformBase):
                         tensor=tensor_util.make_tensor_proto(
                             int32_bias, dtypes.int32, bias_tensor.shape)))
                 bias_node.attr['value'].tensor.dtype = dtypes.qint32.as_datatype_enum
+                if 'input_types' in original_conv_node.attr:
+                    original_conv_node.attr['input_types'].list.type[2] = original_conv_node.attr['Tbias'].type

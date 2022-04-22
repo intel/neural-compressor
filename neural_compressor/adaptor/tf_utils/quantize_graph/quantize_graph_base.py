@@ -116,12 +116,13 @@ class QuantizeNodeBase():
                      and not self.enable_s8)
                     ) and not self._find_relu_node(cur_node):
                     continue
-
+               
                 for sub_rule in patterns:
                     if v != sub_rule[0]:
                         continue
 
                     sub_rule_len = len(sub_rule)
+                    check_hardswish = True if sub_rule_len > 4  else False
                     self.logger.debug("Try to apply rule: {}".format(sub_rule))
 
                     cur_node_name = list(self.node_name_mapping.keys())[k]
@@ -129,7 +130,7 @@ class QuantizeNodeBase():
                     matched_node_name.clear()
 
                     matched_node_name.append(cur_node_name)
-
+                    count = 0
                     while sub_rule_len > 1:
                         if not self.node_name_mapping[cur_node_name].output:
                             self.logger.debug("Fail to match {}".format(sub_rule))
@@ -138,12 +139,26 @@ class QuantizeNodeBase():
                         next_node_name = self.node_name_mapping[
                             cur_node_name].output[0]
 
+                        is_shared_output = True if len(
+                            self.node_name_mapping[cur_node_name].output
+                        ) > 1 else False
+
+                        add_op_quantizable = True 
+                        is_hardswish = False
+                        if is_shared_output:
+                            if next_node_name.find('hard_swish') != -1:
+                                self.logger.debug("Find Hard Swish pattern ......")
+                                is_hardswish = True
+                                count = count + 1
+                                if next_node_name.find('add') == -1:
+                                    next_node_name = self.node_name_mapping[
+                                    cur_node_name].output[1]
+                            else:
+                                add_op_quantizable = False
                         next_node_op = self.node_name_mapping[
                             next_node_name].node.op
 
-                        add_op_quantizable = True
-
-                        if next_node_op in ("Add", "AddN"):
+                        if next_node_op in ("Add", "AddV2", "AddN"):
                             next_node = self.node_name_mapping[
                                 next_node_name].node
                             next_node_inputs = list(next_node.input)
@@ -159,34 +174,46 @@ class QuantizeNodeBase():
                                     add_op_quantizable = False
                                     break
 
-                        is_shared_output = True if len(
-                            self.node_name_mapping[cur_node_name].output
-                        ) > 1 else False
-
-                        if add_op_quantizable and not is_shared_output and \
-                                next_node_op == sub_rule[1 - sub_rule_len]:
-                            matched_node_name.append(next_node_name)
-                            sub_rule_len -= 1
-                            cur_node_name = next_node_name
+                        if add_op_quantizable and next_node_op == sub_rule[1 - sub_rule_len]:
+                            if not is_shared_output: 
+                                matched_node_name.append(next_node_name)
+                                sub_rule_len -= 1
+                                cur_node_name = next_node_name
+                            elif is_hardswish:
+                                matched_node_name.append(next_node_name)
+                                sub_rule_len -= 1
+                                cur_node_name = next_node_name
+                            else:
+                                matched_node_name.clear()
+                                self.logger.debug("Fail to match {}.".format(sub_rule))
+                                break
                         else:
                             matched_node_name.clear()
                             self.logger.debug("Fail to match {}.".format(sub_rule))
                             break
 
                     if sub_rule_len == 1:
-                        self.logger.debug("Match {} on nodes {}.".
+                         if check_hardswish and sub_rule[-1] == 'Mul' and \
+                            sub_rule[-2] == 'Mul' and sub_rule[-3] == 'Relu6' and \
+                            sub_rule[-4] == 'Add' and count != 1:
+                              matched_node_name.clear()
+                              self.logger.debug("Fail to match {}.".format(sub_rule))
+                              break
+                         self.logger.debug("Match {} on nodes {}.".
                                           format(sub_rule, matched_node_name))
-                        return sub_rule, matched_node_name
+                         return sub_rule, matched_node_name
 
         return None, None
 
     def _need_to_check(self, node_type):
-        op_list = ("ConcatV2", "Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
-                   "MaxPool", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
+        op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
+                   "MaxPool", "MaxPool3D", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
                    "CropAndResize", "Dequantize", "Mean", "MatMul", "FakeQuantWithMinMaxVars")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
+        #if node.op.find("HardSwish") != -1:
+        #    return False
         if node.op in ("Relu", "Relu6") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0))):
@@ -250,6 +277,8 @@ class QuantizeNodeBase():
                                              add_op_function):
         quantized_op_name = original_node.name + "_eightbit_quantized"
         quantized_op_type = "Quantized" + original_node.op
+        if bool(tf.version.VERSION >= '2.8.0') and original_node.op == "MaxPool3D":
+            quantized_op_type = "_Quantized" + original_node.op 
         all_input_names = self._add_eightbit_prologue_nodes(original_node.name)
         quantized_op_node = helper.create_node(quantized_op_type,
                                                quantized_op_name,

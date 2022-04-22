@@ -53,11 +53,28 @@ def initialize_graph(model_details, args, od_graph_def):
             input_data_type = [ tf_v1.convert_to_tensor(item).dtype.as_datatype_enum for item in model_details['input'].values() ]
 
             od_graph_def_tmp = od_graph_def
+
             od_graph_def = optimize_for_inference_lib.optimize_for_inference(
                 od_graph_def,  # inputGraph,
                 input_list,  # an array of the input nodes
                 output_list,  # an array of output nodes
                 input_data_type)
+
+            od_graph_def.library.CopyFrom(od_graph_def_tmp.library)
+
+        if args.use_nc_optimize:
+            od_graph_def_tmp = od_graph_def
+            from neural_compressor.adaptor.tensorflow import TensorflowQuery
+            from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
+            from neural_compressor.experimental import common
+            model = common.Model(od_graph_def)
+            query_handler = TensorflowQuery(local_config_file=os.path.join(
+                                            os.path.dirname(__file__) + "tensorflow.yaml"))
+            optimization = query_handler.get_grappler_optimization_cfg()
+            pre_optimizer_handle = PreOptimization(model, optimization)
+            pre_optimized_model = pre_optimizer_handle.get_optimized_model()
+            od_graph_def = pre_optimized_model.graph_def
+
             od_graph_def.library.CopyFrom(od_graph_def_tmp.library)
 
         tf_v1.import_graph_def(od_graph_def, name='g',
@@ -231,6 +248,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action='store_true', help="Benchmark.")
     parser.add_argument("--use_nc", action='store_true', help="Find input/output via neural_compressor.")
     parser.add_argument("--output_name", nargs='*', help="Specify output for neural_compressor ckpt.")
+    parser.add_argument("--use_nc_optimize", action='store_true', help="use nc pre optimizer.")    
     # tuning
     parser.add_argument("--yaml", type=str, help="config yaml file of neural_compressor.", default='./config.yaml')
     parser.add_argument("--tune", action='store_true', help="Do neural_compressor optimize.")

@@ -64,7 +64,9 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
 
         self.all_quantizable_node = []
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
+        self.register_transformer("MaxPool3D", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
+        self.register_transformer("Conv3D", FuseNodeStartWithConv2d)
         self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
@@ -90,7 +92,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     start_node_name=node.name, device=self.device, \
                     fake_quant=self.fake_quant).apply_the_transform()
                 if quantizable_node_names:
-                    if node.op in ('ConcatV2', 'MaxPool', 'AvgPool'):
+                    if node.op in ('ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool'):
                         self.all_quantizable_node.extend([[i] for i in quantizable_node_names])
                     else:
                         self.all_quantizable_node.append(quantizable_node_names)
