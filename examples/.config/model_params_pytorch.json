@@ -603,6 +603,15 @@
       "batch_size": 1,
       "new_benchmark": false
     },
+    "ssd_resnet34_ipex": {
+      "model_src_dir": "object_detection/ssd_resnet34/quantization/ptq/ipex",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
+      "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34_ipex/resnet34-ssd1200.pth",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": false
+    },
     "ssd_resnet34_qat_fx": {
       "model_src_dir": "object_detection/ssd_resnet34/quantization/qat/fx",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco",

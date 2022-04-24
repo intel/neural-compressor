@@ -1996,6 +1996,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                     q_model = optimization.fuse(q_model)
                 except:
                     q_model = q_model
+                try:
+                    q_model.model = optimization.fuse(q_model.model)
+                except:
+                    q_model = q_model
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model, dataloader, iterations,
                                    ipex_conf, tune_cfg.get('calib_sampling_size', 1))
@@ -2249,6 +2253,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 
                 try:
                     init_model = optimization.fuse(init_model)
+                except:
+                    init_model = init_model
+                try:
+                    init_model.model = optimization.fuse(init_model.model)
                 except:
                     init_model = init_model
             self.model_calibration(
