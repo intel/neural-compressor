@@ -60,7 +60,7 @@
             'activation': {
                         'dtype': ['fp32'],
                         'compute_dtype': ['None'],
-                        'scheme': ['asym_float'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['placeholder']
                         },
@@ -145,7 +145,7 @@
             'activation': {
                         'dtype': ['fp32'],
                         'compute_dtype': ['None'],
-                        'scheme': ['asym_float'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['placeholder']
                         },
@@ -223,7 +223,7 @@
             'activation': {
                         'dtype': ['fp32'],
                         'compute_dtype': ['None'],
-                        'scheme': ['asym_float'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['placeholder']
                         },
