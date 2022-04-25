@@ -90,7 +90,7 @@ void ReshapeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*
   auto life_count = MemoryAllocator::get().CheckMemory(data);
 
   // set data is inplace mamupulation, will reset so no need
-  if (life_count == 1 || life_count == -1) {
+  if (life_count == 1) {
     src_ptr->unref_data(true);
     dst_ptr->set_data(data);
     if (input.size() == 2) input[1]->unref_data();

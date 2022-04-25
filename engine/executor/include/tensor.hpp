@@ -96,7 +96,9 @@ class Tensor {
 
   inline const string& name() const { return name_; }
   inline const int life() const { return life_count_; }
-  inline const int left_life() const { return MemoryAllocator::get().CheckMemory(data_); }
+  inline const int left_life() const {
+    return MemoryAllocator::get().CheckMemory(data_);
+  }  // return -1 represent the data should always be hold.
   inline const void* raw_data() const { return data_; }
   inline const vector<int64_t>& shape() const { return shape_; }
   inline const vector<int64_t>& location() const { return location_; }

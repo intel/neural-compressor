@@ -92,7 +92,7 @@ void LayerNormOperator::Forward(const vector<Tensor*>& input, const vector<Tenso
   // Inplace Op
   Tensor* dst_ptr = output[0];
   vector<Tensor*> inputs(input);
-  if ((input.size() == 3) && (input[0] != nullptr) && (input[0]->size() >= dst_ptr->size())) {
+  if (input.size() == 3 && input[0] != nullptr && input[0]->left_life() == 1 && input[0]->size() >= dst_ptr->size()) {
     void* input_ptr = input[0]->mutable_data();
     input[0]->unref_data(true);
     dst_ptr->set_data(input_ptr);

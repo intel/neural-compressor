@@ -118,9 +118,18 @@ void ReorderOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*
 // 2. inference kernel(for int8 and f32)
 void ReorderOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   if (post_ != nullptr) {
+    LOG(INFO) << "reorder has post op " << post_->name();
     void* post_ptr = post_->mutable_data();
-    post_->unref_data(true);
-    dst_->set_data(post_ptr);
+    if (post_->left_life() == 1) {
+      post_->unref_data(true);
+      dst_->set_data(post_ptr);
+    } else {
+      int data_size = post_->size();
+      string data_type = post_->dtype();
+      void* dst_data = dst_->mutable_data();
+      memcpy(dst_data, post_ptr, data_size * type2bytes[data_type]);
+      LOG(WARNING) << "post tensor will be used by multi node...";
+    }
   }
 
   dnnl::stream s(eng_);

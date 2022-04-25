@@ -86,18 +86,28 @@ void BinaryAddOperator::Forward(const vector<Tensor*>& input, const vector<Tenso
   // Inplace Op: 1. append_sum. 2. non-append_sum
   Tensor* dst_ptr = output[0];
   vector<Tensor*> inputs(input);
-  if (!append_sum_ && (input.size() == 2) && (input[0] != nullptr) && (input[0]->size() >= dst_ptr->size())) {
+  if (!append_sum_ && input.size() == 2 && input[0] != nullptr && input[0]->left_life() == 1 &&
+      input[0]->size() >= dst_ptr->size()) {
     void* input_ptr = input[0]->mutable_data();
     input[0]->unref_data(true);
     dst_ptr->set_data(input_ptr);
     inputs = {input[1]};
-  } else if (append_sum_ && (input.size() >= 3) && (input[2] != nullptr) && (input[2]->size() >= dst_ptr->size())) {
-    void* input_ptr = input[2]->mutable_data();
-    input[2]->unref_data(true);
-    dst_ptr->set_data(input_ptr);
-    inputs = {input[0], input[1]};
+  } else if (append_sum_ && input.size() >= 3 && input[2] != nullptr && input[2]->size() >= dst_ptr->size()) {
+    if (input[2]->left_life() == 1) {
+      void* input_ptr = input[2]->mutable_data();
+      input[2]->unref_data(true);
+      dst_ptr->set_data(input_ptr);
+      inputs = {input[0], input[1]};
+    } else {
+      int data_size = input[2]->size();
+      string data_type = input[2]->dtype();
+      void* post_data_ptr = const_cast<void*>(input[2]->data());
+      void* dst_data = dst_ptr->mutable_data();
+      memcpy(dst_data, post_data_ptr, data_size * type2bytes[data_type]);
+      LOG(WARNING) << "post tensor will be used by multi node...";
+    }
   }
-  auto dst_data = output[0]->mutable_data();
+  auto dst_data = dst_ptr->mutable_data();
 
   // 1. Prepare memory objects with data_ptr
   dnnl::stream s(eng_);
