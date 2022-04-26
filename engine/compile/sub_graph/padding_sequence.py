@@ -147,7 +147,7 @@ class PaddingSequence(Pattern):
             # But in some other models, like minilm, they has smaller attention head channel.
             # Use this dict to maintain the attr of padding_sequence operation.
             # The last key is for debug and tell the info of unknown model.
-            heads_num_dict = {1024: 16, 768: 12, 384: 12, 256: 4, -1: -1}
+            heads_num_dict = {1024: 16, 768: 12, 384: 12, 256: 4, 128: 2, -1: -1}
             node_name = 'padding_sequence'
             heads_num = int(heads_num_dict[hidden_size])
             input_data = model.nodes[0]

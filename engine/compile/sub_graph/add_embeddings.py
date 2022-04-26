@@ -177,10 +177,8 @@ class AddEmbeddings(Pattern):
                                                                         pattern_dict, model)
             if len(new_node_names) != 0:
                 for j in range(len(new_node_names)):
-                    add_node = ret_old_nodes[j][0]
-                    pre_node = model.get_node_by_name(add_node.input_tensors[0].source_op[0])
-                    hidden_size = int(pre_node.attr['dst_shape'].split(',')[-1])
                     ln_node = ret_old_nodes[j][1]
+                    hidden_size = int(ln_node.input_tensors[-1].shape[-1])
                     epsilon = ln_node.attr['epsilon']
                     _set_attr(hidden_size, epsilon, new_node_names[j], model)
                     if len(pattern_dict['patterns']['in'][0]) == 2:

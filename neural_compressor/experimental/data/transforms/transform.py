@@ -2172,8 +2172,8 @@ class CollectTransform(BaseTransform):
         return self.all_sample
 
 @transform_registry(transform_type="SquadV1", \
-                process="postprocess", framework="tensorflow, engine")
-class SquadV1PostTransform(BaseTransform):
+                process="postprocess", framework="tensorflow")
+class TFSquadV1PostTransform(BaseTransform):
     """Postprocess the predictions of bert on SQuAD.
 
     Args:
@@ -2238,8 +2238,8 @@ class SquadV1PostTransform(BaseTransform):
                     end_logits=[float(x) for x in end_logits.flat]))
 
         return processed_results
-
-    def __call__(self, sample):
+    
+    def get_postprocess_result(self, sample):
         if sample == (None, None):
             return (None, None)
         all_results, label = sample
@@ -2373,6 +2373,25 @@ class SquadV1PostTransform(BaseTransform):
                 all_predictions[example.qas_id] = nbest_json[0]["text"]
         return (all_predictions, label)
 
+    def __call__(self, sample):
+        return self.get_postprocess_result(sample)   
+
+@transform_registry(transform_type="SquadV1", \
+                process="postprocess", framework="engine")
+class EngineSquadV1PostTransform(TFSquadV1PostTransform):
+    """ Postprocess the predictions of bert on SQuADV1.1
+        See class TFSquadV1PostTransform for more details """
+
+    def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
+        max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
+        super().__init__(label_file, vocab_file, n_best_size, max_seq_length, \
+                max_query_length, max_answer_length, do_lower_case, doc_stride)
+        self.length = len(self.eval_features)
+        self.collect_data = CollectTransform(length=self.length)
+
+    def __call__(self, sample):
+        sample = self.collect_data(sample)
+        return self.get_postprocess_result(sample)
 
 @transform_registry(transform_type="ParseDecodeVoc", \
                     process="preprocess", framework="tensorflow")

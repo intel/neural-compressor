@@ -231,7 +231,7 @@ class EngineAdaptor(Adaptor):
                 metric.reset()
             self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
                 not metric.compare_label for metric in metrics])
-
+      
         for idx, (inputs, labels) in enumerate(dataloader):
             if measurer is not None:
                 measurer.start()

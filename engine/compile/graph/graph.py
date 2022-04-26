@@ -409,7 +409,8 @@ class Graph(object):
                                         "u8": np.uint8,
                                         "bf16": np.uint16,
                                        }
-                        tensor_data = np.frombuffer(tensor_data, dtype=DTYPES_DICT[tensor_dtype])
+                        tensor_data = np.frombuffer(tensor_data, dtype=DTYPES_DICT[tensor_dtype]).\
+                        reshape(tensor_shape)
                     tensorclass = Tensor()
                     if tensor_location == None:
                         tensorclass = Tensor(tensor_name, ['input_data'], [], tensor_shape,
@@ -435,6 +436,7 @@ class Graph(object):
                 for tensor_name in d['model']['operator'][node]['output']:
                     tensor = Tensor(tensor_name, [node])
                     tensor_name_2_class[tensor_name] = tensor
+                    tensor.source_op.append(node)
                     output_tensors.append(tensor)
                 for tensor_name in d['model']['operator'][node]['input']:
                     tensor = tensor_name_2_class[tensor_name]

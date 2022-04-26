@@ -27,13 +27,13 @@ evaluation:
       SquadF1:
     postprocess:
       transform:
-        Collect:
-          length: 10833
         SquadV1:
-          label_file: /path/to/dev-v1.1.json
-          vocab_file: /path/to/vocab.txt
+          label_file: ./build/data/dev-v1.1.json
+          vocab_file: ./build/data/vocab.txt
           do_lower_case: True
+          max_seq_length: 384
   performance:
+    warmup: 5
     iteration: 10
     configs:
         num_of_instance: 1
