@@ -1178,7 +1178,17 @@ class TensorflowQuery(QueryBackendCapability):
         Returns:
             [dictionary]: the content for specific version.
         """
+        from functools import cmp_to_key
+        from pkg_resources import parse_version
         config = None
+
+        def _compare(version1, version2):
+            if parse_version(version1) == parse_version(version2):
+                return 0
+            elif parse_version(version1) < parse_version(version2):
+                return -1
+            else:
+                return 1 
 
         fallback_list = []
         for sub_data in data:
@@ -1191,20 +1201,24 @@ class TensorflowQuery(QueryBackendCapability):
                 return sub_data
             else:
                 sorted_list = copy.deepcopy(sub_data['version']['name'])
-                if isinstance(sorted_list, list):
-                    sorted_list.sort()
-                else:
-                    sorted_list = list(sorted_list)
                 sorted_list.remove('default') if 'default' in sorted_list else None
-                import bisect
-                position = bisect.bisect(sorted_list, self.version)
-                if position != 0:
-                    fallback_list.append([sorted_list[position - 1], sub_data])
+                if isinstance(sorted_list, list):
+                    # TensorFlow 1.15.0-up1/up2/up3 release versions are abnoraml release naming
+                    # convention. Replacing them with dot for version comparision. 
+                    sorted_list = [i.replace('-up', '.') for i in sorted_list]
+                    sorted_list = sorted(sorted_list, key=cmp_to_key(_compare), reverse=True)
+                else:
+                    assert isinstance(sorted_list, str)
+                    sorted_list = list(sorted_list.replace('-up', '.').split())
+                for i in sorted_list:
+                    if parse_version(self.version) >= parse_version(i):
+                        fallback_list.append([i, sub_data])
+                        break
 
         assert config != None, "The default config in framework yaml must exist."
         nearest_version = str(0)
         for fallback in fallback_list:
-            if fallback[0] > nearest_version:
+            if parse_version(fallback[0]) > parse_version(nearest_version):
                 nearest_version = fallback[0]
                 config = fallback[1]
 
