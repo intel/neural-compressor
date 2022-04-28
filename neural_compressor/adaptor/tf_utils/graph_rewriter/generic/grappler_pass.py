@@ -18,7 +18,7 @@
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from ..util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 from tensorflow.python.training import saver
 from tensorflow.core.protobuf import config_pb2

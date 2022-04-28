@@ -21,7 +21,7 @@ from tensorflow.python.framework import tensor_util
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from ..util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 class FusePadWithConv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv2D

@@ -22,7 +22,7 @@ from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from ..util import version1_gt_version2,version1_eq_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 
 
 class InjectDummyBiasAddOptimizer(GraphRewriterBase):

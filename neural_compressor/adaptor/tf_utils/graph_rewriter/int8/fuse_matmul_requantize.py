@@ -26,7 +26,7 @@ from tensorflow.python.framework import dtypes
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from ..util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 
 class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
