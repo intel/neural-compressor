@@ -40,6 +40,7 @@ from .switch_optimizer import SwitchOptimizer
 from .move_squeeze_after_relu import MoveSqueezeAfterReluOptimizer
 from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
+from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
 
 class PreOptimization():
     def __init__(self, model, optimization):
@@ -114,6 +115,8 @@ class PreOptimization():
         self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(
             self._tmp_graph_def).do_transformation()
