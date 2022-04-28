@@ -194,7 +194,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
             if "padding_list" in quantized_node.attr:
-                new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
+                new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
             
@@ -408,7 +408,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.input.append(original_summand_node.name + ':{}'.format(j))
 
             if "padding_list" in quantized_node.attr:
-                new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
+                new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
 
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
