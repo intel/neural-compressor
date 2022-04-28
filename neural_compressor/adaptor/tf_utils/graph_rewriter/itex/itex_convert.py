@@ -34,9 +34,10 @@ class GenerateITEXModel(GraphRewriterBase):
     Return: converted model
     """
 
-    def __init__(self, model, calibration_data):
+    def __init__(self, model, calibration_data, device):
         super().__init__(model)
         self.data = calibration_data
+        self.device = device
 
     @dump_elapsed_time("Pass GenerateITEXGraph")
     def do_transformation(self):
@@ -59,9 +60,11 @@ class GenerateITEXModel(GraphRewriterBase):
         graph_info = g.parse_graph()
         for op_name in quantizable_op_names:
             min_node = Helper.create_constant_node(
-                op_name + '_min', np.min(itex_min_max_values[op_name+'__min']), dtypes.float32)
+                op_name + '_min', \
+                    np.min(itex_min_max_values[op_name+'__min']), dtypes.float32, device=self.device)
             max_node = Helper.create_constant_node(
-                op_name + '_max', np.max(itex_min_max_values[op_name+'__max']), dtypes.float32)
+                op_name + '_max', \
+                    np.max(itex_min_max_values[op_name+'__max']), dtypes.float32, device=self.device)
             quantizable_node_input = graph_info[op_name].node.input[0]
             quant_v2_node = Helper.create_node(
                 "QuantizeV2", op_name + '_quantize',
@@ -105,9 +108,9 @@ class GenerateITEXModel(GraphRewriterBase):
             min_value = np.min(weight_tensor)
             max_value = np.max(weight_tensor)
             min_const_node = Helper.create_constant_node(
-                weight_name + '_min', min_value, dtypes.float32)
+                weight_name + '_min', min_value, dtypes.float32, device=self.device)
             max_const_node = Helper.create_constant_node(
-                weight_name + '_max', max_value, dtypes.float32)
+                weight_name + '_max', max_value, dtypes.float32, device=self.device)
             quant_node = Helper.create_node(
                 "QuantizeV2", weight_name + '_quant',
                 [weight_name, weight_name + '_min', weight_name + '_max'])

@@ -547,7 +547,7 @@ class GraphConverter:
 
                 if self.itex_mode:
                     self._itex_model.graph_def = GenerateITEXModel(
-                        self._itex_model, self._calibration_data).do_transformation()
+                        self._itex_model, self._calibration_data, self.device).do_transformation()
                     self._itex_model.graph_def.library.CopyFrom(
                         self.model.graph_def.library)
 
