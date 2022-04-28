@@ -843,9 +843,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
                 quantized_node_name = node.name + "_eightbit_quantized_depthwise_conv"
                 if node.op == "Conv2D":
-                    # quantized_node_name = node.name + "_eightbit_quantized_conv"
-                    quantized_node_name = node.name if node.name in self.output_names \
-                                                    else node.name + "_eightbit_quantized_conv"  
+                    quantized_node_name = node.name + "_eightbit_quantized_conv"
+                    
                 node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
                         else '_QuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
