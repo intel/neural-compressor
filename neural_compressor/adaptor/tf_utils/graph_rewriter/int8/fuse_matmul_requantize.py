@@ -26,6 +26,7 @@ from tensorflow.python.framework import dtypes
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
+from ..util import version1_gt_version2
 
 
 class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
@@ -43,7 +44,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         fuse_pattern = []
-        if tf.version.VERSION in ("1.15.0-up2", "1.15.0-up3") or tf.version.VERSION >= '2.2.0':
+        if tf.version.VERSION in ("1.15.0-up2", "1.15.0-up3") or version1_gt_version2(tf.version.VERSION, '2.1.0'):
             fuse_pattern = [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'], ('Softmax',)]
         float32_type = dtypes.float32.as_datatype_enum
         qint32_type = dtypes.qint32.as_datatype_enum

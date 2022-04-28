@@ -41,6 +41,16 @@ import prettytable as pt
 import psutil
 import subprocess
 from enum import Enum
+from pkg_resources import parse_version
+
+def version1_lt_version2(version1, version2):
+    return parse_version(version1) < parse_version(version2)
+    
+def version1_gt_version2(version1, version2):
+    return parse_version(version1) > parse_version(version2)
+
+def version1_eq_version2(version1, version2):
+    return parse_version(version1) == parse_version(version2)
 
 
 class LazyImport(object):

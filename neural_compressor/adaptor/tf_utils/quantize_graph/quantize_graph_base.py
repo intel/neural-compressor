@@ -23,7 +23,7 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 from .quantize_graph_common import QuantizeGraphHelper as helper
-
+from ..util import version1_gt_version2, version1_lt_version2, version1_eq_version2
 
 class QuantizeGraphBase():
     """
@@ -81,7 +81,8 @@ class QuantizeNodeBase():
         self.weight_bit = kwargs['op_wise_cfg'][3]
         self.start_node_name = kwargs['start_node_name']
         self.device = kwargs['device']
-        self.enable_s8 = bool(tf.version.VERSION >= '2.1.0' or \
+        self.enable_s8 = bool(version1_gt_version2(tf.version.VERSION, '2.1.0') or \
+                    version1_eq_version2(tf.version.VERSION, '2.1.0') or \
             tf.version.VERSION.find('1.15.0-up') != -1)
 
     def apply_the_transform(self):
@@ -277,7 +278,7 @@ class QuantizeNodeBase():
                                              add_op_function):
         quantized_op_name = original_node.name + "_eightbit_quantized"
         quantized_op_type = "Quantized" + original_node.op
-        if bool(tf.version.VERSION >= '2.8.0') and original_node.op == "MaxPool3D":
+        if version1_gt_version2(tf.version.VERSION, '2.7.0') and original_node.op == "MaxPool3D":
             quantized_op_type = "_Quantized" + original_node.op 
         all_input_names = self._add_eightbit_prologue_nodes(original_node.name)
         quantized_op_node = helper.create_node(quantized_op_type,

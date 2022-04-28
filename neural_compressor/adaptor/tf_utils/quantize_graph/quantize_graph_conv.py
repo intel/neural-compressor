@@ -23,7 +23,7 @@ from tensorflow.python.framework import tensor_util
 
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
-
+from ..util import version1_gt_version2, version1_lt_version2, version1_eq_version2
 import numpy as np
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
@@ -33,8 +33,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
-
-        self.use_new_api = bool(tf.version.VERSION >= '2.8.0')
+        self.use_new_api = version1_gt_version2(tf.version.VERSION, '2.8.0')
+        #self.use_new_api = bool(tf.version.VERSION >= '2.8.0')
         if self.use_new_api:
             self.fusion_mapping = {
                 'Conv2DBiasAdd': self.apply_newly_conv_biasadd_fusion,

@@ -21,6 +21,8 @@ from tensorflow.python.framework import tensor_util
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
+from ..util import version1_gt_version2
+
 class FusePadWithConv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv2D
     Pad + Conv2D --> Conv2D
@@ -69,7 +71,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
-            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or tf.version.VERSION >= '2.8')
+            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or version1_gt_version2(tf.version.VERSION, '2.7'))
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)

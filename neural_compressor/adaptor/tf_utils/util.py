@@ -20,14 +20,29 @@ import os
 import numpy as np
 from google.protobuf import text_format
 import tensorflow as tf
-
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from neural_compressor.utils import logger
 from .graph_rewriter.graph_util import GraphAnalyzer
+from pkg_resources import parse_version
 
+def version1_lt_version2(version1, version2):
+    return parse_version(version1) < parse_version(version2)
+    
+def version1_gt_version2(version1, version2):
+    return parse_version(version1) > parse_version(version2)
+
+def version1_eq_version2(version1, version2):
+    return parse_version(version1) == parse_version(version2)
+
+def version1_gte_version2(version1, version2):
+    return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
+
+def version1_lte_version2(version1, version2):
+    return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
+    
 def disable_random(seed=1):
     """A Decorator to disable tf random seed.
     """

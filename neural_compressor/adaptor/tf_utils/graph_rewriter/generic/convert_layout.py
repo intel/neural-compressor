@@ -23,6 +23,7 @@ from tensorflow.python.grappler import tf_optimizer
 from tensorflow.core.protobuf import meta_graph_pb2
 from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
+from ..util import version1_gt_version2,version1_eq_version2
 
 class ConvertLayoutOptimizer(GraphRewriterBase):
     """ The layout convertion optimizer, convert NCHW to NHWC format.
@@ -47,7 +48,7 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
                node.attr['data_format'].s == b'NCHW':
                 convert = True
                 break
-        if convert and tf.version.VERSION >= '2.4.0':
+        if convert and version1_gt_version2(tf.version.VERSION, '2.3.0'):
 
             g = tf.Graph()
             with g.as_default(): # pylint: disable=not-context-manager

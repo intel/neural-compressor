@@ -37,7 +37,8 @@ from neural_compressor.experimental.common import Model
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import iterator_sess_run
+from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2,version1_lt_version2
+from .util import version1_gte_version2,version1_lte_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
@@ -138,7 +139,7 @@ class GraphConverter:
         self._itex_model.output_tensor_names = self.output_tensor_names
         self._itex_model.input_tensor_names = self.input_tensor_names
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
-        self._use_new_api = bool(tf.version.VERSION >= '2.8.0')
+        self._use_new_api = bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
 
     # pylint: disable=no-member
     def _inference(self, model):
@@ -197,19 +198,19 @@ class GraphConverter:
                 from tensorflow.python.util._pywrap_util_port import IsMklEnabled
             else:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
-            if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
+            if IsMklEnabled() and (version1_lte_version2(TF_SUPPORTED_MIN_VERSION, tf.version.VERSION)):
                 is_supported_version = True
 
-            if tf.version.VERSION >= '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
+            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
                 is_supported_version = True
 
-            if tf.version.VERSION >= '2.9.0':
+            if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
 
         except Exception as e:
             raise ValueError(e)
         finally:
-            if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
+            if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION):
                 logger.warning(
                     str('Please note the {} version of Intel® Optimizations for '
                         'TensorFlow is not fully verified! '
@@ -217,12 +218,11 @@ class GraphConverter:
                         'between {} and {} if meet problem.').format(tf.version.VERSION,
                                                                      TF_SUPPORTED_MIN_VERSION,
                                                                      TF_SUPPORTED_MAX_VERSION))
-            if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
+            if version1_eq_version2(tf.version.VERSION, '2.5.0') and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
                 logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
                              "when TensorFlow 2.5.0 installed.")
 
-            if tf.version.VERSION >= '2.6.0' and tf.version.VERSION < '2.9.0' \
-                    and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
                              "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 

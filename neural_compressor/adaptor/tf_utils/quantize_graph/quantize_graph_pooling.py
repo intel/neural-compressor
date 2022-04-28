@@ -20,11 +20,11 @@ from tensorflow.python.framework import dtypes
 
 from .quantize_graph_base import QuantizeNodeBase
 from .quantize_graph_common import QuantizeGraphHelper as helper
-
+from ..util import version1_gt_version2, version1_lt_version2, version1_eq_version2
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
     def _add_pool_function(self, original_node, quantized_op_node):
-        pooling_type = dtypes.quint8 if tf.version.VERSION < '2.6.0' or \
+        pooling_type = dtypes.quint8 if version1_lt_version2(tf.version.VERSION, '2.6.0') or \
             self._find_relu_node(original_node) else dtypes.qint8
         helper.set_attr_dtype(quantized_op_node, "T", pooling_type)
         helper.copy_attr(quantized_op_node, "ksize", original_node.attr["ksize"])
@@ -37,8 +37,8 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
             # If the tf version is lower than 2.5.0, we need to confirm the input
             # data type of pooling is unsigned.
             if v.node.name == self.start_node_name and \
-                (tf.version.VERSION >= '2.6.0' or
-                    tf.version.VERSION < '2.6.0' and self._find_relu_node(v.node)):
+                (version1_gt_version2(tf.version.VERSION, '2.5.0') or
+                    version1_lt_version2(tf.version.VERSION, '2.6.0') and self._find_relu_node(v.node)):
                 self.eightbitize_single_input_tensor_node(
                     v.node, self._add_pool_function)
                 self.quantizable_node_names.append(v.node.name)

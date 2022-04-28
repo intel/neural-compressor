@@ -24,7 +24,7 @@ from collections import OrderedDict, UserDict
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
-from ..utils.utility import Statistics, GLOBAL_STATE, MODE
+from ..utils.utility import Statistics, GLOBAL_STATE, MODE, version1_lt_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
@@ -937,7 +937,7 @@ class TensorFlowAdaptor(Adaptor):
         scale = None
         # quantize input only support tensorflow version > 2.1.0
         import tensorflow as tf
-        if tf.version.VERSION < '2.1.0':
+        if version1_lt_version2(tf.version.VERSION, '2.1.0'):
             logger.warning("Quantize input needs tensorflow 2.1.0 and newer.")
             return model, scale
 
