@@ -16,9 +16,13 @@ make -j
 ```
 
 ### Test
-After "Build" part,
 ```
-./tests/gtests/test_spmm_sparsednn_prim
+cd test/gtest/SparseLib/
+mkdir build
+cd build
+cmake ..
+make -j
+./test_spmm_default_kernel
 ```
 
 ## API reference for users
@@ -26,14 +30,14 @@ After "Build" part,
 ```cpp
 #include "interface.hpp"
   ...
-  operator_config op_cfg(ker_kind, ker_hypotype, eng_kind, ts_cfgs, op_attrs);
-  sparse_matmul_desc spmm_desc(op_cfg);
+  operator_desc op_desc(ker_kind, ker_prop, eng_kind, ts_descs, op_attrs);
+  sparse_matmul_desc spmm_desc(op_desc);
   sparse_matmul spmm_kern(spmm_desc);
 
   std::vector<const void*> rt_data = {data0, data1, data2, data3, data4};
   spmm_kern.execute(rt_data);
 ```
-See test_spmm_sparsednn_prim.cpp for details.
+See test_spmm_default_kernel.cpp for details.
 
 ## Developer guide for developers
 * The jit_domain/ directory, containing different JIT assemblies (Derived class of Xbyak::CodeGenerator).

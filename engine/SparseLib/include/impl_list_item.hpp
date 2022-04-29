@@ -16,7 +16,7 @@
 #define ENGINE_SPARSELIB_INCLUDE_IMPL_LIST_ITEM_HPP_
 #include <memory>
 #include "param_types.hpp"
-#include "operator_config.hpp"
+#include "operator_desc.hpp"
 #include "kernel_desc.hpp"
 
 namespace jd {
@@ -41,16 +41,16 @@ class impl_list_item_t {
   }
 
  public:
-  bool operator()(std::shared_ptr<const kernel_desc_t>& kd_ref, const operator_config& op_cfg) const {  // NOLINT
+  bool operator()(std::shared_ptr<const kernel_desc_t>& kd_ref, const operator_desc& op_desc) const {  // NOLINT
     if (create_kd_func_ == nullptr) {
       return false;
     }
-    auto status = create_kd_func_(kd_ref, op_cfg);
+    auto status = create_kd_func_(kd_ref, op_desc);
     return status;
   }
 
  private:
-  using create_kd_func_t = bool (*)(std::shared_ptr<const kernel_desc_t>&, const operator_config&);
+  using create_kd_func_t = bool (*)(std::shared_ptr<const kernel_desc_t>&, const operator_desc&);
   create_kd_func_t create_kd_func_ = nullptr;
 };
 }  // namespace jd

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
+project(sparselib_ut)
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -fpic -Wall -fopenmp -march=native")
 set(MAIN_SRC_GTEST "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")

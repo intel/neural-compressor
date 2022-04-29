@@ -25,12 +25,11 @@ enum class kernel_kind : uint8_t {
   sparse_matmul,
 };
 
-// The hypotypes of kernel, temporarily defined as a specific function or scenario. Further,
+// The propagation kind of kernel, temporarily defined as a specific function or scenario. Further,
 // the specific function can be implemented by different algorithms, e.g.: gemm, brgemm, ref.
-enum class kernel_hypotype : uint8_t {
+enum class kernel_prop : uint8_t {
   undef,
-  spmm_sd,  // sparse x dense matmul
-  spmm_ds,  // dense x sparse matmul
+  forward_inference,
 };
 
 // Data type.

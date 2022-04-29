@@ -25,10 +25,9 @@
 namespace jd {
 using dt = jd::data_type;
 using ft = jd::format_type;
-using hypo = jd::kernel_hypotype;
 
 struct op_args_t {
-  operator_config op_cfg;
+  operator_desc op_desc;
   std::vector<const void*> rt_data;
 };
 
@@ -37,23 +36,23 @@ struct test_params_t {
   bool expect_to_fail;
 };
 
-void get_true_data(const operator_config& op_cfg, const std::vector<const void*>& rt_data) {
+void get_true_data(const operator_desc& op_desc, const std::vector<const void*>& rt_data) {
   // shape configure alias
-  const auto& ts_cfgs = op_cfg.tensor_cfgs();
-  const auto& src0_cfg = ts_cfgs[ssd::WEI];
-  const auto& src1_cfg = ts_cfgs[ssd::SRC];
-  const auto& bias_cfg = ts_cfgs[ssd::BIAS];
-  const auto& dst_cfg = ts_cfgs[ssd::DST];
-  int dims = src0_cfg.shape().size();
-  int M = src0_cfg.shape()[0];
-  int K = src0_cfg.shape()[1];
-  int N = src1_cfg.shape()[1];
-  const auto& left_dt = src0_cfg.dtype();
-  const auto& right_dt = src1_cfg.dtype();
-  const auto& dst_dt = dst_cfg.dtype();
-  bool has_bias = !bias_cfg.shape().empty();
-  auto attrs_map = op_cfg.attrs();
-  bool append_sum = (attrs_map["append_sum"] == "true");
+  const auto& ts_descs = op_desc.tensor_descs();
+  const auto& src0_desc = ts_descs[ssd::WEI];
+  const auto& src1_desc = ts_descs[ssd::SRC];
+  const auto& bias_desc = ts_descs[ssd::BIAS];
+  const auto& dst_desc = ts_descs[ssd::DST];
+  int dims = src0_desc.shape().size();
+  int M = src0_desc.shape()[0];
+  int K = src0_desc.shape()[1];
+  int N = src1_desc.shape()[1];
+  const auto& left_dt = src0_desc.dtype();
+  const auto& right_dt = src1_desc.dtype();
+  const auto& dst_dt = dst_desc.dtype();
+  bool has_bias = !bias_desc.shape().empty();
+  auto attrs_map = op_desc.attrs();
+  bool append_sum = (attrs_map["post_op"] == "append_sum");
   std::vector<int64_t> left_stride = {K, 1};
   std::vector<int64_t> right_stride = {N, 1};
   std::vector<int64_t> dst_stride = {N, 1};
@@ -126,8 +125,8 @@ bool check_result(const test_params_t& t) {
   const auto& p = t.args.first;
   const auto& q = t.args.second;
   try {
-    const auto& op_cfg = p.op_cfg;
-    sparse_matmul_desc spmm_desc(op_cfg);
+    const auto& op_desc = p.op_desc;
+    sparse_matmul_desc spmm_desc(op_desc);
     sparse_matmul spmm_kern(spmm_desc);
     spmm_kern.execute(p.rt_data);
   } catch (const std::exception& e) {
@@ -138,14 +137,14 @@ bool check_result(const test_params_t& t) {
     }
   }
   if (!t.expect_to_fail) {
-    get_true_data(q.op_cfg, q.rt_data);
+    get_true_data(q.op_desc, q.rt_data);
     auto buf1 = p.rt_data[ssd::DST];
-    auto size1 = p.op_cfg.tensor_cfgs()[ssd::DST].size();
+    auto size1 = p.op_desc.tensor_descs()[ssd::DST].size();
     auto buf2 = q.rt_data[ssd::DST];
-    auto size2 = q.op_cfg.tensor_cfgs()[ssd::DST].size();
+    auto size2 = q.op_desc.tensor_descs()[ssd::DST].size();
     // Should compare buffer with different addresses
     EXPECT_NE(buf1, buf2);
-    const auto& dst_type = p.op_cfg.tensor_cfgs()[ssd::DST].dtype();
+    const auto& dst_type = p.op_desc.tensor_descs()[ssd::DST].dtype();
     if (dst_type == dt::fp32) {
       return compare_data<float>(buf1, size1, buf2, size2, 5e-3);
     } else if (dst_type == dt::s32) {
@@ -159,15 +158,15 @@ bool check_result(const test_params_t& t) {
   return false;
 }
 
-class SpmmSparsednnPrimTest : public testing::TestWithParam<test_params_t> {
+class SpmmDefaultKernelTest : public testing::TestWithParam<test_params_t> {
  protected:
-  SpmmSparsednnPrimTest() {}
-  virtual ~SpmmSparsednnPrimTest() {}
+  SpmmDefaultKernelTest() {}
+  virtual ~SpmmDefaultKernelTest() {}
   void SetUp() override {}
   void TearDown() override {}
 };
 
-TEST_P(SpmmSparsednnPrimTest, TestPostfix) {
+TEST_P(SpmmDefaultKernelTest, TestPostfix) {
   test_params_t t = testing::TestWithParam<test_params_t>::GetParam();
   EXPECT_TRUE(check_result(t));
 }
@@ -234,39 +233,41 @@ std::pair<const void*, const void*> make_data_obj(const std::vector<int64_t>& a_
   return std::pair<const void*, const void*>{data_ptr, data_ptr_copy};
 }
 
-std::pair<op_args_t, op_args_t> gen_case(const jd::kernel_kind ker_kind, const hypo ker_hypotype,
-  const jd::engine_kind eng_kind, const std::vector<tensor_config>& ts_cfgs,
-  const std::string& mkn_blocks, const std::string& tile_shape) {
+std::pair<op_args_t, op_args_t> gen_case(const jd::kernel_kind ker_kind, const jd::kernel_prop ker_prop,
+  const jd::engine_kind eng_kind, const std::vector<tensor_desc>& ts_descs,
+  const std::string& mkn_blocks = "1,1,1", const std::string& tile_shape = "4,4", std::string post_op = "") {
   // Step 1: Construct operator config
   std::unordered_map<std::string, std::string> op_attrs = {
     {"mkn_blocks", mkn_blocks},
-    {"tile_shape", tile_shape}
+    {"tile_shape", tile_shape},
+    {"post_op", post_op}
   };
+  bool append_sum = (op_attrs["post_op"] == "append_sum");
 
   // Step 2: Construct runtime data
   std::vector<const void*> rt_data1;
   std::vector<const void*> rt_data2;
-  int tensor_num = ts_cfgs.size();
+  int tensor_num = ts_descs.size();
   for (int index = 0; index < tensor_num; ++index) {
-    bool is_clear = (index == ssd::DST) ? true : false;
+    bool is_clear = (index == ssd::DST && !append_sum) ? true : false;
     bool is_sparse = (index == ssd::WEI) ? true : false;
     auto ranges = (index == ssd::SCALES) ? std::vector<float>{0, 1} : std::vector<float>{-10, 10};
-    auto data_pair =  make_data_obj(ts_cfgs[index].shape(), ts_cfgs[index].dtype(),
+    auto data_pair =  make_data_obj(ts_descs[index].shape(), ts_descs[index].dtype(),
                                     is_clear, is_sparse, ranges);
     rt_data1.emplace_back(data_pair.first);
     rt_data2.emplace_back(data_pair.second);
   }
 
   // Step 3: sparse data encoding
-  int M = ts_cfgs[ssd::WEI].shape()[0];
-  int K = ts_cfgs[ssd::WEI].shape()[1];
+  int M = ts_descs[ssd::WEI].shape()[0];
+  int K = ts_descs[ssd::WEI].shape()[1];
   auto sparse_ptr = spns::reorder_to<int8_t>(M, K, rt_data1[ssd::WEI], format_type::csrp);
   op_attrs["sparse_ptr"] = std::to_string(reinterpret_cast<uint64_t>(sparse_ptr));
-  operator_config an_op_cfg(ker_kind, ker_hypotype, eng_kind, ts_cfgs, op_attrs);
+  operator_desc an_op_desc(ker_kind, ker_prop, eng_kind, ts_descs, op_attrs);
 
   // Step 4: op_args_t testcase pair
-  op_args_t op_args = {an_op_cfg, rt_data1};
-  op_args_t op_args_copy = {an_op_cfg, rt_data2};
+  op_args_t op_args = {an_op_desc, rt_data1};
+  op_args_t op_args_copy = {an_op_desc, rt_data2};
 
   return {op_args, op_args_copy};
 }
@@ -275,23 +276,50 @@ static auto case_func = []() {
   std::vector<test_params_t> cases;
 
   // Config
-  tensor_config src0_cfg;
-  tensor_config src1_cfg;
-  tensor_config bias_cfg;
-  tensor_config dst_cfg;
-  tensor_config scales_cfg;
+  tensor_desc src0_desc;
+  tensor_desc src1_desc;
+  tensor_desc bias_desc;
+  tensor_desc dst_desc;
+  tensor_desc scales_desc;
+  std::string mkn_blocks;
+  std::string tile_shape;
 
   // case: sparse: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
-  src0_cfg = {{32, 32}, dt::s8, ft::csrp};
-  src1_cfg = {{32, 128}, dt::u8, ft::ab};
-  bias_cfg = {{32, 1}, dt::s32, ft::ab};
-  dst_cfg = {{32, 128}, dt::s8, ft::ab};
-  scales_cfg = {{32, 1}, dt::fp32, ft::ab};
-  cases.push_back({gen_case(kernel_kind::sparse_matmul, hypo::spmm_sd, engine_kind::cpu,
-    {src0_cfg, src1_cfg, bias_cfg, dst_cfg, scales_cfg}, "1,1,1", "4,4"), false});
+  src0_desc = {{32, 32}, dt::s8, ft::csrp};
+  src1_desc = {{32, 128}, dt::u8, ft::ab};
+  bias_desc = {{32, 1}, dt::s32, ft::ab};
+  dst_desc = {{32, 128}, dt::s8, ft::ab};
+  scales_desc = {{32, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // case: sparse: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
+  src0_desc = {{32, 32}, dt::s8, ft::csrp};
+  src1_desc = {{32, 128}, dt::u8, ft::ab};
+  bias_desc = {{32, 1}, dt::s32, ft::ab};
+  dst_desc = {{32, 128}, dt::s8, ft::ab};
+  scales_desc = {{32, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,2";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // case: sparse: s8xu8+s32+append_fp32=fp32,
+  // weight(M, K) * activation(K, N) + bias(M, 1) + append_sum(M, N) = dst(M, N)
+  src0_desc = {{32, 32}, dt::s8, ft::csrp};
+  src1_desc = {{32, 128}, dt::u8, ft::ab};
+  bias_desc = {{32, 1}, dt::s32, ft::ab};
+  dst_desc = {{32, 128}, dt::fp32, ft::ab};
+  scales_desc = {{32, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape, "append_sum"), false});
 
   return ::testing::ValuesIn(cases);
 };
 
-INSTANTIATE_TEST_SUITE_P(Prefix, SpmmSparsednnPrimTest, case_func());
+INSTANTIATE_TEST_SUITE_P(Prefix, SpmmDefaultKernelTest, case_func());
 }  // namespace jd

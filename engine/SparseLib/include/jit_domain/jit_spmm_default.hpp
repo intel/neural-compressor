@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef ENGINE_SPARSELIB_INCLUDE_JIT_DOMAIN_JIT_SPMM_SPARSEDNN_HPP_
-#define ENGINE_SPARSELIB_INCLUDE_JIT_DOMAIN_JIT_SPMM_SPARSEDNN_HPP_
+#ifndef ENGINE_SPARSELIB_INCLUDE_JIT_DOMAIN_JIT_SPMM_DEFAULT_HPP_
+#define ENGINE_SPARSELIB_INCLUDE_JIT_DOMAIN_JIT_SPMM_DEFAULT_HPP_
 
 #include <omp.h>
 #include <glog/logging.h>
@@ -27,14 +27,14 @@
 
 namespace jd {
 /**
- * @brief jit_spmm_sparsednn_t calculates this kind matmul: sparse x dense = dst.
+ * @brief jit_spmm_default_t calculates this kind matmul: sparse x dense = dst.
  *        weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
  */
-class jit_spmm_sparsednn_t : public jit_generator {
+class jit_spmm_default_t : public jit_generator {
  public:
-  explicit jit_spmm_sparsednn_t(const ssd::flat_param_t& param)
+  explicit jit_spmm_default_t(const ssd::flat_param_t& param)
     : jit_generator(), param_(param), csrp_(param_.sparse_ptr) {}
-  virtual ~jit_spmm_sparsednn_t() {}
+  virtual ~jit_spmm_default_t() {}
 
  public:
   const void* sequence_vals() const { return seq_vals_.data(); }
@@ -60,8 +60,8 @@ class jit_spmm_sparsednn_t : public jit_generator {
   void tile_product();
   void handle_dst_buffer_init(int kb_idx, const std::vector<int64_t>& m_indices);
   void handle_dst_buffer_epilogue(int kb_idx, const std::vector<int64_t>& m_indices);
-  void mul_scale(int i, int j);
-  void move_out(int i, int j, int row_idx);
+  void mul_scale(int i);
+  void move_out(int i, int j, int row_idx, int bytes = 1);
   std::unordered_map<int64_t, std::vector<int64_t>> get_idx_balanced(const std::vector<int64_t>& m_indices,
     const std::vector<int64_t>& sparse_indptr, const std::vector<int64_t>& sparse_indices, int lo, int hi);
   std::unordered_map<int64_t, std::vector<int8_t>> get_val_balanced(const std::vector<int64_t>& m_indices,
@@ -72,6 +72,7 @@ class jit_spmm_sparsednn_t : public jit_generator {
     const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map);
   void clear_dst_tile();
   void load_intermediate_dst(const std::vector<int64_t>& m_indices);
+  void store_intermediate_dst(const std::vector<int64_t>& m_indices);
   void save_sequence_vals(const std::vector<int64_t>& m_indices,
     const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map, int pos1, int pos2);
 
@@ -87,6 +88,7 @@ class jit_spmm_sparsednn_t : public jit_generator {
   int64_t mt_size_ = 0;   // The number of rows contained in a tile of M dimension.
   int64_t m_tiles_ = 0;   // The number of tiles contained in a block of M dimension.
   std::vector<int64_t> dst_stride_;
+  data_type output_type_;
   const int64_t PADDED_NEG_ONE = -1;
   const int64_t PADDED_ZERO = 0;
   int64_t seq_pos = 0;
@@ -123,4 +125,4 @@ class jit_spmm_sparsednn_t : public jit_generator {
   static constexpr int USED_VREGS = 3;
 };
 }  // namespace jd
-#endif  // ENGINE_SPARSELIB_INCLUDE_JIT_DOMAIN_JIT_SPMM_SPARSEDNN_HPP_
+#endif  // ENGINE_SPARSELIB_INCLUDE_JIT_DOMAIN_JIT_SPMM_DEFAULT_HPP_

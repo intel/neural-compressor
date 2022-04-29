@@ -19,8 +19,8 @@
 #include <unordered_map>
 #include <functional>
 #include "param_types.hpp"
-#include "tensor_config.hpp"
-#include "operator_config.hpp"
+#include "tensor_desc.hpp"
+#include "operator_desc.hpp"
 #include "engine.hpp"
 
 namespace jd {
@@ -29,14 +29,14 @@ namespace jd {
  */
 class hash_t {
  public:
-  uint64_t operator()(const operator_config& key) const {
+  uint64_t operator()(const operator_desc& key) const {
     uint64_t seed = 0;
     // Compute hash for primitive_kind_, attr_, impl_id_ and impl_nthr_
     hash_combine(seed, static_cast<uint64_t>(key.kernel_kind()));
-    hash_combine(seed, static_cast<uint64_t>(key.kernel_hypotype()));
+    hash_combine(seed, static_cast<uint64_t>(key.kernel_prop()));
     hash_combine(seed, static_cast<uint64_t>(key.engine_kind()));
     hash_combine(seed, static_cast<uint64_t>(key.impl_nthr()));
-    hash_combine(seed, get_tensor_cfgs_hash(key.tensor_cfgs()));
+    hash_combine(seed, get_tensor_descs_hash(key.tensor_descs()));
     hash_combine(seed, get_attr_hash(key.attrs(), key.kernel_kind()));
     return seed;
   }
@@ -49,15 +49,15 @@ class hash_t {
   }
 
  private:
-  uint64_t get_tensor_cfgs_hash(const std::vector<tensor_config>& t_cfgs) const {
+  uint64_t get_tensor_descs_hash(const std::vector<tensor_desc>& ts_descs) const {
     uint64_t seed = 0;
-    int tensor_cnt = t_cfgs.size();
+    int tensor_cnt = ts_descs.size();
     for (int idx = 0; idx < tensor_cnt; ++idx) {
-      for (const auto& dim : t_cfgs[idx].shape()) {
+      for (const auto& dim : ts_descs[idx].shape()) {
         hash_combine(seed, static_cast<uint64_t>(dim));
       }
-      hash_combine(seed, static_cast<uint64_t>(t_cfgs[idx].dtype()));
-      hash_combine(seed, static_cast<uint64_t>(t_cfgs[idx].ftype()));
+      hash_combine(seed, static_cast<uint64_t>(ts_descs[idx].dtype()));
+      hash_combine(seed, static_cast<uint64_t>(ts_descs[idx].ftype()));
     }
     return seed;
   }
@@ -65,7 +65,7 @@ class hash_t {
   uint64_t get_attr_hash(const std::unordered_map<std::string, std::string>& attrs, const kernel_kind& ker_kind) const {
     auto op_attrs = attrs;
     uint64_t seed = 0;
-    hash_combine(seed, op_attrs["append_sum"]);
+    hash_combine(seed, op_attrs["post_op"]);
     switch (ker_kind) {
       case kernel_kind::undef:
         break;
@@ -73,6 +73,7 @@ class hash_t {
         hash_combine(seed, op_attrs["sparse_ptr"]);
         hash_combine(seed, op_attrs["mkn_blocks"]);
         hash_combine(seed, op_attrs["tile_shape"]);
+        hash_combine(seed, op_attrs["sparse_scheme"]);
         break;
       default:
         break;

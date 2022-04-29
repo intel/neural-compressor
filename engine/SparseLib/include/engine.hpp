@@ -26,7 +26,7 @@ class engine {
 
  public:
   inline const engine_kind& kind() const { return eng_kind_; }
-  virtual const std::vector<impl_list_item_t>* get_implementation_list(const operator_config& op_cfg) const = 0;
+  virtual const std::vector<impl_list_item_t>* get_implementation_list(const operator_desc& op_desc) const = 0;
 
  protected:
   engine_kind eng_kind_;

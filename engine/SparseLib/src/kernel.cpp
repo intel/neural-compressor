@@ -12,9 +12,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "kernel_framework.hpp"
+#include "kernel.hpp"
 
 namespace jd {
-kernel_framework_t::kernel_framework_t(const std::shared_ptr<const kernel_desc_t>& kd) : kd_(kd) {}
+kernel_t::kernel_t(const std::shared_ptr<const kernel_desc_t>& kd) : kd_(kd) {}
 
 }  // namespace jd

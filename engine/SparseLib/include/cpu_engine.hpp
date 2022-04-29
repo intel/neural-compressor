@@ -30,7 +30,7 @@ class cpu_engine : public engine {
   virtual ~cpu_engine() {}
 
  public:
-  const std::vector<impl_list_item_t>* get_implementation_list(const operator_config& op_cfg) const override;
+  const std::vector<impl_list_item_t>* get_implementation_list(const operator_desc& op_desc) const override;
 
  public:
   static const std::vector<impl_list_item_t> empty_list;

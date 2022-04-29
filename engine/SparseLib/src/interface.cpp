@@ -15,26 +15,26 @@
 #include "interface.hpp"
 
 namespace jd {
-kernel_desc_proxy::kernel_desc_proxy(const operator_config& op_cfg) {
+kernel_desc_proxy::kernel_desc_proxy(const operator_desc& op_desc) {
   std::shared_ptr<const kernel_desc_t> result = nullptr;
-  auto status = create_proxy_object(result, op_cfg);
+  auto status = create_proxy_object(result, op_desc);
   reset_sp(result);
 }
 
 bool kernel_desc_proxy::create_proxy_object(std::shared_ptr<const kernel_desc_t>& result_ref,
-    const operator_config& op_cfg) {
+    const operator_desc& op_desc) {
   // Step 1: Get the pd (or kernel_desc_t) if it's in the cache.
   auto& global_primitive_cache = kernel_cache::instance();
-  std::shared_ptr<const kernel_desc_t> candidate_kd = global_primitive_cache.get_kd(op_cfg);
+  std::shared_ptr<const kernel_desc_t> candidate_kd = global_primitive_cache.get_kd(op_desc);
   if (candidate_kd != nullptr) {
     result_ref = candidate_kd;
     return true;
   }
 
   // Step 2.1: get impl_list_
-  const auto& eng_kind = op_cfg.engine_kind();
+  const auto& eng_kind = op_desc.engine_kind();
   const engine* eng = engine_factory::instance().create(eng_kind);
-  impl_list_ = eng->get_implementation_list(op_cfg);
+  impl_list_ = eng->get_implementation_list(op_desc);
   if (impl_list_ == nullptr) {
     return false;
   }
@@ -42,7 +42,7 @@ bool kernel_desc_proxy::create_proxy_object(std::shared_ptr<const kernel_desc_t>
   auto& impl_list = (*impl_list_);
   for (int i = 0; i < impl_list.size(); ++i) {
     candidate_kd = nullptr;
-    auto status = impl_list[i](candidate_kd, op_cfg);  // kd->create() + kd->init()
+    auto status = impl_list[i](candidate_kd, op_desc);  // kd->create() + kd->init()
     if (status) {
       break;
     }
@@ -51,19 +51,19 @@ bool kernel_desc_proxy::create_proxy_object(std::shared_ptr<const kernel_desc_t>
   return true;
 }
 
-kernel_framework_proxy::kernel_framework_proxy(const kernel_desc_proxy& kdp) {
-  std::shared_ptr<const kernel_framework_t> result = nullptr;
+kernel_proxy::kernel_proxy(const kernel_desc_proxy& kdp) {
+  std::shared_ptr<const kernel_t> result = nullptr;
   auto status = create_proxy_object(result, kdp.get_sp());
   reset_sp(result);
 }
 
-bool kernel_framework_proxy::create_proxy_object(std::shared_ptr<const kernel_framework_t>& result_ref,
+bool kernel_proxy::create_proxy_object(std::shared_ptr<const kernel_t>& result_ref,
     const std::shared_ptr<const kernel_desc_t>& kd) {
   auto& global_primitive_cache = kernel_cache::instance();
   const auto& callback = std::bind(
     &kernel_desc_t::create_primitive, kd, std::placeholders::_1, kd);  // k_t->create() + k_t->init()
-  std::shared_ptr<const kernel_framework_t> value = global_primitive_cache.find_or_construct(
-    kd->operator_cfg(), callback);
+  std::shared_ptr<const kernel_t> value = global_primitive_cache.find_or_construct(
+    kd->operator_desc(), callback);
   if (value == nullptr) {
     return false;
   }
@@ -71,7 +71,7 @@ bool kernel_framework_proxy::create_proxy_object(std::shared_ptr<const kernel_fr
   return true;
 }
 
-void kernel_framework_proxy::execute(const std::vector<const void*>& rt_data) {
+void kernel_proxy::execute(const std::vector<const void*>& rt_data) {
   auto status = get_sp()->execute(rt_data);
   return;
 }

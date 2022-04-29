@@ -52,6 +52,20 @@ template bool compare_data<int32_t>(const void*, int64_t, const void*, int64_t, 
 template bool compare_data<uint8_t>(const void*, int64_t, const void*, int64_t, uint8_t);
 template bool compare_data<int8_t>(const void*, int64_t, const void*, int64_t, int8_t);
 
+float time(const std::string& state) {
+  static auto time_axis = std::chrono::microseconds();
+  std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
+  std::chrono::system_clock::duration dur = tp.time_since_epoch();
+  auto micros = std::chrono::duration_cast<std::chrono::microseconds>(dur);
+  if (state == "start") {
+    time_axis = micros;
+    return 0;
+  } else if (state == "end") {
+    return (micros.count() - time_axis.count()) / 1e3;  // Displayed in milliseconds.
+  }
+  return -1;
+}
+
 template<typename T>
 T str_to_num(const std::string& s) {
   return static_cast<T>(atof(s.c_str()));

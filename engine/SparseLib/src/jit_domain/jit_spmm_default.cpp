@@ -12,31 +12,31 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "jit_domain/jit_spmm_sparsednn.hpp"
+#include "jit_domain/jit_spmm_default.hpp"
 
 namespace jd {
 // {zmm31, zmm30, zmm29, zmm28, ...}
-Xbyak::Zmm jit_spmm_sparsednn_t::TH_Vmm(int i) {
+Xbyak::Zmm jit_spmm_default_t::TH_Vmm(int i) {
   const int& alloc_start = VREG_NUMS - 1 - USED_VREGS;
   const int& alloc_idx = alloc_start - i;
   return Xbyak::Zmm(alloc_idx);
 }
 
 // {zmm24, zmm23, zmm22, zmm21, ...}
-Xbyak::Zmm jit_spmm_sparsednn_t::TW_Vmm(int i) {
+Xbyak::Zmm jit_spmm_default_t::TW_Vmm(int i) {
   const int& alloc_start = VREG_NUMS - 1 - USED_VREGS - TH_;
   const int& alloc_idx = alloc_start - i;
   return Xbyak::Zmm(alloc_idx);
 }
 
 // {zmm0, zmm1, zmm2, zmm3, ...}
-Xbyak::Zmm jit_spmm_sparsednn_t::dst_tile_Vmm(int i, int j) {
+Xbyak::Zmm jit_spmm_default_t::dst_tile_Vmm(int i, int j) {
   const int& alloc_start = 0;
   const int& alloc_idx = alloc_start + i * TW_ + j;
   return Xbyak::Zmm(alloc_idx);
 }
 
-void jit_spmm_sparsednn_t::load_bias(const std::vector<int64_t>& m_indices) {
+void jit_spmm_default_t::load_bias(const std::vector<int64_t>& m_indices) {
   for (int i = 0; i < TH_; ++i) {
     for (int j = 0; j < TW_; ++j) {
       vpbroadcastd(dst_tile_Vmm(i, j), ptr[reg_bias + m_indices[i] * BYTE4]);
@@ -44,7 +44,7 @@ void jit_spmm_sparsednn_t::load_bias(const std::vector<int64_t>& m_indices) {
   }
 }
 
-void jit_spmm_sparsednn_t::clear_dst_tile() {
+void jit_spmm_default_t::clear_dst_tile() {
   for (int i = 0; i < TH_; ++i) {
     for (int j = 0; j < TW_; ++j) {
       vxorps(dst_tile_Vmm(i, j), dst_tile_Vmm(i, j), dst_tile_Vmm(i, j));
@@ -52,7 +52,7 @@ void jit_spmm_sparsednn_t::clear_dst_tile() {
   }
 }
 
-void jit_spmm_sparsednn_t::load_intermediate_dst(const std::vector<int64_t>& m_indices) {
+void jit_spmm_default_t::load_intermediate_dst(const std::vector<int64_t>& m_indices) {
   for (int i = 0; i < TH_; ++i) {
     for (int j = 0; j < TW_; ++j) {
       int sliced_dst_idx = m_indices[i] * dst_stride_[0] + j * VEC;
@@ -61,7 +61,7 @@ void jit_spmm_sparsednn_t::load_intermediate_dst(const std::vector<int64_t>& m_i
   }
 }
 
-void jit_spmm_sparsednn_t::handle_dst_buffer_init(int kb_idx, const std::vector<int64_t>& m_indices) {
+void jit_spmm_default_t::handle_dst_buffer_init(int kb_idx, const std::vector<int64_t>& m_indices) {
   // Note that m_indices length is processed.
   if (kb_idx == 0) {
     if (param_.has_bias) {
@@ -74,7 +74,7 @@ void jit_spmm_sparsednn_t::handle_dst_buffer_init(int kb_idx, const std::vector<
   }
 }
 
-void jit_spmm_sparsednn_t::tile_product() {
+void jit_spmm_default_t::tile_product() {
   for (int i = 0; i < TH_; ++i) {
     for (int j = 0; j < TW_; ++j) {
       vpdpbusd(dst_tile_Vmm(i, j), TW_Vmm(j), TH_Vmm(i));
@@ -82,7 +82,7 @@ void jit_spmm_sparsednn_t::tile_product() {
   }
 }
 
-void jit_spmm_sparsednn_t::load_dense(const std::vector<int64_t>& k_indices) {
+void jit_spmm_default_t::load_dense(const std::vector<int64_t>& k_indices) {
   std::vector<int64_t> dense_rows(spns::ADJ);
   for (int i = 0; i < spns::ADJ; ++i) {
     dense_rows[i] = k_indices[i] * dst_stride_[0];
@@ -124,14 +124,14 @@ void jit_spmm_sparsednn_t::load_dense(const std::vector<int64_t>& k_indices) {
   }
 }
 
-void jit_spmm_sparsednn_t::load_sparse() {
+void jit_spmm_default_t::load_sparse() {
   for (int i = 0; i < TH_; ++i) {
     vpbroadcastd(TH_Vmm(i), ptr[reg_seq_vals + (seq_pos + i) * spns::ADJ * BYTE1]);
   }
   seq_pos += TH_;
 }
 
-void jit_spmm_sparsednn_t::save_sequence_vals(const std::vector<int64_t>& m_indices,
+void jit_spmm_default_t::save_sequence_vals(const std::vector<int64_t>& m_indices,
     const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map, int pos1, int pos2) {
   for (int i = 0; i < TH_; ++i) {
     const auto& k_inddata_whole = k_inddata_map.at(m_indices[i]);
@@ -139,7 +139,7 @@ void jit_spmm_sparsednn_t::save_sequence_vals(const std::vector<int64_t>& m_indi
   }
 }
 
-void jit_spmm_sparsednn_t::repeat_THx4xTW_matmal(const std::vector<int64_t>& m_indices,
+void jit_spmm_default_t::repeat_THx4xTW_matmal(const std::vector<int64_t>& m_indices,
     const std::unordered_map<int64_t, std::vector<int64_t>>& k_indices_map,
     const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map) {
   int need_regs = TH_ + TW_ + TH_ * TW_ + USED_VREGS;
@@ -168,32 +168,57 @@ void jit_spmm_sparsednn_t::repeat_THx4xTW_matmal(const std::vector<int64_t>& m_i
   }
 }
 
-void jit_spmm_sparsednn_t::mul_scale(int i, int j) {
-  vcvtdq2ps(dst_tile_Vmm(i, j) | T_rn_sae, dst_tile_Vmm(i, j));
-  vmulps(dst_tile_Vmm(i, j), vreg_dst_temp, dst_tile_Vmm(i, j));
+void jit_spmm_default_t::mul_scale(int i) {
+  for (int j = 0; j < TW_; ++j) {
+    vcvtdq2ps(dst_tile_Vmm(i, j) | T_rn_sae, dst_tile_Vmm(i, j));
+    vmulps(dst_tile_Vmm(i, j), vreg_dst_temp, dst_tile_Vmm(i, j));
+  }
 }
 
-void jit_spmm_sparsednn_t::move_out(int i, int j, int row_idx) {
+void jit_spmm_default_t::move_out(int i, int j, int row_idx, int bytes) {
   int sliced_dst_idx = row_idx * dst_stride_[0] + j * VEC;
-  vcvtps2dq(dst_tile_Vmm(i, j) | T_rn_sae, dst_tile_Vmm(i, j));
-  vpmovsdb(ptr[reg_dst + reg_nt_absolute_idx * BYTE1 + sliced_dst_idx * BYTE1], dst_tile_Vmm(i, j));
+  if (bytes == BYTE1) {
+    vpmovsdb(ptr[reg_dst + reg_nt_absolute_idx * bytes + sliced_dst_idx * bytes], dst_tile_Vmm(i, j));
+  } else if (bytes == BYTE4) {
+    vmovdqu32(ptr[reg_dst + reg_nt_absolute_idx * bytes + sliced_dst_idx * bytes], dst_tile_Vmm(i, j));
+  }
 }
 
-void jit_spmm_sparsednn_t::handle_dst_buffer_epilogue(int kb_idx, const std::vector<int64_t>& m_indices) {
+void jit_spmm_default_t::store_intermediate_dst(const std::vector<int64_t>& m_indices) {
+  for (int i = 0; i < TH_; ++i) {
+    for (int j = 0; j < TW_; ++j) {
+      int sliced_dst_idx = m_indices[i] * dst_stride_[0] + j * VEC;
+      vmovdqu32(ptr[reg_dst + reg_nt_absolute_idx * BYTE4 + sliced_dst_idx * BYTE4], dst_tile_Vmm(i, j));
+    }
+  }
+}
+
+void jit_spmm_default_t::handle_dst_buffer_epilogue(int kb_idx, const std::vector<int64_t>& m_indices) {
   if (kb_idx == k_blocks_ - 1) {
     for (int i = 0; i < TH_; ++i) {
       int row_idx = m_indices[i];
       vbroadcastss(vreg_dst_temp, ptr[reg_scale + row_idx * BYTE4]);  // move in scale.
+      mul_scale(i);
       for (int j = 0; j < TW_; ++j) {
-        mul_scale(i, j);
-        move_out(i, j, row_idx);
+        if (output_type_ == data_type::u8 || output_type_ == data_type::s8) {
+          vcvtps2dq(dst_tile_Vmm(i, j) | T_rn_sae, dst_tile_Vmm(i, j));
+          move_out(i, j, row_idx, BYTE1);
+        } else if (output_type_ == data_type::fp32) {
+          if (param_.append_sum) {
+            int sliced_dst_idx = row_idx * dst_stride_[0] + j * VEC;
+            vmovups(vreg_dst_temp, ptr[reg_dst + reg_nt_absolute_idx * BYTE4 + sliced_dst_idx * BYTE4]);
+            vaddps(dst_tile_Vmm(i, j), vreg_dst_temp, dst_tile_Vmm(i, j));
+          }
+          move_out(i, j, row_idx, BYTE4);
+        }
       }
     }
   } else {  // direct move out intermediate results
+    store_intermediate_dst(m_indices);
   }
 }
 
-std::unordered_map<int64_t, std::vector<int64_t>> jit_spmm_sparsednn_t::get_idx_balanced(
+std::unordered_map<int64_t, std::vector<int64_t>> jit_spmm_default_t::get_idx_balanced(
   const std::vector<int64_t>& m_indices, const std::vector<int64_t>& sparse_indptr,
   const std::vector<int64_t>& sparse_indices, int lo, int hi) {
   std::unordered_map<int64_t, std::vector<int64_t>> k_indices_map;
@@ -223,7 +248,7 @@ std::unordered_map<int64_t, std::vector<int64_t>> jit_spmm_sparsednn_t::get_idx_
   return k_indices_map;
 }
 
-std::unordered_map<int64_t, std::vector<int8_t>> jit_spmm_sparsednn_t::get_val_balanced(
+std::unordered_map<int64_t, std::vector<int8_t>> jit_spmm_default_t::get_val_balanced(
   const std::vector<int64_t>& m_indices, const std::vector<int64_t>& sparse_indptr,
   const std::vector<int64_t>& sparse_indices, int lo, int hi,
   const std::vector<int8_t>& sparse_inddata) {
@@ -255,7 +280,7 @@ std::unordered_map<int64_t, std::vector<int8_t>> jit_spmm_sparsednn_t::get_val_b
   return k_inddata_map;
 }
 
-void jit_spmm_sparsednn_t::read_params() {
+void jit_spmm_default_t::read_params() {
   mov(ebx, 0xf0);
   kmovb(reg_k1, ebx);
 
@@ -268,7 +293,7 @@ void jit_spmm_sparsednn_t::read_params() {
   mov(reg_nb_end, ptr[param1 + 5 * PTR_SIZE + BYTE8]);
 }
 
-void jit_spmm_sparsednn_t::params_alias(const ssd::flat_param_t& param) {
+void jit_spmm_default_t::params_alias(const ssd::flat_param_t& param) {
   n_blocks_ = param.mkn_blocks[2];
   nb_size_ = ceil_div(param.N, n_blocks_);
 
@@ -283,12 +308,13 @@ void jit_spmm_sparsednn_t::params_alias(const ssd::flat_param_t& param) {
   k_blocks_ = 1;
   kb_size_ = ceil_div(param.K, k_blocks_);
   dst_stride_ = {param.N, 1};
+  output_type_ = param.output_type;
 }
 
-void jit_spmm_sparsednn_t::generate() {
+void jit_spmm_default_t::generate() {
   params_alias(param_);
   const auto& iperm = csrp_->iperm();
-  const auto& xgroup = csrp_->xgroup();
+  const auto& avg_group = param_.avg_group;
   const auto& sparse_indptr = csrp_->indptr();
   const auto& sparse_indices = csrp_->indices();
   const auto& sparse_inddata = csrp_->data();
@@ -311,20 +337,28 @@ void jit_spmm_sparsednn_t::generate() {
   for (int kb_idx = 0; kb_idx < k_blocks_; ++kb_idx) {
     int kb_lo = kb_idx * kb_size_;
     int kb_hi = (kb_idx + 1) * kb_size_;
-    int ngrp = xgroup.size() - 1;
+    int ngrp = avg_group.size() - 1;
     for (int i = 0; i < ngrp; ++i) {
-      int i_start = xgroup[i];
-      int i_end = xgroup[i + 1];
-      const auto& grp_indices = std::vector<int64_t>(iperm.begin() + i_start, iperm.begin() + i_end);
-      int64_t grp_rows = grp_indices.size();
-      TH_ = std::min(param_.tile_shape[0], grp_rows);
-      mt_size_ = TH_ * 1;
-      m_tiles_ = ceil_div(grp_rows, mt_size_);
+      int i_start = avg_group[i];
+      int i_end = avg_group[i + 1];
+      int istart_rem = ceil_div(i_start, param_.tile_shape[0]) * param_.tile_shape[0] - i_start;
+      int iend_rem = i_end % param_.tile_shape[0];
+      mt_size_ = param_.tile_shape[0] * 1;
+      m_tiles_ = ceil_div(i_end, mt_size_) - (i_start / mt_size_);
+      int mt_pos = i_start;
       // Loop-M2: CPP loop at "m_tiles". Asm code unroll.
       for (int i2 = 0; i2 < m_tiles_; ++i2) {
-        int mt_lo = i2 * mt_size_;
-        int mt_hi = (i2 + 1) * mt_size_;
-        const auto& m_indices = std::vector<int64_t>(grp_indices.begin() + mt_lo, grp_indices.begin() + mt_hi);
+        int len = mt_size_;
+        TH_ = param_.tile_shape[0];
+        if (i2 == 0 && istart_rem != 0) {  // If m_tiles's head block is unaligned, dynamically set TH_.
+          len = istart_rem;
+          TH_ = istart_rem;
+        } else if (i2 == m_tiles_ - 1 && iend_rem != 0) {  // If m_tiles's tail block is unaligned, dynamically set TH_.
+          len = iend_rem;
+          TH_ = iend_rem;
+        }
+        const auto& m_indices = std::vector<int64_t>(iperm.begin() + mt_pos, iperm.begin() + mt_pos + len);
+        mt_pos += len;
         xor_(reg_nt_relative_idx, reg_nt_relative_idx);
         mov(reg_nt_absolute_idx, reg_nb_start);
 

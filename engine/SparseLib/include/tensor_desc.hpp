@@ -12,23 +12,23 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef ENGINE_SPARSELIB_INCLUDE_TENSOR_CONFIG_HPP_
-#define ENGINE_SPARSELIB_INCLUDE_TENSOR_CONFIG_HPP_
+#ifndef ENGINE_SPARSELIB_INCLUDE_TENSOR_DESC_HPP_
+#define ENGINE_SPARSELIB_INCLUDE_TENSOR_DESC_HPP_
 #include <vector>
 #include <numeric>
 #include <functional>
 #include "param_types.hpp"
 
 namespace jd {
-class tensor_config {
+class tensor_desc {
  public:
-  tensor_config() : shape_({}), dtype_(data_type::undef), ftype_(format_type::undef) {}
-  tensor_config(const std::vector<int64_t>& shape, const data_type& dtype,
+  tensor_desc() : shape_({}), dtype_(data_type::undef), ftype_(format_type::undef) {}
+  tensor_desc(const std::vector<int64_t>& shape, const data_type& dtype,
     const format_type& ftype) : shape_(shape), dtype_(dtype), ftype_(ftype) {}
-  virtual ~tensor_config() {}
+  virtual ~tensor_desc() {}
 
  public:
-  bool operator==(const tensor_config& rhs) const {
+  bool operator==(const tensor_desc& rhs) const {
     return (shape_ == rhs.shape_) && (dtype_ == rhs.dtype_) && (ftype_ == rhs.ftype_);
   }
 
@@ -46,4 +46,4 @@ class tensor_config {
   format_type ftype_;
 };
 }  // namespace jd
-#endif  // ENGINE_SPARSELIB_INCLUDE_TENSOR_CONFIG_HPP_
+#endif  // ENGINE_SPARSELIB_INCLUDE_TENSOR_DESC_HPP_

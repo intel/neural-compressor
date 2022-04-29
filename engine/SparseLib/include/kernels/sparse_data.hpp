@@ -17,7 +17,7 @@
 #include <vector>
 #include <utility>
 #include "utils.hpp"
-#include "tensor_config.hpp"
+#include "param_types.hpp"
 #include "kernels/spmm_types.hpp"
 
 namespace jd {

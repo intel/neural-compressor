@@ -21,6 +21,7 @@
 #include <sstream>
 #include <random>
 #include <limits>
+#include <chrono>  // NOLINT
 
 namespace jd {
 template <typename T>
@@ -29,6 +30,8 @@ void init_vector(T* v, int num_size, float bound1 = -10, float bound2 = 10);
 template <typename T>
 bool compare_data(const void* buf1, int64_t size1, const void* buf2, int64_t size2,
                   T eps = static_cast<T>(1e-6));
+
+float time(const std::string& state);
 
 template<typename value_type, typename predicate_type>
 inline bool is_any_of(std::initializer_list<value_type> il, predicate_type pred) {

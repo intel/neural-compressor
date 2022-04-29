@@ -17,10 +17,10 @@
 namespace jd {
 const std::vector<impl_list_item_t> cpu_engine::empty_list = {};
 
-const std::vector<impl_list_item_t>* cpu_engine::get_implementation_list(const operator_config& op_cfg) const {
+const std::vector<impl_list_item_t>* cpu_engine::get_implementation_list(const operator_desc& op_desc) const {
   // C API forward declaration.
 #define DECLARE_IMPL_LIST(kind) \
-  const std::vector<impl_list_item_t>* get_##kind##_impl_list(const operator_config& op_cfg);
+  const std::vector<impl_list_item_t>* get_##kind##_impl_list(const operator_desc& op_desc);
 
 DECLARE_IMPL_LIST(sparse_matmul);
 
@@ -29,9 +29,9 @@ DECLARE_IMPL_LIST(sparse_matmul);
   // Call C API.
 #define CASE(kind) \
   case kernel_kind::kind: \
-    return get_##kind##_impl_list(op_cfg);
+    return get_##kind##_impl_list(op_desc);
 
-  switch (op_cfg.kernel_kind()) {
+  switch (op_desc.kernel_kind()) {
     CASE(sparse_matmul);
     default:
       return &cpu_engine::empty_list;

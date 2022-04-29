@@ -30,6 +30,16 @@ static constexpr int DST = 3;
 static constexpr int SCALES = 4;
 
 /**
+ * @brief Scenarios supported by spmm_default kernel/algorithm.
+ */
+enum class sparse_scheme : uint8_t {
+  undef,
+  sparse_x_dense,
+  dense_x_sparse,
+  sparse_x_sparse,
+};
+
+/**
  * @brief kernel pameters passed between kernel/primitive and jit_domain.
  */
 struct flat_param_t {
@@ -42,9 +52,11 @@ struct flat_param_t {
   std::vector<int64_t> tile_shape;
   int64_t start;
   int64_t end;
+  data_type output_type;
+  sparse_scheme scheme;
   // sparse weight related
   csrp_data_t<int8_t>* sparse_ptr;
-  std::vector<int64_t> sub_iperm;
+  std::vector<int64_t> avg_group;
 };
 
 /**

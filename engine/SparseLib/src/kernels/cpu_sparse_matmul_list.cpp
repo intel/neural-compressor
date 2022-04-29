@@ -17,34 +17,37 @@
 #include "cpu_engine.hpp"
 #include "param_types.hpp"
 #include "impl_list_item.hpp"
-#include "kernels/spmm_sparsednn.hpp"
+#include "kernels/spmm_default.hpp"
 
 namespace jd {
-using hypo = jd::kernel_hypotype;
-using dt = jd::data_type;
-using map_key_t = std::tuple<hypo, dt, dt, dt>;
+using dt = data_type;
+using map_key_t = std::tuple<kernel_prop, dt, dt, dt>;
 /**
  * @param kernel_kind, point to this file "cpu_sparse_matmul_list.cpp".
- * @param kernel_hypotype, point to [KEY] of impl_list_map. A specific function or scenario.
+ * @param kernel_prop, point to [KEY] of impl_list_map. A specific function or scenario.
  * @param kernel_algorithm, point to [VAL] of impl_list_map. Different algorithms of a
  *   specific function, e.g.: gemm, brgemm.
- * @note Use (kernel_kind->kernel_hypotype->kernel_algorithm) to denote a specific/derived kernel.
+ * @note Use (kernel_kind->kernel_prop->kernel_algorithm) to denote a specific/derived kernel.
  *   Ref onednn's cpu_inner_product_list.cpp, a map's [VAL] is a derived "struct primitive_t",
  *   e.g.: gemm_inner_product_fwd_t<f32>.
  */
 static const std::map<map_key_t, std::vector<impl_list_item_t>> impl_list_map = {
-  {{hypo::spmm_sd, dt::s8, dt::u8, dt::s8}, {
-    CPU_INSTANCE(spmm_sparsednn_k_t),
+  {{kernel_prop::forward_inference, dt::s8, dt::u8, dt::s8}, {
+    CPU_INSTANCE(spmm_default_k_t),
+    NULL_INSTANCE()
+  }},
+  {{kernel_prop::forward_inference, dt::s8, dt::u8, dt::fp32}, {
+    CPU_INSTANCE(spmm_default_k_t),
     NULL_INSTANCE()
   }},
 };
 
-const std::vector<impl_list_item_t>* get_sparse_matmul_impl_list(const operator_config& op_cfg) {
-  const auto& tensor_cfgs = op_cfg.tensor_cfgs();
-  const auto& src0_dtype = tensor_cfgs[0].dtype();
-  const auto& src1_dtype = tensor_cfgs[1].dtype();
-  const auto& dst_dtype = tensor_cfgs[3].dtype();
-  map_key_t key{op_cfg.kernel_hypotype(), src0_dtype, src1_dtype, dst_dtype};
+const std::vector<impl_list_item_t>* get_sparse_matmul_impl_list(const operator_desc& op_desc) {
+  const auto& tensor_descs = op_desc.tensor_descs();
+  const auto& src0_dtype = tensor_descs[ssd::WEI].dtype();
+  const auto& src1_dtype = tensor_descs[ssd::SRC].dtype();
+  const auto& dst_dtype = tensor_descs[ssd::DST].dtype();
+  map_key_t key{op_desc.kernel_prop(), src0_dtype, src1_dtype, dst_dtype};
   const auto impl_list_it = impl_list_map.find(key);
   return (impl_list_it != impl_list_map.end()) ? &(impl_list_it->second) : &cpu_engine::empty_list;
 }

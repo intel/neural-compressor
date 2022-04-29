@@ -12,25 +12,25 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef ENGINE_SPARSELIB_INCLUDE_KERNEL_FRAMEWORK_HPP_
-#define ENGINE_SPARSELIB_INCLUDE_KERNEL_FRAMEWORK_HPP_
+#ifndef ENGINE_SPARSELIB_INCLUDE_KERNEL_HPP_
+#define ENGINE_SPARSELIB_INCLUDE_KERNEL_HPP_
 #include <vector>
 #include <memory>
 #include "kernel_desc.hpp"
 
 namespace jd {
 /**
- * @brief kernel primitive implementation real class.
+ * @brief kernel/primitive implementation real class.
  */
-class kernel_framework_t {
+class kernel_t {
  public:
-  explicit kernel_framework_t(const std::shared_ptr<const kernel_desc_t>& kd);
-  virtual ~kernel_framework_t() {}
+  explicit kernel_t(const std::shared_ptr<const kernel_desc_t>& kd);
+  virtual ~kernel_t() {}
 
  public:
   // Self-created API, provided for external users to call.
   template <typename derived_k_t, typename derived_kd_t>
-  static bool create(std::shared_ptr<const kernel_framework_t>& k_ref,  // NOLINT
+  static bool create(std::shared_ptr<const kernel_t>& k_ref,  // NOLINT
       const std::shared_ptr<const kernel_desc_t>& kd) {
     const auto& derived_kd_temp = std::dynamic_pointer_cast<const derived_kd_t>(kd);
     std::shared_ptr<derived_k_t> prim = std::make_shared<derived_k_t>(derived_kd_temp);
@@ -45,7 +45,7 @@ class kernel_framework_t {
     k_ref = prim;
     return true;
   }
-  // init kernel_framework_t
+  // init kernel_t
   virtual bool init() = 0;
   virtual bool execute(const std::vector<const void*>& rt_data) const = 0;
 
@@ -57,4 +57,4 @@ class kernel_framework_t {
   std::shared_ptr<const kernel_desc_t> kd_;
 };
 }  // namespace jd
-#endif  // ENGINE_SPARSELIB_INCLUDE_KERNEL_FRAMEWORK_HPP_
+#endif  // ENGINE_SPARSELIB_INCLUDE_KERNEL_HPP_

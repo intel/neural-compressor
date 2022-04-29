@@ -19,11 +19,11 @@
 #include <cstdint>
 #include <memory>
 #include "param_types.hpp"
-#include "operator_config.hpp"
+#include "operator_desc.hpp"
 
 namespace jd {
 class engine;
-class kernel_framework_t;
+class kernel_t;
 /**
  * @brief kernel descriptor implementation real class.
  */
@@ -36,8 +36,8 @@ class kernel_desc_t {
  public:
   // Self-created API, provided for external users to call.
   template <typename derived_kd_t>
-  static bool create(std::shared_ptr<const kernel_desc_t>& kd_ref, const operator_config& op_cfg) {  // NOLINT
-    std::shared_ptr<derived_kd_t> derived_kd = std::make_shared<derived_kd_t>(op_cfg);
+  static bool create(std::shared_ptr<const kernel_desc_t>& kd_ref, const operator_desc& op_desc) {  // NOLINT
+    std::shared_ptr<derived_kd_t> derived_kd = std::make_shared<derived_kd_t>(op_desc);
     if (derived_kd == nullptr) {
       return false;
     }
@@ -51,11 +51,11 @@ class kernel_desc_t {
   }
   // init kernel_desc_t
   virtual bool init() = 0;
-  virtual bool create_primitive(std::shared_ptr<const kernel_framework_t>& k_ref,  // NOLINT
+  virtual bool create_primitive(std::shared_ptr<const kernel_t>& k_ref,  // NOLINT
     const std::shared_ptr<const kernel_desc_t>& kd) const = 0;
 
  public:
-  virtual const jd::operator_config& operator_cfg() const = 0;
+  virtual const jd::operator_desc& operator_desc() const = 0;
   inline const jd::kernel_kind& kernel_kind() const { return ker_kind_; }
 
  protected:
@@ -64,9 +64,9 @@ class kernel_desc_t {
 
 // kernel_desc_t::create_primitive() override.
 #define DECLARE_COMMON_PD_T(derived_k_t, derived_kd_t, ...) \
-  bool create_primitive(std::shared_ptr<const kernel_framework_t>& k_ref, \
+  bool create_primitive(std::shared_ptr<const kernel_t>& k_ref, \
     const std::shared_ptr<const kernel_desc_t>& kd) const override { \
-    return kernel_framework_t::create<derived_k_t, derived_kd_t>(k_ref, kd); \
+    return kernel_t::create<derived_k_t, derived_kd_t>(k_ref, kd); \
   }
 
 }  // namespace jd

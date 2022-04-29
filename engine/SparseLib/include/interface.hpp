@@ -19,12 +19,12 @@
 #include <cstdint>
 #include <memory>
 #include "param_types.hpp"
-#include "operator_config.hpp"
+#include "operator_desc.hpp"
 #include "engine.hpp"
 #include "cpu_engine.hpp"
 #include "engine_factory.hpp"
 #include "kernel_desc.hpp"
-#include "kernel_framework.hpp"
+#include "kernel.hpp"
 #include "kernel_cache.hpp"
 #include "utils.hpp"
 #include "kernels/sparse_data.hpp"
@@ -59,14 +59,14 @@ class proxy_base {
 /**
  * @brief Base proxy class, interfacing to the real/cached kernel_desc_t.
  */
-class kernel_desc_proxy : public proxy_base<kernel_desc_t, operator_config> {
+class kernel_desc_proxy : public proxy_base<kernel_desc_t, operator_desc> {
  public:
   kernel_desc_proxy() {}
-  explicit kernel_desc_proxy(const operator_config& op_cfg);
+  explicit kernel_desc_proxy(const operator_desc& op_desc);
   virtual ~kernel_desc_proxy() {}
 
  protected:
-  bool create_proxy_object(std::shared_ptr<const kernel_desc_t>& result_ref, const operator_config& op_cfg) override;
+  bool create_proxy_object(std::shared_ptr<const kernel_desc_t>& result_ref, const operator_desc& op_desc) override;
 
  public:
   inline const jd::kernel_kind& kernel_kind() const { return get_sp()->kernel_kind(); }
@@ -76,16 +76,16 @@ class kernel_desc_proxy : public proxy_base<kernel_desc_t, operator_config> {
 };
 
 /**
- * @brief Base proxy class, interfacing to the real/cached kernel_framework_t.
+ * @brief Base proxy class, interfacing to the real/cached kernel_t.
  */
-class kernel_framework_proxy : public proxy_base<kernel_framework_t, std::shared_ptr<const kernel_desc_t>> {
+class kernel_proxy : public proxy_base<kernel_t, std::shared_ptr<const kernel_desc_t>> {
  public:
-  kernel_framework_proxy() {}
-  explicit kernel_framework_proxy(const kernel_desc_proxy& kdp);
-  virtual ~kernel_framework_proxy() {}
+  kernel_proxy() {}
+  explicit kernel_proxy(const kernel_desc_proxy& kdp);
+  virtual ~kernel_proxy() {}
 
  protected:
-  bool create_proxy_object(std::shared_ptr<const kernel_framework_t>& result_ref,
+  bool create_proxy_object(std::shared_ptr<const kernel_t>& result_ref,
     const std::shared_ptr<const kernel_desc_t>& kd) override;
 
  public:
@@ -101,17 +101,17 @@ class kernel_framework_proxy : public proxy_base<kernel_framework_t, std::shared
 class sparse_matmul_desc : public kernel_desc_proxy {
  public:
   sparse_matmul_desc() {}
-  explicit sparse_matmul_desc(const operator_config& op_cfg) : kernel_desc_proxy(op_cfg) {}
+  explicit sparse_matmul_desc(const operator_desc& op_desc) : kernel_desc_proxy(op_desc) {}
   virtual ~sparse_matmul_desc() {}
 };
 
 /**
  * @brief Derived proxy class, interfacing to the real/cached sparse_matmul_t.
  */
-class sparse_matmul : public kernel_framework_proxy {
+class sparse_matmul : public kernel_proxy {
  public:
   sparse_matmul() {}
-  explicit sparse_matmul(const kernel_desc_proxy& kdp) : kernel_framework_proxy(kdp) {}
+  explicit sparse_matmul(const kernel_desc_proxy& kdp) : kernel_proxy(kdp) {}
   virtual ~sparse_matmul() {}
 };
 }  // namespace jd

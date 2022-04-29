@@ -33,15 +33,15 @@ add_subdirectory(${THIRD_PARTY_DIR}/xbyak)
 add_library(${HOST_LIBRARY_NAME} SHARED
     src/interface.cpp
     src/kernel_desc.cpp
-    src/kernel_framework.cpp
+    src/kernel.cpp
     src/jit_generator.cpp
     src/kernel_cache.cpp
     src/cpu_engine.cpp
     src/utils.cpp
     src/kernels/cpu_sparse_matmul_list.cpp
     src/kernels/sparse_data.cpp
-    src/kernels/spmm_sparsednn.cpp
-    src/jit_domain/jit_spmm_sparsednn.cpp
+    src/kernels/spmm_default.cpp
+    src/jit_domain/jit_spmm_default.cpp
 )
 
 # Header file include path
