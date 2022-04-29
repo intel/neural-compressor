@@ -11,7 +11,7 @@
       <span class="inline">
         <mat-form-field class="form-field" appearance="outline">
           <mat-label>dataset type</mat-label>
-          <mat-select formControlName="dataLoaderEvaluation" (selectionChange)="setDefaultDataLoaderParam($event)">
+          <mat-select formControlName="dataLoader" (selectionChange)="setDefaultDataLoaderParam($event)">
             <mat-option *ngFor="let dataLoader of dataLoaders" [value]="dataLoader.name" matTooltipPosition="right"
               [ngClass]="dataLoader.name === 'custom' ? 'custom-option' : null" [matTooltip]="dataLoader.help">
               {{ dataLoader.name === 'custom' ? '(Add your custom data loader)' : dataLoader.name }}
@@ -19,17 +19,17 @@
           </mat-select>
         </mat-form-field>
       </span>
-      <a *ngIf="datasetFormGroup.get('dataLoaderEvaluation').value === 'custom'" class="warning">
+      <a *ngIf="datasetFormGroup.get('dataLoader').value === 'custom'" class="warning">
         <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
         Fill the code template before tuning
       </a>
       <span *ngIf="showDatasetLocation" class="inline">
         <mat-form-field class="form-field long" appearance="outline">
           <mat-label>dataset location</mat-label>
-          <input formControlName="datasetLocationEvaluation" matInput>
+          <input formControlName="datasetLocation" matInput [placeholder]="datasetLocationPlaceholder">
         </mat-form-field>
         <button id="choose-dataset-btn" mat-raised-button color="primary" class="browse choose-file-btn"
-          (click)="openDialog('datasetLocationEvaluation', 'datasets', 'datasetLocation')">
+          (click)="openDialog('datasetLocation', 'datasets', 'datasetLocation')">
           <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
           Choose dataset
         </button>
@@ -45,7 +45,7 @@
                 [matTooltip]="param.help">
             </mat-form-field>
             <button id="choose-eval-btn" *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button
-              color="primary" class="browse choose-file-btn" (click)="openDialog(param.name, 'all', 'evaluation')">
+              color="primary" class="browse choose-file-btn" (click)="openDialog(param.name, 'all', 'dataset')">
               <img class="icon" src="./../../assets/050a-folder-solid-white.svg">
               Choose file
             </button>
@@ -54,7 +54,7 @@
       </span>
     </mat-card>
 
-    <ng-container *ngIf="datasetFormGroup.get('dataLoaderEvaluation').value !== 'custom'">
+    <ng-container *ngIf="datasetFormGroup.get('dataLoader').value !== 'custom'">
       <h2>Transforms
         <a href="https://github.com/intel/neural-compressor/blob/master/docs/transform.md" target="_blank">
           <img class="help-icon" src="./../../assets/005a-help-solid-blue.svg" matTooltip="Click to open documentation">

@@ -87,12 +87,6 @@ export class MenuComponent implements OnInit {
       width: '60%',
     });
 
-    dialogRef.afterClosed().subscribe(response => {
-      if (response !== undefined) {
-        this.showSpinner = true;
-      }
-    });
-
     this.modelService.projectCreated$.subscribe(
       response => dialogRef.close()
     );

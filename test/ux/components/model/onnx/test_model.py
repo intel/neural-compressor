@@ -18,7 +18,10 @@ import unittest
 from unittest.mock import MagicMock, call, patch
 
 from neural_compressor.ux.components.graph.graph import Graph
-from neural_compressor.ux.components.model.onnxrt.model import OnnxrtModel
+from neural_compressor.ux.components.model.onnxrt.model import (
+    OnnxrtModel,
+    remove_number_of_samples_from_shape,
+)
 from neural_compressor.ux.utils.consts import Frameworks
 
 
@@ -94,6 +97,22 @@ class TestOnnxrtModel(unittest.TestCase):
         """Test getting shape elements order."""
         model = OnnxrtModel("/path/to/model.onnx")
         self.assertListEqual(model.shape_elements_order, ["channels", "height", "width"])
+
+    def test_remove_number_of_samples_from_shape(self) -> None:
+        """Test removing number of samples from shape."""
+        shape = "1,3,224,224"
+        actual = remove_number_of_samples_from_shape(shape)
+
+        expected = "3,224,224"
+        self.assertEqual(expected, actual)
+
+    def test_remove_number_of_samples_from_standard_shape(self) -> None:
+        """Test removing number of samples from shape."""
+        shape = "1,2,3"
+        actual = remove_number_of_samples_from_shape(shape)
+
+        expected = "1,2,3"
+        self.assertEqual(expected, actual)
 
 
 if __name__ == "__main__":

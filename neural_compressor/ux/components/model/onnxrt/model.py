@@ -15,7 +15,7 @@
 """Onnxrt model class."""
 import os
 import re
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from google.protobuf.json_format import MessageToDict
 
@@ -62,6 +62,7 @@ class OnnxrtModel(Model):
             op_names = {
                 node.op_type for node in self.nc_model_instance.nodes()  # pylint: disable=E1101
             }
+
         except Exception:
             return Domain()
 
@@ -77,7 +78,7 @@ class OnnxrtModel(Model):
         if object_detection_domain is not None:
             return object_detection_domain
 
-        image_recognition_domain = self._check_image_recognition_domain(node_names)
+        image_recognition_domain = self._check_image_recognition_domain(op_names)
         if image_recognition_domain is not None:
             return image_recognition_domain
 
@@ -130,9 +131,9 @@ class OnnxrtModel(Model):
             )
         return None
 
-    def _check_image_recognition_domain(self, node_names: set) -> Optional[Domain]:
+    def _check_image_recognition_domain(self, op_names: set) -> Optional[Domain]:
         """Check if model fits into Image Recognition domain."""
-        if self._has_any_name_parts(node_names, ["Conv", "Relu/Clip"]):
+        if self._has_any_name_parts(op_names, ["Conv", "Relu/Clip"]):
             return Domain(
                 domain=Domains.IMAGE_RECOGNITION.value,
                 domain_flavour=DomainFlavours.NONE.value,
@@ -147,7 +148,8 @@ class OnnxrtModel(Model):
 
         if self.domain.domain == Domains.IMAGE_RECOGNITION.value:
             shape_list = []
-            for input_node in self.nc_model_instance.graph().input:  # pylint: disable=E1101
+
+            for input_node in self.filtered_input_nodes:
                 node_dict = MessageToDict(input_node)
                 dimensions = (
                     node_dict.get("type", {}).get("tensorType", {}).get("shape", {}).get("dim", [])
@@ -160,9 +162,17 @@ class OnnxrtModel(Model):
 
             if len(shape_list) == 1:
                 shape = shape_list[0]
+                shape = remove_number_of_samples_from_shape(shape)
                 trusted = True
             if len(shape_list) > 1:
-                shape = ",".join(["[" + sub_shape + "]" for sub_shape in shape_list])
+                adjusted_shapes_list = []
+                for sub_shape in shape_list:
+                    adjusted_shapes_list.append(
+                        remove_number_of_samples_from_shape(sub_shape),
+                    )
+                shape = ",".join(
+                    ["[" + sub_shape + "]" for sub_shape in adjusted_shapes_list],
+                )
                 trusted = True
 
         return Shape(shape=shape, trusted=trusted)
@@ -207,3 +217,23 @@ class OnnxrtModel(Model):
         check_module("onnx")
         check_module("onnxruntime")
         check_module("onnxruntime_extensions")
+
+    @property
+    def filtered_input_nodes(self) -> List[Any]:
+        """Get filtered input nodes."""
+        input_nodes = self.nc_model_instance.graph().input  # pylint: disable=E1101
+        name_to_input = {}
+        for input in input_nodes:
+            name_to_input[input.name] = input
+        for initializer in self.nc_model_instance.graph().initializer:  # pylint: disable=E1101
+            if initializer.name in name_to_input:
+                input_nodes.remove(name_to_input[initializer.name])
+        return input_nodes
+
+
+def remove_number_of_samples_from_shape(shape: str) -> str:
+    """Remove number of samples from shape if exists."""
+    shape_as_list = shape.split(",")
+    if len(shape_as_list) > 3:
+        shape_as_list.pop(0)
+    return ",".join(shape_as_list)

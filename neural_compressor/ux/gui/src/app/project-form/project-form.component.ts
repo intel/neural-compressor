@@ -217,11 +217,16 @@ export class ProjectFormComponent implements OnInit {
     };
 
     this.modelService.createProject(newProject)
-      .subscribe(response => {
-        this.showSpinner = false;
-        this.modelService.projectCreated$.next(true);
-        this.router.navigate(['/project', response['project_id']], { queryParamsHandling: "merge" });
-      });
+      .subscribe(
+        response => {
+          this.showSpinner = false;
+          this.modelService.projectCreated$.next(true);
+          this.router.navigate(['/project', response['project_id']], { queryParamsHandling: "merge" });
+        },
+        error => {
+          this.showSpinner = false;
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   showGraph() {

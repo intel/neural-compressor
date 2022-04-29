@@ -71,7 +71,7 @@
               <img class="icon" src="./../../assets/307-org-chart-white.svg">
               Show graph
             </button>
-            <mat-spinner *ngIf="showGraphSpinner || showSpinner" class="spinner" [diameter]="30"></mat-spinner>
+            <mat-spinner *ngIf="showGraphSpinner" class="spinner" [diameter]="30"></mat-spinner>
           </span>
 
           <div *ngIf="boundaryNodesVisible()">
@@ -168,11 +168,15 @@
       </form>
     </ng-container>
 
+    <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+      [style.display]="showSpinner ? 'block' : 'none'">
+    </mat-spinner>
 
     <br />
     <div *ngIf="!showExamples" class="float-right">
-      <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent"
-        [disabled]="projectFormGroup.status === 'INVALID'" (click)="createProject()" queryParamsHandling="preserve">
+      <button id="finish-adv-btn" mat-raised-button color="accent"
+        [disabled]="projectFormGroup.status === 'INVALID' || showSpinner" (click)="createProject()"
+        queryParamsHandling="preserve">
         <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
         Finish
       </button>

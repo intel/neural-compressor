@@ -74,7 +74,7 @@
       <h3>Batch size</h3>
       <mat-form-field class="form-field" appearance="outline">
         <mat-label>batch size</mat-label>
-        <input formControlName="batchSize" matInput value="1">
+        <input min=1 type="number" formControlName="batchSize" matInput value="1">
       </mat-form-field>
       <h3>Iterations</h3>
       <mat-checkbox [checked]="allSamples" (change)="allSamples = $event.checked">
@@ -84,11 +84,11 @@
       <mat-form-field class="form-field" appearance="outline"
         matTooltip="Number of iterations to run before the benchmark">
         <mat-label>warmup</mat-label>
-        <input type="number" formControlName="warmup" matInput>
+        <input min=0 type="number" formControlName="warmup" matInput>
       </mat-form-field>
       <mat-form-field *ngIf="!allSamples" class="form-field" appearance="outline">
         <mat-label>iterations</mat-label>
-        <input type="number" formControlName="iterations" matInput>
+        <input min=1 type="number" formControlName="iterations" matInput>
       </mat-form-field>
       <h3>Instances</h3>
       <mat-form-field class="form-field" appearance="outline">

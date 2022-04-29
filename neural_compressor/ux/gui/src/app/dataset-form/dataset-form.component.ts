@@ -35,6 +35,7 @@ export class DatasetFormComponent implements OnInit {
   dataLoaderParams = [];
 
   showDatasetLocation = true;
+  datasetLocationPlaceholder = '';
 
   transformations = [];
   transformationParams = [];
@@ -114,10 +115,13 @@ export class DatasetFormComponent implements OnInit {
           this.setDefaultTransformationParam({ value: response['transform'][i]['name'] }, i);
         }
 
-        this.datasetFormGroup.get('dataLoaderEvaluation').setValue(response['dataloader']['name']);
+        this.datasetFormGroup.get('dataLoader').setValue(response['dataloader']['name']);
         this.setDefaultDataLoaderParam({ value: response['dataloader']['name'] });
         if (response['dataloader']['params'][0].name === 'root') {
-          this.datasetFormGroup.get('datasetLocationEvaluation').setValue(response['dataloader']['params'][0].value);
+          this.datasetLocationPlaceholder = response['dataloader']['params'][0].value;
+          this.isFieldRequired('datasetLocation', true);
+        } else {
+          this.isFieldRequired('datasetLocation', false);
         }
 
         this.datasetFormGroup.get('metric').setValue(response['metric']);
@@ -128,8 +132,8 @@ export class DatasetFormComponent implements OnInit {
   setFormValues() {
     this.datasetFormGroup = this._formBuilder.group({
       name: ['Dataset' + String(this.data.index + 1), Validators.required],
-      dataLoaderEvaluation: [''],
-      datasetLocationEvaluation: [''],
+      dataLoader: ['', Validators.required],
+      datasetLocation: [''],
       datasetParams0: [''],
       datasetParams1: [''],
       transform: [''],
@@ -155,13 +159,13 @@ export class DatasetFormComponent implements OnInit {
     }
   }
 
-  isFieldRequired(form: string, field: string, required: boolean) {
+  isFieldRequired(field: string, required: boolean) {
     if (required) {
-      this[form].controls[field].setValidators([Validators.required]);
+      this.datasetFormGroup.controls[field].setValidators([Validators.required]);
     } else {
-      this[form].controls[field].clearValidators();
+      this.datasetFormGroup.controls[field].clearValidators();
     }
-    this[form].controls[field].updateValueAndValidity();
+    this.datasetFormGroup.controls[field].updateValueAndValidity();
   }
 
 
@@ -195,10 +199,10 @@ export class DatasetFormComponent implements OnInit {
     const readyDataset = {
       "project_id": this.data.projectId,
       "name": this.datasetFormGroup.get('name').value,
-      "dataset_path": this.datasetFormGroup.get('datasetLocationEvaluation').value,
+      "dataset_path": this.datasetFormGroup.get('datasetLocation').value,
       "transform": this.getTransformParams(this.transformationParams),
       "dataloader": {
-        "name": this.datasetFormGroup.get('dataLoaderEvaluation').value,
+        "name": this.datasetFormGroup.get('dataLoader').value,
         "params": this.dataLoaderParams ? this.getParams(this.dataLoaderParams) : null,
       },
       "metric": this.datasetFormGroup.get('metric').value,
@@ -237,17 +241,13 @@ export class DatasetFormComponent implements OnInit {
   }
 
   openDialog(fieldName: string, filter: FileBrowserFilter, paramFile?) {
-    let form = 'datasetFormGroup';
     const fileCategories = { 'dev-v1.1.json': 'label_file', 'vocab.txt': 'vocab_file' };
-    if (filter === 'datasets') {
-      form = 'datasetFormGroup';
-    }
 
     const dialogRef = this.dialog.open(FileBrowserComponent, {
       width: '60%',
       height: '60%',
       data: {
-        path: this[form].get(fieldName) && this[form].get(fieldName).value ? this[form].get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
+        path: this.getPath(fieldName),
         filter: filter,
         filesToFind: paramFile ? Object.keys(fileCategories) : null
       }
@@ -257,7 +257,7 @@ export class DatasetFormComponent implements OnInit {
       response => {
         if (response.chosenFile) {
           if (paramFile && paramFile !== 'datasetLocation') {
-            if (paramFile === 'evaluation') {
+            if (paramFile === 'dataset') {
               this.dataLoaderParams.find(x => x.name === fieldName).value = response.chosenFile;
             } else if (paramFile === 'metric') {
               this.metricParam = response.chosenFile;
@@ -265,7 +265,7 @@ export class DatasetFormComponent implements OnInit {
               paramFile.find(x => x.name === fieldName).value = response.chosenFile;
             }
           } else {
-            this[form].get(fieldName).setValue(response.chosenFile);
+            this.datasetFormGroup.get(fieldName).setValue(response.chosenFile);
           }
 
           if (response.foundFiles.length) {
@@ -285,6 +285,12 @@ export class DatasetFormComponent implements OnInit {
       error => {
         this.modelService.openErrorDialog(error);
       });;
+  }
+
+  getPath(fieldName: string) {
+    return this.datasetFormGroup.get(fieldName) && this.datasetFormGroup.get(fieldName).value && !this.datasetFormGroup.get(fieldName).value.includes('/path/to/')
+      ? this.datasetFormGroup.get(fieldName).value.split("/").slice(0, -1).join("/")
+      : this.modelService.workspacePath;
   }
 
   isArray(obj: any): boolean {
