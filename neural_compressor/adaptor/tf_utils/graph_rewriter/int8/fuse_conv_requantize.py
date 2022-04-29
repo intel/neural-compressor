@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import tensorflow as tf
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -23,7 +23,7 @@ from tensorflow.python.framework import dtypes
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 class FuseConvRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized Conv Op with the successor Requantize Op.
@@ -192,9 +192,13 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                                                 if self.device == 'gpu' else qint32_type))
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
-
+            # in tf 2.10, the "padding_list" attr name changes to explicit_paddings
             if "padding_list" in quantized_node.attr:
-                new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
+                if version1_lt_version2(tf.version.VERSION, "2.10"):
+                    new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
+                elif quantized_node.attr["padding"].s == b"EXPLICIT":
+                    new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
+            
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
             
@@ -406,9 +410,12 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             for j in range(3):
                 new_node.input.append(original_summand_node.name + ':{}'.format(j))
-
+            # in tf 2.10, the "padding_list" attr name changes to explicit_paddings
             if "padding_list" in quantized_node.attr:
-                new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
+                if version1_lt_version2(tf.version.VERSION, "2.10"):
+                    new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
+                elif quantized_node.attr["padding"].s == b"EXPLICIT":
+                    new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
 
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
