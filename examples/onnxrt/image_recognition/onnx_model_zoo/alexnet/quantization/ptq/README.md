@@ -11,7 +11,7 @@ onnxruntime: 1.8.0
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ```shell
-wget https://github.com/onnx/models/blob/master/vision/classification/alexnet/model/bvlcalexnet-12.onnx
+wget https://github.com/onnx/models/tree/main/vision/classification/alexnet/model/bvlcalexnet-12.onnx
 ```
 
 ### Quantization

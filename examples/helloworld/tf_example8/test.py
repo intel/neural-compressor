@@ -1,5 +1,5 @@
 import tensorflow as tf
-from neural_compressor.experimental import Quantization,  common
+from neural_compressor.experimental import Quantization, common
 
 tf.compat.v1.disable_eager_execution()
 

@@ -194,7 +194,7 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
 
 ## Validated Models
 
-Intel® Neural Compressor provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](docs/full_model_list.md).
+Intel® Neural Compressor provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](docs/validated_model_list.md).
 
 <table class="docutils">
 <thead>
