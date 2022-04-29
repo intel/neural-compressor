@@ -18,6 +18,10 @@ Preload libiomp5.so can improve the performance when bs=1.
 ```
 export LD_PRELOAD=<path_to_libiomp5.so>
 ```
+Preloading libjemalloc.so can improve the performance. It has been built in third_party/jemalloc/lib.
+```
+export LD_PRELOAD=<path_to_libjemalloc.so>
+```
 ### 2. Prepare Dataset and Model
 ### 2.1 Prepare Dataset
   ```shell

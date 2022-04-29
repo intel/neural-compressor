@@ -43,6 +43,9 @@
 [submodule "engine/executor/third_party/boost/libs/interprocess"]
 	path = engine/executor/third_party/boost/libs/interprocess
 	url = https://github.com/boostorg/interprocess.git
+[submodule "engine/executor/third_party/jemalloc"]
+	path = engine/executor/third_party/jemalloc
+	url = https://github.com/jemalloc/jemalloc
 [submodule "engine/SparseLib/third_party/glog"]
 	path = engine/SparseLib/third_party/glog
 	url = https://github.com/google/glog.git

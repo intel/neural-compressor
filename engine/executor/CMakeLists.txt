@@ -6,11 +6,19 @@ elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.2.1)
 else()
 cmake_minimum_required(VERSION 3.12)
 
-
 set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -ffast-math -lm -ftree-loop-vectorize -fpic -Wall -fopenmp -march=native -Wl,-rpath,'$ORIGIN'")
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Os -Wall -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -Wall -s")
+
+find_library(LIBJEMALLOC jemalloc ${THIRD_PARTY_DIR}/jemalloc/lib)
+if(${LIBJEMALLOC} STREQUAL LIBJEMALLOC-NOTFOUND)
+  execute_process(COMMAND ./autogen.sh --disable-initial-exec-tls
+                  WORKING_DIRECTORY ${THIRD_PARTY_DIR}/jemalloc)
+  execute_process(COMMAND make -j
+                WORKING_DIRECTORY ${THIRD_PARTY_DIR}/jemalloc)
+endif()
+
 #execute_process(COMMAND cat /proc/cpuinfo
 #                COMMAND head -n 26
 #                COMMAND grep -c avx512
@@ -100,7 +108,8 @@ target_include_directories(engine
         ./third_party/boost/libs/interprocess/include
 )
 
-## link against the third party libraries
+
+# link against the third party libraries
 target_link_libraries(engine
     PUBLIC
         ${CMAKE_THREAD_LIBS_INIT}

@@ -13,6 +13,13 @@ pip install -r requirements.txt
 1.2 Install C++ environment (Optional)
 Install engine according to [Engine](../../../../../docs/engine.md) if need the performance in C++.
 Preload libiomp5.so can improve the performance when bs=1.
+```
+export LD_PRELOAD=<path_to_libiomp5.so>
+```
+Preloading libjemalloc.so can improve the performance. It has been built in third_party/jemalloc/lib.
+```
+export LD_PRELOAD=<path_to_libjemalloc.so>
+```
 ### 2. Prepare Dataset and pretrained model
 
 ### 2.1 Get dataset
