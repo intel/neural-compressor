@@ -306,7 +306,7 @@ class TestTensorflowPruning(unittest.TestCase):
         logger.info(sparsity)
         self.assertGreater(sparsity, 20)
         self.assertGreater(prune.baseline_score, 0.72)
-        self.assertGreater(prune.last_score, 0.746)
+        self.assertGreater(prune.last_score, 0.745)
 
 
 if __name__ == '__main__':

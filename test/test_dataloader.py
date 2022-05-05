@@ -3,7 +3,6 @@ import unittest
 import os
 import numpy as np
 import shutil
-import tensorflow as tf
 from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
 from neural_compressor.data.dataloaders.dataloader import DataLoader
 from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
@@ -1162,6 +1161,7 @@ class TestDataloader(unittest.TestCase):
                 dense_shape=(256, 256, 3), label_shape=[[1], [2], [3]])
 
     def test_tensorflow_dataloader_multi_input(self):
+        import tensorflow as tf
         x = tf.data.Dataset.from_tensor_slices((np.random.random(20), np.random.random(20)))
         y = tf.data.Dataset.from_tensor_slices(np.random.random(20))
         dataset = tf.data.Dataset.zip((x, y))
@@ -1288,7 +1288,6 @@ class TestDataloader(unittest.TestCase):
         data = next(iterator)
         self.assertEqual(data[0].shape, (2, 256, 256, 3))
 
-    @unittest.skipIf(tf.__version__<='2.2.0' and tf.__version__>='2.1.0', "tf 2.1 or 2.2 dont support module transformers")
     def test_onnx_bert(self):
         import csv
         os.mkdir('./MRPC')
