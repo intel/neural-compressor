@@ -85,6 +85,7 @@ class InnerProductOperator : public Operator {
   float output_scale_ = 1.f;
   vector<float> dst_scales_;
   string output_dtype_ = "fp32";
+  vector<int64_t> src1_shape_origin_;
   vector<int64_t> src0_perm_;
   vector<int64_t> src1_perm_;
   vector<int64_t> dst_perm_;

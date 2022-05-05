@@ -419,6 +419,22 @@ void InnerProductOperator::PrepareDense(const vector<Tensor*>& input, const vect
     }
     attr_.set_output_scales(ic_dim, rescales);
   }
+  // cache weight here, save weight and bias memory descriptor
+  src1_shape_origin_ = src1_->shape();
+  vector<int64_t> src1_shape = GetShapes(src1_shape_origin_, src1_perm_);
+  vector<int64_t> src1_stride = GetStrides(src1_shape_origin_, src1_perm_);
+  src1_->set_shape(src1_shape);
+  any_src1_md_ = memory::desc(src1_shape, type2mem[src1_->dtype()], memory::format_tag::any);
+  src1_md_ = memory::desc(src1_shape, type2mem[src1_->dtype()], src1_stride);
+  src1_m_ = memory(src1_md_, eng_, src1_->mutable_data());
+
+  if (has_bias_) {
+    vector<int64_t> bias_shape = {src1_shape[0]};
+    vector<int64_t> bias_stride = GetStrides(bias_shape);
+    bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
+    any_bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
+    bias_m_ = memory(bias_md_, eng_, bias_->mutable_data());
+  }
 }
 
 void InnerProductOperator::CalculateCompensation(const vector<int64_t>& src1_shape, const vector<int64_t>& src1_stride,
@@ -443,9 +459,8 @@ void InnerProductOperator::CalculateCompensation(const vector<int64_t>& src1_sha
 // 1. Create primitive
 void InnerProductOperator::ReshapeDense(const vector<Tensor*>& input, const vector<Tensor*>& output) {
   dnnl::post_ops po;
-  vector<int64_t> src1_shape_origin = src1_->shape();
-  vector<int64_t> src1_shape = GetShapes(src1_shape_origin, src1_perm_);
-  vector<int64_t> src1_stride = GetStrides(src1_shape_origin, src1_perm_);
+  vector<int64_t> src1_shape = src1_->shape();
+  vector<int64_t> src1_stride = GetStrides(src1_shape_origin_, src1_perm_);
 
   if (is_dynamic_ && (output_scale_ != 1.f || src0_min_ != nullptr || src1_min_ != nullptr)) {
     if (src0_min_ != nullptr && src1_max_ != nullptr) {
@@ -510,19 +525,6 @@ void InnerProductOperator::ReshapeDense(const vector<Tensor*>& input, const vect
     po.append_eltwise(dst_scales_[0], algorithm::eltwise_linear, 1., zero_point);
   }
 
-  // cache weight here, save weight and bias memory descriptor
-  src1_->set_shape(src1_shape);
-  any_src1_md_ = memory::desc(src1_shape, type2mem[src1_->dtype()], memory::format_tag::any);
-  src1_md_ = memory::desc(src1_shape, type2mem[src1_->dtype()], src1_stride);
-  src1_m_ = memory(src1_md_, eng_, src1_->mutable_data());
-
-  if (has_bias_) {
-    vector<int64_t> bias_shape = {src1_shape[0]};
-    vector<int64_t> bias_stride = GetStrides(bias_shape);
-    bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], bias_stride);
-    any_bias_md_ = memory::desc(bias_shape, type2mem[bias_->dtype()], memory::format_tag::any);
-    bias_m_ = memory(bias_md_, eng_, bias_->mutable_data());
-  }
   // Part1: Derive operator's user proper shape and strides
   // 1.1 Transpose tensor shape and get it
   vector<int64_t> src0_shape_origin = src0_->shape();
