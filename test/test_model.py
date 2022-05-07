@@ -158,9 +158,10 @@ class TestTensorflowModel(unittest.TestCase):
             'http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz'
         dst_path = '/tmp/.neural_compressor/mobilenet_v1_1.0_224.tgz'
         if not os.path.exists(dst_path):
-          os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(
+            os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(
                   mobilenet_ckpt_url, dst_path))
-
+        if not os.path.getsize(dst_path):
+            os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, mobilenet_ckpt_url))
         os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
         model = Model('./ckpt')
         model.output_tensor_names = ['MobilenetV1/Predictions/Reshape_1']
@@ -180,7 +181,8 @@ class TestTensorflowModel(unittest.TestCase):
         if not os.path.exists(dst_path):
             os.system("mkdir -p /tmp/.neural_compressor/slim")
             os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
-
+        if not os.path.getsize(dst_path):
+            os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, inception_ckpt_url))
         os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
         if tf.version.VERSION > '2.0.0':
             return
@@ -246,8 +248,12 @@ class TestTensorflowModel(unittest.TestCase):
         center_dst_path = '/tmp/.neural_compressor/center_saved_model.tar.gz'
         if not os.path.exists(dst_path):
           os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(ssd_resnet50_ckpt_url, dst_path))
+        if not os.path.getsize(dst_path):
+            os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, ssd_resnet50_ckpt_url))
         if not os.path.exists(center_dst_path):
           os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(center_resnet50_saved_model_url, center_dst_path))
+        if not os.path.getsize(center_dst_path):
+            os.system("rm -fr {0} && wget {1} -O {0}".format(center_dst_path, center_resnet50_saved_model_url))
         os.system("tar -xvf {}".format(dst_path))
         unzip_center_model = 'unzip_center_model'
         os.system("mkdir -p {} ".format(unzip_center_model))
