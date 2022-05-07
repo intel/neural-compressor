@@ -85,15 +85,11 @@ add_library(engine SHARED
     src/operators/slice.cpp
     src/operators/group_norm.cpp
     src/sparse_operators/sparse_inner_product.cpp
-    src/kernels/jit_naive_gemm_kernel.cpp
-    src/kernels/jit_naive_matmul.cpp
 )
 
 # Header file include path
 target_include_directories(engine
     PUBLIC
-        ./include/kernels
-        ./include/kernels/xbyak
         ./include/sparse_operators
         ./include/operators
         ./include

@@ -57,15 +57,11 @@ add_library(host_operators SHARED
     ${HOST_SRC_DIR}/src/operators/slice.cpp
     ${HOST_SRC_DIR}/src/operators/group_norm.cpp
     ${HOST_SRC_DIR}/src/sparse_operators/sparse_inner_product.cpp
-    ${HOST_SRC_DIR}/src/kernels/jit_naive_gemm_kernel.cpp
-    ${HOST_SRC_DIR}/src/kernels/jit_naive_matmul.cpp
 )
 
 # Header file include path
 target_include_directories(host_operators
     PUBLIC
-        ${HOST_SRC_DIR}/include/kernels/xbyak
-        ${HOST_SRC_DIR}/include/kernels
         ${HOST_SRC_DIR}/include/sparse_operators
         ${HOST_SRC_DIR}/include/operators
         ${HOST_SRC_DIR}/include
@@ -116,7 +112,6 @@ file(GLOB OPS_TEST_CASES_SRC
     test_embeddingbag_op.cpp
     test_convolution_op.cpp
     test_group_norm_op.cpp
-    kernels/test_naive_gemm.cpp
 )
 
 function(register_gtest_func exe src)
