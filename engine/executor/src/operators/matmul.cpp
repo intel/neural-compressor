@@ -418,7 +418,7 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   // 1. Prepare memory objects with data_ptr
   src0_m_.set_data_handle(const_cast<void*>(src0_data), eng_stream_);
   src1_m_.set_data_handle(const_cast<void*>(src1_data), eng_stream_);
-  dst_m_.set_data_handle(reinterpret_cast<void*>(dst_data), eng_stream_);
+  dst_m_.set_data_handle(dst_data, eng_stream_);
 
   memory any_src0_m = src0_m_;
   memory any_src1_m = src1_m_;
@@ -453,7 +453,7 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   // has post_op: binary_add
   if (post_ != nullptr && binary_add_) {
     void* post_ptr = post_->mutable_data();
-    binary_m_.set_data_handle(reinterpret_cast<void*>(post_ptr), eng_stream_);
+    binary_m_.set_data_handle(post_ptr, eng_stream_);
     // dynamic quantization inserts additional post_ops
     int op_idx = 0;
     if (is_dynamic_) {
@@ -476,7 +476,9 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
   if (is_dynamic_) {
     // quantize the fp32 result of matmul
     if (output.size() > 1) {
-      RuntimeMinmax();
+      runtime_minmax(reinterpret_cast<float*>(matmul_fp32_res.mutable_data()), matmul_fp32_res.size(),
+                     reinterpret_cast<float*>(dst_min_->mutable_data()),
+                     reinterpret_cast<float*>(dst_max_->mutable_data()));
       // quantize
       if (output_dtype_ == "u8" || output_dtype_ == "s8") {
         auto scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());

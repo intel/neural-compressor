@@ -98,16 +98,16 @@ void InitVector(float* v, int buffer_size) {
 }
 
 float Time(string state) {
-  static std::chrono::milliseconds millis_start = std::chrono::milliseconds();
-  static std::chrono::milliseconds millisec_end = std::chrono::milliseconds();
+  static std::chrono::microseconds micros_start = std::chrono::microseconds();
+  static std::chrono::microseconds micros_end = std::chrono::microseconds();
   std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
   std::chrono::nanoseconds nanos = now_time.time_since_epoch();
   if (state == "start") {
-    millis_start = std::chrono::duration_cast<std::chrono::milliseconds>(nanos);
+    micros_start = std::chrono::duration_cast<std::chrono::microseconds>(nanos);
     return 0.;
   } else if (state == "end") {
-    millisec_end = std::chrono::duration_cast<std::chrono::milliseconds>(nanos);
-    return millisec_end.count() - millis_start.count();
+    micros_end = std::chrono::duration_cast<std::chrono::microseconds>(nanos);
+    return (micros_end.count() - micros_start.count()) / 1000.0;
   } else {
     LOG(FATAL) << "not supported state for time, only start and end...";
     return 0;
@@ -707,5 +707,119 @@ void add_ker(uint8_t* inout, uint8_t* in, size_t len) {
 #else
   ref_add_ker(inout, in, len);
 #endif
+}
+
+void runtime_minmax(float* data, size_t length, float* min_num, float* max_num) {
+  int block_size = std::sqrt(length);
+  int block_num = length / block_size;
+  int tmp_length = block_num + (length % block_size != 0);
+  float block_mins[tmp_length], block_maxs[tmp_length];
+#pragma omp parallel for
+  for (int i = 0; i < block_num; i++) {
+    block_minmax(data + i * block_size, block_size, &block_mins[i], &block_maxs[i]);
+  }
+  if (length % block_size != 0) {
+    block_minmax(data + block_num * block_size, length - block_num * block_size, &block_mins[block_num],
+                 &block_maxs[block_num]);
+  }
+  block_size = std::sqrt(tmp_length);
+  block_num = tmp_length / block_size;
+  float mins[block_num + (tmp_length % block_size != 0)], maxs[block_num + (tmp_length % block_size != 0)];
+#pragma omp parallel for
+  for (int i = 0; i < block_num; i++) {
+    mins[i] = *std::min_element(&block_mins[i * block_size], &block_mins[(i + 1) * block_size]);
+    maxs[i] = *std::max_element(&block_maxs[i * block_size], &block_maxs[(i + 1) * block_size]);
+  }
+  if (tmp_length % block_size != 0) {
+    mins[block_num] = *std::min_element(&block_mins[block_num * block_size], &block_mins[tmp_length - 1]);
+    maxs[block_num] = *std::max_element(&block_maxs[block_num * block_size], &block_maxs[tmp_length - 1]);
+  }
+  *min_num = *std::min_element(mins, &mins[block_num + (tmp_length % block_size != 0)]);
+  *max_num = *std::max_element(maxs, &maxs[block_num + (tmp_length % block_size != 0)]);
+}
+
+void block_minmax(float* Input, size_t N, float* Min, float* Max) {
+  float tmp_min = std::numeric_limits<float>::max();
+  float tmp_max = std::numeric_limits<float>::lowest();
+
+  if (N >= 8) {
+    __m256 MaximumVector0 = _mm256_set1_ps(tmp_max);
+    __m256 MinimumVector0 = _mm256_set1_ps(tmp_min);
+
+    if (N >= 32) {
+      __m256 MaximumVector1 = MaximumVector0;
+      __m256 MaximumVector2 = MaximumVector0;
+      __m256 MaximumVector3 = MaximumVector0;
+
+      __m256 MinimumVector1 = MinimumVector0;
+      __m256 MinimumVector2 = MinimumVector0;
+      __m256 MinimumVector3 = MinimumVector0;
+
+      while (N >= 32) {
+        __m256 InputVector0 = _mm256_loadu_ps(Input);
+        __m256 InputVector1 = _mm256_loadu_ps(Input + 8);
+        __m256 InputVector2 = _mm256_loadu_ps(Input + 16);
+        __m256 InputVector3 = _mm256_loadu_ps(Input + 24);
+
+        MaximumVector0 = _mm256_max_ps(MaximumVector0, InputVector0);
+        MaximumVector1 = _mm256_max_ps(MaximumVector1, InputVector1);
+        MaximumVector2 = _mm256_max_ps(MaximumVector2, InputVector2);
+        MaximumVector3 = _mm256_max_ps(MaximumVector3, InputVector3);
+
+        MinimumVector0 = _mm256_min_ps(MinimumVector0, InputVector0);
+        MinimumVector1 = _mm256_min_ps(MinimumVector1, InputVector1);
+        MinimumVector2 = _mm256_min_ps(MinimumVector2, InputVector2);
+        MinimumVector3 = _mm256_min_ps(MinimumVector3, InputVector3);
+
+        Input += 32;
+        N -= 32;
+      }
+
+      MaximumVector0 = _mm256_max_ps(MaximumVector0, MaximumVector1);
+      MaximumVector2 = _mm256_max_ps(MaximumVector2, MaximumVector3);
+      MaximumVector0 = _mm256_max_ps(MaximumVector0, MaximumVector2);
+
+      MinimumVector0 = _mm256_min_ps(MinimumVector0, MinimumVector1);
+      MinimumVector2 = _mm256_min_ps(MinimumVector2, MinimumVector3);
+      MinimumVector0 = _mm256_min_ps(MinimumVector0, MinimumVector2);
+    }
+
+    while (N >= 8) {
+      __m256 InputVector0 = _mm256_loadu_ps(Input);
+      MaximumVector0 = _mm256_max_ps(MaximumVector0, InputVector0);
+      MinimumVector0 = _mm256_min_ps(MinimumVector0, InputVector0);
+
+      Input += 8;
+      N -= 8;
+    }
+
+    float minx8[16];
+    void* min_ptr = reinterpret_cast<void*>(minx8);
+    std::size_t min_space = sizeof(minx8) - 1;
+    std::align(32, sizeof(float), min_ptr, min_space);
+    float* aligned_min = reinterpret_cast<float*>(min_ptr);
+    _mm256_store_ps(aligned_min, MinimumVector0);
+    float maxx8[16];
+    void* max_ptr = reinterpret_cast<void*>(maxx8);
+    std::size_t max_space = sizeof(maxx8) - 1;
+    std::align(32, sizeof(float), max_ptr, max_space);
+    float* aligned_max = reinterpret_cast<float*>(max_ptr);
+    _mm256_store_ps(aligned_max, MaximumVector0);
+    for (int i = 0; i < 8; i++) {
+      tmp_max = std::max(tmp_max, aligned_max[i]);
+      tmp_min = std::min(tmp_min, aligned_min[i]);
+    }
+  }
+
+  while (N > 0) {
+    tmp_max = std::max(tmp_max, *Input);
+    tmp_min = std::min(tmp_min, *Input);
+
+    Input += 1;
+    N -= 1;
+  }
+
+  *Min = tmp_min;
+  *Max = tmp_max;
 }
 }  // namespace executor

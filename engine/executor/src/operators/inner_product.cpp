@@ -726,7 +726,9 @@ void InnerProductOperator::ForwardDense(const vector<Tensor*>& input, const vect
   if (is_dynamic_) {
     // quantize the fp32 result of inner_porduct
     if (output.size() > 1) {
-      RuntimeMinmax();
+      runtime_minmax(reinterpret_cast<float*>(inner_product_fp32_res.mutable_data()), inner_product_fp32_res.size(),
+                     reinterpret_cast<float*>(dst_min_->mutable_data()),
+                     reinterpret_cast<float*>(dst_max_->mutable_data()));
       // quantize
       if (output_dtype_ == "u8" || output_dtype_ == "s8") {
         auto scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());

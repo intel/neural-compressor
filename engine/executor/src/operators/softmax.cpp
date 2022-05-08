@@ -355,7 +355,9 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
 
   if (output.size() > 1) {
     // quantize the fp32 result of softmax
-    RuntimeMinmax(s);
+    runtime_minmax(reinterpret_cast<float*>(fp32_res.mutable_data()), fp32_res.size(),
+                   reinterpret_cast<float*>(dst_min_->mutable_data()),
+                   reinterpret_cast<float*>(dst_max_->mutable_data()));
     // quantize
     if (output_dtype_ == "u8") {
       auto scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());

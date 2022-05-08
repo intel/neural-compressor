@@ -139,6 +139,8 @@ void zero_ker(uint8_t* out, size_t len);
 void move_ker(uint8_t* out, const uint8_t* in, size_t len);
 void add_ker(uint8_t* inout, uint8_t* in, size_t len);
 
+void runtime_minmax(float* data, size_t len, float* min_num, float* max_num);
+void block_minmax(float* Input, size_t N, float* Min, float* Max);
 }  // namespace executor
 
 #endif  // ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
