@@ -63,9 +63,6 @@ def set_all_env_var(conf, overwrite_existing=False):
     
     for var, value in conf.items():
         set_env_var(var.upper(), value, overwrite_existing)
-    # a special but usually used case, directly use current process
-    if conf['num_of_instance'] == 1 and conf['cores_per_instance'] == cpu_counts:
-        set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance, with the objective
@@ -102,6 +99,9 @@ class Benchmark(object):
             mode = list(cfg.evaluation.keys())[0]
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
+        # disable multi-instance for accuracy mode
+        if mode == "accuracy":
+            set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
         logger.info("Start to run Benchmark.")
         if os.environ.get('NC_ENV_CONF') == 'True':

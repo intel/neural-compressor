@@ -65,10 +65,21 @@ def build_yaml():
     with open("test.yaml",  "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_benchmark():
+    seq = '''
+from neural_compressor.experimental import Benchmark, common
+evaluator = Benchmark('test.yaml')
+evaluator.model = './ir'
+evaluator.fit("performance")
+    '''
+    with open('benchmark.py', "w", encoding="utf-8") as f:
+        f.writelines(seq)
+
 class TestDeepengineModel(unittest.TestCase):
 
     def setUp(self):
         build_yaml()
+        build_benchmark()
 
     def test_model(self):
         model_dir = "/home/tensorflow/inc_ut/engine/bert_mlperf_2none.pb"
@@ -89,10 +100,7 @@ class TestDeepengineModel(unittest.TestCase):
         self.assertEqual(1, len(out))
         model.save('./ir')
 
-        evaluator = Benchmark('test.yaml')
-        evaluator.model = './ir'
-        evaluator("performance")
-        self.assertNotEqual(evaluator, None)
+        os.system("python benchmark.py")
 
         model.model = model.model
         model.nodes = model.nodes

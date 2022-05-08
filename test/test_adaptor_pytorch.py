@@ -16,7 +16,6 @@ from neural_compressor.utils.utility import recover
 import shutil
 import copy
 import numpy as np
-import yaml
 
 try:
     try:
@@ -544,9 +543,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         # Load configure and weights by neural_compressor.model
         evaluator.model = model
         evaluator.b_dataloader = common.DataLoader(dataset)
-        evaluator()
-        evaluator.model = model
-        evaluator()
+        evaluator.fit('accuracy')
 
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             model = copy.deepcopy(self.model)
@@ -792,7 +789,7 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
         evaluator = Benchmark('ipex_yaml.yaml')
         evaluator.model = script_model
         evaluator.b_dataloader = common.DataLoader(dataset)
-        results = evaluator()
+        evaluator.fit('accuracy')
 
 
 @unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")

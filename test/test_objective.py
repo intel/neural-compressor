@@ -240,7 +240,7 @@ class TestObjective(unittest.TestCase):
         benchmarker = Benchmark('fake_yaml.yaml')
         benchmarker.b_dataloader = common.DataLoader(dataset)
         benchmarker.model = self.constant_graph_1
-        benchmarker.fit()
+        benchmarker.fit(mode='accuracy')
 
     def test_model_size(self):
         from neural_compressor.experimental import Benchmark, common
@@ -260,7 +260,7 @@ class TestObjective(unittest.TestCase):
         benchmarker = Benchmark('fake_yaml_footprint.yaml')
         benchmarker.b_dataloader = common.DataLoader(dataset)
         benchmarker.model = self.constant_graph_1
-        benchmarker.fit()
+        benchmarker.fit(mode='accuracy')
 
 def build_matmul_model():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])

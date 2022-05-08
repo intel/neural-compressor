@@ -16,7 +16,6 @@ from neural_compressor.experimental import Benchmark, common
 from neural_compressor import options
 from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
 from neural_compressor import conf
-from onnxruntime_extensions import onnx_op
 
 def build_static_yaml():
     fake_yaml = """
@@ -342,26 +341,48 @@ def build_rename_model():
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
 
+def build_benchmark():
+    seq = '''
+from neural_compressor.experimental import Benchmark
+from neural_compressor.data import DATASETS, DATALOADERS
+from neural_compressor import conf
+from onnx import onnx_pb as onnx_proto
+from onnx import helper, TensorProto, numpy_helper
+from onnxruntime_extensions import onnx_op
+import numpy as np
+
 @onnx_op(op_type="PyReverseMatrix")
 def reverse_matrix(x):
     # The user custom op implementation here.
     return np.flip(x, axis=0).astype(np.float32)
 
-def build_ext_model():
-    nodes = []
-    nodes[0:] = [helper.make_node('Identity', ['input_1'], ['identity1'])]
-    nodes[1:] = [helper.make_node('PyReverseMatrix',
-                                  ['identity1'], ['reversed'],
-                                  domain='ai.onnx.contrib')]
+nodes = []
+nodes[0:] = [helper.make_node('Identity', ['input_1'], ['identity1'])]
+nodes[1:] = [helper.make_node('PyReverseMatrix',
+                              ['identity1'], ['reversed'],
+                              domain='ai.onnx.contrib')]
 
-    input0 = helper.make_tensor_value_info(
-            'input_1', onnx_proto.TensorProto.FLOAT, [None, 2])
-    output0 = helper.make_tensor_value_info(
-            'reversed', onnx_proto.TensorProto.FLOAT, [None, 2])
+input0 = helper.make_tensor_value_info(
+        'input_1', onnx_proto.TensorProto.FLOAT, [None, 2])
+output0 = helper.make_tensor_value_info(
+        'reversed', onnx_proto.TensorProto.FLOAT, [None, 2])
 
-    graph = helper.make_graph(nodes, 'test0', [input0], [output0])
-    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
-    return model
+graph = helper.make_graph(nodes, 'test0', [input0], [output0])
+model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+
+datasets = DATASETS('onnxrt_qlinearops')
+ext_dataset = datasets['dummy'](shape=(10, 2), low=0., high=1., label=True)
+ext_dataloader = DATALOADERS['onnxrt_qlinearops'](ext_dataset)
+
+conf.model.framework = 'onnxrt_qlinearops'
+conf.evaluation.accuracy.metric = {'Accuracy': {}}
+evaluator = Benchmark(conf)
+evaluator.b_dataloader = ext_dataloader
+evaluator.model = model
+evaluator('performance')
+    '''
+    with open('benchmark.py', "w", encoding="utf-8") as f:
+        f.writelines(seq)
 
 class MatmulDataset:
     def __init__(self):
@@ -420,7 +441,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.gather_model = build_model_with_gather()
         self.matmul_model = build_matmul_model()
         self.rename_model = build_rename_model()
-        self.ext_model = build_ext_model()
+        build_benchmark()
 
     @classmethod
     def tearDownClass(self):
@@ -440,13 +461,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         shutil.rmtree("./nc_workspace", ignore_errors=True)
 
     def test_ext_model(self):
-        from neural_compressor.experimental import Benchmark
-        conf.model.framework = 'onnxrt_qlinearops'
-        conf.evaluation.accuracy.metric = {'Accuracy': {}}
-        evaluator = Benchmark(conf)
-        evaluator.b_dataloader = self.ext_dataloader
-        evaluator.model = self.ext_model
-        evaluator('performance')
+        os.system("python benchmark.py" )
 
     def test_adaptor_register(self):
         from neural_compressor.adaptor.adaptor import adaptor_registry
@@ -625,7 +640,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
 
-        for mode in ["performance", "accuracy"]:
+        for mode in ["accuracy"]:
             fake_yaml = "benchmark.yaml"
             evaluator = Benchmark(fake_yaml)
             evaluator.b_dataloader = self.cv_dataloader
