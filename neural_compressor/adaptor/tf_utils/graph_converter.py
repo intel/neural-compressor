@@ -48,6 +48,7 @@ from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOpt
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
+from .graph_rewriter.generic.fuse_pad_with_fp32_conv import FusePadWithFP32Conv2DOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
 from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
@@ -557,7 +558,15 @@ class GraphConverter:
 
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
-
+                # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
+                # after enabling pad+conv2d in new API.
+                if self._use_new_api:
+                    non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+                    sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
+                        sampling_graph_def,
+                        non_pad_ops,
+                        self._tmp_model.input_node_names,
+                        self.op_wise_config).do_transformation()
                 if self.itex_mode:
                     self.quantized_node_info.extend(self._search_y_pattern_for_itex())
 
