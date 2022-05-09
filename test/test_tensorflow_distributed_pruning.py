@@ -361,10 +361,7 @@ class TestDistributed(unittest.TestCase):
         build_fake_yaml()
         cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
-        if os.path.exists("/home/tensorflow/.keras/datasets/cifar-10-batches-py.tar.gz"):
-            os.system("rm -fr /home/tensorflow/.keras/datasets/cifar-10-batches-py")
-            os.system("tar xzvf /home/tensorflow/cifar-10-batches-py.tar.gz -C /home/tensorflow/.keras/datasets/")
-    
+
     @classmethod
     def tearDownClass(cls):
         os.remove('fake_ut.py')
