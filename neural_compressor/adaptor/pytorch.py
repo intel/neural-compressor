@@ -241,7 +241,9 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 granularity = weight['granularity']
                 algorithm = weight['algorithm']
                 dtype = weight['dtype']
-                if observer_type == 'quant_aware_training':
+                if observer_type == 'quant_aware_training' and \
+                    key[1] not in ['Embedding', 'EmbeddingBag', 'LSTM', 'GRU', 
+                                    'LSTMCell', 'GRUCell', 'RNNCell']:
                     weights_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
                 else:
                     weights_observer = _observer(algorithm, scheme, granularity, dtype)
@@ -260,23 +262,32 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                             if 'compute_dtype' in activation \
                                 and activation['compute_dtype'] is not None \
                             else 'uint8'
-            if observer_type == 'quant_aware_training':
+            
+            # Default dynamic quantization ops below
+            if key[1] in ['LSTM', 'GRU', 'LSTMCell', 
+                            'GRUCell', 'RNNCell']:
+                tmp_observer_type = 'post_training_dynamic_quant'
+                activation_observer = _observer(algorithm, scheme, granularity, 
+                                                dtype, tmp_observer_type, compute_dtype)
+            elif observer_type == 'quant_aware_training' and\
+              key[1] not in ['Embedding', 'EmbeddingBag']:
                 activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity,
                                                           dtype, compute_dtype)
             else:
-                activation_observer = \
-                    _observer(algorithm, scheme, granularity, dtype, observer_type, compute_dtype)
+                activation_observer = _observer(algorithm, scheme, granularity, 
+                                                dtype, observer_type, compute_dtype)
 
-            if observer_type == 'quant_aware_training':
+            # Make sure modules that don't support qat/ptq-static get quantized
+            if key[1] in ['Embedding', 'EmbeddingBag', 'LSTM', 'GRU', 
+                            'LSTMCell', 'GRUCell', 'RNNCell']:
+                qconfig = torch.quantization.QConfigDynamic(
+                        activation=activation_observer, weight=weights_observer)
+            elif observer_type == 'quant_aware_training':
                 qconfig = torch.quantization.QConfig(
                     activation=activation_fake_quantize, weight=weights_fake_quantize)
             elif observer_type == 'post_training_static_quant':
-                if key[1] in ['Embedding', 'EmbeddingBag']:   # pragma: no cover
-                    qconfig = torch.quantization.QConfigDynamic(
-                        activation=activation_observer, weight=weights_observer)
-                else:
-                    qconfig = torch.quantization.QConfig(
-                        activation=activation_observer, weight=weights_observer)
+                qconfig = torch.quantization.QConfig(
+                    activation=activation_observer, weight=weights_observer)
             else:
                 version = get_torch_version()
                 if version < PyTorchVersionMode.PT16.value:   # pragma: no cover

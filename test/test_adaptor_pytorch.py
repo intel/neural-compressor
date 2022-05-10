@@ -419,6 +419,38 @@ class DynamicControlModel(torch.nn.Module):
         return x
 
 
+class LSTMModel(nn.Module):
+    '''Container module with an encoder, a recurrent module, and a decoder.'''
+
+    def __init__(self, ntoken=10, ninp=512, nhid=256, nlayers=5, dropout=0.5):
+        super(LSTMModel, self).__init__()
+        self.drop = nn.Dropout(dropout)
+        self.encoder = nn.Embedding(ntoken, ninp)
+        self.rnn = nn.LSTM(ninp, nhid, nlayers, dropout=dropout)
+        self.decoder = nn.Linear(nhid, ntoken)
+        self.init_weights()
+        self.nhid = nhid
+        self.nlayers = nlayers
+
+    def init_weights(self):
+        initrange = 0.1
+        self.encoder.weight.data.uniform_(-initrange, initrange)
+        self.decoder.bias.data.zero_()
+        self.decoder.weight.data.uniform_(-initrange, initrange)
+
+    def forward(self, input):
+        input = torch.ones((3, 10), dtype=torch.int32)
+        h0 = torch.randn(2, 10, 256)
+        c0 = torch.randn(2, 10, 256)
+        hidden = (h0, c0)
+        emb = self.encoder(input)
+        #import pdb;pdb.set_trace()
+        output, hidden = self.rnn(emb, hidden)
+        output = self.drop(output)
+        decoded = self.decoder(output)
+        return decoded, hidden
+
+
 def eval_func(model):
     # switch to evaluate mode
     model.eval()
@@ -873,40 +905,12 @@ class TestPytorchFXAdaptor(unittest.TestCase):
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
     def test_fx_dynamic_quant(self):
-        # Model Definition
-        class LSTMModel(nn.Module):
-            '''Container module with an encoder, a recurrent module, and a decoder.'''
-
-            def __init__(self, ntoken, ninp, nhid, nlayers, dropout=0.5):
-                super(LSTMModel, self).__init__()
-                self.drop = nn.Dropout(dropout)
-                self.encoder = nn.Embedding(ntoken, ninp)
-                self.rnn = nn.LSTM(ninp, nhid, nlayers, dropout=dropout)
-                self.decoder = nn.Linear(nhid, ntoken)
-                self.init_weights()
-                self.nhid = nhid
-                self.nlayers = nlayers
-
-            def init_weights(self):
-                initrange = 0.1
-                self.encoder.weight.data.uniform_(-initrange, initrange)
-                self.decoder.bias.data.zero_()
-                self.decoder.weight.data.uniform_(-initrange, initrange)
-
-            def forward(self, input, hidden):
-                emb = self.drop(self.encoder(input))
-                output, hidden = self.rnn(emb, hidden)
-                output = self.drop(output)
-                decoded = self.decoder(output)
-                return decoded, hidden
-
         model = LSTMModel(
             ntoken = 10,
             ninp = 512,
             nhid = 256,
             nlayers = 5,
         )
-
         # run fx_quant in neural_compressor and save the quantized GraphModule
         model.eval()
         quantizer = Quantization('fx_dynamic_yaml.yaml')
@@ -937,6 +941,34 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                               })
         self.assertEqual(model_fx.code, model_fx_recover.code)
         shutil.rmtree('./saved', ignore_errors=True)
+
+    def test_default_dynamic_quant(self):
+        def eval_func(model):
+            return 1
+
+        def q_func(model):
+            return model
+
+        # Model Definition
+        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+            model_origin = LSTMModel(
+                ntoken = 10,
+                ninp = 512,
+                nhid = 256,
+                nlayers = 2,
+            )
+            # run fx_quant in neural_compressor and save the quantized GraphModule
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (3, 10), label=True)
+            quantizer.eval_func = eval_func
+            if fake_yaml == 'fx_qat_yaml.yaml':
+                quantizer.q_func = q_func
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(model_origin)
+            q_model = quantizer.fit()
+            self.assertTrue('quantize' in str(type(q_model._model.encoder)))
+            self.assertTrue('quantize' in str(type(q_model._model.rnn)))
 
     def test_fx_sub_module_quant(self):
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
