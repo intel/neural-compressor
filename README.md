@@ -116,7 +116,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) with performance
 More details for validated models are available [here](docs/validated_model_list.md).   
 
 <a target="_blank" href="./docs/imgs/INC-release-data.png">
-  <img src="./docs/imgs/INC-release-data.png" alt="Architecture" width=750 height=500>
+  <img src="./docs/imgs/inc-release.png" alt="Architecture" width=800 height=500>
 </a>
 
 ## Documentation
