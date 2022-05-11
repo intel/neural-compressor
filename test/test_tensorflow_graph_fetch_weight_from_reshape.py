@@ -138,7 +138,7 @@ def create_graph():
                             reshape_node,
                             conv2_node])
     return test_graph
-        
+
 
 class TestFetchWeightFromReshapeOptimizer(unittest.TestCase):
     @classmethod
@@ -166,6 +166,6 @@ class TestFetchWeightFromReshapeOptimizer(unittest.TestCase):
         self.assertEqual(handled, True)
 
 
-        
+
 if __name__ == "__main__":
     unittest.main()

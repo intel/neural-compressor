@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -28,10 +29,8 @@ class FetchWeightFromReshapeOptimizer(GraphRewriterBase):
     @dump_elapsed_time("Pass FetchWeightFromReshapeOptimizer")
     def do_transformation(self):
         """ fetch weight of Conv2D from Pack+Reshape+Conv2D pattern
-
         Args:
           input_graph_def (graphdef): graphdef object
-
         Returns:
            [graphdef]: optimized graph
         """

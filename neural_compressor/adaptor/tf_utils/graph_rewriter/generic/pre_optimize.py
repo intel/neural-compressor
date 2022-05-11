@@ -141,9 +141,9 @@ class PreOptimization():
 
         self._tmp_graph_def = ExpandDimsOptimizer(
             self._tmp_graph_def).do_transformation()
-            
+
         self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
-            self._tmp_graph_def).do_transformation()     
+            self._tmp_graph_def).do_transformation()
         #TODO we need to remove below optimizer once the TF enabled the single
         # matmul op quantization
         self._tmp_graph_def = InjectDummyBiasAddOptimizer(
