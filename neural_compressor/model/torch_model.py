@@ -290,7 +290,8 @@ class PyTorchModel(PyTorchBaseModel):
         os.makedirs(root, exist_ok=True)
         try:
             stat_dict = self._model.state_dict()
-            stat_dict['best_configure'] = self.tune_cfg
+            if self.tune_cfg:
+                stat_dict['best_configure'] = self.tune_cfg
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
             logger.info("Save config file and weights of quantized model to {}.".format(root))
         except IOError as e:

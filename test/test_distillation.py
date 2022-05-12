@@ -184,7 +184,10 @@ class TestDistillation(unittest.TestCase):
         distiller.student_model = self.student_model
         distiller.teacher_model = self.teacher_model
         print('student model: {}'.format(distiller.student_model))
-        _ = distiller.fit()
+        distilled_model = distiller.fit()
+        distilled_model.save('./saved')
+        stat = torch.load('./saved/best_model.pt')
+        self.student_model.load_state_dict(stat)
 
     def test_distillation_intermediate_layers(self):
         from neural_compressor.experimental import Distillation, common
