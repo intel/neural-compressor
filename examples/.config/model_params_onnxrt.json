@@ -575,6 +575,15 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
-    }
+    },
+    "duc": {
+      "model_src_dir": "object_detection/onnx_model_zoo/DUC/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/leftImg8bit/val",
+      "input_model": "/tf_dataset2/models/onnx/DUC/ResNet101-DUC-12.onnx",
+      "yaml": "DUC.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    },
   }
 }
