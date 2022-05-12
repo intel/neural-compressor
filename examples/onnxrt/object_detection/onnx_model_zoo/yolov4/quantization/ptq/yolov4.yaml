@@ -25,17 +25,16 @@ quantization:                                        # optional. tuning constrai
   approach: post_training_static_quant
   op_wise: {
     'StatefulPartitionedCall/model/lambda*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    'StatefulPartitionedCall/model/tf_op_layer_LeakyRelu*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'StatefulPartitionedCall/model/tf_op_layer_add*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'StatefulPartitionedCall/model/tf_op_layer_Sigmoid*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'StatefulPartitionedCall/model/tf_op_layer_split*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'StatefulPartitionedCall/model/tf_op_layer_Reshape*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'Transpose*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    'StatefulPartitionedCall/model/conv2d_100/Conv2D': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'StatefulPartitionedCall/model/conv2d_101/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    'StatefulPartitionedCall/model/conv2d_108/Conv2D': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'StatefulPartitionedCall/model/conv2d_109/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
   }
+  calibration:
+    sampling_size: 1
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.

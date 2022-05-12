@@ -84,7 +84,7 @@ XYSCALE = [1.2, 1.1, 1.05]
 
 class Dataloader:
     def __init__(self, root, img_dir='val2017', \
-            anno_dir='annotations/instances_val2017.json'):
+            anno_dir='annotations/instances_val2017.json', filter=None):
         import json
         import os
         import numpy as np
@@ -165,7 +165,7 @@ class Post:
         bboxes = postprocess_boxes(pred_bbox, labels[4], self.input_size, 0.25)
         if len(bboxes) == 0:
             return (np.zeros((1,0,4)), np.zeros((1,0)), np.zeros((1,0))), labels[:4]
-        bboxes_ = np.array(nms(bboxes, 0.213, method='nms'))
+        bboxes_ = np.array(nms(bboxes, 0.63, method='nms'))
         bboxes, scores, classes = bboxes_[:, :4], bboxes_[:, 4], bboxes_[:, 5]
 
         bboxes = np.reshape(bboxes, (1, -1, 4))
