@@ -41,7 +41,7 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
 
         target_nodes = cur_graph.query_fusion_pattern_nodes(
-            [["Pad"], ["Conv2D", "Conv3D"], ('BiasAdd', 'Add', 'AddV2')])
+            [["Pad"], ["Conv2D"], ('BiasAdd', 'Add', 'AddV2')])
 
         for node_combination in target_nodes:
             conv_name = node_combination[1]
