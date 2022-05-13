@@ -23,14 +23,14 @@
     valid_mixed_precisions: []
 
   ops:
-    int8: &ops_default_s8 ['Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ConvReLU2d',
-           'ConvReLU3d', 'LinearReLU', 'ConvBn2d', 'ConvBnReLU2d', 'ConvSumReLU2d', 'ConvSumReLU3d']
+    int8: &ops_default_s8 ['conv3d', 'conv3d', 'batchNorm2d', 'batchNorm3d', 'linear', 'relu', 'convrelu2d',
+           'convrelu3d', 'linearrelu', 'convbn2d', 'convbnrelu2d', 'convsumrelu2d', 'convsumrelu3d']
     uint8: *ops_default_s8
     fp32: ['*'] # '*' means all op types
   
   capabilities: &1_10_capabilities
     int8: &cap_1_10_s8 {
-          'Convolution': &cap_s8_1_10_Conv2d {
+          'conv2d': &cap_s8_1_10_Conv2d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -39,16 +39,24 @@
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
+                        'scheme': ['sym', 'asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
                     },
-          'Linear': *cap_s8_1_10_Conv2d,
+          'conv1d': *cap_s8_1_10_Conv2d,
+          'conv3d': *cap_s8_1_10_Conv2d,
+          'linear': *cap_s8_1_10_Conv2d,
           'default': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
+                        'scheme': ['sym', 'asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -58,15 +66,15 @@
 
   patterns:
     fp32: &ref_default_fp32 [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
-        'Conv2d + BN2d',
-        'Conv3d + BN3d',
-        'Conv2d + BN2d + ReLU',
-        'Conv3d + BN3d + ReLU',
-        'Conv2d + Relu',
-        'Conv3d + Relu',
-        'Conv2d + Sum + ReLU',
-        'Conv3d + Sum + ReLU',
-        'Linear + ReLU',
+        'conv2d + BN2d',
+        'conv3d + BN3d',
+        'conv3d + BN2d + ReLU',
+        'conv3d + BN3d + ReLU',
+        'conv3d + Relu',
+        'conv3d + Relu',
+        'conv3d + Sum + ReLU',
+        'conv3d + Sum + ReLU',
+        'linear + ReLU',
         ]
     int8: *ref_default_fp32
     uint8: *ref_default_fp32
@@ -86,7 +94,7 @@
   
   capabilities: &default_capabilities
     int8: &cap_default_s8 {
-          'Convolution': &cap_s8_default_Conv2d {
+          'conv2d': &cap_s8_default_Conv2d {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -100,8 +108,16 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'Linear': *cap_s8_default_Conv2d,
+          'conv1d': *cap_s8_default_Conv2d,
+          'conv3d': *cap_s8_default_Conv2d,
+          'linear': *cap_s8_default_Conv2d,
           'default': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['sym'],

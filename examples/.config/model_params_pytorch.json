@@ -297,6 +297,15 @@
       "batch_size": 16384,
       "new_benchmark": false
     },
+    "dlrm_ipex": {
+      "model_src_dir": "recommendation/dlrm/quantization/ptq/ipex",
+      "dataset_location": "/mnt/local_disk3/dataset/dlrm/dlrm/input",
+      "input_model": "/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt",
+      "yaml": "conf_ipex.yaml",
+      "strategy": "basic",
+      "batch_size": 16384,
+      "new_benchmark": false
+    },
     "blendcnn": {
       "model_src_dir": "nlp/blendcnn/quantization/ptq/eager",
       "dataset_location": "/tf_dataset/pytorch/blendcnn/MRPC/",

@@ -501,7 +501,9 @@ class TuneStrategy(object):
                 # Pytorch can insert observer to model in this hook.
                 # Tensorflow don't support this mode for now
                 model = self.adaptor._pre_eval_hook(model)
-            val = self.objectives.evaluate(self.eval_func, model.model)
+            val = self.objectives.evaluate(
+                self.eval_func, model if self.framework == "pytorch_ipex" else model.model
+            )
             if self.cfg.tuning.tensorboard:
                 # post_eval_hook to deal the tensor
                 self.adaptor._post_eval_hook(model, accuracy=val[0])

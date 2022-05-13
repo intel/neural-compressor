@@ -337,6 +337,12 @@ class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
 
     def __init__(self, model, **kwargs):
         super(PyTorchIpexModel, self).__init__(model, **kwargs)
+        self.ipex_config_path = None
+
+    @property
+    def graph_info(self):
+        ''' return {Node: Node_type} like {'conv0': 'conv2d'} '''
+        pass
 
     @property
     def workspace_path(self):

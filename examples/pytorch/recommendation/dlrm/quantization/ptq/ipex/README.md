@@ -15,7 +15,7 @@ PyTorch 1.10 or higher version is needed with pytorch_fx backend.
 
   ```shell
   # Install dependency
-  cd examples/pytorch/recommendation/dlrm/quantization/ptq/fx
+  cd examples/pytorch/recommendation/dlrm/quantization/ptq/ipex
   pip install -r requirements.txt
   ```
 
@@ -34,7 +34,7 @@ PyTorch 1.10 or higher version is needed with pytorch_fx backend.
 # Run
 ### tune with INC
   ```shell
-  cd examples/pytorch/recommendation/dlrm/quantization/ptq/fx
+  cd examples/pytorch/recommendation/dlrm/quantization/ptq/ipex
   bash run_tuning.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset"
   ```
 
@@ -42,6 +42,7 @@ PyTorch 1.10 or higher version is needed with pytorch_fx backend.
 ```shell
 bash run_benchmark.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset" --mode=accuracy --int8=true
 ```
+
 
 Examples of enabling Intel® Neural Compressor
 =========================
@@ -65,9 +66,13 @@ In examples directory, there is conf.yaml. We could remove most of the items and
 ```yaml
 model:
   name: dlrm
-  framework: pytorch_fx
+  framework: pytorch_ipex
 
 device: cpu
+
+quantization:
+  calibration:
+    sampling_size: 102400
 
 tuning:
   accuracy_criterion:
@@ -82,7 +87,7 @@ Here we set accuracy target as tolerating 0.01 relative accuracy loss of baselin
 
 ### code update
 
-We need update dlrm_s_pytorch_tune.py like below
+We need update dlrm_s_pytorch.py like below
 
 ```python
 class DLRM_DataLoader(object):
@@ -98,26 +103,24 @@ class DLRM_DataLoader(object):
 from neural_compressor.experimental import Quantization, common
 
 def eval_func(model):
-    scores = []
-    targets = []
-    for j, (X_test, lS_o_test, lS_i_test, T) in enumerate(test_dataloader):
-        if not lS_i_test.is_contiguous():
-            lS_i_test = lS_i_test.contiguous()
-        Z = model(X_test, lS_o_test, lS_i_test)
-        S = Z.detach().cpu().numpy()  # numpy array
-        T = T.detach().cpu().numpy()  # numpy array
-        scores.append(S)
-        targets.append(T)
-    scores = np.concatenate(scores, axis=0)
-    targets = np.concatenate(targets, axis=0)
-    roc_auc = sklearn.metrics.roc_auc_score(targets, scores)
-    return roc_auc
-dlrm.eval()
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization("./conf.yaml")
+    args.int8 = False if model.ipex_config_path is None else True
+    args.int8_configure = "" \
+        if model.ipex_config_path is None else model.ipex_config_path
+    with torch.no_grad():
+        return inference(
+            args,
+            model,
+            best_acc_test,
+            best_auc_test,
+            test_ld,
+            trace=args.int8
+        )
+assert args.inference_only, "Please set inference_only in arguments"
+quantizer = Quantization("./conf_ipex.yaml")
 quantizer.model = common.Model(dlrm)
-quantizer.calib_dataloader = DLRM_DataLoader(test_dataloader)
+quantizer.calib_dataloader = DLRM_DataLoader(train_ld)
 quantizer.eval_func = eval_func
 q_model = quantizer.fit()
 q_model.save("/path/to/save/results")
+return
 ```

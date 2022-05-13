@@ -99,6 +99,12 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
             else:
                 input = input.contiguous(memory_format=torch.channels_last)
                 output = model(input)
+        elif isinstance(input, list) or isinstance(input, tuple):
+            if running_mode == "calibration":
+                with ipex.quantization.calibrate(conf, default_recipe=True):
+                    output = model(*input)
+            else:
+                output = model(*input)
         elif isinstance(input, dict):
             if running_mode == "calibration":
                 with ipex.quantization.calibrate(conf, default_recipe=True):
@@ -1955,8 +1961,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         except:
             logger.warning('Fail to remove {}.'.format(self.ipex_config_path))
         self.device = 'ipex'
-        self.qscheme = torch.per_tensor_symmetric
-            
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
@@ -2021,6 +2025,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         model_._model = q_model
         with open(self.ipex_config_path, 'r') as f:
             model_.tune_cfg = json.load(f)
+        model_.ipex_config_path = self.ipex_config_path
         return model_
 
     def _cfg_to_qconfig(self, tune_cfg):
@@ -2067,7 +2072,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             if scheme not in ['asym','sym']:
                 scheme = 'asym'
             break
-                
+
         for key in tune_cfg['op']:
             value = tune_cfg['op'][key]
             if IPEX_110:
@@ -2251,17 +2256,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             if not IPEX_110: 
                 ipex_conf = ipex.AmpConf(torch.int8)
             else:
-                try:
-                    assert 'BertForQuestionAnswering' in init_model.config.architectures
-                    self.qscheme = torch.per_tensor_affine
-                
-                except:
-                    self.qscheme = torch.per_tensor_symmetric
-                
-                ipex_conf = ipex.quantization.QuantConf(
-                          qscheme=self.qscheme
-                )
-                
+                ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
+
                 try:
                     init_model = optimization.fuse(init_model)
                 except:
@@ -2274,9 +2270,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 init_model,
                 self.q_dataloader,
                 conf=ipex_conf,
-                calib_sampling_size=self.q_dataloader.batch_size,
             )
             ipex_conf.save(self.ipex_config_path)
+            del init_model
 
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)

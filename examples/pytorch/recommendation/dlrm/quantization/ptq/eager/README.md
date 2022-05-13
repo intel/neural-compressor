@@ -1,12 +1,7 @@
-Original DLRM README
-============
-
-Please refer [DLRM README](https://github.com/facebookresearch/dlrm/blob/master/README.md)
-
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing PyTorch DLRM tuning zoo result.
+This document is used to list steps of reproducing PyTorch DLRM tuning zoo result. and original DLRM README is in [DLRM README](https://github.com/facebookresearch/dlrm/blob/master/README.md)
 
 > **Note**
 >
@@ -34,21 +29,20 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
   2. Specify the location of the unzipped text files day_0, ...,day_23, using --raw-data-file=<path/day> (the day number will be appended automatically), please refer "Run" command.
 
 ### 3. Prepare pretrained model
-  Corresponding pre-trained model is available under [CC-BY-NC license](https://creativecommons.org/licenses/by-nc/2.0/) and can be downloaded here [dlrm_emb128_subsample0.0_maxindrange40M_pretrained.pt](https://dlrm.s3-us-west-1.amazonaws.com/models/tb00_40M.pt)
+  Download the DLRM PyTorch weights (`tb00_40M.pt`, 90GB) from the
+[MLPerf repo](https://github.com/mlcommons/inference/tree/master/recommendation/dlrm/pytorch#more-information-about-the-model-weights)
 
 # Run
-
+### tune with INC
   ```shell
   cd examples/pytorch/recommendation/dlrm/quantization/ptq/eager
-  python -u dlrm_s_pytorch_tune.py --arch-sparse-feature-size=128 --arch-mlp-bot="13-512-256-128" \
-        --arch-mlp-top="1024-1024-512-256-1" --max-ind-range=40000000 --data-generation=dataset \
-        --data-set=terabyte --raw-data-file=${data_path}/day \ 
-        --processed-data-file=${data_path}/terabyte_processed.npz --loss-function=bce --round-targets=True \
-        --learning-rate=1.0 --mini-batch-size=2048 --print-freq=2048 --print-time --test-freq=102400 \
-        --test-mini-batch-size=16384 --test-num-workers=16 --memory-map --mlperf-logging \
-        --mlperf-auc-threshold=0.8025 --mlperf-bin-loader --mlperf-bin-shuffle \
-        --load-model=${model_path} --tune
+  bash run_tuning.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset"
   ```
+
+### benchmark
+```shell
+bash run_benchmark.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset" --mode=accuracy --int8=true
+```
 
 Examples of enabling Intel® Neural Compressor
 =========================
@@ -63,7 +57,7 @@ Intel® Neural Compressor supports two usages:
 
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
 
-As DLRM's metrics is 'f1', so customer should provide evaluation function 'eval_func', it's suitable for the second use case.
+Here we use the second use case.
 
 ### Write Yaml config file
 In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.
