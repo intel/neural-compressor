@@ -6,6 +6,7 @@
     <tr>
       <td class="header green">Dataset name</td>
       <td class="header green">Dataset type</td>
+      <td class="header green">Action</td>
     </tr>
     <tr [ngClass]="{'hover active': dataset.id === activeDatasetId, 'pointer': true}" *ngFor="let dataset of datasets"
       (click)="getDatasetDetails(dataset.id)" matTooltip="Click to see details">
@@ -18,6 +19,10 @@
           <img class="warning-icon-small" src="./../../assets/006a-alert-solid-orange.svg"
             matTooltip="Fill the code template before using this dataset">
         </a>
+      </td>
+      <td class="center cell">
+        <img matTooltip="Delete this dataset" class="plus-icon" src="./../../assets/057b-trash-outlined.svg"
+          (click)="$event.stopPropagation();deleteDataset(dataset.id, dataset.name)">
       </td>
     </tr>
   </table>

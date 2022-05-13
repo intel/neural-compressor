@@ -42,24 +42,13 @@ export class BenchmarkFormComponent implements OnInit {
   ngOnInit(): void {
     this.name = 'Benchmark' + String(this.data.index + 1);
 
+    this.getDatasetList()
     this.modelService.getModelList(this.data.projectId)
       .subscribe(
         response => {
           this.models = response['models'];
           if (this.models.length > 0) {
             this.modelId = this.models[0].id;
-          }
-        },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
-
-    this.modelService.getDatasetList(this.data.projectId)
-      .subscribe(
-        response => {
-          this.datasets = response['datasets'];
-          if (this.datasets.length > 0) {
-            this.datasetId = this.datasets[0].id;
           }
         },
         error => {
@@ -73,10 +62,30 @@ export class BenchmarkFormComponent implements OnInit {
       numOfInstance: [this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'] / 4],
       coresPerInstance: [4]
     });
+
+    this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
+  }
+
+  getDatasetList() {
+    this.modelService.getDatasetList(this.data.projectId)
+      .subscribe(
+        response => {
+          this.datasets = response['datasets'];
+          if (this.datasets.length > 0) {
+            this.datasetId = this.datasets[0].id;
+          }
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   coresValidated(): boolean {
     return this.benchmarkFormGroup.get('coresPerInstance').value * this.benchmarkFormGroup.get('numOfInstance').value <= this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'];
+  }
+
+  openDatasetDialog() {
+    this.modelService.openDatasetDialog$.next(true);
   }
 
   addBenchmark() {

@@ -14,6 +14,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { ModelService } from '../services/model.service';
 
@@ -77,6 +78,29 @@ export class DatasetsComponent implements OnInit {
         error => {
           this.modelService.openErrorDialog(error);
         });
+  }
+
+  deleteDataset(id: number, name: string) {
+    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        what: 'dataset',
+        id: id,
+        name: name
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(
+      response => {
+        if (response.confirm) {
+          this.modelService.delete('dataset', id, name)
+            .subscribe(
+              response =>
+                this.getDatasetList(),
+              error =>
+                this.modelService.openErrorDialog(error)
+            );
+        }
+      });
   }
 
   objectKeys(obj: any): string[] {

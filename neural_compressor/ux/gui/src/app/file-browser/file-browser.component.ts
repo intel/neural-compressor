@@ -13,7 +13,6 @@
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { ErrorComponent } from '../error/error.component';
 import { FileBrowserFilter, ModelService } from '../services/model.service';
 
 @Component({

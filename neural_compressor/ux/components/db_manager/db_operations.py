@@ -324,15 +324,16 @@ class ModelAPIInterface:
         try:
             project_id: int = int(data.get("project_id", None))
         except ValueError:
-            raise ClientErrorException("Incorrect model id.")
+            raise ClientErrorException("Incorrect project id.")
         except TypeError:
-            raise ClientErrorException("Could not find model id.")
+            raise ClientErrorException("Could not find project id.")
 
         with Session.begin() as db_session:
             models_list = Model.list(
                 db_session,
                 project_id,
             )
+
         return models_list
 
     @staticmethod
@@ -366,6 +367,26 @@ class ModelAPIInterface:
 
 class DatasetAPIInterface:
     """Interface for queries connected with datasets."""
+
+    @staticmethod
+    def delete_dataset(data: dict) -> dict:
+        """Delete dataset from database and clean workspace."""
+        try:
+            dataset_id: int = int(data.get("id", None))
+            dataset_name: str = str(data.get("name", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value.")
+        except TypeError:
+            raise ClientErrorException("Missing dataset id or dataset name.")
+        with Session.begin() as db_session:
+
+            removed_dataset_id = Dataset.delete_dataset(
+                db_session=db_session,
+                dataset_id=dataset_id,
+                dataset_name=dataset_name,
+            )
+
+        return {"id": removed_dataset_id}
 
     @staticmethod
     def get_dataset_details(data: dict) -> dict:
@@ -484,7 +505,6 @@ class DatasetAPIInterface:
         elif custom.get("custom_metric"):
             template_type = "metric"
         if template_type is not None:
-
             template_path = DatasetAPIInterface.generate_template(dataloader_path, template_type)
         return template_path
 
@@ -661,6 +681,43 @@ class DatasetAPIInterface:
 
 class OptimizationAPIInterface:
     """Interface for queries connected with optimizations."""
+
+    @staticmethod
+    def delete_optimization(data: dict) -> dict:
+        """Delete optimization from database and clean workspace."""
+        try:
+            optimization_id: int = int(data.get("id", None))
+            optimization_name: str = str(data.get("name", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value.")
+        except TypeError:
+            raise ClientErrorException("Missing optimization id or optimization name.")
+        with Session.begin() as db_session:
+            optimization_details = Optimization.details(db_session, optimization_id)
+            project_id = optimization_details["project_id"]
+            project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+            removed_optimization_id = Optimization.delete_optimization(
+                db_session=db_session,
+                optimization_id=optimization_id,
+                optimization_name=optimization_name,
+            )
+
+        if removed_optimization_id is not None:
+            try:
+                project_id = project_details["id"]
+                normalized_project_name = normalize_string(project_details["name"])
+                normalized_optimization_name = normalize_string(optimization_name)
+                optimization_location = os.path.join(
+                    WORKSPACE_LOCATION,
+                    f"{normalized_project_name}_{project_id}",
+                    "optimizations",
+                    f"{normalized_optimization_name}_{optimization_id}",
+                )
+                shutil.rmtree(optimization_location, ignore_errors=True)
+            except Exception:
+                log.debug("Could not find optimization directory.")
+
+        return {"id": removed_optimization_id}
 
     @staticmethod
     def get_optimization_details(data: dict) -> dict:
@@ -1037,6 +1094,46 @@ class BenchmarkAPIInterface:
     """Interface for queries connected with benchmark."""
 
     @staticmethod
+    def delete_benchmark(data: dict) -> dict:
+        """Delete benchmark from database and clean workspace."""
+        try:
+            benchmark_id: int = int(data.get("id", None))
+            benchmark_name: str = str(data.get("name", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value.")
+        except TypeError:
+            raise ClientErrorException("Missing project id or project name.")
+        with Session.begin() as db_session:
+            benchmark_details = Benchmark.details(db_session, benchmark_id)
+            project_id = benchmark_details["project_id"]
+            project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+            removed_benchmark_id = Benchmark.delete_benchmark(
+                db_session=db_session,
+                benchmark_id=benchmark_id,
+                benchmark_name=benchmark_name,
+            )
+
+        if removed_benchmark_id is not None:
+            try:
+                model_id = benchmark_details["model"]["id"]
+                normalized_project_name = normalize_string(project_details["name"])
+                normalized_benchmark_name = normalize_string(benchmark_name)
+                normalized_model_name = normalize_string(benchmark_details["model"]["name"])
+                benchmark_location = os.path.join(
+                    WORKSPACE_LOCATION,
+                    f"{normalized_project_name}_{project_id}",
+                    "models",
+                    f"{normalized_model_name}_{model_id}",
+                    "benchmarks",
+                    f"{normalized_benchmark_name}_{benchmark_id}",
+                )
+                shutil.rmtree(benchmark_location, ignore_errors=True)
+            except Exception:
+                log.debug("Could not find benchmark directory.")
+
+        return {"id": removed_benchmark_id}
+
+    @staticmethod
     def get_benchmark_details(data: dict) -> dict:
         """Parse input data and get benchmark details."""
         try:
@@ -1331,6 +1428,46 @@ class ProfilingAPIInterface:
                 profiling_id,
             )
         return profiling_details
+
+    @staticmethod
+    def delete_profiling(data: dict) -> dict:
+        """Delete profiling from database and clean workspace."""
+        try:
+            profiling_id: int = int(data.get("id", None))
+            profiling_name: str = str(data.get("name", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value.")
+        except TypeError:
+            raise ClientErrorException("Missing project id or project name.")
+        with Session.begin() as db_session:
+            profiling_details = Profiling.details(db_session, profiling_id)
+            project_id = profiling_details["project_id"]
+            project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+            removed_profiling_id = Profiling.delete_profiling(
+                db_session=db_session,
+                profiling_id=profiling_id,
+                profiling_name=profiling_name,
+            )
+
+        if removed_profiling_id is not None:
+            try:
+                model_id = profiling_details["model"]["id"]
+                normalized_project_name = normalize_string(project_details["name"])
+                normalized_profiling_name = normalize_string(profiling_name)
+                normalized_model_name = normalize_string(profiling_details["model"]["name"])
+                profiling_location = os.path.join(
+                    WORKSPACE_LOCATION,
+                    f"{normalized_project_name}_{project_id}",
+                    "models",
+                    f"{normalized_model_name}_{model_id}",
+                    "profilings",
+                    f"{normalized_profiling_name}_{profiling_id}",
+                )
+                shutil.rmtree(profiling_location, ignore_errors=True)
+            except Exception:
+                log.debug("Could not find profiling directory.")
+
+        return {"id": removed_profiling_id}
 
     @staticmethod
     def list_profilings(data: dict) -> dict:

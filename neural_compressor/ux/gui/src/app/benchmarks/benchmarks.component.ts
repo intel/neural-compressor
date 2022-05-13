@@ -11,12 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { ColorHelper, ScaleType } from '@swimlane/ngx-charts';
 import { environment } from 'src/environments/environment';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { BenchmarkFormComponent } from '../benchmark-form/benchmark-form.component';
+import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 
@@ -33,6 +35,9 @@ var shajs = require('sha.js');
     './../optimizations/optimizations.component.scss']
 })
 export class BenchmarksComponent implements OnInit {
+  @Input() framework;
+  @Input() domain;
+  @Input() domainFlavour;
 
   apiBaseUrl = environment.baseUrl;
   token = '';
@@ -135,6 +140,24 @@ export class BenchmarksComponent implements OnInit {
         index: this.benchmarks.length
       }
     });
+
+    this.modelService.openDatasetDialog$.subscribe(
+      response => this.addDataset()
+    )
+  }
+
+  addDataset() {
+    const dialogRef = this.dialog.open(DatasetFormComponent, {
+      width: '60%',
+      restoreFocus: true,
+      data: {
+        projectId: 1,
+        index: 2,
+        framework: 'TensorFlow',
+        domain: 'Image Recognition',
+        domainFlavour: ''
+      }
+    });
   }
 
   executeBenchmark(benchmarkId: number) {
@@ -209,6 +232,29 @@ export class BenchmarksComponent implements OnInit {
     }
 
     this.showComparison = true;
+  }
+
+  deleteBenchmark(id: number, name: string) {
+    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        what: 'benchmark',
+        id: id,
+        name: name
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(
+      response => {
+        if (response.confirm) {
+          this.modelService.delete('benchmark', id, name)
+            .subscribe(
+              response =>
+                this.getBenchmarksList(),
+              error =>
+                this.modelService.openErrorDialog(error)
+            );
+        }
+      });
   }
 
   typeOf(object) {

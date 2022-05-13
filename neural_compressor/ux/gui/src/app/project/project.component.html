@@ -20,7 +20,9 @@
       <ng-template #addOptimizationTour>
         You can start by adding new optimization for your model.
       </ng-template>
-      <app-optimizations [framework]="project['input_model']['framework']['name'].toLowerCase()"></app-optimizations>
+      <app-optimizations [framework]="project['input_model']['framework']['name']"
+        [domain]="project['input_model']['domain']['name']"
+        [domainFlavour]="project['input_model']['domain_flavour']['name']"></app-optimizations>
     </mat-tab>
 
     <mat-tab>
@@ -33,7 +35,9 @@
       <ng-template #benchmarkTour>
         Add new benchmark to check out the performance and accuracy of initial and optimized model.
       </ng-template>
-      <app-benchmarks></app-benchmarks>
+      <app-benchmarks [framework]="project['input_model']['framework']['name']"
+        [domain]="project['input_model']['domain']['name']"
+        [domainFlavour]="project['input_model']['domain_flavour']['name']"></app-benchmarks>
     </mat-tab>
 
     <ng-container *ngIf="project['input_model']">

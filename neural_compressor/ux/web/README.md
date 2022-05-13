@@ -1983,6 +1983,44 @@
 }
 ```
 
+#### Get profiling result as csv
+**Path**: `api/profiling/results/csv`<br>
+**Method**: `GET`
+
+**Parameters description:**
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>id</b></td>
+            <td>Profiling id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "id": 1
+}
+```
+
+**Example response**:
+```
+node_name,total_execution_time,accelerator_execution_time,cpu_execution_time,op_run,op_defined
+Node_A,123,0,123,117,140
+Node_B,456,0,456,3,3
+Node_C,234,0,234,12,12
+Node_D,304,0,304,5,185
+```
+
 #### List profilings
 **Path**: `api/profiling/list`<br>
 **Method**: `GET`

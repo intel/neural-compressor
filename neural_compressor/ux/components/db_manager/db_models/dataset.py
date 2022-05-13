@@ -95,6 +95,26 @@ class Dataset(Base):
         return int(new_dataset.id)
 
     @staticmethod
+    def delete_dataset(
+        db_session: session.Session,
+        dataset_id: int,
+        dataset_name: str,
+    ) -> Optional[int]:
+        """Remove dataset from database."""
+        dataset = (
+            db_session.query(Dataset)
+            .filter(Dataset.id == dataset_id)
+            .filter(Dataset.name == dataset_name)
+            .one_or_none()
+        )
+        if dataset is None:
+            return None
+        db_session.delete(dataset)
+        db_session.flush()
+
+        return int(dataset.id)
+
+    @staticmethod
     def details(db_session: Session, dataset_id: int) -> dict:
         """Get dataset details."""
         dataset = db_session.query(Dataset).filter(Dataset.id == dataset_id).one_or_none()

@@ -16,7 +16,7 @@
     <td class="header">Last run</td>
     <td class="header">Duration</td>
     <td class="header">Status</td>
-    <td class="header">Action</td>
+    <td class="header" colspan=2>Action</td>
   </tr>
   <tr [ngClass]="{'active': optimization.id === activeOptimizationId, 'pointer': true}"
     *ngFor="let optimization of optimizations" (click)="getOptimizationDetails(optimization.id)"
@@ -79,7 +79,12 @@
         (click)="$event.stopPropagation();executeOptimization(optimization.id)">
         <img src="./../../assets/088a-start-solid-white.svg">
         Run
-      </button></td>
+      </button>
+    </td>
+    <td class="center cell">
+      <img matTooltip="Delete this optimization" class="plus-icon" src="./../../assets/057b-trash-outlined.svg"
+        (click)="$event.stopPropagation();deleteOptimization(optimization.id, optimization.name)">
+    </td>
   </tr>
 </table>
 
@@ -165,6 +170,16 @@
             </td>
             <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
               {{ detail.value.name ?? (detail.value | json) }}
+            </td>
+            <td>
+              <img *ngIf="detail.key.includes('path')" class="icon-button right"
+                src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
+                (click)="copyToClipboard(detail.value)">
+            </td>
+            <td>
+              <img *ngIf="detail.key === 'path'" class="help-button right pointer" matTooltip="Download model"
+                (click)="downloadModel(optimizationDetails['optimized_model']['path'], optimizationDetails['optimized_model']['id'])"
+                src="./../../assets/160a-download-solid.svg">
             </td>
           </tr>
         </ng-container>

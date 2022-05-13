@@ -3,22 +3,24 @@
 <mat-card>
   <mat-radio-group [(ngModel)]="chosenBenchmarkId">
     <ng-container *ngFor="let benchmark of data.benchmarks">
-      <br>
-      <mat-radio-button [value]="benchmark.id">
-        {{ benchmark.name }}<br>
-        <a *ngIf="benchmark.result.accuracy !== null">
-          accuracy:
-          <a class="big-number-table">
-            {{ benchmark.result.accuracy }} % <br>
+      <ng-container *ngIf="benchmark.result">
+        <br>
+        <mat-radio-button [value]="benchmark.id">
+          {{ benchmark.name }}<br>
+          <a *ngIf="benchmark.result.accuracy !== null">
+            accuracy:
+            <a class="big-number-table">
+              {{ benchmark.result.accuracy }} % <br>
+            </a>
           </a>
-        </a>
-        <a *ngIf="benchmark.result.performance !== null">
-          performance:
-          <a class="big-number-table">
-            {{ benchmark.result.performance }} FPS <br>
+          <a *ngIf="benchmark.result.performance !== null">
+            performance:
+            <a class="big-number-table">
+              {{ benchmark.result.performance }} FPS <br>
+            </a>
           </a>
-        </a>
-      </mat-radio-button><br>
+        </mat-radio-button><br>
+      </ng-container>
     </ng-container>
   </mat-radio-group>
   <br>

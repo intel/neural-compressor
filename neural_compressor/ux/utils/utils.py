@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """UX server utils module."""
-
+import csv
 import json
 import os
 import re
@@ -31,6 +31,7 @@ from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, Domains, Framewo
 from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
+    InternalException,
     NotFoundException,
 )
 from neural_compressor.ux.utils.logger import log
@@ -605,3 +606,15 @@ def parse_to_float_list(values: Union[None, float, List[float]]) -> List[float]:
     if isinstance(values, list):
         return values
     return []
+
+
+def export_to_csv(data: List[dict], file: str) -> None:
+    """Export list of dicts to csv file."""
+    if len(data) < 1:
+        raise InternalException("Could not export to csv. Data is empty.")
+    with open(file, "w") as csvfile:
+        fieldnames = data[0].keys()
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for entry in data:
+            writer.writerow(entry)

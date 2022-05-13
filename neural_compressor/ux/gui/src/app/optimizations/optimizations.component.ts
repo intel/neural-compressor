@@ -14,7 +14,10 @@
 import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as saveAs from 'file-saver';
 import { environment } from 'src/environments/environment';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
+import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { OptimizationFormComponent } from '../optimization-form/optimization-form.component';
 import { PinBenchmarkComponent } from '../pin-benchmark/pin-benchmark.component';
 import { ModelService } from '../services/model.service';
@@ -36,6 +39,8 @@ export class OptimizationsComponent implements OnInit {
   @ViewChild("perfChart", { read: ElementRef, static: false }) perfChartRef: ElementRef;
 
   @Input() framework: string;
+  @Input() domain;
+  @Input() domainFlavour;
   model = {};
   historyData = {};
   optimizations = [];
@@ -215,7 +220,25 @@ export class OptimizationsComponent implements OnInit {
       {
         projectId: this.activatedRoute.snapshot.params.id,
         index: this.optimizations.length,
-        framework: this.framework
+        framework: this.framework.toLowerCase()
+      }
+    });
+
+    this.modelService.openDatasetDialog$.subscribe(
+      response => this.addDataset()
+    )
+  }
+
+  addDataset() {
+    const dialogRef = this.dialog.open(DatasetFormComponent, {
+      width: '60%',
+      restoreFocus: true,
+      data: {
+        projectId: 1,
+        index: 2,
+        framework: 'TensorFlow',
+        domain: 'Image Recognition',
+        domainFlavour: ''
       }
     });
   }
@@ -265,14 +288,49 @@ export class OptimizationsComponent implements OnInit {
   }
 
   fixChart() {
-    this.accChartRef.nativeElement.querySelectorAll("g.line-series path").forEach((el) => {
-      el.setAttribute("stroke-width", "10");
-      el.setAttribute("stroke-linecap", "round");
+    if (this.accChartRef) {
+      this.accChartRef.nativeElement.querySelectorAll("g.line-series path").forEach((el) => {
+        el.setAttribute("stroke-width", "10");
+        el.setAttribute("stroke-linecap", "round");
+      });
+      this.perfChartRef.nativeElement.querySelectorAll("g.line-series path").forEach((el) => {
+        el.setAttribute("stroke-width", "10");
+        el.setAttribute("stroke-linecap", "round");
+      });
+    }
+  }
+
+  downloadModel(filePath: string, modelId: number) {
+    this.modelService.downloadModel(modelId)
+      .subscribe(
+        data =>
+          saveAs(data, this.getFileName(filePath)),
+        error =>
+          this.modelService.openErrorDialog(error)
+      );
+  }
+
+  deleteOptimization(id: number, name: string) {
+    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        what: 'optimization',
+        id: id,
+        name: name
+      }
     });
-    this.perfChartRef.nativeElement.querySelectorAll("g.line-series path").forEach((el) => {
-      el.setAttribute("stroke-width", "10");
-      el.setAttribute("stroke-linecap", "round");
-    });
+
+    dialogRef.afterClosed().subscribe(
+      response => {
+        if (response.confirm) {
+          this.modelService.delete('optimization', id, name)
+            .subscribe(
+              response =>
+                this.getOptimizations(),
+              error =>
+                this.modelService.openErrorDialog(error)
+            );
+        }
+      });
   }
 
   axisFormat(val) {
@@ -286,6 +344,10 @@ export class OptimizationsComponent implements OnInit {
   goToBenchmarks() {
     this.router.navigate(['project', this.activatedRoute.snapshot.params.id, 'benchmarks'], { queryParamsHandling: "merge" });
     this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'benchmarks' });
+  }
+
+  getFileName(path: string): string {
+    return path.replace(/^.*[\\\/]/, '');
   }
 
   typeOf(object) {

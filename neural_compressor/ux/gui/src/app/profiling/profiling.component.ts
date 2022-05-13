@@ -14,7 +14,9 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
+import * as saveAs from 'file-saver';
 import { environment } from 'src/environments/environment';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { ProfilingFormComponent } from '../profiling-form/profiling-form.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
@@ -165,6 +167,16 @@ export class ProfilingComponent implements OnInit {
         });
   }
 
+  downloadProfilingData(id: number) {
+    this.modelService.downloadProfiling(id)
+      .subscribe(
+        data =>
+          saveAs(data, 'profiling' + id + '.csv'),
+        error =>
+          this.modelService.openErrorDialog(error)
+      );
+  }
+
   showProfilingChart() {
     this.profilingChartData[0].series = [];
     Object.keys(this.showInChart).forEach(index => {
@@ -177,6 +189,29 @@ export class ProfilingComponent implements OnInit {
     });
     this.profilingChartData = [...this.profilingChartData];
     this.showChart = true;
+  }
+
+  deleteProfiling(id: number, name: string) {
+    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        what: 'profiling',
+        id: id,
+        name: name
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(
+      response => {
+        if (response.confirm) {
+          this.modelService.delete('profiling', id, name)
+            .subscribe(
+              response =>
+                this.getProfilingList(),
+              error =>
+                this.modelService.openErrorDialog(error)
+            );
+        }
+      });
   }
 
   typeOf(obj): string {

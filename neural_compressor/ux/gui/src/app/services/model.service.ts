@@ -29,6 +29,7 @@ export class ModelService {
 
   projectCreated$: Subject<boolean> = new Subject<boolean>();
   datasetCreated$: Subject<boolean> = new Subject<boolean>();
+  openDatasetDialog$: Subject<boolean> = new Subject<boolean>();
   optimizationCreated$: Subject<boolean> = new Subject<boolean>();
   benchmarkCreated$: Subject<boolean> = new Subject<boolean>();
   projectChanged$: Subject<{}> = new Subject<{}>();
@@ -255,6 +256,24 @@ export class ModelService {
       {
         profiling_id: profilingId,
         request_id: requestId,
+      }
+    );
+  }
+
+  downloadModel(modelId: number) {
+    return this.http.post(
+      this.baseUrl + 'api/model/download',
+      { id: modelId },
+      { responseType: 'blob' }
+    );
+  }
+
+  delete(what: string, id: number, name: string) {
+    return this.http.post(
+      this.baseUrl + `api/${what}/delete`,
+      {
+        id: id,
+        name: name
       }
     );
   }

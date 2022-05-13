@@ -10,7 +10,7 @@
     <td class="header">Number of threads</td>
     <td class="header">Logs</td>
     <td class="header">Status</td>
-    <td class="header">Action</td>
+    <td class="header" colspan=2>Action</td>
   </tr>
   <ng-container *ngFor="let profiling of profilingList">
     <tr [ngClass]="{'active': profiling.id === activeProfilingId, 'pointer': true}"
@@ -42,6 +42,10 @@
           Run
         </button>
       </td>
+      <td class="center cell">
+        <img matTooltip="Delete this profiling" class="plus-icon" src="./../../assets/057b-trash-outlined.svg"
+          (click)="$event.stopPropagation();deleteProfiling(profiling.id, profiling.name)">
+      </td>
     </tr>
   </ng-container>
 </table>
@@ -72,7 +76,15 @@
 
   <div class="item item-charts1">
     <br>
-    <button mat-raised-button color="accent" class="float-right" (click)="showProfilingChart()">Update chart</button>
+    <button mat-raised-button color="accent" class="float-right"
+      (click)="downloadProfilingData(profilingData[0]['profiling_id'])">
+      <img class="help-button pointer" src="./../../assets/160a-download-solid-white.svg">
+      Download .csv file
+    </button>
+    <button mat-raised-button color="accent" class="float-right" (click)="showProfilingChart()">
+      <img class="help-button pointer" src="./../../assets/292-growth-increase.svg">
+      Update chart
+    </button>
     <h2>Profiling data</h2>
     <table class="rounded">
       <tr>

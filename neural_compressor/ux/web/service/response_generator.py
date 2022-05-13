@@ -35,13 +35,14 @@ class ResponseGenerator:
     def serve_from_filesystem(
         path: str,
         mimetype: Optional[str] = None,
+        as_attachment: Optional[bool] = False,
     ) -> Response:
         """Serve any file from filesystem."""
         verify_file_path(path)
         return send_file(
             path,
             mimetype=mimetype,
-            as_attachment=False,
+            as_attachment=as_attachment,
             cache_timeout=0,
         )
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -34,7 +34,6 @@ export class OptimizationFormComponent implements OnInit {
   name: string;
 
   constructor(
-    private dialog: MatDialog,
     public modelService: ModelService,
     @Inject(MAT_DIALOG_DATA) public data
   ) { }
@@ -43,6 +42,7 @@ export class OptimizationFormComponent implements OnInit {
     this.name = "Optimization" + String(this.data.index + 1);
     this.getPrecisions();
     this.getDatasets();
+    this.modelService.datasetCreated$.subscribe(response => this.getDatasets());
   }
 
   getPrecisions() {
@@ -87,6 +87,10 @@ export class OptimizationFormComponent implements OnInit {
         error => {
           this.modelService.openErrorDialog(error);
         });
+  }
+
+  openDatasetDialog() {
+    this.modelService.openDatasetDialog$.next(true);
   }
 
   addOptimization() {

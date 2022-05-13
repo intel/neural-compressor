@@ -7,16 +7,17 @@
   <mat-vertical-stepper #stepper>
     <mat-step [completed]="false">
       <ng-template matStepLabel>Select domain</ng-template>
-      <ng-container *ngFor="let availableDomain of domains">
-        <button [ngClass]="{'chip domain-btn': true, 'active': model.domain === availableDomain}" mat-flat-button
+      <ng-container *ngFor="let availableDomain of domains; let index = index">
+        <button [attr.id]="'domain' + index"
+          [ngClass]="{'chip domain-btn': true, 'active': model.domain === availableDomain}" mat-flat-button
           (click)="onModelDomainChange(availableDomain)">{{ availableDomain | modelList | titlecase }}</button>
       </ng-container>
     </mat-step>
 
     <mat-step [completed]="false">
       <ng-template matStepLabel>Select model</ng-template>
-      <ng-container *ngFor="let availableModel of models">
-        <button *ngIf="configExists(model.framework, model.domain, availableModel)"
+      <ng-container *ngFor="let availableModel of models; let index = index">
+        <button *ngIf="configExists(model.framework, model.domain, availableModel)" [attr.id]="'model' + index"
           [ngClass]="{'chip model-btn': true, 'active': model.model === availableModel}" mat-flat-button
           (click)="model.model = availableModel"> {{ availableModel | modelList }} </button>
       </ng-container>

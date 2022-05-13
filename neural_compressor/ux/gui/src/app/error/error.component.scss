@@ -208,3 +208,13 @@ table.rounded {
 .warning {
   color: $orange;
 }
+
+.link {
+  color: -webkit-link;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.right {
+  float: right;
+}

@@ -117,6 +117,26 @@ class Optimization(Base):
         return int(new_optimization.id)
 
     @staticmethod
+    def delete_optimization(
+        db_session: session.Session,
+        optimization_id: int,
+        optimization_name: str,
+    ) -> Optional[int]:
+        """Remove optimization from database."""
+        optimization = (
+            db_session.query(Optimization)
+            .filter(Optimization.id == optimization_id)
+            .filter(Optimization.name == optimization_name)
+            .one_or_none()
+        )
+        if optimization is None:
+            return None
+        db_session.delete(optimization)
+        db_session.flush()
+
+        return int(optimization.id)
+
+    @staticmethod
     def update_status(
         db_session: session.Session,
         optimization_id: int,

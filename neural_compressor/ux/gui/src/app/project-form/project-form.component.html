@@ -7,13 +7,13 @@
       <form [formGroup]="projectFormGroup">
         <mat-form-field class="form-field long" appearance="outline">
           <mat-label>project name</mat-label>
-          <input required formControlName="name" matInput>
+          <input id="project_name" required formControlName="name" matInput>
         </mat-form-field>
       </form>
     </mat-card>
     <br />
     <div class="float-right">
-      <button mat-raised-button matStepperNext>
+      <button id="next_btn1" mat-raised-button matStepperNext>
         <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
         Next
       </button>
@@ -25,17 +25,17 @@
     <h2>Choose custom or predefined project</h2>
     <mat-card>
       <mat-radio-group [(ngModel)]="showExamples">
-        <mat-radio-button [value]="true">
+        <mat-radio-button id="predefined-radio" [value]="true">
           <b>predefined model</b> - choose model from predefined quantization configurations (basic)
         </mat-radio-button><br><br>
-        <mat-radio-button [value]="false">
+        <mat-radio-button id="custom-radio" [value]="false">
           <b>custom model</b> - create new quantization configuration using wizard (advanced)
         </mat-radio-button>
       </mat-radio-group>
     </mat-card>
     <br />
     <div class="float-right">
-      <button mat-raised-button matStepperNext>
+      <button id="next_btn2" mat-raised-button matStepperNext>
         <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
         Next
       </button>
@@ -59,7 +59,7 @@
           <span class="spinner-wrapper">
             <mat-form-field class="form-field long" appearance="outline">
               <mat-label>model path</mat-label>
-              <input required formControlName="modelLocation" matInput>
+              <input id="model_path" required formControlName="modelLocation" matInput>
             </mat-form-field>
             <button id="choose-file-btn" mat-raised-button color="primary" class="fixed-height choose-file-btn"
               (click)="openDialog('modelLocation', 'models')">

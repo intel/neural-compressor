@@ -47,6 +47,7 @@ from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.web.communication import Request, Response, create_simple_response
 from neural_compressor.ux.web.exceptions import ServiceNotFoundException
 from neural_compressor.ux.web.service.benchmark import BenchmarkService
+from neural_compressor.ux.web.service.model import ModelService
 from neural_compressor.ux.web.service.optimization import OptimizationService
 from neural_compressor.ux.web.service.profiling import ProfilingService
 from neural_compressor.ux.web.service.request_data_processor import RequestDataProcessor
@@ -90,6 +91,7 @@ class Router:
             "project/note": RealtimeRoutingDefinition(ProjectAPIInterface.update_project_notes),
             "dataset": RealtimeRoutingDefinition(DatasetAPIInterface.get_dataset_details),
             "dataset/add": RealtimeRoutingDefinition(DatasetAPIInterface.add_dataset),
+            "dataset/delete": RealtimeRoutingDefinition(DatasetAPIInterface.delete_dataset),
             "dataset/list": RealtimeRoutingDefinition(DatasetAPIInterface.list_datasets),
             "dataset/predefined": RealtimeRoutingDefinition(
                 DatasetAPIInterface.get_predefined_dataset,
@@ -99,6 +101,9 @@ class Router:
             ),
             "optimization/add": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.add_optimization,
+            ),
+            "optimization/delete": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.delete_optimization,
             ),
             "optimization/list": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.list_optimizations,
@@ -113,12 +118,15 @@ class Router:
                 OptimizationAPIInterface.pin_performance_benchmark,
             ),
             "benchmark": RealtimeRoutingDefinition(BenchmarkAPIInterface.get_benchmark_details),
+            "benchmark/delete": RealtimeRoutingDefinition(BenchmarkAPIInterface.delete_benchmark),
             "benchmark/add": RealtimeRoutingDefinition(BenchmarkAPIInterface.add_benchmark),
             "benchmark/list": RealtimeRoutingDefinition(BenchmarkAPIInterface.list_benchmarks),
             "benchmark/execute": DeferredRoutingDefinition(execute_benchmark),
             "benchmark/config.yaml": RealtimeRoutingDefinition(BenchmarkService.get_config),
             "benchmark/output.log": RealtimeRoutingDefinition(BenchmarkService.get_output),
             "profiling": RealtimeRoutingDefinition(ProfilingAPIInterface.get_profiling_details),
+            "profiling/delete": RealtimeRoutingDefinition(ProfilingAPIInterface.delete_profiling),
+            "profiling/results/csv": RealtimeRoutingDefinition(ProfilingService.generate_csv),
             "profiling/add": RealtimeRoutingDefinition(ProfilingAPIInterface.add_profiling),
             "profiling/list": RealtimeRoutingDefinition(ProfilingAPIInterface.list_profilings),
             "profiling/execute": DeferredRoutingDefinition(execute_profiling),
@@ -129,6 +137,7 @@ class Router:
             "model/list": RealtimeRoutingDefinition(ModelAPIInterface.list_models),
             "model/boundary_nodes": DeferredRoutingDefinition(get_boundary_nodes),
             "model/graph": RealtimeRoutingDefinition(get_model_graph),
+            "model/download": RealtimeRoutingDefinition(ModelService.get_model),
             "dict/domains": RealtimeRoutingDefinition(DictionariesAPIInterface.list_domains),
             "dict/domain_flavours": RealtimeRoutingDefinition(
                 DictionariesAPIInterface.list_domain_flavours,

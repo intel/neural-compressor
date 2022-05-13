@@ -53,7 +53,9 @@
   <mat-step [completed]="false">
     <ng-template matStepLabel>Dataset</ng-template>
     <h2>Dataset</h2>
-    <p>Choose the dataset to run the benchmark on.</p>
+    <p>Choose the dataset to run the benchmark on. If you want to add another dataset go
+      <a class="link" (click)="openDatasetDialog()">here</a>.
+    </p>
     <mat-form-field class="form-field long" appearance="outline">
       <mat-label>dataset</mat-label>
       <mat-select required [(ngModel)]="datasetId">

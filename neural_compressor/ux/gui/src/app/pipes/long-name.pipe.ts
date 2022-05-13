@@ -16,7 +16,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'longName' })
 export class LongNamePipe implements PipeTransform {
   transform(value: string): string {
-    value.length > 30 ? value = value.substring(0, 30) + '...' : value;
+    value.length > 30 ? value = value.substring(0, 29) + '...' : value;
     return value;
   }
 }

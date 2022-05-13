@@ -101,6 +101,26 @@ class Benchmark(Base):
         return int(new_benchmark.id)
 
     @staticmethod
+    def delete_benchmark(
+        db_session: session.Session,
+        benchmark_id: int,
+        benchmark_name: str,
+    ) -> Optional[int]:
+        """Remove benchmark from database."""
+        benchmark = (
+            db_session.query(Benchmark)
+            .filter(Benchmark.id == benchmark_id)
+            .filter(Benchmark.name == benchmark_name)
+            .one_or_none()
+        )
+        if benchmark is None:
+            return None
+        db_session.delete(benchmark)
+        db_session.flush()
+
+        return int(benchmark.id)
+
+    @staticmethod
     def update_status(
         db_session: session.Session,
         benchmark_id: int,

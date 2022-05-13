@@ -70,6 +70,7 @@ import { JoyrideModule } from 'ngx-joyride';
 import { MatRadioModule } from '@angular/material/radio';
 import { PinBenchmarkComponent } from './pin-benchmark/pin-benchmark.component';
 import { ProjectRemoveComponent } from './project-remove/project-remove.component';
+import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-dialog.component';
 
 @NgModule({
   declarations: [
@@ -95,7 +96,8 @@ import { ProjectRemoveComponent } from './project-remove/project-remove.componen
     ProfilingFormComponent,
     NotificationComponent,
     PinBenchmarkComponent,
-    ProjectRemoveComponent
+    ProjectRemoveComponent,
+    ConfirmationDialogComponent
   ],
   imports: [
     BrowserModule,

@@ -85,6 +85,26 @@ class Profiling(Base):
         return int(new_profiling.id)
 
     @staticmethod
+    def delete_profiling(
+        db_session: session.Session,
+        profiling_id: int,
+        profiling_name: str,
+    ) -> Optional[int]:
+        """Remove profiling from database."""
+        profiling = (
+            db_session.query(Profiling)
+            .filter(Profiling.id == profiling_id)
+            .filter(Profiling.name == profiling_name)
+            .one_or_none()
+        )
+        if profiling is None:
+            return None
+        db_session.delete(profiling)
+        db_session.flush()
+
+        return int(profiling.id)
+
+    @staticmethod
     def update_status(
         db_session: session.Session,
         profiling_id: int,

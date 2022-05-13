@@ -18,7 +18,7 @@
     <td class="header">Accuracy</td>
     <td class="header">Throughput</td>
     <td class="header">Status</td>
-    <td class="header">Action</td>
+    <td class="header" colspan=2>Action</td>
     <td class="header">Show on chart</td>
   </tr>
   <tr [ngClass]="{'active': benchmark.id === activeBenchmarkId, 'pointer': true}" *ngFor="let benchmark of benchmarks"
@@ -53,6 +53,10 @@
         <img src="./../../assets/088a-start-solid-white.svg">
         Run
       </button>
+    </td>
+    <td class="center cell">
+      <img matTooltip="Delete this benchmark" class="plus-icon" src="./../../assets/057b-trash-outlined.svg"
+        (click)="$event.stopPropagation();deleteBenchmark(benchmark.id, benchmark.name)">
     </td>
     <td class="center">
       <mat-checkbox [(ngModel)]="comparison[benchmark.id]" (click)="$event.stopPropagation();"></mat-checkbox>
