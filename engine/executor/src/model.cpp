@@ -72,6 +72,16 @@ void Model::Init(const ModelConfig& conf) {
   for (int i = 0; i < operators_.size(); ++i) {
     operators_[i]->Prepare(input_vecs_[i], output_vecs_[i]);
   }
+  if (multi_stream_flag) {
+    multi_stream_tasks_.clear();
+    for (int i = 0; i < operators_.size(); ++i) {
+      auto op_attr_map = operators_[i]->operator_conf().attributes();
+      auto it = op_attr_map.find("multi_stream");
+      if (it != op_attr_map.end()) {
+        multi_stream_tasks_.insert({i, StringToNum<int64_t>(it->second)});
+      }
+    }
+  }
 }
 
 void Model::RemoveSharedWeight(bool is_begin, char* count_space_name, char* count_name, char* space_name) {
@@ -223,9 +233,21 @@ vector<Tensor>& Model::Forward(vector<Tensor>& input_data) {
       operators_[i]->Reshape(input_vecs_[i], output_vecs_[i]);
     }
   }
+  int thread_count = 1;
   for (int i = 0; i < operators_.size(); ++i) {
     LOG(INFO) << "operator " << operators_[i]->name() << " gonna forward with type " << operators_[i]->type();
-    operators_[i]->Forward(input_vecs_[i], output_vecs_[i]);
+    if (multi_stream_flag && multi_stream_tasks_.find(i) != multi_stream_tasks_.end()) {
+      tp.resize(thread_count);
+      tp.commitTask(std::bind(&executor::Operator::Forward, operators_[i], input_vecs_[i], output_vecs_[i]));
+      if (thread_count >= multi_stream_tasks_[i]) {
+        tp.waitAllTaskRunOver();
+        tp.close();
+        thread_count = 0;
+      }
+      thread_count++;
+    } else {
+      operators_[i]->Forward(input_vecs_[i], output_vecs_[i]);
+    }
   }
 
   return this->output_tensors();

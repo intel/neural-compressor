@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "common.hpp"
 #include "glog/logging.h"
@@ -31,6 +32,7 @@
 #include "operator.hpp"
 #include "operator_registry.hpp"
 #include "tensor.hpp"
+#include "thread_pool.hpp"
 
 namespace executor {
 
@@ -113,6 +115,10 @@ class Model {
   vector<TensorConfig*> model_input_configs_;
   vector<Tensor*> model_output_tensors_;
   vector<Tensor> output_tensors_;
+  bool multi_stream_flag = (getenv("MULTI_STREAM") != NULL);
+  // collect the op index with parallel thread
+  unordered_map<int, int64_t> multi_stream_tasks_;
+  ThreadPool tp;
   std::mutex rmutex_;
 };
 
