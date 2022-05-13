@@ -371,6 +371,7 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
     } else {
       LOG(ERROR) << "Output dtype in Softmax is: " << output_dtype_ << ", not supported!";
     }
+    fp32_res.unref_data();
   }
 }
 #if __AVX512F__

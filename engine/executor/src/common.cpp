@@ -20,6 +20,12 @@ namespace executor {
 unordered_map<string, int> type2bytes = {{"fp32", sizeof(float)},       {"int8", sizeof(char)}, {"int32", sizeof(int)},
                                          {"u8", sizeof(unsigned char)}, {"s8", sizeof(char)},   {"s32", sizeof(int)},
                                          {"bf16", sizeof(uint16_t)}};
+const int CPU_COUNT = omp_get_max_threads();
+#if __AVX512F__
+const int ALIGN_NUM = 64;
+#else
+const int ALIGN_NUM = 32;
+#endif
 
 void GlobalInit(int* pargc, char*** pargv) {
   // Google flags.
@@ -688,10 +694,24 @@ void add_ker(uint8_t* inout, uint8_t* in, size_t len) {
 }
 
 void runtime_minmax(float* data, size_t length, float* min_num, float* max_num) {
-  int block_size = std::sqrt(length);
+  int block_size = (length / CPU_COUNT) / ALIGN_NUM * ALIGN_NUM;
+  if (block_size == 0) {
+    *min_num = *std::min_element(data, &data[length]);
+    *max_num = *std::max_element(data, &data[length]);
+    return;
+  }
   int block_num = length / block_size;
-  int tmp_length = block_num + (length % block_size != 0);
-  float block_mins[tmp_length], block_maxs[tmp_length];
+  vector<float> block_mins(block_num + (length % block_size != 0)), block_maxs(block_num + (length % block_size != 0));
+#if __AVX512F__
+#pragma omp parallel for
+  for (int i = 0; i < block_num; i++) {
+    block_minmax_avx512(data + i * block_size, block_size, &block_mins[i], &block_maxs[i]);
+  }
+  if (length % block_size != 0) {
+    block_minmax_avx512(data + block_num * block_size, length - block_num * block_size, &block_mins[block_num],
+                        &block_maxs[block_num]);
+  }
+#else
 #pragma omp parallel for
   for (int i = 0; i < block_num; i++) {
     block_minmax(data + i * block_size, block_size, &block_mins[i], &block_maxs[i]);
@@ -700,22 +720,95 @@ void runtime_minmax(float* data, size_t length, float* min_num, float* max_num) 
     block_minmax(data + block_num * block_size, length - block_num * block_size, &block_mins[block_num],
                  &block_maxs[block_num]);
   }
-  block_size = std::sqrt(tmp_length);
-  block_num = tmp_length / block_size;
-  float mins[block_num + (tmp_length % block_size != 0)], maxs[block_num + (tmp_length % block_size != 0)];
-#pragma omp parallel for
-  for (int i = 0; i < block_num; i++) {
-    mins[i] = *std::min_element(&block_mins[i * block_size], &block_mins[(i + 1) * block_size]);
-    maxs[i] = *std::max_element(&block_maxs[i * block_size], &block_maxs[(i + 1) * block_size]);
-  }
-  if (tmp_length % block_size != 0) {
-    mins[block_num] = *std::min_element(&block_mins[block_num * block_size], &block_mins[tmp_length - 1]);
-    maxs[block_num] = *std::max_element(&block_maxs[block_num * block_size], &block_maxs[tmp_length - 1]);
-  }
-  *min_num = *std::min_element(mins, &mins[block_num + (tmp_length % block_size != 0)]);
-  *max_num = *std::max_element(maxs, &maxs[block_num + (tmp_length % block_size != 0)]);
+#endif
+  *min_num = *std::min_element(block_mins.begin(), block_mins.end());
+  *max_num = *std::max_element(block_maxs.begin(), block_maxs.end());
 }
 
+void block_minmax_avx512(float* Input, size_t N, float* Min, float* Max) {
+  float tmp_min = std::numeric_limits<float>::max();
+  float tmp_max = std::numeric_limits<float>::lowest();
+
+  if (N >= 16) {
+    __m512 MaximumVector0 = _mm512_set1_ps(tmp_max);
+    __m512 MinimumVector0 = _mm512_set1_ps(tmp_min);
+
+    if (N >= 64) {
+      __m512 MaximumVector1 = MaximumVector0;
+      __m512 MaximumVector2 = MaximumVector0;
+      __m512 MaximumVector3 = MaximumVector0;
+
+      __m512 MinimumVector1 = MinimumVector0;
+      __m512 MinimumVector2 = MinimumVector0;
+      __m512 MinimumVector3 = MinimumVector0;
+
+      while (N >= 64) {
+        __m512 InputVector0 = _mm512_loadu_ps(Input);
+        __m512 InputVector1 = _mm512_loadu_ps(Input + 16);
+        __m512 InputVector2 = _mm512_loadu_ps(Input + 32);
+        __m512 InputVector3 = _mm512_loadu_ps(Input + 48);
+
+        MaximumVector0 = _mm512_max_ps(MaximumVector0, InputVector0);
+        MaximumVector1 = _mm512_max_ps(MaximumVector1, InputVector1);
+        MaximumVector2 = _mm512_max_ps(MaximumVector2, InputVector2);
+        MaximumVector3 = _mm512_max_ps(MaximumVector3, InputVector3);
+
+        MinimumVector0 = _mm512_min_ps(MinimumVector0, InputVector0);
+        MinimumVector1 = _mm512_min_ps(MinimumVector1, InputVector1);
+        MinimumVector2 = _mm512_min_ps(MinimumVector2, InputVector2);
+        MinimumVector3 = _mm512_min_ps(MinimumVector3, InputVector3);
+
+        Input += 64;
+        N -= 64;
+      }
+
+      MaximumVector0 = _mm512_max_ps(MaximumVector0, MaximumVector1);
+      MaximumVector2 = _mm512_max_ps(MaximumVector2, MaximumVector3);
+      MaximumVector0 = _mm512_max_ps(MaximumVector0, MaximumVector2);
+
+      MinimumVector0 = _mm512_min_ps(MinimumVector0, MinimumVector1);
+      MinimumVector2 = _mm512_min_ps(MinimumVector2, MinimumVector3);
+      MinimumVector0 = _mm512_min_ps(MinimumVector0, MinimumVector2);
+    }
+
+    while (N >= 16) {
+      __m512 InputVector0 = _mm512_loadu_ps(Input);
+      MaximumVector0 = _mm512_max_ps(MaximumVector0, InputVector0);
+      MinimumVector0 = _mm512_min_ps(MinimumVector0, InputVector0);
+
+      Input += 16;
+      N -= 16;
+    }
+
+    float minx16[32];
+    void* min_ptr = reinterpret_cast<void*>(minx16);
+    std::size_t min_space = sizeof(minx16) - 1;
+    std::align(64, sizeof(float), min_ptr, min_space);
+    float* aligned_min = reinterpret_cast<float*>(min_ptr);
+    _mm512_store_ps(aligned_min, MinimumVector0);
+    float maxx16[32];
+    void* max_ptr = reinterpret_cast<void*>(maxx16);
+    std::size_t max_space = sizeof(maxx16) - 1;
+    std::align(64, sizeof(float), max_ptr, max_space);
+    float* aligned_max = reinterpret_cast<float*>(max_ptr);
+    _mm512_store_ps(aligned_max, MaximumVector0);
+    for (int i = 0; i < 16; i++) {
+      tmp_max = std::max(tmp_max, aligned_max[i]);
+      tmp_min = std::min(tmp_min, aligned_min[i]);
+    }
+  }
+
+  while (N > 0) {
+    tmp_max = std::max(tmp_max, *Input);
+    tmp_min = std::min(tmp_min, *Input);
+
+    Input += 1;
+    N -= 1;
+  }
+
+  *Min = tmp_min;
+  *Max = tmp_max;
+}
 void block_minmax(float* Input, size_t N, float* Min, float* Max) {
   float tmp_min = std::numeric_limits<float>::max();
   float tmp_max = std::numeric_limits<float>::lowest();

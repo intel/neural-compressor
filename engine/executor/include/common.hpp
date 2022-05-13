@@ -19,6 +19,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <limits.h>
+#include <omp.h>
 
 #include <chrono>  // NOLINT
 #include <climits>
@@ -134,7 +135,11 @@ void move_ker(uint8_t* out, const uint8_t* in, size_t len);
 void add_ker(uint8_t* inout, uint8_t* in, size_t len);
 
 void runtime_minmax(float* data, size_t len, float* min_num, float* max_num);
+#if __AVX512F__
+void block_minmax_avx512(float* Input, size_t N, float* Min, float* Max);
+#else
 void block_minmax(float* Input, size_t N, float* Min, float* Max);
+#endif
 }  // namespace executor
 
 #endif  // ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_
