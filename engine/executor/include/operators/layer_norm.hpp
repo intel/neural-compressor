@@ -42,6 +42,7 @@ class LayerNormOperator : public Operator {
   void Forward(const vector<Tensor*>& input, const vector<Tensor*>& output) override;
 
  private:
+  bool weight_cached_;
   float epsilon_;
   dnnl::engine eng_ = engine(engine::kind::cpu, 0);
   dnnl::layer_normalization_forward lnorm_p_;

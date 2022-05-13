@@ -43,9 +43,14 @@ class Model {
  public:
   explicit Model(const ModelConfig& conf, const string& weight_root);
   explicit Model(const string& conf_file, const string& weight_root);
-  virtual ~Model() {}
+  virtual ~Model();
 
   void Init(const ModelConfig& conf);
+  void RemoveSharedWeight(bool is_begin = false, char* count_space_name = "RemovedCount",
+                          char* count_name = "removed_count", char* space_name = "SharedWeight");
+  void InitSharedWeight(char* space_name = "SharedWeight");
+  ipc::managed_shared_memory::handle_t LoadSharedWeight(const string& root, const string& type,
+                                                        const vector<int64_t>& shape, const vector<int64_t>& location);
   vector<Tensor>& Forward(vector<Tensor>& input_data);  // NOLINT
 
   void SetInput(const vector<OperatorConfig*>& conf, const int operator_id, const int tensor_id,
@@ -108,6 +113,7 @@ class Model {
   vector<TensorConfig*> model_input_configs_;
   vector<Tensor*> model_output_tensors_;
   vector<Tensor> output_tensors_;
+  std::mutex rmutex_;
 };
 
 }  // namespace executor

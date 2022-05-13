@@ -23,7 +23,7 @@ static unordered_map<string, dnnl::memory::data_type> type2mem{
     {"fp16", dnnl::memory::data_type::f16}, {"u8", dnnl::memory::data_type::u8},
     {"s8", dnnl::memory::data_type::s8},    {"bf16", dnnl::memory::data_type::bf16}};
 
-LayerNormOperator::LayerNormOperator(const OperatorConfig& conf) : Operator(conf) {
+LayerNormOperator::LayerNormOperator(const OperatorConfig& conf) : Operator(conf), weight_cached_(false) {
   auto attrs_map = operator_conf_.attributes();
   epsilon_ = StringToNum<float>(attrs_map["epsilon"]);
 }
@@ -73,11 +73,22 @@ void LayerNormOperator::Reshape(const vector<Tensor*>& input, const vector<Tenso
   memory mean_m(lnorm_pd.mean_desc(), eng_);
   memory variance_m(lnorm_pd.variance_desc(), eng_);
   memory scale_shift_m(scale_shift_md, eng_);
-  void* scale_shift_buf = scale_shift_m.get_data_handle();
-  const auto& gamma_data = input[1]->data();
-  const auto& beta_data = input[2]->data();
-  std::memcpy(scale_shift_buf, gamma_data, sizeof(float) * scale_size);
-  std::memcpy(reinterpret_cast<float*>(scale_shift_buf) + scale_size, beta_data, sizeof(float) * scale_size);
+
+  if (!weight_cached_) {
+    if (input[1]->is_shared() && input[2]->is_shared()) {
+      int64_t scale_shift_size = scale_shift_m.get_desc().get_size();
+      string scale_shift_name = input[1]->name() + input[2]->name();
+      void* scale_shift_shm_ptr =
+          MemoryAllocator::ManagedShm().find_or_construct<char>(scale_shift_name.c_str())[scale_shift_size](0);
+      scale_shift_m.set_data_handle(scale_shift_shm_ptr);
+    }
+    void* scale_shift_buf = scale_shift_m.get_data_handle();
+    const auto& gamma_data = input[1]->data();
+    const auto& beta_data = input[2]->data();
+    std::memcpy(scale_shift_buf, gamma_data, sizeof(float) * scale_size);
+    std::memcpy(reinterpret_cast<float*>(scale_shift_buf) + scale_size, beta_data, sizeof(float) * scale_size);
+    weight_cached_ = true;
+  }
 
   // 2.6 Prepare memory args (cached)
   memory_args_[DNNL_ARG_MEAN] = mean_m;

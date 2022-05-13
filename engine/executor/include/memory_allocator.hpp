@@ -42,6 +42,16 @@ class MemoryAllocator {
   typedef std::map<std::thread::id, MemoryBuffer*> TreadMemory;
   typedef std::map<std::thread::id, BufferName*> TreadName;
 
+  static char* SharedEnv() {
+    static char* shared_env = getenv("SHARED_INST_NUM");
+    return shared_env;
+  }
+  static const int SharedInstNum() {
+    static const int shared_inst_num =
+        (getenv("SHARED_INST_NUM") != nullptr) ? std::atoi(getenv("SHARED_INST_NUM")) : 1;
+    return shared_inst_num;
+  }
+
   static MemoryBuffer& Buffer() {
     static TreadMemory t_memory;
     // (TODO) it's not good for each thread to obtain a MemoryBuffer
@@ -105,8 +115,8 @@ class MemoryAllocator {
     return *m_strategy_;
   }
 
-  static ipc::managed_shared_memory& ManagedShm() {
-    static ipc::managed_shared_memory shm_ptr(ipc::open_only, "SharedWeight");
+  static ipc::managed_shared_memory& ManagedShm(char* space_name = "SharedWeight") {
+    static ipc::managed_shared_memory shm_ptr(ipc::open_only, space_name);
     return shm_ptr;
   }
 

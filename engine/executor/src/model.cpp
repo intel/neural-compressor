@@ -24,9 +24,15 @@ Model::Model(const string& conf_file, const string& weight_root) : weight_root_(
   Init(conf);
 }
 
+Model::~Model() {
+  if (MemoryAllocator::SharedEnv()) {
+    RemoveSharedWeight(false);
+  }
+}
+
 void Model::Init(const ModelConfig& conf) {
+  InitSharedWeight();
   name_ = conf.name();
-  ipc::shared_memory_object::remove("SharedWeight");
   MemoryAllocator::InitStrategy();
   // For each operator, set up its input and output
   auto op_configs = conf.operators();
@@ -66,6 +72,57 @@ void Model::Init(const ModelConfig& conf) {
   for (int i = 0; i < operators_.size(); ++i) {
     operators_[i]->Prepare(input_vecs_[i], output_vecs_[i]);
   }
+}
+
+void Model::RemoveSharedWeight(bool is_begin, char* count_space_name, char* count_name, char* space_name) {
+  LOG(INFO) << "Shared instance number: " << MemoryAllocator::SharedInstNum();
+  ipc::managed_shared_memory count_shm(ipc::open_or_create, count_space_name, 512);
+  int* removed_count = count_shm.find_or_construct<int>(count_name)[sizeof(int)](0);
+  rmutex_.lock();
+  (*removed_count)++;
+  if (is_begin) {  // In model init, remove shared space at the first thread
+    if (*removed_count == 1) {
+      ipc::shared_memory_object::remove(space_name);
+    }
+    if (*removed_count == MemoryAllocator::SharedInstNum()) {
+      ipc::shared_memory_object::remove(count_space_name);
+    }
+  } else {  // In model release, remove shared space at the last thread
+    if (*removed_count == MemoryAllocator::SharedInstNum()) {
+      ipc::shared_memory_object::remove(space_name);
+      ipc::shared_memory_object::remove(count_space_name);
+    }
+  }
+  rmutex_.unlock();
+}
+
+void Model::InitSharedWeight(char* space_name) {
+  if (MemoryAllocator::SharedEnv()) {
+    RemoveSharedWeight(true);
+    std::ifstream inFile(weight_root_, std::ios::in | std::ios::binary);
+    size_t weight_size =
+        inFile ? static_cast<size_t>(inFile.seekg(0, std::ios::end).tellg()) : static_cast<size_t>(weight_root_.size());
+    static ipc::managed_shared_memory managed_shm(ipc::open_or_create, space_name, 6 * weight_size);
+  }
+}
+
+ipc::managed_shared_memory::handle_t Model::LoadSharedWeight(const string& root, const string& type,
+                                                             const vector<int64_t>& shape,
+                                                             const vector<int64_t>& location) {
+  int64_t size = Product(shape);
+  int64_t bytes = size * type2bytes[type];
+  string weight_name = std::to_string(location[0]) + std::to_string(location[1]);
+  std::ifstream inFile(root, std::ios::in | std::ios::binary);
+  void* shm_ptr = MemoryAllocator::ManagedShm().find_or_construct<char>(weight_name.c_str())[bytes](0);
+  if (inFile) {
+    inFile.seekg(location[0], std::ios::beg);
+    inFile.read(reinterpret_cast<char*>(shm_ptr), location[1]);
+    inFile.close();
+  } else {
+    std::memcpy(shm_ptr, &root[location[0]], location[1]);
+  }
+  const auto& handle = MemoryAllocator::ManagedShm().get_handle_from_address(shm_ptr);
+  return handle;
 }
 
 void Model::SetInput(const vector<OperatorConfig*>& conf, const int operator_id, const int tensor_id,
@@ -109,19 +166,17 @@ void Model::SetOutput(const vector<OperatorConfig*>& conf, const int operator_id
   // have output and the output is MODEL's input
   const string& op_type = op_conf->type();
   if (op_type == "Input") {
-    bool is_shared_weight = (getenv("SHARED_WEIGHT") != NULL);
     // parse weight here
     if (tensor_config->location().size() != 0) {
-      LOG(INFO) << tensor_config->name() << " is using shared weight: " << is_shared_weight;
-      if (is_shared_weight) {
+      if (MemoryAllocator::SharedEnv()) {
         auto handle =
-            load_shared_weight(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
+            LoadSharedWeight(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
         tensor_ptr->set_shm_handle(handle);
-        return;
+      } else {
+        void* weight_ptr =
+            read_file_to_type(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
+        tensor_ptr->set_data(weight_ptr);
       }
-      void* weight_ptr =
-          read_file_to_type(weight_root_, tensor_config->dtype(), tensor_config->shape(), tensor_config->location());
-      tensor_ptr->set_data(weight_ptr);
       return;
     }
     // set model input tensors

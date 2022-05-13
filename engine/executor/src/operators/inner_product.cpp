@@ -614,14 +614,25 @@ void InnerProductOperator::ReshapeDense(const vector<Tensor*>& input, const vect
     memory any_src1_m = src1_m_;
     if (inner_product_pd_.weights_desc() != src1_m_.get_desc()) {
       any_src1_m = memory(inner_product_pd_.weights_desc(), eng_);
+      if (src1_->is_shared()) {
+        int64_t weight_size = any_src1_m.get_desc().get_size();
+        void* weight_shm_ptr =
+            MemoryAllocator::ManagedShm().find_or_construct<char>(src1_->name().c_str())[weight_size](0);
+        any_src1_m.set_data_handle(weight_shm_ptr);
+      }
       dnnl::reorder(src1_m_, any_src1_m).execute(eng_stream_, src1_m_, any_src1_m);
     }
     memory_args_[DNNL_ARG_WEIGHTS] = any_src1_m;
-    // bias in dynamic quantization should be calculate in runtime and cannot be cached
     if (!is_dynamic_ && has_bias_) {
       memory any_bias_m = bias_m_;
       if (inner_product_pd_.bias_desc() != bias_m_.get_desc()) {
         any_bias_m = memory(inner_product_pd_.bias_desc(), eng_);
+        if (bias_->is_shared()) {
+          int64_t bias_size = bias_m_.get_desc().get_size();
+          void* bias_shm_ptr =
+              MemoryAllocator::ManagedShm().find_or_construct<char>(bias_->name().c_str())[bias_size](0);
+          any_bias_m.set_data_handle(bias_shm_ptr);
+        }
         dnnl::reorder(bias_m_, any_bias_m).execute(eng_stream_, bias_m_, any_bias_m);
       }
       memory_args_[DNNL_ARG_BIAS] = any_bias_m;
