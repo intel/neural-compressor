@@ -179,8 +179,9 @@ More details for validated models are available [here](docs/validated_model_list
   </thead>
   <tbody>
       <tr>
-          <td colspan="5" align="center"><a href="docs/adaptor.md">Adaptor</a></td>
-          <td colspan="4" align="center"><a href="docs/tuning_strategies.md">Strategy</a></td>
+          <td colspan="3" align="center"><a href="docs/adaptor.md">Adaptor</a></td>
+          <td colspan="3" align="center"><a href="docs/tuning_strategies.md">Strategy</a></td>
+          <td colspan="3" align="center"><a href="docs/reference_examples.md">Reference Example</a></td>
       </tr>
   </tbody>
 </table>
