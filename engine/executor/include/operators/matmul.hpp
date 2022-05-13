@@ -94,6 +94,7 @@ class MatmulOperator : public Operator {
 
   Tensor* dst_min_ = nullptr;
   Tensor* dst_max_ = nullptr;
+  string append_op_;
 };
 }  // namespace executor
 #endif  // ENGINE_EXECUTOR_INCLUDE_OPERATORS_MATMUL_HPP_

@@ -893,4 +893,164 @@ void block_minmax(float* Input, size_t N, float* Min, float* Max) {
   *Min = tmp_min;
   *Max = tmp_max;
 }
+
+/************ hash funtion for primitive cache ************/
+template <typename T>
+size_t hash_combine(size_t seed, const T &v) {
+  return seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+template <typename T>
+void hash_val(size_t seed, const T& val) {
+  hash_combine(seed, val);
+}
+
+template <typename T, typename... Types>
+void hash_val(size_t seed, const T& val, const Types&... args) {
+  hash_combine(seed, val);
+  hash_val(seed, args...);
+}
+
+template <typename... Types>
+size_t hash_val(const Types&... args) {
+  size_t seed = 0;
+  hash_val(seed, args...);
+  return seed;
+}
+
+template <typename T>
+size_t get_array_hash(size_t seed, const T& v, int size) {
+  for (int i = 0; i < size; i++) {
+    seed = hash_combine(seed, v[i]);
+  }
+  return seed;
+}
+
+/************ InnerProductPrimitiveFwdFactory member function ************/
+size_t InnerProductPrimitiveFwdFactory::GenKey(const string& src0_dtype,
+  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
+  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
+  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
+  size_t seed = 0;
+  // primitive kind
+  string prefix = "inner_product_fwd_";
+  seed = hash_val(prefix, src0_dtype, src1_dtype, dst_dtype);
+  seed = get_array_hash(seed, src0_shape, src0_shape.size());
+  seed = get_array_hash(seed, src1_shape, src1_shape.size());
+  // if dst_shape has reverse_perm
+  if (!dst_perm.empty()) {
+    seed = get_array_hash(seed, dst_perm, dst_perm.size());
+  }
+  if (append_op != "") {
+    seed = hash_combine(seed, append_op);
+    if (append_op == "sum" || append_op == "binary_add") {
+      seed = get_array_hash(seed, post_op_shape, post_op_shape.size());
+    }
+  }
+  // if has output_scale
+  if (output_scale != 1.f) {
+    seed = hash_combine(seed, output_scale);
+  }
+  // hash each dnnl engine ptr
+  seed = hash_combine(seed, eng);
+  return seed;
+}
+
+size_t InnerProductPrimitiveFwdFactory::Key(const string& src0_dtype,
+  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
+  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
+  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
+  return InnerProductPrimitiveFwdFactory::GetInstance().GenKey(src0_dtype, src1_dtype, dst_dtype,
+    src0_shape, src1_shape, dst_perm, append_op, post_op_shape, output_scale, eng);
+}
+
+bool InnerProductPrimitiveFwdFactory::IsInFactory(const size_t& key) {
+  return InnerProductPrimitiveFwdFactory::GetInstance().IsInCache(key);
+}
+
+dnnl::inner_product_forward& InnerProductPrimitiveFwdFactory::Get(const size_t& key) {
+  return static_cast<dnnl::inner_product_forward&>(
+    InnerProductPrimitiveFwdFactory::GetInstance().GetPrimitive(key));
+}
+
+void InnerProductPrimitiveFwdFactory::Set(const size_t& key, dnnl::primitive primitive) {
+  InnerProductPrimitiveFwdFactory::GetInstance().SetPrimitive(key, primitive);
+}
+
+void InnerProductPrimitiveFwdFactory::ClearFactory() {
+  InnerProductPrimitiveFwdFactory::GetInstance().Clear();
+}
+
+bool InnerProductPrimitiveFwdFactory::DoNotCache() {
+  return InnerProductPrimitiveFwdFactory::GetInstance().do_not_cache_;
+}
+
+InnerProductPrimitiveFwdFactory& InnerProductPrimitiveFwdFactory::GetInstance() {
+  static InnerProductPrimitiveFwdFactory instance_;
+  return instance_;
+}
+
+/************ MatMulPrimitiveFwdFactory member function ************/
+size_t MatMulPrimitiveFwdFactory::GenKey(const string& src0_dtype,
+  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
+  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
+  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
+  size_t seed = 0;
+  // primitive kind
+  string prefix = "matmul_fwd_";
+  seed = hash_val(prefix, src0_dtype, src1_dtype, dst_dtype);
+  seed = get_array_hash(seed, src0_shape, src0_shape.size());
+  seed = get_array_hash(seed, src1_shape, src1_shape.size());
+  // if dst_shape has reverse_perm
+  if (!dst_perm.empty()) {
+    seed = get_array_hash(seed, dst_perm, dst_perm.size());
+  }
+  if (append_op != "") {
+    seed = hash_combine(seed, append_op);
+    if (append_op == "sum" || append_op == "binary_add") {
+      seed = get_array_hash(seed, post_op_shape, post_op_shape.size());
+    }
+  }
+  // if has output_scale
+  if (output_scale != 1.f) {
+    seed = hash_combine(seed, output_scale);
+  }
+  // hash each dnnl engine ptr
+  seed = hash_combine(seed, eng);
+  return seed;
+}
+
+size_t MatMulPrimitiveFwdFactory::Key(const string& src0_dtype,
+  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
+  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
+  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
+  return MatMulPrimitiveFwdFactory::GetInstance().GenKey(src0_dtype, src1_dtype, dst_dtype,
+    src0_shape, src1_shape, dst_perm, append_op, post_op_shape, output_scale, eng);
+}
+
+bool MatMulPrimitiveFwdFactory::IsInFactory(const size_t& key) {
+  return MatMulPrimitiveFwdFactory::GetInstance().IsInCache(key);
+}
+
+dnnl::matmul& MatMulPrimitiveFwdFactory::Get(const size_t& key) {
+  return static_cast<dnnl::matmul&>(
+    MatMulPrimitiveFwdFactory::GetInstance().GetPrimitive(key));
+}
+
+void MatMulPrimitiveFwdFactory::Set(const size_t& key, dnnl::primitive primitive) {
+  MatMulPrimitiveFwdFactory::GetInstance().SetPrimitive(key, primitive);
+}
+
+void MatMulPrimitiveFwdFactory::ClearFactory() {
+  MatMulPrimitiveFwdFactory::GetInstance().Clear();
+}
+
+bool MatMulPrimitiveFwdFactory::DoNotCache() {
+  return MatMulPrimitiveFwdFactory::GetInstance().do_not_cache_;
+}
+
+MatMulPrimitiveFwdFactory& MatMulPrimitiveFwdFactory::GetInstance() {
+  static MatMulPrimitiveFwdFactory instance_;
+  return instance_;
+}
 }  // namespace executor

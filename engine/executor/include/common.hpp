@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "memory_allocator.hpp"
+#include "oneapi/dnnl/dnnl.hpp"
 
 #if __AVX512F__
 #include <immintrin.h>
@@ -140,6 +141,164 @@ void block_minmax_avx512(float* Input, size_t N, float* Min, float* Max);
 #else
 void block_minmax(float* Input, size_t N, float* Min, float* Max);
 #endif
+
+/************ hash funtion for primitive cache ************/
+// The following code is derived from Boost C++ library
+// Copyright 2005-2014 Daniel James.
+template <typename T>
+inline size_t hash_combine(size_t seed, const T& val);
+
+template <typename T>
+inline void hash_val(size_t seed, const T& val);
+
+template <typename T, typename... Types>
+inline void hash_val(size_t seed, const T& val, const Types&... args);
+
+template <typename... Types>
+inline size_t hash_val(const Types&... args);
+
+// hash array value
+template <typename T>
+inline size_t get_array_hash(size_t seed, const T& v, int size);
+
+// Base class for dnnl primitive cache map.
+// It will cache some important dnnl primitive in order to
+// increase the probability of cache hit under dynamic input shape.
+// Put all dnnl primitive into a single pool so that it can be set
+// capacity and removed by following lru.
+template <typename T>
+class PrimitiveCachePool {
+ public:
+  PrimitiveCachePool() { Clear(); }
+  ~PrimitiveCachePool() {}
+
+  bool IsInCache(const size_t& key) {
+    auto it = cache_map_.find(key);
+    if (it != cache_map_.end()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // call in_cache function first
+  T& GetContext(const size_t& key) noexcept {
+    return cache_map_[key].primitive;
+  }
+
+  void SetContext(const size_t& key, T primitive) {
+    Entry entry(primitive);
+    cache_map_.emplace(std::make_pair(key, primitive));
+  }
+
+  // Clean up the cache map
+  void Clear() {
+    if (cache_map_.empty()) {
+      return;
+    } else {
+      cache_map_.clear();
+    }
+  }
+
+ private:
+  // a struct for caching
+  struct Entry {
+    // dnnl primitive, it's mostly forward class
+    T primitive;
+    Entry() {}
+    explicit Entry(T prim) { primitive = prim; }
+    ~Entry() {}
+  };
+
+  // cache map
+  unordered_map<size_t, Entry> cache_map_;
+};
+
+// Base class for each dnnl primitive to get the cached object
+template <typename T>
+class DnnlPrimitiveFactory {
+ public:
+  DnnlPrimitiveFactory() {}
+  ~DnnlPrimitiveFactory() {}
+
+  bool IsInCache(const size_t& key) {
+    auto& cache_pool = DnnlPrimitiveFactory<T>::GetCachePool();
+    return cache_pool.IsInCache(key);
+  }
+
+  // call in_cache function first
+  dnnl::primitive& GetPrimitive(const size_t& key) {
+    auto& cache_pool = DnnlPrimitiveFactory<T>::GetCachePool();
+    return cache_pool.GetContext(key);
+  }
+
+  void SetPrimitive(const size_t& key, dnnl::primitive primitive) {
+    auto& cache_pool = DnnlPrimitiveFactory<T>::GetCachePool();
+    cache_pool.SetContext(key, primitive);
+  }
+
+  void Clear() {
+    auto& cache_pool = DnnlPrimitiveFactory<T>::GetCachePool();
+    cache_pool.Clear();
+  }
+
+  // If set this env var, all dnnl primitive cache will be disabled
+  bool do_not_cache_ = (getenv("ENGINE_PRIMITIVE_CACHE_OFF") != NULL);
+
+ private:
+  static inline PrimitiveCachePool<dnnl::primitive>& GetCachePool() {
+    static thread_local PrimitiveCachePool<dnnl::primitive> cache_pool_;
+    return cache_pool_;
+  }
+};
+
+// Singleton, cache inner product forward class
+class InnerProductPrimitiveFwdFactory : public DnnlPrimitiveFactory<dnnl::inner_product_forward> {
+ public:
+  static size_t Key(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+    const vector<int64_t>& dst_perm, const string& append_op,
+    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+  static bool IsInFactory(const size_t& key);
+  // call IsInFactory function first
+  static dnnl::inner_product_forward& Get(const size_t& key);
+  static void Set(const size_t& key, dnnl::primitive primitive);
+  static void ClearFactory();
+  static bool DoNotCache();
+
+ private:
+  InnerProductPrimitiveFwdFactory() {}
+  ~InnerProductPrimitiveFwdFactory() {}
+  static InnerProductPrimitiveFwdFactory& GetInstance();
+  static size_t GenKey(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+    const vector<int64_t>& dst_perm, const string& append_op,
+    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+};
+
+// Singleton, cache matmul forward class
+class MatMulPrimitiveFwdFactory : public DnnlPrimitiveFactory<dnnl::matmul> {
+ public:
+  static size_t Key(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+    const vector<int64_t>& dst_perm, const string& append_op,
+    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+  static bool IsInFactory(const size_t& key);
+  // call IsInFactory function first
+  static dnnl::matmul& Get(const size_t& key);
+  static void Set(const size_t& key, dnnl::primitive primitive);
+  static void ClearFactory();
+  static bool DoNotCache();
+
+ private:
+  MatMulPrimitiveFwdFactory() {}
+  ~MatMulPrimitiveFwdFactory() {}
+  static MatMulPrimitiveFwdFactory& GetInstance();
+  static size_t GenKey(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+    const vector<int64_t>& dst_perm, const string& append_op,
+    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+};
 }  // namespace executor
 
 #endif  // ENGINE_EXECUTOR_INCLUDE_COMMON_HPP_

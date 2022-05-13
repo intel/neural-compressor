@@ -68,6 +68,8 @@ MatmulOperator::MatmulOperator(const OperatorConfig& conf)
   gelu_tanh_ = (iter != attrs_map.end() && iter->second == "gelu_tanh") ? true : false;
   tanh_ = (iter != attrs_map.end() && iter->second == "tanh") ? true : false;
   append_eltwise_ = gelu_erf_ || gelu_tanh_ || tanh_;
+  append_op_ = (iter != attrs_map.end()) ? iter->second : "";
+  LOG(INFO) << "append_op: " << append_op_;
 }
 
 MatmulOperator::~MatmulOperator() {}
@@ -350,10 +352,7 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
   attr_.set_post_ops(po);
   matmul_pd_ = dnnl::matmul::primitive_desc(matmul_d, attr_, eng_);
 
-  // 2.4 Prepare primitive objects (cached)
-  matmul_p_ = dnnl::matmul(matmul_pd_);
-
-  // 2.5 Prepare memory objects (cached)
+  // 2.4 Prepare memory objects (cached)
   src0_m_ = memory(src0_md, eng_);
   dst_m_ = memory(dst_md, eng_);
   if (has_bias_) {
@@ -387,6 +386,18 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
     memory_args_[DNNL_ARG_WEIGHTS] = any_src1_m;
   } else {
     src1_m_ = memory(src1_md, eng_);
+  }
+
+  // If the matmul forward class in the cache pool, just get it from pool.
+  // Otherwise, do the reshape and send the related class into the cache pool
+  size_t key = MatMulPrimitiveFwdFactory::Key(src0_->dtype(), src1_->dtype(), output_dtype_,
+    src0_->shape(), src1_->shape(), dst_perm_, append_op_, post_->shape(), output_scale_, &eng_);
+  if (MatMulPrimitiveFwdFactory::IsInFactory(key) && !MatMulPrimitiveFwdFactory::DoNotCache()) {
+    matmul_p_ = MatMulPrimitiveFwdFactory::Get(key);
+  } else {
+    // 2.5 Prepare primitive objects (cached)
+    matmul_p_ = dnnl::matmul(matmul_pd_);
+    MatMulPrimitiveFwdFactory::Set(key, matmul_p_);
   }
 }
 

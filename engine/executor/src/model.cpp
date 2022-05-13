@@ -31,6 +31,9 @@ Model::~Model() {
 }
 
 void Model::Init(const ModelConfig& conf) {
+  // Clear the whole dnnl primitive cache map when init engine
+  InnerProductPrimitiveFwdFactory::ClearFactory();
+  MatMulPrimitiveFwdFactory::ClearFactory();
   InitSharedWeight();
   name_ = conf.name();
   MemoryAllocator::InitStrategy();

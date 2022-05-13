@@ -604,10 +604,8 @@ void InnerProductOperator::ReshapeDense(const vector<Tensor*>& input, const vect
   if (append_eltwise_ || append_sum_ || binary_add_ || is_dynamic_) attr_.set_post_ops(po);
   inner_product_pd_ = dnnl::inner_product_forward::primitive_desc(inner_product_d, attr_, eng_);
 
-  // 2.4 Prepare primitive objects (cached)
-  inner_product_p_ = dnnl::inner_product_forward(inner_product_pd_);
 
-  // 2.5 Prepare memory objects (cached)
+  // 2.4 Prepare memory objects (cached)
   src0_m_ = memory(src0_md, eng_);
   dst_m_ = memory(dst_md, eng_);
   if (!weight_cached_) {
@@ -638,6 +636,18 @@ void InnerProductOperator::ReshapeDense(const vector<Tensor*>& input, const vect
       memory_args_[DNNL_ARG_BIAS] = any_bias_m;
     }
     weight_cached_ = true;
+  }
+
+  // If the inner product forward class in the cache pool, just get it from the pool.
+  // Otherwise, do the reshape and send the related class into the cache pool
+  size_t key = InnerProductPrimitiveFwdFactory::Key(src0_->dtype(), src1_->dtype(), output_dtype_,
+    src0_->shape(), src1_->shape(), dst_perm_, append_op_, post_->shape(), output_scale_, &eng_);
+  if (InnerProductPrimitiveFwdFactory::IsInFactory(key) && !InnerProductPrimitiveFwdFactory::DoNotCache()) {
+    inner_product_p_ = InnerProductPrimitiveFwdFactory::Get(key);
+  } else {
+    // 2.5 Prepare primitive objects (cached)
+    inner_product_p_ = dnnl::inner_product_forward(inner_product_pd_);
+    InnerProductPrimitiveFwdFactory::Set(key, inner_product_p_);
   }
 }
 
