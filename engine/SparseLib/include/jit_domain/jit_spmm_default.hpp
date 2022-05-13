@@ -57,7 +57,7 @@ class jit_spmm_default_t : public jit_generator {
   void load_bias(const std::vector<int64_t>& m_indices);
   void load_dense(const std::vector<int64_t>& k_indices);
   void load_sparse();
-  void tile_product();
+  void tile_product(int tile_height, int tile_width);
   void handle_dst_buffer_init(int kb_idx, const std::vector<int64_t>& m_indices);
   void handle_dst_buffer_epilogue(int kb_idx, const std::vector<int64_t>& m_indices);
   void mul_scale(int i);
@@ -75,6 +75,7 @@ class jit_spmm_default_t : public jit_generator {
   void store_intermediate_dst(const std::vector<int64_t>& m_indices);
   void save_sequence_vals(const std::vector<int64_t>& m_indices,
     const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map, int pos1, int pos2);
+  void gen_sub_function();
 
  private:
   int64_t n_blocks_ = 0;  // The number of blocks divided in N dimension.
@@ -92,6 +93,7 @@ class jit_spmm_default_t : public jit_generator {
   const int64_t PADDED_NEG_ONE = -1;
   const int64_t PADDED_ZERO = 0;
   int64_t seq_pos = 0;
+  const uint8_t* sub_func_fptr_ = nullptr;
 
  private:
   static constexpr int stack_space_needed_ = 200;

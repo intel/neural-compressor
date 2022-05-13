@@ -74,9 +74,9 @@ void jit_spmm_default_t::handle_dst_buffer_init(int kb_idx, const std::vector<in
   }
 }
 
-void jit_spmm_default_t::tile_product() {
-  for (int i = 0; i < TH_; ++i) {
-    for (int j = 0; j < TW_; ++j) {
+void jit_spmm_default_t::tile_product(int tile_height, int tile_width) {
+  for (int i = 0; i < tile_height; ++i) {
+    for (int j = 0; j < tile_width; ++j) {
       vpdpbusd(dst_tile_Vmm(i, j), TW_Vmm(j), TH_Vmm(i));
     }
   }
@@ -164,7 +164,11 @@ void jit_spmm_default_t::repeat_THx4xTW_matmal(const std::vector<int64_t>& m_ind
     // Step 3: tile product. Note that k_indices length is processed.
     // A tile product can calculate at least 1 row and 16 columns of DST.
     // Min tile calculation: Tile width/height is 1, compute (1, ADJ) x (ADJ, 16) = (1, 16) matmul.
-    tile_product();
+    if (!param_.sub_func || TH_ != param_.tile_shape[0]) {
+      tile_product(TH_, TW_);
+    } else {
+      call(sub_func_fptr_);
+    }
   }
 }
 
@@ -293,6 +297,11 @@ void jit_spmm_default_t::read_params() {
   mov(reg_nb_end, ptr[param1 + 5 * PTR_SIZE + BYTE8]);
 }
 
+void jit_spmm_default_t::gen_sub_function() {
+  Xbyak::util::StackFrame callee1_sf(this, 0);
+  tile_product(param_.tile_shape[0], param_.tile_shape[1]);
+}
+
 void jit_spmm_default_t::params_alias(const ssd::flat_param_t& param) {
   n_blocks_ = param.mkn_blocks[2];
   nb_size_ = ceil_div(param.N, n_blocks_);
@@ -318,6 +327,12 @@ void jit_spmm_default_t::generate() {
   const auto& sparse_indptr = csrp_->indptr();
   const auto& sparse_indices = csrp_->indices();
   const auto& sparse_inddata = csrp_->data();
+  inLocalLabel();  // use local label for multiple instance
+  if (param_.sub_func) {
+    sub_func_fptr_ = getCurr();
+    gen_sub_function();
+    callee_functions_code_size_ = getSize();
+  }
   Xbyak::Label g_label1;
   Xbyak::Label g_label2;
 {
@@ -399,5 +414,6 @@ void jit_spmm_default_t::generate() {
   for (int i = 0; i < num_size; ++i) {
     db(vpshufb_control[i], word_size);
   }
+  outLocalLabel();  // end of local label
 }
 }  // namespace jd

@@ -83,14 +83,14 @@ void get_true_data(const operator_desc& op_desc, const std::vector<const void*>&
     for (int i = 0; i < M; ++i) {
       #pragma omp parallel for
       for (int j = 0; j < N; ++j) {
-        double value = 0;
+        float value = 0;  // Consistent with the actual precision (float or double) of cpu instructions.
         #pragma omp simd
         for (int k = 0; k < K; ++k) {
           int idx0 = i * left_stride[0] + k * left_stride[1];
           int idx1 = k * right_stride[0] + j * right_stride[1];
-          double left_k = (left_dt == dt::fp32) ? left_fp32[idx0] : ((left_dt == dt::u8) ?
+          auto left_k = (left_dt == dt::fp32) ? left_fp32[idx0] : ((left_dt == dt::u8) ?
             left_u8[idx0] : ((left_dt == dt::s8) ? left_s8[idx0] : 0));
-          double right_k = (right_dt == dt::fp32) ? right_fp32[idx1] : ((right_dt == dt::u8) ?
+          auto right_k = (right_dt == dt::fp32) ? right_fp32[idx1] : ((right_dt == dt::u8) ?
             right_u8[idx1] : ((right_dt == dt::s8) ? right_s8[idx1] : 0));
           value += left_k * right_k;
         }
@@ -295,13 +295,24 @@ static auto case_func = []() {
   cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
     {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
 
-  // case: sparse: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
+  // case: sparse: s8xu8+s32=s8, n_blocks != 1, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
   src0_desc = {{32, 32}, dt::s8, ft::csrp};
   src1_desc = {{32, 128}, dt::u8, ft::ab};
   bias_desc = {{32, 1}, dt::s32, ft::ab};
   dst_desc = {{32, 128}, dt::s8, ft::ab};
   scales_desc = {{32, 1}, dt::fp32, ft::ab};
   mkn_blocks = "1,1,2";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // case: sparse: s8xu8+s32=s8, k_blocks != 1, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
+  src0_desc = {{32, 32}, dt::s8, ft::csrp};
+  src1_desc = {{32, 128}, dt::u8, ft::ab};
+  bias_desc = {{32, 1}, dt::s32, ft::ab};
+  dst_desc = {{32, 128}, dt::s8, ft::ab};
+  scales_desc = {{32, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,2,1";
   tile_shape = "4,4";
   cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
     {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});

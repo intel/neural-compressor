@@ -56,12 +56,6 @@ bool spmm_default_kd_t::spmm_params_init(ssd::flat_param_t& param_ref,
   param_ref.has_bias = !bias_desc.shape().empty();
   auto op_attrs = op_desc.attrs();
   param_ref.append_sum = (op_attrs["post_op"] == "append_sum");
-  const auto& temp1 = split_str<int64_t>(op_attrs["mkn_blocks"]);
-  param_ref.mkn_blocks = temp1.empty() ? std::vector<int64_t>{1, 1, 1} : temp1;
-  const auto& temp2 = split_str<int64_t>(op_attrs["tile_shape"]);
-  param_ref.tile_shape = temp2.empty() ? std::vector<int64_t>{4, 4} : temp2;
-  param_ref.start = 0;
-  param_ref.end = param_ref.mkn_blocks[2];
   param_ref.output_type = dst_desc.dtype();
   if (op_attrs["sparse_scheme"] == "dense_x_sparse") {
     param_ref.scheme = ssd::sparse_scheme::dense_x_sparse;
@@ -70,6 +64,13 @@ bool spmm_default_kd_t::spmm_params_init(ssd::flat_param_t& param_ref,
   } else {
     param_ref.scheme = ssd::sparse_scheme::sparse_x_dense;
   }
+  const auto& temp1 = split_str<int64_t>(op_attrs["mkn_blocks"]);
+  param_ref.mkn_blocks = temp1.empty() ? std::vector<int64_t>{1, 1, 1} : temp1;
+  const auto& temp2 = split_str<int64_t>(op_attrs["tile_shape"]);
+  param_ref.tile_shape = temp2.empty() ? std::vector<int64_t>{4, 4} : temp2;
+  param_ref.sub_func = (op_attrs["sub_func"] != "false");
+  param_ref.start = 0;
+  param_ref.end = param_ref.mkn_blocks[2];
   const auto& temp_addr = str_to_num<uint64_t>(op_attrs["sparse_ptr"]);
   param_ref.sparse_ptr = reinterpret_cast<csrp_data_t<int8_t>*>(temp_addr);
   param_ref.avg_group = get_avg_group(param_ref.sparse_ptr, nthr, ithr);
@@ -135,7 +136,7 @@ bool spmm_default_k_t::spmm_kernel_create(jit_spmm_default_t** ker_pp, const ssd
 bool spmm_default_k_t::execute(const std::vector<const void*>& rt_data) const {
   int nthr = kd()->operator_desc().impl_nthr();
   std::vector<ssd::flat_data_t> td(nthr);
-  #pragma omp parallel for
+  #pragma omp parallel for num_threads(nthr)
   for (int idx = nthr - 1; idx >= 0; --idx) {
     const auto& jit_impl = jit_kers_[idx];
     td[idx].ptr_seq_vals = jit_impl->sequence_vals();

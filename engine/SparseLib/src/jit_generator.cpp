@@ -25,7 +25,10 @@ bool jit_generator::create_kernel() {
 const uint8_t* jit_generator::get_code() {
   this->ready();
   auto code = CodeGenerator::getCode();
-  return code;
+  if (callee_functions_code_size_ == 0) {
+    return code;
+  }
+  return code + callee_functions_code_size_;
 }
 
 void jit_generator::dump_asm() {

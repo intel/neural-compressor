@@ -48,12 +48,14 @@ struct flat_param_t {
   int64_t N;
   bool has_bias;
   bool append_sum;
-  std::vector<int64_t> mkn_blocks;
-  std::vector<int64_t> tile_shape;
-  int64_t start;
-  int64_t end;
   data_type output_type;
   sparse_scheme scheme;
+  // optimization config of JIT machine code.
+  std::vector<int64_t> mkn_blocks;
+  std::vector<int64_t> tile_shape;
+  bool sub_func;
+  int64_t start;
+  int64_t end;
   // sparse weight related
   csrp_data_t<int8_t>* sparse_ptr;
   std::vector<int64_t> avg_group;

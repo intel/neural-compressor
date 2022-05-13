@@ -44,8 +44,9 @@ class jit_generator : public Xbyak::CodeGenerator {
 
  protected:
   const uint8_t* jit_ker_ = nullptr;
-  static constexpr uint64_t MAX_CODE_SIZE = 256 * 1024;
+  static constexpr uint64_t MAX_CODE_SIZE = 256 * 1024 * 1024;
   static constexpr int VEC = 16;  // 512 bits of ZMM register divided by S32 bits.
+  int callee_functions_code_size_ = 0;
 };
 }  // namespace jd
 #endif  // ENGINE_SPARSELIB_INCLUDE_JIT_GENERATOR_HPP_
