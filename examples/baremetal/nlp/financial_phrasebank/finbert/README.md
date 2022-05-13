@@ -7,11 +7,9 @@
 ```shell
 conda create -n <env name> python=3.7
 conda activate <env name>
-cd <neural_compressor_folder>/examples/engine/nlp/financial_phrasebank/finbert
+cd <neural_compressor_folder>/examples/baremetal/nlp/financial_phrasebank/finbert
 pip install -r requirements.txt
 ```
-1.2 Install C++ environment (Optional)
-Install engine according to [Engine](../../../../../docs/engine.md) if need the performance in C++.
 Preload libiomp5.so can improve the performance when bs=1.
 ```
 export LD_PRELOAD=<path_to_libiomp5.so>

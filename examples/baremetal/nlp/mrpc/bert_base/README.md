@@ -8,13 +8,11 @@ Step-by-Step
 ```shell
 conda create -n <env name> python=3.7
 conda activate <env name>
-cd <nc_folder>/examples/deepengine/nlp/mrpc/bert_base
+cd <nc_folder>/examples/baremetal/nlp/mrpc/bert_base
 pip install 1.15.0 up2 from links below:
 https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
 pip install -r requirements.txt
 ```
-1.2 Install C++ environment (Optional)
-Install engine according to [Engine](../../../../../docs/engine.md) if need the performance in C++.
 Preload libiomp5.so can improve the performance when bs=1.
 ```
 export LD_PRELOAD=<path_to_libiomp5.so>

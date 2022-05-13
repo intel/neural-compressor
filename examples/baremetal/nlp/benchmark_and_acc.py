@@ -56,7 +56,7 @@ def modify_yaml(
         label_file,
         vocab_file):
     """we copy bert.yaml and change attribute."""
-    with open(path + "/bert.yaml", "r") as src_fp:
+    with open(path + "/bert_static.yaml", "r") as src_fp:
         with open(path + "/bert_tmp.yaml", "w") as dst_fp:
             for line in src_fp.readlines():
                 if line.find("num_of_instance") >= 0:
