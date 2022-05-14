@@ -17,9 +17,10 @@
 
 import os
 import copy
-from collections import OrderedDict
 import yaml
+import math
 import numpy as np
+from collections import OrderedDict, UserDict
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
@@ -27,7 +28,6 @@ from ..utils.utility import Statistics, GLOBAL_STATE, MODE
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-import math
 tensorflow = LazyImport('tensorflow')
 
 
@@ -328,11 +328,33 @@ class TensorFlowAdaptor(Adaptor):
             for idx, (inputs, labels) in enumerate(dataloader):
                 # dataloader should keep the order and len of inputs same with input_tensor
                 if len(input_tensor) == 1:
-                    feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
+                    feed_dict = {}
+                    if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
+                      or isinstance(inputs, UserDict):
+                        for name in inputs:
+                            for tensor in input_tensor:
+                                pos = tensor.name.rfind(":")
+                                t_name = tensor.name if pos < 0 else tensor.name[:pos]
+                                if name == t_name:
+                                    feed_dict[tensor] = inputs[name]
+                                    break
+                    else:
+                        feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
                 else:
                     assert len(input_tensor) == len(inputs), \
                         'inputs len must equal with input_tensor'
-                    feed_dict = dict(zip(input_tensor, inputs))
+                    feed_dict = {}
+                    if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
+                      or isinstance(inputs, UserDict):
+                        for name in inputs:
+                            for tensor in input_tensor:
+                                pos = tensor.name.rfind(":")
+                                t_name = tensor.name if pos < 0 else tensor.name[:pos]
+                                if name == t_name:
+                                    feed_dict[tensor] = inputs[name]
+                                    break
+                    else:
+                        feed_dict = dict(zip(input_tensor, inputs))
 
                 if model.iter_op:
                     predictions = iterator_sess_run(model.sess, model.iter_op, \
