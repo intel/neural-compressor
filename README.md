@@ -161,7 +161,7 @@ More details for validated models are available [here](docs/validated_model_list
   <tbody>
     <tr>
         <td colspan="2" align="center"><a href="docs/Quantization.md">Quantization</a></td>
-        <td colspan="1" align="center"><a href="docs/pruning.md">Pruning</a></td>
+        <td colspan="1" align="center"><a href="docs/pruning.md">Pruning</a> <a href="docs/sparsity.md">(Sparsity)</a> </td> 
         <td colspan="3" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
         <td colspan="3" align="center"><a href="docs/mixed_precision.md">Mixed precision</a></td>
     </tr>
