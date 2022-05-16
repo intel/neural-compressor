@@ -40,7 +40,9 @@ from .switch_optimizer import SwitchOptimizer
 from .move_squeeze_after_relu import MoveSqueezeAfterReluOptimizer
 from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
+from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
+
 
 class PreOptimization():
     def __init__(self, model, optimization):
@@ -139,7 +141,9 @@ class PreOptimization():
 
         self._tmp_graph_def = ExpandDimsOptimizer(
             self._tmp_graph_def).do_transformation()
-     
+            
+        self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
+            self._tmp_graph_def).do_transformation()     
         #TODO we need to remove below optimizer once the TF enabled the single
         # matmul op quantization
         self._tmp_graph_def = InjectDummyBiasAddOptimizer(
