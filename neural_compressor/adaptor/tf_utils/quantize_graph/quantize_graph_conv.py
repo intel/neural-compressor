@@ -44,6 +44,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'Conv2DBiasAddAddRelu': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'Conv2DBiasAddRelu6': self.apply_newly_conv_biasadd_relu_fusion,
                 'Conv2DBiasAddRelu': self.apply_newly_conv_biasadd_relu_fusion,
+                'Conv2DBiasAddElu': self.apply_newly_conv_biasadd_relu_fusion,
                 'Conv2DBiasAddLeakyRelu': self.apply_newly_conv_biasadd_relu_fusion,
                 'Conv2DBiasAddLeakyReluAddV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'Conv2DAddRelu6': self.apply_newly_conv_biasadd_relu_fusion,
@@ -678,7 +679,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
                 is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
- 
+                is_elu = self.node_name_mapping[relu_node_name].node.op == "Elu"
+                
                 node_op = '_QuantizedDepthwiseConv2D' 
                 if node.op == 'Conv2D':
                     node_op = "_QuantizedConv2D"
@@ -705,7 +707,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 if self.device == 'gpu' else dtypes.qint32)
                 fused_ops = [b'BiasAdd', b'Relu']
                 if is_leakyrelu:
-                    fused_ops = [b'BiasAdd', b'LeakyRelu'] 
+                    fused_ops = [b'BiasAdd', b'LeakyRelu']
+                if is_elu:
+                    fused_ops = [b'BiasAdd', b'Elu'] 
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
                 helper.set_attr_type_list(quantized_conv_node, 'input_types', [
                     input_data_type.as_datatype_enum,

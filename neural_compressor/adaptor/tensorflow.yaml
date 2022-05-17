@@ -147,6 +147,7 @@
         'Conv2D + BiasAdd',
         'Conv2D + BiasAdd + Add + Relu6 + Mul + Mul',
         'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Elu',
         'Conv2D + BiasAdd + Relu6',
         'Conv2D + BiasAdd + LeakyRelu',
         'Conv2D + BiasAdd + LeakyRelu + AddV2',
