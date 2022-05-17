@@ -50,9 +50,11 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         qint32_type = dtypes.qint32.as_datatype_enum
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
+            if i[0]=='class/MatMul_eightbit_quantized_mat_mul':
+                import pdb;pdb.set_trace()
             # TODO Remove below checker once the TF's limitation removed.
-            if len(i) == 5:
-                continue
+            # if len(i) == 5:
+            #     continue
 
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
