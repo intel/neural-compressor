@@ -453,7 +453,8 @@ class ONNXRTAdaptor(Adaptor):
         onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
         return model
 
-    def _replace_gemm_with_matmul(self, model):
+    @staticmethod
+    def _replace_gemm_with_matmul(model):
         new_nodes = []
         from onnx import numpy_helper
         from neural_compressor.model.onnx_model import ONNXModel
