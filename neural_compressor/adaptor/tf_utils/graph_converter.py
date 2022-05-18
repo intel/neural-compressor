@@ -217,7 +217,7 @@ class GraphConverter:
 
             if tf.version.VERSION >= '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
-                             "when Tensorflow 2.6.x installed.")
+                             "when Tensorflow >= 2.6.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(

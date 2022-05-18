@@ -111,6 +111,8 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 </tbody>
 </table>
 
+> Note: Starting from official TensorFlow 2.6.0, oneDNN has been default in the binary. Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 before running the quantization process or deploying the quantized model with official TensorFlow.
+
 ### Validated Models
 Intel® Neural Compressor validated 420+ [examples](./examples) with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. 
 More details for validated models are available [here](docs/validated_model_list.md).   
