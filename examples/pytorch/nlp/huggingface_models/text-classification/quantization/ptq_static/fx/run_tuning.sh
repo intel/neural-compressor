@@ -42,7 +42,8 @@ function run_tuning {
     MAX_SEQ_LENGTH=128
     model_type='bert'
     approach='post_training_static_quant'
-
+    TASK_NAME='mrpc'
+    model_name_or_path=${input_model}
     if [ "${topology}" = "bert_base_MRPC" ];then
         TASK_NAME='mrpc'
         model_name_or_path=${input_model}
@@ -69,6 +70,12 @@ function run_tuning {
         model_name_or_path=${input_model}
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='cola'
+        model_name_or_path=${input_model}
+    elif [ "${topology}" = "funnel_MRPC_fx" ]; then
+        TASK_NAME='mrpc'
+        model_name_or_path=${input_model}
+    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
+        TASK_NAME='mrpc'
         model_name_or_path=${input_model}
     fi
 

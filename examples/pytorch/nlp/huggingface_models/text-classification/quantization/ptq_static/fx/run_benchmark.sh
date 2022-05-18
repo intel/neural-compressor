@@ -54,7 +54,8 @@ function init_params {
 function run_benchmark {
     extra_cmd=''
     MAX_SEQ_LENGTH=128
-
+    TASK_NAME='mrpc'
+    model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
     elif [[ ${mode} == "benchmark" ]]; then
@@ -90,6 +91,12 @@ function run_benchmark {
         model_name_or_path=${input_model}
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='cola'
+        model_name_or_path=${input_model}
+    elif [ "${topology}" = "funnel_MRPC_fx" ]; then
+        TASK_NAME='mrpc'
+        model_name_or_path=${input_model}
+    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
+        TASK_NAME='mrpc'
         model_name_or_path=${input_model}
     fi
 

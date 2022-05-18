@@ -146,6 +146,10 @@ fake_ptq_yaml_for_fx = '''
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
               },
+              'conv.module': {
+                'weight': {'dtype': ['fp32']},
+                'activation': {'dtype': ['fp32']}
+              },
               'default_qconfig': {
                 'activation':  {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -731,7 +735,6 @@ class TestPytorchAdaptor(unittest.TestCase):
         data = [[{'input': torch.rand(3,224,224)}, torch.ones(1,1)], ]
         # dataloader.batch_size=100
         dataloader = common.DataLoader(data, batch_size=1)
-
         quantizer = Quantization('dynamic_yaml.yaml')
         model = dummymodel(vision_model)
         quantizer.model = model
@@ -826,6 +829,13 @@ class TestPytorchIPEXAdaptor(unittest.TestCase):
 
 @unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
+    framework_specific_info = {"device": "cpu",
+                               "approach": "post_training_static_quant",
+                               "random_seed": 1234,
+                               "q_dataloader": None,
+                               "workspace_path": "./"}
+    framework = "pytorch_fx"
+    adaptor = FRAMEWORKS[framework](framework_specific_info)
     @classmethod
     def setUpClass(self):
         build_pytorch_fx_yaml()
@@ -1008,6 +1018,52 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                               })
             self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree('./saved', ignore_errors=True)
+
+    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
+      "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx backend")
+    def test_bf16_capability(self):
+        model_origin = DynamicControlModel()
+        os.environ['FORCE_BF16'] = '1'
+        q_capability = self.adaptor._get_quantizable_ops(model_origin)
+        del os.environ['FORCE_BF16']
+        self.assertEqual(q_capability['optypewise']['Conv2d']['weight']['dtype'], \
+            ['bf16', 'int8', 'fp32'])
+        self.assertEqual(q_capability['optypewise']['Conv2d']['activation']['dtype'], \
+            ['bf16', 'uint8', 'fp32'])
+        self.assertEqual(q_capability['optypewise']['Linear']['weight']['dtype'], \
+            ['bf16', 'int8', 'fp32'])
+        self.assertEqual(q_capability['optypewise']['Linear']['activation']['dtype'], \
+            ['bf16', 'uint8', 'fp32'])
+        self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['weight']['dtype'], \
+                    ['bf16', 'int8', 'fp32'])
+        self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['activation']['dtype'], \
+                    ['bf16', 'uint8', 'fp32'])
+
+    def test_mix_precision(self):
+        fake_yaml = 'fx_ptq_yaml.yaml'
+        model_origin = DynamicControlModel()
+        # run fx_quant in neural_compressor and save the quantized GraphModule
+        quantizer = Quantization(fake_yaml)
+        dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
+        quantizer.eval_func = eval_func
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = common.Model(model_origin,
+                              **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
+        q_model = quantizer.fit()
+        tune_cfg = q_model.tune_cfg
+        tune_cfg['op'][('conv.module', 'Conv2d')].clear()
+        tune_cfg['op'][('conv.module', 'Conv2d')] = \
+            {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
+        tune_cfg["bf16_ops_list"].append(('conv.module', 'Conv2d'))
+        from neural_compressor.adaptor.torch_utils.bf16_convert import Convert
+        q_model._model = Convert(q_model._model, tune_cfg)
+
+        self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
+        self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
 
 if __name__ == "__main__":
     unittest.main()

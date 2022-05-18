@@ -67,6 +67,10 @@ function run_tuning {
         TASK_NAME='MRPC'
         model_name_or_path=$input_model 
         model_type='ctrl'
+    elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=$input_model
+        model_type='xlm'
     fi
 
     sed -i "/: bert/s|name:.*|name: $model_type|g" conf.yaml

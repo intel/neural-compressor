@@ -233,12 +233,17 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
         }
     """
     op_qcfgs = OrderedDict()
+    op_qcfgs['bf16_ops_list'] = []
     for key in tune_cfg['op']:
         value = tune_cfg['op'][key]
         assert isinstance(value, dict)
         assert 'activation' in value
         if ('weight' in value and value['weight']['dtype'] == 'fp32') or \
            ('weight' not in value and value['activation']['dtype'] == 'fp32'):
+           op_qcfgs[key[0]] = None
+        elif ('weight' in value and value['weight']['dtype'] == 'bf16') or \
+           ('weight' not in value and value['activation']['dtype'] == 'bf16'):
+            op_qcfgs['bf16_ops_list'].append(key)
             op_qcfgs[key[0]] = None
         else:
             if 'weight' in value:
@@ -703,6 +708,7 @@ class TemplateAdaptor(Adaptor):
         random_seed = framework_specific_info['random_seed']
         torch.manual_seed(random_seed)
 
+        self.bf16_ops = []
         self.device = framework_specific_info['device']
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
@@ -714,6 +720,16 @@ class TemplateAdaptor(Adaptor):
         self.sub_module_list = None
         self.default_qconfig = framework_specific_info['default_qconfig'] \
             if 'default_qconfig' in framework_specific_info else None
+        self.fused_op = ['nni.ConvReLU1d',
+                         'nni.ConvReLU2d',
+                         'nni.ConvReLU3d',
+                         'nni.LinearReLU',
+                         'nni.BNReLU2d',
+                         'nni.BNReLU3d',
+                         'nniqat.ConvReLU2d',
+                         'nniqat.ConvBn2d',
+                         'nniqat.ConvBnReLU2d',
+                         'nni.LinearReLU']
 
         if 'approach' in framework_specific_info:   # pragma: no cover
             self.approach = framework_specific_info['approach']
@@ -919,7 +935,83 @@ class TemplateAdaptor(Adaptor):
                 q_capability['optypewise'][q_op[1]] = copy.deepcopy(capability[q_op[1]]) \
                     if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
 
+        # get bf16 capability
+        if (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+            (self.version >= PyTorchVersionMode.PT111.value):
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
+            bf16_ops = []
+            self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
+            mixed_capability = self._combine_capability(bf16_ops, q_capability)
+            return mixed_capability
+
         return q_capability
+
+    def _get_bf16_ops_recursively(self, model, prefix, bf16_ops):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            bf16_ops (list): list of quantizable ops from model include op name and type.
+
+        Returns:
+            None
+        """
+
+        for name, child in model.named_children():
+            op_name = prefix + '.' + name if prefix != '' else name
+            if str(child.__class__.__name__) in self.bf16_ops \
+               and type(child) != torch.nn.Sequential \
+               and type(child) != torch.quantization.stubs.DeQuantStub:
+                bf16_ops.append((
+                    op_name, unify_op_type_mapping[str(child.__class__.__name__)]
+                    if str(child.__class__.__name__) in unify_op_type_mapping else
+                    str(child.__class__.__name__)))
+            elif self.is_fused_module(child):
+                continue
+            else:
+                self._get_bf16_ops_recursively(child, op_name, bf16_ops)
+
+    def _combine_capability(self, bf16_ops, q_capability):
+        for bf16_op in bf16_ops:
+            if bf16_op in q_capability['opwise'].keys():
+                q_capability['opwise'][bf16_op]['weight']['dtype'].insert(0, 'bf16')
+                q_capability['opwise'][bf16_op]['activation']['dtype'].insert(0, 'bf16')
+                if 'bf16' not in q_capability['optypewise'][bf16_op[1]]['weight']['dtype']:
+                    q_capability['optypewise'] \
+                        [bf16_op[1]]['weight']['dtype'].insert(0, 'bf16')
+                if 'bf16' not in q_capability['optypewise'][bf16_op[1]]['activation']['dtype']:
+                    q_capability['optypewise'] \
+                        [bf16_op[1]]['activation']['dtype'].insert(0, 'bf16')
+            else:
+                q_capability['opwise'][bf16_op] = \
+                    {'weight': {'dtype': ['bf16', 'fp32']}, \
+                        'activation': {'dtype': ['bf16', 'fp32']}}
+                if bf16_op[1] not in q_capability['optypewise'].keys():
+                    q_capability['optypewise'][bf16_op[1]] = \
+                        {'weight': {'dtype': ['bf16', 'fp32']}, \
+                            'activation': {'dtype': ['bf16', 'fp32']}}
+        return q_capability
+
+    def is_fused_module(self, module):
+        """This is a helper function for `_propagate_qconfig_helper` to detecte
+           if this module is fused.
+
+        Args:
+            module (object): input module
+
+        Returns:
+            (bool): is fused or not
+        """
+        op_type = str(type(module))
+        op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
+        op_type = 'nni.' + op_type
+        if op_type in self.fused_op:
+            return True
+        else:
+            return False
+
 
 
 unify_op_type_mapping = {
@@ -982,16 +1074,6 @@ class PyTorchAdaptor(TemplateAdaptor):
 
         # for tensorboard
         self.dump_times = 0
-        self.fused_op = ['nni.ConvReLU1d',
-                         'nni.ConvReLU2d',
-                         'nni.ConvReLU3d',
-                         'nni.LinearReLU',
-                         'nni.BNReLU2d',
-                         'nni.BNReLU3d',
-                         'nniqat.ConvReLU2d',
-                         'nniqat.ConvBn2d',
-                         'nniqat.ConvBnReLU2d',
-                         'nni.LinearReLU']
         self.fused_dict = {}
 
     @dump_elapsed_time("Pass quantize model")
@@ -1016,6 +1098,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch"
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
+        self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
+        del op_cfgs['bf16_ops_list']
 
         try:
             q_model = copy.deepcopy(model)
@@ -1065,6 +1149,13 @@ class PyTorchAdaptor(TemplateAdaptor):
             torch.quantization.convert(q_model._model, inplace=True)
         else:
             torch.quantization.convert(q_model._model, mapping=self.q_mapping, inplace=True)
+
+        if len(self.tune_cfg['bf16_ops_list']) > 0 and \
+            (self.version >= PyTorchVersionMode.PT111.value) and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            from .torch_utils.bf16_convert import Convert
+            q_model._model = Convert(q_model._model, self.tune_cfg)
+
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, self.tune_cfg)
@@ -1227,6 +1318,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         for key in tune_cfg['op']:
             op_name = key[0]
             op_type = str(type(modules[op_name])).rstrip('\'>').split('.')[-1]
+            if op_type == 'BF16ModuleWrapper':   # pragma: no cover
+                op_type = str(type(modules[op_name].module)).rstrip('\'>').split('.')[-1]
             if op_type == 'DequantQuantWrapper':
                 op_type = str(type(modules[op_name].module)).rstrip('\'>').split('.')[-1]
             if 'Functional' in op_type:
@@ -1236,6 +1329,8 @@ class PyTorchAdaptor(TemplateAdaptor):
             value = tune_cfg['op'][key]
             if value['activation']['dtype'] == 'fp32':
                 res[op_type]['FP32'] += 1
+            elif value['activation']['dtype'] == 'bf16': # pragma: no cover
+                res[op_type]['BF16'] += 1
             else:
                 res[op_type]['INT8'] += 1
         # fetch other quantizable ops supported in PyTorch from model
@@ -1247,7 +1342,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                         res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                     res[op_type]['INT8'] += 1
                 if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or \
-                      op_type == 'Embedding':
+                      op_type == 'Embedding' or op_type == 'Dropout':
                     ignore_log = True
                     if op_type not in res.keys():
                         res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
@@ -1261,24 +1356,6 @@ class PyTorchAdaptor(TemplateAdaptor):
         Statistics(output_data,
                    header='Mixed Precision Statistics',
                    field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
-
-    def is_fused_module(self, module):
-        """This is a helper function for `_propagate_qconfig_helper` to detecte
-           if this module is fused.
-
-        Args:
-            module (object): input module
-
-        Returns:
-            (bool): is fused or not
-        """
-        op_type = str(type(module))
-        op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
-        op_type = 'nni.' + op_type
-        if op_type in self.fused_op:
-            return True
-        else:
-            return False
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
@@ -2412,7 +2489,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         assert isinstance(model._model, torch.nn.Module), \
                "The model passed in is not the instance of torch.nn.Module"
-
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch_fx"
@@ -2423,6 +2499,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             default_qconfig['weight']['dtype'] = self.default_qconfig['weight']['dtype'][0]
             self.tune_cfg["op"][("default_qconfig", "")] = default_qconfig
         op_cfgs = _cfg_to_qconfig(self.tune_cfg, self.approach)
+        self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
+        del op_cfgs['bf16_ops_list']
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         try:
@@ -2476,6 +2554,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
                                                 q_model._model, prefix='')
+
+        if len(self.tune_cfg['bf16_ops_list']) > 0 and \
+            self.version >= PyTorchVersionMode.PT111.value and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            from .torch_utils.bf16_convert import Convert
+            q_model._model = Convert(q_model._model, self.tune_cfg)
+
         q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, self.tune_cfg)
@@ -2623,6 +2708,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         modules = dict(model.named_modules())
         res = dict()
+
         if approach == 'post_training_dynamic_quant':
             # fetch int8 and fp32 ops set by Neural Compressor from tune_cfg
             for key in tune_cfg['op']:
@@ -2635,6 +2721,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     res[op_type]['INT8'] += 1
                 if value['activation']['dtype'] == 'fp32':
                     res[op_type]['FP32'] += 1
+                if value['activation']['dtype'] == 'bf16':
+                    res[op_type]['BF16'] += 1
         else:
             quantized_mode = False
             for node in model.graph.nodes:
@@ -2710,6 +2798,19 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             res = dict()
             self._get_sub_module_op_stats(model, tune_cfg, approach, res)
+
+        if (self.version >= PyTorchVersionMode.PT111.value) and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            bf16_ops_list = tune_cfg['bf16_ops_list']
+            if len(bf16_ops_list) > 0:
+                for bf16_op in  bf16_ops_list:
+                    op_type = bf16_op[1]
+                    if op_type in res.keys():
+                        res[op_type]['BF16'] += 1
+                        if res[op_type]['FP32'] > 0:
+                            res[op_type]['FP32'] -= 1
+                    else:
+                        res[op_type]['BF16'] = 1
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
                         res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
@@ -3046,3 +3147,22 @@ class PyTorchQuery(QueryBackendCapability):
             and value is a dict that describes all op types' quantization capability.
         """
         return self.cur_config['capabilities']
+
+    def get_op_types(self):
+        """Get the supported op types by all precisions.
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the op types.
+        """
+        return self.cur_config['ops']
+
+    def get_op_types_by_precision(self, precision):
+        """Get op types per precision
+        Args:
+            precision (string): precision name
+        Returns:
+            [string list]: A list composed of op type.
+        """
+        assert precision in list(self.cur_config['ops'].keys())
+
+        return self.cur_config['ops'][precision]
