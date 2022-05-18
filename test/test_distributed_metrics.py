@@ -6,6 +6,7 @@ import subprocess
 import unittest
 import re
 import tensorflow
+import torch
 
 def build_fake_ut():
     fake_ut = """
@@ -961,7 +962,7 @@ class TestDistributed(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors = True)
         shutil.rmtree('runs', ignore_errors = True)
 
-    @unittest.skipIf(tensorflow.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
+    @unittest.skipIf(tensorflow.version.VERSION >= '2.8.0' or torch.version.__version__ >= '1.10.0', "Only supports tf 2.7.0 or below and pytorch 1.9.0 or below")
     def test_distributed(self):
         distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
         p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,
