@@ -12,25 +12,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef ENGINE_SPARSELIB_INCLUDE_ENGINE_HPP_
-#define ENGINE_SPARSELIB_INCLUDE_ENGINE_HPP_
-#include <vector>
+#ifndef ENGINE_SPARSELIB_INCLUDE_AMX_UTILS_HPP_
+#define ENGINE_SPARSELIB_INCLUDE_AMX_UTILS_HPP_
+#include <immintrin.h>
 
-#include "impl_list_item.hpp"
-#include "param_types.hpp"
+#include <cstdint>
 
-namespace jd {
-class engine {
- public:
-  explicit engine(const engine_kind& eng_kind) : eng_kind_(eng_kind) {}
-  virtual ~engine() {}
-
- public:
-  inline const engine_kind& kind() const { return eng_kind_; }
-  virtual const std::vector<impl_list_item_t>* get_implementation_list(const operator_desc& op_desc) const = 0;
-
- protected:
-  engine_kind eng_kind_;
+// Tile configure structure
+struct tileconfig_t {
+  uint8_t palette_id;
+  uint8_t reserved[15];
+  uint16_t colb[16];
+  uint8_t rows[16];
 };
-}  // namespace jd
-#endif  // ENGINE_SPARSELIB_INCLUDE_ENGINE_HPP_
+
+void sparselib_configure_tiles();
+#endif  // ENGINE_SPARSELIB_INCLUDE_AMX_UTILS_HPP_

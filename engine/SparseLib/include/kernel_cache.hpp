@@ -14,12 +14,13 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_KERNEL_CACHE_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_KERNEL_CACHE_HPP_
-#include <unordered_map>
 #include <condition_variable>  // NOLINT
-#include <mutex>  // NOLINT
 #include <memory>
-#include "kernel_desc.hpp"
+#include <mutex>  // NOLINT
+#include <unordered_map>
+
 #include "kernel.hpp"
+#include "kernel_desc.hpp"
 #include "kernel_hashing.hpp"
 
 namespace jd {
@@ -33,8 +34,8 @@ class kernel_cache {
   virtual ~kernel_cache() {}
 
  public:
-  const std::shared_ptr<const kernel_t>& find_or_construct(const operator_desc& op_desc,
-    const std::function<bool(std::shared_ptr<const kernel_t>&)>& callback);
+  const std::shared_ptr<const kernel_t>& find_or_construct(
+      const operator_desc& op_desc, const std::function<bool(std::shared_ptr<const kernel_t>&)>& callback);
   const std::shared_ptr<const kernel_desc_t>& get_kd(const operator_desc& op_desc);
 
  private:

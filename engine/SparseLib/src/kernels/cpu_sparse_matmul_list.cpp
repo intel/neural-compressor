@@ -14,32 +14,31 @@
 
 #include <map>
 #include <tuple>
+
 #include "cpu_engine.hpp"
-#include "param_types.hpp"
 #include "impl_list_item.hpp"
+#include "kernels/spmm_amx_bf16_x16.hpp"
 #include "kernels/spmm_default.hpp"
+#include "param_types.hpp"
 
 namespace jd {
 using dt = data_type;
 using map_key_t = std::tuple<kernel_prop, dt, dt, dt>;
 /**
  * @param kernel_kind, point to this file "cpu_sparse_matmul_list.cpp".
- * @param kernel_prop, point to [KEY] of impl_list_map. A specific function or scenario.
- * @param kernel_algorithm, point to [VAL] of impl_list_map. Different algorithms of a
- *   specific function, e.g.: gemm, brgemm.
- * @note Use (kernel_kind->kernel_prop->kernel_algorithm) to denote a specific/derived kernel.
- *   Ref onednn's cpu_inner_product_list.cpp, a map's [VAL] is a derived "struct primitive_t",
- *   e.g.: gemm_inner_product_fwd_t<f32>.
+ * @param kernel_prop, point to [KEY] of impl_list_map. A specific function or
+ * scenario.
+ * @param kernel_algorithm, point to [VAL] of impl_list_map. Different
+ * algorithms of a specific function, e.g.: gemm, brgemm.
+ * @note Use (kernel_kind->kernel_prop->kernel_algorithm) to denote a
+ * specific/derived kernel. Ref onednn's cpu_inner_product_list.cpp, a map's
+ * [VAL] is a derived "struct primitive_t", e.g.: gemm_inner_product_fwd_t<f32>.
  */
 static const std::map<map_key_t, std::vector<impl_list_item_t>> impl_list_map = {
-  {{kernel_prop::forward_inference, dt::s8, dt::u8, dt::s8}, {
-    CPU_INSTANCE(spmm_default_k_t),
-    NULL_INSTANCE()
-  }},
-  {{kernel_prop::forward_inference, dt::s8, dt::u8, dt::fp32}, {
-    CPU_INSTANCE(spmm_default_k_t),
-    NULL_INSTANCE()
-  }},
+    {{kernel_prop::forward_inference, dt::bf16, dt::bf16, dt::fp32},
+     {CPU_INSTANCE(spmm_amx_bf16_x16_k_t), NULL_INSTANCE()}},
+    {{kernel_prop::forward_inference, dt::s8, dt::u8, dt::s8}, {CPU_INSTANCE(spmm_default_k_t), NULL_INSTANCE()}},
+    {{kernel_prop::forward_inference, dt::s8, dt::u8, dt::fp32}, {CPU_INSTANCE(spmm_default_k_t), NULL_INSTANCE()}},
 };
 
 const std::vector<impl_list_item_t>* get_sparse_matmul_impl_list(const operator_desc& op_desc) {

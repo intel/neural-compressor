@@ -14,9 +14,9 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_PARAM_TYPES_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_PARAM_TYPES_HPP_
-#include <vector>
-#include <unordered_map>
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 
 namespace jd {
 // The main kinds of kernel.
@@ -25,8 +25,9 @@ enum class kernel_kind : uint8_t {
   sparse_matmul,
 };
 
-// The propagation kind of kernel, temporarily defined as a specific function or scenario. Further,
-// the specific function can be implemented by different algorithms, e.g.: gemm, brgemm, ref.
+// The propagation kind of kernel, temporarily defined as a specific function or
+// scenario. Further, the specific function can be implemented by different
+// algorithms, e.g.: gemm, brgemm, ref.
 enum class kernel_prop : uint8_t {
   undef,
   forward_inference,
@@ -66,10 +67,8 @@ enum class engine_kind : uint8_t {
 };
 
 static std::unordered_map<data_type, int> type_size = {
-  {data_type::fp32, 4},
-  {data_type::s32, 4},
-  {data_type::u8, 1},
-  {data_type::s8, 1},
+    {data_type::fp32, 4}, {data_type::s32, 4}, {data_type::fp16, 2},
+    {data_type::bf16, 2}, {data_type::u8, 1},  {data_type::s8, 1},
 };
 }  // namespace jd
 #endif  // ENGINE_SPARSELIB_INCLUDE_PARAM_TYPES_HPP_

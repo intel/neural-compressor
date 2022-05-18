@@ -14,14 +14,15 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_KERNEL_HASHING_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_KERNEL_HASHING_HPP_
-#include <vector>
+#include <functional>
 #include <string>
 #include <unordered_map>
-#include <functional>
+#include <vector>
+
+#include "engine.hpp"
+#include "operator_desc.hpp"
 #include "param_types.hpp"
 #include "tensor_desc.hpp"
-#include "operator_desc.hpp"
-#include "engine.hpp"
 
 namespace jd {
 /**
@@ -43,8 +44,8 @@ class hash_t {
 
  private:
   // http://boost.sourceforge.net/doc/html/boost/hash_combine.html
-  template<typename T>
-  static void hash_combine(size_t& seed, const T& v) {   // NOLINT
+  template <typename T>
+  static void hash_combine(size_t& seed, const T& v) {  // NOLINT
     seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
   }
 

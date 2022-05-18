@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 3.11)
 project(kernellibs)
 set(HOST_LIBRARY_NAME "kernellibs")
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -fpic -Wall -fopenmp -march=native")
+option(SPARSE_LIB_USE_AMX OFF)
+
+set(CMAKE_CXX_FLAGS "-std=c++11 -fpic -Wall -march=native")
+if (SPARSE_LIB_USE_AMX)
+    set(CMAKE_CXX_FLAGS "-DSPARSE_LIB_USE_AMX ${CMAKE_CXX_FLAGS}")
+else()
+    set(CMAKE_CXX_FLAGS "-O3 -fopenmp ${CMAKE_CXX_FLAGS}")
+endif()
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party/")
 
 # -lpthread
@@ -38,10 +44,13 @@ add_library(${HOST_LIBRARY_NAME} SHARED
     src/kernel_cache.cpp
     src/cpu_engine.cpp
     src/utils.cpp
+    src/amx_utils.cpp
     src/kernels/cpu_sparse_matmul_list.cpp
     src/kernels/sparse_data.cpp
     src/kernels/spmm_default.cpp
+    src/kernels/spmm_amx_bf16_x16.cpp
     src/jit_domain/jit_spmm_default.cpp
+    src/jit_domain/jit_spmm_amx_bf16_x16.cpp
 )
 
 # Header file include path

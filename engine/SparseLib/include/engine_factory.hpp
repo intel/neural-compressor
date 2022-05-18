@@ -14,10 +14,11 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_ENGINE_FACTORY_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_ENGINE_FACTORY_HPP_
-#include <unordered_map>
 #include <memory>
-#include "param_types.hpp"
+#include <unordered_map>
+
 #include "cpu_engine.hpp"
+#include "param_types.hpp"
 
 namespace jd {
 class engine_factory {

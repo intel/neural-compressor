@@ -14,17 +14,18 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_TENSOR_DESC_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_TENSOR_DESC_HPP_
-#include <vector>
-#include <numeric>
 #include <functional>
+#include <numeric>
+#include <vector>
+
 #include "param_types.hpp"
 
 namespace jd {
 class tensor_desc {
  public:
   tensor_desc() : shape_({}), dtype_(data_type::undef), ftype_(format_type::undef) {}
-  tensor_desc(const std::vector<int64_t>& shape, const data_type& dtype,
-    const format_type& ftype) : shape_(shape), dtype_(dtype), ftype_(ftype) {}
+  tensor_desc(const std::vector<int64_t>& shape, const data_type& dtype, const format_type& ftype)
+      : shape_(shape), dtype_(dtype), ftype_(ftype) {}
   virtual ~tensor_desc() {}
 
  public:
@@ -36,9 +37,7 @@ class tensor_desc {
   inline const std::vector<int64_t>& shape() const { return shape_; }
   inline const data_type& dtype() const { return dtype_; }
   inline const format_type& ftype() const { return ftype_; }
-  inline uint64_t size() const {
-    return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>());
-  }
+  inline uint64_t size() const { return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>()); }
 
  private:
   std::vector<int64_t> shape_;

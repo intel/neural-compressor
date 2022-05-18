@@ -22,7 +22,7 @@ kernel_desc_proxy::kernel_desc_proxy(const operator_desc& op_desc) {
 }
 
 bool kernel_desc_proxy::create_proxy_object(std::shared_ptr<const kernel_desc_t>& result_ref,
-    const operator_desc& op_desc) {
+                                            const operator_desc& op_desc) {
   // Step 1: Get the pd (or kernel_desc_t) if it's in the cache.
   auto& global_primitive_cache = kernel_cache::instance();
   std::shared_ptr<const kernel_desc_t> candidate_kd = global_primitive_cache.get_kd(op_desc);
@@ -58,12 +58,11 @@ kernel_proxy::kernel_proxy(const kernel_desc_proxy& kdp) {
 }
 
 bool kernel_proxy::create_proxy_object(std::shared_ptr<const kernel_t>& result_ref,
-    const std::shared_ptr<const kernel_desc_t>& kd) {
+                                       const std::shared_ptr<const kernel_desc_t>& kd) {
   auto& global_primitive_cache = kernel_cache::instance();
-  const auto& callback = std::bind(
-    &kernel_desc_t::create_primitive, kd, std::placeholders::_1, kd);  // k_t->create() + k_t->init()
-  std::shared_ptr<const kernel_t> value = global_primitive_cache.find_or_construct(
-    kd->operator_desc(), callback);
+  const auto& callback = std::bind(&kernel_desc_t::create_primitive, kd, std::placeholders::_1,
+                                   kd);  // k_t->create() + k_t->init()
+  std::shared_ptr<const kernel_t> value = global_primitive_cache.find_or_construct(kd->operator_desc(), callback);
   if (value == nullptr) {
     return false;
   }

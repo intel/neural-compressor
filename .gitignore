@@ -9,5 +9,7 @@
 *.log
 *.swp
 *.onnx
+tags
+build/
 _build
 lpot_workspace/

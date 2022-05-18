@@ -23,11 +23,12 @@ bool spmm_default_kd_t::init() {
   const auto& bias_desc = op_desc_.tensor_descs()[ssd::BIAS];
   const auto& dst_desc = op_desc_.tensor_descs()[ssd::DST];
   bool has_bias = !bias_desc.shape().empty();
-  bool is_supported = (op_desc_.kernel_prop() == kernel_prop::forward_inference) &&
-    is_any_of({dt::s8, dt::fp32}, [&](const dt& a){ return wei_desc.dtype() == a; }) &&
-    is_any_of({dt::u8, dt::fp32}, [&](const dt& a){ return src_desc.dtype() == a; }) &&
-    (!has_bias || is_any_of({dt::s32, dt::fp32}, [&](const dt& a){ return bias_desc.dtype() == a; })) &&
-    is_any_of({dt::s8, dt::fp32}, [&](const dt& a){ return dst_desc.dtype() == a; });
+  bool is_supported =
+      (op_desc_.kernel_prop() == kernel_prop::forward_inference) &&
+      is_any_of({dt::s8, dt::fp32}, [&](const dt& a) { return wei_desc.dtype() == a; }) &&
+      is_any_of({dt::u8, dt::fp32}, [&](const dt& a) { return src_desc.dtype() == a; }) &&
+      (!has_bias || is_any_of({dt::s32, dt::fp32}, [&](const dt& a) { return bias_desc.dtype() == a; })) &&
+      is_any_of({dt::s8, dt::fp32}, [&](const dt& a) { return dst_desc.dtype() == a; });
   if (!is_supported) {
     return false;
   }
@@ -44,8 +45,8 @@ bool spmm_default_kd_t::init() {
   return true;
 }
 
-bool spmm_default_kd_t::spmm_params_init(ssd::flat_param_t& param_ref,
-    const jd::operator_desc& op_desc, int nthr, int ithr) {
+bool spmm_default_kd_t::spmm_params_init(ssd::flat_param_t& param_ref, const jd::operator_desc& op_desc, int nthr,
+                                         int ithr) {
   const auto& wei_desc = op_desc.tensor_descs()[ssd::WEI];
   const auto& src_desc = op_desc.tensor_descs()[ssd::SRC];
   const auto& bias_desc = op_desc.tensor_descs()[ssd::BIAS];
@@ -136,7 +137,7 @@ bool spmm_default_k_t::spmm_kernel_create(jit_spmm_default_t** ker_pp, const ssd
 bool spmm_default_k_t::execute(const std::vector<const void*>& rt_data) const {
   int nthr = kd()->operator_desc().impl_nthr();
   std::vector<ssd::flat_data_t> td(nthr);
-  #pragma omp parallel for num_threads(nthr)
+#pragma omp parallel for num_threads(nthr)
   for (int idx = nthr - 1; idx >= 0; --idx) {
     const auto& jit_impl = jit_kers_[idx];
     td[idx].ptr_seq_vals = jit_impl->sequence_vals();

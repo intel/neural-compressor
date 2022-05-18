@@ -33,13 +33,14 @@ const std::shared_ptr<const kernel_desc_t>& kernel_cache::get_kd(const operator_
   return e->kd();
 }
 
-const std::shared_ptr<const kernel_t>& kernel_cache::find_or_construct(const operator_desc& op_desc,
-    const std::function<bool(std::shared_ptr<const kernel_t>&)>& callback) {
-  // For elements with the same key, allow the first element, block the rest elements.
-  // Mark "cache_[key] = nullptr" as the first element, and "cache_[key] = BLOCK_REST" as the rests
+const std::shared_ptr<const kernel_t>& kernel_cache::find_or_construct(
+    const operator_desc& op_desc, const std::function<bool(std::shared_ptr<const kernel_t>&)>& callback) {
+  // For elements with the same key, allow the first element, block the rest
+  // elements. Mark "cache_[key] = nullptr" as the first element, and
+  // "cache_[key] = BLOCK_REST" as the rests
   static bool BLOCK_REST = false;
   std::unique_lock<std::mutex> lk(mtx_);
-  cv_.wait(lk, [&](){
+  cv_.wait(lk, [&]() {
     bool can_pass = (cache_[op_desc] != nullptr) || ((cache_[op_desc] == nullptr) && !BLOCK_REST);
     return can_pass;
   });

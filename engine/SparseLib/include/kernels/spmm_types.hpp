@@ -14,11 +14,15 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_KERNELS_SPMM_TYPES_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_KERNELS_SPMM_TYPES_HPP_
-#include <vector>
 #include <cstdint>
+#include <vector>
+
+#include "param_types.hpp"
+#include "utils.hpp"
 
 namespace jd {
-template <typename T> class csrp_data_t;
+template <typename T>
+class csrp_data_t;
 namespace ssd {
 /**
  * @brief tensors index configuration of this kernel.
@@ -40,7 +44,7 @@ enum class sparse_scheme : uint8_t {
 };
 
 /**
- * @brief kernel pameters passed between kernel/primitive and jit_domain.
+ * @brief kernel parameters passed between kernel/primitive and jit_domain.
  */
 struct flat_param_t {
   int64_t M;
@@ -73,6 +77,38 @@ struct flat_data_t {
   int64_t start;
   int64_t end;
 };
+
+/**
+ * @brief kernel parameters for kernel initialization
+ */
+template <typename T>
+struct amx_params_t {
+  dim_t bs;
+  dim_t shape[2];
+  dim_t blocksize[2] = {16, 1};
+  dim_t blocks_per_group = 64 / sizeof(T);
+  dim_t nnz_group;
+  dim_t nrowptr;
+  dim_t* colidxs;
+  dim_t* group_rowptr;
+  T* weight;
+};
+
+typedef amx_params_t<bfloat16_t> amx_bf16_params_t;
+
+/**
+ * @brief kernel inputs for kernel runtime
+ */
+template <typename src_t, typename wgt_t, typename dst_t>
+struct amx_inputs_t {
+  src_t* weight;
+  wgt_t* src;
+  dst_t* dst;
+  dim_t bs;
+};
+
+typedef amx_inputs_t<bfloat16_t, bfloat16_t, float> amx_bf16f32_inputs_t;
+typedef amx_inputs_t<bfloat16_t, bfloat16_t, bfloat16_t> amx_bf16bf16_inputs_t;
 }  // namespace ssd
 }  // namespace jd
 #endif  // ENGINE_SPARSELIB_INCLUDE_KERNELS_SPMM_TYPES_HPP_

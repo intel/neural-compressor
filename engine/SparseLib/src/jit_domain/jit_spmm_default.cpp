@@ -132,7 +132,8 @@ void jit_spmm_default_t::load_sparse() {
 }
 
 void jit_spmm_default_t::save_sequence_vals(const std::vector<int64_t>& m_indices,
-    const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map, int pos1, int pos2) {
+                                            const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map,
+                                            int pos1, int pos2) {
   for (int i = 0; i < TH_; ++i) {
     const auto& k_inddata_whole = k_inddata_map.at(m_indices[i]);
     seq_vals_.insert(seq_vals_.end(), k_inddata_whole.begin() + pos1, k_inddata_whole.begin() + pos2);
@@ -140,12 +141,16 @@ void jit_spmm_default_t::save_sequence_vals(const std::vector<int64_t>& m_indice
 }
 
 void jit_spmm_default_t::repeat_THx4xTW_matmal(const std::vector<int64_t>& m_indices,
-    const std::unordered_map<int64_t, std::vector<int64_t>>& k_indices_map,
-    const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map) {
+                                               const std::unordered_map<int64_t, std::vector<int64_t>>& k_indices_map,
+                                               const std::unordered_map<int64_t, std::vector<int8_t>>& k_inddata_map) {
   int need_regs = TH_ + TW_ + TH_ * TW_ + USED_VREGS;
-  LOG_IF(FATAL, need_regs >= VREG_NUMS) << "loading weight's REGs (TH=" << TH_ << "), loading "
-    "activation's REGs (TW=" << TW_ << "), dst tile's REGs (TH*TW=" << (TH_ * TW_) << "). "
-    "Their sum " << need_regs << " mustn't exceed 32zmm.";
+  LOG_IF(FATAL, need_regs >= VREG_NUMS) << "loading weight's REGs (TH=" << TH_
+                                        << "), loading "
+                                           "activation's REGs (TW="
+                                        << TW_ << "), dst tile's REGs (TH*TW=" << (TH_ * TW_)
+                                        << "). "
+                                           "Their sum "
+                                        << need_regs << " mustn't exceed 32zmm.";
 
   // ADJ=4 means 4 S8 combine a DST_S32. As ADJ repeats in K-dim, a DST_S32 also accumulates.
   // Note that a whole k-dim(segment) is processed.
@@ -223,8 +228,8 @@ void jit_spmm_default_t::handle_dst_buffer_epilogue(int kb_idx, const std::vecto
 }
 
 std::unordered_map<int64_t, std::vector<int64_t>> jit_spmm_default_t::get_idx_balanced(
-  const std::vector<int64_t>& m_indices, const std::vector<int64_t>& sparse_indptr,
-  const std::vector<int64_t>& sparse_indices, int lo, int hi) {
+    const std::vector<int64_t>& m_indices, const std::vector<int64_t>& sparse_indptr,
+    const std::vector<int64_t>& sparse_indices, int lo, int hi) {
   std::unordered_map<int64_t, std::vector<int64_t>> k_indices_map;
   for (const auto& i : m_indices) {
     int start = sparse_indptr[i];
@@ -253,9 +258,8 @@ std::unordered_map<int64_t, std::vector<int64_t>> jit_spmm_default_t::get_idx_ba
 }
 
 std::unordered_map<int64_t, std::vector<int8_t>> jit_spmm_default_t::get_val_balanced(
-  const std::vector<int64_t>& m_indices, const std::vector<int64_t>& sparse_indptr,
-  const std::vector<int64_t>& sparse_indices, int lo, int hi,
-  const std::vector<int8_t>& sparse_inddata) {
+    const std::vector<int64_t>& m_indices, const std::vector<int64_t>& sparse_indptr,
+    const std::vector<int64_t>& sparse_indices, int lo, int hi, const std::vector<int8_t>& sparse_inddata) {
   std::unordered_map<int64_t, std::vector<int8_t>> k_inddata_map;
   for (const auto& i : m_indices) {
     int start = sparse_indptr[i];
@@ -335,73 +339,74 @@ void jit_spmm_default_t::generate() {
   }
   Xbyak::Label g_label1;
   Xbyak::Label g_label2;
-{
-  Xbyak::util::StackFrame spmm_sf(this, 1, 0, stack_space_needed_);
-  read_params();
-  imul(reg_nb_start, reg_nb_start, nb_size_);
-  imul(reg_nb_end, reg_nb_end, nb_size_);
+  {
+    Xbyak::util::StackFrame spmm_sf(this, 1, 0, stack_space_needed_);
+    read_params();
+    imul(reg_nb_start, reg_nb_start, nb_size_);
+    imul(reg_nb_end, reg_nb_end, nb_size_);
 
-  // initialize the control avx vectors which we are going to use for permutes and shuffles.
-  vpmovzxbd(vpermt2d_arg_idx, ptr[rip + g_label1]);
-  vbroadcasti32x4(vpshufb_arg_b, ptr[rip + g_label2]);
+    // initialize the control avx vectors which we are going to use for permutes and shuffles.
+    vpmovzxbd(vpermt2d_arg_idx, ptr[rip + g_label1]);
+    vbroadcasti32x4(vpshufb_arg_b, ptr[rip + g_label2]);
 
-  // Loop-N1: Assembly loop at "n_blocks". Asm code fold.
-  Xbyak::Label L_nb_loop;
-  L(L_nb_loop);
-  // When K-dim is cut into k_blocks parts, it'll produce same number of DST intermediate results.
-  for (int kb_idx = 0; kb_idx < k_blocks_; ++kb_idx) {
-    int kb_lo = kb_idx * kb_size_;
-    int kb_hi = (kb_idx + 1) * kb_size_;
-    int ngrp = avg_group.size() - 1;
-    for (int i = 0; i < ngrp; ++i) {
-      int i_start = avg_group[i];
-      int i_end = avg_group[i + 1];
-      int istart_rem = ceil_div(i_start, param_.tile_shape[0]) * param_.tile_shape[0] - i_start;
-      int iend_rem = i_end % param_.tile_shape[0];
-      mt_size_ = param_.tile_shape[0] * 1;
-      m_tiles_ = ceil_div(i_end, mt_size_) - (i_start / mt_size_);
-      int mt_pos = i_start;
-      // Loop-M2: CPP loop at "m_tiles". Asm code unroll.
-      for (int i2 = 0; i2 < m_tiles_; ++i2) {
-        int len = mt_size_;
-        TH_ = param_.tile_shape[0];
-        if (i2 == 0 && istart_rem != 0) {  // If m_tiles's head block is unaligned, dynamically set TH_.
-          len = istart_rem;
-          TH_ = istart_rem;
-        } else if (i2 == m_tiles_ - 1 && iend_rem != 0) {  // If m_tiles's tail block is unaligned, dynamically set TH_.
-          len = iend_rem;
-          TH_ = iend_rem;
-        }
-        const auto& m_indices = std::vector<int64_t>(iperm.begin() + mt_pos, iperm.begin() + mt_pos + len);
-        mt_pos += len;
-        xor_(reg_nt_relative_idx, reg_nt_relative_idx);
-        mov(reg_nt_absolute_idx, reg_nb_start);
+    // Loop-N1: Assembly loop at "n_blocks". Asm code fold.
+    Xbyak::Label L_nb_loop;
+    L(L_nb_loop);
+    // When K-dim is cut into k_blocks parts, it'll produce same number of DST intermediate results.
+    for (int kb_idx = 0; kb_idx < k_blocks_; ++kb_idx) {
+      int kb_lo = kb_idx * kb_size_;
+      int kb_hi = (kb_idx + 1) * kb_size_;
+      int ngrp = avg_group.size() - 1;
+      for (int i = 0; i < ngrp; ++i) {
+        int i_start = avg_group[i];
+        int i_end = avg_group[i + 1];
+        int istart_rem = ceil_div(i_start, param_.tile_shape[0]) * param_.tile_shape[0] - i_start;
+        int iend_rem = i_end % param_.tile_shape[0];
+        mt_size_ = param_.tile_shape[0] * 1;
+        m_tiles_ = ceil_div(i_end, mt_size_) - (i_start / mt_size_);
+        int mt_pos = i_start;
+        // Loop-M2: CPP loop at "m_tiles". Asm code unroll.
+        for (int i2 = 0; i2 < m_tiles_; ++i2) {
+          int len = mt_size_;
+          TH_ = param_.tile_shape[0];
+          if (i2 == 0 && istart_rem != 0) {  // If m_tiles's head block is unaligned, dynamically set TH_.
+            len = istart_rem;
+            TH_ = istart_rem;
+          } else if (i2 == m_tiles_ - 1 &&
+                     iend_rem != 0) {  // If m_tiles's tail block is unaligned, dynamically set TH_.
+            len = iend_rem;
+            TH_ = iend_rem;
+          }
+          const auto& m_indices = std::vector<int64_t>(iperm.begin() + mt_pos, iperm.begin() + mt_pos + len);
+          mt_pos += len;
+          xor_(reg_nt_relative_idx, reg_nt_relative_idx);
+          mov(reg_nt_absolute_idx, reg_nb_start);
 
-        // n_blocks and n_tiles are N-dim loops, and can be used for N-dim multithread.
-        // n_blocks is asm outer loop, with longer assembly context span. n_tiles is inner loop.
-        // Loop-N2: Assembly loop at "n_tiles". Asm code fold.
-        Xbyak::Label L_nt_loop;
-        L(L_nt_loop);
-        // init dst buffer, like init the value to bias or the previous intermediate result.
-        handle_dst_buffer_init(kb_idx, m_indices);
-        auto k_indices_map = get_idx_balanced(m_indices, sparse_indptr, sparse_indices, kb_lo, kb_hi);
-        auto k_inddata_map = get_val_balanced(m_indices, sparse_indptr, sparse_indices, kb_lo, kb_hi, sparse_inddata);
-        repeat_THx4xTW_matmal(m_indices, k_indices_map, k_inddata_map);
-        // generate the epilogue logic. This is different depending on B_blocks value (should we
-        // cache intermediate results or write results with post-op to output)
-        handle_dst_buffer_epilogue(kb_idx, m_indices);
+          // n_blocks and n_tiles are N-dim loops, and can be used for N-dim multithread.
+          // n_blocks is asm outer loop, with longer assembly context span. n_tiles is inner loop.
+          // Loop-N2: Assembly loop at "n_tiles". Asm code fold.
+          Xbyak::Label L_nt_loop;
+          L(L_nt_loop);
+          // init dst buffer, like init the value to bias or the previous intermediate result.
+          handle_dst_buffer_init(kb_idx, m_indices);
+          auto k_indices_map = get_idx_balanced(m_indices, sparse_indptr, sparse_indices, kb_lo, kb_hi);
+          auto k_inddata_map = get_val_balanced(m_indices, sparse_indptr, sparse_indices, kb_lo, kb_hi, sparse_inddata);
+          repeat_THx4xTW_matmal(m_indices, k_indices_map, k_inddata_map);
+          // generate the epilogue logic. This is different depending on B_blocks value (should we
+          // cache intermediate results or write results with post-op to output)
+          handle_dst_buffer_epilogue(kb_idx, m_indices);
 
-        add(reg_nt_absolute_idx, nt_size_);
-        add(reg_nt_relative_idx, nt_size_);
-        cmp(reg_nt_relative_idx, nb_size_);
-        jb(L_nt_loop, T_NEAR);  // Loop-N2 end.
-      }  // Loop-M2 end.
+          add(reg_nt_absolute_idx, nt_size_);
+          add(reg_nt_relative_idx, nt_size_);
+          cmp(reg_nt_relative_idx, nb_size_);
+          jb(L_nt_loop, T_NEAR);  // Loop-N2 end.
+        }                         // Loop-M2 end.
+      }
     }
+    add(reg_nb_start, nb_size_);
+    cmp(reg_nb_start, reg_nb_end);
+    jl(L_nb_loop, T_NEAR);  // Loop-N1 end.
   }
-  add(reg_nb_start, nb_size_);
-  cmp(reg_nb_start, reg_nb_end);
-  jl(L_nb_loop, T_NEAR);  // Loop-N1 end.
-}
   int word_size = 1;
   int num_size = 16;
   const uint8_t vpermt2d_control[16] = {0, 4, 16, 20, 1, 5, 17, 21, 2, 6, 18, 22, 3, 7, 19, 23};

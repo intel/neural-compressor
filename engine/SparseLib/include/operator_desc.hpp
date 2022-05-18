@@ -15,9 +15,11 @@
 #ifndef ENGINE_SPARSELIB_INCLUDE_OPERATOR_DESC_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_OPERATOR_DESC_HPP_
 #include <omp.h>
-#include <vector>
+
 #include <string>
 #include <unordered_map>
+#include <vector>
+
 #include "param_types.hpp"
 #include "tensor_desc.hpp"
 
@@ -27,21 +29,27 @@ namespace jd {
  */
 class operator_desc {
  public:
-  operator_desc() : ker_kind_(jd::kernel_kind::undef), ker_prop_(jd::kernel_prop::undef),
-    eng_kind_(jd::engine_kind::undef), impl_nthr_(0), ts_descs_({}), attrs_({}) {}
-  operator_desc(const jd::kernel_kind& ker_kind, const jd::kernel_prop& ker_prop,
-    const jd::engine_kind& eng_kind, const std::vector<tensor_desc>& ts_descs,
-    const std::unordered_map<std::string, std::string>& attrs)
-  : ker_kind_(ker_kind), ker_prop_(ker_prop), eng_kind_(eng_kind),
-    impl_nthr_((omp_get_max_threads() == omp_get_num_procs()) ? 1 : omp_get_max_threads()),
-    ts_descs_(ts_descs), attrs_(attrs) {}
+  operator_desc()
+      : ker_kind_(jd::kernel_kind::undef),
+        ker_prop_(jd::kernel_prop::undef),
+        eng_kind_(jd::engine_kind::undef),
+        impl_nthr_(0),
+        ts_descs_({}),
+        attrs_({}) {}
+  operator_desc(const jd::kernel_kind& ker_kind, const jd::kernel_prop& ker_prop, const jd::engine_kind& eng_kind,
+                const std::vector<tensor_desc>& ts_descs, const std::unordered_map<std::string, std::string>& attrs)
+      : ker_kind_(ker_kind),
+        ker_prop_(ker_prop),
+        eng_kind_(eng_kind),
+        impl_nthr_((omp_get_max_threads() == omp_get_num_procs()) ? 1 : omp_get_max_threads()),
+        ts_descs_(ts_descs),
+        attrs_(attrs) {}
   virtual ~operator_desc() {}
 
  public:
   bool operator==(const operator_desc& rhs) const {
-    return (ker_kind_ == rhs.ker_kind_) && (ker_prop_ == rhs.ker_prop_) &&
-      (eng_kind_ == rhs.eng_kind_) && (impl_nthr_ == rhs.impl_nthr_) &&
-      (ts_descs_ == rhs.ts_descs_) && (attrs_ == rhs.attrs_);
+    return (ker_kind_ == rhs.ker_kind_) && (ker_prop_ == rhs.ker_prop_) && (eng_kind_ == rhs.eng_kind_) &&
+           (impl_nthr_ == rhs.impl_nthr_) && (ts_descs_ == rhs.ts_descs_) && (attrs_ == rhs.attrs_);
   }
 
  public:

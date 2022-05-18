@@ -15,13 +15,13 @@
 #ifndef ENGINE_SPARSELIB_INCLUDE_CPU_ENGINE_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_CPU_ENGINE_HPP_
 #include <vector>
+
 #include "engine.hpp"
-#include "param_types.hpp"
 #include "impl_list_item.hpp"
+#include "param_types.hpp"
 
 namespace jd {
-#define CPU_INSTANCE(...) \
-  impl_list_item_t(type_deduction_helper_t<__VA_ARGS__::kd_t>())
+#define CPU_INSTANCE(...) impl_list_item_t(type_deduction_helper_t<__VA_ARGS__::kd_t>())
 #define NULL_INSTANCE(...) impl_list_item_t(nullptr)
 
 class cpu_engine : public engine {

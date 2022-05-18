@@ -14,8 +14,9 @@
 
 #ifndef ENGINE_SPARSELIB_INCLUDE_KERNEL_HPP_
 #define ENGINE_SPARSELIB_INCLUDE_KERNEL_HPP_
-#include <vector>
 #include <memory>
+#include <vector>
+
 #include "kernel_desc.hpp"
 
 namespace jd {
@@ -31,7 +32,7 @@ class kernel_t {
   // Self-created API, provided for external users to call.
   template <typename derived_k_t, typename derived_kd_t>
   static bool create(std::shared_ptr<const kernel_t>& k_ref,  // NOLINT
-      const std::shared_ptr<const kernel_desc_t>& kd) {
+                     const std::shared_ptr<const kernel_desc_t>& kd) {
     const auto& derived_kd_temp = std::dynamic_pointer_cast<const derived_kd_t>(kd);
     std::shared_ptr<derived_k_t> prim = std::make_shared<derived_k_t>(derived_kd_temp);
     if (prim == nullptr) {
@@ -53,7 +54,8 @@ class kernel_t {
   const std::shared_ptr<const kernel_desc_t>& kd() const { return kd_; }
 
  protected:
-  // kernel_desc_t has no cache management. So use shared_ptr to cache and destruct automatically.
+  // kernel_desc_t has no cache management. So use shared_ptr to cache and
+  // destruct automatically.
   std::shared_ptr<const kernel_desc_t> kd_;
 };
 }  // namespace jd
