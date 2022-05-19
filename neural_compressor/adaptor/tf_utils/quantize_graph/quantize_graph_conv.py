@@ -50,7 +50,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'Conv2DAddRelu6': self.apply_newly_conv_biasadd_relu_fusion,
                 'Conv2DAddRelu': self.apply_newly_conv_biasadd_relu_fusion,
                 'Conv2DBiasAddAddRelu6MulMul': self.apply_conv_biasadd_hardswish_fusion,
+                'Conv2DBiasAddswish_f32': self.apply_newly_conv_biasadd_swishf32_fusion,
+                'Conv2DAddswish_f32': self.apply_newly_conv_biasadd_swishf32_fusion,
+                'Conv2DAddV2swish_f32': self.apply_newly_conv_biasadd_swishf32_fusion,
                 'DepthwiseConv2dNativeBiasAddAddRelu6MulMul': self.apply_conv_biasadd_hardswish_fusion,
+                'DepthwiseConv2dNativeBiasAddswish_f32': self.apply_newly_conv_biasadd_swishf32_fusion,
+                'DepthwiseConv2dNativeAddswish_f32': self.apply_newly_conv_biasadd_swishf32_fusion,
+                'DepthwiseConv2dNativeAddV2swish_f32': self.apply_newly_conv_biasadd_swishf32_fusion,
                 'DepthwiseConv2dNativeAddRelu6':
                 self.apply_newly_conv_biasadd_relu_fusion,
                 'DepthwiseConv2dNativeBiasAddRelu':
@@ -1096,6 +1102,88 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
+
+    def apply_newly_conv_biasadd_swishf32_fusion(self, match_node_name):
+        skip_node_name = match_node_name[1:]
+        matched_node = self.node_name_mapping[match_node_name[0]]
+        control_inputs, normal_inputs = self._get_node_input(
+            matched_node.node.name)
+        weight_name = normal_inputs[1]
+
+        q_weights_name, q_weights_min_name, q_weights_max_name = \
+            self._intel_cpu_quantize_weight_eightbit(
+                matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
+
+        all_input_names = self._add_eightbit_prologue_nodes(matched_node.node.name)
+        all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
+        all_input_names.append(q_weights_min_name)
+        all_input_names.append(q_weights_max_name)
+        skip_node_name.append(weight_name)
+
+        for _, node in enumerate(self.input_graph.node):
+            if node.name in skip_node_name:
+                self.logger.debug("skip node {}".format(node.name))
+            elif node.name == match_node_name[0]:
+                self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
+                quantized_node_name = node.name + "_eightbit_quantized_depthwise_conv"
+                if node.op == "Conv2D":
+                    quantized_node_name = node.name + "_eightbit_quantized_conv"
+
+                bias_node_name = self.node_name_mapping[match_node_name[1]].node.input[1]
+                swish_node_name = match_node_name[2]
+                quantized_node_input_names = all_input_names[:2] + \
+                    [bias_node_name] + all_input_names[2:] + control_inputs
+
+                node_op = '_QuantizedDepthwiseConv2D'
+                if node.op == 'Conv2D':
+                    node_op = "_QuantizedConv2D"
+                quantized_conv_node = helper.create_node(node_op, quantized_node_name,
+                    quantized_node_input_names)
+
+                helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
+                helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                if "alpha" in self.node_name_mapping[swish_node_name].node.attr:
+                    helper.copy_attr(quantized_conv_node, "alpha",
+                    self.node_name_mapping[swish_node_name].node.attr["alpha"])
+                if "padding_list" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "padding_list",
+                    node.attr["padding_list"])
+                helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
+                input_data_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
+                helper.set_attr_dtype(quantized_conv_node, "Tinput", input_data_type)
+                helper.set_attr_dtype(quantized_conv_node, "Tfilter",dtypes.qint8)
+                helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
+                helper.set_attr_dtype(quantized_conv_node, "out_type", dtypes.qint32)
+                helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32
+                                                if self.device == 'gpu' else dtypes.qint32)
+                fused_ops = [b'BiasAdd', b'_FusedSwish']
+                helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
+                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                    input_data_type.as_datatype_enum,
+                    dtypes.qint8.as_datatype_enum,
+                    dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
+                    dtypes.float32.as_datatype_enum,
+                    dtypes.float32.as_datatype_enum,
+                    dtypes.float32.as_datatype_enum,
+                    dtypes.float32.as_datatype_enum,
+                 ])
+                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                                          dtypes.qint32.as_datatype_enum,
+                                          dtypes.float32.as_datatype_enum,
+                                          dtypes.float32.as_datatype_enum, ])
+                self.add_output_graph_node(quantized_conv_node)
+                quantize_down_name = self._add_quantize_down_nodes(
+                    node, quantized_node_name, dtypes.qint8, False)
+                self._intel_cpu_add_dequantize_result_node(
+                    quantize_down_name, swish_node_name, dtype=dtypes.qint8)
+
+
+            else:
+                new_node = node_def_pb2.NodeDef()
+                new_node.CopyFrom(node)
+                self.add_output_graph_node(new_node)
+
+
 
     def get_longest_fuse(self):
         self._get_op_list()

@@ -35,7 +35,7 @@ class FuseBiasAddAndAddOptimizer(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
 
         target_nodes = cur_graph.query_fusion_pattern_nodes(
-            [["Conv2D", "Conv3D"], "BiasAdd", ["Add", "AddV2"], ["Relu", "Relu6"], ["Mul"], ["Mul"]])
+            [["Conv2D", "Conv3D"], "BiasAdd", ["Add", "AddV2"], ["Relu", "Relu6", "swish_f32"], ["Mul"], ["Mul"]])
 
         for i in target_nodes:
             biasadd_const_name = graph_info[i[1]].node.input[1]
