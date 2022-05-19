@@ -410,3 +410,5 @@ class Graph_Optimization():
 
     def __repr__(self):
         return 'GraphOptimization'
+
+GraphOptimization = Graph_Optimization

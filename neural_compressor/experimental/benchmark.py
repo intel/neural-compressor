@@ -23,7 +23,7 @@ import signal
 import psutil
 from ..adaptor import FRAMEWORKS
 from ..objective import MultiObjective
-from ..conf.config import Benchmark_Conf
+from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils import OPTIONS
@@ -72,7 +72,7 @@ class Benchmark(object):
 
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+            BenchmarkConf class containing accuracy goal, tuning objective and preferred
             calibration & quantization tuning space etc.
 
     """
@@ -83,10 +83,10 @@ class Benchmark(object):
         self._b_dataloader = None
         self._metric = None
         self._results = {}
-        if isinstance(conf_fname_or_obj, Benchmark_Conf):
+        if isinstance(conf_fname_or_obj, BenchmarkConf):
             self.conf = conf_fname_or_obj
         else:
-            self.conf = Benchmark_Conf(conf_fname_or_obj)
+            self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
             set_backend(self.framework)

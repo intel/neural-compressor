@@ -94,12 +94,12 @@ distiller.student_model = student_model
 distiller.teacher_model = teacher_model
 model = distiller.fit()
 ```
-Distillation class also support Distillation_Conf class as it's argument.
+Distillation class also support DistillationConf class as it's argument.
 
 ```python
 from lpot.experimental import Distillation, common
-from lpot.conf.config import Distillation_Conf
-conf = Distillation_Conf('/path/to/user/yaml')
+from lpot.conf.config import DistillationConf
+conf = DistillationConf('/path/to/user/yaml')
 distiller = Distillation(conf)
 distiller.student_model = student_model
 distiller.teacher_model = teacher_model

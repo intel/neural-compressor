@@ -46,7 +46,7 @@ args = arg_parser.parse_args()
 from neural_compressor.data import DATASETS
 dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 from neural_compressor.experimental import Benchmark, common
-from neural_compressor.conf.config import Benchmark_Conf
+from neural_compressor.conf.config import BenchmarkConf
 benchmarker = Benchmark('fake_yaml.yaml')
 benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
 benchmarker.model = args.input_model
@@ -61,8 +61,8 @@ args = arg_parser.parse_args()
 from neural_compressor.data import DATASETS
 dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 from neural_compressor.experimental import Benchmark, common
-from neural_compressor.conf.config import Benchmark_Conf
-conf = Benchmark_Conf('fake_yaml.yaml')
+from neural_compressor.conf.config import BenchmarkConf
+conf = BenchmarkConf('fake_yaml.yaml')
 benchmarker = Benchmark(conf)
 benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
 benchmarker.model = args.input_model

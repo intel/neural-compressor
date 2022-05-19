@@ -19,9 +19,9 @@ from .component import Component
 from .quantization import Quantization
 from .pruning import Pruning
 from .benchmark import Benchmark
-from .graph_optimization import Graph_Optimization
+from .graph_optimization import Graph_Optimization, GraphOptimization
 from .model_conversion import ModelConversion
 from .distillation import Distillation
 
 __all__ = ['Component', 'Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization', \
-           'ModelConversion', 'Distillation']
+           'GraphOptimization', 'ModelConversion', 'Distillation']

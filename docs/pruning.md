@@ -69,12 +69,12 @@ prune.model = model
 model = prune.fit()
 ```
 
-Pruning class also support Pruning_Conf class as it's argument.
+Pruning class also support PruningConf class as it's argument.
 
 ```
 from lpot.experimental import Pruning, common
-from lpot.conf.config import Pruning_Conf
-conf = Pruning_Conf('/path/to/user/pruning/yaml')
+from lpot.conf.config import PruningConf
+conf = PruningConf('/path/to/user/pruning/yaml')
 prune = Pruning(conf)
 prune.model = model
 model = prune.fit()

@@ -95,8 +95,8 @@ class TestPruning(unittest.TestCase):
     def test_pruning_external(self):
         from neural_compressor.experimental import common
         from neural_compressor import Pruning
-        from neural_compressor.conf.config import Pruning_Conf
-        conf = Pruning_Conf()
+        from neural_compressor.conf.config import PruningConf
+        conf = PruningConf()
 
         from neural_compressor import conf
         from neural_compressor.conf.config import Pruner

@@ -207,10 +207,10 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from neural_compressor.experimental import Graph_Optimization, common
-            from neural_compressor.conf.config import Graph_Optimization_Conf
-            conf = Graph_Optimization_Conf('fake_yaml.yaml')
-            graph_optimizer = Graph_Optimization(conf)
+            from neural_compressor.experimental import GraphOptimization, common
+            from neural_compressor.conf.config import GraphOptConf
+            conf = GraphOptConf('fake_yaml.yaml')
+            graph_optimizer = GraphOptimization(conf)
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def
@@ -338,8 +338,8 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from neural_compressor.experimental import Graph_Optimization, common
-            graph_optimizer = Graph_Optimization('fake_yaml.yaml')
+            from neural_compressor.experimental import GraphOptimization, common
+            graph_optimizer = GraphOptimization('fake_yaml.yaml')
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
             graph_optimizer.model = output_graph_def

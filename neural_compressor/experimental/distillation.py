@@ -23,24 +23,24 @@ from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 from neural_compressor.experimental.common import Criterions, Optimizers
-from ..conf.config import Distillation_Conf
+from ..conf.config import DistillationConf
 
 class Distillation(Component):
     """
 
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            Distillation_Conf containing accuracy goal, distillation objective and related
+            DistillationConf containing accuracy goal, distillation objective and related
             dataloaders etc.
 
     """
 
     def __init__(self, conf_fname_or_obj=None):
         super(Distillation, self).__init__()
-        if isinstance(conf_fname_or_obj, Distillation_Conf):
+        if isinstance(conf_fname_or_obj, DistillationConf):
             self.conf = conf_fname_or_obj
         else:
-            self.conf = Distillation_Conf(conf_fname_or_obj)
+            self.conf = DistillationConf(conf_fname_or_obj)
         self._init_with_conf()
 
         self._teacher_model = None

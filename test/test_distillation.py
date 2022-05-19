@@ -165,8 +165,8 @@ class TestDistillation(unittest.TestCase):
 
     def test_distillation(self):
         from neural_compressor.experimental import Distillation, common
-        from neural_compressor.conf.config import Distillation_Conf
-        conf = Distillation_Conf('fake.yaml')
+        from neural_compressor.conf.config import DistillationConf
+        conf = DistillationConf('fake.yaml')
         distiller = Distillation(conf)
         distiller = Distillation()
 
@@ -191,8 +191,8 @@ class TestDistillation(unittest.TestCase):
 
     def test_distillation_intermediate_layers(self):
         from neural_compressor.experimental import Distillation, common
-        from neural_compressor.conf.config import Distillation_Conf
-        conf = Distillation_Conf('fake_2.yaml')
+        from neural_compressor.conf.config import DistillationConf
+        conf = DistillationConf('fake_2.yaml')
         conf.usr_cfg.distillation.train.criterion.\
             IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][-1] = \
                 lambda x: x[:, :2,...]
@@ -263,8 +263,8 @@ class TestDistillation(unittest.TestCase):
     @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras requires higher version than tf-2.3.0")
     def test_tf_distillation(self):
         from neural_compressor.experimental import Distillation, common
-        from neural_compressor.conf.config import Distillation_Conf
-        conf = Distillation_Conf('fake_1.yaml')
+        from neural_compressor.conf.config import DistillationConf
+        conf = DistillationConf('fake_1.yaml')
         distiller = Distillation(conf)
         distiller = Distillation('fake_1.yaml')
         distiller.student_model = self.student_model_tf

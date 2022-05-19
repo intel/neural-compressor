@@ -62,12 +62,12 @@ evaluator.metric = common.Metric(metric_cls)
 results = evaluator()
 
 ```
-Benchmark class also support Benchmark_Conf class as it's argument:
+Benchmark class also support BenchmarkConf class as it's argument:
 ```python
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
 from lpot.experimental import Benchmark, common
-from lpot.conf.config import Benchmark_Conf
-conf = Benchmark_Conf(config.yaml)
+from lpot.conf.config import BenchmarkConf
+conf = BenchmarkConf(config.yaml)
 evaluator = Benchmark(conf)
 evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
 # user can also register postprocess and metric, this is optional

@@ -10,7 +10,7 @@ from neural_compressor.model import MODELS
 from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental import Quantization, common
-from neural_compressor.conf.config import Quantization_Conf
+from neural_compressor.conf.config import QuantConf
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils.utility import recover
 import shutil
@@ -585,7 +585,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             model = copy.deepcopy(self.model)
             if fake_yaml == 'ptq_yaml.yaml':
                 model.eval().fuse_model()
-            conf = Quantization_Conf(fake_yaml)
+            conf = QuantConf(fake_yaml)
             quantizer = Quantization(conf)
             dataset = quantizer.dataset('dummy', (100, 3, 224, 224))
             quantizer.model = model
@@ -625,7 +625,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     def test_non_quant_module(self):
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             model = PartialQuantModel()
-            conf = Quantization_Conf(fake_yaml)
+            conf = QuantConf(fake_yaml)
             quantizer = Quantization(conf)
             dataset = quantizer.dataset('dummy', (1, 3, 224, 224))
             non_quant_dict = {'non_quant_module_name': ['conv', 'conv1', 'sub.conv'], \

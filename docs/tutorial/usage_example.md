@@ -36,14 +36,14 @@ quantizer.model = "./mobilenet_v1_1.0_224_frozen.pb"
 quantized_model = quantizer.fit()
 ```
 
-2. Basic + Quantization_Conf + built-in dataloader, dataset and metric 
+2. Basic + QuantConf + built-in dataloader, dataset and metric 
  
-Quantization also support Quantization_Conf class as it's argument:
+Quantization also support QuantConf class as it's argument:
 ```python
 # main.py
 from lpot.experimental import Quantization, common
-from lpot.conf.config import Quantization_Conf
-conf = Quantization_Conf('./conf.yaml')
+from lpot.conf.config import QuantConf
+conf = QuantConf('./conf.yaml')
 quantizer = Quantization(conf)
 quantizer.model = "./mobilenet_v1_1.0_224_frozen.pb"
 quantized_model = quantizer.fit()

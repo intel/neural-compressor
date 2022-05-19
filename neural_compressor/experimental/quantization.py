@@ -28,7 +28,7 @@ from ..utils.create_obj_from_config import create_dataloader
 from ..adaptor import FRAMEWORKS
 from .common import Model as NCModel
 from ..model import BaseModel
-from ..conf.config import Quantization_Conf
+from ..conf.config import QuantConf
 from ..utils.utility import set_backend
 
 class Quantization(Component):
@@ -47,17 +47,17 @@ class Quantization(Component):
 
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            Quantization_Conf class containing accuracy goal, tuning objective and preferred
+            QuantConf class containing accuracy goal, tuning objective and preferred
             calibration & quantization tuning space etc.
 
     """
 
     def __init__(self, conf_fname_or_obj=None):
         super(Quantization, self).__init__()
-        if isinstance(conf_fname_or_obj, Quantization_Conf):
+        if isinstance(conf_fname_or_obj, QuantConf):
             self.conf = conf_fname_or_obj
         else:
-            self.conf = Quantization_Conf(conf_fname_or_obj)
+            self.conf = QuantConf(conf_fname_or_obj)
         self._init_with_conf()
 
         seed = self.cfg.tuning.random_seed

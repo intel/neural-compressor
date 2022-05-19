@@ -23,7 +23,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_train_func,
 from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
-from ..conf.config import Pruning_Conf
+from ..conf.config import PruningConf
 
 class Pruning(Component):
     """This is base class of pruning object.
@@ -35,17 +35,17 @@ class Pruning(Component):
 
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            Pruning_Conf class containing accuracy goal, pruning objective and related
+            PruningConf class containing accuracy goal, pruning objective and related
             dataloaders etc.
 
     """
 
     def __init__(self, conf_fname_or_obj=None):
         super(Pruning, self).__init__()
-        if isinstance(conf_fname_or_obj, Pruning_Conf):
+        if isinstance(conf_fname_or_obj, PruningConf):
             self.conf = conf_fname_or_obj
         else:
-            self.conf = Pruning_Conf(conf_fname_or_obj)
+            self.conf = PruningConf(conf_fname_or_obj)
         self._init_with_conf()
 
         self._pruning_func = None

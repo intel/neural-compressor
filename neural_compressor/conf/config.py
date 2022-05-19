@@ -1456,3 +1456,9 @@ class DefaultConf(DotDict):
     __getattr__ = __getitem__
 
 conf = DefaultConf({})
+
+QuantConf = Quantization_Conf
+PruningConf = Pruning_Conf
+GraphOptConf = Graph_Optimization_Conf
+BenchmarkConf = Benchmark_Conf
+DistillationConf = Distillation_Conf
