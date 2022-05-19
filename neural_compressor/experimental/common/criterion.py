@@ -279,13 +279,18 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         targets_prob = torch.nn.functional.softmax(targets, dim=-1)
         return torch.nn.functional.kl_div(log_prob, targets_prob)
 
-    def teacher_model_forward(self, input, teacher_model=None, device='cpu'):
+    def teacher_model_forward(self, input, teacher_model=None, device=None):
         if self.loss_weights[1] > 0:
             model = self.teacher_model if teacher_model is None else teacher_model
             assert isinstance(model, torch.nn.Module), \
                 'Teacher model should be a torch Module instead of {}'.format(type(model))
             model.eval()
-            model_device = next(model.parameters()).device
+            try:
+                model_device = next(model.parameters()).device
+            except:
+                logger.warning("Cannot get model device, assuming it's in CPU.")
+                model_device = "cpu"
+            device = model_device if device is None else device
             if device != model_device:
                 model.to(device)
             with torch.no_grad():
@@ -643,14 +648,21 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             return lambda x:x
         return pytorch_linear_feature_matcher(student_feature.shape, teacher_feature.shape)
 
-    def teacher_model_forward(self, input, teacher_model=None, device='cpu'):
+    def teacher_model_forward(self, input, teacher_model=None, device=None):
         model = self.teacher_model if teacher_model is None else teacher_model
         assert isinstance(model, torch.nn.Module), \
             'Teacher model should be a torch Module instead of {}'.format(type(model))
         model.eval()
-        model_device = next(model.parameters()).device
+        try:
+            model_device = next(model.parameters()).device
+        except:
+            logger.warning("Cannot get model device, assuming it's in CPU.")
+            model_device = "cpu"
+        device = model_device if device is None else device
+        if device != model_device:
+            model.to(device)
         with torch.no_grad():
-            return pytorch_forward_wrapper(model, input, device=model_device)
+            return pytorch_forward_wrapper(model, input, device=device)
 
     def loss_cal(self):
         self.loss = 0

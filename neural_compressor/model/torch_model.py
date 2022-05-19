@@ -159,7 +159,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         state_dict = self._model.state_dict()
         for name in state_dict:
             if name == tensor_name:
-                state_dict[name].masked_fill_(mask, 0.)
+                state_dict[name].masked_fill_(mask.to(state_dict[name].device), 0.)
 
     def get_inputs(self, input_name=None):
         """Get inputs of model

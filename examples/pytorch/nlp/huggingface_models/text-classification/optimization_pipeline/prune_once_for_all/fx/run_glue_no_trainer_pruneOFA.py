@@ -43,8 +43,6 @@ from transformers import (
     set_seed,
 )
 
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
 logger = logging.getLogger(__name__)
 
 task_to_keys = {
@@ -186,6 +184,18 @@ def parse_args():
 
     return args
 
+def move_input_to_device(input, device):
+    if isinstance(input, torch.Tensor):
+        return input if input.device == device else input.to(device)
+    elif isinstance(input, tuple):
+        return tuple([move_input_to_device(ele, device) for ele in input])
+    elif isinstance(input, list):
+        return [move_input_to_device(ele, device) for ele in input]
+    elif isinstance(input, dict):
+        return {key:move_input_to_device(input[key], device) for key in input}
+    else:
+        assert False, "only support input type of torch.Tensor, tuple, list and dict."
+
 def gather_results(predictions, gt):
     if rank != -1:
         pred_list = [predictions.clone() for _ in range(world)] if rank == 0 else []
@@ -201,7 +211,9 @@ def evaluation(model, eval_dataloader, metric):
     logger.info(f"  Num examples = {len(eval_dataloader) }")
     model.eval()
     eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
+    model_device = next(model.parameters()).device
     for step, batch in enumerate(eval_dataloader):
+        batch = move_input_to_device(batch, model_device)
         outputs = model(**batch)['logits']
         predictions = outputs.argmax(dim=-1)
         metric.add_batch(
@@ -229,11 +241,13 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
 
     agent.pre_epoch_begin()
     model = agent.model.model
+    model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
         agent.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
+            batch = move_input_to_device(batch, model_device)
             agent.on_batch_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
@@ -269,6 +283,8 @@ def main():
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
+
+    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
     # If passed along, set the training seed now.
     if args.seed is not None:
@@ -344,6 +360,7 @@ def main():
         except:
             raise TypeError('Provided {} is not a valid checkpoint file, '
                             'please provide .pt file'.format(args.resume))
+    model.to(device)
 
     # Preprocessing the datasets
     if args.task_name is not None:
@@ -435,6 +452,7 @@ def main():
             from_tf=bool(".ckpt" in args.teacher_model_name_or_path),
             config=teacher_config,
         )
+        teacher_model.to(device)
         para_counter = lambda model:sum(p.numel() for p in model.parameters())
         logger.info("***** Number of teacher model parameters: {:.2f}M *****".format(\
                     para_counter(teacher_model)/10**6))
@@ -457,8 +475,9 @@ def main():
                     train_dataloader = tqdm(train_dataloader, desc="Evaluating")
                     teacher_logits = []
                     for step, batch in enumerate(train_dataloader):
+                        batch = move_input_to_device(batch, device)
                         outputs = teacher_model(**batch)
-                        teacher_logits += [x for x in outputs['logits'].numpy()]
+                        teacher_logits += [x for x in outputs['logits'].cpu().detach().numpy()]
                     np.save(npy_file, np.array(teacher_logits))
                 return train_dataset.add_column('teacher_logits', teacher_logits)
             with torch.no_grad():
@@ -563,7 +582,9 @@ def main():
     if args.do_eval:
         eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
         model.eval()
+        model_device = next(model.parameters()).device
         for step, batch in enumerate(eval_dataloader):
+            batch = move_input_to_device(batch, model_device)
             outputs = model(**batch)
             predictions = outputs['logits'].argmax(dim=-1)
             metric.add_batch(
@@ -580,9 +601,10 @@ def main():
         eval_dataloader = DataLoader(
             eval_dataset, collate_fn=data_collator, batch_size=args.batch_size, drop_last=True
         )
-
         model.eval()
+        model_device = next(model.parameters()).device
         for step, batch in enumerate(eval_dataloader):
+            batch = move_input_to_device(batch, model_device)
             outputs = model(**batch)
             predictions = outputs['logits'].argmax(dim=-1)
             pred, gt = gather_results(predictions, batch["labels"])

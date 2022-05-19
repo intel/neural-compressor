@@ -51,8 +51,6 @@ from transformers import (
 # from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
 
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 # check_min_version("4.8.0.dev0")
 # require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/question-answering/requirements.txt")
@@ -285,6 +283,18 @@ def parse_args():
 
     return args
 
+def move_input_to_device(input, device):
+    if isinstance(input, torch.Tensor):
+        return input if input.device == device else input.to(device)
+    elif isinstance(input, tuple):
+        return tuple([move_input_to_device(ele, device) for ele in input])
+    elif isinstance(input, list):
+        return [move_input_to_device(ele, device) for ele in input]
+    elif isinstance(input, dict):
+        return {key:move_input_to_device(input[key], device) for key in input}
+    else:
+        assert False, "only support input type of torch.Tensor, tuple, list and dict."
+
 def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
           agent, accelerator, eval_dataloader, metric):
     # Train!
@@ -317,7 +327,7 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
             outputs = model(**batch)
             outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
-            labels = torch.hstack([torch.tensor([sx, ex]) \
+            labels = torch.hstack([torch.tensor([sx, ex]).to(outputs_for_kd.device) \
                 for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
             if criterion is None:
                 loss = outputs['loss']
@@ -413,13 +423,14 @@ def evaluation(args, model, accelerator, eval_dataloader, metric):
 
     all_start_logits = []
     all_end_logits = []
+    model_device = next(model.parameters()).device
     for step, batch in enumerate(tqdm(eval_dataloader)):
         with torch.no_grad():
             # due to fx model must take 'start_positions' and 'end_positions' as input
             fake_input = torch.zeros(batch['input_ids'].shape[0], dtype=torch.int64)
             batch['start_positions'] = fake_input
             batch['end_positions'] = fake_input
-
+            batch = move_input_to_device(batch, model_device)
             outputs = model(**batch)
             if torch.is_tensor(outputs):
                 start_logits = torch.vstack([x for x in outputs[0::2]])
@@ -805,6 +816,7 @@ def main():
                 return outputs_reshaped
         
         teacher_model = QAModel_output_reshaped(teacher_model)
+        teacher_model = accelerator.prepare(teacher_model)
         para_counter = lambda model:sum(p.numel() for p in model.parameters())
         logger.info("***** Number of teacher model parameters: {:.2f}M *****".format(\
                     para_counter(teacher_model)/10**6))
@@ -824,10 +836,11 @@ def main():
                     teacher_logits = [list(x) for x in np.load(npy_file, allow_pickle=True)]
                 else:
                     train_dataloader = DataLoader(train_dataset, collate_fn=data_collator, batch_size=args.batch_size)
+                    train_dataloader = accelerator.prepare(train_dataloader)
                     train_dataloader = tqdm(train_dataloader, desc="Evaluating")
                     teacher_logits = []
                     for step, batch in enumerate(train_dataloader):
-                        outputs = teacher_model(**batch).numpy()
+                        outputs = teacher_model(**batch).cpu().detach().numpy()
                         teacher_logits += [[s,e] for s,e in zip(outputs[0::2], outputs[1::2])]
                     np.save(npy_file, teacher_logits, allow_pickle=True)
                 return train_dataset.add_column('teacher_logits', teacher_logits)
@@ -943,10 +956,6 @@ def main():
         model.save(args.output_dir)
         # change to framework model for further use
         model = model.model
-
-    if args.do_train:
-        train(args, model, train_dataloader, lr_scheduler, None, \
-              optimizer, None, accelerator, eval_dataloader, metric)
         
     # Prediction
     if args.do_predict:
@@ -956,13 +965,14 @@ def main():
 
         all_start_logits = []
         all_end_logits = []
+        model_device = next(model.parameters()).device
         for step, batch in enumerate(predict_dataloader):
             with torch.no_grad():
                 # due to fx model must take 'start_positions' and 'end_positions' as input
                 fake_input = torch.zeros(batch['input_ids'].shape[0], dtype=torch.int64)
                 batch['start_positions'] = fake_input
                 batch['end_positions'] = fake_input
-
+                batch = move_input_to_device(batch, model_device)
                 outputs = model(**batch)
                 start_logits = outputs['start_logits']
                 end_logits = outputs['end_logits']
