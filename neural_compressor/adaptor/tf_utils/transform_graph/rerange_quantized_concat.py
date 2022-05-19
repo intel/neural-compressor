@@ -41,12 +41,14 @@ class RerangeQuantizedConcat(GraphTransformBase):
         [b'BiasAdd', b'Requantize'],
         [b'BiasAdd', b'Relu', b'Requantize'],
         [b'BiasAdd', b'LeakyRelu', b'Requantize'],
-        [b'BiasAdd', b'Sum',  b'Relu',  b'Requantize']
+        [b'BiasAdd', b'Sum',  b'Relu',  b'Requantize'],
+        [b'BiasAdd', b'Elu', b'Requantize'],
     )
     fuse_requantized_relu_op_new_api =(
         [b'BiasAdd', b'Relu', b'Requantize'],
         [b'BiasAdd', b'LeakyRelu', b'Requantize'],
         #[b'BiasAdd', b'Sum',  b'Relu',  b'Requantize']
+        [b'BiasAdd', b'Elu', b'Requantize'],
     )
     offset_map = {
         "QuantizedConv2DAndRequantize": 6,
@@ -63,6 +65,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
         str([b'BiasAdd', b'Requantize']): 7,
         str([b'BiasAdd', b'Relu', b'Requantize']): 7,
         str([b'BiasAdd', b'LeakyRelu', b'Requantize']): 7,
+        str([b'BiasAdd', b'Elu', b'Requantize']): 7,
         str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']): 10
     }
    

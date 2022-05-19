@@ -151,7 +151,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             max_filter_node = self.graph_info[new_node.input[6]].node
             min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
-            if last_node.op.find('Requantize') != -1:
+            
+            if last_node.op.find('Requantize') != -1 or ((last_node.op.find('QuantizeV2') != -1 or \
+                                                            last_node.op.find('QuantizedConv2D') != -1) \
+                                                                and len(quantized_node.attr['fused_ops'].list.s) > 0):          
                 bias_node = self.graph_info[new_node.input[2]].node
                 max_input_node = self.graph_info[last_node.input[-1]].node
                 min_input_node = self.graph_info[last_node.input[-2]].node
@@ -177,6 +180,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 int32_bias = Helper.generate_int32_bias_for_conv(
                     bias_tensor, channel_size, max_input, min_input,
                     max_filter_tensor, min_filter_tensor, activation_range)
+
                 bias_node.attr['dtype'].CopyFrom(
                     attr_value_pb2.AttrValue(
                         type=float32_type if self.device == 'gpu' else qint32_type))
