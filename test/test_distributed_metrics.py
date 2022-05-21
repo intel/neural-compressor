@@ -221,7 +221,8 @@ class TestMetrics(unittest.TestCase):
             with open('anno_0.yaml', 'w', encoding = "utf-8") as f:
                 f.write(fake_dict)
         while True:
-            if os.path.exists('anno_0.yaml'):
+            file_exists = hvd.allgather_object(os.path.exists('anno_0.yaml'))
+            if file_exists == [True, True]:
                 break
         mAP = metrics['mAP']('anno_0.yaml')
         mAP.hvd = hvd
@@ -402,7 +403,8 @@ class TestMetrics(unittest.TestCase):
             with open('anno_1.yaml', 'w', encoding = "utf-8") as f:
                 f.write(fake_dict)
         while True:
-            if os.path.exists('anno_1.yaml'):
+            file_exists = hvd.allgather_object(os.path.exists('anno_1.yaml'))
+            if file_exists == [True, True]:
                 break
         mAP = metrics['VOCmAP']('anno_1.yaml')
         mAP.hvd = hvd
@@ -566,7 +568,8 @@ class TestMetrics(unittest.TestCase):
             with open('anno_2.yaml', 'w', encoding = "utf-8") as f:
                 f.write(fake_dict)
         while True:
-            if os.path.exists('anno_2.yaml'):
+            file_exists = hvd.allgather_object(os.path.exists('anno_2.yaml'))
+            if file_exists == [True, True]:
                 break
         mAP = metrics['COCOmAP']('anno_2.yaml')
         mAP.hvd = hvd
