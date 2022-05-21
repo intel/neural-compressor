@@ -25,6 +25,10 @@ from ..graph_util import GraphRewriterHelper as Helper
 
 
 class InjectDummyBiasAddOptimizer(GraphRewriterBase):
+    def __init__(self, model, outputs):
+        super().__init__(model)
+        self.outputs = outputs    
+
     @dump_elapsed_time("Pass InjectDummyBiasAddOptimizer")
     def do_transformation(self):
         g = GraphAnalyzer()
@@ -36,7 +40,10 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
             # only apply this pass for tensorflow release 2.8.0 and lower version for
             # old quantization API.
             # use conv+dummy_biasadd+relu because TF do not support conv+relu now. 
-            if tf.version.VERSION >= '2.9.0': continue
+            if tf.version.VERSION >= '2.9.0': 
+                continue
+            if i[0] in self.outputs:
+                continue            
             next_node_names = graph_info[i[0]].outputs
             if next_node_names and len(next_node_names) == 1 and \
                 graph_info[Helper.node_name_from_input(next_node_names[0])].node.op in valid_ops:
