@@ -1,4 +1,5 @@
 # Bert_Large Inference
+> Note: IPEX version >= 1.10
 
 ## Prepare
 

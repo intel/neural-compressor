@@ -1,4 +1,5 @@
 # SSD-ResNet34 Inference
+> Note: IPEX version >= 1.10
 
 ## Model Specific Setup
 - Install dependencies

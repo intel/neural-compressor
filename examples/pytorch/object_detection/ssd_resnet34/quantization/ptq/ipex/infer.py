@@ -236,28 +236,26 @@ def eval_ssd_r34_mlperf_coco(args):
 
         Profilling_iterator = 99
         start = time.time()
-        fullpath = None
-        use_int8 = False
+
         if (args.accuracy_mode and args.int8) or (args.benchmark and arg.int8):
             for path, dirs, files in os.walk(args.tuned_checkpoint):
                 if 'best_configure.json' in files:
-                    fullpath = os.path.join(path, 'best_configure.json')
-                    use_int8 = True
+                    args.int8_configure = os.path.join(path, 'best_configure.json')
                     break
+
         if args.tune:
-            for path, dirs, files in os.walk('nc_workspace'):
-                if 'ipex_config_tmp.json' in files:
-                    fullpath = os.path.join(path, 'ipex_config_tmp.json')
-                    use_int8 = True
-                    break
+            args.int8 = False if model.ipex_config_path is None else True
+            args.int8_configure = "" \
+                if model.ipex_config_path is None else model.ipex_config_path
+            model = model.model
         
-        if use_int8:
+        if args.int8:
             model = model.eval()
             print('int8 conv_bn_fusion enabled')
             model.model = optimization.fuse(model.model)
             print("INT8 LLGA start trace")
             # insert quant/dequant based on configure.json
-            conf = ipex.quantization.QuantConf(configure_file=fullpath)
+            conf = ipex.quantization.QuantConf(configure_file = args.int8_configure)
             model = ipex.quantization.convert(model, conf, torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last))
             print("done ipex default recipe.......................")
             # freeze the module
@@ -641,8 +639,6 @@ def eval_ssd_r34_mlperf_coco(args):
             return False
 
     if args.tune:
-         import shutil
-         shutil.rmtree('nc_workspace', ignore_errors=True)
          from neural_compressor.experimental import Quantization, common
          quantizer = Quantization("./conf.yaml")
          quantizer.model = common.Model(ssd_r34)

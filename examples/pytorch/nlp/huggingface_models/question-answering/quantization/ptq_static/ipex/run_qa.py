@@ -779,27 +779,27 @@ def main():
 
             #if args.tune:
             def eval_func(model):
-                use_int8 = False
+                model.eval()
                 dumpy_tensor = torch.ones((args.eval_batch_size, 384), dtype=torch.long)
                 jit_inputs = (dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                for path, dirs, files in os.walk('nc_workspace'):
-                    if 'ipex_config_tmp.json' in files:
-                        fullpath = os.path.join(path, 'ipex_config_tmp.json')
-                        use_int8 = True
-                        break
-                if use_int8:
-                    conf = ipex.quantization.QuantConf(configure_file=fullpath)
-                    # convert model to trace model.
-                    if args.int8_fp32:
-                        model = ipex.quantization.convert(model, conf, jit_inputs)
-                        with torch.no_grad():
-                            y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                            y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                    elif args.use_jit:
-                        with torch.no_grad():
-                            model = torch.jit.trace(model, jit_inputs, strict=False)
-                            #model = torch.jit._recursive.wrap_cpp_module(torch._C._freeze_module(model._c, preserveParameters=True))
-                            model = torch.jit.freeze(model)
+                if args.tune:
+                    args.int8 = False if model.ipex_config_path is None else True
+                    args.int8_configure = "" \
+                        if model.ipex_config_path is None else model.ipex_config_path
+                    model = model.model
+                    if args.int8:
+                        conf = ipex.quantization.QuantConf(configure_file=args.int8_configure)
+                        # convert model to trace model.
+                        if args.int8_fp32:
+                            model = ipex.quantization.convert(model, conf, jit_inputs)
+                            with torch.no_grad():
+                                y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
+                                y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
+                        elif args.use_jit:
+                            with torch.no_grad():
+                                model = torch.jit.trace(model, jit_inputs, strict=False)
+                                #model = torch.jit._recursive.wrap_cpp_module(torch._C._freeze_module(model._c, preserveParameters=True))
+                                model = torch.jit.freeze(model)
 
                 all_results = []
                 start_time = timeit.default_timer()
@@ -918,8 +918,6 @@ def main():
 
             if args.tune:
                 from neural_compressor.experimental import Quantization, common
-                import shutil
-                shutil.rmtree('nc_workspace', ignore_errors=True)
                 quantizer = Quantization('conf.yaml')
                 quantizer.eval_func = eval_func
                 quantizer.calib_dataloader = calib_dataloader
@@ -929,7 +927,6 @@ def main():
                 return
             
             if args.benchmark or args.accuracy_only:
-                use_int8 = False
                 dumpy_tensor = torch.ones((args.eval_batch_size, 384), dtype=torch.long)
                 jit_inputs = (dumpy_tensor, dumpy_tensor, dumpy_tensor)
                 if args.int8:
