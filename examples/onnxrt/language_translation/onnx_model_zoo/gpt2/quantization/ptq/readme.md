@@ -23,7 +23,7 @@ To evaluate the model, run `gpt2.py` with the path to the model:
 
 ```bash
 bash run_tuning.sh --topology=gpt2_lm_wikitext2 \ 
-                   --dataset_location=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
+                   --data_path=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```

@@ -91,7 +91,7 @@ class TextDataset(Dataset):
 
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
-    dataset = TextDataset(tokenizer, args, file_path=args.eval_data_file, block_size=args.block_size)
+    dataset = TextDataset(tokenizer, args, file_path=args.data_path, block_size=args.block_size)
     return dataset
 
 def evaluate(args, model, tokenizer, prefix=""):
@@ -181,7 +181,7 @@ def main():
     ## Required parameters
     parser.add_argument('--model_path', type=str,  required=True, 
                         help='Pre-trained bert model onnx file.')
-    parser.add_argument("--eval_data_file", type=str, required=True,
+    parser.add_argument("--data_path", type=str, required=True,
                         help="Input evaluation data file to evaluate the perplexity on (a text file).")
 
     ## Other parameters

@@ -21,9 +21,10 @@ import onnx
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
                                                  attribute_to_kwarg
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
 
-class QPad(QuantOperatorBase):
+class QDQPad(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
@@ -33,11 +34,29 @@ class QPad(QuantOperatorBase):
 
         # Only after version 11, it has the optional constant_value
         # If input[0] is not quantized, do not quanitize this node
-        if (self.quantizer.opset_version < 11) or (node.input[0] not \
-                                               in self.quantizer.quantized_value_map):
-            super().quantize()
+        if self.quantizer.opset_version < 11:
             return
-        quantized_input_value = self.quantizer.quantized_value_map[node.input[0]]
+        self.quantizer.quantize_inputs(node, [0])
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdqops':
+            self.quantizer.quantize_outputs(node)
+
+class QPad(QuantOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def convert(self):
+        node = self.node
+        assert (node.op_type == "Pad")
+
+        # Only after version 11, it has the optional constant_value
+        # If input[0] is not quantized, do not quanitize this node
+        if self.quantizer.opset_version < 11:
+            return
+
+        if len(self.quantizer.model.get_children(node)) == 0:
+            return
+        parent = self.quantizer.model.get_parents(node)[0]
+        child = self.quantizer.model.get_children(node)[0]
 
         kwargs = {}
         for attribute in node.attribute:
@@ -46,12 +65,9 @@ class QPad(QuantOperatorBase):
 
         if 'mode' not in kwargs or kwargs['mode'] == b'constant':
             if len(node.input) > 2:  # There is 3rd input 'constant_value'
-                zp_tensor = self.quantizer.model.get_initializer(quantized_input_value.zp_name)
+                zp_tensor = self.quantizer.model.get_initializer(parent.input[2])
                 scale_tensor = \
-                            self.quantizer.model.get_initializer(quantized_input_value.scale_name)
-                # if zp_tensor is None or scale_tensor is None:
-                #     super().quantize()
-                #     return
+                            self.quantizer.model.get_initializer(parent.input[1])
 
                 padding_constant_initializer = self.quantizer.model.get_initializer(node.input[2])
                 if padding_constant_initializer is not None:
@@ -72,25 +88,18 @@ class QPad(QuantOperatorBase):
                     self.quantizer.model.add_initializer(quantized_padding_constant_initializer)
                     node.input[2] = quantized_padding_constant_name
                 else:
-                    pad_value_qnodes = self.quantizer._get_quantize_input_nodes(node, 2, 
-                                             self.activation_dtype, self.activation_scheme)
-                    self.quantizer.new_nodes += pad_value_qnodes
-                    node.input[2] = pad_value_qnodes[0].output[0]
+                    self.quantizer.quantize_inputs(node, [2], False)
+                    node.input[2] = node.input[2] + '_DequantizeLinear'
             else:
                 # pad zero_point for original zero
-                node.input.extend([quantized_input_value.zp_name])
+                node.input.extend([parent.input[2]])
 
         # Create an entry for output quantized value
-        quantized_output_value = QuantizedValue(node.output[0], node.output[0] + "_quantized",
-                                                quantized_input_value.scale_name, 
-                                                quantized_input_value.zp_name,
-                                                QuantizedValueType.Input)
-        self.quantizer.quantized_value_map[node.output[0]] = quantized_output_value
 
         node.name = node.name + "_quant" if node.name != "" else ""
-        node.input[0] = quantized_input_value.q_name
-        node.output[0] = quantized_output_value.q_name
-        self.quantizer.new_nodes += [node]
+        node.input[0] = parent.input[0]
+        node.output[0] = child.output[0]
+        self.quantizer.remove_nodes.extend([parent, child])
 
 def quantize_nparray(qtype, arr, scale, zero_point, low=None, high=None):
     dtype = numpy.uint8 if qtype == "uint8" else numpy.int8

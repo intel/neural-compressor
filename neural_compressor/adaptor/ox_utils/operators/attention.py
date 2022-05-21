@@ -18,6 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain
 from onnx import onnx_pb as onnx_proto
 '''
@@ -29,7 +30,7 @@ class AttentionQuant(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
-    def quantize(self):
+    def convert(self):
         '''
             parameter node: Attention node.
             parameter new_nodes_list: List of new nodes created before processing this node.
@@ -38,18 +39,30 @@ class AttentionQuant(QuantOperatorBase):
         node = self.node
         assert (node.op_type == "Attention")
 
-        (quantized_input_names, zero_point_names, scale_names, nodes) = \
-                                self.quantizer.quantize_inputs(node, [0, 1])
+        parents = self.quantizer.model.get_parents(node)
+        quantized_name = []
+        scale = []
+        zp = []
+        for parent in parents[:2]:
+            if parent.op_type == 'DequantizeLinear':
+                quantized_name.append(parent.input[0])
+                scale.append(parent.input[1])
+                zp.append(parent.input[2])
+                self.quantizer.remove_nodes.append(parent)
+            elif parent.op_type == 'DynamicQuantizeLinear':
+                quantized_name.append(parent.output[0])
+                scale.append(parent.output[1])
+                zp.append(parent.output[2])
+ 
+        inputs = []
+        inputs.extend(quantized_name)
+        inputs.append(node.input[2])
+        inputs.extend(scale)
+        inputs.append(node.input[3] if len(node.input) > 3 else "")
+        inputs.extend(zp)
+        inputs.extend([node.input[4] if len(node.input) > 4 else ""])
 
         qattention_name = "" if node.name == "" else node.name + "_quant"
-
-        inputs = []
-        inputs.extend(quantized_input_names)
-        inputs.extend([node.input[2]])
-        inputs.extend(scale_names)
-        inputs.extend([node.input[3] if len(node.input) > 3 else ""])
-        inputs.extend(zero_point_names)
-        inputs.extend([node.input[4] if len(node.input) > 4 else ""])
 
         kwargs = {}
         for attribute in node.attribute:
@@ -57,6 +70,20 @@ class AttentionQuant(QuantOperatorBase):
         kwargs["domain"] = ms_domain
         qattention_node = onnx.helper.make_node("QAttention", inputs, node.output, 
                                                  qattention_name, **kwargs)
-        nodes.append(qattention_node)
+        self.quantizer.new_nodes.append(qattention_node)
 
-        self.quantizer.new_nodes += nodes
+        self.quantizer.remove_nodes.append(node)
+
+class QDQAttention(QDQOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        node = self.node
+        assert (node.op_type == "Attention")
+
+        if self.quantizer.static:
+            super().quantize()
+        else:
+            self.quantizer.quantize_inputs(node, [0, 1])
+

@@ -25,28 +25,14 @@ class QGlobalAveragePool(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
-    def quantize(self):
+    def convert(self):
         node = self.node
         assert (node.op_type == "GlobalAveragePool")
 
-        # If input to this node is not quantized then keep this node.
-        if node.input[0] not in self.quantizer.quantized_value_map:
-            return super().quantize()
-        quantized_input_value = self.quantizer.quantized_value_map[node.input[0]]
-
-        # Create an entry for output quantized value.
-        quantized_input_value = self.quantizer.quantized_value_map[node.input[0]]
-        data_found, output_scale_name_from_parameter, output_zp_name_from_parameter, _, _ = \
-            self.quantizer._get_quantization_params(node.output[0])
-        # Just use input scale and zp if parameters for output is not specified.
-        output_scale_name = output_scale_name_from_parameter if data_found else \
-                                                             quantized_input_value.scale_name
-        output_zp_name = output_zp_name_from_parameter if data_found else \
-                                                       quantized_input_value.zp_name
-        quantized_output_value = QuantizedValue(
-            node.output[0], node.output[0] + "_quantized",
-            output_scale_name, output_zp_name, quantized_input_value.qType)
-        self.quantizer.quantized_value_map[node.output[0]] = quantized_output_value
+        if len(self.quantizer.model.get_children(node)) == 0:
+            return
+        parent = self.quantizer.model.get_parents(node)[0]
+        child = self.quantizer.model.get_children(node)[0]
 
         kwargs = {}
         for attribute in node.attribute:
@@ -55,10 +41,15 @@ class QGlobalAveragePool(QuantOperatorBase):
         kwargs["channels_last"] = 0
         qnode_name = node.name + "_quant" if node.name != "" else ""
 
+        inputs = parent.input
+        inputs.extend(child.input[1:])
+
         qnode = onnx.helper.make_node(
             "QLinear" + node.op_type,
-            [quantized_input_value.q_name, quantized_input_value.scale_name, 
-            quantized_input_value.zp_name, output_scale_name, output_zp_name],
-            [quantized_output_value.q_name],
+            inputs,
+            child.output,
             qnode_name, **kwargs)
         self.quantizer.new_nodes += [qnode]
+        self.quantizer.remove_nodes.append(child)
+        self.quantizer.remove_nodes.append(parent)
+        self.quantizer.remove_nodes.append(node)

@@ -89,6 +89,8 @@ framework_metrics = {"tensorflow": TensorflowMetrics,
                      "onnxrt_qlinearops": ONNXRTQLMetrics,
                      "onnxrt_integerops": ONNXRTITMetrics,
                      "onnxrt_qdqops": ONNXRTQDQMetrics,
+                     "onnxrt_qdq": ONNXRTQDQMetrics,
+                     "onnxrt_qoperator": ONNXRTQLMetrics,
                      "engine": EngineMetrics}
 
 # user/model specific metrics will be registered here
@@ -109,14 +111,17 @@ registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "onnxrt_qlinearops": ONNXRT_QL_METRICS,
                     "onnxrt_qdqops": ONNXRT_QDQ_METRICS,
                     "onnxrt_integerops": ONNXRT_IT_METRICS,
+                    "onnxrt_qdq": ONNXRT_QDQ_METRICS,
+                    "onnxrt_qoperator": ONNXRT_QL_METRICS,
                     "engine": ENGINE_METRICS,}
 
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "tensorflow_itex", "engine",
-                            "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdqops", \
-                             "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
+        assert framework in ("tensorflow", "tensorflow_itex", "engine", "onnxrt_qdq",
+                            "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdqops",
+                             "onnxrt_qlinearops", "onnxrt_integerops", "mxnet", 
+                             "onnxrt_qoperator"), \
                              "framework support tensorflow pytorch mxnet onnxrt engine"
         self.metrics = framework_metrics[framework]().metrics
 
@@ -150,6 +155,8 @@ def metric_registry(metric_type, framework):
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
                 "onnxrt_qdqops",
+                "onnxrt_qdq",
+                "onnxrt_qoperator",
                 "pytorch",
                 "pytorch_ipex",
                 "pytorch_fx",

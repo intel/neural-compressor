@@ -516,7 +516,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                              'imagenet')}
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
-        q_config = {'fused ' + self.mb_v2_model.graph.node[0].name: {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8, 'scheme': 'sym'}}}
+        q_config = {self.mb_v2_model.graph.node[0].name: {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8, 'scheme': 'sym'}}}
         adaptor.quantize_config = q_config
         version = get_torch_version()
         q_model.save('./best_model.onnx')
@@ -588,6 +588,29 @@ class TestAdaptorONNXRT(unittest.TestCase):
         adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
         self.assertTrue(len(adaptor.quantizable_ops), 2)
  
+        framework_specific_info['device'] = 'gpu'
+        adaptor = FRAMEWORKS[framework](framework_specific_info) 
+        tune_cfg = {'calib_iteration': 1,
+                    'op': {('gather', 'Gather'): {'activation':  {'dtype': 'fp16'},
+                                                 'weight': {'dtype': 'fp16'}},
+                           ('add', 'Add'): {'activation':  {'dtype': 'fp16'},
+                                           'weight': {'dtype': 'fp16'}},
+                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': 'fp16'},
+                                                   'weight': {'dtype': 'fp16'}}}}
+        model = adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
+        self.assertTrue(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
+
+        tune_cfg = {'calib_iteration': 1,
+                    'op': {('Matmul', 'MatMul'): {'activation':  {'dtype': ['uint8']},
+                                                 'weight': {'dtype': ['int8']}},
+                           ('add', 'Add'): {'activation':  {'dtype': 'fp16'},
+                                           'weight': {'dtype': 'fp16'}},
+                           ('add2', 'Add'): {'activation':  {'dtype': 'fp16'},
+                                                   'weight': {'dtype': 'fp16'}}}}
+        adaptor = FRAMEWORKS[framework](framework_specific_info) 
+        model = adaptor.quantize(tune_cfg, common.Model(self.matmul_model), self.matmul_dataloader)
+        self.assertTrue(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
+ 
         for fake_yaml in ["gather.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.model = self.gather_model
@@ -651,6 +674,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         import time
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'
+        conf.quantization.model_wise = {'weight': {'granularity': ['per_tensor']}, 'activation': {'granularity': ['per_tensor']}}
         conf.tuning.exit_policy.max_trials = 6
         conf.tuning.accuracy_criterion.relative = 0.01
         conf.tuning.accuracy_criterion.higher_is_better = False

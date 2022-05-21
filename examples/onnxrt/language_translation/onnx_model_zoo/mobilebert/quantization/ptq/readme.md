@@ -30,7 +30,7 @@ Dynamic quantize:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/SQuAD/dataset \
+                   --data_path=/path/to/SQuAD/dataset \
                    --config=mobilebert.yaml
 ```
 
@@ -39,7 +39,7 @@ QDQ mode:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/SQuAD/dataset \
+                   --data_path=/path/to/SQuAD/dataset \
                    --config=mobilebert_qdq.yaml
 ```
 
@@ -47,7 +47,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --dataset_location=/path/to/SQuAD/dataset \
+                   --data_path=/path/to/SQuAD/dataset \
                    --config=mobilebert.yaml
                    --mode=performance # or accuracy
 ```

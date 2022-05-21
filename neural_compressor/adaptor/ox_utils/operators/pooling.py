@@ -18,50 +18,60 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
         attribute_to_kwarg, ms_domain
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
 
-
-class QLinearPool(QuantOperatorBase):
+class QDQPool(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
         node = self.node
+        if not self.quantizer.is_valid_quantize_weight(node.input[0]):
+            return
+        self.quantizer.quantize_inputs(self.node)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdqops':
+            self.quantizer.quantize_outputs(self.node)
 
-        # only try to quantize when given quantization parameters for it
-        data_found, output_scale_name, output_zp_name, _, _ = \
-            self.quantizer._get_quantization_params(node.output[0])
-        if (not data_found):
-            return super().quantize()
+class QLinearPool(QuantOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
 
-        # get quantized input tensor names, quantize input if needed
-        quantized_input_names, input_zero_point_names, input_scale_names, nodes = \
-            self.quantizer.quantize_inputs(node, [0])
+    def convert(self):
+        node = self.node
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
+ 
+        if len(children) == 0 or len(parents) == 0:
+            return
 
-        # Create an entry for output quantized value.
-        qlinear_output_name = node.output[0] + "_quantized"
-        quantized_output_value = QuantizedValue(
-            node.output[0], qlinear_output_name, output_scale_name, output_zp_name, QuantizedValueType.Input)
-        self.quantizer.quantized_value_map[node.output[0]] = quantized_output_value
+        if all([i.op_type == 'DequantizeLinear' for i in parents]) and \
+            any([i.op_type == 'QuantizeLinear' for i in children]):
+            qlinear_output_name = node.output[0] + '_quantized'
+            inputs = []
+            inputs.extend(parents[0].input)
+            inputs.extend([i for i in children if i.op_type == 'QuantizeLinear'][0].input[1:])
+            kwargs = {}
+            for attribute in node.attribute:
+                kwargs.update(attribute_to_kwarg(attribute))
+            kwargs["domain"] = ms_domain
+            qlinear_node_name = node.name + "_quant" if node.name != "" else ""
+            qnode = onnx.helper.make_node(
+                "QLinear" + node.op_type,
+                inputs,
+                [qlinear_output_name],
+                qlinear_node_name,
+                **kwargs)
+ 
+            self.quantizer.remove_nodes.extend(parents)
+            for child in children:
+                if child.op_type == 'QuantizeLinear':
+                    self.quantizer.remove_nodes.append(child)
+                    self.quantizer.model.replace_input_of_all_nodes(
+                        child.output[0], qnode.output[0])
 
-        # Create qlinear pool node for given type (AveragePool, etc)
-        kwargs = {}
-        for attribute in node.attribute:
-            kwargs.update(attribute_to_kwarg(attribute))
-        kwargs["domain"] = ms_domain
-        qlinear_node_name = node.name + "_quant" if node.name != "" else ""
-        inputs = [quantized_input_names[0], input_scale_names[0], input_zero_point_names[0], \
-                 output_scale_name, output_zp_name]
-        qnode = onnx.helper.make_node(
-            "QLinear" + node.op_type,
-            inputs,
-            [qlinear_output_name],
-            qlinear_node_name,
-            **kwargs)
-
-        # add all newly created nodes
-        nodes.append(qnode)
-        self.quantizer.new_nodes += nodes
+            self.quantizer.new_nodes.append(qnode)
+            self.quantizer.remove_nodes.append(node)

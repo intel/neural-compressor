@@ -18,8 +18,8 @@ function init_params {
       --topology=*)
           topology=$(echo $var |cut -f2 -d=)
       ;;
-      --dataset_location=*)
-          dataset_location=$(echo $var |cut -f2 -d=)
+      --data_path=*)
+          data_path=$(echo $var |cut -f2 -d=)
       ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
@@ -62,7 +62,7 @@ function run_benchmark {
       test_data='wiki.test.raw'
     fi
     python gpt2.py --model_path ${input_model} \
-                        --eval_data_file ${dataset_location}${test_data} \
+                        --data_path ${data_path}${test_data} \
                         --model_type ${model_type} \
                         --model_name_or_path ${model_name_or_path} \
                         --config ${gpt2_yaml} \

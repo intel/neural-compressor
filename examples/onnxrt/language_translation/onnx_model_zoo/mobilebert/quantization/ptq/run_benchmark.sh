@@ -22,8 +22,8 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
-      --dataset_location=*)
-          data_dir=$(echo $var |cut -f2 -d=)
+      --data_path=*)
+          data_path=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -37,7 +37,7 @@ function run_benchmark {
             --model_path ${input_model} \
             --config ${config} \
             --mode=${mode} \
-            --data_dir ${data_dir} \
+            --data_path ${data_path} \
             --benchmark
             
 }

@@ -106,7 +106,7 @@ def main():
                         help='Tuning config file path')
     parser.add_argument('--save_path', type=str, default='mobilbert_tune.onnx', 
                         help='save tuned model path')
-    parser.add_argument('--data_dir', type=str,
+    parser.add_argument('--data_path', type=str,
                         help='datseset path')
     parser.add_argument('--tune', action='store_true', default=False, 
                         help='run neural_compressor tune')
@@ -121,7 +121,7 @@ def main():
     model = onnx.load(args.model_path)
 
     predict_file = 'dev-v1.1.json'
-    input_file=os.path.join(args.data_dir, predict_file)
+    input_file=os.path.join(args.data_path, predict_file)
     eval_examples = read_squad_examples(input_file=input_file)
 
     vocab_file = os.path.join('uncased_L-12_H-768_A-12', 'vocab.txt')

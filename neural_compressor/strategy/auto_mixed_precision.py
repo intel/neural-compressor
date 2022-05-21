@@ -128,7 +128,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
         if best_cfg is not None:
             fallback_dtypes = []
-            for data_type in ["bf16", "fp32"]:
+            for data_type in ["bf16", "fp16", "fp32"]:
                 for _, tune_space in self.modelwise_tune_space.items():
                     if (data_type in tune_space["activation"]["dtype"] and
                         data_type not in fallback_dtypes):

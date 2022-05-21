@@ -43,7 +43,7 @@ evaluation:                                          # optional. used to config 
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric: 
       COCOmAPv2:
-        anno_path: /path/to/annotation
+        anno_path: label_map.yaml
         output_index_mapping:
           boxes: 0
           classes: 1

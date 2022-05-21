@@ -18,62 +18,59 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
-from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
         attribute_to_kwarg, ms_domain
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
-
-
-class QLinearConcat(QuantOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        node = self.node
-
-        if all([item not in self.quantizer.quantized_value_map for item in node.input]):
-            self.quantizer.new_nodes += [node]
-            return
-
-        if not all([item in self.quantizer.quantized_value_map for item in node.input]):
-            super().quantize()
-            return
-
-        data_found, output_scale_name, output_zp_name, _, _ = \
-                    self.quantizer._get_quantization_params(node.output[0])
-        quantized_input_value = self.quantizer.quantized_value_map[node.input[0]]
-        quantized_output_value = QuantizedValue(node.output[0], node.output[0] + "_quantized",
-                                                output_scale_name, output_zp_name,
-                                                quantized_input_value.value_type)
-        self.quantizer.quantized_value_map[node.output[0]] = quantized_output_value
-
-        (q_input_names, zero_point_names, scale_names, nodes) = self.quantizer.quantize_inputs(
-                                                            node, [*range(0, len(node.input))])
-
-        kwargs = {}
-        for attribute in node.attribute:
-            kwargs.update(attribute_to_kwarg(attribute))
-        kwargs["domain"] = ms_domain
-        qnode_name = node.name + "_quant" if node.name != "" else ""
-
-        qlconcat_inputs = [output_scale_name, output_zp_name]
-        for i in range(0, len(q_input_names)):
-            qlconcat_inputs.extend([q_input_names[i], scale_names[i], zero_point_names[i]])
-        qlconcat_node = onnx.helper.make_node("QLinearConcat", 
-                                              qlconcat_inputs, 
-                                              [node.output[0] + "_quantized"], 
-                                              qnode_name, 
-                                              **kwargs)        
-
-        self.quantizer.new_nodes += nodes
-        self.quantizer.new_nodes += [qlconcat_node]
+from .qdq_base_operator import QDQOperatorBase
 
 class QDQConcat(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
-        if all([inp not in self.quantizer.quantized_value_map for inp in self.node.input]):
+        if all([inp not in self.quantizer.quantized_value_map for inp in self.node.input]) or \
+            not all([inp in self.quantizer.quantized_value_map for inp in self.node.input]):
             return
         super().quantize()
+
+class QLinearConcat(QuantOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def convert(self):
+        node = self.node
+
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 or len(parents) == 0:
+            return
+
+        if all([i.op_type == 'DequantizeLinear' for i in parents]) and \
+            any([i.op_type == 'QuantizeLinear' for i in children]):
+            inputs = []
+
+            inputs.extend([i for i in children if i.op_type == 'QuantizeLinear'][0].input[1:])
+            for parent in parents:
+                inputs.extend(parent.input)
+                self.quantizer.remove_nodes.append(parent)
+            for child in children:
+                if child.op_type == 'QuantizeLinear':
+                    self.quantizer.remove_nodes.append(child)
+                    self.quantizer.model.replace_input_of_all_nodes(
+                        child.output[0], node.output[0] + '_quantized')
+            
+            kwargs = {}
+            for attribute in node.attribute:
+                kwargs.update(attribute_to_kwarg(attribute))
+            kwargs["domain"] = ms_domain
+            qnode_name = node.name + "_quant" if node.name != "" else ""
+
+            qlconcat_node = onnx.helper.make_node("QLinearConcat", 
+                                                  inputs, 
+                                                  [node.output[0] + "_quantized"], 
+                                                  qnode_name, 
+                                                  **kwargs)        
+
+            self.quantizer.new_nodes += [qlconcat_node]
+            self.quantizer.remove_nodes.append(node)

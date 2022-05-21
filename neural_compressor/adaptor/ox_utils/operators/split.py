@@ -20,16 +20,29 @@ import onnx
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
                                                  attribute_to_kwarg
 from .base_operator import QuantOperatorBase 
+from .qdq_base_operator import QDQOperatorBase
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
 
-class QSplit(QuantOperatorBase):
+class QDQSplit(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
         node = self.node
-        quantized_input_names, zero_point_names, scale_names, nodes = \
-                                           self.quantizer.quantize_inputs(node, [0])
+        self.quantizer.quantize_inputs(node, [0])
+        if not self.disable_qdq_for_node_output or self.quantizer != 'qdqops':
+            self.quantizer.quantize_outputs(self.node, direct_int8=True)
+
+class QSplit(QuantOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def convert(self):
+        node = self.node
+        parent = self.quantizer.model.get_parents(node)[0]
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0:
+            return
         quantized_node_name = ""
         if node.name != "":
             quantized_node_name = node.name + "_quant"
@@ -37,22 +50,27 @@ class QSplit(QuantOperatorBase):
         for attribute in node.attribute:
             kwargs.update(attribute_to_kwarg(attribute))
 
-        # Output just derive the scale/zero from input
-        quantized_output_names = []
-        for output_name in node.output:
-            quantized_output_name = output_name + "_quantized"
-            quantized_output_names.append(quantized_output_name)
-            q_output = QuantizedValue(output_name, quantized_output_name, 
-                                      scale_names[0], zero_point_names[0],
-                                      QuantizedValueType.Input)
-            self.quantizer.quantized_value_map[output_name] = q_output
-
+        quantized_input_names = []
+        quantized_input_names.append(parent.input[0])
         if len(node.input) > 1:
             quantized_input_names = quantized_input_names.extend(node.input[1:])
+        outputs = []
+        for output in node.output:
+            if output in self.quantizer.model.input_name_to_nodes:
+                child = self.quantizer.model.input_name_to_nodes[output][0]
+                if child.op_type == 'QuantizeLinear':
+                    self.quantizer.remove_nodes.append(child)
+                    outputs.append(child.output[0])
+                else:
+                    outputs.append(output)
+            else:
+                outputs.append(output + '_quatized')
+
         quantized_node = onnx.helper.make_node(node.op_type, 
                                                quantized_input_names, 
-                                               quantized_output_names,
+                                               outputs,
                                                quantized_node_name, **kwargs)
-
-        nodes.append(quantized_node)
-        self.quantizer.new_nodes += nodes
+        self.quantizer.new_nodes.append(quantized_node)
+        self.quantizer.remove_nodes.extend([parent, node])
+               
+        

@@ -29,44 +29,23 @@ class QLinearActivation(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
-    def QuantizeClipRelu(self):
+    def convert(self):
         node = self.node
-        assert (node.op_type == "Relu" or node.op_type == 'Clip')
-
-        # When mode is QLinearOps, the output quantization params are calculated 
-        # based on outputs from activation nodes, therefore these nodes can be 
-        # removed from the graph if they follow a quantized op.
-        # If input to this node is not quantized then keep this node
-        if node.input[0] not in self.quantizer.quantized_value_map:
-            self.quantizer.new_nodes += [node]
+        if node.op_type in ['Relu', 'Clip']:
             return
-
-        if node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
-            super().quantize()
+            
+        if len(self.quantizer.model.get_children(node)) == 0:
             return
-
-        node_childs = self.quantizer.model.input_name_to_nodes[node.output[0]]
-        for child in node_childs:
-           child.input[list(child.input).index(node.output[0])] = node.input[0] 
-
-    def quantize(self):
-        node = self.node
-        if node.op_type == "Relu" or node.op_type == 'Clip':
-            self.QuantizeClipRelu()
-            return
-
         # No assert on op_type as it is controlled by registry
         # only try to quantize when given quantization parameters for it
-        data_found, output_scale_name, output_zp_name, _, _ = self.quantizer.\
-                                       _get_quantization_params(node.output[0])
-        if not data_found:
-            super().quantize()
-            return
+        parent = self.quantizer.model.get_parents(node)[0]
+        child = self.quantizer.model.get_children(node)[0]
 
-        quantized_input_names, zero_point_names, scale_names, nodes = self.quantizer.\
-                                                            quantize_inputs(node, [0])
+        inputs = []
+        inputs.extend(parent.input)
+        inputs.extend(child.input[1:])
 
-        qlinear_activation_output = node.output[0] + "_quantized"
+        qlinear_activation_output = child.output[0]
         qlinear_activation_name = ""
         if node.name != "":
             qlinear_activation_name = node.name + "_quant"
@@ -75,20 +54,12 @@ class QLinearActivation(QuantOperatorBase):
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
-        qlinear_activation_inputs = [quantized_input_names[0], scale_names[0], 
-                                     zero_point_names[0], output_scale_name, output_zp_name]
-
         qlinear_activation_node = onnx.helper.make_node(
-            "QLinear" + node.op_type, qlinear_activation_inputs,
+            "QLinear" + node.op_type, inputs,
             [qlinear_activation_output], qlinear_activation_name, **kwargs)
 
-        # Create an entry for this quantized value
-        q_output = QuantizedValue(node.output[0], qlinear_activation_output, output_scale_name,
-                                  output_zp_name, QuantizedValueType.Input)
-        self.quantizer.quantized_value_map[node.output[0]] = q_output
-
-        nodes.append(qlinear_activation_node)
-        self.quantizer.new_nodes += nodes
+        self.quantizer.new_nodes.append(qlinear_activation_node)
+        self.quantizer.remove_nodes.extend([parent, child, node])
 
 class QDQRemovableActivation(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -96,10 +67,21 @@ class QDQRemovableActivation(QDQOperatorBase):
 
     def quantize(self):
         node = self.node
-        if node.input[0] not in self.quantizer.quantized_value_map or \
-            node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
-            self.quantizer.quantize_tensor(node.input[0])
+        if node.input[0] not in self.quantizer.quantized_value_map:
+            return
+        elif node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
+            self.quantizer.dequantize_tensor(node, node.input[0])
         else:
             self.quantizer.model.replace_input_of_all_nodes(node.output[0], node.input[0])
             self.quantizer.remove_nodes.append(node)
 
+class QDQActivation(QDQOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        node = self.node
+        data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
+        if not data_found:
+            return
+        super().quantize()

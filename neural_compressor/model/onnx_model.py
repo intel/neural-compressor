@@ -74,7 +74,21 @@ class ONNXModel(BaseModel):
         self._input_name_to_nodes = {}
         self._get_input_name_to_nodes(self._model.graph.node)
         self._get_output_name_to_node(self._model.graph.node)
- 
+
+    def input(self):
+        return [i.name for i in self._model.graph.input]
+
+    def output(self):
+        return [i.name for i in self._model.graph.output]
+
+    def update(self):
+        self._graph_info = {}
+        self._get_graph_info()
+        self._output_name_to_node = {}
+        self._input_name_to_nodes = {}
+        self._get_input_name_to_nodes(self._model.graph.node)
+        self._get_output_name_to_node(self._model.graph.node)
+
     @property
     def graph_info(self):
         return self._graph_info
@@ -267,10 +281,17 @@ class ONNXModel(BaseModel):
             if node.input[j] == old_input_name:
                 node.input[j] = new_input_name
 
-    def replace_input_of_all_nodes(self, old_input_name, new_input_name, excluded_optype=[]):
-        for node in self.model.graph.node:
-            if node.op_type not in excluded_optype:
-                ONNXModel.replace_node_input(node, old_input_name, new_input_name)
+    def replace_input_of_all_nodes(self, old_input_name, new_input_name,
+        white_optype=[], black_optype=[]):
+        if len(white_optype) > 0:
+            for node in self.model.graph.node:
+                if node.op_type in white_optype:
+                    ONNXModel.replace_node_input(node, old_input_name, new_input_name)
+        else:
+            for node in self.model.graph.node:
+                if node.op_type not in black_optype:
+                    ONNXModel.replace_node_input(node, old_input_name, new_input_name)
+
 
     @staticmethod
     def replace_node_output(node, old_output_name, new_output_name):
@@ -279,22 +300,30 @@ class ONNXModel(BaseModel):
             if node.output[j] == old_output_name:
                 node.output[j] = new_output_name
 
-    def replace_output_of_all_nodes(self, old_output_name, new_output_name, excluded_optype=[]):
-        for node in self.model.graph.node:
-            if node.op_type not in excluded_optype:
-                ONNXModel.replace_node_output(node, old_output_name, new_output_name)
+    def replace_output_of_all_nodes(self, old_output_name, new_output_name, 
+        white_optype=[], black_optype=[]):
+        if len(white_optype) > 0:
+            for node in self.model.graph.node:
+                if node.op_type in white_optype:
+                    ONNXModel.replace_node_output(node, old_output_name, new_output_name)
+        else:
+            for node in self.model.graph.node:
+                if node.op_type not in black_optype:
+                    ONNXModel.replace_node_output(node, old_output_name, new_output_name)
 
     def remove_unused_constant(self):
-        self._input_name_to_nodes = {}
-        self._get_input_name_to_nodes(self._model.graph.node)
- 
         unused_nodes = []
         nodes = self.nodes()
         for node in nodes:
             if node.op_type == "Constant" and node.output[0] not in self._model.graph.output \
                 and node.output[0] not in self._input_name_to_nodes:
                 unused_nodes.append(node)
-
+            elif node.op_type == 'QuantizeLinear' and len(self.get_children(node)) == 1 and \
+                self.get_children(node)[0].op_type == 'DequantizeLinear' and \
+                node.input[0] not in self._output_name_to_node and \
+                self.get_children(node)[0].output[0] not in self._input_name_to_nodes:
+                unused_nodes.append(node)
+                unused_nodes.extend(self.get_children(node))
         self.remove_nodes(unused_nodes)
 
         ununsed_weights = []

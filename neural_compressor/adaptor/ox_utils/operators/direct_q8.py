@@ -16,40 +16,58 @@
 # limitations under the License.
 #
 
-from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
+from .base_operator import QuantOperatorBase
+from .base_operator_cast import CastOperatorBase
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
 
 # For operators that support 8bits operations directly, and output could
 # reuse input[0]'s type, zeropoint, scale; For example,Transpose, Reshape, etc.
+
 class Direct8BitOp(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
-    def quantize(self):
+    def convert(self):
         node = self.node
-
-        # Quantize when input[0] is quantized already. Otherwise keep it.
-        if node.input[0] not in self.quantizer.quantized_value_map:
-            self.quantizer.new_nodes += [node]
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 and len(parents) == 0:
             return
-            
-        quantized_input_value = self.quantizer.quantized_value_map[node.input[0]]
-        quantized_output_value = QuantizedValue(node.output[0], node.output[0] + "_quantized",
-                                                quantized_input_value.scale_name, 
-                                                quantized_input_value.zp_name,
-                                                quantized_input_value.value_type)
-        self.quantizer.quantized_value_map[node.output[0]] = quantized_output_value
-        node.input[0] = node.input[0] + "_quantized"
-        node.output[0] = node.output[0] + "_quantized"
 
-        self.quantizer.new_nodes += [node]
+        if any([i.op_type == 'DequantizeLinear' for i in parents]) and \
+            any([i.op_type == 'QuantizeLinear' for i in children]):
+            for parent in parents:
+                if parent.op_type == 'DequantizeLinear':
+                    self.node.input[0] = parent.input[0]
+                    self.quantizer.remove_nodes.append(parents[0])
+                    break
+            for child in children:
+                if child.op_type == 'QuantizeLinear':
+                    self.quantizer.remove_nodes.append(child)
+                    self.quantizer.model.replace_input_of_all_nodes(
+                        child.output[0], node.output[0] + '_quantized')
+            node.output[0] = node.output[0] + '_quantized' 
 
 class QDQDirect8BitOp(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
-        self.quantizer.quantize_tensor(self.node.input[0])
-        if not self.disable_qdq_for_node_output:
-            self.quantizer.quantize_tensor(self.node.output[0])
+        node = self.node
+        if not self.quantizer.is_valid_quantize_weight(node.input[0]):
+            return
+        self.quantizer.quantize_inputs(self.node)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdqops':
+            self.quantizer.quantize_outputs(self.node, direct_int8=True)
+
+class DirectCast(CastOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def cast(self):
+        node = self.node
+        if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
+            return
+        super().cast()
+ 

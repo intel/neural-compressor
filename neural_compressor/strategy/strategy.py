@@ -233,7 +233,8 @@ class TuneStrategy(object):
         else:
             self.calib_iter = [1]
 
-        fallback_precision_list = ['fp32'] if self.graph_optimization_mode else ['fp32', 'bf16']
+        fallback_precision_list = ['fp32'] if self.graph_optimization_mode \
+            else ['fp32', 'bf16', 'fp16']
         self.model_wise_quant_cfgs = OrderedDict()
         for optype in self.model_wise_tune_cfgs.keys():
             self.model_wise_quant_cfgs[optype] = []

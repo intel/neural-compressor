@@ -18,13 +18,25 @@
     name: '1.7.0'
   
   precisions: &common_precisions
-    names: int8, uint8, fp32
+    names: int8, uint8, fp16, fp32
     valid_mixed_precisions: []
   
   ops: &common_ops
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
            'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
            'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
+    fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
+           'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
+           'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
+           'Scatter', 'ScatterElements', 'ScatterND', 'Shape', 'Shrink', 'Sign6',
+           'Slice', 'Squeeze', 'Transpose', 'Unsqueeze', 'ExpandDims', 'Inverse',
+           'SkipLayerNormalization', 'QuantizeLinear', 'QAttention', 'LongformerAttention',
+           'Gelu', 'FusedMatMul', 'FastGelu', 'EmbedLayerNormalization', 'DequantizeLinear',
+           'BiasGelu', 'Attention', 'Where', 'Upsample', 'Tanh', 'Sub', 'Sqrt', 'Split',
+           'Softmax', 'Sigmoid', 'Scatter', 'Relu', 'ReduceMean', 'Pow', 'Pad', 'Mul',
+           'MaxPool', 'MatMul', 'LeakyRelu', 'LayerNormalization', 'GlobalMaxPool',
+           'GlobalAveragePool', 'Gemm', 'Conv', 'BatchNormalization', 'AveragePool',
+           'Add', 'Clip']
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
@@ -47,7 +59,7 @@
             'weight':   {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
-                        'granularity': ['per_channel'],
+                        'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
@@ -62,7 +74,7 @@
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
-                        'granularity': ['per_channel'],
+                        'granularity': ['per_channel', 'per_tensor'],
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -102,6 +114,18 @@
            'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
            'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add', 'Squeeze',
            'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
+    fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
+           'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
+           'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
+           'Scatter', 'ScatterElements', 'ScatterND', 'Shape', 'Shrink', 'Sign6',
+           'Slice', 'Squeeze', 'Transpose', 'Unsqueeze', 'ExpandDims', 'Inverse',
+           'SkipLayerNormalization', 'QuantizeLinear', 'QAttention', 'LongformerAttention',
+           'Gelu', 'FusedMatMul', 'FastGelu', 'EmbedLayerNormalization', 'DequantizeLinear',
+           'BiasGelu', 'Attention', 'Where', 'Upsample', 'Tanh', 'Sub', 'Sqrt', 'Split',
+           'Softmax', 'Sigmoid', 'Scatter', 'Relu', 'ReduceMean', 'Pow', 'Pad', 'Mul',
+           'MaxPool', 'MatMul', 'LeakyRelu', 'LayerNormalization', 'GlobalMaxPool',
+           'GlobalAveragePool', 'Gemm', 'Conv', 'BatchNormalization', 'AveragePool',
+           'Add', 'Clip']
     fp32: ['*'] # '*' means all op types
 
   capabilities:
@@ -119,9 +143,21 @@
 
   ops:
     int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
-           'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add', 'Squeeze',
-           'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
+        'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add', 'Squeeze',
+        'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
+    fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
+        'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
+        'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
+        'Scatter', 'ScatterElements', 'ScatterND', 'Shape', 'Shrink', 'Sign6',
+        'Slice', 'Squeeze', 'Transpose', 'Unsqueeze', 'ExpandDims', 'Inverse',
+        'SkipLayerNormalization', 'QuantizeLinear', 'QAttention', 'LongformerAttention',
+        'Gelu', 'FusedMatMul', 'FastGelu', 'EmbedLayerNormalization', 'DequantizeLinear',
+        'BiasGelu', 'Attention', 'Where', 'Upsample', 'Tanh', 'Sub', 'Sqrt', 'Split',
+        'Softmax', 'Sigmoid', 'Scatter', 'Relu', 'ReduceMean', 'Pow', 'Pad', 'Mul',
+        'MaxPool', 'MatMul', 'LeakyRelu', 'LayerNormalization', 'GlobalMaxPool',
+        'GlobalAveragePool', 'Gemm', 'Conv', 'BatchNormalization', 'AveragePool',
+        'Add', 'Clip']
     fp32: ['*'] # '*' means all op types
 
   capabilities:
@@ -144,7 +180,7 @@
             'weight':   {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
-                        'granularity': ['per_channel'],
+                        'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
@@ -159,7 +195,7 @@
                         'dtype': ['uint8', 'fp32'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
-                        'granularity': ['per_channel'],
+                        'granularity': ['per_channel', 'per_tensor'],
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -172,7 +208,7 @@
             'weight':   {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
-                        'granularity': ['per_channel'],
+                        'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {

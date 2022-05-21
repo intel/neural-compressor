@@ -32,6 +32,8 @@ OPTIONS = {'tensorflow': None,
            'onnxrt_integerops': onnxrt,
            'onnxrt_qlinearops': onnxrt,
            'onnxrt_qdqops': onnxrt,
+           'onnxrt_qdq': onnxrt,
+           'onnxrt_qoperator': onnxrt,
            'engine': None}
 
 

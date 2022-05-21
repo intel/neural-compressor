@@ -22,6 +22,106 @@ from onnx import helper
 from onnx import onnx_pb as onnx_proto  
 from onnxruntime.quantization.quant_utils import QuantType       
 
+support_pair = {
+    'uint8 uint8': True,
+    '2 2': True,
+    'float16 float16': True,
+    '10 10': True,
+    'float32 float16': True,
+    '1 10': True,
+    'float16 float32': True,
+    '10 1': True
+}
+
+dtype_mapping = {
+    'fp32': 1,
+    'fp16': 10,
+    'int8': 3,
+    'uint8': 2,
+}
+
+def make_quant_node(name, inputs, outputs):
+    return helper.make_node("QuantizeLinear", inputs, outputs, name)
+
+def make_dquant_node(name, inputs, outputs):
+    return helper.make_node("DequantizeLinear", inputs, outputs, name)
+
+def _get_qrange_for_qType(qType, reduce_range=False):
+    '''
+    Helper function to get the quantization range for a type.
+        parameter qType: quantization type.
+        return: quantization range.
+    '''
+    if qType == onnx_proto.TensorProto.UINT8:
+        return 127 if reduce_range else 255
+    elif qType == onnx_proto.TensorProto.INT8:
+        # [-64, 64] for reduce_range, and [-127, 127] full_range.
+        return 128 if reduce_range else 254
+    else:
+        raise ValueError('unsupported quantization data type')
+
+def convert_np_to_float16(np_array, min_positive_val=1e-7, max_finite_val=1e4):
+    '''
+    Convert float32 numpy array to float16 without changing sign or finiteness.
+    Positive values less than min_positive_val are mapped to min_positive_val.
+    Positive finite values greater than max_finite_val are mapped to max_finite_val.
+    Similar for negative values. NaN, 0, inf, and -inf are unchanged.
+    '''
+    def between(a, b, c):
+        return np.logical_and(a < b, b < c)
+    np_array = np.where(between(0, np_array, min_positive_val), min_positive_val, np_array)
+    np_array = np.where(between(-min_positive_val, np_array, 0), -min_positive_val, np_array)
+    np_array = np.where(between(max_finite_val, np_array, float('inf')), max_finite_val, np_array)
+    np_array = np.where(between(float('-inf'), np_array, -max_finite_val), -max_finite_val, np_array)
+    return np.float16(np_array)
+
+def _npfloat16_to_int(np_list):
+    '''
+    Convert numpy float16 to python int.
+        param np_list: numpy float16 list
+        return int_list: python int list
+    '''
+    return [int(bin(_.view('H'))[2:].zfill(16), 2) for _ in np_list]
+
+def cast_tensor(tensor, dtype, min_positive_val=1e-7, max_finite_val=1e4):
+    '''
+    Convert tensor float to float16.
+        param tensor: TensorProto object
+        return tensor_float16: converted TensorProto object
+    Example:
+        from onnxmltools.utils.float16_converter import convert_tensor_float_to_float16
+        new_tensor = convert_tensor_float_to_float16(tensor)
+    '''
+    if not isinstance(tensor, onnx_proto.TensorProto):
+        raise ValueError('Expected input type is an ONNX TensorProto but got %s' % type(tensor))
+
+    if tensor.data_type == onnx_proto.TensorProto.FLOAT:
+        tensor.data_type = onnx_proto.TensorProto.FLOAT16
+        # convert float_data (float type) to float16 and write to int32_data
+        if tensor.float_data:
+            float16_data = convert_np_to_float16(np.array(tensor.float_data), min_positive_val, max_finite_val)
+            int_list = _npfloat16_to_int(float16_data)
+            tensor.int32_data[:] = int_list
+            tensor.float_data[:] = []
+        # convert raw_data (bytes type)
+        if tensor.raw_data:
+            # convert n.raw_data to float
+            float32_list = np.fromstring(tensor.raw_data, dtype='float32')
+            # convert float to float16
+            float16_list = convert_np_to_float16(float32_list, min_positive_val, max_finite_val)
+            # convert float16 to bytes and write back to raw_data
+            tensor.raw_data = float16_list.tostring()
+    return tensor
+
+def remove_init_from_model_input(model):
+    inputs = model.model.graph.input
+    name_to_input = {}
+    for inp in inputs:
+        name_to_input[inp.name] = inp
+    for initializer in model.model.graph.initializer:
+        if initializer.name in name_to_input:
+            inputs.remove(name_to_input[initializer.name])
+
 def split_shared_input(model):
     for input_name, node_list in model.input_name_to_nodes.items():
         if len(node_list) > 1 and input_name in [i.name for i in model.model.graph.initializer]:
@@ -132,10 +232,10 @@ def quantize_data_per_channel(tensor_value, qType, scheme, scale_value, zo_value
                                            new_per_channel_tensor_value), 0)
     return new_tensor_value
 
-def dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value):
+def dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value): # pragma: no cover
     return (tensor_value.astype(np.float32) - zo_value.astype(np.float32)) * scale_value
 
-def dequantize_data(tensor_value, scale_value, zo_value, axis=0):
+def dequantize_data(tensor_value, scale_value, zo_value, axis=0): # pragma: no cover
     if scale_value.size == 1:
         return dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value)
     else:
@@ -159,6 +259,15 @@ def dequantize_data(tensor_value, scale_value, zo_value, axis=0):
             new_tensor_value = np.concatenate((new_tensor_value, \
                                                new_per_channel_tensor_value), 0)
         return new_tensor_value
+
+class ValueInfo:
+    def __init__(self,
+                 tensor_name,
+                 dtype,
+                 new_dtype):
+        self.tensor_name = tensor_name
+        self.dtype = dtype
+        self.new_dtype = new_dtype
 
 class QuantizedValue:
     '''

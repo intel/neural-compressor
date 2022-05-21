@@ -19,6 +19,7 @@
 import onnx
 import numpy
 from .base_operator import QuantOperatorBase
+from .qdq_base_operator import QDQOperatorBase
 from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, QuantType
 from onnx import onnx_pb as onnx_proto
 '''
@@ -30,7 +31,7 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
     def __init__(self, onnx_quantizer, onnx_node):
         super().__init__(onnx_quantizer, onnx_node)
 
-    def quantize(self):
+    def convert(self):
         '''
             parameter node: LSTM node.
             parameter new_nodes_list: List of new nodes created before processing this node.
@@ -41,7 +42,7 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
 
         if (not self.quantizer.is_valid_quantize_weight(node.input[1]) or
             not self.quantizer.is_valid_quantize_weight(node.input[2])):
-            super().quantize()
+            super().convert()
             return
 
         model = self.quantizer.model
@@ -49,7 +50,7 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
         R = model.get_initializer(node.input[2])
 
         if (len(W.dims) != 3 or len(R.dims) != 3):
-            super().quantize()
+            super().convert()
             return
 
         [W_num_dir, W_4_hidden_size, W_input_size] = W.dims
@@ -111,7 +112,7 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
                        quant_input_weight_tuple[1], 
                        quant_recurrent_weight_tuple[2], 
                        quant_recurrent_weight_tuple[1]])
-
+                       
         kwargs = {}
         for attribute in node.attribute:
             kwargs.update(attribute_to_kwarg(attribute))
@@ -120,5 +121,13 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
         quant_lstm_name = "" if node.name == "" else node.name + "_quant"
         quant_lstm_node = onnx.helper.make_node("DynamicQuantizeLSTM", 
                                                 inputs, node.output, quant_lstm_name, **kwargs)
+        self.quantizer.remove_nodes.append(node)
+        self.quantizer.new_nodes.append(quant_lstm_node)
 
-        self.quantizer.new_nodes += [quant_lstm_node]
+class QDQLSTM(QDQOperatorBase): # pragma: no cover
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        return
+ 

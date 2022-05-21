@@ -20,6 +20,8 @@ class QuantOperatorBase:
     def __init__(self, onnx_quantizer, onnx_node):
         self.quantizer = onnx_quantizer
         self.node = onnx_node
+        self.disable_qdq_for_node_output = True if onnx_node.op_type in \
+            onnx_quantizer.op_types_to_exclude_output_quantization else False
         if self.node.name in self.quantizer.config:
             self.per_channel = False
             self.algorithm = 'minmax'
@@ -43,7 +45,7 @@ class QuantOperatorBase:
                     self.activation_scheme = self.quantizer.config[self.node.name]\
                         ['activation']['scheme']
 
-    def quantize(self):
+    def convert(self):
         '''
         Given a node which does not support quantization(Conv, Matmul, Gather), this method
         checks whether the input to this node is quantized and adds a DequantizeLinear node
@@ -52,11 +54,5 @@ class QuantOperatorBase:
             parameter new_nodes_list: List of new nodes created before processing current node
             return: List of new nodes created
         '''
-        nodes = []
-        for index, node_input in enumerate(self.node.input):
-            dequantize_node = self.quantizer._dequantize_value(node_input)
-            if dequantize_node is not None:
-                self.quantizer.new_nodes.append(dequantize_node)
+        return
 
-        # Append the original node
-        self.quantizer.new_nodes.append(self.node)

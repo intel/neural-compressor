@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+# pylint: disable=no-member
 
 import os
 import copy
@@ -51,6 +51,7 @@ class ONNXRTAdaptor(Adaptor):
         super().__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []
+        self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
@@ -58,7 +59,14 @@ class ONNXRTAdaptor(Adaptor):
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
-        self.quantizable_op_types = self._query_quantizable_op_types()
+        self.quantizable_op_types = []
+        for precision in self.query_handler.get_precisions():
+            if precision != 'fp32':
+                if self.device == 'cpu' and precision == 'fp16':
+                    continue
+                self.quantizable_op_types += \
+                    self.query_handler.get_op_types_by_precision(precision=precision)
+ 
         self.evaluate_nums = 0
 
         self.fp32_results = []
@@ -89,13 +97,12 @@ class ONNXRTAdaptor(Adaptor):
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
-        from neural_compressor.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
-        if self.backend == "qlinearops":
+        if self.backend in ["qlinearops", "qoperator"]:
             backend = QuantizationMode.QLinearOps
-        elif self.backend == "qdqops":
+        elif self.backend in ["qdqops", "qdq"]:
             assert ort_version >= ONNXRT170_VERSION, 'QDQ mode needs onnxruntime1.7.0 or newer'
-            backend = self.backend
+            backend = "qdqops"
         else:
             backend = QuantizationMode.IntegerOps
 
@@ -143,17 +150,14 @@ class ONNXRTAdaptor(Adaptor):
         else:
             quantize_params = None
         self.quantize_params = quantize_params
-        if self.backend == "qlinearops" or self.backend == "integerops":
-            quantizer_cls = ONNXQuantizer
-        else:
-            from neural_compressor.adaptor.ox_utils.qdq_quantizer import QDQQuantizer
-            quantizer_cls = QDQQuantizer
-        quantizer = quantizer_cls(tmp_model.model,
+        from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
+        quantizer = Quantizer(tmp_model.model,
             quantize_config,
             backend,
             self.static,
             quantize_params,
-            self.quantizable_op_types)
+            self.quantizable_op_types,
+            self.query_handler.get_fallback_list())
         quantizer.quantize_model()
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
@@ -177,10 +181,12 @@ class ONNXRTAdaptor(Adaptor):
                         scale_info[output_name] = quantize_params[output_name]
             tune_cfg['op'][(node.name, node.op_type)]['scale_info'] = scale_info
         fwk_info = {}
-        fwk_info['approach'] = self.static
+        fwk_info['approach'] = "post_training_static_quant" if self.static else \
+                                                        "post_training_dynamic_quant"
         fwk_info['backend'] = self.backend
         fwk_info['workspace_path'] = self.work_space
         fwk_info['graph_optimization'] = self.graph_optimization
+        fwk_info['device'] = self.device
         tune_cfg['framework_specific_info'] = fwk_info
         return tune_cfg
 
@@ -204,7 +210,6 @@ class ONNXRTAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
 
-        from neural_compressor.adaptor.ox_utils.onnx_quantizer import ONNXQuantizer
         from onnxruntime.quantization.quant_utils import QuantizationMode
         if self.backend == "qlinearops":
             backend = QuantizationMode.QLinearOps
@@ -213,22 +218,18 @@ class ONNXRTAdaptor(Adaptor):
             backend = self.backend
         else:
             backend = QuantizationMode.IntegerOps
-
+        from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
-        if self.backend == "qlinearops" or self.backend == "integerops":
-            quantizer_cls = ONNXQuantizer
-        else:
-            from neural_compressor.adaptor.ox_utils.qdq_quantizer import QDQQuantizer
-            quantizer_cls = QDQQuantizer
-        quantizer = quantizer_cls(model.model,
+        quantizer = Quantizer(model.model,
             quantize_config,
             backend,
             self.static,
             quantize_params,
-            self.quantizable_op_types)
-
+            self.quantizable_op_types,
+            self.query_handler.get_fallback_list())
+ 
         quantizer.quantize_model()
         model.model = quantizer.model.model
         return model
@@ -255,13 +256,15 @@ class ONNXRTAdaptor(Adaptor):
         return quantize_params, tune_cfg
 
     def _dump_model_op_stats(self, model):
-        fp32_op_list = self.query_handler.get_op_types_by_precision( # pylint: disable=no-member
-            precision='int8')
+        fp32_op_list = []
+        for precision in self.query_handler.get_precisions():
+            if precision != 'fp32':
+                fp32_op_list += self.query_handler.get_op_types_by_precision(precision=precision)
         res = {}
         for op_type in fp32_op_list:
-            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+            res[op_type] = {'INT8':0, 'BF16': 0, 'FP16': 0, 'FP32':0}
         for op_type in ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]:
-            res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
+            res[op_type] = {'INT8':0, 'BF16': 0, 'FP16': 0, 'FP32':0}
 
 
         if self.backend in ["qlinearops", "qdqops"] :
@@ -310,14 +313,18 @@ class ONNXRTAdaptor(Adaptor):
                 any(['_DequantizeLinear' in inp for inp in node.input]):
                 res[node.op_type]['INT8'] += 1
 
-            elif node.op_type in fp32_op_list:
-                res[node.op_type]['FP32'] += 1
+            elif node.op_type in fp32_op_list and node.name in self.quantize_config:
+                if self.quantize_config[node.name] not in self.query_handler.get_fallback_list():
+                    res[node.op_type]['FP32'] += 1
+                else:
+                    res[node.op_type][self.quantize_config[node.name].upper()] += 1
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-            res[op_type]['BF16'], res[op_type]['FP32']] for op_type in res.keys()]
+            res[op_type]['BF16'], res[op_type]['FP16'], res[op_type]['FP32']] for \
+            op_type in res.keys()]
         Statistics(output_data, 
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
+                   field_names=["Op Type", "Total", "INT8", "BF16", "FP16", "FP32"]).print_stat()
 
     def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
         from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
@@ -416,10 +423,12 @@ class ONNXRTAdaptor(Adaptor):
         return new_bias_data
 
     def _pre_optimize(self, model, level=1):
-        from neural_compressor.adaptor.ox_utils.util import split_shared_input
+        from neural_compressor.adaptor.ox_utils.util import \
+            split_shared_input, remove_init_from_model_input
+        remove_init_from_model_input(model)
         model = split_shared_input(model)
         sess_options = ort.SessionOptions()
-        level = self.query_handler.get_graph_optimization() # pylint: disable=no-member
+        level = self.query_handler.get_graph_optimization()
         if self.graph_optimization.level:
             optimization_levels = {
                     'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
@@ -439,7 +448,47 @@ class ONNXRTAdaptor(Adaptor):
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
             if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
+        if self.backend != "integerops":
+            model = self._revert_fusedconv(model)
         self.pre_optimized_model = model
+
+    def _revert_fusedconv(self, model):
+        from onnxruntime.quantization.quant_utils import attribute_to_kwarg
+        from onnx import onnx_pb as onnx_proto
+        new_nodes = []
+        remove_nodes = []
+        for node in model.model.graph.node:
+            if node.op_type == 'FusedConv':
+                kwargs = {}
+                activation_params = None
+                for attr in node.attribute:
+                    if attr.name == 'activation':
+                        activation_type = attr.s.decode('utf-8')
+                    elif attr.name == 'activation_params':
+                        activation_params = attr.floats
+                    else:
+                        kwargs.update(attribute_to_kwarg(attr))
+                conv = onnx.helper.make_node(
+                    'Conv', node.input, [node.name], node.name.split('fused ')[-1], **kwargs)
+                if activation_params:
+                    init_name = ['_'.join((conv.name, activation_type, key)) \
+                                                                for key in ['min', 'max']]
+                    model.model.graph.initializer.extend([onnx.helper.make_tensor(
+                        name, onnx_proto.TensorProto.FLOAT, [], [val]) for \
+                        name, val in zip(init_name, activation_params)])
+                    activation_input = list(conv.output) + init_name
+                else:
+                    activation_input = conv.output
+
+                activation = onnx.helper.make_node(activation_type,
+                    activation_input, node.output, '_'.join((conv.name, activation_type)))
+                new_nodes.extend([conv, activation])
+                remove_nodes.append(node)
+        model.model.graph.node.extend(new_nodes)
+        for node in remove_nodes:
+            model.model.graph.node.remove(node)
+        model.update()
+        return model
 
     def _rename_node(self, model):
         node_names = [i.name for i in model.graph.node]
@@ -541,26 +590,48 @@ class ONNXRTAdaptor(Adaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
-        quantizable_ops = self._query_quantizable_ops(self.pre_optimized_model.model)
+
+        precisions = self.query_handler.get_precisions()
         optype_wise = OrderedDict()
-        special_config_types = list(self.query_handler.get_quantization_capability()\
-                                     ['int8'].keys())  # pylint: disable=no-member
-        default_config = self.query_handler.get_quantization_capability()[\
-                                     'int8']['default'] # pylint: disable=no-member
+
         op_wise = OrderedDict()
-        for _, op in enumerate(quantizable_ops):
-            if op.op_type not in special_config_types:
-                op_capability = default_config
+        for precision in precisions:
+            if precision == 'fp16' and self.device == 'cpu':
+                continue
+            if precision in self.query_handler.get_quantization_capability():
+                special_config_types = list(self.query_handler.get_quantization_capability() \
+                    [precision].keys())
+                default_config = self.query_handler.get_quantization_capability() \
+                    [precision]['default']
             else:
-                op_capability = \
-                    self.query_handler.get_quantization_capability()[\
-                                   'int8'][op.op_type]  # pylint: disable=no-member
-            if op.op_type not in optype_wise.keys():
-                optype_wise[op.op_type] = copy.deepcopy(op_capability)
+                special_config_types = {}
+                default_config = {'weight': {'dtype': [precision]}, 
+                                  'activation': {'dtype': [precision]}}
+            optypes = self.query_handler.get_op_types_by_precision(precision) if \
+                self.query_handler.get_op_types_by_precision(precision) != ['*'] else \
+                optype_wise.keys()
+            for op in optypes:
+                if op not in special_config_types:
+                    op_capability = default_config
+                else:
+                    op_capability = self.query_handler.get_quantization_capability() \
+                        [precision][op]
+                if op not in optype_wise.keys():
+                    optype_wise[op] = copy.deepcopy(op_capability)
+                elif precision not in optype_wise[op]['weight']['dtype']:
+                    optype_wise[op]['weight']['dtype'].append(precision)
+                    optype_wise[op]['activation']['dtype'].append(precision)
 
-            op_wise.update(
-                {(op.name, op.op_type): copy.deepcopy(op_capability)})
+        for key, val in optype_wise.items():
+            optype_wise[key]['weight']['dtype'] = \
+                [i for i in precisions if i in val['weight']['dtype']]
+            optype_wise[key]['activation']['dtype'] = \
+                [i for i in precisions if i in val['activation']['dtype']]
 
+        for _, node in enumerate(self.pre_optimized_model.nodes()):
+            if node.op_type in optype_wise:
+                op_wise.update(
+                    {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _cfg_to_quantize_config(self, tune_cfg):
@@ -571,9 +642,10 @@ class ONNXRTAdaptor(Adaptor):
 
         from onnx import onnx_pb as onnx_proto
         for _, op in enumerate(self.quantizable_ops):
-            if tune_cfg['op'][(op.name, op.op_type)
-                              ]['activation']['dtype'] == 'fp32':
-                quantize_config[op.name] = 'fp32'
+            if tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype'] in \
+                self.query_handler.get_fallback_list():
+                quantize_config[op.name] = \
+                    tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype']
             else:
                 node_config = copy.deepcopy(tune_cfg['op'][(op.name, op.op_type)])
                 for tensor, config in tune_cfg['op'][(op.name, op.op_type)].items():
@@ -582,13 +654,11 @@ class ONNXRTAdaptor(Adaptor):
                     if 'algorithm' not in config:
                         node_config[tensor]['algorithm'] = algorithm
                     if config['dtype'] == "int8":
-                        node_config[tensor]['dtype'] = \
-                                  onnx_proto.TensorProto.INT8 # pylint: disable=no-member
+                        node_config[tensor]['dtype'] = onnx_proto.TensorProto.INT8
                         if 'scheme' not in config:
                             node_config[tensor]['scheme'] = 'sym'
                     else:
-                        node_config[tensor]['dtype'] = \
-                                 onnx_proto.TensorProto.UINT8 # pylint: disable=no-member
+                        node_config[tensor]['dtype'] = onnx_proto.TensorProto.UINT8
                         if 'scheme' not in config:
                             node_config[tensor]['scheme'] = 'asym'
                 quantize_config[op.name] = node_config
@@ -603,9 +673,7 @@ class ONNXRTAdaptor(Adaptor):
         return self.quantizable_ops
 
     def _query_quantizable_op_types(self):
-        quantizable_op_types = self.query_handler.get_op_types_by_precision( \
-                                  precision='int8') # pylint: disable=no-member
-
+        quantizable_op_types = self.query_handler.get_op_types_by_precision(precision='int8')
         return quantizable_op_types
 
     def evaluate(self, input_graph, dataloader, postprocess=None,
@@ -742,6 +810,20 @@ class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
         self.backend = "qlinearops"
         super().__init__(framework_specific_info)
 
+@adaptor_registry
+class ONNXRT_QOperatorAdaptor(ONNXRTAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
+        self.backend = "qlinearops"
+        super().__init__(framework_specific_info)
+
 
 @adaptor_registry
 class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
@@ -759,6 +841,20 @@ class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
 
 @adaptor_registry
 class ONNXRT_QDQOpsAdaptor(ONNXRTAdaptor):
+    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+    Args:
+        framework_specific_info (dict): framework specific configuration for quantization.
+    """
+
+    def __init__(self, framework_specific_info):
+        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), "onnxrt_qdq.yaml"))
+        self.backend = "qdqops"
+        super().__init__(framework_specific_info)
+
+@adaptor_registry
+class ONNXRT_QDQAdaptor(ONNXRTAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
     Args:
@@ -826,7 +922,7 @@ class ONNXRTQuery(QueryBackendCapability):
         Returns:
             [string list]: the precisions' name.
         """
-        return self.cur_config['precisions']['names']
+        return [i.strip() for i in self.cur_config['precisions']['names'].split(',')]
 
     def get_op_types(self): # pragma: no cover
         """Get the supported op types by all precisions.
@@ -855,9 +951,11 @@ class ONNXRTQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        assert precision in list(self.cur_config['ops'].keys())
-
-        return self.cur_config['ops'][precision]
+        #assert precision in list(self.cur_config['ops'].keys())
+        if precision in list(self.cur_config['ops'].keys()):
+            return self.cur_config['ops'][precision]
+        else:
+            return []
 
     def get_graph_optimization(self):
         """ Get onnxruntime graph optimization level"""
@@ -870,3 +968,6 @@ class ONNXRTQuery(QueryBackendCapability):
         assert level in optimization_levels, "the optimization choices \
                                               are {}".format(optimization_levels.keys())
         return optimization_levels[level]
+
+    def get_fallback_list(self):
+        return list(self.cur_config['ops'].keys() - self.cur_config['capabilities'].keys())

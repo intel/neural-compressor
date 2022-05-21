@@ -22,8 +22,8 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
-      --dataset_location=*)
-          data_dir=$(echo $var |cut -f2 -d=)
+      --data_path=*)
+          data_path=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -36,7 +36,7 @@ function run_tuning {
             --model_path ${input_model} \
             --save_path ${output_model} \
             --config ${config} \
-            --data_dir ${data_dir} \
+            --data_path ${data_path} \
             --tune
 }
 

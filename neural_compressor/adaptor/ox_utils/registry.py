@@ -19,23 +19,23 @@ from onnxruntime.quantization.quant_utils import QuantizationMode
 from .operators.base_operator import QuantOperatorBase
 from .operators.qdq_base_operator import QDQOperatorBase
 from .operators.matmul import MatMulInteger, QLinearMatMul, QDQMatMul
-from .operators.attention import AttentionQuant
+from .operators.attention import AttentionQuant, QDQAttention
 from .operators.embed_layernorm import EmbedLayerNormalizationQuant
-from .operators.gather import GatherQuant
+from .operators.gather import GatherConverter, GatherQuant
 from .operators.conv import QLinearConv, ConvInteger, QDQConv
-from .operators.activation import QLinearActivation, QDQRemovableActivation
-from .operators.binary_op import QLinearBinaryOp
+from .operators.activation import QLinearActivation, QDQRemovableActivation, QDQActivation
+from .operators.binary_op import QLinearBinaryOp, QDQBinaryOp
 from .operators.maxpool import QMaxPool, QDQMaxPool
 from .operators.gavgpool import QGlobalAveragePool
-from .operators.lstm import LSTMQuant
-from .operators.split import QSplit
-from .operators.pad import QPad
+from .operators.lstm import LSTMQuant, QDQLSTM
+from .operators.split import QSplit, QDQSplit
 from .operators.concat import QLinearConcat, QDQConcat
-from .operators.pooling import QLinearPool
-from .operators.direct_q8 import Direct8BitOp, QDQDirect8BitOp
-from .operators.resize import QDQResize, QResize
+from .operators.pad import QPad, QDQPad
+from .operators.pooling import QLinearPool, QDQPool
+from .operators.direct_q8 import QDQDirect8BitOp, Direct8BitOp, DirectCast
+from .operators.base_operator_cast import CastOperatorBase
 
-CommonOpsRegistry = {"Gather": GatherQuant, \
+CommonOpsRegistry = {"Gather": GatherConverter, \
                      "EmbedLayerNormalization": EmbedLayerNormalizationQuant}
 
 IntegerOpsRegistry = {
@@ -49,6 +49,7 @@ IntegerOpsRegistry.update(CommonOpsRegistry)
 
 QLinearOpsRegistry = {
     "Conv": QLinearConv,
+    "Concat": QLinearConcat,
     "Attention": AttentionQuant,
     "FusedConv": QLinearConv,
     "MatMul": QLinearMatMul,
@@ -62,13 +63,11 @@ QLinearOpsRegistry = {
     "GlobalAveragePool": QGlobalAveragePool,
     "Split": QSplit,
     "Pad": QPad,
-    "Concat": QLinearConcat,
-    "Reshape": Direct8BitOp,
-    "Squeeze": Direct8BitOp,
-    "Unsqueeze" : Direct8BitOp,
-    "Transpose" : Direct8BitOp,
     "AveragePool" : QLinearPool,
-    "Resize": QResize
+    "Reshape": Direct8BitOp,
+    "Transpose" : Direct8BitOp,
+    "Squeeze" : Direct8BitOp,
+    "Unsqueeze" : Direct8BitOp,
 }
 QLinearOpsRegistry.update(CommonOpsRegistry)
 
@@ -77,22 +76,41 @@ QDQRegistry = {
     "Conv": QDQConv,
     "Clip": QDQRemovableActivation,
     "Relu": QDQRemovableActivation,
+    "LeakyRelu": QDQActivation,
+    "Sigmoid": QDQActivation,
+    "MaxPool": QDQMaxPool,
+    "MatMul": QDQMatMul,
+    "Add": QDQBinaryOp,
+    "Mul": QDQBinaryOp,
+    "Gather": GatherQuant,
+    "Attention": QDQAttention,
+    "LSTM": QDQLSTM,
+    "Pad": QDQPad,
     "Reshape": QDQDirect8BitOp,
     "Transpose" : QDQDirect8BitOp,
     "Squeeze" : QDQDirect8BitOp,
+    "AveragePool": QDQPool,
     "Unsqueeze" : QDQDirect8BitOp,
-    "Resize": QDQResize,
-    "MaxPool": QDQMaxPool,
-    "AveragePool" : QDQDirect8BitOp,
     "Concat": QDQConcat,
-    "MatMul": QDQMatMul,
+    "Split": QDQSplit
 }
 
-def CreateDefaultOpQuantizer(onnx_quantizer, node):
-    return QuantOperatorBase(onnx_quantizer, node)
+CastRegistry = {
+    "Shape": DirectCast,
+    "Squeeze": DirectCast,
+    "Unsqueeze": DirectCast,
+    "Reshape": DirectCast,
+    "Unsqueeze": DirectCast,
+    "Transpose": DirectCast,
+    "Loop": DirectCast,
+    "Slice": DirectCast,
+    "Split": DirectCast,
+    "Concat": DirectCast,
+
+}
 
 
-def CreateOpQuantizer(onnx_quantizer, node):
+def CreateOpConverter(onnx_quantizer, node):
     registry = IntegerOpsRegistry if onnx_quantizer.mode == QuantizationMode.IntegerOps \
                                   else QLinearOpsRegistry
     if node.op_type in registry.keys():
@@ -103,3 +121,8 @@ def CreateQDQQuantizer(onnx_quantizer, node):
     if node.op_type in QDQRegistry.keys():
         return QDQRegistry[node.op_type](onnx_quantizer, node)
     return QDQOperatorBase(onnx_quantizer, node)
+
+def CreateCaster(onnx_quantizer, node):
+    if node.op_type in CastRegistry.keys():
+        return CastRegistry[node.op_type](onnx_quantizer, node)
+    return CastOperatorBase(onnx_quantizer, node)

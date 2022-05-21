@@ -153,9 +153,11 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                      "pytorch": PYTORCH_DATASETS,
                      "pytorch_ipex": PYTORCHIPEX_DATASETS,
                      "pytorch_fx": PYTORCHFX_DATASETS,
-                     "onnxrt_integerops": ONNXRTQL_DATASETS,
+                     "onnxrt_integerops": ONNXRTIT_DATASETS,
                      "onnxrt_qdqops": ONNXRTQDQ_DATASETS,
-                     "onnxrt_qlinearops": ONNXRTIT_DATASETS,
+                     "onnxrt_qdq": ONNXRTQDQ_DATASETS,
+                     "onnxrt_qoperator": ONNXRTQL_DATASETS,
+                     "onnxrt_qlinearops": ONNXRTQL_DATASETS,
                      "engine": ENGINE_DATASETS}
 
 
@@ -184,6 +186,8 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
                 "onnxrt_qdqops",
+                "onnxrt_qdq",
+                "onnxrt_qoperator",
                 "engine"
             ], "The framework support tensorflow mxnet pytorch onnxrt engine"
             dataset_name = dataset_type + dataset_format
