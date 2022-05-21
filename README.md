@@ -20,6 +20,9 @@ Intel® Neural Compressor has been one of the critical AI software components in
   # install stable version from pip
   pip install neural-compressor
 
+  # backend-level installation supported from v1.12, details in *Installation Guide*
+  pip install neural-compressor[tf]  
+
   # install nightly version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
 

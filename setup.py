@@ -94,12 +94,6 @@ class CMakeExtension(Extension):
         self.sourcedir = os.path.abspath(sourcedir)
 
 def check_submodules():
-    def check_for_files(folder, files):
-        if not any(os.path.exists(os.path.join(folder, f)) for f in files):
-            report("Could not find any of {} in {}".format(", ".join(files), folder))
-            report("Did you run 'git submodule update --init --recursive'?")
-            sys.exit(1)
-
     def not_exists_or_empty(folder):
         return not os.path.exists(folder) or (os.path.isdir(folder) and len(os.listdir(folder)) == 0)
 
@@ -121,6 +115,50 @@ def check_submodules():
             print('Please run:\n\tgit submodule update --init --recursive')
             sys.exit(1)
 
+dep_list = [
+    'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
+    'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
+    'prettytable', 'cryptography', 'Cython', 'sqlalchemy==1.4.27', 'alembic==1.7.7'
+]
+
+extra_dep_lists = {}
+extra_dep_lists["tf"] = ["tensorflow"]
+extra_dep_lists["intel-tf"] = ["intel-tensorflow"]
+extra_dep_lists["torch"] = ["torch", "torchvision"]
+extra_dep_lists["onnx"] = ["onnx", "onnxruntime", "onnxruntime-extensions"]
+extra_dep_lists["mxnet"] = ["mxnet"]
+extra_dep_lists["all"] = (
+    extra_dep_lists["tf"]
+    + extra_dep_lists["torch"]
+    + extra_dep_lists["onnx"]
+    + extra_dep_lists["mxnet"]
+)
+
+if "--tf" in sys.argv:
+    dep_list.extend(extra_dep_lists["tf"])
+    sys.argv.remove("--tf")
+
+if "--intel-tf" in sys.argv:
+    dep_list.extend(extra_dep_lists["intel-tf"])
+    sys.argv.remove("--intel-tf")
+
+if "--torch" in sys.argv:
+    dep_list.extend(extra_dep_lists["torch"])
+    sys.argv.remove("--torch")
+
+if "--onnx" in sys.argv:
+    dep_list.extend(extra_dep_lists["onnx"])
+    sys.argv.remove("--onnx")
+
+if "--mxnet" in sys.argv:
+    dep_list.extend(extra_dep_lists["mxnet"])
+    sys.argv.remove("--mxnet")
+
+if "--all" in sys.argv:
+    dep_list.extend(extra_dep_lists["all"])
+    sys.argv.remove("--all")
+
+
 if __name__ == '__main__':
     check_submodules()
 
@@ -136,9 +174,8 @@ if __name__ == '__main__':
         license='Apache 2.0',
         url="https://github.com/intel/neural-compressor",
         ext_modules=[CMakeExtension("engine_py", str(cwd) + '/engine/executor/')],
-        packages = find_packages(),
+        packages = find_packages(exclude=["test.*", "test"]),
         include_package_data = True,
-        package_dir = {'':'.'},
         package_data={
             '': ['*.py', '*.yaml'],
             'neural_compressor.ux': [
@@ -157,12 +194,11 @@ if __name__ == '__main__':
         cmdclass={
             'build_ext': build_ext,
         },
-        install_requires=[
-            'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
-            'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
-            'prettytable', 'cryptography', 'Cython', 'sqlalchemy==1.4.27', 'alembic==1.7.7'],
+        install_requires=dep_list,
+        extras_require=extra_dep_lists,
+
         scripts=['neural_compressor/ux/bin/inc_bench', 'engine/bin/inferencer'],
-        python_requires='>=3.6.0',
+        python_requires='>=3.7.0',
         classifiers=[
               'Intended Audience :: Science/Research',
               'Programming Language :: Python :: 3',

@@ -2,10 +2,6 @@ Installation
 ===
 ## Linux Installation
 ### Prerequisites
-You can install Neural Compressor using one of three options: Install only the library
-from binary or source, or get the Intel-optimized framework together with the
-library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).  
-
 The following prerequisites and requirements must be satisfied for a successful installation:
 
 - Python version: 3.7 or 3.8 or 3.9 or 3.10
@@ -28,6 +24,23 @@ The following prerequisites and requirements must be satisfied for a successful 
   # install stable version from from conda
   conda install neural-compressor -c conda-forge -c intel 
   ```
+* Backend Level Installation
+  ```Shell
+  # install neural-compressor and tensorflow in one line
+  pip install neural-compressor[tf]
+  # install neural-compressor and intel-tensorflow in one line
+  pip install neural-compressor[intel-tf]
+  # install neural-compressor and torch in one line
+  pip install neural-compressor[torch]
+  # install neural-compressor and onnx in one line
+  pip install neural-compressor[onnx]
+  # install neural-compressor and mxnet in one line
+  pip install neural-compressor[mxnet]
+  # install neural-compressor and several backends in one line
+  pip install neural-compressor[torch,onnx]
+  # install neural-compressor and all supported backends in one line
+  pip install neural-compressor[all]
+  ```
 
 ### Option 2 Install from source
 
@@ -38,6 +51,15 @@ The following prerequisites and requirements must be satisfied for a successful 
   git submodule update --init --recursive
   pip install -r requirements.txt
   python setup.py install
+  ```
+* Backend Level Installation  
+  ```Shell
+  # install neural-compressor and tensorflow in one line
+  python setup.py install --tf
+  # install neural-compressor and several backends in one line
+  python setup.py install --torch --onnx
+  # install neural-compressor and all supported backends in one line
+  python setup.py install --all
   ```
 
 ### Option 3 Install from AI Kit
