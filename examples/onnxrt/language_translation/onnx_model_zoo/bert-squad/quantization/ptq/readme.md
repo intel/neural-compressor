@@ -20,7 +20,7 @@ unzip uncased_L-12_H-768_A-12.zip
 
 Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/master/text/machine_comprehension/bert-squad).
 ```bash
-wget https://github.com/onnx/models/blob/master/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx
+wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx
 ```
 
 ### Quantization

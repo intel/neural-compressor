@@ -10,8 +10,9 @@ onnxruntime: 1.10.0
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
+
 ```shell
-wget https://github.com/onnx/models/blob/main/vision/classification/caffenet/model/caffenet-12.onnx
+wget https://github.com/onnx/models/raw/main/vision/classification/caffenet/model/caffenet-12.onnx
 ```
 
 ### Quantization

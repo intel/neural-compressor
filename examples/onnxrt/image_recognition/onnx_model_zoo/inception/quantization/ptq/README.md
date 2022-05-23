@@ -11,7 +11,7 @@ onnxruntime: 1.10.0
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ```shell
-wget https://github.com/onnx/models/blob/main/vision/classification/inception_and_googlenet/inception_v1/model/inception-v1-12.onnx
+wget https://github.com/onnx/models/raw/main/vision/classification/inception_and_googlenet/inception_v1/model/inception-v1-12.onnx
 ```
 
 ### Quantization

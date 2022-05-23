@@ -11,7 +11,7 @@ onnxruntime: 1.10.0
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ```shell
-wget https://github.com/onnx/models/blob/main/vision/classification/resnet/model/resnet50-v1-12.onnx
+wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet50-v1-12.onnx
 ```
 
 ### Quantization

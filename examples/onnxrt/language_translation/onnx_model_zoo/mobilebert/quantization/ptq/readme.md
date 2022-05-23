@@ -18,7 +18,7 @@ unzip uncased_L-12_H-768_A-12.zip
 Download MLPerf mobilebert model and convert it to onnx model with [tf2onnx](https://github.com/onnx/tensorflow-onnx) tool.
 
 ```bash
-wget https://github.com/fatihcakirs/mobile_models/blob/main/v0_7/tflite/mobilebert_float_384_20200602.tflite
+wget https://github.com/fatihcakirs/mobile_models/raw/main/v0_7/tflite/mobilebert_float_384_20200602.tflite
 
 python -m tf2onnx.convert --opset 11 --tflite mobilebert_float_384_20200602.tflite --output mobilebert_SQuAD.onnx
 ```

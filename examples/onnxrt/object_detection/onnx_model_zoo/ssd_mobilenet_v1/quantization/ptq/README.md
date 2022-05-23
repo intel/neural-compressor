@@ -8,10 +8,10 @@ onnx: 1.9.0
 onnxruntime: 1.10.0
 
 ### Prepare model
-Please refer to [Converting SSDMobilenet To ONNX Tutorial](https://github.com/onnx/tensorflow-onnx/blob/master/tutorials/ConvertingSSDMobilenetToONNX.ipynb) for detailed model converted. The following is a simple example command:
+Please refer to [Converting SSDMobilenet To ONNX Tutorial](https://github.com/onnx/tensorflow-onnx/blob/main/tutorials/ConvertingSSDMobilenetToONNX.ipynb) for detailed model converted. The following is a simple example command:
 
 ```shell
-wget https://github.com/onnx/models/raw/master/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_12.onnx
+wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_12.onnx
 ```
 
 ### Quantization

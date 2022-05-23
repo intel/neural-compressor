@@ -11,7 +11,7 @@ onnxruntime: 1.10.0
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ```shell
-https://github.com/onnx/models/blob/main/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-12.onnx
+wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-12.onnx
 ```
 
 ### Quantization
