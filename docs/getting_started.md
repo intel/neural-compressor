@@ -102,7 +102,7 @@ The [Tutorial](../docs/tutorial.md) provides comprehensive instructions on how t
 
 ## Developer Documentation
 
-View Neural Compressor [Documentation](docs/doclist.rst) for getting started, deep dive, and advanced resources to help you use and develop Neural Compressor.
+View Neural Compressor [Documentation](doclist.rst) for getting started, deep dive, and advanced resources to help you use and develop Neural Compressor.
 
 ## System Requirements
 
@@ -113,7 +113,7 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 
 Intel® Neural Compressor requires installing the Intel-optimized framework version for the supported DL framework you use: TensorFlow, PyTorch, MXNet, or ONNX runtime. 
 
-Note: Intel Neural Compressor supports Intel-optimized and official frameworks for some TensorFlow versions. Refer to [Supported Frameworks](README.md#Supported-Frameworks) for specifics.
+Note: Intel Neural Compressor supports Intel-optimized and official frameworks for some TensorFlow versions. Refer to [Supported Frameworks](../README.md#Supported-Frameworks) for specifics.
 
 ### Validated Hardware/Software Environment
 
@@ -194,7 +194,7 @@ Note: Intel Neural Compressor supports Intel-optimized and official frameworks f
 
 ## Validated Models
 
-Intel® Neural Compressor provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](docs/validated_model_list.md).
+Intel® Neural Compressor provides numerous examples to show promising accuracy loss with the best performance gain. A full quantized model list on various frameworks is available in the [Model List](validated_model_list.md).
 
 <table class="docutils">
 <thead>

@@ -12,13 +12,13 @@ Sections
 
    README.md
    docs/tutorial.md
-   examples_readme.md
+   docs/examples_readme.md
    api-documentation/apis.rst
    docs/doclist.rst
-   releases_info.md
-   contributions.md
-   legal_information.md
-   security_policy.md
+   docs/releases_info.md
+   docs/contributions.md
+   docs/legal_information.md
+   docs/security_policy.md
    Intel® Neural Compressor repository <https://github.com/intel/neural-compressor>
 
     

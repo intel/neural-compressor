@@ -7,7 +7,7 @@ Intel® Neural Compressor (formerly known as Intel® Low Precision Optimization 
 
 | Architecture | Workflow |
 | - | - |
-| ![Architecture](./docs/imgs/architecture.png "Architecture") | ![Workflow](./docs/imgs/workflow.png "Workflow") |
+| ![Architecture](imgs/architecture.png "Architecture") | ![Workflow](imgs/workflow.png "Workflow") |
 
 Supported deep learning frameworks are:
 

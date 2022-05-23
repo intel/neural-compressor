@@ -202,10 +202,10 @@ More details for validated models are available [here](docs/validated_model_list
 
 ## Additional Content
 
-* [Release Information](releases_info.md)
-* [Contribution Guidelines](contributions.md)
-* [Legal Information](legal_information.md)
-* [Security Policy](security_policy.md)
+* [Release Information](docs/releases_info.md)
+* [Contribution Guidelines](docs/contributions.md)
+* [Legal Information](docs/legal_information.md)
+* [Security Policy](docs/security_policy.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
 ## Hiring
