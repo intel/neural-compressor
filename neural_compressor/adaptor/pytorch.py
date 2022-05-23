@@ -1327,7 +1327,9 @@ class PyTorchAdaptor(TemplateAdaptor):
             if op_type not in res.keys():
                 res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
             value = tune_cfg['op'][key]
-            if value['activation']['dtype'] == 'fp32':
+            # Special cases: QuantStub, Embedding
+            if ('weight' in value and value['weight']['dtype'] == 'fp32') or \
+              ('weight' not in value and value['activation']['dtype'] == 'fp32'):
                 res[op_type]['FP32'] += 1
             elif value['activation']['dtype'] == 'bf16': # pragma: no cover
                 res[op_type]['BF16'] += 1
@@ -1341,8 +1343,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                     if op_type not in res.keys():
                         res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                     res[op_type]['INT8'] += 1
-                if op_type == 'LayerNorm' or op_type == 'InstanceNorm3d' or \
-                      op_type == 'Embedding' or op_type == 'Dropout':
+                if op_type in self.non_quant_dict['skipped_module_classes']:
                     ignore_log = True
                     if op_type not in res.keys():
                         res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
@@ -1998,10 +1999,13 @@ class PyTorchAdaptor(TemplateAdaptor):
                                  'skipped_module_classes': skipped_module_classes}
         # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops, 
         # due to huge accuracy regression in PyTorch.
-        custom_non_quant_dict['skipped_module_classes'] += ['LayerNorm', 
-                                                            'InstanceNorm3d', 
-                                                            'Embedding', 
-                                                            'Dropout']
+        additional_skipped_module_classes = ['LayerNorm', 
+                                            'InstanceNorm3d', 
+                                            'Embedding', 
+                                            'Dropout']
+        if self.approach == 'post_training_dynamic_quant':
+            additional_skipped_module_classes.remove('Embedding')
+        custom_non_quant_dict['skipped_module_classes'] += additional_skipped_module_classes
         return custom_non_quant_dict
 
 
