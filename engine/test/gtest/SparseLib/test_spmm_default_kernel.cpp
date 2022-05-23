@@ -284,6 +284,207 @@ static auto case_func = []() {
   std::string mkn_blocks;
   std::string tile_shape;
 
+  /* bert-mini config. case: spmm: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N) */
+  // when M = 256, K = 256, N = 128
+  src0_desc = {{256, 256}, dt::s8, ft::csrp};
+  src1_desc = {{256, 128}, dt::u8, ft::ab};
+  bias_desc = {{256, 1}, dt::s32, ft::ab};
+  dst_desc = {{256, 128}, dt::s8, ft::ab};
+  scales_desc = {{256, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 256, K = 256, N = 384
+  src0_desc = {{256, 256}, dt::s8, ft::csrp};
+  src1_desc = {{256, 384}, dt::u8, ft::ab};
+  bias_desc = {{256, 1}, dt::s32, ft::ab};
+  dst_desc = {{256, 384}, dt::s8, ft::ab};
+  scales_desc = {{256, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 256, K = 1024, N = 128
+  src0_desc = {{256, 1024}, dt::s8, ft::csrp};
+  src1_desc = {{1024, 128}, dt::u8, ft::ab};
+  bias_desc = {{256, 1}, dt::s32, ft::ab};
+  dst_desc = {{256, 128}, dt::s8, ft::ab};
+  scales_desc = {{256, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 256, K = 1024, N = 384
+  src0_desc = {{256, 1024}, dt::s8, ft::csrp};
+  src1_desc = {{1024, 384}, dt::u8, ft::ab};
+  bias_desc = {{256, 1}, dt::s32, ft::ab};
+  dst_desc = {{256, 384}, dt::s8, ft::ab};
+  scales_desc = {{256, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 1024, K = 256, N = 128
+  src0_desc = {{1024, 256}, dt::s8, ft::csrp};
+  src1_desc = {{256, 128}, dt::u8, ft::ab};
+  bias_desc = {{1024, 1}, dt::s32, ft::ab};
+  dst_desc = {{1024, 128}, dt::s8, ft::ab};
+  scales_desc = {{1024, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 1024, K = 256, N = 384
+  src0_desc = {{1024, 256}, dt::s8, ft::csrp};
+  src1_desc = {{256, 384}, dt::u8, ft::ab};
+  bias_desc = {{1024, 1}, dt::s32, ft::ab};
+  dst_desc = {{1024, 384}, dt::s8, ft::ab};
+  scales_desc = {{1024, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  /* bert-base config. case: spmm: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N) */
+  // when M = 768, K = 768, N = 128
+  src0_desc = {{768, 768}, dt::s8, ft::csrp};
+  src1_desc = {{768, 128}, dt::u8, ft::ab};
+  bias_desc = {{768, 1}, dt::s32, ft::ab};
+  dst_desc = {{768, 128}, dt::s8, ft::ab};
+  scales_desc = {{768, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 768, K = 768, N = 384
+  src0_desc = {{768, 768}, dt::s8, ft::csrp};
+  src1_desc = {{768, 384}, dt::u8, ft::ab};
+  bias_desc = {{768, 1}, dt::s32, ft::ab};
+  dst_desc = {{768, 384}, dt::s8, ft::ab};
+  scales_desc = {{768, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 768, K = 3072, N = 128
+  src0_desc = {{768, 3072}, dt::s8, ft::csrp};
+  src1_desc = {{3072, 128}, dt::u8, ft::ab};
+  bias_desc = {{768, 1}, dt::s32, ft::ab};
+  dst_desc = {{768, 128}, dt::s8, ft::ab};
+  scales_desc = {{768, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 768, K = 3072, N = 384
+  src0_desc = {{768, 3072}, dt::s8, ft::csrp};
+  src1_desc = {{3072, 384}, dt::u8, ft::ab};
+  bias_desc = {{768, 1}, dt::s32, ft::ab};
+  dst_desc = {{768, 384}, dt::s8, ft::ab};
+  scales_desc = {{768, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 3072, K = 768, N = 128
+  src0_desc = {{3072, 768}, dt::s8, ft::csrp};
+  src1_desc = {{768, 128}, dt::u8, ft::ab};
+  bias_desc = {{3072, 1}, dt::s32, ft::ab};
+  dst_desc = {{3072, 128}, dt::s8, ft::ab};
+  scales_desc = {{3072, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 3072, K = 768, N = 384
+  src0_desc = {{3072, 768}, dt::s8, ft::csrp};
+  src1_desc = {{768, 384}, dt::u8, ft::ab};
+  bias_desc = {{3072, 1}, dt::s32, ft::ab};
+  dst_desc = {{3072, 384}, dt::s8, ft::ab};
+  scales_desc = {{3072, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  /* bert-large config. case: spmm: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N) */
+  // when M = 1024, K = 1024, N = 128
+  src0_desc = {{1024, 1024}, dt::s8, ft::csrp};
+  src1_desc = {{1024, 128}, dt::u8, ft::ab};
+  bias_desc = {{1024, 1}, dt::s32, ft::ab};
+  dst_desc = {{1024, 128}, dt::s8, ft::ab};
+  scales_desc = {{1024, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 1024, K = 1024, N = 384
+  src0_desc = {{1024, 1024}, dt::s8, ft::csrp};
+  src1_desc = {{1024, 384}, dt::u8, ft::ab};
+  bias_desc = {{1024, 1}, dt::s32, ft::ab};
+  dst_desc = {{1024, 384}, dt::s8, ft::ab};
+  scales_desc = {{1024, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 1024, K = 4096, N = 128
+  src0_desc = {{1024, 4096}, dt::s8, ft::csrp};
+  src1_desc = {{4096, 128}, dt::u8, ft::ab};
+  bias_desc = {{1024, 1}, dt::s32, ft::ab};
+  dst_desc = {{1024, 128}, dt::s8, ft::ab};
+  scales_desc = {{1024, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 1024, K = 4096, N = 384
+  src0_desc = {{1024, 4096}, dt::s8, ft::csrp};
+  src1_desc = {{4096, 384}, dt::u8, ft::ab};
+  bias_desc = {{1024, 1}, dt::s32, ft::ab};
+  dst_desc = {{1024, 384}, dt::s8, ft::ab};
+  scales_desc = {{1024, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 4096, K = 1024, N = 128
+  src0_desc = {{4096, 1024}, dt::s8, ft::csrp};
+  src1_desc = {{1024, 128}, dt::u8, ft::ab};
+  bias_desc = {{4096, 1}, dt::s32, ft::ab};
+  dst_desc = {{4096, 128}, dt::s8, ft::ab};
+  scales_desc = {{4096, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
+  // when M = 4096, K = 1024, N = 384
+  src0_desc = {{4096, 1024}, dt::s8, ft::csrp};
+  src1_desc = {{1024, 384}, dt::u8, ft::ab};
+  bias_desc = {{4096, 1}, dt::s32, ft::ab};
+  dst_desc = {{4096, 384}, dt::s8, ft::ab};
+  scales_desc = {{4096, 1}, dt::fp32, ft::ab};
+  mkn_blocks = "1,1,1";
+  tile_shape = "4,4";
+  cases.push_back({gen_case(kernel_kind::sparse_matmul, kernel_prop::forward_inference, engine_kind::cpu,
+    {src0_desc, src1_desc, bias_desc, dst_desc, scales_desc}, mkn_blocks, tile_shape), false});
+
   // case: sparse: s8xu8+s32=s8, weight(M, K) * activation(K, N) + bias(M, 1) = dst(M, N)
   src0_desc = {{32, 32}, dt::s8, ft::csrp};
   src1_desc = {{32, 128}, dt::u8, ft::ab};
