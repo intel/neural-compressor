@@ -115,50 +115,6 @@ def check_submodules():
             print('Please run:\n\tgit submodule update --init --recursive')
             sys.exit(1)
 
-dep_list = [
-    'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
-    'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
-    'prettytable', 'cryptography', 'Cython', 'sqlalchemy==1.4.27', 'alembic==1.7.7'
-]
-
-extra_dep_lists = {}
-extra_dep_lists["tf"] = ["tensorflow"]
-extra_dep_lists["intel-tf"] = ["intel-tensorflow"]
-extra_dep_lists["torch"] = ["torch", "torchvision"]
-extra_dep_lists["onnx"] = ["onnx", "onnxruntime", "onnxruntime-extensions"]
-extra_dep_lists["mxnet"] = ["mxnet"]
-extra_dep_lists["all"] = (
-    extra_dep_lists["tf"]
-    + extra_dep_lists["torch"]
-    + extra_dep_lists["onnx"]
-    + extra_dep_lists["mxnet"]
-)
-
-if "--tf" in sys.argv:
-    dep_list.extend(extra_dep_lists["tf"])
-    sys.argv.remove("--tf")
-
-if "--intel-tf" in sys.argv:
-    dep_list.extend(extra_dep_lists["intel-tf"])
-    sys.argv.remove("--intel-tf")
-
-if "--torch" in sys.argv:
-    dep_list.extend(extra_dep_lists["torch"])
-    sys.argv.remove("--torch")
-
-if "--onnx" in sys.argv:
-    dep_list.extend(extra_dep_lists["onnx"])
-    sys.argv.remove("--onnx")
-
-if "--mxnet" in sys.argv:
-    dep_list.extend(extra_dep_lists["mxnet"])
-    sys.argv.remove("--mxnet")
-
-if "--all" in sys.argv:
-    dep_list.extend(extra_dep_lists["all"])
-    sys.argv.remove("--all")
-
-
 if __name__ == '__main__':
     check_submodules()
 
@@ -194,9 +150,10 @@ if __name__ == '__main__':
         cmdclass={
             'build_ext': build_ext,
         },
-        install_requires=dep_list,
-        extras_require=extra_dep_lists,
-
+        install_requires=[
+            'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
+            'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
+            'prettytable', 'cryptography', 'Cython', 'sqlalchemy==1.4.27', 'alembic==1.7.7'],
         scripts=['neural_compressor/ux/bin/inc_bench', 'engine/bin/inferencer'],
         python_requires='>=3.7.0',
         classifiers=[
