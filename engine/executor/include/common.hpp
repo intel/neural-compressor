@@ -91,11 +91,13 @@ void AddZeroPoints(const int size, const string& dtype, const float* src_data, c
                    const vector<float>& scales, float* dst_data);
 
 #if __AVX512F__
-void Quantize_avx512(const int size, const string& dtype, const void* src_data, const float* range_mins,
-                     const vector<float>& scales, void* dst_data);
+void QuantizeAVX512(const int size, const string& dtype, const void* src_data, const float* range_mins,
+                    const vector<float>& scales, void* dst_data);
+void QuantizeBF16AVX512(const int size, const void* src_data, void* dst_data);
 #else
 void Quantize(const int size, const string& dtype, const void* src_data, const float* range_mins,
               const vector<float>& scales, void* dst_data);
+void QuantizeBF16(const int size, const void* src_data, void* dst_data);
 #endif
 
 vector<int64_t> ReversePerm(const vector<int64_t>& perm_to);
@@ -182,9 +184,7 @@ class PrimitiveCachePool {
   }
 
   // call in_cache function first
-  T& GetContext(const size_t& key) noexcept {
-    return cache_map_[key].primitive;
-  }
+  T& GetContext(const size_t& key) noexcept { return cache_map_[key].primitive; }
 
   void SetContext(const size_t& key, T primitive) {
     Entry entry(primitive);
@@ -218,7 +218,7 @@ class PrimitiveCachePool {
 template <typename T>
 class DnnlPrimitiveFactory {
  public:
-  DnnlPrimitiveFactory() {}
+  DnnlPrimitiveFactory() { do_not_cache_ = (getenv("ENGINE_PRIMITIVE_CACHE_OFF") != NULL); }
   ~DnnlPrimitiveFactory() {}
 
   bool IsInCache(const size_t& key) {
@@ -243,7 +243,7 @@ class DnnlPrimitiveFactory {
   }
 
   // If set this env var, all dnnl primitive cache will be disabled
-  bool do_not_cache_ = (getenv("ENGINE_PRIMITIVE_CACHE_OFF") != NULL);
+  bool do_not_cache_ = false;
 
  private:
   static inline PrimitiveCachePool<dnnl::primitive>& GetCachePool() {
@@ -256,9 +256,9 @@ class DnnlPrimitiveFactory {
 class InnerProductPrimitiveFwdFactory : public DnnlPrimitiveFactory<dnnl::inner_product_forward> {
  public:
   static size_t Key(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
-    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
-    const vector<int64_t>& dst_perm, const string& append_op,
-    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+                    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                    const vector<int64_t>& dst_perm, const string& append_op, const vector<int64_t>& post_op_shape,
+                    const float& output_scale, const dnnl::engine* eng);
   static bool IsInFactory(const size_t& key);
   // call IsInFactory function first
   static dnnl::inner_product_forward& Get(const size_t& key);
@@ -271,18 +271,18 @@ class InnerProductPrimitiveFwdFactory : public DnnlPrimitiveFactory<dnnl::inner_
   ~InnerProductPrimitiveFwdFactory() {}
   static InnerProductPrimitiveFwdFactory& GetInstance();
   static size_t GenKey(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
-    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
-    const vector<int64_t>& dst_perm, const string& append_op,
-    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+                       const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                       const vector<int64_t>& dst_perm, const string& append_op, const vector<int64_t>& post_op_shape,
+                       const float& output_scale, const dnnl::engine* eng);
 };
 
 // Singleton, cache matmul forward class
 class MatMulPrimitiveFwdFactory : public DnnlPrimitiveFactory<dnnl::matmul> {
  public:
   static size_t Key(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
-    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
-    const vector<int64_t>& dst_perm, const string& append_op,
-    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+                    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                    const vector<int64_t>& dst_perm, const string& append_op, const vector<int64_t>& post_op_shape,
+                    const float& output_scale, const dnnl::engine* eng);
   static bool IsInFactory(const size_t& key);
   // call IsInFactory function first
   static dnnl::matmul& Get(const size_t& key);
@@ -295,9 +295,9 @@ class MatMulPrimitiveFwdFactory : public DnnlPrimitiveFactory<dnnl::matmul> {
   ~MatMulPrimitiveFwdFactory() {}
   static MatMulPrimitiveFwdFactory& GetInstance();
   static size_t GenKey(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
-    const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
-    const vector<int64_t>& dst_perm, const string& append_op,
-    const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng);
+                       const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                       const vector<int64_t>& dst_perm, const string& append_op, const vector<int64_t>& post_op_shape,
+                       const float& output_scale, const dnnl::engine* eng);
 };
 }  // namespace executor
 

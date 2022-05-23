@@ -362,8 +362,8 @@ void SoftmaxOperator::Forward_dnnl(const vector<Tensor*>& input, const vector<Te
     if (output_dtype_ == "u8") {
       auto scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
 #if __AVX512F__
-      Quantize_avx512(fp32_res.size(), dst_->dtype(), fp32_res.data(), static_cast<const float*>(dst_min_->data()),
-                      scales_, dst_->mutable_data());
+      QuantizeAVX512(fp32_res.size(), dst_->dtype(), fp32_res.data(), static_cast<const float*>(dst_min_->data()),
+                     scales_, dst_->mutable_data());
 #else
       Quantize(fp32_res.size(), dst_->dtype(), fp32_res.data(), static_cast<const float*>(dst_min_->data()), scales_,
                dst_->mutable_data());

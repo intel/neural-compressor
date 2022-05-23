@@ -239,36 +239,10 @@ void AddZeroPoints(const int size, const string& dtype, const float* src_data, c
 }
 
 #if __AVX512F__
-void Quantize_avx512(const int size, const string& dtype, const void* src_data, const float* range_mins,
-                     const vector<float>& scales, void* dst_data) {
+void QuantizeAVX512(const int size, const string& dtype, const void* src_data, const float* range_mins,
+                    const vector<float>& scales, void* dst_data) {
   const float* src_data_ = static_cast<const float*>(src_data);
-
   int avx512_loop_len = size >> 4;
-
-  if (dtype == "bf16") {
-    uint16_t* dst_data_ = static_cast<uint16_t*>(dst_data);
-#pragma omp parallel for
-    for (int i = 0; i < avx512_loop_len; ++i) {
-      __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
-#if __AVX512_BF16__
-      __m256i data_bf16 = (__m256i)_mm512_cvtneps_pbh(_src_data);
-#else
-      auto y = _mm512_bsrli_epi128(_mm512_castps_si512(_src_data), 2);
-      __m256i data_bf16 = _mm512_cvtepi32_epi16(y);
-#endif
-      _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst_data_ + (i << 4)), data_bf16);
-    }
-    union {
-      unsigned int u;
-      float f;
-    } typecast;
-#pragma omp parallel for
-    for (int i = (avx512_loop_len << 4); i < size; i++) {
-      typecast.f = src_data_[i];
-      dst_data_[i] = typecast.u >> 16;
-    }
-    return;
-  }
 
   __m512 _min_with_scale_u8 = _mm512_set1_ps(range_mins[0] * scales[0]);
   __m512 _min_with_scale_s8 = _mm512_set1_ps(0);
@@ -315,6 +289,34 @@ void Quantize_avx512(const int size, const string& dtype, const void* src_data, 
   return;
 }
 
+void QuantizeBF16AVX512(const int size, const void* src_data, void* dst_data) {
+  const float* src_data_ = static_cast<const float*>(src_data);
+  uint16_t* dst_data_ = static_cast<uint16_t*>(dst_data);
+
+  int avx512_loop_len = size >> 4;
+#pragma omp parallel for
+  for (int i = 0; i < avx512_loop_len; ++i) {
+    __m512 _src_data = _mm512_loadu_ps(src_data_ + (i << 4));
+#if __AVX512_BF16__
+    __m256i data_bf16 = (__m256i)_mm512_cvtneps_pbh(_src_data);
+#else
+    auto y = _mm512_bsrli_epi128(_mm512_castps_si512(_src_data), 2);
+    __m256i data_bf16 = _mm512_cvtepi32_epi16(y);
+#endif
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst_data_ + (i << 4)), data_bf16);
+  }
+  union {
+    unsigned int u;
+    float f;
+  } typecast;
+#pragma omp parallel for
+  for (int i = (avx512_loop_len << 4); i < size; i++) {
+    typecast.f = src_data_[i];
+    dst_data_[i] = typecast.u >> 16;
+  }
+  return;
+}
+
 #else
 void Quantize(const int size, const string& dtype, const void* src_data, const float* range_mins,
               const vector<float>& scales, void* dst_data) {
@@ -337,19 +339,23 @@ void Quantize(const int size, const string& dtype, const void* src_data, const f
       data = data > 127 ? 127 : data;
       dst_data_[i] = static_cast<char>(data);
     }
-  } else if (dtype == "bf16") {
-    uint16_t* dst_data_ = static_cast<uint16_t*>(dst_data);
-    union {
-      unsigned int u;
-      float f;
-    } typecast;
-#pragma omp parallel for
-    for (int i = 0; i < size; i++) {
-      typecast.f = src_data_[i];
-      dst_data_[i] = typecast.u >> 16;
-    }
   } else {
     LOG(ERROR) << "Can't suppport dst_dtype: " << dtype << " now!";
+  }
+  return;
+}
+
+void QuantizeBF16(const int size, const void* src_data, void* dst_data) {
+  const float* src_data_ = static_cast<const float*>(src_data);
+  uint16_t* dst_data_ = static_cast<uint16_t*>(dst_data);
+  union {
+    unsigned int u;
+    float f;
+  } typecast;
+#pragma omp parallel for
+  for (int i = 0; i < size; i++) {
+    typecast.f = src_data_[i];
+    dst_data_[i] = typecast.u >> 16;
   }
   return;
 }
@@ -896,7 +902,7 @@ void block_minmax(float* Input, size_t N, float* Min, float* Max) {
 
 /************ hash funtion for primitive cache ************/
 template <typename T>
-size_t hash_combine(size_t seed, const T &v) {
+size_t hash_combine(size_t seed, const T& v) {
   return seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
@@ -927,10 +933,11 @@ size_t get_array_hash(size_t seed, const T& v, int size) {
 }
 
 /************ InnerProductPrimitiveFwdFactory member function ************/
-size_t InnerProductPrimitiveFwdFactory::GenKey(const string& src0_dtype,
-  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
-  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
-  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
+size_t InnerProductPrimitiveFwdFactory::GenKey(const string& src0_dtype, const string& src1_dtype,
+                                               const string& dst_dtype, const vector<int64_t>& src0_shape,
+                                               const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm,
+                                               const string& append_op, const vector<int64_t>& post_op_shape,
+                                               const float& output_scale, const dnnl::engine* eng) {
   size_t seed = 0;
   // primitive kind
   string prefix = "inner_product_fwd_";
@@ -956,12 +963,13 @@ size_t InnerProductPrimitiveFwdFactory::GenKey(const string& src0_dtype,
   return seed;
 }
 
-size_t InnerProductPrimitiveFwdFactory::Key(const string& src0_dtype,
-  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
-  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
-  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
-  return InnerProductPrimitiveFwdFactory::GetInstance().GenKey(src0_dtype, src1_dtype, dst_dtype,
-    src0_shape, src1_shape, dst_perm, append_op, post_op_shape, output_scale, eng);
+size_t InnerProductPrimitiveFwdFactory::Key(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+                                            const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                                            const vector<int64_t>& dst_perm, const string& append_op,
+                                            const vector<int64_t>& post_op_shape, const float& output_scale,
+                                            const dnnl::engine* eng) {
+  return InnerProductPrimitiveFwdFactory::GetInstance().GenKey(
+      src0_dtype, src1_dtype, dst_dtype, src0_shape, src1_shape, dst_perm, append_op, post_op_shape, output_scale, eng);
 }
 
 bool InnerProductPrimitiveFwdFactory::IsInFactory(const size_t& key) {
@@ -969,17 +977,14 @@ bool InnerProductPrimitiveFwdFactory::IsInFactory(const size_t& key) {
 }
 
 dnnl::inner_product_forward& InnerProductPrimitiveFwdFactory::Get(const size_t& key) {
-  return static_cast<dnnl::inner_product_forward&>(
-    InnerProductPrimitiveFwdFactory::GetInstance().GetPrimitive(key));
+  return static_cast<dnnl::inner_product_forward&>(InnerProductPrimitiveFwdFactory::GetInstance().GetPrimitive(key));
 }
 
 void InnerProductPrimitiveFwdFactory::Set(const size_t& key, dnnl::primitive primitive) {
   InnerProductPrimitiveFwdFactory::GetInstance().SetPrimitive(key, primitive);
 }
 
-void InnerProductPrimitiveFwdFactory::ClearFactory() {
-  InnerProductPrimitiveFwdFactory::GetInstance().Clear();
-}
+void InnerProductPrimitiveFwdFactory::ClearFactory() { InnerProductPrimitiveFwdFactory::GetInstance().Clear(); }
 
 bool InnerProductPrimitiveFwdFactory::DoNotCache() {
   return InnerProductPrimitiveFwdFactory::GetInstance().do_not_cache_;
@@ -991,10 +996,11 @@ InnerProductPrimitiveFwdFactory& InnerProductPrimitiveFwdFactory::GetInstance() 
 }
 
 /************ MatMulPrimitiveFwdFactory member function ************/
-size_t MatMulPrimitiveFwdFactory::GenKey(const string& src0_dtype,
-  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
-  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
-  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
+size_t MatMulPrimitiveFwdFactory::GenKey(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+                                         const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                                         const vector<int64_t>& dst_perm, const string& append_op,
+                                         const vector<int64_t>& post_op_shape, const float& output_scale,
+                                         const dnnl::engine* eng) {
   size_t seed = 0;
   // primitive kind
   string prefix = "matmul_fwd_";
@@ -1020,12 +1026,13 @@ size_t MatMulPrimitiveFwdFactory::GenKey(const string& src0_dtype,
   return seed;
 }
 
-size_t MatMulPrimitiveFwdFactory::Key(const string& src0_dtype,
-  const string& src1_dtype, const string& dst_dtype, const vector<int64_t>& src0_shape,
-  const vector<int64_t>& src1_shape, const vector<int64_t>& dst_perm, const string& append_op,
-  const vector<int64_t>& post_op_shape, const float& output_scale, const dnnl::engine* eng) {
-  return MatMulPrimitiveFwdFactory::GetInstance().GenKey(src0_dtype, src1_dtype, dst_dtype,
-    src0_shape, src1_shape, dst_perm, append_op, post_op_shape, output_scale, eng);
+size_t MatMulPrimitiveFwdFactory::Key(const string& src0_dtype, const string& src1_dtype, const string& dst_dtype,
+                                      const vector<int64_t>& src0_shape, const vector<int64_t>& src1_shape,
+                                      const vector<int64_t>& dst_perm, const string& append_op,
+                                      const vector<int64_t>& post_op_shape, const float& output_scale,
+                                      const dnnl::engine* eng) {
+  return MatMulPrimitiveFwdFactory::GetInstance().GenKey(src0_dtype, src1_dtype, dst_dtype, src0_shape, src1_shape,
+                                                         dst_perm, append_op, post_op_shape, output_scale, eng);
 }
 
 bool MatMulPrimitiveFwdFactory::IsInFactory(const size_t& key) {
@@ -1033,21 +1040,16 @@ bool MatMulPrimitiveFwdFactory::IsInFactory(const size_t& key) {
 }
 
 dnnl::matmul& MatMulPrimitiveFwdFactory::Get(const size_t& key) {
-  return static_cast<dnnl::matmul&>(
-    MatMulPrimitiveFwdFactory::GetInstance().GetPrimitive(key));
+  return static_cast<dnnl::matmul&>(MatMulPrimitiveFwdFactory::GetInstance().GetPrimitive(key));
 }
 
 void MatMulPrimitiveFwdFactory::Set(const size_t& key, dnnl::primitive primitive) {
   MatMulPrimitiveFwdFactory::GetInstance().SetPrimitive(key, primitive);
 }
 
-void MatMulPrimitiveFwdFactory::ClearFactory() {
-  MatMulPrimitiveFwdFactory::GetInstance().Clear();
-}
+void MatMulPrimitiveFwdFactory::ClearFactory() { MatMulPrimitiveFwdFactory::GetInstance().Clear(); }
 
-bool MatMulPrimitiveFwdFactory::DoNotCache() {
-  return MatMulPrimitiveFwdFactory::GetInstance().do_not_cache_;
-}
+bool MatMulPrimitiveFwdFactory::DoNotCache() { return MatMulPrimitiveFwdFactory::GetInstance().do_not_cache_; }
 
 MatMulPrimitiveFwdFactory& MatMulPrimitiveFwdFactory::GetInstance() {
   static MatMulPrimitiveFwdFactory instance_;

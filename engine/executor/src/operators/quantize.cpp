@@ -94,12 +94,22 @@ void QuantizeOperator::Forward(const vector<Tensor*>& input, const vector<Tensor
     min_data = static_cast<const float*>(dst_min_->data());
   }
   // quantize
-  if (src_data != nullptr && dst_data != nullptr) {
+  if (dst_->dtype() == "bf16") {
+    if (src_data != nullptr && dst_data != nullptr) {
 #if __AVX512F__
-    Quantize_avx512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+      QuantizeBF16AVX512(src_->size(), src_data, dst_data);
 #else
-    Quantize(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+      QuantizeBF16(src_->size(), src_data, dst_data);
 #endif
+    }
+  } else {
+    if (src_data != nullptr && dst_data != nullptr && min_data != nullptr) {
+#if __AVX512F__
+      QuantizeAVX512(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+#else
+      Quantize(src_->size(), dst_->dtype(), src_data, min_data, scales_, dst_data);
+#endif
+    }
   }
   this->unref_tensors(input);
 }

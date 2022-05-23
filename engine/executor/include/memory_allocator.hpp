@@ -47,8 +47,7 @@ class MemoryAllocator {
     return shared_env;
   }
   static const int SharedInstNum() {
-    static const int shared_inst_num =
-        (getenv("SHARED_INST_NUM") != nullptr) ? std::atoi(getenv("SHARED_INST_NUM")) : 1;
+    static const int shared_inst_num = SharedEnv() ? std::atoi(SharedEnv()) : 1;
     return shared_inst_num;
   }
 

@@ -390,8 +390,9 @@ void MatmulOperator::Reshape(const vector<Tensor*>& input, const vector<Tensor*>
 
   // If the matmul forward class in the cache pool, just get it from pool.
   // Otherwise, do the reshape and send the related class into the cache pool
-  size_t key = MatMulPrimitiveFwdFactory::Key(src0_->dtype(), src1_->dtype(), output_dtype_,
-    src0_->shape(), src1_->shape(), dst_perm_, append_op_, post_->shape(), output_scale_, &eng_);
+  size_t key =
+      MatMulPrimitiveFwdFactory::Key(src0_->dtype(), src1_->dtype(), output_dtype_, src0_->shape(), src1_->shape(),
+                                     dst_perm_, append_op_, post_->shape(), output_scale_, &eng_);
   if (MatMulPrimitiveFwdFactory::IsInFactory(key) && !MatMulPrimitiveFwdFactory::DoNotCache()) {
     matmul_p_ = MatMulPrimitiveFwdFactory::Get(key);
   } else {
@@ -505,8 +506,8 @@ void MatmulOperator::Forward(const vector<Tensor*>& input, const vector<Tensor*>
       if (output_dtype_ == "u8" || output_dtype_ == "s8") {
         auto scales_ = GetScales(dst_min_->data(), dst_max_->data(), dst_min_->size(), dst_->dtype());
 #if __AVX512F__
-        Quantize_avx512(matmul_fp32_res.size(), dst_->dtype(), matmul_fp32_res.data(),
-                        static_cast<const float*>(dst_min_->data()), scales_, dst_->mutable_data());
+        QuantizeAVX512(matmul_fp32_res.size(), dst_->dtype(), matmul_fp32_res.data(),
+                       static_cast<const float*>(dst_min_->data()), scales_, dst_->mutable_data());
 #else
         Quantize(matmul_fp32_res.size(), dst_->dtype(), matmul_fp32_res.data(),
                  static_cast<const float*>(dst_min_->data()), scales_, dst_->mutable_data());
