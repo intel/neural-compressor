@@ -1020,7 +1020,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             shutil.rmtree('./saved', ignore_errors=True)
 
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
-      "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx backend")
+      "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_bf16_capability(self):
         model_origin = DynamicControlModel()
         os.environ['FORCE_BF16'] = '1'
@@ -1038,7 +1038,9 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                     ['bf16', 'int8', 'fp32'])
         self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['activation']['dtype'], \
                     ['bf16', 'uint8', 'fp32'])
-
+    
+    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
+      "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_mix_precision(self):
         fake_yaml = 'fx_ptq_yaml.yaml'
         model_origin = DynamicControlModel()
