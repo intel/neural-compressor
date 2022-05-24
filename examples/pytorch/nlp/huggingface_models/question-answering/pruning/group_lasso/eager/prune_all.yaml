@@ -8,7 +8,7 @@ pruning:
   approach:
     weight_compression:
       initial_sparsity: 0.0
-      target_sparsity: 0.97
+      target_sparsity: 0.7
       start_epoch: 0
       end_epoch: 4
       pruners:

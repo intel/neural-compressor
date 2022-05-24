@@ -1,7 +1,10 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing PyTorch BERT pruning result.
+This document describes the steps of training with sparsity for BERT model on PyTorch.
+
+> **Note:**
+> Training wth sparsity on CPU is under development, while the initial experiment is on GPU.
 
 # Prerequisite
 
@@ -33,16 +36,18 @@ pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu
 #### Install BERT dependency
 
 ```bash
-cd examples/pytorch/eager/language_translation/BERT_sparse
+cd examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager/
 pip3 install -r requirements.txt --ignore-installed PyYAML
 ```
+
+#### Install APEX
+
 ```bash
 git clone https://github.com/NVIDIA/apex
 cd apex
 pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 ```
 > **Note**
->
 > If no CUDA runtime is found, please export CUDA_HOME='/use/local/cuda'.
 
 ### 2. Prepare Dataset
@@ -58,9 +63,9 @@ wget https://api.ngc.nvidia.com/v2/models/nvidia/bert_pyt_ckpt_large_pretraining
 curl -LO https://api.ngc.nvidia.com/v2/models/nvidia/bert_pyt_ckpt_large_pretraining_amp_lamb/versions/20.03.0/files/bert_large_pretrained_amp.pt
 ```
 # Run
-Enter your created conda env, then run the script.
+Enter your created conda env, then run the script. Below command shows how to train with sparsity for a simplified BERT with [one sparse GEMM layer](prune_bert.yaml). 
 ```bash
-bash script/run_squad_sparse /path/to/model.pt 2.0 16 5e-5 tf32 /path/to/data /path/to/outdir prune.yaml
+bash script/run_squad_sparse /path/to/model.pt 2.0 16 5e-5 tf32 /path/to/data /path/to/outdir prune_bert.yaml
 ```
 The default parameters are as follows:
 ```shell
@@ -73,6 +78,8 @@ BERT_PREP_WORKING_DIR=${6:-'/path/to/bert_data'}
 OUT_DIR=${7:-"./results/SQuAD"}
 prune_config=${8:-"prune_bert.yaml"}
 ```
+We also provided an example of BERT with [full sparse layers](prune_all.yaml).
+
 # Original BERT README
 
 Please refer [BERT README](https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/LanguageModeling/BERT/README.md)
