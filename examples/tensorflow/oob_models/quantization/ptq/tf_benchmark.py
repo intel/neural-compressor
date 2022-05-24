@@ -62,21 +62,6 @@ def initialize_graph(model_details, args, od_graph_def):
 
             od_graph_def.library.CopyFrom(od_graph_def_tmp.library)
 
-        if args.use_nc_optimize:
-            od_graph_def_tmp = od_graph_def
-            from neural_compressor.adaptor.tensorflow import TensorflowQuery
-            from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-            from neural_compressor.experimental import common
-            model = common.Model(od_graph_def)
-            query_handler = TensorflowQuery(local_config_file=os.path.join(
-                                            os.path.dirname(__file__) + "tensorflow.yaml"))
-            optimization = query_handler.get_grappler_optimization_cfg()
-            pre_optimizer_handle = PreOptimization(model, optimization)
-            pre_optimized_model = pre_optimizer_handle.get_optimized_model()
-            od_graph_def = pre_optimized_model.graph_def
-
-            od_graph_def.library.CopyFrom(od_graph_def_tmp.library)
-
         tf_v1.import_graph_def(od_graph_def, name='g',
                             input_map=input_variables)
 

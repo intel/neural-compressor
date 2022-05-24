@@ -118,12 +118,6 @@ function set_args {
   --------
   )
 
-  models_need_use_nc_optimizer=(
-  --------
-  ava-person-vehicle-detection-stage2-2_0_0
-  --------
-  )  
-
   # neural_compressor graph_def
   models_need_nc_graphdef=(
   --------
