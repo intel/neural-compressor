@@ -652,7 +652,7 @@ COCOmAP_input_order_schema = Schema({
 schema = Schema({
     'model': {
         'name': str,
-        'framework': And(str, lambda s: s.lower() in list(FRAMEWORKS.keys()) + ['NA']),
+        'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
     },

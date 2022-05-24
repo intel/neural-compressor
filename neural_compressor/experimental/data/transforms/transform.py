@@ -153,7 +153,6 @@ class ONNXRTQLTransforms(Transforms):
         general.update(ONNXRT_QL_TRANSFORMS["general"])
         return general
 
-
 class ONNXRTITTransforms(Transforms):
     def _get_preprocess(self):
         preprocess = {}
@@ -168,22 +167,6 @@ class ONNXRTITTransforms(Transforms):
     def _get_general(self):
         general = {}
         general.update(ONNXRT_IT_TRANSFORMS["general"])
-        return general
-
-class ONNXRTQDQTransforms(Transforms):
-    def _get_preprocess(self):
-        preprocess = {}
-        preprocess.update(ONNXRT_QDQ_TRANSFORMS["preprocess"])
-        return preprocess
-
-    def _get_postprocess(self):
-        postprocess = {}
-        postprocess.update(ONNXRT_QDQ_TRANSFORMS["postprocess"])
-        return postprocess
-
-    def _get_general(self):
-        general = {}
-        general.update(ONNXRT_QDQ_TRANSFORMS["general"])
         return general
 
 class EngineTransforms(Transforms):
@@ -210,7 +193,8 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
                         "pytorch_fx": PyTorchTransforms,
                         "onnxrt_qlinearops": ONNXRTQLTransforms,
                         "onnxrt_integerops": ONNXRTITTransforms,
-                        "onnxrt_qdqops": ONNXRTQDQTransforms,
+                        "onnxrt_qoperator": ONNXRTQLTransforms,
+                        "onnxrt_qdq": ONNXRTQLTransforms,
                         "engine": EngineTransforms}
 
 # transform registry will register transforms into these dicts
@@ -218,7 +202,6 @@ TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-ONNXRT_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ENGINE_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
@@ -229,14 +212,15 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "pytorch_ipex": PYTORCH_TRANSFORMS,
                        "pytorch_fx": PYTORCH_TRANSFORMS,
                        "onnxrt_qlinearops": ONNXRT_QL_TRANSFORMS,
-                       "onnxrt_qdqops": ONNXRT_QDQ_TRANSFORMS,
+                       "onnxrt_qdq": ONNXRT_QL_TRANSFORMS,
+                       "onnxrt_qoperator": ONNXRT_QL_TRANSFORMS,
                        "onnxrt_integerops": ONNXRT_IT_TRANSFORMS,
                        "engine": ENGINE_TRANSFORMS}
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "tensorflow_itex", "engine",
-                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdqops",
+        assert framework in ("tensorflow", "tensorflow_itex", "engine", "onnxrt_qoperator",
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt engine"
         assert process in ("preprocess", "postprocess",
@@ -279,8 +263,9 @@ def transform_registry(transform_type, process, framework):
                 "pytorch_ipex",
                 "pytorch_fx",
                 "onnxrt_qlinearops",
-                "onnxrt_qdqops",
+                "onnxrt_qdq",
                 "onnxrt_integerops",
+                "onnxrt_qoperator",
                 "engine"
             ], "The framework support tensorflow mxnet pytorch onnxrt engine"
             if transform_type in registry_transforms[single_framework][process].keys():
@@ -363,8 +348,7 @@ def get_torchvision_map(interpolation):
         return interpolation
 
 @transform_registry(transform_type="Compose", process="general", \
-                 framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
-                            engine, onnxrt_qdqops")
+                 framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, engine")
 class ComposeTransform(BaseTransform):
     """Composes several transforms together.
 
@@ -440,7 +424,7 @@ class MXNetCropToBoundingBox(CropToBoundingBox):
         return (image, label)
 
 @transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
-                framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops")
+                framework="onnxrt_qlinearops, onnxrt_integerops")
 class ONNXRTCropToBoundingBox(CropToBoundingBox):
     """Crops an image to a specified bounding box.
 
@@ -486,7 +470,7 @@ class TensorflowCropToBoundingBox(CropToBoundingBox):
         return (image, label)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
-                framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops, pytorch, mxnet")
+                framework="onnxrt_qlinearops, onnxrt_integerops, pytorch, mxnet")
 class ResizeWithRatio(BaseTransform):
     """Resize image with aspect ratio and pad it to max shape(optional).
        If the image is padded, the label will be processed at the same time.
@@ -601,7 +585,7 @@ class TensorflowResizeWithRatio(BaseTransform):
         return image, (bbox, str_label, int_label, image_id)
 
 @transform_registry(transform_type="Transpose", process="preprocess", \
-        framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+        framework="onnxrt_qlinearops, onnxrt_integerops")
 class Transpose(BaseTransform):
     """Transpose image according to perm.
 
@@ -676,7 +660,7 @@ class PyTorchTranspose(Transpose):
         return (image, label)
 
 @transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
-        framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops")
+        framework="onnxrt_qlinearops, onnxrt_integerops")
 class RandomVerticalFlip(BaseTransform):
     """Vertically flip the given image randomly.
 
@@ -709,7 +693,7 @@ class TensorflowRandomVerticalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
-        framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops")
+        framework="onnxrt_qlinearops, onnxrt_integerops")
 class RandomHorizontalFlip(BaseTransform):
     """Horizontally flip the given image randomly.
 
@@ -742,8 +726,7 @@ class TensorflowRandomHorizontalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="ToArray", process="preprocess", \
-        framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops, \
-                   tensorflow, pytorch, mxnet")
+        framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, pytorch, mxnet")
 class ToArray(BaseTransform):
     """Convert PIL Image or NDArray to numpy array.
 
@@ -799,7 +782,7 @@ class CastTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="Cast", process="general",
-                    framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                    framework="onnxrt_qlinearops, onnxrt_integerops")
 class CastONNXTransform(BaseTransform):
     """Convert image to given dtype.
 
@@ -1285,7 +1268,7 @@ class RescaleTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
-                framework='onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops')
+                framework='onnxrt_qlinearops, onnxrt_integerops')
 class RescaleTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
@@ -1300,8 +1283,7 @@ class RescaleTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
-    framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet, \
-               onnxrt_qdqops')
+    framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet')
 class AlignImageChannelTransform(BaseTransform):
     """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
         [H,W,3]->[H,W].
@@ -1409,7 +1391,7 @@ class ResizeMXNetTransform(BaseTransform):
 
 
 @transform_registry(transform_type="Resize", process="preprocess", \
-                framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                framework="onnxrt_qlinearops, onnxrt_integerops")
 class ResizeTransform(BaseTransform):
     """Resize the input image to the given size.
 
@@ -1559,7 +1541,7 @@ class MXNetCropResizeTransform(BaseTransform):
         return (transformer(image), label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", \
-                framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops")
+                framework="onnxrt_qlinearops, onnxrt_integerops")
 class CropResizeTransform(BaseTransform):
     """Crop the input image with given location and resize it.
 
@@ -1600,7 +1582,7 @@ class CropResizeTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="CenterCrop", process="preprocess", \
-                framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                framework="onnxrt_qlinearops, onnxrt_integerops")
 class CenterCropTransform(BaseTransform):
     """Crops the given image at the center to the given size.
 
@@ -1695,7 +1677,7 @@ class PyTorchNormalizeTransform(MXNetNormalizeTransform):
         return (image, label)
 
 @transform_registry(transform_type="Normalize", process="preprocess", \
-                framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                framework="onnxrt_qlinearops, onnxrt_integerops")
 class NormalizeTransform(BaseTransform):
     """Normalize a image with mean and standard deviation.
 
@@ -1725,7 +1707,7 @@ class NormalizeTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomCrop", process="preprocess", \
-                framework="onnxrt_qdqops, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+                framework="mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class RandomCropTransform(BaseTransform):
     """Crop the image at a random location to the given size.
 
@@ -1765,7 +1747,7 @@ class RandomCropTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
-                framework="onnxrt_qdqops, onnxrt_qlinearops, onnxrt_integerops")
+                framework="onnxrt_qlinearops, onnxrt_integerops")
 class RandomResizedCropTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 

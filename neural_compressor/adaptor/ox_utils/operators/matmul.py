@@ -143,5 +143,5 @@ class QDQMatMul(QDQOperatorBase):
         else:
             self.quantizer.quantize_inputs(node, [1])
 
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdqops':
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)

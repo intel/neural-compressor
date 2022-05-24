@@ -30,7 +30,7 @@ class QDQSplit(QDQOperatorBase):
     def quantize(self):
         node = self.node
         self.quantizer.quantize_inputs(node, [0])
-        if not self.disable_qdq_for_node_output or self.quantizer != 'qdqops':
+        if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
             self.quantizer.quantize_outputs(self.node, direct_int8=True)
 
 class QSplit(QuantOperatorBase):

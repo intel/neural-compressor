@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. used to specify model specific information.
   name: distilbert 
-  framework: onnxrt_qdqops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
+  framework: onnxrt_qdq                          # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 quantization:
   approach: post_training_static_quant              # optional. default value is post_training_static_quant.                                   

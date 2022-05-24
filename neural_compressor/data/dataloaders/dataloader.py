@@ -29,7 +29,7 @@ class DataLoader(object):
                  num_workers=0, pin_memory=False, shuffle=False, distributed=False):
 
         assert framework in ('tensorflow', 'tensorflow_itex',
-                             'pytorch', 'pytorch_ipex', 'pytorch_fx', 'onnxrt_qdqops', \
+                             'pytorch', 'pytorch_ipex', 'pytorch_fx', 'onnxrt_qdq', \
                              'onnxrt_qlinearops', 'onnxrt_integerops', 'mxnet'), \
                              "framework support tensorflow pytorch mxnet onnxruntime"
         return DATALOADERS[framework](dataset=dataset,

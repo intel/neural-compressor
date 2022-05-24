@@ -69,12 +69,6 @@ class ONNXRTITMetrics(object):
         self.metrics.update(ONNXRT_IT_METRICS)
 
 @singleton
-class ONNXRTQDQMetrics(object):
-    def __init__(self):
-        self.metrics = {}
-        self.metrics.update(ONNXRT_QDQ_METRICS)
-
-@singleton
 class EngineMetrics(object):
     def __init__(self):
         self.metrics = {}
@@ -88,8 +82,7 @@ framework_metrics = {"tensorflow": TensorflowMetrics,
                      "pytorch_fx": PyTorchMetrics,
                      "onnxrt_qlinearops": ONNXRTQLMetrics,
                      "onnxrt_integerops": ONNXRTITMetrics,
-                     "onnxrt_qdqops": ONNXRTQDQMetrics,
-                     "onnxrt_qdq": ONNXRTQDQMetrics,
+                     "onnxrt_qdq": ONNXRTQLMetrics,
                      "onnxrt_qoperator": ONNXRTQLMetrics,
                      "engine": EngineMetrics}
 
@@ -98,7 +91,6 @@ TENSORFLOW_METRICS = {}
 MXNET_METRICS = {}
 PYTORCH_METRICS = {}
 ONNXRT_QL_METRICS = {}
-ONNXRT_QDQ_METRICS = {}
 ONNXRT_IT_METRICS = {}
 ENGINE_METRICS = {}
 
@@ -109,17 +101,16 @@ registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "pytorch_ipex": PYTORCH_METRICS,
                     "pytorch_fx": PYTORCH_METRICS,
                     "onnxrt_qlinearops": ONNXRT_QL_METRICS,
-                    "onnxrt_qdqops": ONNXRT_QDQ_METRICS,
+                    "onnxrt_qdq": ONNXRT_QL_METRICS,
                     "onnxrt_integerops": ONNXRT_IT_METRICS,
-                    "onnxrt_qdq": ONNXRT_QDQ_METRICS,
                     "onnxrt_qoperator": ONNXRT_QL_METRICS,
                     "engine": ENGINE_METRICS,}
 
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "tensorflow_itex", "engine", "onnxrt_qdq",
-                            "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdqops",
+        assert framework in ("tensorflow", "tensorflow_itex", "engine",
+                            "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet", 
                              "onnxrt_qoperator"), \
                              "framework support tensorflow pytorch mxnet onnxrt engine"
@@ -154,7 +145,6 @@ def metric_registry(metric_type, framework):
                 "mxnet",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
-                "onnxrt_qdqops",
                 "onnxrt_qdq",
                 "onnxrt_qoperator",
                 "pytorch",
@@ -317,7 +307,7 @@ def _shape_validate(preds, labels):
     return preds, labels
 
 @metric_registry('F1', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, \
-                        onnxrt_qdqops, onnxrt_integerops, engine')
+                        onnxrt_integerops, engine')
 class F1(BaseMetric):
     """Computes the F1 score of a binary classification problem.
 
@@ -377,7 +367,7 @@ def _accuracy_type_check(preds, labels):
    return update_type
 
 @metric_registry('Accuracy', 'tensorflow, pytorch, onnxrt_qlinearops, \
-                              onnxrt_qdqops, onnxrt_integerops, engine')
+                              onnxrt_integerops, engine')
 class Accuracy(BaseMetric):
     """Computes accuracy classification score.
 
@@ -457,8 +447,7 @@ class PyTorchLoss():
                                       before it can be computed.")
         return self._sum.item() / self._num_examples
         
-@metric_registry('Loss', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine, \
-                         onnxrt_qdqops')
+@metric_registry('Loss', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
 class Loss(BaseMetric):
     """A dummy metric for directly printing loss, it calculates the average of predictions.
 
@@ -486,8 +475,7 @@ class Loss(BaseMetric):
             return allgather_sum / allgather_sample
         return self.sum / self.sample
 
-@metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine, \
-                         onnxrt_qdqops')
+@metric_registry('MAE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
 class MAE(BaseMetric):
     """Computes Mean Absolute Error (MAE) loss.
 
@@ -523,7 +511,7 @@ class MAE(BaseMetric):
         return aes_sum / aes_size
 
 @metric_registry('RMSE', 'tensorflow, pytorch, mxnet, onnxrt_qlinearops, \
-                          onnxrt_qdqops, onnxrt_integerops, engine')
+                          onnxrt_integerops, engine')
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
 
@@ -548,8 +536,7 @@ class RMSE(BaseMetric):
             self.mse._hvd = self._hvd
         return np.sqrt(self.mse.result())
 
-@metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, \
-                         onnxrt_qdqops, engine')
+@metric_registry('MSE', 'tensorflow, pytorch, onnxrt_qlinearops, onnxrt_integerops, engine')
 class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
 
@@ -629,8 +616,7 @@ class TensorflowTopK(BaseMetric):
             return allgather_num_correct / allgather_num_sample 
         return self.num_correct / self.num_sample
 
-@metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops, \
-                          engine, onnxrt_qdqops')
+@metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops, engine')
 class GeneralTopK(BaseMetric):
     """Computes top k predictions accuracy.
 
@@ -676,8 +662,7 @@ class GeneralTopK(BaseMetric):
             return allgather_num_correct / allgather_num_sample
         return self.num_correct / self.num_sample
 
-@metric_registry('COCOmAPv2', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, \
-                               onnxrt_qdqops, engine')
+@metric_registry('COCOmAPv2', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class COCOmAPv2(BaseMetric):
     """Computes mean average precision.
     Args:
@@ -824,8 +809,7 @@ class COCOmAPv2(BaseMetric):
 
             return box_metrics[self.map_key]
 
-@metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, \
-                         onnxrt_qdqops, engine')
+@metric_registry('mAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowMAP(BaseMetric):
     """Computes mean average precision.
 
@@ -973,8 +957,7 @@ class TensorflowMAP(BaseMetric):
 
             return box_metrics[self.map_key]
 
-@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, \
-                             onnxrt_qdqops, engine')
+@metric_registry('COCOmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowCOCOMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in COCO
 
@@ -990,8 +973,7 @@ class TensorflowCOCOMAP(TensorflowMAP):
         self.iou_thrs = '0.5:0.05:0.95'
         self.map_points = 101
 
-@metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, \
-                            onnxrt_qdqops, engine')
+@metric_registry('VOCmAP', 'tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine')
 class TensorflowVOCMAP(TensorflowMAP):
     """Computes mean average precision using algorithm in VOC
 
@@ -1079,7 +1061,7 @@ class mIOU(BaseMetric):
         mean_iu = np.nanmean(iu)
         return mean_iu
 
-@metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops, engine, onnxrt_qdqops')
+@metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops, engine')
 class ONNXRTGLUE(BaseMetric):
     """Computes GLUE score.
 

@@ -17,7 +17,7 @@ version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
   name: mobilebert 
-  framework: onnxrt_qdqops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
+  framework: onnxrt_qdq                          # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   performance:                                       # optional. used to benchmark performance of passing model.

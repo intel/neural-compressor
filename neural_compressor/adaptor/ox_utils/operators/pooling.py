@@ -33,7 +33,7 @@ class QDQPool(QDQOperatorBase):
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return
         self.quantizer.quantize_inputs(self.node)
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdqops':
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(self.node)
 
 class QLinearPool(QuantOperatorBase):

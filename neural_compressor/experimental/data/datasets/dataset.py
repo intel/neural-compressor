@@ -65,12 +65,6 @@ class ONNXRTITDatasets(object):
         self.datasets = {}
         self.datasets.update(ONNXRTIT_DATASETS)
 
-@singleton
-class ONNXRTQDQDatasets(object):
-    def __init__(self):
-        self.datasets = {}
-        self.datasets.update(ONNXRTQDQ_DATASETS)
-
 class PytorchMxnetWrapDataset():
     def __init__(self, datafunc):
         self.datafunc = datafunc
@@ -106,8 +100,9 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
                       "pytorch": PyTorchDatasets,
                       "pytorch_ipex": PyTorchDatasets,
                       "pytorch_fx": PyTorchDatasets,
-                      "onnxrt_qdqops": ONNXRTQDQDatasets,
+                      "onnxrt_qdq": ONNXRTQLDatasets,
                       "onnxrt_qlinearops": ONNXRTQLDatasets,
+                      "onnxrt_qoperator": ONNXRTQLDatasets,
                       "onnxrt_integerops": ONNXRTITDatasets,
                       "engine": EngineDatasets}
 
@@ -124,9 +119,10 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "tensorflow_itex", "onnxrt_qdqops",
+        assert framework in ["tensorflow", "tensorflow_itex", "onnxrt_qdq",
                              "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
-                             "pytorch", "pytorch_ipex", "pytorch_fx", "engine"], \
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "engine",
+                             "onnxrt_qoperator"], \
                              "framework support tensorflow pytorch mxnet onnxrt engine"
         self.datasets = framework_datasets[framework]().datasets
 
@@ -144,7 +140,6 @@ PYTORCHIPEX_DATASETS = {}
 PYTORCHFX_DATASETS = {}
 ONNXRTQL_DATASETS = {}
 ONNXRTIT_DATASETS = {}
-ONNXRTQDQ_DATASETS = {}
 ENGINE_DATASETS = {}
 
 registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
@@ -154,8 +149,7 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                      "pytorch_ipex": PYTORCHIPEX_DATASETS,
                      "pytorch_fx": PYTORCHFX_DATASETS,
                      "onnxrt_integerops": ONNXRTIT_DATASETS,
-                     "onnxrt_qdqops": ONNXRTQDQ_DATASETS,
-                     "onnxrt_qdq": ONNXRTQDQ_DATASETS,
+                     "onnxrt_qdq": ONNXRTQL_DATASETS,
                      "onnxrt_qoperator": ONNXRTQL_DATASETS,
                      "onnxrt_qlinearops": ONNXRTQL_DATASETS,
                      "engine": ENGINE_DATASETS}
@@ -185,7 +179,6 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
                 "pytorch_fx",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
-                "onnxrt_qdqops",
                 "onnxrt_qdq",
                 "onnxrt_qoperator",
                 "engine"
@@ -280,7 +273,7 @@ def calculate_md5(fpath, chunk_size=1024*1024):
     return md5.hexdigest()
 
 @dataset_registry(dataset_type="CIFAR10", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, onnxrt_qdqops", dataset_format='')
+                    onnxrt_integerops", dataset_format='')
 class CIFAR10(Dataset):
     """Configuration for CIFAR10 and CIFAR100 database
 
@@ -428,7 +421,7 @@ class TensorflowCIFAR10(CIFAR10):
         return (image, label)
 
 @dataset_registry(dataset_type="CIFAR100", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, onnxrt_qdqops", dataset_format='')
+                    onnxrt_integerops", dataset_format='')
 class CIFAR100(CIFAR10):
     url = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
     filename = "cifar-100-python.tar.gz"
@@ -478,7 +471,7 @@ class TensorflowCIFAR100(CIFAR100):
         return (image, label)
 
 @dataset_registry(dataset_type="MNIST", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, onnxrt_qdqops", dataset_format='')
+                    onnxrt_integerops", dataset_format='')
 class MNIST(Dataset):
     """Configuration for Modified National Institute of Standards and Technology database
        and FashionMNIST database
@@ -587,7 +580,7 @@ class TensorflowMNIST(MNIST):
         return (image, label)
 
 @dataset_registry(dataset_type="FashionMNIST", framework="onnxrt_qlinearops, \
-                    onnxrt_qdqops, onnxrt_integerops", dataset_format='')
+                    onnxrt_integerops", dataset_format='')
 class FashionMNIST(MNIST):
     resource = [
         ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/' + file_name, None)
@@ -651,7 +644,7 @@ class TensorflowFashionMNIST(FashionMNIST):
         return (image, label)
 
 @dataset_registry(dataset_type="ImageFolder", framework="onnxrt_qlinearops, \
-                    onnxrt_qdqops, onnxrt_integerops", dataset_format='')
+                    onnxrt_integerops", dataset_format='')
 class ImageFolder(Dataset):
     """Configuration for ImageFolder
 

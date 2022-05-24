@@ -55,7 +55,7 @@ def build_static_yaml():
     fake_yaml = """
         model:
           name: imagenet
-          framework: onnxrt_qdqops
+          framework: onnxrt_qdq
 
         quantization:                                        
           approach: post_training_static_quant  

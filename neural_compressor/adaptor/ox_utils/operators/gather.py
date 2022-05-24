@@ -88,5 +88,5 @@ class GatherQuant(QuantOperatorBase):
             return
 
         self.quantizer.quantize_inputs(node, [0])
-        if not self.disable_qdq_for_node_output or self.quantizer != 'qdqops':
+        if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
             self.quantizer.quantize_outputs(node)

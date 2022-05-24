@@ -31,5 +31,5 @@ class QDQOperatorBase(QuantOperatorBase):
         node = self.node
 
         self.quantizer.quantize_inputs(node)
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdqops':
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)

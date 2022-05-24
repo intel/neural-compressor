@@ -17,7 +17,7 @@ version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
   name: ssd
-  framework: onnxrt_qdqops                       # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  framework: onnxrt_qdq                          # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
   inputs: image
   outputs: detection_bboxes,detection_classes,detection_scores
 

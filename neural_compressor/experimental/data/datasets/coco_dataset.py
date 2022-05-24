@@ -130,7 +130,7 @@ class COCORecordDataset(IterableDataset):
         ds = ds.prefetch(buffer_size=1000)
         return ds
 
-@dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, onnxrt_qdqops, \
+@dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, \
                     onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
 class COCORaw(Dataset):
     """Configuration for Coco raw dataset.
@@ -205,7 +205,7 @@ class COCORaw(Dataset):
             sample= self.transform(sample)
         return sample
 
-@dataset_registry(dataset_type="COCONpy", framework="onnxrt_qlinearops, onnxrt_qdqops, \
+@dataset_registry(dataset_type="COCONpy", framework="onnxrt_qlinearops, \
                     onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
 class COCONpy(Dataset):
     """Configuration for Coco npy dataset.

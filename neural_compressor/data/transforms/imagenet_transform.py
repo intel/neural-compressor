@@ -188,7 +188,7 @@ class BilinearImagenetTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="BilinearImagenet", process="preprocess", \
-                    framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                    framework="onnxrt_qlinearops, onnxrt_integerops")
 class OnnxBilinearImagenetTransform(BaseTransform):
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -239,7 +239,7 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="ResizeCropImagenet", process="preprocess", \
-                    framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                    framework="onnxrt_qlinearops, onnxrt_integerops")
 class ONNXResizeCropImagenetTransform(BaseTransform):
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
@@ -294,7 +294,7 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
         return (image.transpose(2, 0, 1), label)
 
 @transform_registry(transform_type="ResizeWithAspectRatio", process="preprocess", \
-                    framework="onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdqops")
+                    framework="onnxrt_qlinearops, onnxrt_integerops")
 class ResizeWithAspectRatio(BaseTransform):
     def __init__(self, height, width, scale=87.5, inter_pol=cv2.INTER_AREA):
         self.height = height

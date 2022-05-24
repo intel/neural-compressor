@@ -109,7 +109,7 @@ class Quantizer:
             self.model.model.opset_import.extend([onnx.helper.make_opsetid("", 11)])
             opset_version = 11
 
-        if opset_version < 13 and self.mode == 'qdqops':
+        if opset_version < 13 and self.mode == 'qdq':
             logger.warning("Per-Channel support with QDQ format requires onnx opset >= 13," \
                 " use per-tensor granularity instead")
         return opset_version
@@ -128,7 +128,7 @@ class Quantizer:
         self.remove_redundant_pairs()
  
         # step 3: convert q-node-dq to qlinear op if needed
-        if self.mode != 'qdqops':
+        if self.mode != 'qdq':
             self.convert_qdq_to_operator_oriented()
  
         self.merge_dedicated_qdq_pair() 
@@ -144,7 +144,7 @@ class Quantizer:
         self.remove_nodes = []
         self.replace_input = []
         self.new_nodes = []
-        if self.mode == 'qdqops' and self.dedicated_qdq_pair:
+        if self.mode == 'qdq' and self.dedicated_qdq_pair:
             for node in self.model.nodes():
                 if node.op_type in ['QuantizeLinear']:
                     children = self.model.get_children(node)
@@ -168,7 +168,7 @@ class Quantizer:
                             self.replace_input.append([self.model.get_children(child)[0],
                                                 child.output[0], node.input[0]])
                     self.remove_nodes.append(node)
-        elif self.mode != 'qdqops' or not self.dedicated_qdq_pair:
+        elif self.mode != 'qdq' or not self.dedicated_qdq_pair:
             target_type = ['QuantizeLinear', 'DequantizeLinear']
             for op_type in target_type:
                 for node in self.model.nodes():
@@ -424,7 +424,7 @@ class Quantizer:
                     scheme = self.config[node.name]['weight']['scheme'] if \
                         initializer_use_weight_qType else \
                         self.config[node.name]['activation']['scheme']
-                if self.add_qdq_pair_to_weight and self.mode == 'qdqops':
+                if self.add_qdq_pair_to_weight and self.mode == 'qdq':
                     weight = self._get_quantized_weight(initializer, dtype, scheme)
                     self._update_weight(weight)
                     q_weight_name = weight.name + "_quantized"
@@ -652,7 +652,7 @@ class Quantizer:
         return
 
     def quantize_weights_per_channel(self, node, indices, weight_qType, scheme, axis):
-        if self.opset_version < 13 and self.mode == 'qdqops':
+        if self.opset_version < 13 and self.mode == 'qdq':
             self.quantize_inputs(node, indices)
             return
 
@@ -660,7 +660,7 @@ class Quantizer:
             if idx not in indices:
                 continue
 
-            if self.add_qdq_pair_to_weight and self.mode == 'qdqops':
+            if self.add_qdq_pair_to_weight and self.mode == 'qdq':
                 q_name, zp_name, scale_name = self.quantize_weight_per_channel(weight_name, 
                                                                                weight_qType,
                                                                                scheme,

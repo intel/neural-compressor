@@ -173,7 +173,7 @@
     <<: *default_optimization
 -
   version:
-    name: ['1.9.0', '1.10.0']
+    name: ['1.9.0', '1.10.0', '1.11.0']
 
   precisions:
     <<: *common_precisions

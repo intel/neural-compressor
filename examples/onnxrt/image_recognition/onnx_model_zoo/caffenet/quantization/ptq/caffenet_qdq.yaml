@@ -17,7 +17,7 @@ version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
   name: caffenet
-  framework: onnxrt_qdqops                       # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: onnxrt_qdq                          # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant               # optional. default value is post_training_static_quant.                          
