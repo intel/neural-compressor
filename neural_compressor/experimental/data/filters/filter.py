@@ -79,7 +79,6 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
 
 class FILTERS(object):
     def __init__(self, framework):
-        print(framework)
         assert framework in ["tensorflow", "tensorflow_itex", "onnxrt_qdq",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "mxnet",
                              "onnxrt_integerops", "onnxrt_qlinearops", "onnxrt_qoperator"], \
