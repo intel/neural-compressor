@@ -95,7 +95,7 @@ export class DatasetsComponent implements OnInit {
           this.modelService.delete('dataset', id, name)
             .subscribe(
               response =>
-                this.getDatasetList(),
+                this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'datasets' }),
               error =>
                 this.modelService.openErrorDialog(error)
             );

@@ -325,7 +325,7 @@ export class OptimizationsComponent implements OnInit {
           this.modelService.delete('optimization', id, name)
             .subscribe(
               response =>
-                this.getOptimizations(),
+                this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'optimizations' }),
               error =>
                 this.modelService.openErrorDialog(error)
             );

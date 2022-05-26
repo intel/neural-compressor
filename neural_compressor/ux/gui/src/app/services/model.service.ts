@@ -268,6 +268,14 @@ export class ModelService {
     );
   }
 
+  downloadProfiling(profilingId: number) {
+    return this.http.post(
+      this.baseUrl + 'api/profiling/results/csv',
+      { id: profilingId.toString() },
+      { responseType: 'blob' }
+    );
+  }
+
   delete(what: string, id: number, name: string) {
     return this.http.post(
       this.baseUrl + `api/${what}/delete`,

@@ -203,6 +203,11 @@
                         "value": ""
                     },
                     {
+                        "name": "model_name_or_path",
+                        "help": "Path to pre-trained student model or shortcut name",
+                        "value": "bert-base-uncased"
+                    },
+                    {
                         "name": "max_seq_length",
                         "help": "The maximum total input sequence length after tokenization.",
                         "value": 128

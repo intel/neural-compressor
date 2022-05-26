@@ -249,7 +249,7 @@ export class BenchmarksComponent implements OnInit {
           this.modelService.delete('benchmark', id, name)
             .subscribe(
               response =>
-                this.getBenchmarksList(),
+                this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'benchmarks' }),
               error =>
                 this.modelService.openErrorDialog(error)
             );
