@@ -24,9 +24,6 @@
 #include <string>
 #include <vector>
 
-#ifdef SPARSE_LIB_USE_AMX
-#include "amx_utils.hpp"
-#endif
 
 namespace jd {
 

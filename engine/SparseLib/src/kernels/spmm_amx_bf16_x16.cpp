@@ -67,6 +67,7 @@ bool spmm_amx_bf16_x16_k_t::init() {
   bool status = spmm_kernel_create(&ker, derived_kd()->params());
   if (!status) return false;
   jit_kers_ = ker;
+  amx_config_ = amx_tile_config_t::GetInstance();
   return true;
 }
 
@@ -81,8 +82,9 @@ bool spmm_amx_bf16_x16_k_t::spmm_kernel_create(jit_spmm_amx_bf16_x16_t** ker_pp,
 bool spmm_amx_bf16_x16_k_t::execute(const std::vector<const void*>& rt_data) const {
   dim_t bs = derived_kd()->params().bs;
   bfloat16_t* weight = derived_kd()->params().weight;
-  // #pragma omp parallel for
+  #pragma omp parallel for
   for (dim_t micro_bs = 0; micro_bs < bs; micro_bs += tileM) {
+    amx_config_->amx_tile_configure(tile_param_);
     jd::ssd::amx_bf16f32_inputs_t inputs;
     inputs.weight = weight;
     inputs.src = static_cast<bfloat16_t*>(const_cast<void*>(rt_data[1]));

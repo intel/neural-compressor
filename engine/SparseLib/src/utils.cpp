@@ -145,8 +145,6 @@ bool init_amx() {
 
   // XFEATURE_XTILEDATA set successfully, TMUL usage is allowed
 
-  // configure tiles
-  sparselib_configure_tiles();
   return true;
 #else
   return false;

@@ -33,7 +33,6 @@ void jit_spmm_amx_bf16_x16_t::read_inputs() {
 
 void jit_spmm_amx_bf16_x16_t::main_compute(dim_t mstart) {
   for (int b_row = 0; b_row < nrowptr - 1; ++b_row) {
-    // int n_start = nt * NZ;
     tilezero(tmm0);
     tilezero(tmm1);
     tilezero(tmm2);
@@ -59,13 +58,10 @@ void jit_spmm_amx_bf16_x16_t::main_compute(dim_t mstart) {
       mov(rax, 64);
       tileloadd(tmm4, ptr[rsp + rax + (0x40)]);
       tdpbf16ps(tmm0, tmm6, tmm4);
-      // add(rax, 0x400);
       tileloadd(tmm4, ptr[rsp + rax + (1024 + 0x40)]);
       tdpbf16ps(tmm1, tmm6, tmm4);
-      // add(rax, 1024);
       tileloadd(tmm4, ptr[rsp + rax + (2048 + 0x40)]);
       tdpbf16ps(tmm2, tmm6, tmm4);
-      // add(rax, 1024);
       tileloadd(tmm4, ptr[rsp + rax + (3072 + 0x40)]);
       tdpbf16ps(tmm3, tmm6, tmm4);
     }
@@ -84,12 +80,7 @@ void jit_spmm_amx_bf16_x16_t::main_compute(dim_t mstart) {
 
 void jit_spmm_amx_bf16_x16_t::loop_N() {
   dim_t mstart = 0;
-  // L(l1);
-  // add(reg_mstart, tileM);
   main_compute(mstart);
-  // mstart += tileM;
-  // cmp(reg_mstart, reg_bs);
-  // jl(l1, T_NEAR);
 }
 
 void jit_spmm_amx_bf16_x16_t::init_param() {
@@ -102,7 +93,6 @@ void jit_spmm_amx_bf16_x16_t::init_param() {
 }
 
 void jit_spmm_amx_bf16_x16_t::generate() {
-  // Xbyak::util::StackFrame spmm_sf(this, 4, 0, 5120);
   {
     sub(rsp, stack_space_needed_);
 
@@ -132,9 +122,6 @@ void jit_spmm_amx_bf16_x16_t::generate() {
   L(loopMask);
   int num = 32;
   int wordlen = 2;
-  // const src_t mask[32] = {31, 15, 30, 14, 29, 13, 28, 12, 27, 11, 26,
-  //                         10, 25, 9,  24, 8,  23, 7,  22, 6,  21, 5,
-  //                         20, 4,  19, 3,  18, 2,  17, 1,  16, 0};
   const src_t mask[32] = {0, 16, 1, 17, 2,  18, 3,  19, 4,  20, 5,  21, 6,  22, 7,  23,
                           8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31};
   for (int i = 0; i < num; ++i) {

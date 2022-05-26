@@ -24,7 +24,7 @@
 #include "kernels/sparse_data.hpp"
 #include "kernels/spmm_types.hpp"
 #include "operator_desc.hpp"
-#include "utils.hpp"
+#include "amx_utils.hpp"
 
 namespace jd {
 // By convention,
@@ -85,6 +85,8 @@ class spmm_amx_bf16_x16_k_t : public kernel_t {
 
  private:
   jit_spmm_amx_bf16_x16_t* jit_kers_;
+  const tile_param_t tile_param_ = {16, 16, 32, true, 2};
+  amx_tile_config_t* amx_config_;
 };
 }  // namespace jd
 #endif  // ENGINE_SPARSELIB_INCLUDE_KERNELS_SPMM_AMX_BF16_X16_HPP_

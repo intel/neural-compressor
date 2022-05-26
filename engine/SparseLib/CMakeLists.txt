@@ -4,11 +4,11 @@ set(HOST_LIBRARY_NAME "kernellibs")
 
 option(SPARSE_LIB_USE_AMX OFF)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -fpic -Wall -march=native")
+set(CMAKE_CXX_FLAGS "-std=c++11 -fpic -Wall -fopenmp -march=native")
 if (SPARSE_LIB_USE_AMX)
     set(CMAKE_CXX_FLAGS "-DSPARSE_LIB_USE_AMX ${CMAKE_CXX_FLAGS}")
 else()
-    set(CMAKE_CXX_FLAGS "-O3 -fopenmp ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-O3 ${CMAKE_CXX_FLAGS}")
 endif()
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party/")
 
@@ -51,6 +51,7 @@ add_library(${HOST_LIBRARY_NAME} SHARED
     src/kernels/spmm_amx_bf16_x16.cpp
     src/jit_domain/jit_spmm_default.cpp
     src/jit_domain/jit_spmm_amx_bf16_x16.cpp
+    src/jit_domain/jit_amx_configure.cpp
 )
 
 # Header file include path
