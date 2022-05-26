@@ -41,21 +41,7 @@
   
   capabilities: &common_capabilities
     int8: &ref_1_7 {
-          'FusedConv': &key_1_7_0 {
-            'weight': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
-                        },
-            'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
-                        }
-                    },
-          'Conv': {
+          'Conv': &key_1_7_0 {
             'weight':   {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -162,20 +148,6 @@
 
   capabilities:
     int8: {
-          'FusedConv': {
-            'weight': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
-                        },
-            'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
-                        }
-                    },
           'Conv': {
             'weight':   {
                         'dtype': ['int8', 'fp32'],
