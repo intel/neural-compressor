@@ -27,6 +27,9 @@ class FuseGeluOptimizer(GraphRewriterBase): # pragma: no cover
     """
 
     def do_transformation(self):
+        if tf.version.VERSION not in ('1.15.0-up2','1.15.0-up3'):
+            return self.model
+        
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
