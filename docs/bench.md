@@ -116,7 +116,7 @@ In Optimizations tab you can see list of optimizations in the project. Currently
 To add new optimization, click "Add new optimization" button at the bottom of the table and follow the steps.
 ![Optimizations-wizard](imgs/bench/optimizations-wizard.png "Optimizations-wizard")
 ### Optimization details
-To perform optimization click "Run" button. Once process is finished you can click on row with specific optimization to display details about optimization parameters and optimized model.
+To perform optimization click "Run" button. Once process is finished you can click on row with specific optimization to display details about optimization parameters and optimized model. When you click on blue arrow icon in model path line, you can download optimized model.
 ![Optimization-details](imgs/bench/optimization-details.png "Optimization-details")
 
 ## Add benchmark
@@ -144,7 +144,8 @@ It is also possible to do profiling of all Tensorflow frozen models in project.
 To profile model, click "Add new profiling" button at the bottom of the table and follow the steps.
 ![Profiling-wizard](imgs/bench/profiling-wizard.png "Profiling-wizard")
 ### Profiling details
-Once profiling entry is added, you can click "Run" button to execute it. After completing the process, the results will appear in the form of a bar chart and a table with full profiling data. The table is also used to control which operations are to be included in the chart. Check the box next to the selected row and click "Update chart" button to include it in the bar chart.
+Once profiling entry is added, you can click "Run" button to execute it. After completing the process, the results will appear in the form of a bar chart and a table with full profiling data. The table is also used to control which operations are included in the chart. Check the box next to the selected row and click "Update chart" button to include it in the bar chart.
+Click "Download .csv file" button to get profiling data in .csv file.
 ![Profiling-details](imgs/bench/profiling-details.png "Profiling-details")
 
 ## Display model graph
