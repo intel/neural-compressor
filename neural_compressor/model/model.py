@@ -21,6 +21,7 @@ import importlib
 from collections import OrderedDict
 from abc import abstractmethod
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
+from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
 from neural_compressor.conf.dotdict import deep_get, deep_set
 from neural_compressor.conf import config as cfg
@@ -66,7 +67,7 @@ def get_model_type(model):
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (model.endswith('.h5') and os.path.isfile(model)):
-            if tf.version.VERSION < '2.3.0':
+            if version1_lt_version2(tf.version.VERSION, '2.3.0'):
                 logger.warn("keras model running on tensorflow 2.2.0 and"
                             " lower may have problem.")
             model = tf.keras.models.load_model(model)
@@ -77,7 +78,7 @@ def get_model_type(model):
                 # Warning: TF compatibility issue to load saved model. TF 2.3 keras.load
                 # can load saved model from TF backend, but TF 2.4 cannot.
                 try:
-                    if tf.version.VERSION < '2.3.0':
+                    if version1_lt_version2(tf.version.VERSION, '2.3.0'):
                         logger.warn("keras model running on tensorflow 2.2.0 and"
                                     " lower may have problem.")
                     model = tf.keras.models.load_model(model)
@@ -99,7 +100,7 @@ def get_model_type(model):
                 # it's very ugly tf version issue, in tf2.3 keras.load can
                 #batch_size_(batch_size), load saved model from tf backend, but tf2.4 it will crash
                 try:
-                    if tf.version.VERSION < '2.3.0':
+                    if version1_lt_version2(tf.version.VERSION, '2.3.0'):
                         logger.warn("keras model running on tensorflow 2.2.0 and"
                                     " lower may have problem.")
                     model = tf.keras.models.load_model(model)
@@ -345,17 +346,17 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_tensor_names (list of string): validated output_tensor_names
     """
 
-    assert tf.version.VERSION >= '2.3.0', 'keras model need tensorflow version >= 2.3.0....'
+    assert version1_gte_version2(tf.version.VERSION, '2.3.0'), 'keras model need tensorflow version >= 2.3.0....'
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
     if not isinstance(model, tf.keras.Model):
         model = tf.keras.models.load_model(model)
     kwargs = dict(zip(model.input_names, model.inputs))
-    if tf.version.VERSION > '2.2.0' and tf.version.VERSION < '2.5.0':
+    if version1_gt_version2(tf.version.VERSION, '2.2.0') and version1_lt_version2(tf.version.VERSION, '2.5.0'):
         from tensorflow.python.keras.engine import keras_tensor
         if keras_tensor.keras_tensors_enabled():
             for name, tensor in kwargs.items():
                 kwargs[name] = tensor.type_spec
-    elif tf.version.VERSION >= '2.5.0':
+    elif version1_gte_version2(tf.version.VERSION, '2.5.0'):
         for name, tensor in kwargs.items():
             kwargs[name] = tensor.type_spec
     full_model = tf.function(lambda **kwargs: model(kwargs.values(), training=False))
@@ -408,7 +409,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_tensor_names (list of string): validated output_tensor_names
     """
 
-    assert tf.version.VERSION < '2.0.0', 'slim model only used in tensorflow 1.x'
+    assert version1_lt_version2(tf.version.VERSION, '2.0.0'), 'slim model only used in tensorflow 1.x'
     from .nets_factory import TFSlimNetsFactory
     factory = TFSlimNetsFactory()
     assert 'name' in kwargs, 'model name should be set in slim checkpoint....'

@@ -52,6 +52,12 @@ def version1_gt_version2(version1, version2):
 def version1_eq_version2(version1, version2):
     return parse_version(version1) == parse_version(version2)
 
+def version1_gte_version2(version1, version2):
+    return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
+
+def version1_lte_version2(version1, version2):
+    return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
+
 
 class LazyImport(object):
     """Lazy import python module till use
