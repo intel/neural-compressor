@@ -37,10 +37,10 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
         valid_ops = ('BiasAdd', 'Add', 'AddV2', 'AddN')
         target_nodes = g.query_fusion_pattern_nodes([['MatMul', 'Conv2D'],])
         for i in target_nodes:
-            # only apply this pass for tensorflow release 2.8.0 and lower version for
+            # only apply this pass for tensorflow release 2.9.1 and lower version for
             # old quantization API.
             # use conv+dummy_biasadd+relu because TF do not support conv+relu now. 
-            if tf.version.VERSION >= '2.9.0': 
+            if tf.version.VERSION > '2.9.1': 
                 continue
             if i[0] in self.outputs:
                 continue            

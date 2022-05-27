@@ -21,6 +21,7 @@ import os
 import logging
 import tempfile
 import tensorflow as tf
+
 from collections import OrderedDict, UserDict
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import tensor_util
@@ -62,7 +63,7 @@ from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node
 from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
 
 
-TF_SUPPORTED_MAX_VERSION = '2.8.0'
+TF_SUPPORTED_MAX_VERSION = '2.9.1'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger()
@@ -200,6 +201,9 @@ class GraphConverter:
             if tf.version.VERSION >= '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
                 is_supported_version = True
 
+            if tf.version.VERSION >= '2.9.0':
+                is_supported_version = True
+
         except Exception as e:
             raise ValueError(e)
         finally:
@@ -213,11 +217,12 @@ class GraphConverter:
                                                                      TF_SUPPORTED_MAX_VERSION))
             if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
                 logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
-                             "when Tensorflow 2.5.0 installed.")
+                             "when TensorFlow 2.5.0 installed.")
 
-            if tf.version.VERSION >= '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+            if tf.version.VERSION >= '2.6.0' and tf.version.VERSION < '2.9.0' \
+                    and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
-                             "when Tensorflow >= 2.6.0 installed.")
+                             "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(

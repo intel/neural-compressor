@@ -20,6 +20,7 @@ import copy
 import os
 import logging
 import tensorflow as tf
+
 from tensorflow.python.platform import gfile
 from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.experimental.common import Model
@@ -45,7 +46,7 @@ from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimize
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 
 
-TF_SUPPORTED_MAX_VERSION = '2.6.2'
+TF_SUPPORTED_MAX_VERSION = '2.9.1'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger()
@@ -102,9 +103,13 @@ class GraphConverterWithoutCalib:
                 from tensorflow.python._pywrap_util_port import IsMklEnabled
             if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
                 is_supported_version = True
-
-            if tf.version.VERSION.find('2.6.') != -1 and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
+                
+            if tf.version.VERSION >= '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
                 is_supported_version = True
+
+            if tf.version.VERSION >= '2.9.0':
+                is_supported_version = True
+
         except Exception as e:
             raise ValueError(e)
         finally:# pragma: no cover
@@ -117,12 +122,13 @@ class GraphConverterWithoutCalib:
                                                                      TF_SUPPORTED_MIN_VERSION,
                                                                      TF_SUPPORTED_MAX_VERSION))
             if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
-                logger.warning("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
-                               "when Tensorflow 2.5.0 installed.")
+                logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
+                             "when TensorFlow 2.5.0 installed.")
 
-            if tf.version.VERSION.find('2.6.') != -1 and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
-                logger.warning("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
-                               "when Tensorflow 2.6.x installed.")
+            if tf.version.VERSION >= '2.6.0' and tf.version.VERSION < '2.9.0' \
+                    and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+                logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
+                             "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(

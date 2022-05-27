@@ -100,9 +100,9 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.8.0>2.8.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.7.0>2.7.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.6.2>2.6.2</a></td>
+    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.8.2>2.8.2</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.7.3>2.7.3</a><br>
     <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0>2.8.0</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.7.0>2.7.0</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3>1.15.0UP3</a></td>
@@ -122,7 +122,8 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 </tbody>
 </table>
 
-> Note: Starting from official TensorFlow 2.6.0, oneDNN has been default in the binary. Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 before running the quantization process or deploying the quantized model with official TensorFlow.
+> Note: 1.Starting from official TensorFlow 2.6.0, oneDNN has been default in the binary. Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 to enable the oneDNN optimizations.  
+> 2.Starting from official TensorFlow 2.9.0, oneDNN optimizations are enabled by default on CPUs with neural-network-focused hardware features such as AVX512_VNNI, AVX512_BF16, AMX, etc. No need to set environment variable.
 
 ### Validated Models
 Intel® Neural Compressor validated 420+ [examples](./examples) with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. 
