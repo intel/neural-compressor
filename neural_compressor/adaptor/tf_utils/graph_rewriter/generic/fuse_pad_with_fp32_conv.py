@@ -71,7 +71,8 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
-            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or version1_gt_version2(tf.version.VERSION, '2.7'))
+            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
+                                                version1_gt_version2(tf.version.VERSION, '2.7'))
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)

@@ -147,7 +147,8 @@ class BF16Convert(GraphRewriterBase):
             input_node_outputs = input_detail.outputs
 
             #print(bf16_node.op, bf16_node.name, input_node.op, input_node.name, allowed_dt_val, inputs_dt[index])
-            if inputs_dt[index] in allowed_dt_val and dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
+            if inputs_dt[index] in allowed_dt_val and \
+                                        dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
                 continue
 
             if inputs_dt_val[index] != DT_FLOAT32:

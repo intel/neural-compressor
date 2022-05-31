@@ -224,7 +224,8 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     continue
                 sum_off_set = 0 
                 if original_conv_node.op == "_QuantizedConv2D":
-                    if str(original_conv_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
+                    if str(original_conv_node.attr['fused_ops'].list.s) == \
+                                        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
                         sum_off_set = 1
                     #else:
                     #    print(str(original_conv_node.attr['fused_ops'].list.s))

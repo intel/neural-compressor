@@ -728,18 +728,6 @@ class GraphRewriterHelper():
         list_value = attr_value_pb2.AttrValue.ListValue(s=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
     @staticmethod
-    def set_attr_type_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
-        list_value = attr_value_pb2.AttrValue.ListValue(type=value)
-        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
-    @staticmethod
-    def set_attr_string_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
-        list_value = attr_value_pb2.AttrValue.ListValue(s=value)
-        node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
-    @staticmethod
     def set_attr_string(node, key, value):
         """Set the node's attr which data type is string.
         """

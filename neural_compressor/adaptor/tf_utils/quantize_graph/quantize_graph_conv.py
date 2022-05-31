@@ -114,7 +114,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             shape = tensor_util.MakeNdarray(original_add_input.attr["value"].tensor)
             if shape.ndim > 1 and shape.shape[:-1] == (1,1,1,1):
                 squeezed_value = np.squeeze(shape)
-                squeezed_node = helper.create_constant_node(match_node_name[1] +'_squeezed', squeezed_value, dtypes.float32)
+                squeezed_node = helper.create_constant_node(match_node_name[1] +'_squeezed', \
+                                                                            squeezed_value, dtypes.float32)
                 skip_node_name.append(add_node.input[1])
                 add_node.input[1] = squeezed_node.name
                 self.add_output_graph_node(squeezed_node)
@@ -215,7 +216,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             shape = tensor_util.MakeNdarray(original_add_input.attr["value"].tensor)
             if shape.ndim > 1 and shape.shape[:-1] == (1,1,1,1):
                 squeezed_value = np.squeeze(shape)
-                squeezed_node = helper.create_constant_node(match_node_name[1] +'_squeezed', squeezed_value, dtypes.float32)
+                squeezed_node = helper.create_constant_node(match_node_name[1] +'_squeezed', \
+                                                                                    squeezed_value, dtypes.float32)
                 skip_node_name.append(add_node.input[1])
                 add_node.input[1] = squeezed_node.name
                 self.add_output_graph_node(squeezed_node)
