@@ -1,6 +1,6 @@
 # Sparsity
 
-Sparsity is one of promising model compression techniques that can be used to accelerate the deep learning inference. Typically, sparsity can be classified as 1) structured sparsity, and 2) unstructured sparsity. Structured sparsity indicates an observed structure pattern of zero (or non-zero) values, while unstructured sparsity indicates no such pattern for zero (or non-zero) values. In general, structured sparsity has lower accuracy due to restrictive structure than unstructured sparsity; however, it can reduce the model execution significantly with software or hardware sparsity.
+Sparsity is one of promising model compression techniques that can be used to accelerate the deep learning inference. Typically, sparsity can be classified as 1) structured sparsity, and 2) unstructured sparsity. Structured sparsity indicates an observed structure pattern of zero (or non-zero) values, while unstructured sparsity indicates no such pattern for zero (or non-zero) values. In general, structured sparsity has lower accuracy due to restrictive structure than unstructured sparsity; however, it can accelerate the model execution significantly with software or hardware sparsity.
 
 The document describes the sparsity definition, sparsity training flow, validated models, and performance benefit using software sparsity. Note that the document discusses the sparse weight (with dense activation) for inference acceleration. Sparse activation or sparse embedding for inference acceleration or training acceleration is out of the scope.
 
@@ -19,7 +19,7 @@ Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension
 </a>
 
 ## Training Flow & Sample Code
-We describe the typical flow of training for sparsity. Compared with normal training flow, training for sparsity requires more steps (e.g., regularization and pruning) to meet the goal of sparsity ratio.
+The following image describes the typical flow of training for sparsity. Compared with normal training flow, training for sparsity requires more steps (e.g., regularization and pruning) to meet the goal of sparsity ratio.
 
 <a target="_blank" href="./docs/imgs/train_for_sparsity.png">
     <img src="../docs/imgs/train_for_sparsity.png" width=336 height=465 alt="Sparsity Training Flow">
@@ -43,9 +43,9 @@ def train():
 
 ## Validated Models
 
-We validate the sparsity on typical models across a range of model domains (including CV, NLP, and Recommendation System). The below table shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. We also provide a simplified [BERT example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager) with only one sparse layer.
+We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). The below table shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. We also provide a simplified [BERT example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager) with only one sparse layer.
 
-|   Model   | Sparsity Pattern | Sparsity Ratio | Accuracy (Sparse Model) | Accuracy (Sparse Model) |
+|   Model   | Sparsity Pattern | Sparsity Ratio | Accuracy (Sparse Model) | Accuracy (Dense Model) |
 |-----------|:----------------:|:--------------:|:-----------------------:|:-----------------------:|
 | Bert Large| ***2***x1          | 70%            | 90.70%                  | 91.34%                  |
 | DLRM      | 4x***16***         | 85%            | 80.29%                  | 80.25%                  |
@@ -58,7 +58,7 @@ Note: ***bold*** means the sparsity dimension (```OC```).
 
 ## Performance
 
-We experiment the sparse kernel development with software sparsity and apply to DLRM, a very popular industrial recommendation model as one of [MLPerf](https://mlcommons.org/en/) benchmarks. We achieve 1.6x performance gains on INT8 sparse model over INT8 dense model, and 6.4x total performance gains over FP32 dense model in [MLPerf inference submissions](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/A-Double-Play-for-MLPerf-Inference-Performance-Gains-with-3rd/post/1335759). We expect further performance speedup with the support of hardware sparsity. 
+We explore kernels development with software sparsity and apply to DLRM, a very popular industrial recommendation model as one of [MLPerf](https://mlcommons.org/en/) benchmarks. We achieve 1.6x performance gains on INT8 sparse model over INT8 dense model, and 6.4x total performance gains over FP32 dense model in [MLPerf inference submissions](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/A-Double-Play-for-MLPerf-Inference-Performance-Gains-with-3rd/post/1335759). We expect further performance speedup with the support of hardware sparsity. 
 
 |   | Dense Model (FP32)  | Dense Model (INT8)   | Sparse Model (INT8)   |
 |---|:---:|:---:|:---:|
