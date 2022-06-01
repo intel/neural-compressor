@@ -81,7 +81,8 @@ class GraphConverter:
                  bf16_ops=[],
                  data_loader=None,
                  fake_quant=False,
-                 itex_mode=False):
+                 itex_mode=False,
+                 new_api=False):
         """Convert graph.
 
         :param model: input tensorflow model.
@@ -140,7 +141,7 @@ class GraphConverter:
         self._itex_model.output_tensor_names = self.output_tensor_names
         self._itex_model.input_tensor_names = self.input_tensor_names
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
-        self._use_new_api = bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
+        self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
 
     # pylint: disable=no-member
     def _inference(self, model):
@@ -561,7 +562,7 @@ class GraphConverter:
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
                 # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
                 # after enabling pad+conv2d in new API.
-                if self._use_new_api:
+                if self.new_api:
                     non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
                     sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
                         sampling_graph_def,
@@ -640,7 +641,8 @@ class GraphConverter:
             self._tmp_graph_def,
             non_pad_ops,
             self._tmp_model.input_node_names,
-            self.op_wise_config).do_transformation()
+            self.op_wise_config,
+            self.new_api).do_transformation()
 
         self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
             self._tmp_graph_def,
@@ -654,7 +656,8 @@ class GraphConverter:
             self.op_wise_config,
             self.int8_sequences,
             self.device,
-            self.fake_quant).do_transform()
+            self.fake_quant,
+            self.new_api).do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if debug:
@@ -728,7 +731,7 @@ class GraphConverter:
 
         self._tmp_graph_def = FuseConvRequantizeTransformer(
             self._tmp_graph_def,
-            self.device, self._use_new_api).do_transformation()
+            self.device, self.new_api).do_transformation()
 
         if not self.fake_quant:
             self._tmp_graph_def = FuseMatMulRequantizeTransformer(

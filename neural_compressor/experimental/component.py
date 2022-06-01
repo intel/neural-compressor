@@ -90,7 +90,7 @@ class Component(object):
         if self.cfg.quantization.approach is not None:
             framework_specific_info['approach'] = self.cfg.quantization.approach
 
-        if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
+        if 'tensorflow' in self.framework:
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
@@ -368,7 +368,7 @@ class Component(object):
             self.cfg.model.framework = self.framework
             set_backend(self.framework)
 
-        if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
+        if 'tensorflow' in self.framework:
             self._model.name = self.cfg.model.name
             self._model.output_tensor_names = self.cfg.model.outputs
             self._model.input_tensor_names = self.cfg.model.inputs

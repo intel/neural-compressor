@@ -33,8 +33,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
-        self.use_new_api = version1_gte_version2(tf.version.VERSION, '2.8.0')
-        if self.use_new_api:
+        if self.new_api:
             self.fusion_mapping = {
                 'Conv2DBiasAdd': self.apply_newly_conv_biasadd_fusion,
                 'Conv2DBiasAddAddNRelu': self.apply_newly_conv_biasadd_addn_relu_fusion,

@@ -28,11 +28,12 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
     Pad + Conv2D --> Conv2D
     """
 
-    def __init__(self, model, excluded_op_names, inputs, cfg):
+    def __init__(self, model, excluded_op_names, inputs, cfg, new_api):
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs
         self.cfg = cfg
+        self.new_api = new_api
 
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
@@ -71,8 +72,8 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
-            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
-                                                version1_gt_version2(tf.version.VERSION, '2.7'))
+            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or self.new_api)
+
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)

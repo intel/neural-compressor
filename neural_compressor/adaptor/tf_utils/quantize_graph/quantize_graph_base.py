@@ -81,6 +81,7 @@ class QuantizeNodeBase():
         self.weight_bit = kwargs['op_wise_cfg'][3]
         self.start_node_name = kwargs['start_node_name']
         self.device = kwargs['device']
+        self.new_api = kwargs['new_api']
         self.enable_s8 = bool(version1_gt_version2(tf.version.VERSION, '2.1.0') or \
                     version1_eq_version2(tf.version.VERSION, '2.1.0') or \
             tf.version.VERSION.find('1.15.0-up') != -1)

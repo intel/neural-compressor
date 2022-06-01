@@ -1007,6 +1007,7 @@ class MXNetModel(BaseModel):
 
 
 MODELS = {'tensorflow': TensorflowModel,
+          'inteltensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel if TORCH else None,

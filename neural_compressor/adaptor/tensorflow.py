@@ -30,7 +30,6 @@ from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 tensorflow = LazyImport('tensorflow')
 
-
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
@@ -72,6 +71,7 @@ class TensorFlowAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.callbacks = []
+        self.new_api = False
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -535,7 +535,8 @@ class TensorFlowAdaptor(Adaptor):
                                         int8_sequences=self.op_wise_sequences,
                                         fp32_ops=self.fp32_ops,
                                         bf16_ops=self.bf16_ops,
-                                        data_loader=data_loader).convert()
+                                        data_loader=data_loader,
+                                        new_api=self.new_api).convert()
             except Exception: # pragma: no cover
                 from .tf_utils.util import get_model_input_shape
                 batch_size = get_model_input_shape(model)
@@ -550,7 +551,8 @@ class TensorFlowAdaptor(Adaptor):
                                         int8_sequences=self.op_wise_sequences,
                                         fp32_ops=self.fp32_ops,
                                         bf16_ops=self.bf16_ops,
-                                        data_loader=data_loader).convert()
+                                        data_loader=data_loader,
+                                        new_api=self.new_api).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -567,7 +569,8 @@ class TensorFlowAdaptor(Adaptor):
                                 int8_sequences=self.op_wise_sequences,
                                 fp32_ops=self.fp32_ops,
                                 bf16_ops=self.bf16_ops,
-                                data_loader=data_loader).convert()
+                                data_loader=data_loader,
+                                new_api=self.new_api).convert()
         #just save framework_specific_info feature for recover
         converted_model.q_config.update({'framework_specific_info': \
                                             self.framework_specific_info})
@@ -648,7 +651,7 @@ class TensorFlowAdaptor(Adaptor):
         valid_precision = self.query_handler.get_mixed_precision_combination()
         op_capability = self.query_handler.get_quantization_capability()
         conv_config = copy.deepcopy(op_capability['uint8']['Conv2D'])
-        conv3d_config = copy.deepcopy(op_capability['uint8']['Conv3D'])
+        conv3d_config = copy.deepcopy(op_capability['uint8']['Conv3D']) if 'Conv3D' in op_capability['uint8'] else None
         matmul_config = copy.deepcopy(op_capability['uint8']['MatMul'])
         other_config = copy.deepcopy(op_capability['uint8']['default'])
         if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
@@ -927,7 +930,8 @@ class TensorFlowAdaptor(Adaptor):
         converter = GraphConverter(model,
                                    qt_config=self.quantize_config,
                                    int8_sequences=self.op_wise_sequences,
-                                   data_loader=dataloader)
+                                   data_loader=dataloader,
+                                   new_api=self.new_api)
 
         dump_content = converter.inspect_tensor(\
                 op_list, iteration_list, self.work_dir, inspect_type)
@@ -1101,7 +1105,7 @@ class TensorFlowAdaptor(Adaptor):
         converter = GraphConverter(model,
                                    qt_config=quantize_config,
                                    int8_sequences=self.op_wise_sequences,
-                                   fake_quant=True)
+                                   fake_quant=True, new_api=self.new_api)
 
         return converter.convert()
 
@@ -1442,3 +1446,11 @@ class TensorflowQuery(QueryBackendCapability):
                 final_out.append(_generate_pattern(similar_sequences))
 
         return final_out
+
+@adaptor_registry
+class IntelTensorFlowAdaptor(TensorFlowAdaptor):
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
+        from pkg_resources import parse_version
+        import tensorflow as tf
+        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False

@@ -169,7 +169,7 @@ class Benchmark(object):
                                    'approach': cfg.quantization.approach, \
                                    'random_seed': cfg.tuning.random_seed}
         framework = cfg.model.framework.lower()
-        if framework == 'tensorflow' or framework == 'tensorflow_itex':
+        if 'tensorflow' in framework:
             framework_specific_info.update({"inputs": cfg.model.inputs, \
                                             "outputs": cfg.model.outputs, \
                                             "recipes": cfg.model.recipes, \

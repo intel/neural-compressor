@@ -23,7 +23,6 @@ from tensorflow.python.framework import dtypes
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 class FuseConvRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized Conv Op with the successor Requantize Op.
@@ -47,7 +46,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
     sum_pattern = [["QuantizedConv2DWithBiasSumAndRelu", "QuantizedConv2DWithBiasReluAndSum", "_QuantizedConv2D"],
                      ['RequantizePerChannel', 'Requantize']]
 
-    def __init__(self, model, device='cpu', use_new_api=False):
+    def __init__(self, model, device='cpu', new_api=False):
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -55,7 +54,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
         self.graph_info = self.graph_analyzer.parse_graph()
         self.fused_ops = []
         self.output_types = []
-        self.use_new_api = use_new_api
+        self.new_api = new_api
 
     def do_transformation(self):
         """Fuse the quantized op with the following requantize op.
@@ -80,7 +79,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 #   print(quantized_node.attr['fused_ops'].list.s)
             requantize_node_name = i[1]
             requantize_node = self.graph_info[requantize_node_name].node
-            if i[-1][-1] == 'Dequantize' and self.use_new_api and \
+            if i[-1][-1] == 'Dequantize' and self.new_api and \
                 i[0] in ('_QuantizedDepthwiseConv2D', '_QuantizedConv2D', '_QuantizedConv3D'):
                 dequantize_node_name = i[2]
             else:
@@ -91,7 +90,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             quantized_node_op = i[-1][0]
 
             new_node = node_def_pb2.NodeDef()
-            if self.use_new_api:
+            if self.new_api:
                 if i[-1][0] == 'QuantizedConv2DWithBiasAndRelu':
                     new_node.op = '_QuantizedConv2D'
                     self.fused_ops= [b"BiasAdd", b"Relu", b"Requantize"]
@@ -198,7 +197,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             # in tf 2.10, the "padding_list" attr name changes to explicit_paddings
             if "padding_list" in quantized_node.attr:
-                if version1_lt_version2(tf.version.VERSION, "2.10"):
+                if not self.new_api:
                     new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
                 elif quantized_node.attr["padding"].s == b"EXPLICIT":
                     new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
@@ -206,7 +205,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
             
-            if self.use_new_api and new_node.op in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D'):
+            if self.new_api and new_node.op in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D'):
                 input_data_type = dtypes.qint8 if new_node.attr["Tinput"].type == dtypes.qint8 else dtypes.quint8
                 Helper.set_attr_type_list(new_node, 'input_types', [
                     input_data_type.as_datatype_enum,
@@ -396,7 +395,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             new_node = node_def_pb2.NodeDef()
 
-            if self.use_new_api:
+            if self.new_api:
                 if i[-1][0] in ('QuantizedConv2DWithBiasSumAndRelu',) :
                     new_node.op = '_QuantizedConv2D'
                     self.fused_ops= [b"BiasAdd", b"Sum", b"Relu", b"Requantize"]
@@ -434,7 +433,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.input.append(original_summand_node.name + ':{}'.format(j))
             # in tf 2.10, the "padding_list" attr name changes to explicit_paddings
             if "padding_list" in quantized_node.attr:
-                if version1_lt_version2(tf.version.VERSION, "2.10"):
+                if not self.new_api:
                     new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
                 elif quantized_node.attr["padding"].s == b"EXPLICIT":
                     new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
@@ -500,7 +499,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                                                                                                         dtypes.qint8)
                 Helper.set_attr_string_list(new_node, 'fused_ops', self.fused_ops)
 
-            if not self.use_new_api:
+            if not self.new_api:
                 if quantized_node_op == 'QuantizedConv2DWithBiasReluAndSum':
                     new_node.op = 'QuantizedConv2DWithBiasReluAndSumAndRequantize'
                     if "alpha" in quantized_node.attr:

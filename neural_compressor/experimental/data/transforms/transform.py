@@ -186,6 +186,7 @@ class EngineTransforms(Transforms):
         return general
 
 framework_transforms = {"tensorflow": TensorflowTransforms,
+                        "inteltensorflow": TensorflowTransforms,
                         "tensorflow_itex": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
                         "pytorch": PyTorchTransforms,
@@ -206,6 +207,7 @@ ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ENGINE_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
+                       "inteltensorflow": TENSORFLOW_TRANSFORMS,
                        "tensorflow_itex": TENSORFLOW_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
                        "pytorch": PYTORCH_TRANSFORMS,
@@ -219,7 +221,7 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "tensorflow_itex", "engine", "onnxrt_qoperator",
+        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", "engine", "onnxrt_qoperator",
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt engine"
@@ -257,6 +259,7 @@ def transform_registry(transform_type, process, framework):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow",
+                "inteltensorflow",
                 "tensorflow_itex",
                 "mxnet",
                 "pytorch",

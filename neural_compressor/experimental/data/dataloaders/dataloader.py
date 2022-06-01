@@ -23,6 +23,7 @@ from .engine_dataloader import EngineDataLoader
 from .default_dataloader import DefaultDataLoader
 
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
+               "inteltensorflow": TensorflowDataLoader,
                "tensorflow_itex": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
                "pytorch": PyTorchDataLoader,

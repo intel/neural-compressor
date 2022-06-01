@@ -119,7 +119,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "tensorflow_itex", "onnxrt_qdq",
+        assert framework in ["inteltensorflow", "tensorflow", "tensorflow_itex", "onnxrt_qdq",
                              "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
                              "pytorch", "pytorch_ipex", "pytorch_fx", "engine",
                              "onnxrt_qoperator"], \
@@ -133,6 +133,7 @@ class DATASETS(object):
 
 # user/model specific datasets will be registered here
 TENSORFLOW_DATASETS = {}
+INTELTENSORFLOW_DATASETS = {}
 TENSORFLOWITEX_DATASETS = {}
 MXNET_DATASETS = {}
 PYTORCH_DATASETS = {}
@@ -143,6 +144,7 @@ ONNXRTIT_DATASETS = {}
 ENGINE_DATASETS = {}
 
 registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
+                     "inteltensorflow": INTELTENSORFLOW_DATASETS,
                      "tensorflow_itex": TENSORFLOWITEX_DATASETS,
                      "mxnet": MXNET_DATASETS,
                      "pytorch": PYTORCH_DATASETS,
@@ -172,6 +174,7 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow",
+                "inteltensorflow",
                 "tensorflow_itex",
                 "mxnet",
                 "pytorch",

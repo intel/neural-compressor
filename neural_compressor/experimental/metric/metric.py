@@ -75,6 +75,7 @@ class EngineMetrics(object):
         self.metrics.update(ENGINE_METRICS)
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
+                     "inteltensorflow": TensorflowMetrics,
                      "tensorflow_itex": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
                      "pytorch": PyTorchMetrics,
@@ -88,6 +89,7 @@ framework_metrics = {"tensorflow": TensorflowMetrics,
 
 # user/model specific metrics will be registered here
 TENSORFLOW_METRICS = {}
+INTELTENSORFLOW_METRICS = {}
 MXNET_METRICS = {}
 PYTORCH_METRICS = {}
 ONNXRT_QL_METRICS = {}
@@ -95,6 +97,7 @@ ONNXRT_IT_METRICS = {}
 ENGINE_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
+                    "inteltensorflow": INTELTENSORFLOW_METRICS,
                     "tensorflow_itex": TENSORFLOW_METRICS,
                     "mxnet": MXNET_METRICS,
                     "pytorch": PYTORCH_METRICS,
@@ -109,9 +112,9 @@ registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
 
 class METRICS(object):
     def __init__(self, framework):
-        assert framework in ("tensorflow", "tensorflow_itex", "engine",
+        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", "engine",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
-                             "onnxrt_qlinearops", "onnxrt_integerops", "mxnet", 
+                             "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
                              "onnxrt_qoperator"), \
                              "framework support tensorflow pytorch mxnet onnxrt engine"
         self.metrics = framework_metrics[framework]().metrics
@@ -141,6 +144,7 @@ def metric_registry(metric_type, framework):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow",
+                "inteltensorflow",
                 "tensorflow_itex",
                 "mxnet",
                 "onnxrt_qlinearops",

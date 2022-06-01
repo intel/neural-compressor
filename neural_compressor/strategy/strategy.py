@@ -141,7 +141,7 @@ class TuneStrategy(object):
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
 
-        if framework == 'tensorflow' or framework == 'tensorflow_itex':
+        if 'tensorflow' in framework:
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
                  "outputs": self.cfg.model.outputs,
@@ -529,7 +529,7 @@ class TuneStrategy(object):
                 fp32_baseline = self.baseline == None)
 
             if getattr(self.eval_dataloader, 'distributed', False):
-                if self.framework in ['tensorflow','tensorflow_itex']:
+                if 'tensorflow' in self.framework:
                     import horovod.tensorflow as hvd
                 elif self.framework in ['pytorch_ipex','pytorch','pytorch_fx']:
                     import horovod.torch as hvd
