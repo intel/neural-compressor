@@ -2,7 +2,7 @@
   
 Intel® Neural Compressor
 ===========================
-<h3> An open-source Python library supporting popular network compression technologies on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
+<h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
 [![python](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-1.12-green)](https://github.com/intel/neural-compressor/releases)
