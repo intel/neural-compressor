@@ -984,7 +984,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'Relu'])
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
-                helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.float32)
+                helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
                 if is_leakyrelu_add_fusion:
                     helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu', b'Sum'])
                 elif is_relu_add_fusion:
