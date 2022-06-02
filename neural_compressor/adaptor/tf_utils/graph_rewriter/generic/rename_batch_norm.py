@@ -49,7 +49,7 @@ class RenameBatchNormOptimizer(GraphRewriterBase):
 
         for _, v in graph_details.items():
         #for node in cur_graph.graph.node:
-            if v.node.op == "FusedBatchNorm":
+            if v.node.op == "FusedBatchNorm" or v.node.op == "FusedBatchNormV2":
                 v.node.op = "FusedBatchNormV3"
                 v.node.attr["U"].CopyFrom(v.node.attr["T"])
 

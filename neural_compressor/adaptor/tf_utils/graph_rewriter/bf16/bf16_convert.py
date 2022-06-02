@@ -50,7 +50,7 @@ class BF16Convert(GraphRewriterBase):
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
         self.converted_ops = []
-        self.device = "CPU"  #TODO support differnt device type
+        self.device = ["CPU", "DEFAULT"]  #TODO support differnt device types, such as GPU
 
     def _dtype(self, node):
         op_def = op_def_registry.get(node.op)
@@ -105,15 +105,15 @@ class BF16Convert(GraphRewriterBase):
         registered_dt_val = {}
         registered_kernels = get_registered_kernels_for_op(node.op)
         for kernel in registered_kernels.kernel:
-            if kernel.device_type == self.device:
+            if kernel.device_type in self.device:
                 for constraint in kernel.constraint:
-                    if constraint.name in allowed_dt_val and constraint.HasField("allowed_values"):
+                    if constraint.HasField("allowed_values"):
                         if constraint.name not in registered_dt_val:
                             registered_dt_val[constraint.name] = constraint.allowed_values.list.type
                         else:
                             registered_dt_val[constraint.name].extend(constraint.allowed_values.list.type)
         for dt_val in registered_dt_val:
-            if registered_dt_val[dt_val] != [] and dt_val in allowed_dt_val:
+            if registered_dt_val[dt_val] != []:
                 allowed_dt_val[dt_val] = registered_dt_val[dt_val]
         return allowed_dt_val
 
@@ -133,8 +133,8 @@ class BF16Convert(GraphRewriterBase):
         inputs_dt_val, outputs_dt_val = self._dtype_val(bf16_node)
         allowed_dt_val = self._allowed_dtype_val(bf16_node)
 
-        # skip bf16 node whose inputs are all not FP32 data type
-        if all([True if i != DT_FLOAT32 else False for i in inputs_dt_val]):
+        # skip the node whose inputs and outputs are all not allowed to be BF16 data type
+        if all([True if allowed_dt_val[i] != DT_BFLOAT16 else False for i in allowed_dt_val]):
             return
 
         for index, input_name in enumerate(bf16_node.input):
@@ -171,17 +171,23 @@ class BF16Convert(GraphRewriterBase):
                 input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
                     tensor=tensor_util.make_tensor_proto(
                         fp32_value, dtypes.bfloat16, fp32_value.shape)))
+            elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1:
+                _, outputs_dt_input_node = self._dtype(input_node)
+                allowed_input_node_dt_val = self._allowed_dtype_val(input_node)
+                if outputs_dt_input_node[0] in allowed_input_node_dt_val and \
+                        dtypes.bfloat16.as_datatype_enum in allowed_input_node_dt_val[outputs_dt_input_node[0]]:
+                    input_node.attr[outputs_dt_input_node[0]].CopyFrom(DT_BFLOAT16)
             elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op:
                 self._bf16_convert(input_node.name)
             else:
                 cast_node_name = input_name.replace(':', '_') + "/" + bf16_node_name + "_FP32toBF16"
-                assert cast_node_name not in list(self.cur_graph.node_name_details.keys())
-                input_cast_node = Helper.create_node(
-                    "Cast", cast_node_name, [input_name])
-                Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
-                Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
-                Helper.set_attr_bool(input_cast_node, "Truncate", False)
-                bf16_node.input[index] = input_cast_node.name
+                if cast_node_name not in list(self.cur_graph.node_name_details.keys()):
+                    input_cast_node = Helper.create_node(
+                        "Cast", cast_node_name, [input_name])
+                    Helper.set_attr_dtype(input_cast_node, "DstT", dtypes.bfloat16)
+                    Helper.set_attr_dtype(input_cast_node, "SrcT", dtypes.float32)
+                    Helper.set_attr_bool(input_cast_node, "Truncate", False)
+                bf16_node.input[index] = cast_node_name
                 outputs = self.cur_graph.node_name_details[ \
                                   Helper.node_name_from_input(input_name)].outputs
                 outputs = list(map(lambda x: x.replace(bf16_node.name, cast_node_name), outputs))
