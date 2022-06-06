@@ -42,6 +42,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
         [b'BiasAdd', b'Relu', b'Requantize'],
         [b'BiasAdd', b'LeakyRelu', b'Requantize'],
         [b'BiasAdd', b'Sum',  b'Relu',  b'Requantize'],
+        [b'BiasAdd', b'Sum',  b'Requantize'],
         [b'BiasAdd', b'Elu', b'Requantize'],
     )
     fuse_requantized_relu_op_new_api =(
@@ -66,7 +67,8 @@ class RerangeQuantizedConcat(GraphTransformBase):
         str([b'BiasAdd', b'Relu', b'Requantize']): 7,
         str([b'BiasAdd', b'LeakyRelu', b'Requantize']): 7,
         str([b'BiasAdd', b'Elu', b'Requantize']): 7,
-        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']): 10
+        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']): 10,
+        str([b'BiasAdd', b'Sum', b'Requantize']): 10
     }
    
 
@@ -225,7 +227,9 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 sum_off_set = 0 
                 if original_conv_node.op == "_QuantizedConv2D":
                     if str(original_conv_node.attr['fused_ops'].list.s) == \
-                                        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
+                       str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']) \
+                       or str(original_conv_node.attr['fused_ops'].list.s) == \
+                       str([b'BiasAdd', b'Sum', b'Requantize']):
                         sum_off_set = 1
                     #else:
                     #    print(str(original_conv_node.attr['fused_ops'].list.s))

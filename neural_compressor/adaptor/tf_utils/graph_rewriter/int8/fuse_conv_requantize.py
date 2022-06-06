@@ -38,12 +38,14 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
     ], ['RequantizePerChannel', 'Requantize'], ('Dequantize',)]
    
     fuse_sum_op_types = (
+        [b'BiasAdd', b'Sum'],
         [b'BiasAdd', b'Sum', b'Relu'],
         [b'BiasAdd', b'Relu', b'Sum'],
         [b'BiasAdd', b'LeakyRelu', b'Sum']
         )
 
-    sum_pattern = [["QuantizedConv2DWithBiasSumAndRelu", "QuantizedConv2DWithBiasReluAndSum", "_QuantizedConv2D"],
+    sum_pattern = [["QuantizedConv2DWithBiasSumAndRelu", "QuantizedConv2DWithBiasReluAndSum", \
+                    "_QuantizedDepthwiseConv2D", "_QuantizedConv2D", "_QuantizedConv3D"],
                      ['RequantizePerChannel', 'Requantize']]
 
     def __init__(self, model, device='cpu', new_api=False):
@@ -401,6 +403,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                     self.fused_ops= [b"BiasAdd", b"Sum", b"Relu", b"Requantize"]
                 elif i[-1][0] == '_QuantizedConv2D':
                     new_node.op = '_QuantizedConv2D'
+                elif quantized_node_op == '_QuantizedDepthwiseConv2D':
+                    new_node.op = '_QuantizedDepthwiseConv2D'
+                elif i[-1][0] == '_QuantizedConv3D':
+                    new_node.op = '_QuantizedConv3D'
             else:
                 new_node.op = quantized_node_op + "AndRequantize"
 
@@ -448,8 +454,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             new_node.attr["Tsummand"].CopyFrom(attr_value_pb2.AttrValue(type=summand_op_type))
-
-            if new_node.op == '_QuantizedConv2D':
+ 
+            if new_node.op in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D', '_QuantizedConv3D'):
                 original_input = list(new_node.input)
                 new_input = []
                 new_input.extend(original_input[:3])
@@ -474,6 +480,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum
                 ])
+                Helper.set_attr_dtype(new_node, "Tsummand", dtypes.quint8 if summand_op_type != int8_type \
+                   else dtypes.qint8)
                 if str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
                     self.fused_ops = [b'BiasAdd', b'Sum', b'Relu', b'Requantize']
                     Helper.set_attr_type_list(new_node, 'out_types', [
@@ -495,8 +503,18 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum ])
                     Helper.set_attr_dtype(new_node, "out_type", dtypes.qint8)
-                Helper.set_attr_dtype(new_node, "Tsummand", dtypes.quint8 if summand_op_type != int8_type else \
-                                                                                                        dtypes.qint8)
+                    #Current fusion requires summand has same dtype as output if output is qint8
+                    Helper.set_attr_dtype(new_node, "Tsummand", dtypes.qint8)
+
+                elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum']):
+                    self.fused_ops = [b'BiasAdd', b'Sum', b'Requantize']
+                    Helper.set_attr_type_list(new_node, 'out_types', [
+                                          dtypes.qint8.as_datatype_enum,
+                                          dtypes.float32.as_datatype_enum,
+                                          dtypes.float32.as_datatype_enum ])
+                    Helper.set_attr_dtype(new_node, "out_type", dtypes.qint8)
+                    #Current fusion requires summand has same dtype as output if output is qint8
+                    Helper.set_attr_dtype(new_node, "Tsummand", dtypes.qint8)
                 Helper.set_attr_string_list(new_node, 'fused_ops', self.fused_ops)
 
             if not self.new_api:

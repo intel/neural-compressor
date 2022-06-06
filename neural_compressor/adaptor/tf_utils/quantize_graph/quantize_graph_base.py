@@ -98,6 +98,55 @@ class QuantizeNodeBase():
         """
         pass
 
+    def _insert_dummy_biasadd(self, match_node_name, matched_node):
+         target_node_name = matched_node.node.name
+         matmul_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
+         matmul_a_node = self.node_name_mapping[matmul_a_node_name].node
+         matmul_b_node_name = helper.node_name_from_input(matched_node.node.input[1])
+         matmul_b_node = self.node_name_mapping[matmul_b_node_name].node
+
+         if matmul_a_node.op == 'Const' and matmul_b_node.op != 'Const':
+             pass
+         else:
+             from ..graph_rewriter.graph_util import GraphAnalyzer
+             g = GraphAnalyzer()
+             g.graph = self.input_graph
+             graph_info = g.parse_graph()
+             next_node_names = graph_info[matched_node.node.name].outputs
+             bias_node_name = target_node_name + '_dummy_biasadd'
+             bias_const_node_name = target_node_name + '_fake_const'
+
+             if matched_node.node.op == 'MatMul':
+                 t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
+             if matched_node.node.op in ('Conv2D' or 'DepthwiseConv2dNative') and \
+                matched_node.node.attr['data_format'].s == b'NHWC':
+                 t_b_index = 3
+             elif matched_node.node.op in ('Conv2D' or 'DepthwiseConv2dNative')  and \
+                matched_node.node.op.attr['data_format'].s == b'NCHW':
+                 t_b_index = 1
+             elif matched_node.node.op == 'Conv3D' and matched_node.node.attr['data_format'].s == b'NDHWC':
+                 t_b_index = 4
+             elif matched_node.node.op == 'Conv3D' and matched_node.node.attr['data_format'].s == b'NCDHW':
+                 t_b_index = 1
+             bias_add_length = matmul_b_node.attr['value'].tensor.tensor_shape.dim[t_b_index].size
+
+             bias_add_content = [0.] * bias_add_length
+
+             bias_const_node = helper.create_constant_node(
+                 bias_const_node_name, bias_add_content, dtypes.float32, shape=[bias_add_length])
+             bias_node = helper.create_node('BiasAdd', bias_node_name, [target_node_name, bias_const_node_name])
+             helper.set_attr_dtype(bias_node, "T", dtypes.float32)
+
+             g.add_node(bias_node, target_node_name, next_node_names)
+             g.add_node(bias_const_node, None, [bias_node_name])
+             self.input_graph = g.dump_graph()
+             self._parse_graph(self.input_graph)
+             new_match_node_name=match_node_name[:1]+[bias_node_name]+match_node_name[1:]
+             new_match_node_name=match_node_name[:1]+[bias_node_name]+match_node_name[1:]
+
+             return new_match_node_name
+
+
     def _is_match(self, patterns):
         """Detect the rule matched nodes collections.
 
