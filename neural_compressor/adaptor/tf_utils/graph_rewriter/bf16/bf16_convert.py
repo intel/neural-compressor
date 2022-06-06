@@ -31,6 +31,7 @@ from tensorflow.python.framework.kernels import get_registered_kernels_for_op
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
+from ..generic.graph_cse_optimizer import GraphCseOptimizer
 
 DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -133,10 +134,6 @@ class BF16Convert(GraphRewriterBase):
         inputs_dt_val, outputs_dt_val = self._dtype_val(bf16_node)
         allowed_dt_val = self._allowed_dtype_val(bf16_node)
 
-        # skip the node whose inputs and outputs are all not allowed to be BF16 data type
-        if all([True if allowed_dt_val[i] != DT_BFLOAT16 else False for i in allowed_dt_val]):
-            return
-
         for index, input_name in enumerate(bf16_node.input):
             if input_name.startswith('^'):
                 continue
@@ -146,7 +143,6 @@ class BF16Convert(GraphRewriterBase):
             input_node = input_detail.node
             input_node_outputs = input_detail.outputs
 
-            #print(bf16_node.op, bf16_node.name, input_node.op, input_node.name, allowed_dt_val, inputs_dt[index])
             if inputs_dt[index] in allowed_dt_val and \
                                         dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
                 continue
@@ -195,8 +191,6 @@ class BF16Convert(GraphRewriterBase):
 
             bf16_node.attr[inputs_dt[index]].CopyFrom(
                                attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
-        if all([True if i != DT_FLOAT32 else False for i in outputs_dt_val]):
-            return
 
         for output_name in bf16_node_outputs:
             output_detail = self.cur_graph.node_name_details[output_name]
@@ -212,6 +206,9 @@ class BF16Convert(GraphRewriterBase):
                     continue
 
                 index = int(input_name.split(':')[-1]) if ':' in input_name else 0
+                if outputs_dt[index] in allowed_dt_val and \
+                                            dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[outputs_dt[index]]:
+                    continue
                 if outputs_dt_val[index] != DT_FLOAT32:
                     continue
 
@@ -252,5 +249,7 @@ class BF16Convert(GraphRewriterBase):
         :return: Transformed graph
         """
         converted_graph_def = self._model_bf16_convert()
+        # remove those ops which could be shared by Graph Cse optimizer
+        converted_graph_def = GraphCseOptimizer(converted_graph_def).do_transformation()
         converted_graph_def.library.CopyFrom(self.model.library)
         return converted_graph_def
