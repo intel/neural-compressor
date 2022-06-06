@@ -95,6 +95,7 @@ class EngineDatasets(object):
         self.datasets.update(ENGINE_DATASETS)
 
 framework_datasets = {"tensorflow": TensorflowDatasets,
+                      "inteltensorflow": TensorflowDatasets,
                       "tensorflow_itex": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
                       "pytorch": PyTorchDatasets,
