@@ -22,7 +22,7 @@ from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 
 class InjectDummyBiasAddOptimizer(GraphRewriterBase):
@@ -41,7 +41,7 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
             # only apply this pass for tensorflow release 2.9.1 and lower version for
             # old quantization API.
             # use conv+dummy_biasadd+relu because TF do not support conv+relu now. 
-            if version1_gt_version2(tf.version.VERSION, '2.9.0') or version1_eq_version2(tf.version.VERSION, '2.9.1'):
+            if version1_gt_version2(tf.version.VERSION, '2.9.1'):
                 continue
             if i[0] in self.outputs:
                 continue

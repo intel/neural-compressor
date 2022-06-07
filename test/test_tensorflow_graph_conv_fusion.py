@@ -232,7 +232,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == 'QuantizedConv2DWithBiasAndReluAndRequantize':
+                if i.op.find('QuantizedConv2D') != -1:
                     found_conv_fusion = True
                     break
 

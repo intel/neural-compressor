@@ -1128,7 +1128,8 @@ class TensorFlowAdaptor(Adaptor):
 
         from .tf_utils.graph_converter_without_calib import GraphConverterWithoutCalib
         converter = GraphConverterWithoutCalib(model,
-                                            recover_config=q_config)
+                                            recover_config=q_config,
+                                            new_api=self.new_api)
 
         return converter.convert_without_calib()
 

@@ -74,6 +74,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
         for i in target_nodes:
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
+            if not self.new_api and quantized_node.op == "QuantizedDepthwiseConv2DWithBias":
+                continue
             if i[-1][0] in ('_QuantizedDepthwiseConv2D', '_QuantizedConv2D', '_QuantizedConv3D'):
                 if str(quantized_node.attr['fused_ops'].list.s).find('Sum') != -1:
                     continue

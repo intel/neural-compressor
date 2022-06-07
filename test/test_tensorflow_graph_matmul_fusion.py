@@ -402,13 +402,13 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                     quantizer.model = float_graph_def
                     output_graph = quantizer.fit()
-
                     count=0
                     for i in output_graph.model.as_graph_def().node:
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
                             count += 1
                     found_quantized_matmul = bool(count > 1)
-            self.assertEqual(found_quantized_matmul, False)
+            # TF2.7 has enabled matmul_biasadd_requantize_dequantize_fusion_with_softmax
+            self.assertEqual(found_quantized_matmul, True)
 
 
 if __name__ == '__main__':

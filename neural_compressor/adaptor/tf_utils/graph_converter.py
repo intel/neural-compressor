@@ -208,7 +208,10 @@ class GraphConverter:
 
             if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
-
+                 
+            if tf.version.VERSION == '1.15.0-up3':
+                is_supported_version = True
+                
         except Exception as e:
             raise ValueError(e)
         finally:
@@ -274,7 +277,7 @@ class GraphConverter:
 
         if self.itex_mode:
             return self._itex_model
-
+        
         if len(self.bf16_ops) > 0:
             model = self.bf16_convert()
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()

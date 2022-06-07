@@ -312,7 +312,8 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_conv2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_conv3.attr["T"].type, dtypes.float32)
-
+        
+    @unittest.skipIf(tf.version.VERSION != "2.10.0", "Only supports newAPI feature")  
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
 
