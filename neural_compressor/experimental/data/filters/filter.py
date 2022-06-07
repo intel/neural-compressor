@@ -56,6 +56,7 @@ PYTORCH_FILTERS = {}
 MXNET_FILTERS = {}
 
 framework_filters = {"tensorflow": TensorflowFilters,
+                     "inteltensorflow": TensorflowFilters,
                      "tensorflow_itex": TensorflowFilters,
                      "pytorch": PyTorchFilters,
                      "pytorch_ipex": PyTorchFilters,
@@ -68,6 +69,7 @@ framework_filters = {"tensorflow": TensorflowFilters,
                      }
 
 registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
+                    "inteltensorflow": TENSORFLOW_FILTERS,
                     "tensorflow_itex": TENSORFLOW_FILTERS,
                     "pytorch": PYTORCH_FILTERS,
                     "pytorch_ipex": PYTORCH_FILTERS,
