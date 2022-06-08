@@ -65,7 +65,7 @@ quantizer.fit()
 # An ONNX Example
 pip install onnx==1.9.0 onnxruntime==1.10.0 onnxruntime-extensions
 # Prepare fp32 model
-wget https://github.com/onnx/models/blob/main/vision/classification/resnet/model/resnet50-v1-12.onnx
+wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet50-v1-12.onnx
 # Start GUI
 inc_bench
 ```
