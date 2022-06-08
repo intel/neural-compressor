@@ -95,6 +95,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_conv_fusion, False)
 
     @disable_random()
+    @unittest.skipIf(tf.__version__ < "2.0", "does not support on 1.15up3")
     def test_depthwiseconv_biasadd_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)

@@ -181,6 +181,7 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
         os.remove('fake_yaml.yaml')
 
     @disable_random()
+    @unittest.skipIf(tf.__version__ < "2.0", "does not support on 1.15up3")
     def test_bf16_cfg_on_non_bf16_enabled_host(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 300, 300, 16], name="input")
         top_relu = tf.nn.relu(x)
@@ -227,6 +228,7 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
             else:
                 self.assertEqual(found_cast_op, False)
 
+@unittest.skipIf(tf.__version__ < "2.0", "does not support on 1.15up3")
 class TestGraphOptimization(unittest.TestCase):
     @classmethod
     def setUpClass(self):

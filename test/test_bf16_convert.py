@@ -290,7 +290,7 @@ class TestBF16Convert(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_bf16_rnn.yaml')
         shutil.rmtree("saved", ignore_errors=True)
-
+    @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 convert does not support 1.15up3")
     def test_rn50_convert(self):
         bf16_nodes = [node.name for node in self.input_graph.node if node.op in ["Conv2D", "AvgPool", "MatMul"]]
         bf16_nodes.remove("v0/resnet_v13/conv14/conv2d/Conv2D")
@@ -302,7 +302,7 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_conv11.attr["T"].type, new_conv52.attr["T"].type)
         self.assertNotEqual(new_conv11.attr["T"].type, new_conv14.attr["T"].type)
 
-
+    @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 convert does not support 1.15up3")
     def test_do_transform(self):
         bf16_converter = BF16Convert(self.test_graph, ["conv3"], ["conv2", "relu2"])
         new_graph = bf16_converter.do_transformation()

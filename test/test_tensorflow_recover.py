@@ -134,10 +134,12 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
     def tearDownClass(self):
         del os.environ['FORCE_BF16']
         os.remove('fake_yaml_2.yaml')
-        os.remove('test.pb')
+        if os.path.exists('./test.pb'):
+            os.remove('test.pb')
         shutil.rmtree('./saved', ignore_errors=True)
 
     @disable_random()
+    @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 converter only support tf > 2.0")
     def test_tensorflow_recover_bf16(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)

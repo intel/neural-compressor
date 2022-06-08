@@ -64,7 +64,7 @@ class TestTensorflowConcat(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-
+    @unittest.skipIf(tf.__version__ < "2.0", "does not support on 1.15up3")
     def test_tensorflow_concat_quantization(self):
 
         output_graph_def = read_graph(self.pb_path)
