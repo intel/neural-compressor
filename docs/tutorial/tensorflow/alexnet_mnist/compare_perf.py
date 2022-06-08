@@ -74,9 +74,9 @@ format_print('latency_times', latencys_times)
 format_print('accuracy_times', accuracys_times)
 
 plt.figure(figsize=(16,6))
-draw_bar(x, t, throughputs_times, 131, 'tab:green', 'Throughput Normalized (big is better)', '', width=0.2)
-draw_bar(x, t, latencys_times, 132, 'tab:blue', 'Latency Normalized (small is better)', '', width=0.2)
-draw_bar(x, t, accuracys_times, 133, '#28a99d', 'Accuracys Normalized (small is better)', '', width=0.2)
+draw_bar(x, t, throughputs_times, 131, 'tab:green', 'Throughput Normalized (larger is better)', '', width=0.2)
+draw_bar(x, t, latencys_times, 132, 'tab:blue', 'Latency Normalized (smaller is better)', '', width=0.2)
+draw_bar(x, t, accuracys_times, 133, '#28a99d', 'Accuracys Normalized (larger is better)', '', width=0.2)
 
 plt.savefig("fp32_int8_times.png")
 print("\nSave to fp32_int8_times.png")
