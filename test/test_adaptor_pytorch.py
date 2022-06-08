@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.quantized as nnq
 from torch.quantization import QuantStub, DeQuantStub
-import torchvision
 import unittest
 import os
 from neural_compressor.adaptor import FRAMEWORKS
@@ -16,6 +15,11 @@ from neural_compressor.utils.utility import recover
 import shutil
 import copy
 import numpy as np
+from neural_compressor.utils.utility import LazyImport
+
+# improve lazy import UT coverage
+resnet18 = LazyImport("torchvision.models.resnet18")
+q_resnet18 = LazyImport("torchvision.models.quantization.resnet18")
 
 try:
     try:
@@ -487,7 +491,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                                "workspace_path": "./"}
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
-    model = torchvision.models.quantization.resnet18()
+    model = q_resnet18()
     nc_model = MODELS['pytorch'](model)
 
     @classmethod
@@ -520,7 +524,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             torch.tensor(100.))
 
     def test_get_input(self):
-        model = MODELS['pytorch'](torchvision.models.quantization.resnet18())
+        model = MODELS['pytorch'](q_resnet18())
         model.model.eval().fuse_model()
         model.register_forward_pre_hook()
         rand_input = torch.rand(100, 3, 224, 224).float()
@@ -724,7 +728,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(op_map['conv1'] == 'Conv2d')
 
     def test_forward_wrapper(self):
-        vision_model = torchvision.models.resnet18()
+        vision_model = resnet18()
         class dummymodel(torch.nn.Module):
             def __init__(self, model):
                 super(dummymodel, self).__init__()
@@ -849,7 +853,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
     def test_fx_quant(self):
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
-            model_origin = torchvision.models.resnet18()
+            model_origin = resnet18()
             # run fx_quant in neural_compressor and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)

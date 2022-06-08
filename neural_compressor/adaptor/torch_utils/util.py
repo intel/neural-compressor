@@ -18,6 +18,26 @@
 import numpy as np
 import torch
 
+def get_embedding_contiguous(model):
+    """This is a helper function for nn.Embedding,
+        and it will get input contiguous.
+
+    Args:
+        model (object): input model
+
+    Returns:
+        None
+    """
+    def contiguous_hook(module, input):
+        embeddings = input[0].contiguous()
+        modified_input = (embeddings, *input[1:])
+        return modified_input
+
+    for child in model.modules():
+        child_type = child.__class__.__name__
+        if child_type == 'Embedding':
+            child.register_forward_pre_hook(contiguous_hook)
+
 def collate_torch_preds(results):
     batch = results[0]
     if isinstance(batch, list):

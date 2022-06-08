@@ -29,6 +29,7 @@ import time
 import sys
 import pickle
 import logging
+import importlib
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 import os.path as osp
@@ -40,6 +41,36 @@ import prettytable as pt
 import psutil
 import subprocess
 from enum import Enum
+
+
+class LazyImport(object):
+    """Lazy import python module till use
+
+       Args:
+           module_name (string): The name of module imported later
+    """
+
+    def __init__(self, module_name):
+        self.module_name = module_name
+        self.module = None
+
+    def __getattr__(self, name):
+        try:
+            self.module = importlib.import_module(self.module_name)
+            mod = getattr(self.module, name)
+        except:
+            spec = importlib.util.find_spec(str(self.module_name + '.' + name))
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        return mod
+
+    def __call__(self, *args, **kwargs):
+        function_name = self.module_name.split('.')[-1]
+        module_name = self.module_name.split(f'.{function_name}')[0]
+        self.module = importlib.import_module(module_name)
+        function = getattr(self.module, function_name)
+        return function(*args, **kwargs)
+
 
 def singleton(cls):
     instances = {}
@@ -57,33 +88,6 @@ def set_backend(backend):
 def get_backend():
     global __BACKEND
     return __BACKEND
-
-class LazyImport(object):
-    """Lazy import python module till use
-
-       Args:
-           module_name (string): The name of module imported later
-    """
-
-    def __init__(self, module_name):
-        self.module_name = module_name
-        self.module = None
-
-    def __getattr__(self, name):
-        if self.module is None:
-            # __import__ returns top level module
-            top_level_module = __import__(self.module_name)
-            if len(self.module_name.split('.')) == 1:
-                self.module = top_level_module
-            else:
-                # for cases that input name is foo.bar.module
-                module_list = self.module_name.split('.')
-                temp_module = top_level_module
-                for temp_name in module_list[1:]:
-                    temp_module = getattr(temp_module, temp_name)
-                self.module = temp_module
-
-        return getattr(self.module, name)
 
 @contextmanager
 def time_limit(seconds):
