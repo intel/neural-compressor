@@ -258,7 +258,7 @@ class QuantizeNodeBase():
 
     def _need_to_check(self, node_type):
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
-                   "MaxPool", "MaxPool3D", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
+                   "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
                    "CropAndResize", "Dequantize", "Mean", "MatMul", "FakeQuantWithMinMaxVars")
         return any([node_type.find(i) != -1 for i in op_list])
 
@@ -329,7 +329,7 @@ class QuantizeNodeBase():
         quantized_op_name = original_node.name + "_eightbit_quantized"
         quantized_op_type = "Quantized" + original_node.op
         if version1_gt_version2(tf.version.VERSION, '2.7.0') and original_node.op == "MaxPool3D":
-            quantized_op_type = "_Quantized" + original_node.op 
+            quantized_op_type = "_Quantized" + original_node.op
         all_input_names = self._add_eightbit_prologue_nodes(original_node.name)
         quantized_op_node = helper.create_node(quantized_op_type,
                                                quantized_op_name,

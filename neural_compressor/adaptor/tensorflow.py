@@ -36,6 +36,7 @@ class TensorFlowAdaptor(Adaptor):
         "Conv2D": "conv2d",
         "Conv3D": "conv3d",
         "DepthwiseConv2dNative": "conv2d",
+        "FusedBatchNormV3": "batchnorm",
         "MaxPool": "pooling",
         "MaxPool3D": "pooling",
         "AvgPool": "pooling",
@@ -256,7 +257,7 @@ class TensorFlowAdaptor(Adaptor):
 
             output_postfix = "_fp32.output"
             inspect_node_types = ["Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool",
-                                  "ConcatV2", "MatMul", "FusedBatchNormV3", "BiasAdd",
+                                  "ConcatV2", "MatMul", "FusedBatchNormV3", "FusedBatchNorm", "BiasAdd",
                                   "Relu", "Relu6", "Dequantize"]
             fp32_inspect_node_name = []
             int8_inspect_node_name = []
@@ -580,11 +581,17 @@ class TensorFlowAdaptor(Adaptor):
         return converted_model
 
     def _dump_model_op_stats(self, model_graphdef):
-        fp32_op_list = copy.deepcopy(
+        fp32_op_list_uint8 = copy.deepcopy(
             self.query_handler.get_op_types_by_precision(precision='uint8'))
+        fp32_op_list_int8 = copy.deepcopy(
+            self.query_handler.get_op_types_by_precision(precision='int8'))
+        fp32_op_list=list(set(fp32_op_list_uint8).union(set(fp32_op_list_int8)))
+
+
         int8_op_prefix_list = ['QuantizedConv2D', '_QuantizedConv3D', 'QuantizedDepthwise',
                                'QuantizedMaxPool', 'QuantizedAvgPool',
-                               'QuantizedConcatV2', 'QuantizedMatMul']
+                               'QuantizedConcatV2', 'QuantizedMatMul',
+                               '_QuantizedFusedBatchNorm']
         from tensorflow.python.framework import dtypes
 
         res = {}

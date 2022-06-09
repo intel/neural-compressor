@@ -206,13 +206,19 @@ class FreezeValueTransformer(GraphRewriterBase):
         :return: transformed graph
         """
         for node_name, value in max_name_value.items():
-            if node_name not in self.graph_info:
+            bn_node_name = node_name.replace('eightbit_requant_range', 'eightbit_quantized_bn')
+            if not self.graph_info.get(bn_node_name) or \
+                not bn_node_name.endswith('_eightbit_quantized_bn'):
+                bn_node_name = None
+            if node_name not in self.graph_info \
+                and bn_node_name not in self.graph_info:
                 continue
 
             min_node = node_def_pb2.NodeDef()
             min_node.op = "HostConst" if self.device == "gpu" else "Const"
             min_node_postfix = "/frozen_min"
-            min_node.name = node_name + min_node_postfix
+            min_node.name = bn_node_name + "/frozen_bn_output_min" if bn_node_name \
+                else node_name + min_node_postfix
             min_node.attr["dtype"].CopyFrom(
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             min_node.attr["value"].CopyFrom(
@@ -223,25 +229,43 @@ class FreezeValueTransformer(GraphRewriterBase):
             max_node = node_def_pb2.NodeDef()
             max_node.op = "HostConst" if self.device == "gpu" else "Const"
             max_node_postfix = "/frozen_max"
-            max_node.name = node_name + max_node_postfix
+            max_node.name = bn_node_name + "/frozen_bn_output_max" if bn_node_name \
+                else node_name + max_node_postfix
             max_node.attr["dtype"].CopyFrom(
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             max_node.attr["value"].CopyFrom(
                 attr_value_pb2.AttrValue(
                     tensor=tensor_util.make_tensor_proto(float(value[1]),
                     dtypes.float32, [])))
-            output_node_name = self.graph_info[node_name].outputs[0]
-            self.cur_graph.replace_const_node(min_node,
-                                              [Helper.node_name_from_input(output_node_name)],
-                                              node_name + ':0')
-            self.cur_graph.replace_const_node(max_node,
-                                              [Helper.node_name_from_input(output_node_name)],
-                                              node_name + ':1')
-            self.cur_graph.remove_node(node_name)
 
-            self.requant_min_max[node_name] = [
-                tensor_util.MakeNdarray(min_node.attr["value"].tensor),
-                tensor_util.MakeNdarray(max_node.attr["value"].tensor)
+            if bn_node_name:
+                self.cur_graph.replace_const_node(
+                    min_node,
+                    [Helper.node_name_from_input(bn_node_name)],
+                    bn_node_name + '_input7_output_min'
+                )
+                self.cur_graph.replace_const_node(
+                    max_node,
+                    [Helper.node_name_from_input(bn_node_name)],
+                    bn_node_name + '_input8_output_max'
+                )
+            else:
+                output_node_name = self.graph_info[node_name].outputs[0]
+                self.cur_graph.replace_const_node(
+                    min_node,
+                    [Helper.node_name_from_input(output_node_name)],
+                    node_name + ':0'
+                )
+                self.cur_graph.replace_const_node(
+                    max_node,
+                    [Helper.node_name_from_input(output_node_name)],
+                    node_name + ':1'
+                )
+                self.cur_graph.remove_node(node_name)
+
+                self.requant_min_max[node_name] = [
+                    tensor_util.MakeNdarray(min_node.attr["value"].tensor),
+                    tensor_util.MakeNdarray(max_node.attr["value"].tensor)
                 ]
 
         self.scale_info[self.postfix] = self.requant_min_max

@@ -546,6 +546,7 @@ class GraphConverter:
         """
         try:
             self._quantize_graph()
+
             self._rnn_details = Helper.analysis_rnn_model(self._tmp_graph_def,
                                                             bf16_ops=self.bf16_ops,
                                                             fp32_ops=self.fp32_ops)
@@ -599,6 +600,7 @@ class GraphConverter:
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
+
         except ValueError as e:
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None

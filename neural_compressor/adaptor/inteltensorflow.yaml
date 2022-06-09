@@ -23,7 +23,8 @@
     valid_mixed_precisions: []
 
   ops: &common_ops
-    int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+    int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'FusedBatchNorm', 'FusedBatchNormV2',
+           'FusedBatchNormV3', 'MatMul', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
     uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
     bf16: ['Conv2D', 'Conv2DBackpropFilter', 'Conv2DBackpropInput', 'Conv3D', 'Conv3DBackpropFilterV2',
            'Conv3DBackpropInputV2', 'DepthwiseConv2dNative', 'DepthwiseConv2dNativeBackpropFilter',
@@ -61,6 +62,14 @@
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'FusedBatchNormV3': {
             'activation': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -209,7 +218,8 @@
         'DepthwiseConv2dNative + BiasAdd + Relu',
         'DepthwiseConv2dNative + Relu',
         'DepthwiseConv2dNative + Add + Relu6',
-        'DepthwiseConv2dNative + BiasAdd'
+        'DepthwiseConv2dNative + BiasAdd',
+        'FusedBatchNormV3 + Relu'
         ]
     uint8: [
         'Conv2D + BiasAdd + AddN + Relu',

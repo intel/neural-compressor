@@ -25,6 +25,7 @@ from .quantize_graph_conv import FuseNodeStartWithConv2d
 from .quantize_graph_concatv2 import FuseNodeStartWithConcatV2
 from .quantize_graph_matmul import FuseNodeStartWithMatmul
 from .quantize_graph_pooling import FuseNodeStartWithPooling
+from .quantize_graph_bn import FuseNodeStartWithFusedBatchNormV3
 
 class QuantizeGraphForIntel(QuantizeGraphBase):
     """
@@ -68,6 +69,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.register_transformer("MaxPool3D", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
         self.register_transformer("Conv3D", FuseNodeStartWithConv2d)
+        self.register_transformer("FusedBatchNormV3", FuseNodeStartWithFusedBatchNormV3)
         self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
@@ -84,7 +86,6 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                 count += 1
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
-
                 self.input_graph, quantizable_node_names = self.transformers[node.op](
                     input_graph=self.input_graph,
                     patterns=self.op_wise_seq[node.op],
@@ -97,5 +98,6 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                         self.all_quantizable_node.extend([[i] for i in quantizable_node_names])
                     else:
                         self.all_quantizable_node.append(quantizable_node_names)
+
         return self.remove_dead_nodes(self.input_graph, self.output_node_names), \
             self.all_quantizable_node
