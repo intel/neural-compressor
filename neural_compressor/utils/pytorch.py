@@ -19,6 +19,7 @@ from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
 from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
 from ..adaptor.pytorch import PyTorchVersionMode
 from ..adaptor.pytorch import PyTorch_FXAdaptor
+from ..adaptor.torch_utils.util import get_embedding_contiguous
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
@@ -194,31 +195,22 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
                                                     prefix='')
             PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
                                                 q_model, prefix='')
-
-        bf16_ops_list = tune_cfg['bf16_ops_list'] if 'bf16_ops_list' in tune_cfg.keys() else []
-        if len(bf16_ops_list) > 0 and (version >= PyTorchVersionMode.PT111.value):
-            from ..adaptor.torch_utils.bf16_convert import Convert
-            q_model = Convert(q_model, tune_cfg)
-        if checkpoint_dir is None and history_cfg is not None:
-            _set_activation_scale_zeropoint(q_model, history_cfg)
-        else:
-            q_model.load_state_dict(stat_dict)
-        return q_model
-
-    if tune_cfg['approach'] == "post_training_dynamic_quant":
-        op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
     else:
-        op_cfgs = _cfg_to_qconfig(tune_cfg)
+        if tune_cfg['approach'] == "post_training_dynamic_quant":
+            op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
+        else:
+            op_cfgs = _cfg_to_qconfig(tune_cfg)
 
-    _propagate_qconfig(q_model, op_cfgs, approach=tune_cfg['approach'])
-    # sanity check common API misusage
-    if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
-        logger.warn("None of the submodule got qconfig applied. Make sure you "
-                    "passed correct configuration through `qconfig_dict` or "
-                    "by assigning the `.qconfig` attribute directly on submodules")
-    if tune_cfg['approach'] != "post_training_dynamic_quant":
-        add_observer_(q_model)
-    q_model = convert(q_model, mapping=q_mapping, inplace=True)
+        _propagate_qconfig(q_model, op_cfgs, approach=tune_cfg['approach'])
+        # sanity check common API misusage
+        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
+            logger.warn("None of the submodule got qconfig applied. Make sure you "
+                        "passed correct configuration through `qconfig_dict` or "
+                        "by assigning the `.qconfig` attribute directly on submodules")
+        if tune_cfg['approach'] != "post_training_dynamic_quant":
+            add_observer_(q_model)
+        q_model = convert(q_model, mapping=q_mapping, inplace=True)
+
     bf16_ops_list = tune_cfg['bf16_ops_list'] if 'bf16_ops_list' in tune_cfg.keys() else []
     if len(bf16_ops_list) > 0 and (version >= PyTorchVersionMode.PT111.value):
         from ..adaptor.torch_utils.bf16_convert import Convert
@@ -227,4 +219,5 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         _set_activation_scale_zeropoint(q_model, history_cfg)
     else:
         q_model.load_state_dict(stat_dict)
+    get_embedding_contiguous(q_model)
     return q_model
