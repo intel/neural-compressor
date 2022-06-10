@@ -2642,9 +2642,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):   # pragma: no cover
         from torch.quantization.quantize_fx import convert_fx
-        self.model._model = convert_fx(self.model._model,
-          convert_custom_config_dict=self.model.kwargs.get('convert_custom_config_dict', None)
-          if self.model.kwargs is not None else None)
+        if self.sub_module_list is None:
+            self.model._model = convert_fx(self.model._model,
+              convert_custom_config_dict=self.model.kwargs.get('convert_custom_config_dict', None)
+                if self.model.kwargs is not None else None)
+        else:
+            PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
+                                                self.model._model, prefix='')
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
