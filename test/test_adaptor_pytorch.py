@@ -1071,5 +1071,17 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
         self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
 
+    def test_symbolic_trace(self):
+        from neural_compressor.adaptor.torch_utils.symbolic_trace import symbolic_trace
+        model_origin = DynamicControlModel()
+        traced_model = symbolic_trace(model_origin, is_qat=False)
+        if PT_VERSION >= PyTorchVersionMode.PT111.value:
+            self.assertTrue(isinstance(traced_model.sub, torch.nn.Module))
+            self.assertTrue(isinstance(traced_model.conv, torch.fx.graph_module.GraphModule))
+        else:
+            self.assertTrue(isinstance(traced_model.sub, torch.fx.graph_module.GraphModule))
+        traced_model_qat = symbolic_trace(model_origin, is_qat=True)
+        self.assertTrue(isinstance(traced_model_qat.sub, torch.fx.graph_module.GraphModule))
+
 if __name__ == "__main__":
     unittest.main()

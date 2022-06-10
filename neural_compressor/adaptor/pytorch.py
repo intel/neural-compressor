@@ -2630,9 +2630,15 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         self.model._model.train()
-        self.model._model = prepare_qat_fx(self.model._model, fx_op_cfgs,
-            prepare_custom_config_dict=self.model.kwargs.get('prepare_custom_config_dict', None)
-            if self.model.kwargs is not None else None)
+        if self.sub_module_list is None:
+            self.model._model = prepare_qat_fx(self.model._model, fx_op_cfgs,
+               prepare_custom_config_dict=self.model.kwargs.get('prepare_custom_config_dict', None)
+               if self.model.kwargs is not None else None)
+        else:
+            logger.info('Fx trace of the entire model failed. ' + \
+                        'We will conduct auto quantization')
+            PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list, fx_op_cfgs, \
+                                                self.model._model, prefix='', is_qat=True)
 
     def _post_hook_for_qat(self):   # pragma: no cover
         from torch.quantization.quantize_fx import convert_fx
@@ -3084,7 +3090,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 except:
                     self._fuse_sub_graph(module, op_name, is_qat)
 
-    def _check_dynamic_control(self, module):
+    @staticmethod
+    def _check_dynamic_control(module):
         """This is a helper function to check dynamic control in forward function of module.
 
         Args:
