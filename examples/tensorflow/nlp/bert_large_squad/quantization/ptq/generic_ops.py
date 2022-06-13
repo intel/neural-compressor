@@ -20,11 +20,15 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow as tf
-
+from pkg_resources import parse_version
 
 _inprecision = tf.float32
 _rprecision = tf.float32
-_keras_policy = tf.keras.mixed_precision.experimental.Policy("float32")
+if parse_version(tf.version.VERSION) < parse_version('2.9.0'):
+    _keras_policy = tf.keras.mixed_precision.experimental.Policy("float32")
+else:
+    _keras_policy = tf.keras.mixed_precision.Policy("float32")
+
 _use_optimized_softmax = True
 _use_experimental_gelu = True
 
@@ -32,7 +36,10 @@ def set_global_precision(dt):
   # Set Keras API precision
   global _keras_policy
   if dt == tf.bfloat16:
-    _keras_policy=tf.keras.mixed_precision.experimental.Policy("mixed_bfloat16")
+     if parse_version(tf.version.VERSION) < parse_version('2.9.0'):
+        _keras_policy=tf.keras.mixed_precision.experimental.Policy("mixed_bfloat16")
+     else:
+         _keras_policy = tf.keras.mixed_precision.Policy("mixed_bfloat16")
 
   # Set basic API precision
   set_rprecision(dt)
