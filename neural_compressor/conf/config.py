@@ -963,6 +963,18 @@ schema = Schema({
             },
     },
 
+    Optional('nas'): {
+        Optional("approach", default=None): str,
+        Optional("search"): {
+            Optional("search_space", default=None): dict,
+            Optional("search_algorithm", default=None): str,
+            Optional("metrics", default=None): list,
+            Optional("higher_is_better", default=None): list,
+            Optional("max_trials", default=None): int,
+            Optional("seed", default=42): int,
+            },
+    },
+
     Optional("train"): train_schema
 })
 
