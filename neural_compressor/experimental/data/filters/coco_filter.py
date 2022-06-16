@@ -19,7 +19,8 @@ from neural_compressor.utils.utility import LazyImport
 from .filter import Filter, filter_registry
 tf = LazyImport('tensorflow')
 
-@filter_registry(filter_type="LabelBalanceCOCORecord", framework="tensorflow")
+@filter_registry(filter_type="LabelBalanceCOCORecord", framework="tensorflow, \
+                 inteltensorflow")
 class LabelBalanceCOCORecordFilter(Filter):
     def __init__(self, size=1):
         self.size = size
@@ -28,7 +29,7 @@ class LabelBalanceCOCORecordFilter(Filter):
         return tf.math.equal(len(label[0]), self.size)
 
 @filter_registry(filter_type="LabelBalanceCOCORaw", framework="tensorflow, \
-    pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+    inteltensorflow, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class LabelBalanceCOCORawFilter(Filter):
     def __init__(self, size=1):
         self.size = size

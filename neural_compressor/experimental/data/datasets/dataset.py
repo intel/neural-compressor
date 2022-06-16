@@ -411,7 +411,7 @@ class MXNetCIFAR10(CIFAR10):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="CIFAR10", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="CIFAR10", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowCIFAR10(CIFAR10):
     def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
@@ -461,7 +461,7 @@ class MXNetCIFAR100(CIFAR100):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="CIFAR100", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="CIFAR100", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowCIFAR100(CIFAR100):
     def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
@@ -569,7 +569,7 @@ class MXNetMNIST(MNIST):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="MNIST", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="MNIST", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowMNIST(MNIST):
     def __getitem__(self, index):
         image, label = self.data[index], int(self.targets[index])
@@ -633,7 +633,7 @@ class MXNetFashionMNIST(FashionMNIST):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="FashionMNIST", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="FashionMNIST", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowFashionMNIST(FashionMNIST):
     def __getitem__(self, index):
         image, label = self.data[index], int(self.targets[index])
@@ -706,7 +706,7 @@ class MXNetImageFolder(ImageFolder):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="ImageFolder", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="ImageFolder", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowImageFolder(ImageFolder):
     def __getitem__(self, index):
         sample = self.image_list[index]
@@ -724,7 +724,7 @@ class TensorflowImageFolder(ImageFolder):
                 image = image.numpy()
             return (image, label)
 
-@dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowTFRecordDataset(IterableDataset):
     """Configuration for TensorflowTFRecordDataset
 
@@ -748,7 +748,7 @@ class TensorflowTFRecordDataset(IterableDataset):
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
-@dataset_registry(dataset_type="ImageRecord", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="ImageRecord", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
     """Configuration for ImageNet database in tf record format
 
@@ -789,7 +789,7 @@ class TensorflowImageRecord(IterableDataset):
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
-@dataset_registry(dataset_type="VOCRecord", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="VOCRecord", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowVOCRecord(IterableDataset):
     """Configuration for PASCAL VOC 2012 database in tf record format
 

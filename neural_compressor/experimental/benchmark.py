@@ -351,7 +351,7 @@ class Benchmark(object):
             set_backend(self.framework)  
 
         # (TODO) ugly to set these params, but tensorflow need
-        if self.framework == 'tensorflow':
+        if 'tensorflow' in self.framework:
             self._model.name = cfg.model.name
             self._model.output_tensor_names = cfg.model.outputs
             self._model.input_tensor_names = cfg.model.inputs

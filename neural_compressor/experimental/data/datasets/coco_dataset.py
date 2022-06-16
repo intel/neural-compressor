@@ -83,7 +83,7 @@ class ParseDecodeCoco():
 
         return image_tensor, (bbox[0], str_label, int_label, image_id)
 
-@dataset_registry(dataset_type="COCORecord", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="COCORecord", framework="tensorflow, inteltensorflow", dataset_format='')
 class COCORecordDataset(IterableDataset):
     """Configuration for Coco dataset in tf record format.
 
@@ -131,7 +131,7 @@ class COCORecordDataset(IterableDataset):
         return ds
 
 @dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
+                    onnxrt_integerops, pytorch, mxnet, tensorflow, inteltensorflow", dataset_format='')
 class COCORaw(Dataset):
     """Configuration for Coco raw dataset.
 
@@ -206,7 +206,7 @@ class COCORaw(Dataset):
         return sample
 
 @dataset_registry(dataset_type="COCONpy", framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, pytorch, mxnet, tensorflow", dataset_format='')
+                    onnxrt_integerops, pytorch, mxnet, tensorflow, inteltensorflow", dataset_format='')
 class COCONpy(Dataset):
     """Configuration for Coco npy dataset.
 

@@ -200,6 +200,7 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+INTELTENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
@@ -207,7 +208,7 @@ ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ENGINE_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
-                       "inteltensorflow": TENSORFLOW_TRANSFORMS,
+                       "inteltensorflow": INTELTENSORFLOW_TRANSFORMS,
                        "tensorflow_itex": TENSORFLOW_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
                        "pytorch": PYTORCH_TRANSFORMS,
@@ -351,7 +352,8 @@ def get_torchvision_map(interpolation):
         return interpolation
 
 @transform_registry(transform_type="Compose", process="general", \
-                 framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, engine")
+                 framework="onnxrt_qlinearops, onnxrt_integerops, \
+                            tensorflow, inteltensorflow, engine")
 class ComposeTransform(BaseTransform):
     """Composes several transforms together.
 
@@ -448,7 +450,7 @@ class ONNXRTCropToBoundingBox(CropToBoundingBox):
         return (image, label)
 
 @transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
-                framework="tensorflow")
+                framework="tensorflow, inteltensorflow")
 class TensorflowCropToBoundingBox(CropToBoundingBox):
     """Crops an image to a specified bounding box.
 
@@ -527,7 +529,7 @@ class ResizeWithRatio(BaseTransform):
         return image, (bbox, str_label, int_label, image_id)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
-                framework="tensorflow")
+                framework="tensorflow, inteltensorflow")
 class TensorflowResizeWithRatio(BaseTransform):
     """Resize image with aspect ratio and pad it to max shape(optional).
        If the image is padded, the label will be processed at the same time.
@@ -608,7 +610,8 @@ class Transpose(BaseTransform):
         image = np.transpose(image, axes=self.perm)
         return (image, label)
 
-@transform_registry(transform_type="Transpose", process="preprocess", framework="tensorflow")
+@transform_registry(transform_type="Transpose", process="preprocess", \
+                    framework="tensorflow, inteltensorflow")
 class TensorflowTranspose(Transpose):
     """Transpose image according to perm.
 
@@ -678,7 +681,7 @@ class RandomVerticalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
-        framework="tensorflow")
+        framework="tensorflow, inteltensorflow")
 class TensorflowRandomVerticalFlip(BaseTransform):
     """Vertically flip the given image randomly.
 
@@ -711,7 +714,7 @@ class RandomHorizontalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
-        framework="tensorflow")
+        framework="tensorflow, inteltensorflow")
 class TensorflowRandomHorizontalFlip(BaseTransform):
     """Horizontally flip the given image randomly.
 
@@ -729,7 +732,8 @@ class TensorflowRandomHorizontalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="ToArray", process="preprocess", \
-        framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, pytorch, mxnet")
+        framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
+                   inteltensorflow, pytorch, mxnet")
 class ToArray(BaseTransform):
     """Convert PIL Image or NDArray to numpy array.
 
@@ -755,7 +759,7 @@ np_dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64,
            'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
 
 @transform_registry(transform_type="Cast",
-                    process="general", framework="tensorflow")
+                    process="general", framework="tensorflow, inteltensorflow")
 class CastTFTransform(BaseTransform):
     """Convert image to given dtype.
 
@@ -830,7 +834,7 @@ class CastPyTorchTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="CenterCrop",
-                    process="preprocess", framework="tensorflow")
+                    process="preprocess", framework="tensorflow, inteltensorflow")
 class CenterCropTFTransform(BaseTransform):
     """Crops the given image at the center to the given size.
 
@@ -870,7 +874,7 @@ class CenterCropTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="PaddedCenterCrop", process="preprocess", \
-                framework="tensorflow")
+                framework="tensorflow, inteltensorflow")
 class PaddedCenterCropTransform(BaseTransform):
     def __init__(self, size, crop_padding=0):
         if isinstance(size, int):
@@ -897,7 +901,7 @@ class PaddedCenterCropTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="Resize",
-                    process="preprocess", framework="tensorflow")
+                    process="preprocess", framework="tensorflow, inteltensorflow")
 class ResizeTFTransform(BaseTransform):
     """Resize the input image to the given size.
 
@@ -959,7 +963,7 @@ class ResizePytorchTransform(BaseTransform):
         return (transformer(image), label)
 
 @transform_registry(transform_type="RandomCrop",
-                    process="preprocess", framework="tensorflow")
+                    process="preprocess", framework="tensorflow, inteltensorflow")
 class RandomCropTFTransform(BaseTransform):
     """Crop the image at a random location to the given size.
 
@@ -1093,7 +1097,7 @@ class RandomResizedCropMXNetTransform(BaseTransform):
 
 
 @transform_registry(transform_type="RandomResizedCrop",
-                    process="preprocess", framework="tensorflow")
+                    process="preprocess", framework="tensorflow, inteltensorflow")
 class RandomResizedCropTFTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
@@ -1193,7 +1197,7 @@ class RandomResizedCropTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="Normalize", process="preprocess",
-                        framework="tensorflow")
+                        framework="tensorflow, inteltensorflow")
 class NormalizeTFTransform(BaseTransform):
     """Normalize a image with mean and standard deviation.
 
@@ -1236,7 +1240,7 @@ class NormalizeTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='KerasRescale', process="preprocess", \
-                framework='tensorflow')
+                framework='tensorflow, inteltensorflow')
 class RescaleKerasPretrainTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
@@ -1254,7 +1258,7 @@ class RescaleKerasPretrainTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
-                framework='tensorflow')
+                framework='tensorflow, inteltensorflow')
 class RescaleTFTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
@@ -1286,7 +1290,7 @@ class RescaleTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
-    framework='tensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet')
+    framework='tensorflow, inteltensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet')
 class AlignImageChannelTransform(BaseTransform):
     """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
         [H,W,3]->[H,W].
@@ -1429,7 +1433,7 @@ class ResizeTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", \
-                framework="tensorflow")
+                framework="tensorflow, inteltensorflow")
 class CropResizeTFTransform(BaseTransform):
     """Crop the input image with given location and resize it.
 
@@ -2157,7 +2161,7 @@ class CollectTransform(BaseTransform):
         return self.all_sample
 
 @transform_registry(transform_type="SquadV1", \
-                process="postprocess", framework="tensorflow")
+                process="postprocess", framework="tensorflow, inteltensorflow")
 class TFSquadV1PostTransform(BaseTransform):
     """Postprocess the predictions of bert on SQuAD.
 
@@ -2409,7 +2413,7 @@ class TFSquadV1ModelZooPostTransform(EngineSquadV1PostTransform):
         self.collect_data = TFModelZooCollectTransform(length=self.length)
 
 @transform_registry(transform_type="ParseDecodeVoc", \
-                    process="preprocess", framework="tensorflow")
+                    process="preprocess", framework="tensorflow, inteltensorflow")
 class ParseDecodeVocTransform(BaseTransform):
     """Parse features in Example proto.
 

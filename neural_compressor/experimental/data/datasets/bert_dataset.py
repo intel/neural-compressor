@@ -274,7 +274,7 @@ class InputFeatures:
         """Serializes this instance to a JSON string."""
         return json.dumps(dataclasses.asdict(self)) + "\n"
 
-@dataset_registry(dataset_type="bert", framework="tensorflow", dataset_format='')
+@dataset_registry(dataset_type="bert", framework="tensorflow, inteltensorflow", dataset_format='')
 class TensorflowBertDataset(Dataset):
     """Configuration for Tensorflow Bert Dataset.
 

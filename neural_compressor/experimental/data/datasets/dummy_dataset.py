@@ -25,7 +25,7 @@ torch = LazyImport('torch')
 
 logger = logging.getLogger()
 
-@dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
+@dataset_registry(dataset_type="dummy", framework="tensorflow, inteltensorflow, tensorflow_itex, \
                                                     onnxrt_qlinearops, onnxrt_integerops, \
                                                     pytorch, pytorch_ipex, pytorch_fx, \
                                                     mxnet, engine",

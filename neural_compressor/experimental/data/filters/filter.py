@@ -69,7 +69,7 @@ framework_filters = {"tensorflow": TensorflowFilters,
                      }
 
 registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
-                    "inteltensorflow": TENSORFLOW_FILTERS,
+                    "inteltensorflow": INTELTENSORFLOW_FILTERS,
                     "tensorflow_itex": TENSORFLOW_FILTERS,
                     "pytorch": PYTORCH_FILTERS,
                     "pytorch_ipex": PYTORCH_FILTERS,
