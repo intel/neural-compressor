@@ -79,6 +79,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     def do_transform(self):
         count = 0
         remove_redundant_quant_flag = False
+        op_wise_config_name_list = list(self.op_wise_config.keys())
         all_node_length = len(self.op_wise_config)
         for _, node in enumerate(self.input_graph.node):
             if node in self.input_graph.node and node.op in self.transformers \
@@ -91,6 +92,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     patterns=self.op_wise_seq[node.op],
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
                     op_wise_cfg=self.op_wise_config[node.name],
+                    op_wise_config_name_list=op_wise_config_name_list,
                     start_node_name=node.name, device=self.device, \
                     fake_quant=self.fake_quant, new_api=self.new_api).apply_the_transform()
                 if quantizable_node_names:

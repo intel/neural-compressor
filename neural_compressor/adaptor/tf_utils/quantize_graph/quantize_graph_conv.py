@@ -267,10 +267,15 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     self._intel_cpu_add_dequantize_result_node(
                         quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
                 else:
+                    dtype = dtypes.quint8
+                    if [i for i in self.node_name_mapping[relu_node_name].output \
+                        if 'FusedBatchNorm' in self.node_name_mapping[i].node.op and \
+                            i in self.op_wise_config_name_list]:
+                            dtype = dtypes.qint8
                     quantize_down_name = self._add_quantize_down_nodes(
-                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                        node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtypes.quint8)
+                        quantize_down_name, relu_node_name, dtype)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -505,10 +510,15 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 self.add_output_graph_node(quantized_conv_node)
                 if not is_leakyrelu:
+                    dtype = dtypes.quint8
+                    if [i for i in self.node_name_mapping[relu_node_name].output \
+                        if 'FusedBatchNorm' in self.node_name_mapping[i].node.op and \
+                            i in self.op_wise_config_name_list]:
+                            dtype = dtypes.qint8
                     quantize_down_name = self._add_quantize_down_nodes(
-                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                        node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name)
+                        quantize_down_name, relu_node_name, dtype)
                 else:
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtypes.qint8, False)
@@ -973,11 +983,15 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     self._intel_cpu_add_dequantize_result_node(
                         quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
                 else:
+                    dtype = dtypes.quint8
+                    if [i for i in self.node_name_mapping[relu_node_name].output \
+                        if 'FusedBatchNorm' in self.node_name_mapping[i].node.op and \
+                            i in self.op_wise_config_name_list]:
+                            dtype = dtypes.qint8
                     quantize_down_name = self._add_quantize_down_nodes(
-                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                        node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name)
-
+                        quantize_down_name, relu_node_name, dtype)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -1082,10 +1096,15 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(quantized_conv_node) 
  
                 if not is_leakyrelu:
+                    dtype = dtypes.quint8
+                    if [i for i in self.node_name_mapping[relu_node_name].output \
+                        if 'FusedBatchNorm' in self.node_name_mapping[i].node.op and \
+                            i in self.op_wise_config_name_list]:
+                            dtype = dtypes.qint8
                     quantize_down_name = self._add_quantize_down_nodes(
-                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                        node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name)
+                        quantize_down_name, relu_node_name, dtype)
                 else:
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtypes.qint8, False)
@@ -1403,10 +1422,15 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     self._intel_cpu_add_dequantize_result_node(
                         quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
                 else:
+                    dtype = dtypes.quint8
+                    if [i for i in self.node_name_mapping[relu_node_name].output \
+                        if 'FusedBatchNorm' in self.node_name_mapping[i].node.op and \
+                            i in self.op_wise_config_name_list]:
+                            dtype = dtypes.qint8
                     quantize_down_name = self._add_quantize_down_nodes(
-                        node, quantized_node_name, dtypes.quint8, is_relu6)
+                        node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtypes.quint8)
+                        quantize_down_name, relu_node_name, dtype)
 
             else:
                 new_node = node_def_pb2.NodeDef()

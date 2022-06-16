@@ -78,6 +78,7 @@ class QuantizeNodeBase():
         self.remove_redundant_quant_flag = kwargs['remove_redundant_quant_flag']
         self.fake_quant = kwargs['fake_quant'] if 'fake_quant' in kwargs else False
         self.per_channel, self.is_asymmetric = kwargs['op_wise_cfg'][0], kwargs['op_wise_cfg'][2]
+        self.op_wise_config_name_list = kwargs['op_wise_config_name_list']
         self.weight_bit = kwargs['op_wise_cfg'][3]
         self.start_node_name = kwargs['start_node_name']
         self.device = kwargs['device']
@@ -370,6 +371,8 @@ class QuantizeNodeBase():
                     dtype = dtypes.quint8 if self._find_relu_node(
                         self.node_name_mapping[original_node].node
                     ) else dtypes.qint8
+                    if 'FusedBatchNorm' in self.node_name_mapping[original_node].node.op:
+                        dtype = dtypes.qint8
             quantize_input_name, min_input_name, max_input_name = (
                 self._eightbitize_input_to_node(namespace_prefix,
                                                 each_input_name,

@@ -608,6 +608,8 @@ class TensorFlowAdaptor(Adaptor):
 
             if any(possible_int8_res):
                 origin_op_type = possible_int8_res[0].split('Quantized')[-1]
+                if origin_op_type == 'FusedBatchNorm':
+                    origin_op_type = 'FusedBatchNormV3'
                 if origin_op_type == 'Depthwise':
                     origin_op_type = 'DepthwiseConv2dNative'
                 res[origin_op_type]['INT8'] += 1
