@@ -3,53 +3,74 @@ Pruning
 
 ## Introduction
 
-Network pruning is one of popular approaches of network compression, which reduces the size of a network by removing parameters with minimal drop in accuracy.
+Network pruning is one of popular approaches of network compression, which removes the least important parameters in the network to achieve compact architectures with minimal accuracy drop.
 
-- Structured Pruning
-
-Structured pruning means pruning sparsity patterns, in which there is some structure, most often in the form of blocks.
-Neural Compressor provided a NLP Structured pruning example:
-[Bert example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager).
-[README of Structured pruning example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager/README.md).
+## Pruning Types
 
 - Unstructured Pruning
 
-Unstructured pruning means pruning unstructured sparsity (aka random sparsity) patterns, where the nonzero patterns are irregular and could be anywhere in the matrix.
+Unstructured pruning means finding and removing the less salient connection in the model where the nonzero patterns are irregular and could be anywhere in the matrix.
 
-- Filter/Channel Pruning
+- Structured Pruning
 
-Filter/Channel pruning means pruning a larger part of the network, such as filters or layers, according to some rules.
+Structured pruning means finding parameters in groups, deleting entire blocks, filters, or channels according to some pruning criterions.
 
-## Pruning Algorithms supported by Neural Compressor
+## Pruning Algorithms
 
-|    Pruning Type        |                 Algorithm                   | PyTorch | Tensorflow |
-|------------------------|---------------------------------------------|---------|------------|
-| unstructured pruning   | basic_magnitude                             |   Yes   |     Yes    |
-|                        | pattern_lock                                |   Yes   |     N/A    | 
-|  structured pruning    | pattern_lock                                |   Yes   |     N/A    | 
-| filter/channel pruning | gradient_sensitivity                        |   Yes   |     N/A    |
+<table>
+<thead>
+  <tr>
+    <th>Pruning Type</th>
+    <th>Pruning Granularity</th>
+    <th>Pruning Algorithm</th>
+    <th>Framework</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="2">Unstructured Pruning</td>
+    <td rowspan="2">Element-wise</td>
+    <td>Magnitude</td>
+    <td>PyTorch, TensorFlow</td>
+  </tr>
+  <tr>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="3">Structured Pruning</td>
+    <td>Filter/Channel-wise</td>
+    <td>Gradient Sensitivity</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>Block-wise</td>
+    <td>Group Lasso</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>Element-wise</td>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+</tbody>
+</table>
 
-Neural Compressor also supports the two-shot execution of unstructured pruning and post-training quantization.
-
-- basic_magnitude:
+- Magnitude
 
   - The algorithm prunes the weight by the lowest absolute value at each layer with given sparsity target.
 
-- gradient_sensitivity:
+- Gradient sensitivity
 
   - The algorithm prunes the head, intermediate layers, and hidden states in NLP model according to importance score calculated by following the paper [FastFormers](https://arxiv.org/abs/2010.13382). 
 
-- pattern_lock
+- Group Lasso
 
-  - The algorithm takes a sparsity model as input and starts to fine tune this sparsity model and locks the sparsity pattern by freezing those zero values in weight tensor after weight update during training. 
+  - The algorithm uses Group lasso regularization to prune entire rows, columns or blocks of parameters that result in a smaller dense network.
 
-- pruning and then post-training quantization
+- Pattern Lock
 
-  - The algorithm executes unstructured pruning and then executes post-training quantization. 
-
-- pruning during quantization-aware training
-
-  - The algorithm executes unstructured pruning during quantization-aware training.
+  - The algorithm locks the sparsity pattern in fine tune phase by freezing those zero values of weight tensor during weight update of training. 
 
 ## Pruning API
 
@@ -58,38 +79,29 @@ Neural Compressor also supports the two-shot execution of unstructured pruning a
 Neural Compressor pruning API is defined under `neural_compressor.experimental.Pruning`, which takes a user defined yaml file as input. The user defined yaml defines training, pruning and evaluation behaviors.
 [API Readme](../docs/pruning_api.md).
 
-### Launcher code
+### Usage 1: Launch pruning with user-defined yaml
 
-Simplest launcher code if training behavior is defined in user-defined yaml.
+#### Launcher code
+
+Below is the launcher code if training behavior is defined in user-defined yaml.
 
 ```
-from neural_compressor.experimental import Pruning, common
+from neural_compressor.experimental import Pruning
 prune = Pruning('/path/to/user/pruning/yaml')
 prune.model = model
 model = prune.fit()
 ```
 
-Pruning class also support PruningConf class as it's argument.
-
-```
-from lpot.experimental import Pruning, common
-from lpot.conf.config import PruningConf
-conf = PruningConf('/path/to/user/pruning/yaml')
-prune = Pruning(conf)
-prune.model = model
-model = prune.fit()
-```
-
-### User-defined yaml
+#### User-defined yaml
 
 The user-defined yaml follows below syntax, note `train` section is optional if user implements `pruning_func` and sets to `pruning_func` attribute of pruning instance.
-[user-defined yaml](../docs/pruning.yaml).
+User could refer to [the yaml template file](../docs/pruning.yaml) to know field meanings.
 
-#### `train`
+##### `train`
 
 The `train` section defines the training behavior, including what training hyper-parameter would be used and which dataloader is used during training. 
 
-#### `approach`
+##### `approach`
 
 The `approach` section defines which pruning algorithm is used and how to apply it during training process.
 
@@ -103,13 +115,13 @@ The `approach` section defines which pruning algorithm is used and how to apply 
 
 - `Pruner`:
 
-  - `prune_type`: pruning algorithm, currently ``basic_magnitude`` and ``gradient_sensitivity`` are supported.
+  - `prune_type`: pruning algorithm, currently ``basic_magnitude``, ``gradient_sensitivity`` and ``group_lasso``are supported.
 
   - `names`: weight name to be pruned. If no weight is specified, all weights of the model will be pruned.
 
-  - `parameters`: Additional parameters is required ``gradient_sensitivity`` prune_type, which is defined in ``parameters`` field. Those parameters determined how a weight is pruned, including the pruning target and the calculation of weight's importance. it contains:
+  - `parameters`: Additional parameters is required ``gradient_sensitivity`` prune_type, which is defined in ``parameters`` field. Those parameters determined how a weight is pruned, including the pruning target and the calculation of weight's importance. It contains:
 
-    - `target`: the pruning target for weight.
+    - `target`: the pruning target for weight, will override global config `target_sparsity` if set.
     - `stride`: each stride of the pruned weight.
     - `transpose`: whether to transpose weight before prune.
     - `normalize`: whether to normalize the calculated importance.
@@ -119,18 +131,32 @@ The `approach` section defines which pruning algorithm is used and how to apply 
 
     Take above as an example, if we assume the 'bert.encoder.layer.0.attention.output.dense.weight' is the shape of [N, 12\*64]. The target 8 and stride 64 is used to control the pruned weight shape to be [N, 8\*64]. `Transpose` set to True indicates the weight is pruned at dim 1 and should be transposed to [12\*64, N] before pruning. `importance_input` and `importance_metric` specify the actual input and metric to calculate importance matrix.
 
+### Usage 2: Launch pruning with user-defined pruning function
 
-### Pruning with user-defined pruning_func()
+#### Launcher code
 
-User can pass the customized training/evaluation functions to `Pruning` for flexible scenarios. `Pruning`  In this case, pruning process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.
+In this case, the launcher code is like the following:
 
-Neural Compressor defines several hooks for user pass
+```python
+from neural_compressor.experimental import Pruning, common
+prune = Pruning(args.config)
+prune.model = model
+prune.pruning_func = pruning_func
+model = prune.fit()
+```
+
+#### User-defined pruning function
+
+User can pass the customized training/evaluation functions to `Pruning` for flexible scenarios. In this case, pruning process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.
+
+Neural Compressor defines several hooks for user use:
 
 ```
 on_epoch_begin(epoch) : Hook executed at each epoch beginning
 on_batch_begin(batch) : Hook executed at each batch beginning
 on_batch_end() : Hook executed at each batch end
 on_epoch_end() : Hook executed at each epoch end
+on_post_grad() : Hook executed after gradients calculated and before backward
 ```
 
 Following section shows how to use hooks in user pass-in training function which is part of example from BERT training:
@@ -169,41 +195,6 @@ def pruning_func(model):
 ...
 ```
 
-In this case, the launcher code is like the following:
-
-```python
-from neural_compressor.experimental import Pruning, common
-prune = Pruning(args.config)
-prune.model = model
-prune.pruning_func = pruning_func
-model = prune.fit()
-```
-
-### Scheduler for Pruning and Quantization
-
-Neural Compressor defined Scheduler to automatically pipeline execute prune and post-training quantization. After appending separate component into scheduler pipeline, scheduler executes them one by one. In following example it executes the pruning and then post-training quantization.
-
-```python
-from neural_compressor.experimental import Quantization, common, Pruning, Scheduler
-prune = Pruning(prune_conf)
-quantizer = Quantization(post_training_quantization_conf)
-scheduler = Scheduler()
-scheduler.model = model
-scheduler.append(prune)
-scheduler.append(quantizer)
-opt_model = scheduler.fit()
-```
-
 ## Examples
 
-### Examples in Neural Compressor
-Following examples are supported in Neural Compressor:
-
-- CNN Examples:
-  - [resnet example](../examples/pytorch/image_recognition/torchvision_models/pruning/magnitude/eager/README.md): magnitude pruning on resnet.
-  - [pruning and post-training quantization](../examples/pytorch/image_recognition/torchvision_models/optimization_pipeline/prune_and_ptq/eager/README.md): magnitude pruning and then post-training quantization on resnet.
-  - [resnet_v2 example](../examples/tensorflow/image_recognition/resnet_v2/pruning/magnitude/README.md): magnitude pruning on resnet_v2 for tensorflow.
-- NLP Examples:
-  - [BERT example](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/magnitude/eager/README.md): magnitude pruning on DistilBERT.
-  - [BERT example](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager/README.md): Pattern-lock and head-pruning on BERT-base.
-
+For related examples, please refer to [Pruning examples](../examples/README.md).

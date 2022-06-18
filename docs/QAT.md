@@ -1,75 +1,56 @@
-# QAT
+# Quantization-aware Training
 
 ## Design
 
-At its core, QAT simulates low-precision inference-time computation in the forward pass of the training process. With QAT, all weights and activations are "fake quantized" during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while "aware" of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
+Quantization-aware training (QAT) simulates low-precision inference-time computation in the forward pass of the training process. With QAT, all weights and activations are "fake quantized" during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while "aware" of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
 
-The overall workflow for actually performing QAT is very similar to Post-training static quantization (PTQ):
-
-* We can use the same model as PTQ; no additional preparation is needed for quantization-aware training.
-* We need to use a qconfig specifying what kind of fake-quantization is to be inserted after weights and activations, instead of specifying observers.
+<img src="../docs/imgs/fake_quant.png" width=700 height=433 alt="fake quantize">
 
 ## Usage
 
-### MobileNetV2 Model Architecture
-
-Refer to the [PTQ Model Usage](PTQ.md#mobilenetv2-model-architecture).
-
-### Helper Functions
-
-Refer to [PTQ Helper Functions](PTQ.md#helper-functions).
-
-### QAT
-
-First, define a training function:
+First, define a training function as below.
+accuracy is in the 
 
 ```python
-def train_one_epoch(model, criterion, optimizer, data_loader, device, ntrain_batches):
-    model.train()
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
-    avgloss = AverageMeter('Loss', '1.5f')
-
-    cnt = 0
-    for image, target in data_loader:
-        start_time = time.time()
-        print('.', end = '')
-        cnt += 1
-        image, target = image.to(device), target.to(device)
-        output = model(image)
-        loss = criterion(output, target)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        top1.update(acc1[0], image.size(0))
-        top5.update(acc5[0], image.size(0))
-        avgloss.update(loss, image.size(0))
-        if cnt >= ntrain_batches:
-            print('Loss', avgloss.avg)
-
-            print('Training: * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
-                  .format(top1=top1, top5=top5))
-            return
-
-    print('Full imagenet train set:  * Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f}'
-          .format(top1=top1, top5=top5))
-    return
+def training_func_for_nc(model):
+    epochs = 8
+    iters = 30
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    for nepoch in range(epochs):
+        model.train()
+        cnt = 0
+        for image, target in train_loader:
+            print('.', end='')
+            cnt += 1
+            output = model(image)
+            loss = criterion(output, target)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            if cnt >= iters:
+                break
+        if nepoch > 3:
+            # Freeze quantizer parameters
+            model.apply(torch.quantization.disable_observer)
+        if nepoch > 2:
+            # Freeze batch norm mean and variance estimates
+            model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
+    return model
 ```
-Fuse modules as PTQ:
+Fuse modules:
 ```python
 model.fuse_model()
 optimizer = torch.optim.SGD(model.parameters(), lr = 0.0001)
 model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
 ```
-Finally, prepare_qat performs the "fake quantization", preparing the model for quantization-aware training:
+Finally, prepare_qat performs the "fake quantization", preparing the model for quantization-aware training, this function already be implemented as a hook :
 ```python
 torch.quantization.prepare_qat(model, inplace=True)
 ```
-Training a quantized model with high accuracy requires accurate modeling of numerics at inference. For quantization-aware training, therefore, modify the training loop by doing the following:
-
+Training a quantized model with high accuracy requires accurate modeling of numerics at inference. INC does the training loop by following:
 * Switch batch norm to use running mean and variance towards the end of training to better match inference numerics.
 * Freeze the quantizer parameters (scale and zero-point) and fine tune the weights.
+
 ```python
 num_train_batches = 20
 # Train and check accuracy after each epoch
@@ -88,6 +69,20 @@ for nepoch in range(8):
     print('Epoch %d :Evaluation accuracy on %d images, %2.2f'%(nepoch, num_eval_batches * eval_batch_size, top1.avg))
 ```
 
+When using QAT in INC, you just need to use these APIs: 
+```python
+from neural_compressor.experimental import Quantization, common
+quantizer = Quantization("./conf.yaml")
+quantizer.model = common.Model(model)
+quantizer.q_func = training_func_for_nc
+quantizer.eval_dataloader = val_loader
+q_model = quantizer.fit()
+```
+
+The quantizer.fit() function will return a best quantized model during timeout constrain.
+<br>
+The yaml define example: [The yaml example](/examples/pytorch/image_recognition/torchvision_models/quantization/qat/fx)
+
 Here, we just perform quantization-aware training for a small number of epochs. Nevertheless, quantization-aware training yields an accuracy of over 71% on the entire imagenet dataset, which is close to the floating point accuracy of 71.9%.
 
 More on quantization-aware training:
@@ -96,10 +91,6 @@ More on quantization-aware training:
 * We can simulate the accuracy of a quantized model in floating points since we are using fake-quantization to model the numerics of actual quantized arithmetic.
 * We can easily mimic post-training quantization.
 
-Intel® Neural Compressor can support QAT calibration for
-PyTorch models. Refer to the [QAT model](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/eager/image_recognition/imagenet/cpu/qat/README.md) for step-by-step tuning.
-
-### Example
-View a [QAT example of PyTorch resnet50](/examples/pytorch/image_recognition/torchvision_models/quantization/qat).
-
+### Examples
+For related examples, please refer to the [QAT models](/examples/README.md).
 

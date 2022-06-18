@@ -1,4 +1,4 @@
-Infrastructure
+Design
 =====
 Intel® Neural Compressor features an architecture and workflow that aids in increasing performance and faster deployments across infrastructures. 
 

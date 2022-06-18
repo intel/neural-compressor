@@ -37,9 +37,7 @@ Intel® Neural Compressor has been one of the critical AI software components in
   # install stable version from from conda
   conda install neural-compressor -c conda-forge -c intel 
   ```
-More installation methods can be found at [Installation Guide](./docs/installation_guide.md).  
-> **Note:**
-> Run into installation issues, please check [FAQ](./docs/faq.md). 
+More installation methods can be found at [Installation Guide](./docs/installation_guide.md). Please check out our [FAQ](./docs/faq.md) for more details.
 
 ## Getting Started
 * Quantization with Python API  
@@ -122,8 +120,8 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 </tbody>
 </table>
 
-> Note: 1.Starting from official TensorFlow 2.6.0, oneDNN has been default in the binary. Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 to enable the oneDNN optimizations.  
-> 2.Starting from official TensorFlow 2.9.0, oneDNN optimizations are enabled by default on CPUs with neural-network-focused hardware features such as AVX512_VNNI, AVX512_BF16, AMX, etc. No need to set environment variable.
+> **Note:**
+> Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 to enable oneDNN optimizations if you are using TensorFlow from v2.6 to v2.8. oneDNN has been fully default from TensorFlow v2.9.
 
 ### Validated Models
 Intel® Neural Compressor validated 420+ [examples](./examples) with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. 
@@ -143,7 +141,7 @@ More details for validated models are available [here](docs/validated_model_list
   </thead>
   <tbody>
     <tr>
-      <td colspan="3" align="center"><a href="docs/infrastructure.md">Infrastructure</a></td>
+      <td colspan="3" align="center"><a href="docs/design.md">Architecture</a></td>
       <td colspan="2" align="center"><a href="docs/tutorial.md">Tutorial</a></td>
       <td colspan="2" align="center"><a href="./examples">Examples</a></td>
       <td colspan="1" align="center"><a href="docs/bench.md">GUI</a></td>
@@ -177,7 +175,7 @@ More details for validated models are available [here](docs/validated_model_list
         <td colspan="2" align="center"><a href="docs/Quantization.md">Quantization</a></td>
         <td colspan="1" align="center"><a href="docs/pruning.md">Pruning</a> <a href="docs/sparsity.md">(Sparsity)</a> </td> 
         <td colspan="3" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
-        <td colspan="3" align="center"><a href="docs/mixed_precision.md">Mixed precision</a></td>
+        <td colspan="3" align="center"><a href="docs/mixed_precision.md">Mixed Precision</a></td>
     </tr>
     <tr>
         <td colspan="2" align="center"><a href="docs/benchmark.md">Benchmarking</a></td>
@@ -207,7 +205,7 @@ More details for validated models are available [here](docs/validated_model_list
 * [Quantizing ONNX Models using Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Quantizing-ONNX-Models-using-Intel-Neural-Compressor/post/1355237) (Feb 2022)
 * [Quantize AI Model by Intel® oneAPI AI Analytics Toolkit on Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) (Feb 2022)
 
-> View the [full publication list](docs/publication_list.md).
+> Please check out our [full publication list](docs/publication_list.md).
 
 ## Additional Content
 
@@ -217,6 +215,6 @@ More details for validated models are available [here](docs/validated_model_list
 * [Security Policy](docs/security_policy.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
-## Hiring
+## Hiring :star:
 
-We are hiring. Please send your resume to inc.maintainers@intel.com if you have interests in model compression techniques.
+We are actively hiring. Please send your resume to inc.maintainers@intel.com if you have interests in model compression techniques.
