@@ -168,13 +168,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/Natural Language Processing/bert_base_mrpc/quantization/ptq">ckpt</a></td>
+    <td><a href="./tensorflow/nlp/bert_base_mrpc/quantization/ptq">ckpt</a></td>
+  </tr>
+  <tr>
+    <td>BERT large SQuAD (Model Zoo)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>BERT large SQuAD</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/Natural Language Processing/bert_large_squad/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/nlp/bert_large_squad/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Transformer LT</td>
