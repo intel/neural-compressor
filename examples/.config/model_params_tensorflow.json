@@ -504,6 +504,15 @@
       "batch_size": 64,
       "new_benchmark": true
     },
+    "bert_large_squad_model_zoo": {
+      "model_src_dir": "nlp/bert_large_squad_model_zoo/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/bert/data",
+      "input_model": "/tf_dataset/tensorflow/bert/fp32_bert_squad.pb",
+      "yaml": "bert.yaml",
+      "strategy": "basic",
+      "batch_size": 64,
+      "new_benchmark": true
+    },
     "bert_base_mrpc": {
       "model_src_dir": "nlp/bert_base_mrpc/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/bert/mrpc_data",

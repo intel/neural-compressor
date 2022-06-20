@@ -88,4 +88,4 @@ precision_optimization_types = {
     OptimizationTypes.GRAPH_OPTIMIZATION: [Precisions.BF16, Precisions.FP32],
 }
 
-postprocess_transforms = ["SquadV1"]
+postprocess_transforms = ["SquadV1", "SquadV1ModelZoo"]

@@ -304,3 +304,88 @@ class TensorflowBertDataset(Dataset):
 
     def __len__(self):
         return 1
+
+class ParseDecodeBert():
+    def __call__(self, sample):    
+        import tensorflow as tf
+        # Dense features in Example proto.
+        feature_map = {
+            'input_ids':
+            tf.compat.v1.VarLenFeature(dtype=tf.int64),
+            'input_mask':
+            tf.compat.v1.VarLenFeature(dtype=tf.int64),
+            'segment_ids':
+            tf.compat.v1.VarLenFeature(dtype=tf.int64),
+        }
+
+        features = tf.io.parse_single_example(sample, feature_map)
+
+        input_ids = features['input_ids'].values
+        input_mask = features['input_mask'].values
+        segment_ids = features['segment_ids'].values
+
+        return (input_ids, input_mask, segment_ids)
+
+@dataset_registry(dataset_type="mzbert", framework="tensorflow", dataset_format='')
+class TensorflowModelZooBertDataset(Dataset):
+    """Configuration for three-input Bert dataset in tf record format.
+    Root is a full path to tfrecord file, which contains the file name.
+    Please use Resize transform when batch_size > 1
+    Args: root (str): path of dataset.
+          label_file (str): path of label file.
+          task (str, default='squad'): task type of model.
+          model_type (str, default='bert'): model type, support 'bert'.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according
+    """
+    def __init__(self, root, label_file, task='squad',
+            model_type='bert', transform=None, filter=None, num_cores=28):
+        import json
+        with open(label_file) as lf:
+            label_json = json.load(lf)
+            assert label_json['version'] == '1.1', 'only support squad 1.1'
+            self.label = label_json['data']
+        import tensorflow as tf
+        record_iterator = tf.compat.v1.python_io.tf_record_iterator(root)
+        example = tf.train.SequenceExample()
+        for element in record_iterator:
+            example.ParseFromString(element)
+            break
+        feature = example.context.feature
+        if len(feature['input_ids'].int64_list.value) == 0 \
+            and len(feature['input_mask'].int64_list.value) == 0:
+            raise ValueError("Tfrecord format is incorrect, please refer\
+                'https://github.com/tensorflow/models/blob/master/research/\
+                object_detection/dataset_tools/' to create correct tfrecord")
+        # pylint: disable=no-name-in-module
+        from tensorflow.python.data.experimental import parallel_interleave
+        tfrecord_paths = [root]
+        ds = tf.data.TFRecordDataset.list_files(tfrecord_paths)
+        ds = ds.apply(
+            parallel_interleave(tf.data.TFRecordDataset,
+                                cycle_length=num_cores,
+                                block_length=5,
+                                sloppy=True,
+                                buffer_output_elements=10000,
+                                prefetch_input_elements=10000))
+        if transform is not None:
+            transform.transform_list.insert(0, ParseDecodeBert())
+        else:
+            transform = ParseDecodeBert()
+        ds = ds.map(transform, num_parallel_calls=None)
+        if filter is not None:
+            ds = ds.filter(filter)
+        ds = ds.prefetch(buffer_size=1000)
+        from ..dataloaders.tensorflow_dataloader import TFDataDataLoader
+        ds = TFDataDataLoader(ds)
+        self.root = []
+        for inputs in ds:
+            self.root.append(inputs)
+        self.transform = transform
+        self.filter = filter
+
+    def __getitem__(self, index):
+        return self.root[index], self.label
+
+    def __len__(self):
+        return len(self.root)

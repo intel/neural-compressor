@@ -25,7 +25,7 @@ from .sampler import IterableSampler, SequentialSampler, BatchSampler
 from .fetcher import FETCHERS
 from .default_dataloader import default_collate
 from .default_dataloader import DefaultDataLoader
-from ..datasets.bert_dataset import TensorflowBertDataset
+from ..datasets.bert_dataset import TensorflowBertDataset, TensorflowModelZooBertDataset
 from .base_dataloader import BaseDataLoader
 import logging
 
@@ -167,6 +167,38 @@ class TensorflowBertDataLoader(DefaultDataLoader):
             except StopIteration:
                 return
 
+class TensorflowModelZooBertDataLoader(DefaultDataLoader):
+    def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
+                             sampler, batch_sampler, num_workers, pin_memory, shuffle,
+                             distributed):
+
+        if shuffle:
+            logging.warning('Shuffle is not supported yet in TensorflowBertDataLoader, ' \
+                            'ignoring shuffle keyword.')
+        def bert_collate_fn(batch):
+            input_ids = []
+            input_mask = []
+            segment_ids = []
+            for elem in batch:
+                input_ids.append(elem[0][0][0])
+                input_mask.append(elem[0][1][0])
+                segment_ids.append(elem[0][2][0])
+            inputs = [input_ids, input_mask, segment_ids]
+            return inputs, batch[0][1]
+        drop_last = False if last_batch == 'rollover' else True
+        sampler = self._generate_sampler(dataset, distributed)
+        self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+        self.fetcher = FETCHERS[self.dataset_type]\
+            (dataset, bert_collate_fn, drop_last, distributed)
+
+        inputs = []
+        for batched_indices in self.batch_sampler:
+            try:
+                data = self.fetcher(batched_indices)
+                yield data
+            except StopIteration:
+                return
+
 class TensorflowDataLoader(BaseDataLoader):
     """DataLoader for framework Tensorflow, if it's a tf.data.Dataset we will directly use
        the dataloader in the other case will use DefaultDataLoader instead.
@@ -210,6 +242,14 @@ class TensorflowDataLoader(BaseDataLoader):
                 raise NotImplementedError("Distributed TensorflowBertDataLoader" \
                     " is not yet supported, please set 'distributed: False'")
             tf_bert_dataloader  = TensorflowBertDataLoader(dataset, batch_size, \
+                last_batch, collate_fn, sampler, batch_sampler, \
+                num_workers, pin_memory, shuffle, distributed)
+            return tf_bert_dataloader
+        elif isinstance(dataset, TensorflowModelZooBertDataset):
+            if distributed:
+                raise NotImplementedError("Distributed TensorflowBertDataLoader" \
+                    " is not yet supported, please set 'distributed: False'")
+            tf_bert_dataloader  = TensorflowModelZooBertDataLoader(dataset, batch_size, \
                 last_batch, collate_fn, sampler, batch_sampler, \
                 num_workers, pin_memory, shuffle, distributed)
             return tf_bert_dataloader

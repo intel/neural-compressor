@@ -2249,6 +2249,10 @@ class TFSquadV1PostTransform(BaseTransform):
             null_start_logit = 0  # the start logit at the slice with min null score
             null_end_logit = 0  # the end logit at the slice with min null score
             for (feature_index, feature) in enumerate(features):
+                # skip the case that is not predicted
+                if not feature.unique_id in unique_id_to_result:
+                    all_predictions[example.qas_id] = "*#skip this example#*"
+                    continue
                 result = unique_id_to_result[feature.unique_id]
                 start_indexes = _get_best_indexes(result.start_logits, self.n_best_size)
                 end_indexes = _get_best_indexes(result.end_logits, self.n_best_size)
@@ -2374,6 +2378,32 @@ class EngineSquadV1PostTransform(TFSquadV1PostTransform):
     def __call__(self, sample):
         sample = self.collect_data(sample)
         return self.get_postprocess_result(sample)
+
+@transform_registry(transform_type="ModelZooCollect", \
+                process="postprocess", framework="tensorflow, engine")
+class TFModelZooCollectTransform(CollectTransform):
+    def __call__(self, sample):
+        all_results, label = sample
+        all_results = zip(all_results[0], all_results[1])
+        for start_logits, end_logits in all_results:
+            if len(self.unique_id) < self.length:
+                self.unique_id.append(self.idx)
+                self.start_logits.append(start_logits)
+                self.end_logits.append(end_logits)
+                self.idx += 1
+        if len(self.unique_id) == self.length:
+            self.all_sample = ([self.unique_id, self.start_logits, self.end_logits], label)
+        return self.all_sample
+
+@transform_registry(transform_type="SquadV1ModelZoo", \
+                process="postprocess", framework="tensorflow, engine")
+class TFSquadV1ModelZooPostTransform(EngineSquadV1PostTransform):
+    def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
+        max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
+        super().__init__(label_file, vocab_file, n_best_size, max_seq_length, \
+                max_query_length, max_answer_length, do_lower_case, doc_stride)
+        self.length = len(self.eval_features)
+        self.collect_data = TFModelZooCollectTransform(length=self.length)
 
 @transform_registry(transform_type="ParseDecodeVoc", \
                     process="preprocess", framework="tensorflow")

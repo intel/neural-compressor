@@ -402,6 +402,12 @@ postprocess_schema = Schema({
         Optional('do_lower_case', default='True'): bool,
         Optional('max_seq_length', default=384): int,
     },
+    Optional('SquadV1ModelZoo'): {
+        'label_file': str,
+        'vocab_file': str,
+        Optional('do_lower_case', default='True'): bool,
+        Optional('max_seq_length', default=384): int,
+    },
 })
 
 dataset_schema = Schema({
@@ -485,6 +491,12 @@ dataset_schema = Schema({
         Optional('label'): bool,
     },
     Optional('bert'): {
+        'root': str,
+        'label_file': str,
+        Optional('task'): And(str, lambda s: s in ["classifier", "squad"]),
+        Optional('model_type'): And(str, lambda s: s in ['bert', 'xlnet', 'xlm']),
+    },
+    Optional('mzbert'): {
         'root': str,
         'label_file': str,
         Optional('task'): And(str, lambda s: s in ["classifier", "squad"]),

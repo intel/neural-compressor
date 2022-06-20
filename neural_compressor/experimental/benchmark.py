@@ -81,6 +81,7 @@ class Benchmark(object):
         self.framework = None
         self._model = None
         self._b_dataloader = None
+        self._b_func = None
         self._metric = None
         self._results = {}
         if isinstance(conf_fname_or_obj, BenchmarkConf):
@@ -210,19 +211,14 @@ class Benchmark(object):
 
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
-            b_func = create_eval_func(self.framework, \
-                                      self._b_dataloader, \
-                                      adaptor, \
-                                      metric, \
-                                      b_postprocess_cfg,
-                                      iteration=iteration)
-        else:
-            b_func = create_eval_func(self.framework, \
-                                      self._b_dataloader, \
-                                      adaptor, \
-                                      metric, \
-                                      b_postprocess_cfg,
-                                      iteration=iteration)
+            
+        if self._b_func is None:
+            self._b_func = create_eval_func(self.framework, \
+                                    self._b_dataloader, \
+                                    adaptor, \
+                                    metric, \
+                                    b_postprocess_cfg,
+                                    iteration=iteration)
 
         objectives = [i.lower() for i in cfg.tuning.multi_objectives.objective] if \
             deep_get(cfg, 'tuning.multi_objectives') else [cfg.tuning.objective]
@@ -231,7 +227,7 @@ class Benchmark(object):
                               cfg.tuning.accuracy_criterion,
                               is_measure=True)
 
-        val = self.objectives.evaluate(b_func, self._model)
+        val = self.objectives.evaluate(self._b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val
@@ -299,6 +295,26 @@ class Benchmark(object):
 
         """
         self._b_dataloader = _generate_common_dataloader(dataloader, self.framework)
+
+    @property
+    def b_func(self):
+        """ not support get b_func """
+        assert False, 'Should not try to get the value of `b_func` attribute.'
+        return None
+
+    @b_func.setter
+    def b_func(self, user_b_func):
+        """Eval function for benchmark.
+
+        Args:
+            user_b_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If train_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed.
+        """
+        self._b_func = user_b_func
 
     @property
     def model(self):
