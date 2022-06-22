@@ -11,15 +11,9 @@ This document is used to list steps of reproducing TensorFlow Intel® Neural Com
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow 1.15 up2
-Check your python version and use pip install 1.15.0 up2 from links below:
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
-
-Intel Tensorflow 2.5.0 also supports since Neural Compressor 1.6 release.
-```python
-pip install intel-tensorflow==2.5.0
+### 2. Install Intel Tensorflow
+```shell
+pip install intel-tensorflow
 ```
 
 ### 3. Prepare Dataset
