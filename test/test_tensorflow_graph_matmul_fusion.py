@@ -407,8 +407,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                         if i.op == 'QuantizedMatMulWithBiasAndDequantize':
                             count += 1
                     found_quantized_matmul = bool(count > 1)
-            # TF2.7 has enabled matmul_biasadd_requantize_dequantize_fusion_with_softmax
-            if tf.__version__ < '2.7.0':
+            # TF2.6 has enabled matmul_biasadd_requantize_dequantize_fusion_with_softmax
+            if tf.__version__ < '2.6.0':
                 self.assertEqual(found_quantized_matmul, False)
             else:
                 self.assertEqual(found_quantized_matmul, True)

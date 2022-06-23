@@ -26,7 +26,7 @@ from tensorflow.python.framework import dtypes
 from ..graph_base import GraphRewriterBase
 from ..graph_util import GraphAnalyzer
 from ..graph_util import GraphRewriterHelper as Helper
-from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2, version1_lt_version2
 
 
 class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
@@ -51,8 +51,8 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
             # TODO Remove below checker once the TF's limitation removed.
-            # if len(i) == 5:
-            #     continue
+            if len(i) == 5 and version1_lt_version2(tf.__version__(), '2.6.0'):
+                continue
 
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
