@@ -317,7 +317,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet18</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">ipex</a></td>
   </tr>
   <tr>
     <td>ResNet18</td>

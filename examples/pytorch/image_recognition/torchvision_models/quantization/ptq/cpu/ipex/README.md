@@ -83,17 +83,8 @@ bash run_tuning.sh --topology=resnext101_32x16d_wsl_ipex --dataset_location=/pat
 bash run_benchmark.sh --topology=resnext101_32x16d_wsl_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
-### 4. Mobilenet_v2 With Intel PyTorch Extension
 
-```shell
-python main.py -t -a mobilenet_v2 --ipex --pretrained /path/to/imagenet
-```
-or
-```shell
-bash run_tuning.sh --topology=mobilenet_v2_ipex --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --topology=mobilenet_v2_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
-```
-# Saving and loading model:
+# Saving model:
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
@@ -109,26 +100,6 @@ Here, nc_model is Neural Compressor model class, so it has "save" API:
 
 ```python
 nc_model.save("Path_to_save_configure_file")
-```
-
-* loading model:
-
-```python
-# With IPEX
-import intel_pytorch_extension as ipex 
-model                 # fp32 model
-model.to(ipex.DEVICE)
-try:
-    new_model = torch.jit.script(model)
-except:
-    new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
-ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
-                                "best_configure.json")
-conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
-with torch.no_grad():
-    for i, (input, target) in enumerate(val_loader):
-        with ipex.AutoMixPrecision(conf, running_mode='inference'):
-            output = new_model(input.to(ipex.DEVICE))
 ```
 
 Please refer to [Sample code](./main.py).
@@ -227,7 +198,7 @@ The related code please refer to examples/pytorch/ipex/image_recognition/imagene
 
 ### Tuning With Intel PyTorch Extension
 
-1. Tuning With Neural Compressor
+Tuning With Neural Compressor
 
     ```python
       from neural_compressor.experimental import Quantization, common
@@ -237,31 +208,3 @@ The related code please refer to examples/pytorch/ipex/image_recognition/imagene
       nc_model.save("Path_to_save_configure_file")
     ```
 
-2. Saving and Run ipex model
-
-    * Saving model
-
-    ```python
-      nc_model.save("Path_to_save_configure_file")
-    ```
-
-    Here, nc_model is the result of Neural Compressor tuning. It is neural_compressor.model class, so it has "save" API.
-
-    * Run ipex model:
-
-    ```python
-    import intel_pytorch_extension as ipex 
-    model                 # fp32 model
-    model.to(ipex.DEVICE)
-    try:
-        new_model = torch.jit.script(model)
-    except:
-        new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
-    ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
-                                    "best_configure.json")
-    conf = ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
-    with torch.no_grad():
-        for i, (input, target) in enumerate(val_loader):
-            with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                output = new_model(input.to(ipex.DEVICE))
-    ```

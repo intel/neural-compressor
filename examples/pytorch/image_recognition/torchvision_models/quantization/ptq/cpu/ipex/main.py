@@ -213,6 +213,9 @@ def main_worker(gpu, ngpus_per_node, args):
             else:
                 model = quantize_models.__dict__[args.arch]()
 
+    if args.ipex and not args.int8:
+        model = model.to(memory_format=torch.channels_last)
+
     if not torch.cuda.is_available():
         print('using CPU...')
     elif args.distributed:
@@ -354,6 +357,11 @@ def main_worker(gpu, ngpus_per_node, args):
                     except:
                         new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
                 else:
+                    model = ipex.optimize(model, dtype=torch.float32, inplace=True)
+                    x = torch.randn(args.batch_size, 3, 224, 224).contiguous(memory_format=torch.channels_last)
+                    with torch.no_grad():
+                        model = torch.jit.trace(model, x).eval()
+                    model = torch.jit.freeze(model)
                     new_model = model
             else:
                 model.fuse_model()
@@ -475,6 +483,11 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
                     output = model(input)
             else:
                 output = model(input)
+           
+           # measure elapsed time
+            if i >= args.warmup_iter:
+                batch_time.update(time.time() - start)
+
             loss = criterion(output, target)
 
             # measure accuracy and record loss
@@ -483,9 +496,6 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
             top1.update(acc1[0], input.size(0))
             top5.update(acc5[0], input.size(0))
 
-            # measure elapsed time
-            if i >= args.warmup_iter:
-                batch_time.update(time.time() - start)
 
             if i % args.print_freq == 0:
                 progress.print(i)
