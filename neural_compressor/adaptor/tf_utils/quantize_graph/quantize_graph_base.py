@@ -231,7 +231,7 @@ class QuantizeNodeBase():
                                 matched_node_name.append(next_node_name)
                                 sub_rule_len -= 1
                                 cur_node_name = next_node_name
-                            elif is_hardswish:
+                            elif is_hardswish and self.new_api:
                                 matched_node_name.append(next_node_name)
                                 sub_rule_len -= 1
                                 cur_node_name = next_node_name
