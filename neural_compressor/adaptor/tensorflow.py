@@ -766,7 +766,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization)
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
 
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
         model.graph_def = self.pre_optimized_model.graph_def

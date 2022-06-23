@@ -43,15 +43,13 @@ from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
-import tensorflow as tf
-from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 
 
 class PreOptimization():
-    def __init__(self, model, optimization):
+    def __init__(self, model, optimization, new_api):
         self.model = model
         self.optimization = optimization
-
+        self.new_api = new_api
 
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = model.graph_def
@@ -150,7 +148,7 @@ class PreOptimization():
 
         self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
             self._tmp_graph_def).do_transformation()
-        if not bool(version1_gte_version2(tf.version.VERSION, '2.8.0')):
+        if not self.new_api:
             #TODO we need to remove below optimizer once the TF enabled the single
             # matmul op quantization
             self._tmp_graph_def = InjectDummyBiasAddOptimizer(
