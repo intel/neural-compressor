@@ -51,7 +51,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
             # TODO Remove below checker once the TF's limitation removed.
-            if len(i) == 5 and version1_lt_version2(tf.__version__(), '2.6.0'):
+            if len(i) == 5 and version1_lt_version2(tf.__version__, '2.6.0'):
                 continue
 
             quantized_node_name = i[0]
