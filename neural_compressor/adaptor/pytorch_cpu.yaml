@@ -29,7 +29,7 @@
     uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
             'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
-    bf16: ['Linear', 'Conv1d', 'Conv2d', 'Conv3d', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
+    bf16: ['Linear', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
             '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell', 'Tanh']
     fp32: ['*'] # '*' means all op types
   

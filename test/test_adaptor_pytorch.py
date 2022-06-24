@@ -1031,17 +1031,17 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_capability = self.adaptor._get_quantizable_ops(model_origin)
         del os.environ['FORCE_BF16']
         self.assertEqual(q_capability['optypewise']['Conv2d']['weight']['dtype'], \
-            ['bf16', 'int8', 'fp32'])
+            [ 'int8', 'fp32'])
         self.assertEqual(q_capability['optypewise']['Conv2d']['activation']['dtype'], \
-            ['bf16', 'uint8', 'fp32'])
+            [ 'uint8', 'fp32'])
         self.assertEqual(q_capability['optypewise']['Linear']['weight']['dtype'], \
             ['bf16', 'int8', 'fp32'])
         self.assertEqual(q_capability['optypewise']['Linear']['activation']['dtype'], \
             ['bf16', 'uint8', 'fp32'])
         self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['weight']['dtype'], \
-                    ['bf16', 'int8', 'fp32'])
+                    ['int8', 'fp32'])
         self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['activation']['dtype'], \
-                    ['bf16', 'uint8', 'fp32'])
+                    ['uint8', 'fp32'])
     
     @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
