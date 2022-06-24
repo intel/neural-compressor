@@ -2385,6 +2385,15 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "3dunet-mlperf": {
+      "model_src_dir": "semantic_image_segmentation/3dunet-mlperf/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/MICCAI_BraTS_2019_Data_Training",
+      "input_model": "/tf_dataset2/models/tensorflow/3dunet/3dunet_dynamic_ndhwc.pb",
+      "yaml": "3dunet-mlperf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
     }
   }
 }
