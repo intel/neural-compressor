@@ -122,7 +122,7 @@ if __name__ == '__main__':
         name="neural_compressor",
         version=__version__,
         author="Intel AIA/AIPC Team",
-        author_email="feng.tian@intel.com, chuanqi.wang@intel.com, pengxin.yuan@intel.com, guoming.zhang@intel.com, haihao.shen@intel.com, jiong.gong@intel.com, xi2.chen@intel.com",
+        author_email="feng.tian@intel.com, haihao.shen@intel.com, penghui.cheng@intel.com, xi2.chen@intel.com, jiong.gong@intel.com",
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding='utf-8').read(),
         long_description_content_type="text/markdown",
