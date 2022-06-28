@@ -16,7 +16,11 @@
 # limitations under the License.
 
 import numpy as np
-import torch
+import re
+from ...utils.utility import LazyImport
+
+torch = LazyImport("torch")
+
 
 def get_embedding_contiguous(model):
     """This is a helper function for nn.Embedding,
@@ -57,3 +61,29 @@ def collate_torch_preds(results):
         collate_results = np.concatenate(results)
     return collate_results
 
+def append_attr(fx_model, model):
+    """a helper method to append attribution for the symbolic traced model.
+
+    Args:
+        fx_model(torch.fx.GraphModule): The symbolic traced model.
+        model(torch.nn.Module): The original model.
+
+    Returns:
+        fx_model (dir): The symbolic traced model with additional attribution.
+    """
+    fx_attr = dir(fx_model)
+    org_attr = dir(model)
+    ignore_match_patterns = [r"_", r"quant", r"dequant", 
+                            r'activation_post_process']
+    ignore_search_patterns = [r"_scale_", r"_zero_point_", 
+                            r'_activation_post_process_']
+    attr_names = []
+    for i in org_attr:
+        if i not in fx_attr and \
+          not any([re.match(p, i) for p in ignore_match_patterns]) and \
+          not any([re.search(p, i) for p in ignore_search_patterns]) :
+            attr_names.append(i)
+    for name in attr_names:
+        attr = getattr(model, name)
+        setattr(fx_model, name, attr)
+    return fx_model

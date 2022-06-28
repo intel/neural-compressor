@@ -30,6 +30,7 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from .torch_utils.util import append_attr
 
 
 torch = LazyImport("torch")
@@ -2972,6 +2973,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     module_pre = prepare_qat_fx(module, fx_sub_op_cfgs)
                 else:
                     module_pre = prepare_fx(module, fx_sub_op_cfgs)
+                append_attr(module_pre, module)
                 setattr(model, name, module_pre)
             else:
                 PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list, fx_op_cfgs, \
@@ -2994,6 +2996,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             op_name = prefix + '.' + name if prefix != '' else name
             if op_name in sub_module_list:
                 module_con = convert_fx(module)
+                append_attr(module_con, module)
                 setattr(model, name, module_con)
             else:
                 PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
@@ -3078,7 +3081,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             if type(module) == torch.nn.Dropout:  # pragma: no cover
                 continue
             op_name = prefix + '.' + name if prefix != '' else name
-            if type(module) in fx_white_list:
+            if type(module) in fx_white_list \
+              and type(module) != torch.nn.Sequential:
                 module = torch.quantization.QuantWrapper(module)
             if self._check_dynamic_control(module):
                 self._fuse_sub_graph(module, op_name, is_qat=is_qat)
