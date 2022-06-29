@@ -985,7 +985,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertTrue('quantize' in str(type(q_model._model.rnn)))
 
     def test_fx_sub_module_quant(self):
-        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml', 'fx_dynamic_yaml.yaml']:
             model_origin = DynamicControlModel()
             # run fx_quant in neural_compressor and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)

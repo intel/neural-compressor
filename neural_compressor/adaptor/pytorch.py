@@ -2731,17 +2731,19 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if approach == 'post_training_dynamic_quant':
             # fetch int8 and fp32 ops set by Neural Compressor from tune_cfg
             for key in tune_cfg['op']:
-                op_type = str(type(modules[key[0]])).rstrip('\'>').split('.')[-1]
+                op_type = key[1]
                 #build initial dict
                 if op_type not in res.keys():
                     res[op_type] = {'INT8':0, 'BF16': 0, 'FP32':0}
                 value = tune_cfg['op'][key]
-                if 'int8' in value['activation']['dtype']:
-                    res[op_type]['INT8'] += 1
-                if value['activation']['dtype'] == 'fp32':
+                # Special cases: QuantStub, Embedding
+                if ('weight' in value and value['weight']['dtype'] == 'fp32') or \
+                  ('weight' not in value and value['activation']['dtype'] == 'fp32'):
                     res[op_type]['FP32'] += 1
-                if value['activation']['dtype'] == 'bf16':
+                elif value['activation']['dtype'] == 'bf16': # pragma: no cover
                     res[op_type]['BF16'] += 1
+                else:
+                    res[op_type]['INT8'] += 1
         else:
             quantized_mode = False
             for node in model.graph.nodes:
@@ -2812,7 +2814,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-        if self.sub_module_list is None:
+        if self.sub_module_list is None or \
+          self.approach == 'post_training_dynamic_quant':
             res = self._get_module_op_stats(model, tune_cfg, approach)
         else:
             res = dict()
@@ -3014,9 +3017,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         self.pre_optimized_model = model
         tmp_model = model._model
-        if self.approach != "post_training_dynamic_quant":
-            tmp_model = self.fuse_fx_model(model, 
-                                           is_qat=(self.approach=="quant_aware_training"))
+        tmp_model = self.fuse_fx_model(model, 
+                        is_qat=(self.approach=="quant_aware_training"))
         return self._get_quantizable_ops(tmp_model)
 
     def fuse_fx_model(self, model, is_qat):
