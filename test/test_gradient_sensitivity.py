@@ -249,7 +249,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
                                0.8,
                                delta=0.01)
         self.assertAlmostEqual((conv2_weight == 0).sum().item() / conv2_weight.numel(),
-                               0.6,
+                               0.48,
                                delta=0.01)
 
 if __name__ == "__main__":

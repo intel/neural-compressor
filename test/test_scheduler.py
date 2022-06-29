@@ -371,7 +371,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
 
     def test_scheduler_qat_distillation(self):
@@ -394,7 +394,7 @@ class TestPruning(unittest.TestCase):
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.01,
                                delta=0.01)
-        
+
 
     def test_combine_qat_pruning(self):
         from neural_compressor.experimental import Pruning, common, Quantization
@@ -413,7 +413,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
@@ -455,7 +455,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 

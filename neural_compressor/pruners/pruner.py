@@ -120,12 +120,10 @@ class Pruner:
         Returns:
             sparsity (float): sparsity target in this epoch
         """
-        if self.start_epoch == self.end_epoch:
-            return self.initial_sparsity
         if epoch < self.start_epoch:
             return 0
-        if epoch > self.end_epoch:
+        if self.start_epoch == self.end_epoch or epoch > self.end_epoch:
             return self.target_sparsity
         return self.initial_sparsity + (self.target_sparsity - self.initial_sparsity) * (
-            (epoch - self.start_epoch) // self.freq) * self.freq / \
-            (self.end_epoch - self.start_epoch)
+            (epoch - self.start_epoch + 1) // self.freq) * self.freq / \
+            (self.end_epoch - self.start_epoch + 1)

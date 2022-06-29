@@ -112,7 +112,7 @@ def build_fake_yaml():
 def build_fake_yaml2():
     with open('fake2.yaml', 'w', encoding="utf-8") as f:
         f.write(fake2_yaml)
-        
+
 def build_fake_yaml3():
     with open('fake3.yaml', 'w', encoding="utf-8") as f:
         f.write(fake3_yaml)
@@ -208,10 +208,10 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
-    
+
     def test_distillation_qat_oneshot(self):
         from neural_compressor.experimental import Distillation, common, Quantization
         datasets = DATASETS('pytorch')
@@ -264,7 +264,7 @@ class TestPruning(unittest.TestCase):
         print(opt_model.model)
 
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
-    
+
     def test_distillation_prune_oneshot(self):
         from neural_compressor.experimental import Distillation, common, Pruning
         datasets = DATASETS('pytorch')
@@ -316,10 +316,10 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
-    
+
     def test_prune_qat_distillation_oneshot(self):
         from neural_compressor.experimental import Pruning, common, Quantization, Distillation
         datasets = DATASETS('pytorch')
@@ -376,7 +376,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization,distillation')
 
@@ -433,7 +433,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
@@ -487,7 +487,7 @@ class TestPruning(unittest.TestCase):
         print(opt_model.model)
 
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
-    
+
     def test_distillation_prune_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, common, Pruning
         datasets = DATASETS('pytorch_fx')
@@ -539,7 +539,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
 
@@ -597,7 +597,7 @@ class TestPruning(unittest.TestCase):
         except:
           conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.5,
+                               0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization,distillation')
 
