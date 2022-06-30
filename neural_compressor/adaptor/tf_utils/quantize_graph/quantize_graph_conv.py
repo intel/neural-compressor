@@ -283,9 +283,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv3d_add_addn_fusion(self, match_node_name):
-        #Remove this WA once TF bug is fixed
-        return self.apply_conv3d_add_fusion(match_node_name[:2])
-
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
 
@@ -1648,9 +1645,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_biasadd_addn_fusion(self, match_node_name):
-        #Remove this WA once TF bug is fixed
-        return self.apply_newly_conv_biasadd_fusion(match_node_name[:2])
-
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
 
