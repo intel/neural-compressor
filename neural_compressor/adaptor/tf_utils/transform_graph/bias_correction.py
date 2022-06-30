@@ -42,7 +42,7 @@ class BiasCorrection(GraphTransformBase):
     with this we don't change the min/max value, and correct the weight
     """
 
-    def __init__(self, input_graph, fp32_graph, method='weight_empirical'):
+    def __init__(self, input_graph, fp32_graph, method='weight_empirical', new_api=False):
         # only support weight_empirical now
         self.bias_correct_map = {'weight_empirical': self._weight_empirical}
         assert method in self.bias_correct_map, \
@@ -54,6 +54,7 @@ class BiasCorrection(GraphTransformBase):
         self.method = method
         self.fp32_node_mapping = {}
         self.parse_input_pb()
+        self.new_api = new_api
 
     def _weight_empirical(self):
 
@@ -64,8 +65,12 @@ class BiasCorrection(GraphTransformBase):
         for node_name in self.node_mapping:
             node = self.node_mapping[node_name]
             node_op = node.op
-            if 'QuantizedConv2D' not in node_op:
-                continue
+            if self.new_api:
+                if '_QuantizedConv2D' not in node_op:
+                    continue
+            else:
+                if 'QuantizedConv2D' not in node_op:
+                    continue
 
             int8_filter = self.node_mapping[self.get_node_name_from_input(
                 node.input[1])]
@@ -83,7 +88,10 @@ class BiasCorrection(GraphTransformBase):
             tr_fp32_value = fp32_value.transpose([3, 0, 1, 2])
 
             # if bias fused, then offset to min/max filter should be 5
-            offset = 5 if 'Bias' in node_op else 4
+            if self.new_api:
+                offset = 5
+            else:
+                offset = 5 if 'Bias' in node_op else 4
             min_filter_node = self.node_mapping[
                 node.input[offset]]
             max_filter_node = self.node_mapping[

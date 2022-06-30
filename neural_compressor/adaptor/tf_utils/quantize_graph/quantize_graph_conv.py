@@ -95,6 +95,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'Conv3DAddRelu': self.apply_conv3d_add_relu_fusion,
                 'Conv3DAddV2': self.apply_conv3d_add_fusion,
                 'Conv3DAddV2Relu': self.apply_conv3d_add_relu_fusion,
+                'Conv3DRelu': self.apply_conv3d_add_relu_fusion,
+                'Conv3DRelu6': self.apply_conv3d_add_relu_fusion,
+                'Conv3DElu': self.apply_conv3d_add_relu_fusion,
+                'Conv3DLeakyRelu': self.apply_conv3d_add_relu_fusion,
                 'DepthwiseConv2dNative': self.apply_newly_conv_single_fusion
             }
         else:

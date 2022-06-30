@@ -22,7 +22,7 @@ from tensorflow.python.framework import dtypes
 from .quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 
-class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
+class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

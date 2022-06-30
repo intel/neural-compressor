@@ -44,6 +44,6 @@ class TestBiasCorrection(unittest.TestCase):
         correct_graph_def = BiasCorrection(
             int8_graph_def, output_graph_def).do_transformation()
         self.assertEqual(len(correct_graph_def.node), len(int8_graph_def.node)) 
-        
+
 if __name__ == "__main__":
     unittest.main()

@@ -457,8 +457,10 @@ class GraphConverter:
                         patterns=self.int8_sequences[node_op],
                         remove_redundant_quant_flag=True,
                         op_wise_cfg=(False, "minmax", False, 7.0),
+                        op_wise_config_name_list=list(self.op_wise_config.keys()),
                         start_node_name=op_name,
-                        device=self.device).get_longest_fuse()
+                        device=self.device,
+                        new_api=False).get_longest_fuse()
 
                     if matched_nodes:
                         fp32_node_name_mapping[matched_nodes[-1]] = op_name
@@ -768,7 +770,7 @@ class GraphConverter:
         if self.advance_config is not None and \
            deep_get(self.advance_config, 'bias_correction') is not None:
             self._tmp_graph_def = BiasCorrection(
-                self._tmp_graph_def, self.model.graph_def).do_transformation()
+                self._tmp_graph_def, self.model.graph_def, self.new_api).do_transformation()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 

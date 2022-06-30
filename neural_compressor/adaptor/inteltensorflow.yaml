@@ -259,8 +259,8 @@
         'Conv3D + Add + Relu',
         'Conv3D + AddV2 + Relu',
         'Conv3D + AddV2 + Relu',
-        'Conv3D + Relu',
-        'Conv3D + Relu6'
+        'Conv3D + Eelu',
+        'Conv3D + LeakyRelu'
 
   ]
 
