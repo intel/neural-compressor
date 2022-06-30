@@ -49,7 +49,8 @@ class Model(object):
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
         elif framework == 'pytorch':
-            assert backend != 'NA', 'please set pytorch backend'
+            if backend == 'NA':
+                backend = 'pytorch'
             model = MODELS[backend](root, **kwargs)
         else:
             model = MODELS[framework](root, **kwargs)

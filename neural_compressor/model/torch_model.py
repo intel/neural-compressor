@@ -18,8 +18,10 @@
 import copy
 import os
 import inspect
-from collections import OrderedDict
+import sys
+from collections import OrderedDict, UserDict
 from abc import abstractmethod
+from ..adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils import logger
 from neural_compressor.conf.dotdict import deep_get, deep_set
@@ -30,6 +32,9 @@ torch = LazyImport('torch')
 yaml = LazyImport('yaml')
 json = LazyImport('json')
 np = LazyImport('numpy')
+onnx = LazyImport('onnx')
+ort = LazyImport('onnxruntime')
+ortq = LazyImport('onnxruntime.quantization')
 
 
 class PyTorchBaseModel(torch.nn.Module, BaseModel):
@@ -189,7 +194,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         elif isinstance(input_tensor, torch.Tensor):
             assert input_tensor.grad is not None, 'Please call backward() before get_gradient'
             return np.array(input_tensor.grad.cpu())
-        else:
+        else:   # pragma: no cover
             logger.error("Expect str or torch.Tensor in get_gradient, " \
                          "but get {}.".format(type(input_tensor)))
 
@@ -290,23 +295,24 @@ class PyTorchModel(PyTorchBaseModel):
         os.makedirs(root, exist_ok=True)
         try:
             stat_dict = self._model.state_dict()
-            if self.tune_cfg:
-                stat_dict['best_configure'] = self.tune_cfg
+            if self.q_config:
+                stat_dict['best_configure'] = self.q_config
             torch.save(stat_dict, os.path.join(root, "best_model.pt"))
             logger.info("Save config file and weights of quantized model to {}.".format(root))
-        except IOError as e:
+        except IOError as e:   # pragma: no cover
             logger.error("Fail to save configure file and weights due to {}.".format(e))
 
     def quantized_state_dict(self):
         try:
             stat_dict = self._model.state_dict()
-            stat_dict['best_configure'] = self.tune_cfg
-        except IOError as e:
+            stat_dict['best_configure'] = self.q_config
+        except IOError as e:   # pragma: no cover
             logger.error("Fail to dump configure and weights due to {}.".format(e))
         return stat_dict
 
     def load_quantized_state_dict(self, stat_dict):
         from ..utils.pytorch import load
+        self.q_config = stat_dict['best_configure']
         self._model = load(stat_dict, self._model)
 
     @property
@@ -315,6 +321,261 @@ class PyTorchModel(PyTorchBaseModel):
         op_map = {}
         get_ops_recursively(self._model, '', op_map)
         return op_map
+
+    def export_to_jit(self, example_inputs=None):
+        if example_inputs is not None:
+            if isinstance(input, dict) or isinstance(input, UserDict):
+                example_inputs = tuple(example_inputs.values())
+        else:
+            logger.warning("Please provide example_inputs for jit.trace")
+        try:
+            jit_model = torch.jit.trace(
+                self._model,
+                example_inputs,
+            )
+        except:
+            jit_model = torch.jit.trace(
+                self._model,
+                example_inputs,
+                strict=False
+            )
+        info = "JIT Model exported"
+        logger.info("*"*len(info))
+        logger.info(info)
+        logger.info("*"*len(info))
+        return jit_model
+
+    def export_to_fp32_onnx(
+        self,
+        save_path='fp32-model.onnx',
+        example_inputs=torch.rand([1, 1, 1, 1]),
+        opset_version=14,
+        dynamic_axes={"input": {0: "batch_size"},
+                      "output": {0: "batch_size"}},
+        do_constant_folding=True,
+        verbose=True,
+        fp32_model=None,
+    ):
+        example_input_names = ['input']
+        if isinstance(input, dict) or isinstance(input, UserDict):
+            example_input_names = list(input.keys())
+        model = self.model
+        if fp32_model:
+            model = fp32_model
+        torch.onnx.export(
+            model,
+            input2tuple(example_inputs),
+            save_path,
+            opset_version=opset_version,
+            input_names=example_input_names,
+            dynamic_axes=dynamic_axes,
+            do_constant_folding=do_constant_folding,
+        )
+        if verbose:
+            info = "The FP32 ONNX Model exported to path: {0}".format(save_path)
+            logger.info("*"*len(info))
+            logger.info(info)
+            logger.info("*"*len(info))
+
+    def export_to_bf16_onnx(self, 
+        save_path='bf16-model.onnx', 
+        example_inputs = torch.rand([1, 1, 1, 1]),
+        opset_version=14, 
+        dynamic_axes={"input": {0: "batch_size"},
+                      "output": {0: "batch_size"}},
+        do_constant_folding=True,
+        verbose=True,
+    ):
+        fp32_path = save_path + '.tmp' if save_path else 'bf16-model.onnx.tmp'
+        self.export_to_fp32_onnx(
+            save_path=fp32_path,
+            example_inputs = example_inputs,
+            opset_version=opset_version,
+            dynamic_axes=dynamic_axes,
+            do_constant_folding=do_constant_folding,
+            verbose=False,
+        )
+        import onnx
+        model = onnx.load(fp32_path)
+        bf16_type_list = ['MatMul', 'Gemm', 'Conv', 'Gather']
+        bf16_tensor_name_list = []
+
+        for node in model.graph.node:
+            if node.op_type in bf16_type_list:
+                for inp in node.input:
+                    bf16_tensor_name_list.append(inp)
+
+        from onnx import TensorProto, helper, numpy_helper
+        original_initializer = copy.deepcopy(model.graph.initializer)
+        for tensor in original_initializer:
+            if tensor.name in bf16_tensor_name_list:
+                bf16_tensor = helper.make_tensor(
+                    name=tensor.name,
+                    data_type=TensorProto.BFLOAT16,
+                    dims=tensor.dims,
+                    vals=numpy_helper.to_array(tensor),
+                )
+                model.graph.initializer.remove(tensor)
+                model.graph.initializer.append(bf16_tensor)
+        onnx.save(model, save_path)
+        os.remove(fp32_path)
+
+        if verbose:
+            info = "The BF16 ONNX Model is exported to path: {0}".format(save_path)
+            logger.info("*"*len(info))
+            logger.info(info)
+            logger.info("*"*len(info))
+
+    def export_to_int8_onnx(
+        self,
+        save_path='int8-model.onnx',
+        example_inputs = torch.rand([1, 1, 1, 1]),
+        example_input_names = 'input',
+        opset_version=14,
+        dynamic_axes={"input": {0: "batch_size"},
+                    "output": {0: "batch_size"}},
+        do_constant_folding=True,
+        quant_format='QDQ',
+        dtype='S8S8',
+        fp32_model=None,
+        calib_dataloader=None,
+    ): 
+        if 'U8U8' in dtype:   # pragma: no cover
+            activation_type = ortq.QuantType.QUInt8
+            weight_type = ortq.QuantType.QUInt8
+        elif 'S8S8' in dtype:
+            activation_type = ortq.QuantType.QInt8
+            weight_type = ortq.QuantType.QInt8
+        elif 'U8S8' in dtype:
+            activation_type = ortq.QuantType.QUInt8
+            weight_type = ortq.QuantType.QInt8
+        else:   # pragma: no cover 
+            # Gather requires weight type be the same as activation.
+            # So U8S8(acitvation|weight) option is not workable for best performance.
+            logger.error("Right now, we don't support dtype: {}, \
+                          please use U8U8/U8S8/S8S8.".format(dtype))
+            sys.exit(0)
+        logger.info("Weight type: {}.".format(weight_type))
+        logger.info("Activation type: {}.".format(activation_type))
+
+        assert self.q_config is not None, \
+            "No quantization configuration found, " + \
+            "please use the model generated by INC quantizer"
+        if 'dynamic' in self.q_config['approach']:
+            op_types_to_quantize=['MatMul', 'Gather', "LSTM", 'Conv']
+            pytorch_op_types_to_quantize=['Linear', 'Embedding', "LSTM", 
+                                            'Conv1d', 'Conv2d']
+            addition_op_to_quantize = list(ortq.registry.IntegerOpsRegistry.keys())
+        else:
+            op_types_to_quantize=['MatMul', 'Gather', 'Conv']
+            pytorch_op_types_to_quantize=['Linear', 'Embedding', 'Conv1d', 'Conv2d']
+            if quant_format == 'QDQ':
+                addition_op_to_quantize = list(ortq.registry.QDQRegistry.keys())
+                addition_op_to_quantize.remove('Relu') # ValueError: x not in list
+            else:
+                addition_op_to_quantize = list(ortq.registry.QLinearOpsRegistry.keys())
+
+        if 'U8S8' in dtype:
+            op_types_to_quantize.remove('Gather')
+            pytorch_op_types_to_quantize.remove('Embedding')
+
+        if quant_format == 'QDQ' and opset_version < 13:   # pragma: no cover 
+            opset_version = 13
+            logger.warning("QDQ format requires opset_version >= 13, " + 
+                            "we reset opset_version={} here".format(opset_version))
+        all_op_types_to_quantize = op_types_to_quantize + addition_op_to_quantize
+
+        # pylint: disable=E1101
+        fp32_path = save_path + '.tmp' if save_path else 'int8-model.onnx.tmp'
+        self.export_to_fp32_onnx(
+            save_path=fp32_path,
+            example_inputs = example_inputs,
+            opset_version=opset_version,
+            dynamic_axes=dynamic_axes,
+            do_constant_folding=do_constant_folding,
+            verbose=False,
+            fp32_model=fp32_model
+        )
+        model = onnx.load(fp32_path)
+        from neural_compressor.adaptor.onnxrt import ONNXRTAdaptor
+        # pylint: disable=E1120
+        inc_model = ONNXRTAdaptor._replace_gemm_with_matmul(model)
+        model = inc_model.model
+        onnx.save(model, fp32_path)
+
+        # Get weight name from onnx initializer
+        weight_name_list = []
+        for tensor in model.graph.initializer:
+            weight_name_list.append(tensor.name)
+
+        # Match weight name with onnx node name
+        quantize_nodes = []
+        tmp_node_mapping = {}
+        module_node_mapping = {}
+        for node in model.graph.node:
+            if node.op_type not in op_types_to_quantize:
+                for inp in node.input:
+                    if inp in weight_name_list and 'weight' in inp:
+                        tmp_node_mapping.update({node.output[0] : inp.split('.weight')[0]})
+                    elif inp in tmp_node_mapping:
+                        tmp_node_mapping.update({node.output[0] : tmp_node_mapping[inp]})
+            else:
+                for inp in node.input:
+                    if inp in weight_name_list and 'weight' in inp:
+                        module_node_mapping.update({inp.split('.weight')[0] : node.name})
+                    elif inp in tmp_node_mapping:
+                        module_node_mapping.update({tmp_node_mapping[inp]: node.name})
+
+            # Save all quantizable node name
+            if node.op_type in all_op_types_to_quantize:
+                quantize_nodes.append(node.name)
+
+        # Match pytorch module name with onnx node name for fallbacked fp32 module
+        for k, v in self.q_config['op'].items():   # pragma: no cover
+            if k[1] not in pytorch_op_types_to_quantize or 'int8' in v['weight']['dtype']:
+                continue
+            k_0 = k[0].split('.module')[0] if k[0] not in module_node_mapping else k[0]
+            if k_0 in module_node_mapping:
+                fallback_op = module_node_mapping[k_0]
+                quantize_nodes.remove(fallback_op)
+
+        # Quantization
+        quant_format = ortq.QuantFormat.QOperator if quant_format != 'QDQ' else ortq.QuantFormat.QDQ
+
+        if 'dynamic' in self.q_config['approach']:
+            ortq.quantize_dynamic(fp32_path,
+                                save_path,
+                                per_channel=True,
+                                weight_type=weight_type,
+                                nodes_to_quantize=quantize_nodes,
+                                nodes_to_exclude=[],
+                                #op_types_to_quantize=op_types_to_quantize,
+                                extra_options={})
+        else:
+            from ..adaptor.torch_utils.onnx import DataReader
+            # pylint: disable=E1101
+            assert calib_dataloader is not None, \
+                "Please provice the calibration dataloader used in static quantization"
+            if not isinstance(calib_dataloader, ortq.CalibrationDataReader):
+                sample_size=self.q_config['calib_sampling_size']
+                calib_datareader = DataReader(calib_dataloader, sample_size=sample_size)
+            ortq.quantize_static(fp32_path,
+                                save_path,
+                                calib_datareader,
+                                quant_format=quant_format,
+                                per_channel=True,
+                                weight_type=weight_type,
+                                activation_type=activation_type,
+                                nodes_to_quantize=quantize_nodes,
+                                nodes_to_exclude=[],
+                                #op_types_to_quantize=op_types_to_quantize,
+                                extra_options={})
+
+        os.remove(fp32_path)
+        info = "The INT8 ONNX Model is exported to path: {0}".format(save_path)
+        logger.info("*"*len(info))
+        logger.info(info)
+        logger.info("*"*len(info))
 
 
 class PyTorchFXModel(PyTorchModel):

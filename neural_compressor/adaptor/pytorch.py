@@ -1160,13 +1160,12 @@ class PyTorchAdaptor(TemplateAdaptor):
             from .torch_utils.bf16_convert import Convert
             q_model._model = Convert(q_model._model, self.tune_cfg)
 
-        q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
-        if self.approach != 'post_training_dynamic_quant':
-            self._get_scale_zeropoint(q_model._model, self.tune_cfg)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
+        if self.approach != 'post_training_dynamic_quant':
+            self._get_scale_zeropoint(q_model._model, q_model.q_config)
         q_model.is_quantized = True
 
-        self._dump_model_op_stats(q_model._model, q_model.tune_cfg)
+        self._dump_model_op_stats(q_model._model, q_model.q_config)
         torch_utils.util.get_embedding_contiguous(q_model._model)
         return q_model
 
@@ -2569,12 +2568,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             from .torch_utils.bf16_convert import Convert
             q_model._model = Convert(q_model._model, self.tune_cfg)
 
-        q_model.tune_cfg = copy.deepcopy(self.tune_cfg)
-        if self.approach != 'post_training_dynamic_quant':
-            self._get_scale_zeropoint(q_model._model, self.tune_cfg)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
+        if self.approach != 'post_training_dynamic_quant':
+            self._get_scale_zeropoint(q_model._model, q_model.q_config)
 
-        self._dump_model_op_stats(q_model._model, q_model.tune_cfg, self.approach)
+        self._dump_model_op_stats(q_model._model, q_model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(q_model._model)
         return q_model
 

@@ -1,5 +1,5 @@
 intel-tensorflow==2.5.0
-onnx
+onnx>=1.11
 onnxruntime
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==1.9.0+cpu

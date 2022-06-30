@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import re
+import numpy as np
+from collections import UserDict
 from ...utils.utility import LazyImport
 
 torch = LazyImport("torch")
@@ -42,6 +43,7 @@ def get_embedding_contiguous(model):
         if child_type == 'Embedding':
             child.register_forward_pre_hook(contiguous_hook)
 
+
 def collate_torch_preds(results):
     batch = results[0]
     if isinstance(batch, list):
@@ -60,6 +62,17 @@ def collate_torch_preds(results):
         ]
         collate_results = np.concatenate(results)
     return collate_results
+
+
+def input2tuple(input):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        output = tuple(input.values())
+    elif isinstance(input, list) or isinstance(input, tuple):
+        output = tuple(input)
+    else:
+        output = input
+    return output
+
 
 def append_attr(fx_model, model):
     """a helper method to append attribution for the symbolic traced model.
