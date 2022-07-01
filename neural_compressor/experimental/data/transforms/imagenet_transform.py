@@ -68,8 +68,8 @@ class QuantizedInput(BaseTransform):
         image = tf.dtypes.cast(image, dtype=self.dtype_map[self.dtype])
         return image, label
 
-@transform_registry(transform_type="LabelShift", \
-    process="postprocess", framework="tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine")
+@transform_registry(transform_type="LabelShift", process="postprocess", \
+                    framework="pytorch, tensorflow, onnxrt_qlinearops, onnxrt_integerops, engine")
 class LabelShift(BaseTransform):
     """Convert label to label - label_shift.
 
