@@ -214,8 +214,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
         conv2_weights = tf.compat.v1.get_variable("weight_conv2", [3, 3, 16, 16],
                                                  initializer=tf.compat.v1.random_normal_initializer())
         conv2 = tf.nn.conv2d(x, conv2_weights, strides=[1, 2, 2, 1], padding="SAME")
-        leaky_relu = tf.nn.leaky_relu(conv2)
-        sumadd = tf.raw_ops.AddV2(x=conv1, y=leaky_relu, name='addv2')
+        sumadd = tf.raw_ops.AddV2(x=conv1, y=conv2, name='addv2')
 
         out_name = sumadd.name.split(':')[0]
         with tf.compat.v1.Session() as sess:
@@ -232,13 +231,13 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             quantizer.model = output_graph_def
             output_graph = quantizer.fit()
 
-            found_conv_sumadd_fusion = False
+            found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D' and \
-                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sum']:
-                    found_conv_sumadd_fusion = True
+                if i.op.find('QuantizedConv2D') != -1:
+                    found_conv_fusion = True
+                    break
 
-            self.assertEqual(found_conv_sumadd_fusion, True)
+            self.assertEqual(found_conv_fusion, True)
 
     @disable_random()
     def test_conv_biasadd_add_relu_fusion(self):

@@ -286,7 +286,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
 
-    def apply_conv3d_add_addn_fusion(self, match_node_name):
+    def apply_conv3d_add_addn_fusion(self, match_node_name): # pragma: no cover
         #Remove this WA once TF bug is fixed
         return self.apply_conv3d_add_fusion(match_node_name[:2])
 
@@ -1651,7 +1651,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
 
-    def apply_newly_conv_biasadd_addn_fusion(self, match_node_name):
+    def apply_newly_conv_biasadd_addn_fusion(self, match_node_name): # pragma: no cover
         #Remove this WA once TF bug is fixed
         return self.apply_newly_conv_biasadd_fusion(match_node_name[:2])
 
