@@ -1,5 +1,0 @@
-neural-compressor
-onnx
-onnxruntime
-transformers
-onnxruntime_extensions

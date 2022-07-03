@@ -163,10 +163,6 @@ class TuneStrategy(object):
                and 'default_qconfig' in self.cfg['quantization']['op_wise']:
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
-        if framework == 'engine':
-            framework_specific_info.update(
-                 {'workspace_path': self.cfg.tuning.workspace.path,
-                  'q_dtype': self.cfg.quantization.dtype})
 
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
@@ -616,11 +612,11 @@ class TuneStrategy(object):
 
                 last_tune = [weighted_acc]
 
-            last_tune_msg = '[Accuracy ({}|fp32):'.format(self.cfg.quantization.dtype) + \
+            last_tune_msg = '[Accuracy (int8|fp32):' + \
                 ''.join([' {:.4f}|{:.4f}'.format(last, base) for last, base in \
                 zip(last_tune, self.tune_data['baseline'])]) + \
-                ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format( \
-                x, self.cfg.quantization.dtype, y, z) for x, y, z in zip( \
+                ''.join([', {} (int8|fp32): {:.4f}|{:.4f}'.format( \
+                x, y, z) for x, y, z in zip( \
                 self.objectives.representation, self.last_tune_result[1], self.baseline[1]) \
                 if x != 'Accuracy']) + ']'
         else: # pragma: no cover

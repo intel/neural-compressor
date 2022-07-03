@@ -681,7 +681,7 @@ schema = Schema({
                                                       'first_conv_or_matmul_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                      'dtype': 'int8'}): {
+                                      }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
             # TODO check if framework support dynamic quantize
@@ -693,7 +693,6 @@ schema = Schema({
         Optional('advance', default=None): {
             Optional('bias_correction'): And(str, lambda s: s in ['weight_empirical']),
         },
-        Optional('dtype', default='int8'): And(str, Or('int8', 'bf16')),
         Optional('calibration', default={'sampling_size': [100]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema
@@ -1006,7 +1005,7 @@ quantization_default_schema = Schema({
                                                       'first_conv_or_matmul_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                        'dtype':'int8'}): dict,
+                                    }): dict,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},

@@ -40,9 +40,7 @@ class Model(object):
         backend = get_backend()
         framework = get_model_fwk_name(root)
 
-        if backend == 'engine':
-            model = MODELS[backend](root, **kwargs)
-        elif framework == 'tensorflow':
+        if framework == 'tensorflow':
             if 'modelType' in kwargs:
                 model_type = kwargs['modelType']
             else:

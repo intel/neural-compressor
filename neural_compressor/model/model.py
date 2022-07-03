@@ -27,7 +27,6 @@ from neural_compressor.conf.dotdict import deep_get, deep_set
 from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.model.engine_model import EngineModel
 
 TORCH = False
 if importlib.util.find_spec('torch'):
@@ -175,30 +174,7 @@ def get_model_fwk_name(model):
     if isinstance(model, TensorflowBaseModel):
         return 'tensorflow'
 
-    def _is_engine(model):
-        if model and os.path.isdir(model):
-            file_list = os.listdir(model)
-            is_engine = True
-            if len(file_list) == 2:
-                for file_name in file_list:
-                    file_ext= os.path.splitext(file_name)
-                    front, ext = file_ext
-                    if ext == ".yaml":
-                        is_engine &= True
-                    elif ext == ".bin":
-                        is_engine &= True
-                    else:
-                        is_engine &= False
-                        logger.error("Please Input yaml and bin for engine.")
-                        return 'NA'
-            else:
-                return 'NA'
-            if is_engine == True:
-                return 'engine'
-        else:
-            return 'NA'
-
-    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet, _is_engine]
+    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
     for handler in checker:
         fwk_name = handler(model)
         if fwk_name != 'NA':
@@ -1014,4 +990,4 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_ipex': PyTorchIpexModel if TORCH else None,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
-          'engine': EngineModel}
+          }

@@ -169,21 +169,6 @@ class ONNXRTITTransforms(Transforms):
         general.update(ONNXRT_IT_TRANSFORMS["general"])
         return general
 
-class EngineTransforms(Transforms):
-    def _get_preprocess(self):
-        preprocess = {}
-        preprocess.update(ENGINE_TRANSFORMS["preprocess"])
-        return preprocess
-
-    def _get_postprocess(self):
-        postprocess = {}
-        postprocess.update(ENGINE_TRANSFORMS["postprocess"])
-        return postprocess
-
-    def _get_general(self):
-        general = {}
-        general.update(ENGINE_TRANSFORMS["general"])
-        return general
 
 framework_transforms = {"tensorflow": TensorflowTransforms,
                         "inteltensorflow": TensorflowTransforms,
@@ -195,8 +180,7 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
                         "onnxrt_qlinearops": ONNXRTQLTransforms,
                         "onnxrt_integerops": ONNXRTITTransforms,
                         "onnxrt_qoperator": ONNXRTQLTransforms,
-                        "onnxrt_qdq": ONNXRTQLTransforms,
-                        "engine": EngineTransforms}
+                        "onnxrt_qdq": ONNXRTQLTransforms}
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
@@ -205,7 +189,6 @@ MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-ENGINE_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "inteltensorflow": INTELTENSORFLOW_TRANSFORMS,
@@ -218,14 +201,14 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "onnxrt_qdq": ONNXRT_QL_TRANSFORMS,
                        "onnxrt_qoperator": ONNXRT_QL_TRANSFORMS,
                        "onnxrt_integerops": ONNXRT_IT_TRANSFORMS,
-                       "engine": ENGINE_TRANSFORMS}
+                       }
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", "engine", "onnxrt_qoperator",
+        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", "onnxrt_qoperator",
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
-                             "framework support tensorflow pytorch mxnet onnxrt engine"
+                             "framework support tensorflow pytorch mxnet onnxrt"
         assert process in ("preprocess", "postprocess",
                            "general"), "process support preprocess postprocess, general"
         self.transforms = framework_transforms[framework](process).transforms
@@ -270,8 +253,7 @@ def transform_registry(transform_type, process, framework):
                 "onnxrt_qdq",
                 "onnxrt_integerops",
                 "onnxrt_qoperator",
-                "engine"
-            ], "The framework support tensorflow mxnet pytorch onnxrt engine"
+            ], "The framework support tensorflow mxnet pytorch onnxrt"
             if transform_type in registry_transforms[single_framework][process].keys():
                 raise ValueError('Cannot have two transforms with the same name')
             registry_transforms[single_framework][process][transform_type] = cls
@@ -353,7 +335,7 @@ def get_torchvision_map(interpolation):
 
 @transform_registry(transform_type="Compose", process="general", \
                  framework="onnxrt_qlinearops, onnxrt_integerops, \
-                            tensorflow, inteltensorflow, engine")
+                            tensorflow, inteltensorflow")
 class ComposeTransform(BaseTransform):
     """Composes several transforms together.
 
@@ -529,7 +511,7 @@ class ResizeWithRatio(BaseTransform):
         return image, (bbox, str_label, int_label, image_id)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
-                framework="tensorflow, inteltensorflow")
+                framework="tensorflow")
 class TensorflowResizeWithRatio(BaseTransform):
     """Resize image with aspect ratio and pad it to max shape(optional).
        If the image is padded, the label will be processed at the same time.
@@ -2136,7 +2118,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
             unique_id += 1
 
 @transform_registry(transform_type="Collect", \
-                process="postprocess", framework="engine")
+                process="postprocess", framework="tensorflow")
 class CollectTransform(BaseTransform):
     def __init__(self, length=10833):
         self.length = length
@@ -2369,25 +2351,9 @@ class TFSquadV1PostTransform(BaseTransform):
     def __call__(self, sample):
         return self.get_postprocess_result(sample)   
 
-@transform_registry(transform_type="SquadV1", \
-                process="postprocess", framework="engine")
-class EngineSquadV1PostTransform(TFSquadV1PostTransform):
-    """ Postprocess the predictions of bert on SQuADV1.1
-        See class TFSquadV1PostTransform for more details """
-
-    def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
-        max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
-        super().__init__(label_file, vocab_file, n_best_size, max_seq_length, \
-                max_query_length, max_answer_length, do_lower_case, doc_stride)
-        self.length = len(self.eval_features)
-        self.collect_data = CollectTransform(length=self.length)
-
-    def __call__(self, sample):
-        sample = self.collect_data(sample)
-        return self.get_postprocess_result(sample)
 
 @transform_registry(transform_type="ModelZooCollect", \
-                process="postprocess", framework="tensorflow, engine")
+                process="postprocess", framework="tensorflow")
 class TFModelZooCollectTransform(CollectTransform):
     def __call__(self, sample):
         all_results, label = sample
@@ -2403,14 +2369,20 @@ class TFModelZooCollectTransform(CollectTransform):
         return self.all_sample
 
 @transform_registry(transform_type="SquadV1ModelZoo", \
-                process="postprocess", framework="tensorflow, engine")
-class TFSquadV1ModelZooPostTransform(EngineSquadV1PostTransform):
+                process="postprocess", framework="tensorflow")
+class TFSquadV1ModelZooPostTransform(TFSquadV1PostTransform):
+    """ Postprocess the predictions of bert on SQuADV1.1
+        See class TFSquadV1PostTransform for more details """
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
         super().__init__(label_file, vocab_file, n_best_size, max_seq_length, \
                 max_query_length, max_answer_length, do_lower_case, doc_stride)
         self.length = len(self.eval_features)
         self.collect_data = TFModelZooCollectTransform(length=self.length)
+
+    def __call__(self, sample):
+        sample = self.collect_data(sample)
+        return self.get_postprocess_result(sample)
 
 @transform_registry(transform_type="ParseDecodeVoc", \
                     process="preprocess", framework="tensorflow, inteltensorflow")
