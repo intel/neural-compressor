@@ -1060,7 +1060,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'preserved_attributes': []}
                               })
         q_model = quantizer.fit()
-        tune_cfg = q_model.tune_cfg
+        tune_cfg = q_model.q_config
         tune_cfg['op'][('conv.module', 'Conv2d')].clear()
         tune_cfg['op'][('conv.module', 'Conv2d')] = \
             {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
