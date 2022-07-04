@@ -1223,6 +1223,9 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model._model, inplace=True)
+        # This is a flag for reloading
+        self.model.q_config = {'is_oneshot': True, 'framework': 'pytorch', 
+                                'reduce_range': REDUCE_RANGE}
 
     def _pre_hook_for_hvd(self):
         # TODO: lazy init here
@@ -2611,7 +2614,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         return self.model_eval(model_, dataloader, postprocess, metrics, measurer, iteration)
 
-    def _pre_hook_for_qat(self):   # pragma: no cover
+    def _pre_hook_for_qat(self):
         q_cfgs = torch.quantization.QConfig(
                             activation=torch.quantization.FakeQuantize.with_args(
                                     dtype=torch.quint8,
@@ -2620,8 +2623,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                     observer=torch.quantization.MovingAverageMinMaxObserver),
                             weight=torch.quantization.default_weight_fake_quant)
         quantizable_ops = []
-        tmp_model = self.fuse_fx_model(self.model, 
-                                       is_qat=(self.approach=="quant_aware_training"))
+        tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         quantized_ops = {op[0]:q_cfgs for op in quantizable_ops}
         if self.version < PyTorchVersionMode.PT111.value:
@@ -2638,8 +2640,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         'We will conduct auto quantization')
             PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list, fx_op_cfgs, \
                                                 self.model._model, prefix='', is_qat=True)
+        # This is a flag for reloading
+        self.model.q_config = {'is_oneshot': True, 'framework': 'pytorch_fx', 
+                                'reduce_range': REDUCE_RANGE, 'quantizable_ops': quantizable_ops, 
+                                'sub_module_list': self.sub_module_list}
 
-    def _post_hook_for_qat(self):   # pragma: no cover
+    def _post_hook_for_qat(self):
         from torch.quantization.quantize_fx import convert_fx
         if self.sub_module_list is None:
             self.model._model = convert_fx(self.model._model,
