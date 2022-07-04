@@ -22,8 +22,10 @@ The following prerequisites and requirements must be satisfied for a successful 
   # install stable version from pip
   pip install neural-compressor
 
-  # install nightly version from pip
+  # install basic nightly version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
+  # install full nightly version from pip (including GUI)
+  pip install -i https://test.pypi.org/simple/ neural-compressor-full
 
   # install stable version from from conda
   conda install neural-compressor -c conda-forge -c intel 
@@ -34,10 +36,11 @@ The following prerequisites and requirements must be satisfied for a successful 
   ```Shell
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
-  git submodule sync
-  git submodule update --init --recursive
   pip install -r requirements.txt
+  # build with basic functionality
   python setup.py install
+  # build with full functionality (including GUI)
+  python setup.py --full install
   ```
 
 ### Option 3 Install from AI Kit

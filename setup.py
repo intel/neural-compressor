@@ -13,41 +13,65 @@ try:
 except Exception as error:
     assert False,  "Error: Could not open '%s' due %s\n" % (filepath, error)
 
+full_installation = False
+if "--full" in sys.argv:
+    full_installation = True
+    sys.argv.remove("--full")
+
+# define package data
+package_data = {'': ['*.py', '*.yaml']}
+ux_package_data = {
+    'neural_compressor.ux': [
+    "web/static/*.*",
+    "web/static/assets/*.*",
+    "web/static/assets/fonts/*.*",
+    "components/db_manager/alembic.ini",
+    "components/db_manager/alembic/*",
+    "components/db_manager/alembic/versions/*.py",
+    "utils/configs/*.json",
+    "utils/configs/predefined_configs/**/*.yaml",
+    "utils/templates/*.txt"]
+}
+
+# define install requirements
+install_requires_list = [
+        'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools',
+        'opencv-python', 'requests', 'psutil', 'Pillow', 'sigopt', 'prettytable', 'cryptography', 'Cython']
+ux_install_requires_list = [
+        'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent','sqlalchemy==1.4.27', 'alembic==1.7.7']
+
+# define scripts
+scripts_list = []
+ux_scripts_list = ['neural_compressor/ux/bin/inc_bench']
+
+if full_installation:
+    project_name = "neural_compressor_full"
+    packages_exclude = find_packages(exclude=["test.*", "test"])
+    package_data.update(ux_package_data)
+    install_requires_list.extend(ux_install_requires_list)
+    scripts_list.extend(ux_scripts_list)
+else:
+    project_name = "neural_compressor"
+    packages_exclude = find_packages(exclude=["test.*", "test", "neural_compressor.ux", "neural_compressor.ux.*"])
 
 if __name__ == '__main__':
 
     setup(
-        name="neural_compressor",
+        name=project_name,
         version=__version__,
-        author="Intel AIA/AIPC Team",
-        author_email="feng.tian@intel.com, haihao.shen@intel.com, penghui.cheng@intel.com, xi2.chen@intel.com, jiong.gong@intel.com",
+        author="Intel AIA Team",
+        author_email="feng.tian@intel.com, haihao.shen@intel.com, suyue.chen@intel.com",
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding='utf-8').read(),
         long_description_content_type="text/markdown",
         keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training, tuning strategy',
         license='Apache 2.0',
         url="https://github.com/intel/neural-compressor",
-        packages = find_packages(exclude=["test.*", "test"]),
+        packages = packages_exclude,
         include_package_data = True,
-        package_data={
-            '': ['*.py', '*.yaml'],
-            'neural_compressor.ux': [
-                "web/static/*.*",
-                "web/static/assets/*.*",
-                "web/static/assets/fonts/*.*",
-                "components/db_manager/alembic.ini",
-                "components/db_manager/alembic/*",
-                "components/db_manager/alembic/versions/*.py",
-                "utils/configs/*.json",
-                "utils/configs/predefined_configs/**/*.yaml",
-                "utils/templates/*.txt",
-            ],
-        },
-        install_requires=[
-            'numpy', 'pyyaml', 'scikit-learn', 'schema', 'py-cpuinfo', 'hyperopt', 'pandas', 'pycocotools', 'opencv-python',
-            'requests', 'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent', 'psutil', 'Pillow', 'sigopt',
-            'prettytable', 'cryptography', 'Cython', 'sqlalchemy==1.4.27', 'alembic==1.7.7'],
-        scripts=['neural_compressor/ux/bin/inc_bench'],
+        package_data=package_data,
+        install_requires=install_requires_list,
+        scripts=scripts_list,
         python_requires='>=3.7.0',
         classifiers=[
               'Intended Audience :: Science/Research',
