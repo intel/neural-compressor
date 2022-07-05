@@ -105,7 +105,9 @@ class ONNXRTAugment:
             self.white_nodes = new_white_nodes
 
         initializers = {i.name: i.data_type for i in model.graph.initializer}
+        node_outputs = []
         for node in model.graph.node: # pylint: disable=no-member
+            node_outputs.extend(node.output)
             should_be_dump = ((node.op_type in self.dump_op_types) and
                                    (node.name not in self.black_nodes)) or \
                                    (node.name in self.white_nodes)
@@ -147,6 +149,9 @@ class ONNXRTAugment:
             value_info[output.name] = output.type.tensor_type.elem_type
         for tensor in tensors_to_dump:
             if self.augment_nodes:
+                if tensor not in node_outputs and tensor not in initializers \
+                    and tensor not in value_info:
+                    continue
                 for augment_node_type in self.augment_nodes:
                     if augment_node_type in ['ReduceMin', 'ReduceMax']:
                         if tensor in initializers and initializers[tensor] != 1:

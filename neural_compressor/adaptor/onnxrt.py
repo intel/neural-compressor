@@ -28,8 +28,9 @@ from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
                                             GLOBAL_STATE, MODE
-from ..utils.utility import Statistics
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.utils.utility import Statistics
+from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.conf.dotdict import deep_get
 import math
 
 onnx = LazyImport("onnx")
@@ -56,6 +57,7 @@ class ONNXRTAdaptor(Adaptor):
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
         self.graph_optimization = framework_specific_info["graph_optimization"]
+        self.recipes = deep_get(framework_specific_info, 'recipes', {})
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
@@ -168,6 +170,7 @@ class ONNXRTAdaptor(Adaptor):
         self.quantize_config = quantize_config # update so other methods can know current configs
 
         self._dump_model_op_stats(tmp_model)
+        tmp_model.topological_sort()
         return tmp_model
 
     def _generate_qconfig(self, model, tune_cfg, quantize_params):
@@ -236,6 +239,7 @@ class ONNXRTAdaptor(Adaptor):
  
         quantizer.quantize_model()
         model.model = quantizer.model.model
+        model.topological_sort()
         return model
 
     def _parse_qconfig(self, q_config):
@@ -454,6 +458,7 @@ class ONNXRTAdaptor(Adaptor):
         model.model = self._rename_node(model.model)
         if self.backend != "integerops":
             model = self._revert_fusedconv(model)
+        model.topological_sort()
         self.pre_optimized_model = model
 
     def _revert_fusedconv(self, model):
@@ -500,10 +505,10 @@ class ONNXRTAdaptor(Adaptor):
             logger.warning("This model has nodes with the same name, please check \
                 renamed_model.onnx in workspace_path (default is nc_workspace) \
                 for newly generated node name")
-        for idx, node in enumerate(model.graph.node):
-            if node_names.count(node.name) > 1:
-                node.name = node.op_type + '_nc_rename_' + str(idx)
-        onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
+            for idx, node in enumerate(model.graph.node):
+                if node_names.count(node.name) > 1:
+                    node.name = node.op_type + '_nc_rename_' + str(idx)
+            onnx.save(model, os.path.join(self.work_space, "renamed_model.onnx")) 
         return model
 
     @staticmethod
@@ -594,7 +599,10 @@ class ONNXRTAdaptor(Adaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
-
+        exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
+            self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
+            else False
+ 
         precisions = self.query_handler.get_precisions()
         optype_wise = OrderedDict()
 
@@ -634,6 +642,13 @@ class ONNXRTAdaptor(Adaptor):
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in optype_wise:
+                if exclude_first_quantizable_op and node.op_type in ['Conv', 'MatMul']:
+                    exclude_first_quantizable_op = False
+                    tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
+                    for k, v in tmp_cfg.items():
+                        v['dtype'] = list(filter(lambda x: x not in ['uint8', 'int8'], v['dtype']))
+                    op_wise.update({(node.name, node.op_type): tmp_cfg})
+                    continue
                 op_wise.update(
                     {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
         return {'optypewise': optype_wise, 'opwise': op_wise}

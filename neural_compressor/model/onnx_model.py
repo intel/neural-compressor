@@ -336,3 +336,46 @@ class ONNXModel(BaseModel):
                         self.graph().input.remove(graph_input)
 
         self.remove_initializers(ununsed_weights)
+        self.update()
+
+    def topological_sort(self, enable_subgraph=False):
+        from collections import deque
+        from functools import reduce
+        if not enable_subgraph:
+            input_name_to_nodes = {}
+            output_name_to_node = {}
+            for node in self.model.graph.node:
+                for input_name in node.input:
+                    if input_name not in input_name_to_nodes:
+                        input_name_to_nodes[input_name] = [node]
+                    else:
+                        input_name_to_nodes[input_name].append(node)
+                for output_name in node.output:
+                    output_name_to_node[output_name] = node
+        else: # pragma: no cover
+            input_name_to_nodes = self._input_name_to_nodes
+            output_name_to_node = self._output_name_to_node
+
+        all_nodes = {}
+        q = deque([output_name_to_node[i.name] for i in self.model.graph.output])
+        while q:
+            n = q.popleft()
+            flag = True
+            for out in n.output:
+                if out in input_name_to_nodes and \
+                    any([i.name not in all_nodes for i in input_name_to_nodes[out]]):
+                    q.extend(filter(lambda x:x.name not in all_nodes and x not in q, \
+                        input_name_to_nodes[out]))
+                    flag = False
+            if not flag:
+                q.append(n)
+            if flag and n.name not in all_nodes:
+                all_nodes[n.name] = n
+                for inp in n.input:
+                    if inp in output_name_to_node:
+                        q.append(output_name_to_node[inp])
+
+        nodes = [i[1] for i in all_nodes.items()]
+        nodes.reverse()
+        self.model.graph.ClearField('node')
+        self.model.graph.node.extend(nodes)

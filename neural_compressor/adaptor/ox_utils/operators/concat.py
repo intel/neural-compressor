@@ -29,10 +29,18 @@ class QDQConcat(QDQOperatorBase):
         super().__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
-        if all([inp not in self.quantizer.quantized_value_map for inp in self.node.input]) or \
-            not all([inp in self.quantizer.quantized_value_map for inp in self.node.input]):
+        node = self.node
+        inits = [i.name for i in self.quantizer.model.initializer()]
+        if all([inp not in self.quantizer.quantized_value_map and inp not in inits \
+            for inp in node.input]) or \
+            not all([inp in self.quantizer.quantized_value_map or inp in inits \
+            for inp in node.input]):
             return
-        super().quantize()
+        for idx, inp in enumerate(node.input):
+            initializer_use_weight_qType = inp not in inits
+            self.quantizer.quantize_inputs(node, [idx], initializer_use_weight_qType)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+            self.quantizer.quantize_outputs(node)
 
 class QLinearConcat(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):

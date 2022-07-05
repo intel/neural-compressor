@@ -144,6 +144,43 @@ def build_dynamic_yaml():
     with open("dynamic.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_recipe_yaml():
+    fake_yaml = """
+        model:
+          name: imagenet
+          framework: onnxrt_qlinearops
+
+        quantization:                                        
+          approach: post_training_static_quant 
+          recipes:
+            first_conv_or_matmul_quantization: False
+          calibration:
+            sampling_size: 1
+            dataloader:
+              dataset:
+                dummy_v2:
+                  input_shape: [100, 4]
+
+        evaluation:
+          accuracy:
+            metric:
+              MSE:
+                compare_label: False
+            dataloader:
+              dataset:
+                dummy_v2:
+                  input_shape: [100, 4]
+
+        tuning:
+          accuracy_criterion:
+            relative:  -0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+        """
+    with open("recipe.yaml", "w", encoding="utf-8") as f:
+        f.write(fake_yaml)
+
 def build_gather_yaml():
     fake_yaml = """
         model:
@@ -432,6 +469,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         build_gather_yaml()
         build_non_MSE_yaml()
         build_benchmark_yaml()
+        build_recipe_yaml()
         export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
         export_onnx_model(self.rn50_model, self.rn50_export_path)
@@ -447,6 +485,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def tearDownClass(self):
         os.remove("qlinear.yaml")
         os.remove("qdq.yaml")
+        os.remove("recipe.yaml")
         os.remove("dynamic.yaml")
         os.remove("non_MSE.yaml")
         os.remove("benchmark.yaml")
@@ -630,6 +669,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizer.model = self.matmul_model
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
+
+        quantizer = Quantization('recipe.yaml')
+        quantizer.model = self.matmul_model
+        quantizer.calib_dataloader = self.matmul_dataloader
+        quantizer.eval_dataloader = self.matmul_dataloader
+        q_model = quantizer.fit()
+        self.assertTrue('Matmul' in [i.name for i in q_model.nodes()])
 
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         for fake_yaml in ["non_MSE.yaml"]:
