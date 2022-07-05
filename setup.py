@@ -72,7 +72,7 @@ if __name__ == '__main__':
         package_data=package_data,
         install_requires=install_requires_list,
         scripts=scripts_list,
-        python_requires='>=3.7.0',
+        python_requires='>=3.6.0',
         classifiers=[
               'Intended Audience :: Science/Research',
               'Programming Language :: Python :: 3',
