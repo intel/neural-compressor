@@ -778,6 +778,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
+    <td>ArcFace</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/arcface/quantization/ptq">qlinearops</a></td>
+  </tr>
+  <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
