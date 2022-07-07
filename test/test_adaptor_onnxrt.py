@@ -319,7 +319,7 @@ def build_ir3_model():
     graph.initializer.add().CopyFrom(X1_weight)
     graph.input.extend([weight])
     model = helper.make_model(graph)
-    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 11)]})
     model.ir_version = 3
     return model
 
@@ -376,6 +376,29 @@ def build_rename_model():
     add = onnx.helper.make_node('Add', ['C', 'E'], ['F'], name='')
     graph = helper.make_graph([squeeze, node, add], 'test_graph_1', [A], [F], [B_init, E_init])
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
+def build_conv_model():
+    initializers = []
+    input = helper.make_tensor_value_info('input', TensorProto.FLOAT, [1, 3, 224, 224])
+    conv1_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [3, 3, 3, 3]).astype(np.float32), name='conv1_weight')
+    conv1_node = helper.make_node('Conv', ['input', 'conv1_weight'], ['conv1_output'], name='conv1')
+
+    conv2_weight_initializer = numpy_helper.from_array(
+        np.random.randint(-1, 2, [5, 3, 3, 3]).astype(np.float32), name='conv2_weight')
+    conv2_node = helper.make_node('Conv', ['conv1_output', 'conv2_weight'], ['conv2_output'], name='conv2')
+
+    avg_args = {'kernel_shape': [3, 3]}
+    avgpool_node = helper.make_node('AveragePool', ['conv1_output'], ['avg_output'], name='AveragePool', **avg_args)
+
+    concat_node = helper.make_node('Concat', ['avg_output', 'conv2_output'], 
+        ['concat_output'], name='Concat', axis=1)
+    output = helper.make_tensor_value_info('concat_output', TensorProto.FLOAT, [1, 8, 220, 220])
+    initializers = [conv1_weight_initializer, conv2_weight_initializer]
+    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node],
+        'test', [input], [output], initializer=initializers)
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
 
 def build_benchmark():
@@ -444,7 +467,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     rn50_model = torchvision.models.resnet50()
 
     datasets = DATASETS('onnxrt_qlinearops')
-    cv_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
+    cv_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
     
     ir3_dataset = datasets['dummy'](shape=(10, 2048), low=0., high=1., label=True)
@@ -479,6 +502,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.gather_model = build_model_with_gather()
         self.matmul_model = build_matmul_model()
         self.rename_model = build_rename_model()
+        self.conv_model = build_conv_model()
         build_benchmark()
 
     @classmethod
@@ -698,14 +722,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
             from neural_compressor.utils.utility import recover
             model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)
             self.assertTrue(model.model == q_model.model)
-
+        options.onnxrt.qdq_setting.AddQDQPairToWeight = False
+ 
         options.onnxrt.qdq_setting.DedicatedQDQPair = True
-        options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = ['Conv']
         for fake_yaml in ["qdq.yaml"]:
             quantizer = Quantization(fake_yaml)
             quantizer.calib_dataloader = self.cv_dataloader
             quantizer.eval_dataloader = self.cv_dataloader
-            quantizer.model = self.rn50_model
+            quantizer.model = self.conv_model
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
 
@@ -715,6 +739,16 @@ class TestAdaptorONNXRT(unittest.TestCase):
             evaluator.b_dataloader = self.cv_dataloader
             evaluator.model = self.rn50_model
             evaluator(mode)
+
+        options.onnxrt.qdq_setting.DedicatedQDQPair = False
+        options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = ['Conv']
+        for fake_yaml in ["qdq.yaml"]:
+            quantizer = Quantization(fake_yaml)
+            quantizer.calib_dataloader = self.cv_dataloader
+            quantizer.eval_dataloader = self.cv_dataloader
+            quantizer.model = self.rn50_model
+            q_model = quantizer.fit()
+            self.assertNotEqual(q_model, None)
 
     def test_lower_is_better_case(self):
         import time

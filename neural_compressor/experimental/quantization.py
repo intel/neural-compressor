@@ -305,15 +305,18 @@ class Quantization(Component):
 
     @objective.setter
     def objective(self, user_objective):
-        if deep_get(self.conf.usr_cfg, "tuning.multi_objective.objective"):
+        if deep_get(self.conf.usr_cfg, "tuning.multi_objectives.objective") or \
+            deep_get(self.conf.usr_cfg, "tuning.objective"):
             logger.warning("Override the value of `objective` field defined in yaml file" \
                            " as user defines the value of `objective` attribute by code.")
-
+        
+        user_obj_cfg = "tuning.objective" if deep_get(self.conf.usr_cfg, "tuning.objective") \
+            else "tuning.multi_objectives.objective"
         from ..objective import objective_custom_registry
         objective_cls = type(user_objective)
         name = user_objective.__class__.__name__
-        objective_cfg = [name]
-        deep_set(self.conf.usr_cfg, "tuning.multi_objective.objective", objective_cfg)
+        objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
+        deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         objective_custom_registry(name, objective_cls)
     

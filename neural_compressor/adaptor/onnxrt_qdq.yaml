@@ -22,9 +22,9 @@
     valid_mixed_precisions: []
   
   ops: &common_ops
-    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
+    int8: ['Conv', 'MatMul', 'Attention', 'Relu', 'Clip',
            'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
+           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split']
     fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
            'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
            'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
@@ -96,9 +96,9 @@
     <<: *common_precisions
 
   ops:
-    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
+    int8: ['Conv', 'MatMul', 'Attention', 'Relu', 'Clip',
            'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add', 'Squeeze',
+           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Squeeze',
            'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
     fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
            'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
@@ -128,9 +128,9 @@
     <<: *common_precisions
 
   ops:
-    int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip',
+    int8: ['Conv', 'MatMul', 'Attention', 'Relu', 'Clip',
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add', 'Squeeze',
+        'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Squeeze',
         'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
     fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
         'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
