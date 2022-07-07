@@ -4,7 +4,7 @@ Step-by-Step
 This document describes the steps of training with sparsity for BERT model on PyTorch.
 
 > **Note:**
-> Training wth sparsity on CPU is under development, while the initial experiment is on GPU.
+> CPU training is now enabled.
 
 # Prerequisite
 
@@ -40,20 +40,17 @@ cd examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lass
 pip3 install -r requirements.txt --ignore-installed PyYAML
 ```
 
-#### Install APEX
-
-```bash
-git clone https://github.com/NVIDIA/apex
-cd apex
-pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
-```
-> **Note**
-> If no CUDA runtime is found, please export CUDA_HOME='/use/local/cuda'.
-
-### 2. Prepare Dataset
-
+### 1. Prepare Dataset
 * For SQuAD task, you should download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
-### 3. Prepare pretrained model
+* Considering SQuAD1.1 Dataset as the example, simply run the following commands
+```
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json
+```
+* Please also ensure that official evaluation script is downloaded to the same directory as json files. vocab.txt is also required for tokenization
+* After all data is settled, the data directory should be like this:
+
+### 2. Prepare pretrained model
 * Please download BERT large pretrained model from [NGC](https://catalog.ngc.nvidia.com/orgs/nvidia/models/bert_pyt_ckpt_large_pretraining_amp_lamb/files?version=20.03.0).
 ```bash
 # wget cmd
@@ -62,10 +59,10 @@ wget https://api.ngc.nvidia.com/v2/models/nvidia/bert_pyt_ckpt_large_pretraining
 # curl cmd
 curl -LO https://api.ngc.nvidia.com/v2/models/nvidia/bert_pyt_ckpt_large_pretraining_amp_lamb/versions/20.03.0/files/bert_large_pretrained_amp.pt
 ```
-# Run
+### 3. Run
 Enter your created conda env, then run the script. Below command shows how to train with sparsity for a simplified BERT with [one sparse GEMM layer](prune_bert.yaml). 
 ```bash
-bash script/run_squad_sparse /path/to/model.pt 2.0 16 5e-5 tf32 /path/to/data /path/to/outdir prune_bert.yaml
+bash scripts/run_squad_sparse.sh /path/to/model.pt 2.0 16 5e-5 tf32 /path/to/data /path/to/outdir prune_bert.yaml
 ```
 The default parameters are as follows:
 ```shell

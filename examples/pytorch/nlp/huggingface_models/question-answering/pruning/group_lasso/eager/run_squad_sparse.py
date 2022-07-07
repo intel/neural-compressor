@@ -33,8 +33,6 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
-
-from apex import amp
 from schedulers import LinearWarmUpScheduler
 from file_utils import PYTORCH_PRETRAINED_BERT_CACHE
 import modeling
@@ -697,34 +695,13 @@ def _compute_softmax(scores):
         probs.append(score / total_sum)
     return probs
 
-
-
-from apex.multi_tensor_apply import multi_tensor_applier
 class GradientClipper:
-    """
-    Clips gradient norm of an iterable of parameters. 
-    """
     def __init__(self, max_grad_norm):
-        self.max_norm = max_grad_norm
-        if multi_tensor_applier.available:
-            import amp_C
-            self._overflow_buf = torch.cuda.IntTensor([0])
-            self.multi_tensor_l2norm = amp_C.multi_tensor_l2norm
-            self.multi_tensor_scale = amp_C.multi_tensor_scale
-        else:
-            raise RuntimeError('Gradient clipping requires cuda extensions')
-
+        self.max_grad_norm = max_grad_norm
     def step(self, parameters):
-        l = [p.grad for p in parameters if p.grad is not None]
-        total_norm, _ = multi_tensor_applier(self.multi_tensor_l2norm, self._overflow_buf, [l], False)
-        total_norm = total_norm.item()
-        if (total_norm == float('inf')): return
-        clip_coef = self.max_norm / (total_norm + 1e-6)
-        if clip_coef < 1:
-            multi_tensor_applier(self.multi_tensor_scale, self._overflow_buf, [l, l], clip_coef)
-
-
-def train_func(model, agent, args, dllogger, global_step, train_examples, num_train_optimization_steps, n_gpu, device, optimizer):
+        torch.nn.utils.clip_grad_norm_(parameters, self.max_grad_norm)
+        
+def train_func(model, agent, args, dllogger, global_step, train_examples, num_train_optimization_steps, n_gpu, device, tokenizer, optimizer):
     model = agent.model.model
 
     if args.cache_dir is None:
@@ -770,11 +747,12 @@ def train_func(model, agent, args, dllogger, global_step, train_examples, num_tr
         train_sampler = RandomSampler(train_data)
     else:
         train_sampler = DistributedSampler(train_data)
-    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size * n_gpu)
+    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size * 1) # for cpu use
 
     args.train_features = train_features
     model.train()
-    gradClipper = GradientClipper(max_grad_norm=1.0)
+    # define the gradient clipper
+    gradClipper = GradientClipper(max_grad_norm = 1.0)
     final_loss = None
     train_start = time.time()
 
@@ -814,24 +792,16 @@ def train_func(model, agent, args, dllogger, global_step, train_examples, num_tr
                 loss = loss.mean()  # mean() to average on multi-gpu.
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
-            if args.fp16:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                loss.backward()
+            
+            loss.backward()
             
             # gradient clipping  
-            gradClipper.step(amp.master_params(optimizer))         
+            gradClipper.step(model.parameters())
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
-                if args.fp16 :
-                    # modify learning rate with special warm up for BERT which FusedAdam doesn't do
-                    scheduler.step()
-
                 optimizer.step()
                 agent.on_post_grad()
                 optimizer.zero_grad()
-
                 global_step += 1
 
             final_loss = loss.item()
@@ -1147,8 +1117,6 @@ def main():
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
 
-    # hack to remove pooler, which is not used
-    # thus it produce None grad that break apex
     param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
 
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
@@ -1157,50 +1125,19 @@ def main():
         {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
     if args.do_train:
-        if args.fp16:
-            try:
-                from apex.optimizers import FusedAdam
-            except ImportError:
-                raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
-            optimizer = FusedAdam(optimizer_grouped_parameters,
-                                  lr=args.learning_rate,
-                                  bias_correction=False)
-
-            if args.loss_scale == 0:
-                model, optimizer = amp.initialize(model, optimizer, opt_level="O2", keep_batchnorm_fp32=False,
-                                                      loss_scale="dynamic")
-            else:
-                model, optimizer = amp.initialize(model, optimizer, opt_level="O2", keep_batchnorm_fp32=False, loss_scale=args.loss_scale)
-            if args.do_train:
-                scheduler = LinearWarmUpScheduler(optimizer, warmup=args.warmup_proportion, total_steps=num_train_optimization_steps)
-
-        else:
-            optimizer = BertAdam(optimizer_grouped_parameters,
-                                    lr=args.learning_rate,
-                                    warmup=args.warmup_proportion,
-                                    t_total=num_train_optimization_steps)
-
-    if args.local_rank != -1:
-        try:
-            from apex.parallel import DistributedDataParallel as DDP
-        except ImportError:
-            raise ImportError(
-                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
-
-        model = DDP(model)
-    elif n_gpu > 1:
-        model = torch.nn.DataParallel(model)
+        optimizer = BertAdam(optimizer_grouped_parameters,
+                                lr=args.learning_rate,
+                                warmup=args.warmup_proportion,
+                                t_total=num_train_optimization_steps)
     
     global_step = 0
-    
     if args.do_prune:
         # Pruning!
         from neural_compressor.experimental import Pruning, common
         agent = Pruning(args.prune_config)
     
     def train_func_nc(model):
-        return train_func(model, agent, args, dllogger, global_step, train_examples, num_train_optimization_steps, n_gpu, device, optimizer)
+        return train_func(model, agent, args, dllogger, global_step, train_examples, num_train_optimization_steps, n_gpu, device, tokenizer, optimizer)
     
     def eval_func_nc(model):
         return eval_func(model, args, dllogger, tokenizer, device)
