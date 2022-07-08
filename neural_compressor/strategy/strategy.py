@@ -141,6 +141,9 @@ class TuneStrategy(object):
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
 
+        self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
+            bool('graph_optimization' in self.cfg)
+
         if 'tensorflow' in framework:
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
@@ -150,13 +153,19 @@ class TuneStrategy(object):
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnxrt' in framework.lower():
-            framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
+            if self.mixed_precision_mode:
+                framework_specific_info.update({"backend": "integerops"})
+                framework_specific_info.update({"approach": "post_training_dynamic_quant"})
+            else:
+                framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
             framework_specific_info.update({'recipes': self.cfg.quantization.recipes})
             framework_specific_info.update(
                                 {'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
+            if self.mixed_precision_mode:
+                framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update(
                 {"workspace_path": os.path.dirname(self.deploy_path)})
@@ -210,8 +219,6 @@ class TuneStrategy(object):
                              deep_get(self.cfg, 'tuning.multi_objectives.higher_is_better'),
                              deep_get(self.cfg, 'tuning.multi_objectives.weight'))
         self.capability = self.adaptor.query_fw_capability(model)
-        self.graph_optimization_mode = bool('graph_optimization' in self.cfg)
-
         self.modelwise_tune_space = conf.modelwise_tune_space(self.capability['optypewise'])
         self.opwise_tune_space = conf.opwise_tune_space(self.capability['opwise'])
         self.model_wise_tune_cfgs = OrderedDict()
@@ -230,7 +237,7 @@ class TuneStrategy(object):
         else:
             self.calib_iter = [1]
 
-        fallback_precision_list = ['fp32'] if self.graph_optimization_mode \
+        fallback_precision_list = ['fp32'] if self.mixed_precision_mode \
             else ['fp32', 'bf16', 'fp16']
         self.model_wise_quant_cfgs = OrderedDict()
         for optype in self.model_wise_tune_cfgs.keys():
@@ -250,8 +257,11 @@ class TuneStrategy(object):
             cfg_list = self.opwise_tune_cfgs[key]
             new_list = []
             for cfg in cfg_list:
-                if self.graph_optimization_mode:
-                    if cfg['activation']['dtype'] in self.cfg.graph_optimization.precisions:
+                if self.mixed_precision_mode:
+                    if (self.cfg.graph_optimization and \
+                        cfg['activation']['dtype'] in self.cfg.graph_optimization.precisions) or \
+                        (self.cfg.mixed_precision and \
+                        cfg['activation']['dtype'] in self.cfg.mixed_precision.precisions):
                         new_list.append(cfg)
                 else:
                     if ('weight' in cfg

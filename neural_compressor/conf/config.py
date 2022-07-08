@@ -253,7 +253,30 @@ graph_optimization_schema = Schema({
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+            }
+    }
+})
+
+mixed_precision_schema = Schema({
+
+    Optional('precisions', default={'precisions': ['fp32']}): And(
+        Or(str, list),
+        Use(input_to_list),
+        lambda s: all(i in [ 'fp32', 'bf16', 'fp16'] for i in s)),
+
+    Optional('op_wise', default={'weight': {}, 'activation': {}}): {
+        Optional('weight', default=None): {
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+        },
+        Optional('activation', default=None): {
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
             }
     }
 })
@@ -767,6 +790,7 @@ schema = Schema({
     },
 
     Optional('graph_optimization'): graph_optimization_schema,
+    Optional('mixed_precision'): mixed_precision_schema,
 
     Optional('model_conversion'): model_conversion_schema,
 
@@ -1068,6 +1092,36 @@ graph_optimization_default_schema = Schema({
     Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict 
 })
 
+mixed_precision_default_schema = Schema({
+    Optional('model', default={'name': 'resnet50', \
+                               'framework': 'NA', \
+                                'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('quantization', default={'approach': 'post_training_static_quant', 
+                                    'calibration': {'sampling_size': [100]},
+                                    'recipes': {'scale_propagation_max_pooling': True,
+                                                    'scale_propagation_concat': True,
+                                                    'first_conv_or_matmul_quantization': True},
+                                    'model_wise': {'weight': {'bit': [7.0]},
+                                                    'activation': {}}}): dict,
+
+    Optional('tuning', default={
+        'strategy': {'name': 'basic'},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
+        'objective': 'performance',
+        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
+
+    Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict 
+})
+
 benchmark_default_schema = Schema({
     Optional('model', default={'name': 'resnet50', \
                                'framework': 'NA', \
@@ -1218,7 +1272,7 @@ class Quantization_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, quantization_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(quantization_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(quantization_default_schema.validate(dict()))
         self._model_wise_tune_space = None
@@ -1414,7 +1468,7 @@ class Pruning_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, pruning_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(pruning_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(pruning_default_schema.validate(dict()))
 
@@ -1431,9 +1485,26 @@ class Graph_Optimization_Conf(Quantization_Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, graph_optimization_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(graph_optimization_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(graph_optimization_default_schema.validate(dict()))
+
+class MixedPrecision_Conf(Quantization_Conf):
+    """config parser.
+
+    Args:
+        cfg: The path to the configuration file or DotDict object or None.
+
+    """
+
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(self._convert_cfg(
+                cfg, copy.deepcopy(mixed_precision_default_schema.validate(dict()))))
+        else:
+            self.usr_cfg = DotDict(mixed_precision_default_schema.validate(dict()))
 
 class Benchmark_Conf(Conf):
     """config parser.
@@ -1448,7 +1519,7 @@ class Benchmark_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, benchmark_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(benchmark_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))
 
@@ -1465,7 +1536,7 @@ class Distillation_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, distillation_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(distillation_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
 
@@ -1485,3 +1556,4 @@ PruningConf = Pruning_Conf
 GraphOptConf = Graph_Optimization_Conf
 BenchmarkConf = Benchmark_Conf
 DistillationConf = Distillation_Conf
+MixedPrecisionConf = MixedPrecision_Conf

@@ -661,7 +661,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            ('squeeze', 'Squeeze'): {'activation':  {'dtype': 'fp16'},
                                                    'weight': {'dtype': 'fp16'}}}}
         model = adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
-        self.assertTrue(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 0)
 
         tune_cfg = {'calib_iteration': 1,
                     'op': {('Matmul', 'MatMul'): {'activation':  {'dtype': ['uint8']},
@@ -672,7 +672,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                                    'weight': {'dtype': 'fp16'}}}}
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         model = adaptor.quantize(tune_cfg, common.Model(self.matmul_model), self.matmul_dataloader)
-        self.assertTrue(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 0)
  
         for fake_yaml in ["gather.yaml"]:
             quantizer = Quantization(fake_yaml)

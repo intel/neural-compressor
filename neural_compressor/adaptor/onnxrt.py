@@ -605,10 +605,11 @@ class ONNXRTAdaptor(Adaptor):
  
         precisions = self.query_handler.get_precisions()
         optype_wise = OrderedDict()
+        quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
 
         op_wise = OrderedDict()
         for precision in precisions:
-            if precision == 'fp16' and self.device == 'cpu':
+            if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
                 continue
             if precision in self.query_handler.get_quantization_capability():
                 special_config_types = list(self.query_handler.get_quantization_capability() \
@@ -623,6 +624,8 @@ class ONNXRTAdaptor(Adaptor):
                 self.query_handler.get_op_types_by_precision(precision) != ['*'] else \
                 optype_wise.keys()
             for op in optypes:
+                if op not in quantizable_optype:
+                    continue
                 if op not in special_config_types:
                     op_capability = default_config
                 else:

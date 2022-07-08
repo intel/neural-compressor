@@ -18,25 +18,13 @@
     name: '1.7.0'
   
   precisions: &common_precisions
-    names: int8, uint8, fp16, fp32
+    names: int8, uint8, fp32
     valid_mixed_precisions: []
   
   ops: &common_ops
     int8: ['Conv', 'MatMul', 'Attention', 'Relu', 'Clip',
            'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split']
-    fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
-           'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
-           'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
-           'Scatter', 'ScatterElements', 'ScatterND', 'Shape', 'Shrink', 'Sign6',
-           'Slice', 'Squeeze', 'Transpose', 'Unsqueeze', 'ExpandDims', 'Inverse',
-           'SkipLayerNormalization', 'QuantizeLinear', 'QAttention', 'LongformerAttention',
-           'Gelu', 'FusedMatMul', 'FastGelu', 'EmbedLayerNormalization', 'DequantizeLinear',
-           'BiasGelu', 'Attention', 'Where', 'Upsample', 'Tanh', 'Sub', 'Sqrt', 'Split',
-           'Softmax', 'Sigmoid', 'Scatter', 'Relu', 'ReduceMean', 'Pow', 'Pad', 'Mul',
-           'MaxPool', 'MatMul', 'LeakyRelu', 'LayerNormalization', 'GlobalMaxPool',
-           'GlobalAveragePool', 'Gemm', 'Conv', 'BatchNormalization', 'AveragePool',
-           'Add', 'Clip']
+           'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Add']
     fp32: ['*'] # '*' means all op types
   
   capabilities: &common_capabilities
@@ -100,18 +88,6 @@
            'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
            'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Squeeze',
            'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
-    fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
-           'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
-           'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
-           'Scatter', 'ScatterElements', 'ScatterND', 'Shape', 'Shrink', 'Sign6',
-           'Slice', 'Squeeze', 'Transpose', 'Unsqueeze', 'ExpandDims', 'Inverse',
-           'SkipLayerNormalization', 'QuantizeLinear', 'QAttention', 'LongformerAttention',
-           'Gelu', 'FusedMatMul', 'FastGelu', 'EmbedLayerNormalization', 'DequantizeLinear',
-           'BiasGelu', 'Attention', 'Where', 'Upsample', 'Tanh', 'Sub', 'Sqrt', 'Split',
-           'Softmax', 'Sigmoid', 'Scatter', 'Relu', 'ReduceMean', 'Pow', 'Pad', 'Mul',
-           'MaxPool', 'MatMul', 'LeakyRelu', 'LayerNormalization', 'GlobalMaxPool',
-           'GlobalAveragePool', 'Gemm', 'Conv', 'BatchNormalization', 'AveragePool',
-           'Add', 'Clip']
     fp32: ['*'] # '*' means all op types
 
   capabilities:
@@ -132,18 +108,6 @@
         'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
         'FusedConv', 'GlobalAveragePool', 'Pad', 'Split', 'Squeeze',
         'Reshape', 'Concat', 'AveragePool', 'Unsqueeze', 'Transpose']
-    fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
-        'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
-        'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',
-        'Scatter', 'ScatterElements', 'ScatterND', 'Shape', 'Shrink', 'Sign6',
-        'Slice', 'Squeeze', 'Transpose', 'Unsqueeze', 'ExpandDims', 'Inverse',
-        'SkipLayerNormalization', 'QuantizeLinear', 'QAttention', 'LongformerAttention',
-        'Gelu', 'FusedMatMul', 'FastGelu', 'EmbedLayerNormalization', 'DequantizeLinear',
-        'BiasGelu', 'Attention', 'Where', 'Upsample', 'Tanh', 'Sub', 'Sqrt', 'Split',
-        'Softmax', 'Sigmoid', 'Scatter', 'Relu', 'ReduceMean', 'Pow', 'Pad', 'Mul',
-        'MaxPool', 'MatMul', 'LeakyRelu', 'LayerNormalization', 'GlobalMaxPool',
-        'GlobalAveragePool', 'Gemm', 'Conv', 'BatchNormalization', 'AveragePool',
-        'Add', 'Clip']
     fp32: ['*'] # '*' means all op types
 
   capabilities:

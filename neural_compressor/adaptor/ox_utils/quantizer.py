@@ -196,7 +196,7 @@ class Quantizer:
         self.model.update()
 
     def should_cast(self, node):
-        if node.name in self.config and self.config[node.name] != 'fp32':
+        if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
             return True
         else:
             return False
@@ -206,7 +206,7 @@ class Quantizer:
             if self.should_quantize(node):
                 op_quantizer = CreateQDQQuantizer(self, node)
                 op_quantizer.quantize()
-            elif self.should_cast(node):
+            elif self.should_cast(node): # pragma: no cover
                 op_caster = CreateCaster(self, node)
                 op_caster.cast()
         self.model.graph().node.extend(self.new_nodes)
@@ -269,7 +269,7 @@ class Quantizer:
                                 all([i.op_type in ['QuantizeLinear', 'DequantizeLinear'] \
                                 for i in self.model.get_children(node)]):
                                 self.remove_nodes.append(node)
-                else:
+                else: # pragma: no cover
                     parent = self.model.get_parents(match_nodes[0])[0]
                     children = self.model.get_children(match_nodes[1])
                     input_dtype = '1' # float32
@@ -316,7 +316,7 @@ class Quantizer:
             self.model.replace_node_input(node, old_input_name, new_input_name)
         self.model.update()
 
-    def dtype_cast(self, node, cfg, keep_io_types=True):
+    def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
         min_positive_val = 1e-7
         max_finite_val = 1e4
         for idx, tensor_name in enumerate(node.input):

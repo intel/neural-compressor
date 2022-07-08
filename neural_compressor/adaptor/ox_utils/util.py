@@ -60,7 +60,7 @@ def _get_qrange_for_qType(qType, reduce_range=False):
     else:
         raise ValueError('unsupported quantization data type')
 
-def convert_np_to_float16(np_array, min_positive_val=1e-7, max_finite_val=1e4):
+def convert_np_to_float16(np_array, min_positive_val=1e-7, max_finite_val=1e4): # pragma: no cover
     '''
     Convert float32 numpy array to float16 without changing sign or finiteness.
     Positive values less than min_positive_val are mapped to min_positive_val.
@@ -83,7 +83,7 @@ def _npfloat16_to_int(np_list):
     '''
     return [int(bin(_.view('H'))[2:].zfill(16), 2) for _ in np_list]
 
-def cast_tensor(tensor, dtype, min_positive_val=1e-7, max_finite_val=1e4):
+def cast_tensor(tensor, dtype, min_positive_val=1e-7, max_finite_val=1e4): # pragma: no cover
     '''
     Convert tensor float to float16.
         param tensor: TensorProto object
@@ -260,7 +260,7 @@ def dequantize_data(tensor_value, scale_value, zo_value, axis=0): # pragma: no c
                                                new_per_channel_tensor_value), 0)
         return new_tensor_value
 
-class ValueInfo:
+class ValueInfo: # pragma: no cover
     def __init__(self,
                  tensor_name,
                  dtype,
