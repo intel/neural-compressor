@@ -7,7 +7,7 @@ Low-precision inference can speed up inference obviously, by converting the fp32
 
 Intel® Neural Compressor helps the user to simplify the processing to convert the fp32 model to int8/bf16.
 
-At the same time, Intel® Neural Compressor will tune the quanization method to reduce the accuracy loss, which is a big blocker for low-precision inference.
+At the same time, Intel® Neural Compressor will tune the quantization method to reduce the accuracy loss, which is a big blocker for low-precision inference.
 
 Intel® Neural Compressor is released in Intel® AI Analytics Toolkit and works with Intel® Optimization of TensorFlow*.
 
@@ -39,7 +39,7 @@ We will learn the acceleration of AI inference by Intel AI technology:
 |Train a CNN AlexNet model|keras_tf_train_mnist.py|dataset: MNIST|fp32_frozen.pb|
 |Quantize the frozen PB model file|inc_quantize_model.py|dataset: MNIST<br>model: fp32_frozen.pb<br>yaml: alexnet.yaml|alexnet_int8_model.pb|
 |Test performance|profiling_inc.py|fp32_frozen.pb<br>alexnet_int8_model.pb|32.json<br>8.json|
-|Compare the performance|compare_perf.py|32.json<br>8.json|stdout/stderr<br>log file<br>fp32_int8_aboslute.png<br>fp32_int8_times.png|
+|Compare the performance|compare_perf.py|32.json<br>8.json|stdout/stderr<br>log file<br>fp32_int8_absolute.png<br>fp32_int8_times.png|
 
 **run_sample.sh** will call above python scripts to finish the demo.
 
@@ -47,7 +47,7 @@ We will learn the acceleration of AI inference by Intel AI technology:
 
 This demo could be executed on any Intel CPU. But it's recommended to use 2nd Generation Intel® Xeon® Scalable Processors or newer, which include:
 
-1. AVX512 intruction to speed up training & inference AI model.
+1. AVX512 instruction to speed up training & inference AI model.
 
 2. Intel® Deep Learning Boost: Vector Neural Network Instruction (VNNI) to accelerate AI/DL Inference with INT8/BF16 Model.
 
@@ -134,7 +134,7 @@ throughput(fps)   572.4982883964987        3030.70552731285
 latency(ms)      2.8339174329018104       2.128233714979522       
 accuracy(%)      0.9799               0.9796                  
 
-Save to fp32_int8_aboslute.png
+Save to fp32_int8_absolute.png
 
 Model         FP32                  INT8                    
 throughput_times  1                    5.293824608282245       
@@ -159,7 +159,7 @@ We will see the performance and accuracy of FP32 and INT8 model. The performance
 
 ##### Check Result in PNG file
 
-The demo creates figure files: fp32_int8_aboslute.png, fp32_int8_times.png to show performance bar. They could be used in report.
+The demo creates figure files: fp32_int8_absolute.png, fp32_int8_times.png to show performance bar. They could be used in report.
 
 Copy files from DevCloud in host:
 
@@ -170,7 +170,7 @@ scp devcloud:~/xxx/*.png ./
 
 ### Customer Server
 
-Set up own running enviroment in local server, cloud (including Intel® DevCloud):
+Set up own running environment in local server, cloud (including Intel® DevCloud):
 
 #### Install by PyPi
 
@@ -214,7 +214,7 @@ throughput(fps)   572.4982883964987        3030.70552731285
 latency(ms)      2.8339174329018104       2.128233714979522       
 accuracy(%)      0.9799               0.9796                  
 
-Save to fp32_int8_aboslute.png
+Save to fp32_int8_absolute.png
 
 Model         FP32                  INT8                    
 throughput_times  1                    5.293824608282245       
@@ -232,7 +232,7 @@ We will see the performance and accuracy of FP32 and INT8 model. The performance
 
 2. Check Result in PNG file
 
-The demo creates figure files: fp32_int8_aboslute.png, fp32_int8_times.png to show performance bar. They could be used in report.
+The demo creates figure files: fp32_int8_absolute.png, fp32_int8_times.png to show performance bar. They could be used in report.
 
 #### Run by Jupyter Notebook
 

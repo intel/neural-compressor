@@ -11,10 +11,12 @@ The `train.py` script generates a saved model and a frozen pb at ./models for yo
 
 The following Hello World examples are available:
 
-*  Builtin dataloader and metric, with pb model: [tf_example1](../../examples/helloworld/tf_example1/README.md)
-*  Customized dataloader and metric, with Keras saved model: [tf_example2](../../examples/helloworld/tf_example2/README.md)
-*  TensorFlow slim model: [tf_example3](../../examples/helloworld/tf_example3/README.md)
-*  TensorFlow checkpoint: [tf_example4](../../examples/helloworld/tf_example4/README.md)
-*  Enable benchmark for performance and accuracy measurement: [tf_example5](../../examples/helloworld/tf_example5/README.md)
-*  Quantization and benchmark with Python-flavor config: [tf_example7](../../examples/helloworld/tf_example7/README.md)
+* [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric. 
+* [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.  
+* [tf_example3](/examples/helloworld/tf_example3): quantize slim model. 
+* [tf_example4](/examples/helloworld/tf_example4): quantize checkpoint with dummy dataloader.  
+* [tf_example5](/examples/helloworld/tf_example5): config performance and accuracy measurement.  
+* [tf_example6](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model. 
+* [tf_example7](/examples/helloworld/tf_example7): enable quantization and benchmark with python-flavor config.
+* [tf_example8](/examples/helloworld/tf_example8): quantize with pure python API.
 

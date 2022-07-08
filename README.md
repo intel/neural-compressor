@@ -144,10 +144,9 @@ More details for validated models are available [here](docs/validated_model_list
   <tbody>
     <tr>
       <td colspan="3" align="center"><a href="docs/design.md">Architecture</a></td>
-      <td colspan="2" align="center"><a href="docs/tutorial.md">Tutorial</a></td>
       <td colspan="2" align="center"><a href="./examples">Examples</a></td>
-      <td colspan="1" align="center"><a href="docs/bench.md">GUI</a></td>
-      <td colspan="1" align="center"><a href="docs/api-introduction.md">APIs</a></td>
+      <td colspan="2" align="center"><a href="docs/bench.md">GUI</a></td>
+      <td colspan="2" align="center"><a href="docs/api-introduction.md">APIs</a></td>
     </tr>
     <tr>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
