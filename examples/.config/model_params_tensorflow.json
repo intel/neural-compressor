@@ -432,6 +432,15 @@
       "batch_size": 1,
       "new_benchmark": true
     },
+    "faster_rcnn_resnet50": {
+      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
+      "yaml": "faster_rcnn_resnet50.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    },
     "faster_rcnn_resnet101_saved": {
       "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
