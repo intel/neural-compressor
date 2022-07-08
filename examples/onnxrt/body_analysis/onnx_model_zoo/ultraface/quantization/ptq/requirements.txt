@@ -1,0 +1,4 @@
+onnx==1.11.0
+onnxruntime==1.10.0
+onnxruntime_extensions
+scipy

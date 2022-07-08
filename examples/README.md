@@ -921,5 +921,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/yolov4/quantization/ptq">qlinearops</a></td>
   </tr>
+  <tr>
+    <td>Emotion FERPlus</td>
+    <td>Body Analysis</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>Ultra Face</td>
+    <td>Body Analysis</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq">qlinearops</a></td>
+  </tr>
 </tbody>
 </table>
