@@ -385,7 +385,7 @@ class Quantizer:
                     "In static mode quantization params for inputs and outputs \
                     of nodes to be quantized are required.".format(tensor_name))
 
-            node.output[idx] = tensor_name + "_" + str(idx)
+            node.output[idx] = tensor_name + "_qdq_" + str(idx)
             q_input = node.output[idx]
             q_output = tensor_name + "_QuantizeLinear_" + str(idx)
             dq_input = q_output

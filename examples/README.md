@@ -856,6 +856,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/language_translation/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
+    <td>BiDAF</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./onnxrt/language_translation/onnx_model_zoo/BiDAF/quantization/ptq">integerops</a></td>
+  </tr>
+  <tr>
     <td>SSD MobileNet V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>

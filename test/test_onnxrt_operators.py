@@ -165,8 +165,47 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            'mask_index_out': [np.uint8(10.), np.float32(0)],
                            'input_ids': [np.uint8(10.), np.float32(0)],
                            } 
-        self.qlinear_test(model, q_config, quantize_params, ['EmbedLayerNormalization'])                        
-        self.qdq_test(model, q_config, quantize_params, ['EmbedLayerNormalization'])                        
+        self.qlinear_test(model, q_config, quantize_params, ['EmbedLayerNormalization']) 
+        self.qdq_test(model, q_config, quantize_params, ['EmbedLayerNormalization']) 
+
+    def test_LSTM(self):
+        input_shape = [1, 1, 200]
+        input_tensor = helper.make_tensor_value_info('input', TensorProto.FLOAT, input_shape)
+
+        w_shape = [2, 400, 200]
+        w_weights = np.random.random_sample(w_shape).astype(dtype='float32')
+        w_init = onnx.numpy_helper.from_array(w_weights, name='w')
+
+        r_shape = [2, 400, 100]
+        r_weights = np.random.random_sample(r_shape).astype(dtype='float32')
+        r_init = onnx.numpy_helper.from_array(r_weights, name='r')
+
+        b_shape = [2, 800]
+        b_weights = np.random.random_sample(b_shape).astype(dtype='float32')
+        b_init = onnx.numpy_helper.from_array(b_weights, name='b')
+
+        out_shape = [1, 2, 1, 100]
+        out_tensor = helper.make_tensor_value_info('out', TensorProto.FLOAT, out_shape)
+
+        kwargs = {}
+        kwargs['direction'] = "bidirectional"
+        kwargs['activations'] = ["Sigmoid", "Tanh", "Tanh", "Sigmoid", "Tanh", "Tanh"]
+        kwargs['hidden_size'] = 100
+        kwargs['input_forget'] = 0
+
+        lstm_node = helper.make_node('LSTM',
+                                     ['input', 'w', 'r', 'b'],
+                                     ['out'],
+                                     name='lstm',
+                                     domain='',
+                                     **kwargs)
+        graph = helper.make_graph([lstm_node], 'test', [input_tensor], [out_tensor], initializer=[w_init, r_init, b_init])
+        model = helper.make_model(graph, 
+            opset_imports=[helper.make_opsetid("", 11)])
+        model.ir_version = 7 # use stable onnx ir version
+        
+        q_config = {'lstm': self.q_config}
+        self.dynamic_test(model, q_config, None, ['LSTM']) 
 
     def test_concat_reshape_pooling(self):
         model = build_model()

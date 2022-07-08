@@ -362,19 +362,35 @@ def build_model_with_gather():
     return model
 
 def build_rename_model():
-    b_value = np.random.randint(2, size=(10)).astype(np.int32)
-    B_init = helper.make_tensor('B', TensorProto.INT32, [10], b_value.reshape(10).tolist())
-    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 100, 4])
-    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [100, 4])
-    squeeze = onnx.helper.make_node('Squeeze', ['A'], ['D'], name='')
-    B = helper.make_tensor_value_info('B', TensorProto.INT32, [10])
-    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [10, 4])
+    input_shape = [1, 1, 200]
+    input_tensor = helper.make_tensor_value_info('input', TensorProto.FLOAT, input_shape)
+    w_shape = [2, 400, 200]
+    w_weights = np.random.random_sample(w_shape).astype(dtype='float32')
+    w_init = onnx.numpy_helper.from_array(w_weights, name='w')
+    r_shape = [2, 400, 100]
+    r_weights = np.random.random_sample(r_shape).astype(dtype='float32')
+    r_init = onnx.numpy_helper.from_array(r_weights, name='r')
+    b_shape = [2, 800]
+    b_weights = np.random.random_sample(b_shape).astype(dtype='float32')
+    b_init = onnx.numpy_helper.from_array(b_weights, name='b')
+    kwargs = {}
+    kwargs['direction'] = "bidirectional"
+    kwargs['activations'] = ["Sigmoid", "Tanh", "Tanh", "Sigmoid", "Tanh", "Tanh"]
+    kwargs['hidden_size'] = 100
+    kwargs['input_forget'] = 0
+    lstm_node = helper.make_node('LSTM', ['input', 'w', 'r', 'b'], ['out'], name='lstm', **kwargs)
+
+    b_value = np.random.randint(2, size=(1)).astype(np.int32)
+    B_init = helper.make_tensor('B', TensorProto.INT32, [1], b_value.reshape(1).tolist())
+    squeeze = onnx.helper.make_node('Squeeze', ['out'], ['D'], name='')
+    B = helper.make_tensor_value_info('B', TensorProto.INT32, [1])
     node = onnx.helper.make_node('Gather', ['D', 'B'], ['C'], name='')
-    e_value = np.random.randint(2, size=(10)).astype(np.float32)
-    E_init = helper.make_tensor('E', TensorProto.FLOAT, [10, 1], e_value.reshape(10).tolist())
-    F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [10, 4])
+    e_value = np.random.randint(2, size=(100)).astype(np.float32)
+    E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 100], e_value.reshape(100).tolist())
+    F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [1, 1, 100])
     add = onnx.helper.make_node('Add', ['C', 'E'], ['F'], name='')
-    graph = helper.make_graph([squeeze, node, add], 'test_graph_1', [A], [F], [B_init, E_init])
+    graph = helper.make_graph([lstm_node, squeeze, node, add], 'test_graph_1', [input_tensor], [F], 
+        [B_init, E_init, w_init, r_init, b_init])
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
 
@@ -479,7 +495,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
     ext_dataset = datasets['dummy'](shape=(10, 2), low=0., high=1., label=True)
     ext_dataloader = DATALOADERS['onnxrt_qlinearops'](ext_dataset)
 
-    rename_dataloader = gather_dataloader
+    rename_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 1, 200), label=True)
+    rename_dataloader = DATALOADERS['onnxrt_qlinearops'](rename_dataset)
 
     matmul_dataset = MatmulDataset()
     matmul_dataloader = DATALOADERS['onnxrt_qlinearops'](matmul_dataset)

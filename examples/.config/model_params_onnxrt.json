@@ -602,6 +602,15 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "BiDAF": {
+      "model_src_dir": "language_translation/onnx_model_zoo/BiDAF/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/squad/dev-v1.1.json",
+      "input_model": "/tf_dataset2/models/onnx/BiDAF/bidaf-11.onnx",
+      "yaml": "bidaf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     }
   }
 }

@@ -315,6 +315,8 @@ class ONNXRTAdaptor(Adaptor):
 
                 if origin_op_type == "QAttention":
                     origin_op_type = "Attention"
+                if origin_op_type == "DynamicQuantizeLSTM":
+                    origin_op_type = "LSTM"
                 res[origin_op_type]['INT8'] += 1
 
             elif node.op_type in fp32_op_list and \
