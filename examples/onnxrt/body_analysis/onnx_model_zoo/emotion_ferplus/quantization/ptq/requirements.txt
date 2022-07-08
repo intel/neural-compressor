@@ -1,0 +1,5 @@
+onnx==1.11.0
+onnxruntime==1.10.0
+onnxruntime_extensions
+pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
+pandas
