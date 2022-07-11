@@ -324,22 +324,23 @@ def build_ir3_model():
     return model
 
 def build_matmul_model():
-    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
-    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
-    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
-    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
-    H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
- 
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 5, 5])
+    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 5, 2])
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 5, 2])
+    H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 5, 2])
+
+    e_value = np.random.randint(2, size=(10)).astype(np.float32)
+    B_init = helper.make_tensor('B', TensorProto.FLOAT, [5, 2], e_value.reshape(10).tolist())
+    E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 5, 2], e_value.reshape(10).tolist())
+
     matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
-    e_value = np.random.randint(2, size=(5)).astype(np.float32)
-    E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
     add = onnx.helper.make_node('Add', ['C', 'E'], ['D'], name='add')
  
-    f_value = np.random.randint(2, size=(5)).astype(np.float32)
-    F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
+    f_value = np.random.randint(2, size=(10)).astype(np.float32)
+    F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 5, 2], e_value.reshape(10).tolist())
     add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
  
-    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
+    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A], [H], [B_init, E_init, F_init])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
@@ -465,9 +466,8 @@ class MatmulDataset:
         self.data = []
         self.label = []
         for i in range(3):
-            self.data.append([np.random.randn(1,5,5).astype('float32'), 
-                              np.random.randn(1,5,1).astype('float32')])
-            self.label.append(np.random.randn(1,5,1).astype('float32'))
+            self.data.append(np.random.randn(5,5).astype('float32')) 
+            self.label.append(np.random.randn(5,1).astype('float32'))
 
     def __getitem__(self, idx):
         return self.data[idx], self.label[idx]
@@ -612,6 +612,34 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
 
     def test_adaptor(self):
+        from neural_compressor.utils.constant import FP32, INT8_SYM_MINMAX_PERTENSOR, UINT8_ASYM_MINMAX_PERTENSOR
+        conf.model.framework = 'onnxrt_qlinearops'
+        conf.quantization.approach = 'post_training_static_quant'
+        conf.quantization.calibration.sampling_size = 1
+        conf.quantization.optype_wise = {'Add': FP32}
+        conf.quantization.op_wise = {'add': {'weight': INT8_SYM_MINMAX_PERTENSOR, 'activation': UINT8_ASYM_MINMAX_PERTENSOR}}
+        conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.matmul_dataloader
+        quantizer.eval_dataloader = self.matmul_dataloader
+        quantizer.model = self.matmul_model
+        q_model = quantizer.fit()
+        self.assertTrue('add2' in [i.name for i in q_model.nodes()])
+        self.assertTrue('add_quant' in [i.name for i in q_model.nodes()])
+
+        conf.quantization.pop('op_wise')
+        conf.quantization.model_wise = {'weight': INT8_SYM_MINMAX_PERTENSOR}
+        conf.quantization.optype_wise = {'MatMul': {'weight': {'granularity': ['per_channel']}}}
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.matmul_dataloader
+        quantizer.eval_dataloader = self.matmul_dataloader
+        quantizer.model = self.matmul_model
+        q_model = quantizer.fit()
+        self.assertEqual(len([i for i in q_model.initializer() if i.name == 'B_scale'][0].float_data), 2)
+ 
+        conf.quantization.pop('optype_wise')
+        conf.quantization.pop('model_wise')
+
         conf.model.framework = 'onnxrt_integerops'
         conf.quantization.approach = 'post_training_dynamic_quant'
         conf.quantization.calibration.sampling_size = 1

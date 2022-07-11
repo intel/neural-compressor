@@ -467,11 +467,12 @@ class TensorFlowAdaptor(Adaptor):
                 continue
 
             is_perchannel = False
-            weight_bit = 7.0
+            bit = None
             if 'weight' in tuning_cfg['op'][each_op_info]:
                 is_perchannel = tuning_cfg['op'][each_op_info]['weight'][
                     'granularity'] == 'per_channel'
-                weight_bit = tuning_cfg['op'][each_op_info]['weight']['bit']
+                bit = tuning_cfg['op'][each_op_info]['weight']['bit']
+            weight_bit = bit if bit else 7.0
 
             algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
 

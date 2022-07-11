@@ -196,32 +196,32 @@ def percent_to_float(data):
 
 ops_schema = Schema({
     Optional('weight', default=None): {
-        Optional('granularity', default=None): And(
+        Optional('granularity'): And(
             list,
             lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-        Optional('scheme', default=None): And(
+        Optional('scheme'): And(
             list,
             # asym_float are only for PyTorch framework
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
-        Optional('dtype', default=None): And(
+        Optional('dtype'): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
-        Optional('algorithm', default=None): And(
+        Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
-        Optional('bit', default=None):  And(
+        Optional('bit'):  And(
             Or(float, list),
             Use(input_to_list_float),
             lambda s: all(0.0 < i <= 7.0 for i in s))
     },
     Optional('activation', default=None): {
-        Optional('granularity', default=None): And(
+        Optional('granularity'): And(
             list,
             lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-        Optional('scheme', default=None): And(
+        Optional('scheme'): And(
             list,
             lambda s: all(i in ['asym', 'sym'] for i in s)),
-        Optional('dtype', default=None): And(
+        Optional('dtype'): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         # compute_dtypeis only for PyTorch framework
@@ -229,7 +229,7 @@ ops_schema = Schema({
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
         # placeholder are only for PyTorch framework
-        Optional('algorithm', default=None): And(
+        Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))
     }
@@ -784,6 +784,9 @@ schema = Schema({
                     lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s)),
             }
         },
+        Optional('optype_wise', default=None): {
+            str: ops_schema
+        },
         Optional('op_wise', default=None): {
             str: ops_schema
         },
@@ -1281,8 +1284,7 @@ class Quantization_Conf(Conf):
     def _merge_dicts(self, src, dst):
         """Helper function to merge src dict into dst dict.
 
-           If the key in src doesn't exist in dst, then add this key and value
-           pair to dst.
+           If the key in src doesn't exist in dst, then skip
            If the key in src is in dst and the value intersects with the one in
            dst, then override the value in dst with the intersect value.
 
@@ -1304,9 +1306,6 @@ class Quantization_Conf(Conf):
                              if value in dst[key] or isinstance(value, float)]
                     if value != []:
                         dst[key] = value
-            else:
-                if not isinstance(src[key], dict):
-                    dst[key] = src[key]
 
         return dst
 
@@ -1315,8 +1314,14 @@ class Quantization_Conf(Conf):
 
         self._model_wise_tune_space = OrderedDict()
         for optype in model_wise_quant.keys():
-            self._model_wise_tune_space[optype] = self._merge_dicts(cfg.quantization.model_wise,
-                                                                    model_wise_quant[optype])
+            if cfg.quantization.optype_wise and optype in cfg.quantization.optype_wise:
+                self._model_wise_tune_space[optype] = self._merge_dicts(
+                    cfg.quantization.optype_wise[optype],
+                    model_wise_quant[optype])
+            else:
+                self._model_wise_tune_space[optype] = self._merge_dicts(
+                    cfg.quantization.model_wise,
+                    model_wise_quant[optype])
 
         return self._model_wise_tune_space
 
@@ -1367,19 +1372,17 @@ class Quantization_Conf(Conf):
             return True
 
         opwise = copy.deepcopy(opwise_quant)
-        for k, v in opwise.items():
-            opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
 
         cfg = self.usr_cfg
         if cfg.quantization.op_wise:
             for k, v in cfg.quantization.op_wise.items():
                 is_regex = _is_regex(k)
                 for k_op, _ in opwise.items():
-                    if not is_regex and k == k_op[0]:
+                    if (not is_regex and k == k_op[0]) or (is_regex and re.match(k, k_op[0])):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
 
-                    if is_regex and re.match(k, k_op[0]):
-                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])
+        for k, v in opwise.items():
+            opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
 
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
