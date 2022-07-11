@@ -618,7 +618,7 @@ class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
             tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
 
         with open(tune_cfg_file, 'r') as f:
-            self.tune_cfg= json.load(f)
+            self.tune_cfg = json.load(f)
 
     def save(self, root=None):
         if not root:

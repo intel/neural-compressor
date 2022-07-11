@@ -333,7 +333,7 @@ class TestTensorflowPruning(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('nc_workspace',ignore_errors=True)
-    
+
     @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_create_train_func1(self):
         framework = 'tensorflow'

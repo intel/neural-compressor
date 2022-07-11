@@ -74,7 +74,7 @@ class TestPruning(unittest.TestCase):
                 cnt = 0
                 prune.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    prune.on_batch_begin(cnt)
+                    prune.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
@@ -82,7 +82,7 @@ class TestPruning(unittest.TestCase):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    prune.on_batch_end()
+                    prune.on_step_end()
                     if cnt >= iters:
                         break
                 prune.on_epoch_end()
@@ -118,7 +118,7 @@ class TestPruning(unittest.TestCase):
                 cnt = 0
                 prune.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    prune.on_batch_begin(cnt)
+                    prune.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
@@ -126,7 +126,7 @@ class TestPruning(unittest.TestCase):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    prune.on_batch_end()
+                    prune.on_step_end()
                     if cnt >= iters:
                         break
                 prune.on_epoch_end()

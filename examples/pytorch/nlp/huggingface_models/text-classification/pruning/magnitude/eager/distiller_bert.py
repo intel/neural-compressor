@@ -349,7 +349,7 @@ def take_train_steps(args, model, tokenizer, train_dataloader, prune):
         model.train()
         prune.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
-            prune.on_batch_begin(step)
+            prune.on_step_begin(step)
             batch = tuple(t.to(args.device) for t in batch)
             inputs = {'input_ids': batch[0],
                       'attention_mask': batch[1],
@@ -372,7 +372,7 @@ def take_train_steps(args, model, tokenizer, train_dataloader, prune):
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
 
-            prune.on_batch_end()
+            prune.on_step_end()
             if step >= 20:
                 break;
             if args.local_rank in [-1, 0] and args.logging_steps > 0 and step % args.logging_steps == 20:

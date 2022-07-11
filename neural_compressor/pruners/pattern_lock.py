@@ -27,13 +27,13 @@ class PatternLockPruner(Pruner):
     def on_epoch_begin(self, epoch):
         pass
 
-    def on_batch_begin(self, batch_id):
+    def on_step_begin(self, batch_id):
         pass
 
     def on_epoch_end(self):
         pass
 
-    def on_batch_end(self):
+    def on_step_end(self):
         self.update_weights()
 
     def compute_mask(self):

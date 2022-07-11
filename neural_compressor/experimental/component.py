@@ -22,6 +22,8 @@ from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 from ..model.model import get_model_fwk_name
+from warnings import warn
+
 
 class Component(object):
     """This is base class of Neural Compressor Component
@@ -41,22 +43,24 @@ class Component(object):
         self.adaptor = None
         self._metric = None
         self.hooks = {
-            'pre_epoch_begin': self.pre_epoch_begin,
-            'post_epoch_end': self.post_epoch_end,
+            'on_train_begin': self.on_train_begin,
+            'on_train_end': self.on_train_end,
             'on_epoch_begin': self.on_epoch_begin,
             'on_epoch_end': self.on_epoch_end,
-            'on_batch_begin': self.on_batch_begin,
-            'on_batch_end': self.on_batch_end,
-            'on_post_grad': self.on_post_grad
+            'on_step_begin': self.on_step_begin,
+            'on_step_end': self.on_step_end,
+            'on_after_compute_loss': self.on_after_compute_loss,
+            'on_before_optimizer_step': self.on_before_optimizer_step
         }
         self.hooks_dict = {
-            'pre_epoch_begin': [],
-            'post_epoch_end': [],
+            'on_train_begin': [],
+            'on_train_end': [],
             'on_epoch_begin': [],
             'on_epoch_end': [],
-            'on_batch_begin': [],
-            'on_batch_end': [],
-            'on_post_grad': []
+            'on_step_begin': [],
+            'on_step_end': [],
+            'on_after_compute_loss': [],
+            'on_before_optimizer_step': []
         }
         if conf_fname_or_obj is not None:  # pragma: no cover
             if isinstance(conf_fname_or_obj, str):
@@ -132,11 +136,11 @@ class Component(object):
                                                fp32_baseline = False)
         # register Quantization Aware Training hooks
         if self.combination is not None and 'Quantization' in self.combination:
-            self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_qat)
-            self.register_hook('post_epoch_end', self.adaptor._post_hook_for_qat)
+            self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
+            self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
         # strategy will be considered in future
         if getattr(self.train_dataloader, 'distributed', False):
-            self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_hvd)
+            self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         """ Initialize the dataloader and train/eval functions from yaml config.
@@ -161,39 +165,75 @@ class Component(object):
     def post_process(self):
         pass
 
+    def on_train_begin(self):
+        """ called before the beginning of epochs"""
+        for on_train_begin_hook in self.hooks_dict['on_train_begin']:
+            on_train_begin_hook()
+
+    def on_train_end(self):
+        """ called after the end of epochs"""
+        for on_train_end_hook in self.hooks_dict['on_train_end']:
+            on_train_end_hook()
+
     def pre_epoch_begin(self):
         """ called before the beginning of epochs"""
-        for pre_epoch_begin_hook in self.hooks_dict['pre_epoch_begin']:
-            pre_epoch_begin_hook()
+        warn('This method is deprecated. please use `on_train_begin` instead.',
+             DeprecationWarning, stacklevel=2)
+        for on_train_begin_hook in self.hooks_dict['on_train_begin']:
+            on_train_begin_hook()
 
     def post_epoch_end(self):
         """ called after the end of epochs"""
-        for post_epoch_end_hook in self.hooks_dict['post_epoch_end']:
-            post_epoch_end_hook()
+        warn('This method is deprecated. please use `on_train_end` instead.',
+             DeprecationWarning, stacklevel=2)
+        for on_train_end_hook in self.hooks_dict['on_train_end']:
+            on_train_end_hook()
 
     def on_epoch_begin(self, epoch):
         """ called on the beginning of epochs"""
         for on_epoch_begin_hook in self.hooks_dict['on_epoch_begin']:
             on_epoch_begin_hook(epoch)
 
-    def on_batch_begin(self, batch_id):
+    def on_step_begin(self, batch_id):
         """ called on the beginning of batches"""
         res_list = []
-        for on_batch_begin_hook in self.hooks_dict['on_batch_begin']:
-            res_list.append(on_batch_begin_hook(batch_id))
+        for on_step_begin_hook in self.hooks_dict['on_step_begin']:
+            res_list.append(on_step_begin_hook(batch_id))
         return res_list
+
+    def on_batch_begin(self, batch_id):
+        warn('This method is deprecated. please use `on_step_begin` instead.',
+             DeprecationWarning, stacklevel=2)
+        return self.on_step_begin(batch_id)
+
+    def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
+        """ called on the end of loss computation"""
+        loss = student_loss
+        for on_after_compute_loss_hook in self.hooks_dict['on_after_compute_loss']:
+            loss = on_after_compute_loss_hook(input, student_output, loss, teacher_output)
+        return loss
+
+    def on_before_optimizer_step(self):
+        """ called on the end of backward"""
+        for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
+            on_before_optimizer_step_hook()
 
     def on_post_grad(self):
-        """ called on the end of backward"""
-        for on_post_grad_hook in self.hooks_dict['on_post_grad']:
-            on_post_grad_hook()
+        warn('This method is deprecated. please use `on_before_optimizer_step` instead.',
+             DeprecationWarning, stacklevel=2)
+        return self.on_before_optimizer_step()
 
-    def on_batch_end(self):
+    def on_step_end(self):
         """ called on the end of batches"""
         res_list = []
-        for on_batch_end_hook in self.hooks_dict['on_batch_end']:
-            res_list.append(on_batch_end_hook())
+        for on_step_end_hook in self.hooks_dict['on_step_end']:
+            res_list.append(on_step_end_hook())
         return res_list
+
+    def on_batch_end(self):
+        warn('This method is deprecated. please use `on_step_end` instead.',
+             DeprecationWarning, stacklevel=2)
+        return self.on_step_end()
 
     def on_epoch_end(self):
         """ called on the end of epochs"""
@@ -238,7 +278,8 @@ class Component(object):
                          contained training hyper-parameters. If training_func set,
                          an evaluation process must be triggered and user should
                          set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed.
+                         to make evaluation of the model executed. training_func will return
+                         a trained model.
         """
         self._train_func = user_train_func
 
@@ -254,10 +295,9 @@ class Component(object):
 
         Args:
             user_eval_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If train_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
+                         and executes entire evaluation process with self
+                         contained metrics. If eval_func set,
+                         an evaluation process must be triggered 
                          to make evaluation of the model executed.
         """
         self._eval_func = user_eval_func
@@ -373,4 +413,3 @@ class Component(object):
             self._model.output_tensor_names = self.cfg.model.outputs
             self._model.input_tensor_names = self.cfg.model.inputs
             self._model.workspace_path = self.cfg.tuning.workspace.path
-            

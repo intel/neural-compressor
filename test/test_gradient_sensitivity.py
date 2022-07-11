@@ -174,7 +174,7 @@ class TestGradientSensitivity(unittest.TestCase):
             outputs = model(output_attentions=True, **inputs, head_mask=head_mask)
             tmp_eval_loss, logits = outputs[:2]
             tmp_eval_loss.backward()
-            prune.on_batch_end()
+            prune.on_step_end()
             prune.on_epoch_end()
 
         def eval_func_for_nc(model):
@@ -217,13 +217,13 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            prune_cv.pre_epoch_begin()
+            prune_cv.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 prune_cv.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    prune_cv.on_batch_begin(cnt)
+                    prune_cv.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
@@ -231,11 +231,11 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    prune_cv.on_batch_end()
+                    prune_cv.on_step_end()
                     if cnt >= iters:
                         break
                 prune_cv.on_epoch_end()
-            prune_cv.post_epoch_end()
+            prune_cv.on_train_end()
         prune_cv.model = self.cv_model
         prune_cv.pruning_func = training_func_for_cv
         prune_cv.eval_dataloader = dummy_dataloader

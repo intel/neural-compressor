@@ -207,7 +207,7 @@ def main():
     model = model.model
 
 def train(train_loader, model, scheduler, distiller, best_prec1):
-    distiller.pre_epoch_begin()
+    distiller.on_train_begin()
     for epoch in range(args.start_epoch, args.epochs):
         """Train for one epoch on the training set"""
         batch_time = AverageMeter()
@@ -226,9 +226,8 @@ def train(train_loader, model, scheduler, distiller, best_prec1):
 
             # compute output
             output = model(input)
-            
-            distiller.on_post_forward(input, teacher_logits)
             loss = distiller.criterion(output, target)
+            loss = distiller.on_after_compute_loss(input, output, loss, teacher_logits)
 
             # measure accuracy and record loss
             prec1 = accuracy(output.data, target, topk=(1,))[0]
@@ -268,7 +267,7 @@ def train(train_loader, model, scheduler, distiller, best_prec1):
             log_value('train_loss', losses.avg, epoch)
             log_value('train_acc', top1.avg, epoch)
             log_value('learning_rate', scheduler._last_lr[0], epoch)
-            
+
 
 def validate(val_loader, model, distiller):
     """Perform validation on the validation set"""

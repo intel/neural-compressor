@@ -43,13 +43,13 @@ class Pruning:
         """ called on the begining of epochs"""
         self.exp_pruner.on_epoch_begin(epoch)
 
-    def on_batch_begin(self, batch_id):
+    def on_step_begin(self, batch_id):
         """ called on the begining of batches"""
-        self.exp_pruner.on_batch_begin(batch_id)
+        self.exp_pruner.on_step_begin(batch_id)
 
-    def on_batch_end(self):
+    def on_step_end(self):
         """ called on the end of batches"""
-        self.exp_pruner.on_batch_end()
+        self.exp_pruner.on_step_end()
 
     def on_epoch_end(self):
         """ called on the end of epochs"""

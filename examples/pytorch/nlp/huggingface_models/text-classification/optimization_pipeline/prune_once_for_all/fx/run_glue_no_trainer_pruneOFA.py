@@ -156,7 +156,6 @@ def parse_args():
         required=True,
     )
     parser.add_argument("--core_per_instance", type=int, default=-1, help="cores per instance.")
-    
     parser.add_argument("--temperature", default=1, type=float,
                         help='temperature parameter of distillation')
     parser.add_argument("--loss_types", default=['CE', 'KL'], type=str, nargs='+',
@@ -239,7 +238,7 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
     # Only show the progress bar once on each machine.
     completed_steps = 0
 
-    agent.pre_epoch_begin()
+    agent.on_train_begin()
     model = agent.model.model
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
@@ -248,7 +247,7 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
         agent.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             batch = move_input_to_device(batch, model_device)
-            agent.on_batch_begin(step)
+            agent.on_step_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = batch['teacher_logits']
@@ -259,20 +258,22 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
             else:
                 criterion.teacher_outputs = teacher_logits
                 loss = criterion(outputs['logits'], batch["labels"])
+                loss = agent.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             loss.backward()
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                agent.on_before_optimizer_step()
                 optimizer.step()
-                agent.on_post_grad()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            agent.on_batch_end()
+            agent.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
         agent.on_epoch_end()
         evaluation(model, eval_dataloader, metric)
-    agent.post_epoch_end()
+    agent.on_train_end()
+
 
 def main():
     args = parse_args()
@@ -458,7 +459,7 @@ def main():
                     para_counter(teacher_model)/10**6))
         logger.info("***** Number of student model parameters: {:.2f}M *****".format(\
                     para_counter(model)/10**6))
-        
+
         # get logits of teacher model
         if args.loss_weights[1] > 0:
             def get_logits(teacher_model, train_dataset):
@@ -524,7 +525,7 @@ def main():
     # Get the metric function
     if args.task_name is not None:
         metric = load_metric("glue", args.task_name)
-    
+
     def train_func(model):
         return train(args, model, train_dataloader, lr_scheduler, \
                                 criterion, optimizer, agent, eval_dataloader, metric)
@@ -548,7 +549,7 @@ def main():
                                     loss_types=args.loss_types,
                                     loss_weights=args.loss_weights)
             criterion.teacher_model = teacher_model
-            
+
         if args.do_quantization:
             # transforming the student model to fx mode for QAT
             from transformers.utils.fx import symbolic_trace
@@ -558,11 +559,11 @@ def main():
             model = symbolic_trace(model, input_names=input_names, \
                                    batch_size=args.batch_size, \
                                    sequence_length=args.max_seq_length)
-                                   
+
             from neural_compressor.experimental.scheduler import Scheduler
             from neural_compressor.experimental import Quantization
             combs = [agent, Quantization(args.quantization_config)]
-            scheduler = Scheduler()                         
+            scheduler = Scheduler()
             scheduler.model = common.Model(model)
             agent = scheduler.combine(*combs)
             agent.train_func = train_func

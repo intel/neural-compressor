@@ -149,7 +149,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
         def train_func(model):
             epochs = 30
             iters = 120
-            distiller.pre_epoch_begin()
+            distiller.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -159,11 +159,17 @@ def main(config='config/distill/mrpc/train.json', args=None):
                     teacher_logits, input_ids, segment_ids, input_mask, target = batch
                     cnt += 1
                     output = model(input_ids, segment_ids, input_mask)
-                    distiller.on_post_forward({'input_ids':input_ids, 
-                                               'segment_ids':segment_ids, 
-                                               'input_mask':input_mask}, \
-                                              teacher_logits)
                     loss = criterion(output, target)
+                    loss = distiller.on_after_compute_loss(
+                        {
+                            'input_ids': input_ids,
+                            'segment_ids': segment_ids,
+                            'input_mask': input_mask
+                        },
+                        output,
+                        loss,
+                        teacher_logits
+                    )
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()

@@ -6,15 +6,16 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
-from torch.quantization.quantize_fx import convert_fx, prepare_qat_fx
+import neural_compressor.adaptor.pytorch as nc_torch
 
+from neural_compressor.conf.config import DistillationConf, PruningConf
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
+from neural_compressor.adaptor.pytorch import PyTorchVersionMode
+from neural_compressor.training import fit, prepare
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils import logger
-import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 
 PT_VERSION = nc_torch.get_torch_version()
 if PT_VERSION >= PyTorchVersionMode.PT18.value:
@@ -187,7 +188,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_prune_qat_oneshot(self):
-        from neural_compressor.experimental import Pruning, common, Quantization
+        from neural_compressor.experimental import Pruning, Quantization
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -210,7 +211,7 @@ class TestPruning(unittest.TestCase):
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
@@ -218,11 +219,11 @@ class TestPruning(unittest.TestCase):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -249,7 +250,7 @@ class TestPruning(unittest.TestCase):
         self.assertEqual(reloaded_conv_weight.sum().item(), conv_weight.sum().item())
 
     def test_distillation_qat_oneshot(self):
-        from neural_compressor.experimental import Distillation, common, Quantization
+        from neural_compressor.experimental import Distillation, Quantization
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -269,26 +270,26 @@ class TestPruning(unittest.TestCase):
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
             torch.quantization.prepare_qat(model, inplace=True)
-            combination.pre_epoch_begin()
+            combination.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    combination.on_post_forward(image)
                     loss = criterion(output, target)
+                    loss = combination.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -303,62 +304,69 @@ class TestPruning(unittest.TestCase):
         reloaded_model = load('./saved', self.q_model)
 
     def test_distillation_prune_oneshot(self):
-        from neural_compressor.experimental import Distillation, common, Pruning
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        distiller = Distillation('./fake3.yaml')
-        pruner = Pruning('./fake.yaml')
-        scheduler = Scheduler()
         model = copy.deepcopy(self.model)
-        distiller.teacher_model = copy.deepcopy(model)
-        scheduler.model = model
-        combination = scheduler.combine(distiller, pruner)
+        d_conf = DistillationConf('./fake3.yaml')
+        p_conf = PruningConf('./fake.yaml')
+        callbacks, model = prepare(
+            [d_conf, p_conf], model=model, teacher_model=copy.deepcopy(model)
+        )
 
         def train_func_for_nc(model):
             epochs = 3
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.pre_epoch_begin()
+            callbacks.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
-                combination.on_epoch_begin(nepoch)
+                callbacks.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    callbacks.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    combination.on_post_forward(image)
                     loss = criterion(output, target)
+                    loss = callbacks.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
+                    callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    combination.on_batch_end()
+                    callbacks.on_step_end()
                     if cnt >= iters:
                         break
-                combination.on_epoch_end()
-            combination.post_epoch_end()
+                callbacks.on_epoch_end()
+            callbacks.on_train_end()
+            return model
 
-        combination.train_func = train_func_for_nc
-        combination.eval_dataloader = dummy_dataloader
-        combination.train_dataloader = dummy_dataloader
-        scheduler.append(combination)
-        opt_model = scheduler()
-        logger.info(20*'=' + 'test_distillation_prune_oneshot' + 20*'=')
+        def eval_func(model):
+            for image, target in dummy_dataloader:
+                model(image)
+            return 1  # metric is 1 here, just for unit test
 
+        opt_model = fit(
+            model, callbacks, train_func=train_func_for_nc,
+            eval_func=eval_func
+        )
+        print(20*'=' + 'test_distillation_prune_oneshot' + 20*'=')
+        print(opt_model.model)
         try:
-          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+            conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         except:
-          conv_weight = opt_model.model.layer1[0].conv1.weight
+            conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.64,
                                delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
+        self.assertEqual(
+          callbacks.component.components[0].__repr__().lower(),
+          'combination of distillation,pruning'
+        )
 
     def test_prune_qat_distillation_oneshot(self):
-        from neural_compressor.experimental import Pruning, common, Quantization, Distillation
+        from neural_compressor.experimental import Pruning, Quantization, Distillation
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -379,26 +387,27 @@ class TestPruning(unittest.TestCase):
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
             torch.quantization.prepare_qat(model, inplace=True)
-            combination.pre_epoch_begin()
+            combination.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    combination.on_post_forward(image)
                     loss = criterion(output, target)
+                    loss = combination.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
+            return model
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -408,16 +417,16 @@ class TestPruning(unittest.TestCase):
         logger.info(20*'=' + 'test_prune_qat_distillation_oneshot' + 20*'=')
 
         try:
-          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+            conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
         except:
-          conv_weight = opt_model.model.layer1[0].conv1.weight
+            conv_weight = opt_model.model.layer1[0].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization,distillation')
 
     def test_prune_qat_oneshot_fx(self):
-        from neural_compressor.experimental import Pruning, common, Quantization
+        from neural_compressor.experimental import Pruning, Quantization
         datasets = DATASETS('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -433,14 +442,14 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.pre_epoch_begin()
+            combination.on_train_begin()
             model = combination.model.model
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
@@ -448,11 +457,12 @@ class TestPruning(unittest.TestCase):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
+            return model
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -471,10 +481,10 @@ class TestPruning(unittest.TestCase):
         reloaded_conv_weight = reloaded_model.state_dict()['layer1.0.conv1.weight']
         self.assertTrue(torch.equal(reloaded_conv_weight, conv_weight))
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value, 
+    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
       "requires higher version of torch than 1.9.0")
     def test_distillation_qat_oneshot_fx(self):
-        from neural_compressor.experimental import Distillation, common, Quantization
+        from neural_compressor.experimental import Distillation, Quantization
         datasets = DATASETS('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -491,27 +501,28 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.pre_epoch_begin()
+            combination.on_train_begin()
             model = combination.model.model
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    combination.on_post_forward(image)
                     loss = criterion(output, target)
+                    loss = combination.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
+            return model
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -527,7 +538,7 @@ class TestPruning(unittest.TestCase):
         reloaded_model = load('./saved', model)
 
     def test_distillation_prune_oneshot_fx(self):
-        from neural_compressor.experimental import Distillation, common, Pruning
+        from neural_compressor.experimental import Distillation, Pruning
         datasets = DATASETS('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -544,26 +555,27 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.pre_epoch_begin()
+            combination.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    combination.on_post_forward(image)
                     loss = criterion(output, target)
+                    loss = combination.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
+            return model
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -573,18 +585,18 @@ class TestPruning(unittest.TestCase):
         logger.info(20*'=' + 'test_distillation_prune_oneshot_fx' + 20*'=')
 
         try:
-          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+            conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
         except:
-          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
+            conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.64,
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value, 
+    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
       "requires higher version of torch than 1.9.0")
     def test_prune_qat_distillation_oneshot_fx(self):
-        from neural_compressor.experimental import Pruning, common, Quantization, Distillation
+        from neural_compressor.experimental import Pruning, Quantization, Distillation
         datasets = DATASETS('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
@@ -602,27 +614,28 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.pre_epoch_begin()
+            combination.on_train_begin()
             model = combination.model.model
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
                 combination.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    combination.on_batch_begin(cnt)
+                    combination.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    combination.on_post_forward(image)
                     loss = criterion(output, target)
+                    loss = combination.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    combination.on_batch_end()
+                    combination.on_step_end()
                     if cnt >= iters:
                         break
                 combination.on_epoch_end()
-            combination.post_epoch_end()
+            combination.on_train_end()
+            return model
 
         combination.train_func = train_func_for_nc
         combination.eval_dataloader = dummy_dataloader
@@ -632,13 +645,16 @@ class TestPruning(unittest.TestCase):
         logger.info(20*'=' + 'test_prune_qat_distillation_oneshot_fx' + 20*'=')
 
         try:
-          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+            conv_weight = \
+                dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
         except:
-          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
+            conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.64,
                                delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization,distillation')
+        self.assertEqual(
+          combination.__repr__().lower(), 'combination of pruning,quantization,distillation'
+        )
 
 
 if __name__ == "__main__":

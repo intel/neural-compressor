@@ -130,7 +130,7 @@ class TensorFlowAdaptor(Adaptor):
         else:
             input_model = tf.keras.models.load_model(model._model)
             hooks = callbacks['tf_pruning'](model, input_model, hooks)
-        hooks['pre_epoch_begin']()                 # pre_epoch_begin hook
+        hooks['on_train_begin']()                 # on_train_begin hook
         train_loss_results = []
         if distributed:
             try:
@@ -152,6 +152,7 @@ class TensorFlowAdaptor(Adaptor):
                 tape.watch(input_model.trainable_variables)
                 y_ = input_model(x, training=True)
                 loss_value = criterion(y, y_)
+                loss_value = hooks['on_after_compute_loss'](x, y_, loss_value)
             tape = self.hvd.DistributedGradientTape(tape) if distributed else tape
             # Get gradient
             grads = tape.gradient(loss_value, input_model.trainable_variables) # pylint: disable=no-member
@@ -172,14 +173,12 @@ class TensorFlowAdaptor(Adaptor):
             # Training loop
             for iter, data in enumerate(dataloader):
                 x, y = postprocess(data) if postprocess is not None else data
-                hooks['on_batch_begin'](iter)      # on_batch_begin hook
+                hooks['on_step_begin'](iter)      # on_step_begin hook
                 cnt += 1
-                if hasattr(criterion, "teacher_model_forward"):
-                    criterion.teacher_model_forward(x)
                 loss_value = training_step(x, y, iter==0)
                 # Track progress
                 epoch_loss_avg.update_state(loss_value)  # Add current batch loss
-                hooks['on_batch_end']()            # on_batch_end hook
+                hooks['on_step_end']()            # on_step_end hook
                 if iters is not None and cnt >= iters:
                     break
             model._sess = None
@@ -191,7 +190,7 @@ class TensorFlowAdaptor(Adaptor):
                     .format(epoch+1, self.hvd.allgather_object(self.hvd.rank())))
             logger.info("Epoch {:03d}: Loss: {:.3f}".format(epoch+1, epoch_loss_avg.result()))
 
-        hooks['post_epoch_end']()                  # post_epoch_end hook
+        hooks['on_train_end']()                  # on_train_end hook
         model._sess = None
         if not isinstance(criterion, TensorflowKnowledgeDistillationLoss):
             if distributed:

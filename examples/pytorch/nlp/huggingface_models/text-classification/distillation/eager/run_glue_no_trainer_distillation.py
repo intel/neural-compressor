@@ -224,7 +224,7 @@ def train(args, model, train_dataloader, lr_scheduler, distiller):
     # Only show the progress bar once on each machine.
     completed_steps = 0
 
-    distiller.pre_epoch_begin()
+    distiller.on_train_begin()
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
@@ -234,8 +234,8 @@ def train(args, model, train_dataloader, lr_scheduler, distiller):
                 teacher_logits = batch['teacher_logits']
                 del batch['teacher_logits']
             outputs = model(**batch)
-            distiller.on_post_forward(batch, teacher_logits)
             loss = distiller.criterion(outputs, batch["labels"])
+            loss = distiller.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             loss.backward()
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:

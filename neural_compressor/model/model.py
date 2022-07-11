@@ -991,3 +991,17 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
           }
+
+
+def export(model: BaseModel, path: str, to_onnx: bool = False):
+    """_summary_
+
+    Args:
+        model (BaseModel): optimized model
+        path (str): path to save model
+        to_onnx (bool, optional): whether to convert to onnx model. Defaults to False.
+    """
+    if to_onnx:
+        assert False, "Not support yet!"
+    else:
+        model.save(path)

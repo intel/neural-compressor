@@ -374,7 +374,7 @@ def take_train_steps(args, model, train_dataloader, eval_dataloader, train_sampl
         train_sampler.set_epoch(epoch) if rank != -1 else None
         prune.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
-            prune.on_batch_begin(step)
+            prune.on_step_begin(step)
             outputs = model(**batch)
             loss = outputs.loss
             loss = loss / args.gradient_accumulation_steps
@@ -389,7 +389,7 @@ def take_train_steps(args, model, train_dataloader, eval_dataloader, train_sampl
             if completed_steps >= args.max_train_steps:
                 break
 
-            prune.on_batch_end()
+            prune.on_step_end()
         prune.on_epoch_end()
 
 

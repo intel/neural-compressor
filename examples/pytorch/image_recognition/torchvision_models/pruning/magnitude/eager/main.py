@@ -7,15 +7,12 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.parallel
-import torch.distributed as dist
 import torch.optim as optim
-import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-import numpy
 
 import horovod.torch as hvd
 
@@ -100,7 +97,7 @@ def main_worker(args):
         hvd.init()
         print(hvd.size(), args.world_size, args.num_per_node)
         assert(hvd.size() == args.world_size * args.num_per_node)
-    
+
     # create model
     if args.pretrained:
         print("=> using pre-trained model '{}'".format(args.topology))
@@ -109,7 +106,7 @@ def main_worker(args):
     else:
         print("=> creating model '{}'".format(args.topology))
         model = models.__dict__[args.topology]()
-        
+
     # Data loading code
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
@@ -133,7 +130,6 @@ def main_worker(args):
             normalize,
         ]))
 
-
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset, num_replicas=hvd.size(), rank=hvd.rank(), shuffle=True)
         val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, num_replicas=hvd.size(), rank=hvd.rank(), shuffle=False)
@@ -151,7 +147,7 @@ def main_worker(args):
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=(val_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=val_sampler)
-    
+
     criterion = nn.CrossEntropyLoss()
     if args.distributed:
         # Horovod: scale learning rate by the number of rank if not keep the batch size.
@@ -168,7 +164,7 @@ def main_worker(args):
         optimizer = optim.SGD(model.parameters(), lr=args.lr,
                               momentum=args.momentum,
                               weight_decay=args.weight_decay)
-       
+
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -183,16 +179,16 @@ def main_worker(args):
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
-        
+
     if args.prune:
         from neural_compressor.experimental import Pruning, common
         prune = Pruning(args.config)
 
         def train_func(model):
             # To add a learning rate scheduler, here redefine a training func
-            
+
             global best_acc1
-            # prune.pre_epoch_begin()
+            # prune.on_train_begin()
             if args.distributed:
                 # Horovod: broadcast parameters & optimizer state.
                 hvd.broadcast_parameters(model.state_dict(), root_rank=0)
@@ -210,7 +206,7 @@ def main_worker(args):
                 # train for one epoch
                 train(train_loader, model, criterion, optimizer, epoch, args, prune)
                 prune.on_epoch_end()
-                
+
                 # evaluate on validation set
                 acc1, acc5 = validate(val_loader, model, criterion, args)
 
@@ -238,7 +234,7 @@ def main_worker(args):
         model.save(args.output_model)
         return
 
-       
+
 def train(train_loader, model, criterion, optimizer, epoch, args, op):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
@@ -255,8 +251,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args, op):
     for i, (input, target) in enumerate(train_loader):
         # measure data loading time
         data_time.update(time.time() - end)
-        
-        op.on_batch_begin(i) 
+
+        op.on_step_begin(i)
         # compute output
         output = model(input)
         loss = criterion(output, target)
@@ -271,25 +267,25 @@ def train(train_loader, model, criterion, optimizer, epoch, args, op):
         optimizer.zero_grad()
         loss.backward()
 
-        op.on_post_grad()        
+        op.on_before_optimizer_step()
 
         optimizer.step()
-        
-        op.on_batch_end()
+
+        op.on_step_end()
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
 
 
-        if (i % args.print_freq == 0 
-            and (not args.distributed 
+        if (i % args.print_freq == 0
+            and (not args.distributed
                 or (args.distributed and hvd.rank() == 0
             ))):
             progress.print(i)
-        
+
         if args.iteration > 0 and i > args.iteration:
             break
-        
+
 
 def validate(val_loader, model, criterion, args):
     batch_time = AverageMeter('Time', ':6.3f')

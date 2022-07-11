@@ -293,7 +293,7 @@ def train(args, model, train_dataloader, lr_scheduler, distiller, accelerator):
 
     completed_steps = 0
 
-    distiller.pre_epoch_begin()
+    distiller.on_train_begin()
     for epoch in range(args.num_train_epochs):
         model.train()
         for step, batch in enumerate(tqdm(train_dataloader)):
@@ -306,14 +306,14 @@ def train(args, model, train_dataloader, lr_scheduler, distiller, accelerator):
             teacher_batch = batch
             for col in missing_columns_for_teacher:
                 del batch[col]
-                
+
             outputs = model(**batch)
             outputs = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs.start_logits, outputs.end_logits)])
             labels = torch.hstack([torch.tensor([sx, ex]) \
                 for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
-            distiller.on_post_forward(teacher_batch, teacher_logits)
             loss = distiller.criterion(outputs, labels)
+            loss = distiller.on_after_compute_loss(teacher_batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
@@ -752,7 +752,7 @@ def main():
                 outputs_reshaped = torch.vstack([torch.vstack([sx, ex]) \
                         for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
                 return outputs_reshaped
-        
+
         teacher_model = QAModel_output_reshaped(teacher_model)
         para_counter = lambda model:sum(p.numel() for p in model.parameters())
         logger.info("***** Number of teacher model parameters: {:.2f}M *****".format(\

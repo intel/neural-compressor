@@ -141,8 +141,8 @@ class TestDistributed(unittest.TestCase):
 
         prune.model = self.model
         _ = prune()
-        # assert hvd hook is registered. pruner has 2 pre_epoch_begin hooks: hvd and prune
-        assert len(prune.hooks_dict['pre_epoch_begin'])==2
+        # assert hvd hook is registered. pruner has 2 on_train_begin hooks: hvd and prune
+        assert len(prune.hooks_dict['on_train_begin'])==2
 
 if __name__ == "__main__":
     unittest.main()

@@ -8,6 +8,7 @@ import torch.nn as nn
 import tensorflow as tf
 
 from neural_compressor.data import DATASETS
+from neural_compressor.conf.config import DistillationConf
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():
@@ -203,15 +204,8 @@ class TestDistillation(unittest.TestCase):
         _ = distiller.fit()
 
     def test_distillation_external(self):
-        import tensorflow as tf
-        from neural_compressor.experimental import Distillation
-        from neural_compressor.utils.create_obj_from_config import create_train_func
-        from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss, \
+        from neural_compressor.experimental.common.criterion import \
             TensorflowKnowledgeDistillationLossExternal
-        distiller = Distillation('fake.yaml')
-        datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         criterion = TensorflowKnowledgeDistillationLossExternal()
         criterion.teacher_model_forward(None)
@@ -219,9 +213,19 @@ class TestDistillation(unittest.TestCase):
         y_pred = [[0.05, 0.95, 0]]
         criterion.teacher_student_loss_cal(y_pred, y_true)
         criterion.student_targets_loss_cal(y_pred, y_true)
-        criterion = PyTorchKnowledgeDistillationLoss(loss_weights=[0, 1])
-        criterion.teacher_model = self.teacher_model
+
+    def test_distillation_external_new_API(self):
+        from neural_compressor.training import prepare, fit
+        datasets = DATASETS('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
+        criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.student_model.parameters(), lr=0.0001)
+        conf = DistillationConf('fake.yaml')
+        callbacks, model = prepare(
+            conf, model=self.student_model, teacher_model=self.teacher_model
+        )
 
         def training_func_for_nc(model):
             epochs = 3
@@ -229,40 +233,36 @@ class TestDistillation(unittest.TestCase):
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
-                distiller.on_epoch_begin(nepoch)
+                callbacks.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    distiller.on_batch_begin(cnt)
+                    callbacks.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
                     output = model(image)
-                    distiller.on_post_forward(image)
-                    criterion.teacher_model_forward(image)
                     loss = criterion(output, target)
+                    loss = callbacks.on_after_compute_loss(image, output, loss)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    distiller.on_batch_end()
+                    callbacks.on_step_end()
                     if cnt >= iters:
                         break
-                distiller.on_epoch_end()
-        distiller.student_model = self.student_model
-        distiller.teacher_model = self.teacher_model
-        distiller.criterion = criterion
-        distiller.optimizer = optimizer
-        distiller.train_func = training_func_for_nc
-        distiller.eval_dataloader = dummy_dataloader
-        distiller.train_dataloader = dummy_dataloader
-        _ = distiller.fit()
-        distiller.train_func = create_train_func(
-                                                distiller.framework, \
-                                                distiller.train_dataloader, \
-                                                distiller.adaptor, \
-                                                distiller.cfg.distillation.train, \
-                                                hooks=distiller.hooks)
+                callbacks.on_epoch_end()
+            return model
+
+        def eval_func(model):
+            for image, target in dummy_dataloader:
+                model(image)
+            return 1  # metric is 1 here, just for unit test
+
+        model = fit(
+            model, callbacks, train_func=training_func_for_nc,
+            eval_func=eval_func
+        )
 
     @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras requires higher version than tf-2.3.0")
     def test_tf_distillation(self):
-        from neural_compressor.experimental import Distillation, common
+        from neural_compressor.experimental import Distillation
         from neural_compressor.conf.config import DistillationConf
         conf = DistillationConf('fake_1.yaml')
         distiller = Distillation(conf)

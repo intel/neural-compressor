@@ -62,6 +62,7 @@ parser.add_argument("--loss_weights", default=[0.5, 0.5], type=float, nargs='+',
                     'second for teacher student loss weight.')
 parser.set_defaults(augment=True)
 
+
 def set_seed(seed):
     import random
     import numpy as np
@@ -70,22 +71,23 @@ def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
+
 def main():
     global args, best_prec1
     args, _ = parser.parse_known_args()
     best_prec1 = 0
     if args.seed is not None:
         set_seed(args.seed)
-    if args.tensorboard: configure("runs/%s"%(args.name))
+    if args.tensorboard: configure("runs/%s" % (args.name))
 
     # Data loading code
     normalize = transforms.Normalize(mean=[0.5071, 0.4866, 0.4409], std=[0.2675, 0.2565, 0.2761])
 
     if args.augment:
         transform_train = transforms.Compose([
-        	transforms.ToTensor(),
-        	transforms.Lambda(lambda x: F.pad(x.unsqueeze(0),
-        						(4,4,4,4),mode='reflect').squeeze()),
+            transforms.ToTensor(),
+            transforms.Lambda(lambda x: F.pad(x.unsqueeze(0),
+                              (4, 4, 4, 4),mode='reflect').squeeze()),
             transforms.ToPILImage(),
             transforms.RandomCrop(32),
             transforms.RandomHorizontalFlip(),
@@ -110,7 +112,7 @@ def main():
     else:
         raise NotImplementedError('Unsupported teacher model type')
     teacher_model.load_state_dict(torch.load(args.teacher_model)['state_dict'])
-    
+
     if args.student_type == 'CNN-2':
         student_model = ConvNetMaker(plane_cifar100_book['2'])
     elif args.student_type == 'VGG-8':
@@ -187,7 +189,7 @@ def main():
 
     from neural_compressor.experimental import Distillation, common
     from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-    
+
     distiller = Distillation(args.config)
     distiller.teacher_model = common.Model(teacher_model)
     distiller.student_model = common.Model(student_model)
@@ -199,7 +201,7 @@ def main():
                             loss_types=args.loss_types,
                             loss_weights=args.loss_weights)
     model = distiller.fit()
-    
+
     directory = "runs/%s/"%(args.name)
     os.makedirs(directory, exist_ok=True)
     model.save(directory)
@@ -207,7 +209,7 @@ def main():
     model = model.model
 
 def train(train_loader, model, scheduler, distiller, best_prec1):
-    distiller.pre_epoch_begin()
+    distiller.on_train_begin()
     for epoch in range(args.start_epoch, args.epochs):
         """Train for one epoch on the training set"""
         batch_time = AverageMeter()
@@ -226,9 +228,9 @@ def train(train_loader, model, scheduler, distiller, best_prec1):
 
             # compute output
             output = model(input)
-            
-            distiller.on_post_forward(input, teacher_logits)
+
             loss = distiller.criterion(output, target)
+            loss = distiller.on_after_compute_loss(input, output, loss, teacher_logits)
 
             # measure accuracy and record loss
             prec1 = accuracy(output.data, target, topk=(1,))[0]

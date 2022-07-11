@@ -1259,15 +1259,16 @@ class PyTorchAdaptor(TemplateAdaptor):
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
         if hooks is not None:
-            pre_epoch_begin = hooks['pre_epoch_begin']
-            post_epoch_end = hooks['post_epoch_end']
+            on_train_begin = hooks['on_train_begin']
+            on_train_end = hooks['on_train_end']
             on_epoch_begin = hooks['on_epoch_begin']
             on_epoch_end = hooks['on_epoch_end']
-            on_batch_begin = hooks['on_batch_begin']
-            on_batch_end = hooks['on_batch_end']
-            on_post_grad = hooks['on_post_grad']
+            on_step_begin = hooks['on_step_begin']
+            on_step_end = hooks['on_step_end']
+            on_after_compute_loss = hooks['on_after_compute_loss']
+            on_before_optimizer_step = hooks['on_before_optimizer_step']
         if hooks is not None:
-            pre_epoch_begin()
+            on_train_begin()
         for nepoch in range(start_epochs, end_epochs):
             model_.to(device)
             model_.train()
@@ -1282,20 +1283,20 @@ class PyTorchAdaptor(TemplateAdaptor):
                 # TODO: to support adjust lr with epoch
                 target = target.to(device)
                 if hooks is not None:
-                    on_batch_begin(cnt)
+                    on_step_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = pytorch_forward_wrapper(model_, image, device=device)
-                if hasattr(criterion, "teacher_model_forward"):
-                    criterion.teacher_model_forward(image, device=device)
                 loss = criterion(output, target)
+                if hooks is not None:
+                    loss = on_after_compute_loss(image, output, loss)
                 self.optimizer.zero_grad()
                 loss.backward()
                 if hooks is not None:
-                    on_post_grad()
+                    on_before_optimizer_step()
                 self.optimizer.step()
                 if hooks is not None:
-                    on_batch_end()
+                    on_step_end()
                 if cnt >= iters:
                     break
             if hooks is not None:
@@ -1305,7 +1306,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             model_.to(self.device)
 
         if hooks is not None:
-            post_epoch_end()
+            on_train_end()
 
         return model_
 
@@ -2674,16 +2675,17 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         criterion = criterion_tuple[0](**criterion_tuple[1])
         # prepare hooks first to ensure model will be converted correctly
         if hooks is not None:   # pragma: no cover
-            pre_epoch_begin = hooks['pre_epoch_begin']
-            post_epoch_end = hooks['post_epoch_end']
+            on_train_begin = hooks['on_train_begin']
+            on_train_end = hooks['on_train_end']
             on_epoch_begin = hooks['on_epoch_begin']
             on_epoch_end = hooks['on_epoch_end']
-            on_batch_begin = hooks['on_batch_begin']
-            on_batch_end = hooks['on_batch_end']
-            on_post_grad = hooks['on_post_grad']
+            on_step_begin = hooks['on_step_begin']
+            on_step_end = hooks['on_step_end']
+            on_after_compute_loss = hooks['on_after_compute_loss']
+            on_before_optimizer_step = hooks['on_before_optimizer_step']
         model._model.train()
         if hooks is not None:
-            pre_epoch_begin()
+            on_train_begin()
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
@@ -2695,18 +2697,20 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             for input, target in dataloader:
                 target = target.to(device)
                 if hooks is not None:
-                    on_batch_begin(cnt)
+                    on_step_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = pytorch_forward_wrapper(model._model, input, device=device)
                 loss = criterion(output, target)
                 if hooks is not None:
-                    on_post_grad()
+                    loss = on_after_compute_loss(input, output, loss)
                 optimizer.zero_grad()
                 loss.backward()
+                if hooks is not None:
+                    loss = on_before_optimizer_step()
                 optimizer.step()
                 if hooks is not None:
-                    on_batch_end()
+                    on_step_end()
                 if cnt >= iters:
                     break
             if hooks is not None:
@@ -2716,7 +2720,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             model._model.to(self.device)
 
         if hooks is not None:
-            post_epoch_end()
+            on_train_end()
 
         return model._model
 

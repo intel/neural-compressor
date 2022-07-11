@@ -141,7 +141,7 @@ In this case, the launcher code is like the following:
 from neural_compressor.experimental import Pruning, common
 prune = Pruning(args.config)
 prune.model = model
-prune.pruning_func = pruning_func
+prune.train_func = pruning_func
 model = prune.fit()
 ```
 
@@ -153,10 +153,10 @@ Neural Compressor defines several hooks for user use:
 
 ```
 on_epoch_begin(epoch) : Hook executed at each epoch beginning
-on_batch_begin(batch) : Hook executed at each batch beginning
-on_batch_end() : Hook executed at each batch end
+on_step_begin(batch) : Hook executed at each batch beginning
+on_step_end() : Hook executed at each batch end
 on_epoch_end() : Hook executed at each epoch end
-on_post_grad() : Hook executed after gradients calculated and before backward
+on_before_optimizer_step() : Hook executed after gradients calculated and before backward
 ```
 
 Following section shows how to use hooks in user pass-in training function which is part of example from BERT training:
@@ -168,7 +168,7 @@ def pruning_func(model):
         model.train()
         prune.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
-            prune.on_batch_begin(step)
+            prune.on_step_begin(step)
             batch = tuple(t.to(args.device) for t in batch)
             inputs = {'input_ids': batch[0],
                       'attention_mask': batch[1],
@@ -185,13 +185,13 @@ def pruning_func(model):
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-            
             if (step + 1) % args.gradient_accumulation_steps == 0:
+                prune.on_before_optimizer_step()
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
     
-            prune.on_batch_end()
+            prune.on_step_end()
 ...
 ```
 
