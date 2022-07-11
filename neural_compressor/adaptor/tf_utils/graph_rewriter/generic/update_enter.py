@@ -18,7 +18,7 @@
 
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 
 

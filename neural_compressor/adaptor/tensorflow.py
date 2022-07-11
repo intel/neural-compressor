@@ -252,7 +252,7 @@ class TensorFlowAdaptor(Adaptor):
             logger.info("Rank {!s} dataloaders' data distribution balance check for evaluation have been finnished." \
                 .format(hvd.allgather_object(hvd.rank())))
         if tensorboard:
-            from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+            from .tf_utils.graph_util import GraphAnalyzer
             from tensorflow.python.framework import tensor_util
 
             output_postfix = "_fp32.output"
@@ -732,7 +732,7 @@ class TensorFlowAdaptor(Adaptor):
     def filter_unquantizable_concat(self, matched_nodes):
         target_concat_nodes = [i[0] for i in matched_nodes if i[-1][0] == 'ConcatV2']
         from neural_compressor.adaptor.tf_utils.util import GraphAnalyzer
-        from .tf_utils.graph_rewriter.graph_util import GraphRewriterHelper
+        from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper
 
         g = GraphAnalyzer()
         g.graph = self.pre_optimized_model.graph_def
@@ -821,7 +821,7 @@ class TensorFlowAdaptor(Adaptor):
         return capability
 
     def set_tensor(self, model, tensor_dict):
-        from .tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+        from .tf_utils.graph_util import GraphAnalyzer
         g = GraphAnalyzer()
         g.graph = model.graph_def
         graph_info = g.parse_graph()
@@ -845,7 +845,7 @@ class TensorFlowAdaptor(Adaptor):
 
             return is_weight, is_biasadd, current_node_name, last_node_name
 
-        from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+        from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
         from tensorflow.python.framework import dtypes
         from tensorflow.python.framework import tensor_util
         from tensorflow.core.framework import attr_value_pb2
@@ -908,7 +908,7 @@ class TensorFlowAdaptor(Adaptor):
                         tensor_content.transpose(2,3,1,0), dtypes.float32)
                 min_filter_node = graph_info[current_node.input[5]].node
                 per_channel = True if min_filter_node.attr['value'].tensor.tensor_shape else False
-                from .tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+                from .tf_utils.quantize_graph_common import QuantizeGraphHelper
                 original_fp32_op = current_node.op.split("With")[0].split("Quantized")[-1]
                 if original_fp32_op.find("Depthwise") != -1:
                     original_fp32_op = "DepthwiseConv2dNative"
@@ -1001,7 +1001,7 @@ class TensorFlowAdaptor(Adaptor):
         quantize_node_outputs = [node for node in graph_def.node
                                  if quantize_node.name in node.input]
 
-        from .tf_utils.graph_rewriter.graph_util import GraphRewriterHelper
+        from .tf_utils.graph_util import GraphRewriterHelper
         if quantize_node_input.op == 'Pad':
             pad_node_input = node_name_mapping[quantize_node_input.input[0]]
             assert pad_node_input.op == 'Placeholder', \

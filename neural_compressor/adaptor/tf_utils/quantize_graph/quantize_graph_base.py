@@ -22,8 +22,10 @@ import tensorflow as tf
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
-from .quantize_graph_common import QuantizeGraphHelper as helper
-from ..util import version1_gt_version2, version1_lt_version2, version1_eq_version2
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
 
 class QuantizeGraphBase():
     """
@@ -109,7 +111,7 @@ class QuantizeNodeBase():
          if matmul_a_node.op == 'Const' and matmul_b_node.op != 'Const':
              pass
          else:
-             from ..graph_rewriter.graph_util import GraphAnalyzer
+             from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
              g = GraphAnalyzer()
              g.graph = self.input_graph
              graph_info = g.parse_graph()

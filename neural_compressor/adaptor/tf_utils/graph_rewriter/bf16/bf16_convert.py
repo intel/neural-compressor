@@ -29,8 +29,8 @@ from tensorflow.python.framework import op_def_registry
 from tensorflow.python.framework.kernels import get_registered_kernels_for_op
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from ..generic.graph_cse_optimizer import GraphCseOptimizer
 
 DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)

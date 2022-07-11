@@ -25,7 +25,7 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from .graph_transform_base import GraphTransformBase
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 
 class RerangeQuantizedConcat(GraphTransformBase):

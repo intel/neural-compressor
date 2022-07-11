@@ -7,7 +7,7 @@ from neural_compressor.adaptor.tf_utils.util import collate_tf_preds
 from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from tensorflow.core.framework import graph_pb2
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from tensorflow.python.framework import dtypes
 
 def build_fake_graphdef():

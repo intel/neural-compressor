@@ -80,7 +80,7 @@ class TestTensorflowConcat(unittest.TestCase):
         found_quantized_concat_node = False
 
         target_concat_node_name = 'v0/cg/incept_v3_a0/concat_eightbit_quantized_concatv2'
-        from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+        from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
         cur_graph = GraphAnalyzer()
         cur_graph.graph = output_graph.graph_def
         graph_info = cur_graph.parse_graph()

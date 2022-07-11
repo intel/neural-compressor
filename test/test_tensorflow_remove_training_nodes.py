@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 
 
 class TestRemoveTrainingNodes(unittest.TestCase):

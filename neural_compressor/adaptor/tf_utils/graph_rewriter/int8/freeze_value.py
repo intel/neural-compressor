@@ -22,8 +22,8 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 import numpy as np
 import re

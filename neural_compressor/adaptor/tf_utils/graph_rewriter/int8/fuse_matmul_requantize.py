@@ -24,8 +24,8 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2, version1_lt_version2
 
 

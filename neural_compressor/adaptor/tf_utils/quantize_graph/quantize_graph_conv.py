@@ -21,9 +21,9 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
 
-from .quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
-from ..util import version1_gte_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 import numpy as np
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):

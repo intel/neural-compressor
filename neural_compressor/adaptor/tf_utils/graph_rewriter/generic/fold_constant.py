@@ -22,7 +22,7 @@ from tensorflow.python.platform import tf_logging
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer, GraphRewriterHelper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
 
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):

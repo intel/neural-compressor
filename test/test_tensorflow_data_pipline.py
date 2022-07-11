@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name, iterator_sess_run
 
 class TestDataPipelineConvert(unittest.TestCase):

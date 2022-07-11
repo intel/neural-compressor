@@ -5,7 +5,7 @@ import unittest
 import os
 import copy
 from neural_compressor.adaptor.tf_utils.util import read_graph
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
 class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
     ssd_resnet50_model = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'

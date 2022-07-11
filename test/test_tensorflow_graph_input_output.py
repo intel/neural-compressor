@@ -6,7 +6,7 @@ import os
 import yaml
 import tensorflow as tf
 
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
 
 def build_fake_yaml():

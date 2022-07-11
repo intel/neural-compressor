@@ -17,7 +17,7 @@
 
 
 import logging
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer

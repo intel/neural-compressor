@@ -19,7 +19,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
-from .quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 
 class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover

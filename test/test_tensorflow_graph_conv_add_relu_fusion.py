@@ -2,7 +2,7 @@ import os
 import unittest
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random

@@ -19,8 +19,10 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
 from .quantize_graph_base import QuantizeNodeBase
-from .quantize_graph_common import QuantizeGraphHelper as helper
-from ..util import version1_gt_version2, version1_lt_version2, version1_eq_version2
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
     def _add_pool_function(self, original_node, quantized_op_node):

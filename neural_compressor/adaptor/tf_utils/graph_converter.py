@@ -40,10 +40,10 @@ from .transform_graph.bias_correction import BiasCorrection
 from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2,version1_lt_version2
 from .util import version1_gte_version2,version1_lte_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from .quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
 
-from .graph_rewriter.graph_util import GraphAnalyzer
+from .graph_util import GraphAnalyzer
 from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
@@ -62,7 +62,7 @@ from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimize
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 from .graph_rewriter.itex.itex_convert import GenerateITEXModel
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+from .graph_util import GraphRewriterHelper as Helper
 
 
 TF_SUPPORTED_MAX_VERSION = '2.9.1'

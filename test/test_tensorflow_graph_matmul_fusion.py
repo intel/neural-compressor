@@ -413,6 +413,62 @@ class TestGraphMatMulFusion(unittest.TestCase):
             else:
                 self.assertEqual(found_quantized_matmul, True)
 
+    def test_matmul_biasadd_relu_non_const_weight(self):
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.matmul(x, x, name='no_quant_matmul')
+            biasadd = tf.nn.bias_add(y, [1, 2])
+            z = tf.nn.relu(biasadd)
+            found_quantized_matmul = True
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == 'MatMul':
+                        found_quantized_matmul = False
+                        break
+            self.assertEqual(found_quantized_matmul, False)
+
+    def test_matmul_biasadd_non_const_weight(self):
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.matmul(x, x, name='no_quant_matmul')
+            z = tf.nn.bias_add(y, [1, 2])
+            found_quantized_matmul = True
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == 'MatMul':
+                        found_quantized_matmul = False
+                        break
+            self.assertEqual(found_quantized_matmul, False)
 
 if __name__ == '__main__':
     unittest.main()
