@@ -264,7 +264,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             fusion_name = ''.join(matched_rule)
             if fusion_name in self.fusion_mapping:
                 matched_nodes = self.fusion_mapping[fusion_name](matched_node_name)
-            else:
+            else: # pragma: no cover
                 self.logger.debug("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)

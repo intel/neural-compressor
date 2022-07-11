@@ -42,6 +42,7 @@ class TensorFlowAdaptor(Adaptor):
         "AvgPool": "pooling",
         "ConcatV2": "concat",
         "MatMul": "matmul",
+        "BatchMatMulV2": "matmul",
         "Pad": "pad"
     }
     def __init__(self, framework_specific_info):
@@ -65,7 +66,10 @@ class TensorFlowAdaptor(Adaptor):
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name))
-        self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
+        self.itex_mode = cfg_yaml_name == 'tensorflow_itex_qdq.yaml'
+        self.qdq_pattern_enabled = cfg_yaml_name == 'tensorflow_qdq.yaml' or \
+                                   cfg_yaml_name == 'tensorflow_itex_qdq.yaml'
+        self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_pattern_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
         self.fp32_results = []
@@ -768,7 +772,7 @@ class TensorFlowAdaptor(Adaptor):
 
         self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
 
-        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
         self.exclude_node_names = self.pre_optimizer_handle.get_excluded_node_names()
@@ -1389,7 +1393,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
         self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
-        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model()
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
         from .tf_utils.graph_converter_without_calib import GraphConverterWithoutCalib
@@ -1480,6 +1484,191 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                    bf16_ops=self.bf16_ops,
                                    data_loader=data_loader,
                                    itex_mode=True).convert()
+
+        self._dump_model_op_stats(converted_model.graph_def)
+
+        return converted_model
+
+@adaptor_registry
+class Tensorflow_QDQAdaptor(TensorFlowAdaptor):
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
+        from pkg_resources import parse_version
+        import tensorflow as tf
+        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization configuration
+            model (tf.compat.v1.GraphDef): fp32 model
+            data_loader (generator): generator the data and labels
+            q_func (optional): training function for quantization aware training mode,
+                                which not enabled for tensorflow yet.
+
+        Returns:
+            tf.compat.v1.GraphDef: the quantized model
+        """
+        assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        self.tuning_cfg_to_fw(tune_cfg)
+        logger.debug('Dump quantization configurations:')
+        logger.debug(self.quantize_config)
+        from .tf_utils.graph_converter import GraphConverter
+        calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+        if isinstance(data_loader, BaseDataLoader):
+            batch_size = data_loader.batch_size
+            try:
+                for i in range(batch_size):
+                    if calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                           "to {}".format(calib_batch_size) +
+                                           " to make sure the sampling_size is "
+                                           "divisible exactly by batch size")
+                        break
+                tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                data_loader.batch(calib_batch_size)
+                self.quantize_config['calib_iteration'] = tmp_iterations
+                converted_model = GraphConverter(model,
+                                    qt_config=self.quantize_config,
+                                    recipes=self.recipes,
+                                    int8_sequences=self.op_wise_sequences,
+                                    fp32_ops=self.fp32_ops,
+                                    bf16_ops=self.bf16_ops,
+                                    data_loader=data_loader,
+                                    qdq_pattern_enabled=True,
+                                    new_api=self.new_api).convert()
+            except Exception: # pragma: no cover
+                logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(batch_size, 1))
+                data_loader.batch(1)
+                self.quantize_config['calib_iteration'] = calib_sampling_size
+                converted_model = GraphConverter(model,
+                                qt_config=self.quantize_config,
+                                recipes=self.recipes,
+                                int8_sequences=self.op_wise_sequences,
+                                fp32_ops=self.fp32_ops,
+                                bf16_ops=self.bf16_ops,
+                                data_loader=data_loader,
+                                qdq_pattern_enabled=True,
+                                new_api=self.new_api).convert()
+        else: # pragma: no cover
+            if hasattr(data_loader, 'batch_size') and \
+              calib_sampling_size % data_loader.batch_size != 0:
+                iter = self.quantize_config['calib_iteration']
+                logger.warning(
+                    "Please note that calibration sampling size {} " \
+                    "isn't divisible exactly by batch size {}. " \
+                    "So the real sampling size is {}.".
+                    format(calib_sampling_size, data_loader.batch_size,
+                           data_loader.batch_size * iter))
+            converted_model = GraphConverter(model,
+                                   qt_config=self.quantize_config,
+                                   recipes=self.recipes,
+                                   int8_sequences=self.op_wise_sequences,
+                                   fp32_ops=self.fp32_ops,
+                                   bf16_ops=self.bf16_ops,
+                                   data_loader=data_loader,
+                                   qdq_pattern_enabled=True,
+                                   new_api=self.new_api).convert()
+
+        self._dump_model_op_stats(converted_model.graph_def)
+
+        return converted_model
+
+@adaptor_registry
+class Tensorflow_ITEX_QDQAdaptor(TensorFlowAdaptor):
+    def __init__(self, framework_specific_info):
+        super().__init__(framework_specific_info)
+        from pkg_resources import parse_version
+        import tensorflow as tf
+        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization configuration
+            model (tf.compat.v1.GraphDef): fp32 model
+            data_loader (generator): generator the data and labels
+            q_func (optional): training function for quantization aware training mode,
+                                which not enabled for tensorflow yet.
+
+        Returns:
+            tf.compat.v1.GraphDef: the quantized model
+        """
+        assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        self.tuning_cfg_to_fw(tune_cfg)
+        logger.debug('Dump quantization configurations:')
+        logger.debug(self.quantize_config)
+        from .tf_utils.graph_converter import GraphConverter
+        calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
+        if isinstance(data_loader, BaseDataLoader):
+            batch_size = data_loader.batch_size
+            try:
+                for i in range(batch_size):
+                    if calib_sampling_size % (batch_size - i) == 0:
+                        calib_batch_size = batch_size - i
+                        if i != 0:  # pragma: no cover
+                            logger.warning("Reset `calibration.dataloader.batch_size` field "
+                                           "to {}".format(calib_batch_size) +
+                                           " to make sure the sampling_size is "
+                                           "divisible exactly by batch size")
+                        break
+                tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
+                data_loader.batch(calib_batch_size)
+                self.quantize_config['calib_iteration'] = tmp_iterations
+                converted_model = GraphConverter(model,
+                                    qt_config=self.quantize_config,
+                                    recipes=self.recipes,
+                                    int8_sequences=self.op_wise_sequences,
+                                    fp32_ops=self.fp32_ops,
+                                    bf16_ops=self.bf16_ops,
+                                    data_loader=data_loader,
+                                    itex_mode=True,
+                                    qdq_pattern_enabled=True,
+                                    new_api=self.new_api).convert()
+            except Exception: # pragma: no cover
+                logger.warning(
+                        "Fail to forward with batch size={}, set to {} now.".
+                        format(batch_size, 1))
+                data_loader.batch(1)
+                self.quantize_config['calib_iteration'] = calib_sampling_size
+                converted_model = GraphConverter(model,
+                                qt_config=self.quantize_config,
+                                recipes=self.recipes,
+                                int8_sequences=self.op_wise_sequences,
+                                fp32_ops=self.fp32_ops,
+                                bf16_ops=self.bf16_ops,
+                                data_loader=data_loader,
+                                itex_mode=True,
+                                qdq_pattern_enabled=True,
+                                new_api=self.new_api).convert()
+        else: # pragma: no cover
+            if hasattr(data_loader, 'batch_size') and \
+              calib_sampling_size % data_loader.batch_size != 0:
+                iter = self.quantize_config['calib_iteration']
+                logger.warning(
+                    "Please note that calibration sampling size {} " \
+                    "isn't divisible exactly by batch size {}. " \
+                    "So the real sampling size is {}.".
+                    format(calib_sampling_size, data_loader.batch_size,
+                           data_loader.batch_size * iter))
+            converted_model = GraphConverter(model,
+                                   qt_config=self.quantize_config,
+                                   recipes=self.recipes,
+                                   int8_sequences=self.op_wise_sequences,
+                                   fp32_ops=self.fp32_ops,
+                                   bf16_ops=self.bf16_ops,
+                                   data_loader=data_loader,
+                                   itex_mode=True,
+                                   qdq_pattern_enabled=True,
+                                   new_api=self.new_api).convert()
 
         self._dump_model_op_stats(converted_model.graph_def)
 
@@ -1644,7 +1833,7 @@ class TensorflowQuery(QueryBackendCapability):
 
         return res
 
-    def get_eightbit_patterns(self):
+    def get_eightbit_patterns(self, with_qdq=False):
         """Get eightbit op wise sequences information.
 
         Returns:
@@ -1659,13 +1848,20 @@ class TensorflowQuery(QueryBackendCapability):
 
         res = {}
         for i in quantizable_op_types:
-            res[i] = [[i]]
-
+            if with_qdq:
+                res[i] = [['Dequantize', i, 'QuantizeV2']]
+            else:
+                res[i] = [[i]]
+               
+        
         for pattern in int8_patterns:
-            op_type = pattern[0]
+            if with_qdq:
+                op_type = pattern[1]
+            else:
+                op_type = pattern[0]
             if op_type in res:
                 res[op_type].append(pattern)
-
+        
         return res
 
     def generate_internal_patterns(self):

@@ -92,6 +92,8 @@ class PytorchMxnetWrapFunction():
 framework_datasets = {"tensorflow": TensorflowDatasets,
                       "inteltensorflow": TensorflowDatasets,
                       "tensorflow_itex": TensorflowDatasets,
+                      "tensorflow_qdq": TensorflowDatasets,
+                      "tensorflow_itex_qdq": TensorflowDatasets,
                       "mxnet": MXNetDatasets,
                       "pytorch": PyTorchDatasets,
                       "pytorch_ipex": PyTorchDatasets,
@@ -115,10 +117,10 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 class DATASETS(object):
     def __init__(self, framework):
-        assert framework in ["inteltensorflow", "tensorflow", "tensorflow_itex", "onnxrt_qdq",
-                             "mxnet", "onnxrt_qlinearops", "onnxrt_integerops",
-                             "pytorch", "pytorch_ipex", "pytorch_fx",
-                             "onnxrt_qoperator"], \
+        assert framework in ["inteltensorflow", "tensorflow", "tensorflow_itex", \
+                             "tensorflow_qdq", "tensorflow_itex_qdq", "mxnet", \
+                             "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops", \
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.datasets = framework_datasets[framework]().datasets
 
@@ -131,6 +133,8 @@ class DATASETS(object):
 TENSORFLOW_DATASETS = {}
 INTELTENSORFLOW_DATASETS = {}
 TENSORFLOWITEX_DATASETS = {}
+TENSORFLOW_QDQ_DATASETS = {}
+TENSORFLOWITEX_QDQ_DATASETS = {}
 MXNET_DATASETS = {}
 PYTORCH_DATASETS = {}
 PYTORCHIPEX_DATASETS = {}
@@ -141,6 +145,8 @@ ONNXRTIT_DATASETS = {}
 registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                      "inteltensorflow": INTELTENSORFLOW_DATASETS,
                      "tensorflow_itex": TENSORFLOWITEX_DATASETS,
+                     "tensorflow_qdq": TENSORFLOW_QDQ_DATASETS,
+                     "tensorflow_itex_qdq": TENSORFLOWITEX_QDQ_DATASETS,
                      "mxnet": MXNET_DATASETS,
                      "pytorch": PYTORCH_DATASETS,
                      "pytorch_ipex": PYTORCHIPEX_DATASETS,
@@ -171,6 +177,8 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
                 "tensorflow",
                 "inteltensorflow",
                 "tensorflow_itex",
+                "tensorflow_qdq",
+                "tensorflow_itex_qdq",
                 "mxnet",
                 "pytorch",
                 "pytorch_ipex",
@@ -404,7 +412,8 @@ class MXNetCIFAR10(CIFAR10):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="CIFAR10", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="CIFAR10", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowCIFAR10(CIFAR10):
     def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
@@ -454,7 +463,8 @@ class MXNetCIFAR100(CIFAR100):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="CIFAR100", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="CIFAR100", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowCIFAR100(CIFAR100):
     def __getitem__(self, index): # pragma: no cover
         image, label = self.data[index], self.targets[index]
@@ -562,7 +572,8 @@ class MXNetMNIST(MNIST):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="MNIST", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="MNIST", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowMNIST(MNIST):
     def __getitem__(self, index):
         image, label = self.data[index], int(self.targets[index])
@@ -626,7 +637,8 @@ class MXNetFashionMNIST(FashionMNIST):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="FashionMNIST", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="FashionMNIST", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowFashionMNIST(FashionMNIST):
     def __getitem__(self, index):
         image, label = self.data[index], int(self.targets[index])
@@ -699,7 +711,8 @@ class MXNetImageFolder(ImageFolder):
             image, label = self.transform((image, label))
         return (image, label)
 
-@dataset_registry(dataset_type="ImageFolder", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="ImageFolder", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowImageFolder(ImageFolder):
     def __getitem__(self, index):
         sample = self.image_list[index]
@@ -717,7 +730,8 @@ class TensorflowImageFolder(ImageFolder):
                 image = image.numpy()
             return (image, label)
 
-@dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowTFRecordDataset(IterableDataset):
     """Configuration for TensorflowTFRecordDataset
 
@@ -741,7 +755,8 @@ class TensorflowTFRecordDataset(IterableDataset):
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
-@dataset_registry(dataset_type="ImageRecord", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="ImageRecord", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
     """Configuration for ImageNet database in tf record format
 
@@ -782,7 +797,8 @@ class TensorflowImageRecord(IterableDataset):
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
-@dataset_registry(dataset_type="VOCRecord", framework="tensorflow, inteltensorflow", dataset_format='')
+@dataset_registry(dataset_type="VOCRecord", framework="tensorflow, inteltensorflow, \
+                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
 class TensorflowVOCRecord(IterableDataset):
     """Configuration for PASCAL VOC 2012 database in tf record format
 

@@ -26,6 +26,8 @@ class onnxrt:
 OPTIONS = {'tensorflow': None,
            'inteltensorflow': None,
            'tensorflow_itex': None,
+           'tensorflow_qdq': None,
+           'tensorflow_itex_qdq': None,
            'pytorch': None,
            'pytorch_fx': None,
            'pytorch_ipex': None,

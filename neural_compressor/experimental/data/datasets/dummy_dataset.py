@@ -26,10 +26,11 @@ torch = LazyImport('torch')
 logger = logging.getLogger()
 
 @dataset_registry(dataset_type="dummy", framework="tensorflow, inteltensorflow, tensorflow_itex, \
-                                                    onnxrt_qlinearops, onnxrt_integerops, \
-                                                    pytorch, pytorch_ipex, pytorch_fx, \
-                                                    mxnet",
-                                                    dataset_format='')
+                                                   tensorflow_qdq, tensorflow_itex_qdq, \
+                                                   onnxrt_qlinearops, onnxrt_integerops, \
+                                                   pytorch, pytorch_ipex, pytorch_fx, \
+                                                   mxnet",
+                                                   dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.
        This Dataset is to construct a dataset from a specific shape.

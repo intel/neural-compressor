@@ -42,6 +42,7 @@ from .util import version1_gte_version2,version1_lte_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
+from .quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
 
 from .graph_util import GraphAnalyzer
 from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
@@ -55,12 +56,17 @@ from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
+from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeNewAPITransformer
+from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeNewAPITransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 from .graph_rewriter.itex.itex_convert import GenerateITEXModel
+from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
+from .graph_rewriter.qdq.merge_duplicated_quantize import MergeDuplicatedQuantizeOptimizer
+from .graph_rewriter.qdq.lift_qdq_above_reshape_transpose import LiftQDQAboveReshapeTransposeOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
 from .graph_util import GraphRewriterHelper as Helper
 
@@ -82,6 +88,7 @@ class GraphConverter:
                  data_loader=None,
                  fake_quant=False,
                  itex_mode=False,
+                 qdq_pattern_enabled=False,
                  new_api=False):
         """Convert graph.
 
@@ -107,6 +114,7 @@ class GraphConverter:
         self.recipes = recipes
         self.fake_quant = fake_quant
         self.itex_mode = itex_mode
+        self.qdq_pattern_enabled = qdq_pattern_enabled
         self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
@@ -273,7 +281,10 @@ class GraphConverter:
         """
         model = self._tmp_model
         if len(self.op_wise_config) > 0:
-            model = self.quantize()
+            if self.qdq_pattern_enabled:
+                model = self.quantize_with_qdq_pattern()
+            else:
+                model = self.quantize()
 
         if self.itex_mode:
             return self._itex_model
@@ -572,6 +583,13 @@ class GraphConverter:
             self.device, self.new_api).do_transformation()
 
         if not self.fake_quant:
+            #if self.qdq_pattern_enabled:
+            #    self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
+            #        self._tmp_graph_def).do_transformation()
+            #
+            #    self._tmp_graph_def = FuseMatMulRequantizeDequantizeNewAPITransformer(
+            #        self._tmp_graph_def).do_transformation()
+            #else:
             self._tmp_graph_def = FuseMatMulRequantizeTransformer(
                 self._tmp_graph_def).do_transformation()
 
@@ -619,3 +637,154 @@ class GraphConverter:
 
         elif gfile.Exists(self._int8_logged_model_path + '.pb'):
             os.remove(self._int8_logged_model_path + '.pb')
+
+    def quantize_with_qdq_pattern(self):
+        """ Quantize model by inserting QDQ
+            step 1: insert QDQ pairs and update node info
+            step 2: convert Q-DQ-node-Q-DQ to Q-newAPI node-DQ
+        """
+        try:
+            self._insert_qdq_pairs()
+            self._convert_qdq()
+
+        except ValueError as e:
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
+            self._tmp_model = None
+            raise
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self._tmp_model = None
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
+            return self._tmp_model
+        finally:
+            if not debug:
+                self._post_clean()
+        return self._tmp_model
+
+    def _insert_qdq_pairs(self):
+        # Fuse Pad into Conv2D, Conv3D, DepthwiseConv2dNative 
+        non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+        self._tmp_graph_def = FusePadWithConv2DOptimizer(
+                    self._tmp_graph_def,
+                    non_pad_ops,
+                    self._tmp_model.input_node_names,
+                    self.op_wise_config,
+                    self.new_api,
+                    True).do_transformation()
+
+        # Sort graph
+        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
+            self._tmp_graph_def,
+            self._tmp_model.input_node_names,
+            self._tmp_model.output_node_names)
+
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+
+        # Find out the quantized nodes
+        self.quantized_node_info = OptimizeQDQGraph(self._tmp_graph_def,
+                                               self._tmp_model.input_node_names,
+                                               self._tmp_model.output_node_names,
+                                               self.op_wise_config,
+                                               self.int8_sequences,
+                                               self.device,
+                                               self.fake_quant,
+                                               self.new_api).get_quantized_nodes()
+
+        self._rnn_details = Helper.analysis_rnn_model(self._tmp_graph_def,
+                                                      bf16_ops=self.bf16_ops,
+                                                      fp32_ops=self.fp32_ops)
+        self.quantized_node_info.extend(self._rnn_details.keys())
+        self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
+
+        if self.itex_mode:
+            self.quantized_node_info.extend(self._search_y_pattern_for_itex())
+
+        if self._enable_kl_op_names:
+            self._get_fp32_print_node_names(self._enable_kl_op_names)
+            self._generate_calibration_data(self._fp32_logged_model_path,
+                                            self._fp32_print_data,
+                                            True)
+
+        # Calibration using sampling model
+        output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
+        sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+        # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph
+        # after enabling pad+conv2d in new API.
+        non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+        sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
+                                    sampling_graph_def,
+                                    non_pad_ops,
+                                    self._tmp_model.input_node_names,
+                                    self.op_wise_config).do_transformation()
+
+        for i in self.quantized_node_info:
+            frame_name = self._rnn_details[i] if i in self._rnn_details else None
+            sampling_graph_def, output_names = InsertPrintMinMaxNode(
+                sampling_graph_def, i[0], i[-1]).do_transformation()
+            output_tensor_names.extend(output_names)
+
+        if self.quantized_node_info:
+            sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._sampling_model.graph_def = sampling_graph_def
+            self._sampling_model.output_tensor_names = output_tensor_names
+            tmp_dump_file = tempfile.mkstemp(suffix='.log')[1]
+            with CaptureOutputToFile(tmp_dump_file):
+                self._inference(self._sampling_model)
+            self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
+
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+        self._tmp_model.graph_def = self._tmp_graph_def
+
+        # Insert QDQ pattern
+        self._tmp_graph_def = GenerateGraphWithQDQPattern(
+              self._tmp_model, self._calibration_data,
+              self.op_wise_config, self.fake_quant, self.fp32_ops, self.device).do_transformation()
+
+    def _convert_qdq(self):
+        if self.itex_mode:
+            self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
+                self._tmp_graph_def,
+                self._calibration_data,
+                '__max:').do_transformation()
+            self._tmp_graph_def, quantizev2_min = FreezeValueTransformer(
+                self._tmp_graph_def,
+                self._calibration_data,
+                '__min:').do_transformation()
+            self._tmp_graph_def, requant_min_max= FreezeValueTransformer(
+                self._tmp_graph_def,
+                self._calibration_data,
+                '__requant_min_max',
+                tensor_data= self._kl_op_dict,
+                device=self.device,
+                ).do_transformation()
+
+            self.scale_info.update(quantizev2_max)
+            self.scale_info.update(quantizev2_min)
+            self.scale_info.update(requant_min_max)
+
+            self._tmp_graph_def = StripUnusedNodesOptimizer(
+                self._tmp_graph_def,
+                self._tmp_model.input_node_names,
+                self._tmp_model.output_node_names).do_transformation()
+    
+            # Just for the verification of ITEX QDQ test
+            # self._tmp_graph_def = MergeDuplicatedQuantizeOptimizer(self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = LiftQDQAboveReshapeTransposeOptimizer(self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._itex_model.graph_def = self._tmp_graph_def
+            self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
+        else:
+            self._tmp_graph_def = OptimizeQDQGraph(self._tmp_graph_def,
+                                                   self._tmp_model.input_node_names,
+                                                   self._tmp_model.output_node_names,
+                                                   self.op_wise_config,
+                                                   self.int8_sequences,
+                                                   self.device,
+                                                   self.fake_quant,
+                                                   self.new_api).do_transform()
+
+            if len(self._calibration_data) > 0:
+                self._freeze_requantization_ranges(self._kl_op_dict)
+                self._fuse_requantize_with_fused_quantized_node()
+
