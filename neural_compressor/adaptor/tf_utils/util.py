@@ -353,3 +353,21 @@ def get_model_input_shape(model):
             if len(_shape) > 1 and isinstance(_shape[0], int):
                 return _shape[0]
     return 1
+    
+def get_tensor_val_from_graph_node(graph_node_name_mapping, node_name):
+    """
+    Get the tensor value for given node name
+    Args:
+        graph_node_name_mapping: key: node name, val: node
+        node_name: query node
+
+    Returns:
+        tensor_val: numpy array
+
+    """
+    from tensorflow.python.framework import tensor_util
+    node = graph_node_name_mapping[node_name]
+    node_tensor = node.attr['value'].tensor
+    tensor_val = tensor_util.MakeNdarray(node_tensor)
+    return tensor_val
+

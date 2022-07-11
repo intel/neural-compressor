@@ -921,43 +921,300 @@ class TensorFlowAdaptor(Adaptor):
                 g.replace_constant_graph_with_constant_node(min_node, current_node.input[5])
                 g.replace_constant_graph_with_constant_node(max_node, current_node.input[6])
 
-    def inspect_tensor(self, model, dataloader, op_list=[], iteration_list=[],
-                       inspect_type='activation', save_to_disk=False):
-        """Collect the specified tensor's output on specified iteration.
-
-        Args:
-            model (tf.compat.v1.GraphDef): model definition.
-            dataloader (generator): generate the data and labels
-            op_list (list, optional): the specified op names' list. Defaults to [].
-            iteration_list (list, optional): the specified iteration. Defaults to [].
-
-        Returns:
-            [dict]: the key is op_name while the value is the ndarray tensor.
+    def inspect_weight_and_bias(self, node_list, graph_def, graph_info, graph_node_name_mapping,
+                                quantized_node_name_postfix):
         """
-        logger.info("Start to inspect tensor.")
-        from .tf_utils.graph_converter import GraphConverter
-        converter = GraphConverter(model,
-                                   qt_config=self.quantize_config,
-                                   int8_sequences=self.op_wise_sequences,
-                                   data_loader=dataloader,
-                                   new_api=self.new_api)
+        Inspect the weights
+        """
+        from neural_compressor.utils.utility import DequantizeWeight
+        from neural_compressor.adaptor.tf_utils.util import get_tensor_val_from_graph_node
+        import tensorflow as tf
+        weights_result = {}
+        for node in graph_def.node:
+            # TODO: judge whether the node is in node_list
+            node_name = node.name
+            if 'Quantized' in node.op:
+                node_name = node_name.split(quantized_node_name_postfix)[0]
 
-        dump_content = converter.inspect_tensor(\
-                op_list, iteration_list, self.work_dir, inspect_type)
+            # inspect weights and bias
+            # TODO: need more accurate conditions to determine whether it‘s a quantized op
+            if node.op in ('QuantizedConv2DWithBiasAndReluAndRequantize', 'Conv2D' ):
+                # get weights from graph_def
+                weights_node_name = node.input[1]
+                weights_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, weights_node_name)
+                weights_node_val = weights_node_val.astype('float32')
+                # dequantize the weight for quantized model
+                if 'Quantized' in node.op:
+                    # TODO: use a optimized method to get min/max
+                    min_filter_node = [node_name for node_name in node.input if '_min' in node_name][0]
+                    max_filter_node = [node_name for node_name in node.input if '_max' in node_name][0]
+                    if graph_info[min_filter_node].node.attr['value'].tensor.float_val:
+                        min_filter_val = graph_info[min_filter_node].node.attr['value'].tensor.float_val
+                        max_filter_val = graph_info[max_filter_node].node.attr['value'].tensor.float_val
+                    else:
+                        min_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, min_filter_node)
+                        max_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, max_filter_node)
+                    weights_node_val = weights_node_val.astype('float')
+                    DequantizeWeight(weights_node_val, min_filter_val, max_filter_val)
+                weights_result[node_name] = {weights_node_name: weights_node_val}
+                # get bias from fp32 model
+                if 'Quantized' not in node.op:
+                    bias_add_node = None
+                    if graph_info[node.name].outputs:
+                        bias_add_node = graph_info[graph_info[node.name].outputs[0]].node
+                    if bias_add_node and bias_add_node.op == 'BiasAdd':
+                        bias_node_name = bias_add_node.input[1]
+                        bias_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
+                        weights_result[node_name][bias_node_name] = bias_node_val
+                # get bias from quantized model directly
+                else:
+                    bias_node_name = node.input[2]
+                    bias_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
+                    weights_result[node_name][bias_node_name] = bias_val.astype('float32')
+        return weights_result
+
+    def parse_quan_configuration(self, node_dict, postfix_dict):
+        """
+        Parse the quantization configuration
+        Args:
+            node_dict: node list configuration during quantization
+            postfix_dict: key: node type, val: postfix after quantization
+        Returns:
+            fp_and_quan_node_mapping: key: node name before quantized, val: node name after quantized
+            quan_and_fp_node_mapping: key: node name after quantized, val: node name before quantized
+            pattern_mapping: key: node name before quantized, val: {sequence : ..., precision:...}
+        """
+        fp_and_quan_node_mapping = {}  # key: node name before quantization, val:  node name after quantization
+        quan_and_fp_node_mapping = {}  # key: node name after quantization, val: node name before quantization
+        pattern_mapping = {}  # key: node name before quantization, val: fused pattern list
+        for node_name_and_type in node_dict.keys():
+            node_name, node_type = node_name_and_type
+            # TODO, more check the postfix dict, refactor code
+            if 'pattern' in node_dict[node_name_and_type]:
+                precision_type = node_dict[node_name_and_type]['pattern']['precision']
+                assert precision_type in postfix_dict
+                precision_postfix = postfix_dict[precision_type]
+                quan_node_name = node_name + precision_postfix
+                fp_and_quan_node_mapping[node_name] = quan_node_name
+                quan_and_fp_node_mapping[quan_node_name] = node_name
+                pattern_mapping[node_name] = node_dict[node_name_and_type]['pattern']
+            else:
+                quan_node_name = node_name + '_eightbit_quantized'
+                fp_and_quan_node_mapping[node_name] = quan_node_name
+                quan_and_fp_node_mapping[quan_node_name] = node_name
+                pattern_mapping[node_name] = {'sequence': node_name}
+        return fp_and_quan_node_mapping, quan_and_fp_node_mapping, pattern_mapping
+
+    def fused_node_mapping(self, node_list, pattern_mapping, graph_info, graph_node_name_mapping):
+        """
+        Create the mapping between first node and last node in fused sequence
+        Args:
+            node_list: node name list
+            pattern_mapping:  key: node name, val: node pattern mapping
+            graph_info: key: node name, val: node details
+            graph_node_name_mapping: key: node name, val: node
+        Returns:
+            fused_mapping: key: first node name in fused seq, val: last node in fused seq
+            fused_mapping_reverse: key: last node in fused seq, val: first node name in fused seq
+        """
+        fused_mapping = {}
+        fused_mapping_reverse = {}
+        for node_name in node_list:
+            fused_seq = pattern_mapping[node_name]['sequence'].split(',')
+            # for the node not fused with others
+            if len(fused_seq) == 1:
+                fused_mapping[node_name] = node_name
+                fused_mapping_reverse[node_name] = node_name
+                continue
+            _next_node_name = node_name
+            for _next_node_op_type in fused_seq[1:]:
+                node_details = graph_info[_next_node_name]
+                for node_output_name in node_details.outputs:
+                    if graph_node_name_mapping[node_output_name].op == 'Cast':
+                        cast_node = graph_node_name_mapping[node_output_name]
+                        node_output_name = graph_info[cast_node.name].outputs[0]
+                    if graph_node_name_mapping[node_output_name].op in [_next_node_op_type, 'Cast']:
+                        _next_node_name = node_output_name
+            fused_mapping[node_name] = _next_node_name
+            fused_mapping_reverse[_next_node_name] = node_name
+        return fused_mapping, fused_mapping_reverse
+
+    def _inspect_tensor_inference(self, inspect_node_dict,  model, dataloader, iteration_list):
+        """
+        Do inference for inspect activation
+        """
+        out_tensor_lst = []
+        out_tensor_lst += [{n : [n + ':' + str(i) for i in range(3)]} for n in inspect_node_dict['qreq_node']]
+        out_tensor_lst += [{n : n + ':0'} for n in inspect_node_dict['qdq_node']]
+        out_tensor_lst += [{n : n + ':0'} for n in inspect_node_dict['f_node']]
+        out_cnt = len(out_tensor_lst)
+        iteration_list = set(iteration_list)
+        input_tensor = model.input_tensor
+        logger.info('Start to do inference for inspect activation.')
+        activation_result = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            model_out = []
+            if idx + 1 not in iteration_list:
+                continue
+            if idx + 1 > max(iteration_list):
+                break
+            if len(input_tensor) == 1:
+                feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
+            else:
+                assert len(input_tensor) == len(inputs), \
+                    'inputs len must equal with input_tensor'
+                feed_dict = dict(zip(input_tensor, inputs))
+            #TODO find an optimized method to avoid multiple runs
+            for i, out_t in enumerate(out_tensor_lst):
+                logger.debug(f'finished inspect {i+1}/{out_cnt} nodes.')
+                out = model.sess.run(out_t, feed_dict)
+                model_out.append(out)
+            activation_result.append(model_out)
+        return activation_result
+
+    def inspect_activation(self, node_list, graph_def, graph_node_name_mapping, quantization_cfg,
+                           postfix_dict, dataloader, iteration_list, graph_info, quan_model_flag=False):
+        """
+        Inspect the activation.
+        """
+        import tensorflow as tf
+        from neural_compressor.experimental.common import Model
+        fp_and_quan_node_mapping, quan_and_fp_node_mapping, pattern_mapping = self.parse_quan_configuration(
+            quantization_cfg['op'], postfix_dict)
+        original_graph_node_mapping = {}
+        for node in graph_def.node:
+            original_graph_node_mapping[node.name] = node
+        inspect_node_dict = {'qdq_node':[], 'qreq_node':[], 'f_node':[]}
+        for node_name in node_list:
+            node = graph_node_name_mapping[node_name]
+            if 'Quantized' in node.op and 'Dequantize' in node.op:
+                inspect_node_dict['qdq_node'].append(node.name)
+            elif 'Requantize' in node.op and 'Dequantize' not in node.op:
+                inspect_node_dict['qreq_node'].append(node.name)
+            else:
+                inspect_node_dict['f_node'].append(node_name)
+        node_name_mapping = fp_and_quan_node_mapping
+        node_name_mapping_reverse = quan_and_fp_node_mapping
+        if inspect_node_dict['f_node']:
+            fused_mapping, fused_mapping_reverse = self.fused_node_mapping(inspect_node_dict['f_node'],
+                                                                            pattern_mapping, graph_info, 
+                                                                            graph_node_name_mapping)
+            node_name_mapping.update(fused_mapping)
+            node_name_mapping_reverse.update(fused_mapping_reverse)
+        if inspect_node_dict['f_node']:
+            inspect_node_dict['f_node'] = [node_name_mapping[n] for n in inspect_node_dict['f_node']]
+
+        # build model and do inference
+        model = Model(graph_def)
+        activation_result  =self._inspect_tensor_inference(inspect_node_dict,  model, dataloader, iteration_list)
+        final_result = []
+        for iter_res in activation_result:
+            tmp_iter_result = {}
+            for res in iter_res:
+                n = list(res.keys())[0]
+                val = res[n]
+                if len(val) == 3:
+                    q_node_scale = (node_name, val[1], val[2])
+                    val = Dequantize(val[0], q_node_scale)
+                tmp_iter_result[node_name_mapping_reverse[n]] = {node_name_mapping_reverse[n]: val}
+            final_result.append(tmp_iter_result)
+        return final_result
+
+    def inspect_tensor(self, model, dataloader=None, op_list=[], iteration_list=[],
+                       inspect_type='activation', save_to_disk=False, save_path=None, quantization_cfg=None):
+        """
+        Dump the weight and activation(output) to local disk.
+        1. create the correspondence between query node name and the actually output node name in graph_def
+        2. get the weight and bias for the given node
+        3. get the activation for the given node
+        4. save the tensor to disk
+        Args:
+            model: int8/fp32 graph_def/TensorflowBaseModel
+            dataloader: dataloader used during inspect activation
+            op_list: op list to inspect
+            iteration_list: iteration list to inspect, start from 1
+            inspect_type: activation/weight/all
+            save_to_disk: dump to disk or not
+            save_path: the dump path for inspect tensor
+            quantization_cfg: quantization configuration for fused fp32 model and quantized model
+        Returns:
+            Dict
+               {
+                 'weight': {
+                   'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                   'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                   ...
+                 },
+                 'activation': [
+                   # iter 1:
+                       {
+                         'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                         'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                         ...
+                       },
+                   # iter 2:
+                        {
+                       ...
+                       }
+                 ]
+               }
+        """
+        from neural_compressor.model.model import TensorflowBaseModel
+        from neural_compressor.utils.utility import load_data_from_pkl, dump_data_to_local
+        from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+        import tensorflow as tf
+        if isinstance(model, TensorflowBaseModel):
+            model = model.graph_def
+        if not quantization_cfg:
+            quantization_cfg = load_data_from_pkl('./nc_workspace/', 'cfg.pkl')
+        node_list = op_list
+        # create the mapping between node name and node, key: node_name, val: node
+        graph_node_name_mapping = {}
+        quantized_node_name_postfix = '_eightbit_requantize'
+        quan_model_flag = False
+        for node in model.node:
+            node_name = node.name
+            if 'Quantized' in node.op or 'Requantize' in node.op:
+                quan_model_flag = True
+                node_name = node_name.split(quantized_node_name_postfix)[0]
+            if node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:
+                quan_model_flag = True
+            graph_node_name_mapping[node_name] = node
+        if quan_model_flag:
+            logger.info('Dump the tensor for quantized model.')
+            
+        # create the mapping between node name and node detail, key: node_name, val: node detail
+        g = GraphAnalyzer()
+        g.graph = model
+        graph_info = g.parse_graph()
+        inspect_result = {}
+        
+        # inspect weight
+        if inspect_type == 'weight' or inspect_type == 'all':
+            logger.info('Start to inspect weight and bias.')
+            weights_result = self.inspect_weight_and_bias(node_list, model, graph_info, graph_node_name_mapping,
+                                                          quantized_node_name_postfix)
+            inspect_result['weight'] = weights_result
+            
+        # inspect activation
+        if inspect_type == 'activation' or inspect_type == 'all':
+            postfix_dict = {
+                'int8': '_eightbit_requantize',
+            }
+            logger.info('Start to inspect activation.')
+            activation_result = self.inspect_activation(node_list, model, graph_node_name_mapping, quantization_cfg,
+                                                        postfix_dict, dataloader, iteration_list, graph_info,
+                                                        quan_model_flag=quan_model_flag)
+            inspect_result['activation'] = activation_result
+
+        # save to disk
         if save_to_disk:
-            dump_dir = os.path.join(self.work_dir, 'dump_tensor')
-            os.makedirs(dump_dir, exist_ok=True)
-            for index, value in enumerate(dump_content['activation']):
-                tmp_dict = {}
-                for k, v in value.items():
-                    tmp_dict[k[0]] = v
-                output_path = os.path.join(dump_dir, 'activation_iter{}.npz'.format(index + 1))
-                np.savez(output_path, **tmp_dict)
+            if not save_path:
+                save_path = './nc_workspace/tmp/'
+            dump_data_to_local(inspect_result, save_path, 'inspect_result.pkl')
+            logger.info(f'Dumped the inspect tensor to {save_path}')
+        return inspect_result
 
-            if inspect_type in ('weight', 'all') and dump_content['weight']:
-                np.savez(os.path.join(dump_dir, 'weight.npz'), **dump_content['weight'])
-
-        return dump_content
 
     def quantize_input(self, model):
         ''' quantize the model to be able to take quantized input

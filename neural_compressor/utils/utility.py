@@ -444,3 +444,49 @@ class MODE(Enum):
 
 class GLOBAL_STATE():
     STATE = MODE.QUANTIZATION
+
+
+
+import pickle
+import os
+
+
+def load_data_from_pkl(path, filename):
+    """
+    load data from local pkl file
+    Args:
+        path: the directory to load data
+        filename: filename to load
+
+    Returns:
+        None
+
+    """
+    try:
+        file_path = os.path.join(path, filename)
+        with open(file_path, 'rb') as fp:
+            data = pickle.load(fp)
+            return data
+    except FileExistsError:
+        logging.getLogger().info('Can not open %s.' % path)
+
+
+def dump_data_to_local(data, path, filename):
+    """
+    Dump data to local as pkl file
+    Args:
+        data: data used to dump
+        path: the directory to save data
+        filename: filename to dump
+
+    Returns:
+        loaded data
+
+    """
+    from pathlib import Path
+    if not os.path.exists(path):
+        Path(path).mkdir(parents=True, exist_ok=True)
+    file_path = os.path.join(path, filename)
+    with open(file_path, 'wb') as fp:
+        pickle.dump(data, fp)
+        logging.getLogger().info("Dumped data to %s" % file_path)

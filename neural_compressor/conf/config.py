@@ -803,7 +803,9 @@ schema = Schema({
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
-        'workspace': {'path': default_workspace}}): {
+        'workspace': {'path': default_workspace},
+        'diagnosis': False,
+        }): {
         Optional('strategy', default={'name': 'basic'}): {
             'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
@@ -838,7 +840,22 @@ schema = Schema({
         Optional('workspace', default={'path': default_workspace}): {
             Optional('path', default=None): str,
             Optional('resume'): str
-        }
+        },
+        Optional('diagnosis', default = {
+            'diagnosis_after_tuning': False,
+            'op_list': [],
+            'iteration_list': [1],
+            'inspect_type': 'activation',
+            'save_to_disk': True,
+            'save_path': './nc_workspace/inspect_saved/',
+        }):{
+            Optional('diagnosis_after_tuning', default=False): And(bool, lambda s: s in [True, False]),
+            Optional('op_list', default=[]): And(Or(str, list), Use(input_to_list)),
+            Optional('iteration_list', default=[1]): And(Or(int, list), Use(input_to_list_int)),
+            Optional('inspect_type', default='all'): And(str, lambda s : s in ['all', 'activation', 'weight']),
+            Optional('save_to_disk', default=True): And(bool, lambda s: s in [True, False]),
+            Optional('save_path', default='./nc_workspace/inspect_saved/'): str,
+        },
     },
     Optional('evaluation'): {
         Hook('accuracy', handler=_valid_multi_metrics): object,
