@@ -21,8 +21,8 @@ import logging
 
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
-from neural_compressor.utils.utility import (dump_elapsed_time, LazyImport, singleton,
-                                             GLOBAL_STATE, MODE)
+from neural_compressor.utils.utility import (LazyImport, GLOBAL_STATE, MODE, CpuInfo,
+                                             dump_elapsed_time, singleton)
 from neural_compressor.adaptor.mxnet_utils.util import *
 from collections import OrderedDict
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
@@ -262,7 +262,8 @@ class MxNetAdaptor(Adaptor):
         # op_type_wise and op_wise capability
         sym_model, self.qdataloader = prepare_model_data(nc_model, self.ctx,
                                                          self.qdataloader)
-        self.quantizable_nodes, self._tensor_to_node = query_quantizable_nodes(
+
+        self.quantizable_nodes, self._tensor_to_node, all_op_nodes = query_quantizable_nodes(
             sym_model, self.ctx, self.qdataloader)
 
         op_type_wise = OrderedDict()

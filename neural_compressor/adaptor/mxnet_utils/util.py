@@ -150,7 +150,7 @@ def prepare_model(nc_model, ctx, input_desc):
 
     model_x = nc_model.model
     if isinstance(model_x, mx.gluon.HybridBlock):
-        if not model_x._active and not isinstance(model_x, mx.gluon.SymbolBlock):
+        if not model_x._active:
             model_x.hybridize(static_alloc=False, static_shape=False)
         model_x(*create_data_example(ctx, input_desc))
         with TemporaryDirectory() as tmpdirname:
@@ -200,7 +200,7 @@ def prepare_dataloader(nc_model, ctx, data_x):
     if isinstance(model_x, mx.gluon.HybridBlock):
         data = ensure_list(next(iter(dataloader)))  # data example
         data = [ndarray_to_device(d, ctx) for d in data]
-        if not model_x._active and not isinstance(model_x, mx.gluon.SymbolBlock):
+        if not model_x._active:
             model_x.hybridize(static_alloc=False, static_shape=False)
         while True:
             try:
@@ -281,6 +281,23 @@ def query_quantizable_nodes(sym_model, ctx, dataloader):
     qsymnet = qmodel[0]
     qnodes_ops = {n['name']: n['op'].lower() for n in json.loads(qsymnet.tojson())['nodes']}
 
+    # collect fp32 tensors
+    collector = NameCollector()
+    run_forward(sym_model, ctx, dataloader, [True], collector)
+    tensors = set(collector.names)
+
+    # map tensors to nodes
+    tensor_to_node = {}
+    nodes = set(nodes_ops.keys())
+    for tensor in tensors:
+        node = _tensor_to_node(tensor, nodes)
+        if node != '':
+            tensor_to_node[tensor] = node
+        elif tensor in calib_tensors:
+            tensor_to_node[tensor] = tensor
+    assert set(calib_tensors).issubset(set(tensor_to_node.keys()))
+    calib_nodes = [tensor_to_node[ct] for ct in calib_tensors]
+
     quantizable = {}
     for qsym in qsymnet.get_internals():
         if qnodes_ops[qsym.name] in NULL_OP_NAMES:
@@ -290,31 +307,15 @@ def query_quantizable_nodes(sym_model, ctx, dataloader):
         node_name = sym_name if node_name == '' else node_name
         assert qnodes_ops[qsym.name] not in QUANTIZE_OP_NAMES or (op_type == OpType.QUANTIZE), \
             'Quantize node was not recognised properly. Node name: "{}"'.format(node_name)
-        if op_type == OpType.QUANTIZE:
-            quantizable[node_name] = QUANTIZE_OP_NAME
-        elif op_type == OpType.QUANTIZED:
-            quantizable[node_name] = nodes_ops[node_name]
+        if node_name in calib_nodes:
+            if op_type == OpType.QUANTIZE:
+                quantizable[node_name] = QUANTIZE_OP_NAME
+            elif op_type == OpType.QUANTIZED:
+                quantizable[node_name] = nodes_ops[node_name]
 
-    quantizable_nodes = [{'name': name, 'type': op}
-                         for (name, op) in quantizable.items()]
-
-    # getting tensors to nodes mapping (for adaptor.inspect_tensor)
-
-    # collect fp32 tensors
-    collector = NameCollector()
-    run_forward(sym_model, ctx, dataloader, [True], collector)
-    tensors = set(collector.names)
-
-    # map tensors to nodes
-    tensor_to_node = {}
-    nodes = set(quantizable.keys())
-    for tensor in tensors:
-        node = _tensor_to_node(tensor, nodes)
-        if node != '':
-            tensor_to_node[tensor] = node
-    assert set(calib_tensors).issubset(set(tensor_to_node.keys()))
-
-    return quantizable_nodes, tensor_to_node
+    quantizable_nodes = [{'name': name, 'type': op} for (name, op) in quantizable.items()]
+    op_nodes = {k: v for k, v in nodes_ops.items() if v not in NULL_OP_NAMES}
+    return quantizable_nodes, tensor_to_node, op_nodes
 
 
 def quantize_sym_model(sym_model, ctx, qconfig):
@@ -593,8 +594,13 @@ def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
     assert len(kl_tensors & minmax_tensors) == 0, 'same `calib_tensors` entries matched both kl ' \
         'and minmax nodes. Entries: {}'.format(kl_tensors & minmax_tensors)
 
+    # `rest` are the nodes that require callibration because of some node being excluded
+    # for example: input -> quantize -> conv_1 -> pooling -> conv_2
+    # when conv_1 is quantized, pooling output does not require callibration
+    # when conv_1 is excluded, pooling output requires callibration (as it is input of a quantized
+    # node): input -> conv_1 -> pooling -> quantize -> conv_2
     rest = calib_tensors - (kl_tensors | minmax_tensors)
-    assert len(rest) == 0, 'Unexpected `calib_tensors` entries. Entries: {}'.format(rest)
+    minmax_tensors |= rest # assign them to the minmax algorithm by default
 
     return (kl_tensors, minmax_tensors)
 
@@ -754,9 +760,6 @@ class TensorCollector(CollectorBase):
         if node in self.include_nodes:
             op = self.include_nodes[node]
             key = (node, op)
-            # rewriting should only take place for quantize nodes
-            assert (key not in self.tensors_dicts[-1] or name not in self.tensors_dicts[-1][key]
-                    or op == QUANTIZE_OP_NAME)
             self.tensors_dicts[-1].setdefault(key, {})[name] = (is_quantized, arr.copy())
 
     def pre_batch(self, m, b):
