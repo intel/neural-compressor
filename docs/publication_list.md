@@ -1,11 +1,14 @@
 Full Publications 
 ==========
 
+* [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
+* [Intel® Neural Compressor oneAPI](https://www.intel.com/content/www/us/en/developer/tools/oneapi/neural-compressor.html) (Jun 2022)
 * [Intel® Deep Learning Boost - Boost Network Security AI Inference Performance in Google Cloud Platform (GCP)](https://networkbuilders.intel.com/solutionslibrary/intel-deep-learning-boost-boost-network-security-ai-inference-performance-in-google-cloud-platform-gcp-technology-guide) (Apr 2022)
 * [INC as PT ecosystem project](https://pytorch.org/ecosystem/) (Apr 2022)
 * [New instructions in the Intel® Xeon® Scalable processors combined with optimized software frameworks enable real-time AI within network workloads](https://builders.intel.com/docs/networkbuilders/ai-technologies-unleash-ai-innovation-in-network-applications-solution-brief-1637303210.pdf) (Feb 2022)
 * [Quantizing ONNX Models using Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Quantizing-ONNX-Models-using-Intel-Neural-Compressor/post/1355237) (Feb 2022)
 * [Quantize AI Model by Intel® oneAPI AI Analytics Toolkit on Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) (Feb 2022)
+* [Intel Neural Compressor Quantization with SigOpt](https://sigopt.com/blog/intel-neural-compressor-quantization-with-sigopt/) (Jan 2022) 
 * [AI Performance and Productivity with Intel® Neural Compressor](https://twitter.com/IntelAI/status/1469079414562557952) (Jan 2022)
 * [Ease-of-use quantization for PyTorch with Intel® Neural Compressor](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html) (Jan 2022)
 * [Intel Neural Compressor Tutorial on BiliBili](https://space.bilibili.com/1840724569?from=search&seid=8673550305007703901&spm_id_from=333.337.0.0) (Dec 2021)
