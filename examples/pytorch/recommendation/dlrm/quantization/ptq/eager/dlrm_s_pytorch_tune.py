@@ -70,7 +70,6 @@ import numpy as np
 import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-import onnx
 
 # pytorch
 import torch
@@ -926,7 +925,7 @@ if __name__ == "__main__":
         dlrm.bot_l.append(DeQuantStub())
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-        if args.do_int8_inference:
+        if args.int8:
             from neural_compressor.utils.pytorch import load
             import os
             dlrm = load(
@@ -935,7 +934,7 @@ if __name__ == "__main__":
         exit(0)
 
 
-    if args.do_int8_inference and args.inference_only:
+    if args.int8 and args.inference_only:
         print('do_int8_inference')
         fuse_list = []
         for i in range(0, len(dlrm.bot_l), 2):
@@ -1325,6 +1324,7 @@ if __name__ == "__main__":
 
     # export the model in onnx
     if args.save_onnx:
+        import onnx
         with open("dlrm_s_pytorch.onnx", "w+b") as dlrm_pytorch_onnx_file:
             (X, lS_o, lS_i, _) = train_data[0]  # get first batch of elements
             torch.onnx._export(
