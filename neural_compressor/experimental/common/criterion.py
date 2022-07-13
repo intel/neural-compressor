@@ -371,7 +371,12 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         outputs = None
         if self.loss_weights[1] > 0 and input is not None:
             model = self.teacher_model if teacher_model is None else teacher_model
-            outputs = model(input, training=True)
+            if isinstance(input, list) or isinstance(input, tuple):  # pragma: no cover
+                outputs = model(*input, training=True)
+            elif isinstance(input, dict):  # pragma: no cover
+                outputs = model(**input, training=True)
+            else:
+                outputs = model(input, training=True)
             self.teacher_outputs = outputs
         return outputs
 
@@ -452,7 +457,12 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
         outputs = None
         if self.loss_weights[1] > 0 and input is not None:
             model = self.teacher_model if teacher_model is None else teacher_model
-            outputs = model(input, training=True)
+            if isinstance(input, list) or isinstance(input, tuple):  # pragma: no cover
+                outputs = model(*input, training=True)
+            elif isinstance(input, dict):  # pragma: no cover
+                outputs = model(**input, training=True)
+            else:
+                outputs = model(input, training=True)
             self.teacher_outputs = outputs
         return outputs
 

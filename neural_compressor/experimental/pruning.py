@@ -315,6 +315,16 @@ class TfPruningCallback(object):
     def on_train_end(self, logs=None):
         self.hooks['on_train_end']()
 
+    def pre_epoch_begin(self, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_train_begin` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_train_begin(logs)
+
+    def post_epoch_end(self, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_train_end` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_train_end(logs)
+
     def on_epoch_begin(self, epoch, logs=None):
         self._set_weights()
         self.hooks['on_epoch_begin'](epoch)
@@ -335,6 +345,11 @@ class TfPruningCallback(object):
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
+    def on_batch_begin(self, batch, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_step_begin` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_step_begin(batch, logs)
+
     def on_after_compute_loss(self, input, s_outputs, s_loss, t_outputs=None):
         return self.hooks['on_after_compute_loss'](input, s_outputs, s_loss, t_outputs)
 
@@ -345,3 +360,8 @@ class TfPruningCallback(object):
             get_weights = self.model.layers[layer_index].get_weights()
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
+
+    def on_batch_end(self, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_step_end` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_step_end(logs)
