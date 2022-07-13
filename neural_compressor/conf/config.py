@@ -1019,14 +1019,23 @@ schema = Schema({
     },
 
     Optional('nas'): {
-        Optional("approach", default=None): str,
+        Optional("approach", default=None): Or(str, None),
         Optional("search"): {
-            Optional("search_space", default=None): dict,
-            Optional("search_algorithm", default=None): str,
+            Optional("search_space", default=None): Or(dict, None),
+            Optional("search_algorithm", default=None): Or(str, None),
             Optional("metrics", default=None): list,
             Optional("higher_is_better", default=None): list,
             Optional("max_trials", default=None): int,
             Optional("seed", default=42): int,
+            },
+        Optional("dynas"): {
+            Optional("supernet", default=None): str,
+            Optional("metrics", default=None): list,
+            Optional("population", default=50): int,
+            Optional("num_evals", default=100000): int,
+            Optional("results_csv_path", default=None): str,
+            Optional("dataset_path", default=None): str,
+            Optional("batch_size", default=64): int,
             },
     },
 
@@ -1559,6 +1568,38 @@ class Distillation_Conf(Conf):
                 cfg, copy.deepcopy(distillation_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
+
+class NASConfig(Conf):
+    """config parser.
+
+    Args:
+        approach: The approach of the NAS.
+        search_algorithm: The search algorithm for NAS procedure.
+
+    """
+
+    def __init__(self, approach=None, search_space=None, search_algorithm=None):
+        assert approach is None or (isinstance(approach, str) and approach), \
+            "Should set approach with a string."
+        usr_cfg = {
+            'model': {'name': 'nas', 'framework': 'NA'},
+            'nas': {'approach': approach,
+                    'search': {
+                        'search_space': search_space,
+                        'search_algorithm': search_algorithm}
+                    },
+        }
+        self.usr_cfg = DotDict(usr_cfg)
+        if approach and approach != 'basic':
+            self.usr_cfg.nas[approach] = DotDict({})
+            self.__setattr__(approach, self.usr_cfg.nas[approach])
+
+    def validate(self):
+        self.usr_cfg = schema.validate(self.usr_cfg)
+        
+    @property
+    def nas(self):
+        return self.usr_cfg.nas
 
 class DefaultConf(DotDict):
     def __getitem__(self, key):

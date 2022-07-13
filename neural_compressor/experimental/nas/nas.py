@@ -22,17 +22,19 @@ import shutil
 from collections.abc import Iterable
 from .nas_utils import find_pareto_front, NASMethods
 from .search_algorithms import BayesianOptimizationSearcher, GridSearcher, RandomSearcher
-from neural_compressor.conf.config import Conf
+from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.utils.utility import logger, LazyImport
 
 torch = LazyImport('torch')
 
 
 class NAS(object):
-    def __new__(self, conf_fname, *args, **kwargs):
-        if isinstance(conf_fname, str):
-            if os.path.isfile(conf_fname):
-                self.conf = Conf(conf_fname).usr_cfg
+    def __new__(self, conf_fname_or_obj, *args, **kwargs):
+        if isinstance(conf_fname_or_obj, str):
+            if os.path.isfile(conf_fname_or_obj):
+                self.conf = Conf(conf_fname_or_obj).usr_cfg
+        elif isinstance(conf_fname_or_obj, NASConfig):
+            self.conf = conf_fname_or_obj.usr_cfg
         else: # pragma: no cover
             raise NotImplementedError(
                 "Please provide a str path to the config file."
@@ -46,7 +48,7 @@ class NAS(object):
                 "NAS approach not set in config, use default NAS approach, i.e. Basic."
             )
             method = 'basic'
-        return NASMethods[method](conf_fname, *args, **kwargs)
+        return NASMethods[method](conf_fname_or_obj, *args, **kwargs)
 
 
 class NASBase(object):
@@ -264,8 +266,10 @@ class NASBase(object):
         elif self.search_algorithm_type.lower() == 'bo':
             self._search_algorithm = BayesianOptimizationSearcher(self.search_space, self.seed)
         else: # pragma: no cover
-            raise NotImplementedError(
-                'Unsupported \'{}\' search algorithm'.format(self.search_algorithm_type)
+            logger.warning(
+                'Please be aware that \'{}\' is not a built-in search algorithm.'.format(
+                    self.search_algorithm_type
+                )
             )
 
     @property

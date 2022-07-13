@@ -4,12 +4,16 @@
 /venv/
 */__pycache__
 *.snapshot
+*.csv
 *.pb
 *.ckpt
 *.log
 *.swp
 *.onnx
+*.so
+*.egg-info/
 tags
 build/
 _build
 lpot_workspace/
+.torch/

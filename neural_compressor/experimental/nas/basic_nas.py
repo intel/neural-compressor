@@ -20,7 +20,7 @@ import os
 from .nas import NASBase
 from .nas_utils import nas_registry
 from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.conf.config import Conf
+from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.experimental.component import Component
 from neural_compressor.utils.create_obj_from_config import \
     create_dataloader, create_train_func, create_eval_func
@@ -36,10 +36,10 @@ class BasicNAS(NASBase, Component):
             model architecture parameters.
 
     """
-    def __init__(self, conf_fname, search_space=None, model_builder=None):
+    def __init__(self, conf_fname_or_obj, search_space=None, model_builder=None):
         NASBase.__init__(self, search_space=search_space, model_builder=model_builder)
         Component.__init__(self)
-        self.init_by_cfg(conf_fname)
+        self.init_by_cfg(conf_fname_or_obj)
 
     def execute(self):
         return self.search()
@@ -56,19 +56,22 @@ class BasicNAS(NASBase, Component):
         self._train_func(model)
         return self._eval_func(model)
 
-    def init_by_cfg(self, conf_fname):
-        if isinstance(conf_fname, str):
-            if os.path.isfile(conf_fname):
-                self.conf = Conf(conf_fname)
+    def init_by_cfg(self, conf_fname_or_obj):
+        if isinstance(conf_fname_or_obj, str):
+            if os.path.isfile(conf_fname_or_obj):
+                self.conf = Conf(conf_fname_or_obj)
             else: # pragma: no cover
                 raise FileNotFoundError(
                     "{} is not a file, please provide a NAS config file path.".format(
-                        conf_fname
+                        conf_fname_or_obj
                     )
                 )
+        elif isinstance(conf_fname_or_obj, NASConfig):
+            conf_fname_or_obj.validate()
+            self.conf = conf_fname_or_obj
         else: # pragma: no cover
             raise NotImplementedError(
-                "Please provide a str path to the config file."
+                "Please provide a str path to the config file or an object of NASConfig."
             )
         self._init_with_conf()
         assert self.cfg.nas is not None, "nas section must be set"
