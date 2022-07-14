@@ -554,7 +554,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     matched_node_name.append(sub_rule[0])
                     matched_node_name.append(cur_node_name)
 
-                    count = 0
                     while sub_rule_len > 1:
                         if not self.node_name_mapping[cur_node_name].output:
                             self.logger.debug("Fail to match {}".format(sub_rule))
@@ -563,53 +562,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         next_node_name = self.node_name_mapping[
                             cur_node_name].output[0]
 
-                        is_shared_output = True if len(
-                            self.node_name_mapping[cur_node_name].output
-                        ) > 1 else False
-
-                        add_op_quantizable = True
-                        is_hardswish = False
-                        if is_shared_output:
-                            if next_node_name.find('hard_swish') != -1:
-                                self.logger.debug("Find Hard Swish pattern ......")
-                                is_hardswish = True
-                                count = count + 1
-                                if next_node_name.find('add') == -1:
-                                    next_node_name = self.node_name_mapping[
-                                        cur_node_name].output[1]
-                            else:
-                                add_op_quantizable = False
                         next_node_op = self.node_name_mapping[
                             next_node_name].node.op
 
-                        if next_node_op in ("Add", "AddV2", "AddN"):
-                            next_node = self.node_name_mapping[
-                                next_node_name].node
-                            next_node_inputs = list(next_node.input)
-                            cur_node_index = next_node_inputs.index(
-                                cur_node_name)
-
-                            for index, input_name in enumerate(
-                                    next_node_inputs):
-                                node_type = self.node_name_mapping[helper.node_name_from_input(
-                                    input_name)].node.op
-                                if input_name != cur_node_name and index < cur_node_index and \
-                                        node_type != 'Dequantize':
-                                    add_op_quantizable = False
-                                    break
-                        if add_op_quantizable and next_node_op == sub_rule[-sub_rule_len]:
-                            if not is_shared_output:
-                                matched_node_name.append(next_node_name)
-                                sub_rule_len -= 1
-                                cur_node_name = next_node_name
-                            elif is_hardswish:
-                                matched_node_name.append(next_node_name)
-                                sub_rule_len -= 1
-                                cur_node_name = next_node_name
-                            else:
-                                matched_node_name.clear()
-                                self.logger.debug("Fail to match {}.".format(sub_rule))
-                                break
+                        if next_node_op == sub_rule[-sub_rule_len]:
+                            matched_node_name.append(next_node_name)
+                            sub_rule_len -= 1
+                            cur_node_name = next_node_name
                         else:
                             matched_node_name.clear()
                             self.logger.debug("Fail to match {}.".format(sub_rule))
@@ -617,12 +576,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
                     if sub_rule_len == 1:
                         matched_node_name.append(sub_rule[-1])
-                        if check_hardswish and sub_rule[-2] == 'Mul' and \
-                                sub_rule[-3] == 'Mul' and sub_rule[-4] == 'Relu6' and \
-                                sub_rule[-5] == 'Add' and count != 1:
-                            matched_node_name.clear()
-                            self.logger.debug("Fail to match {}.".format(sub_rule))
-                            break
                         self.logger.debug("Match {} on nodes {}.".
                                           format(sub_rule, matched_node_name))
                         return sub_rule, matched_node_name

@@ -167,8 +167,6 @@ class TestItexEnabling(unittest.TestCase):
 
             dequant_count = 0
             for i in output_graph.graph_def.node:
-                if 'min' in i.name or 'max' in i.name:
-                    self.assertEqual(i.op, 'HostConst')
                 if i.op == 'HostConst':
                     self.assertTrue('min' in i.name or 'max' in i.name)
                 if i.op == 'Dequantize':

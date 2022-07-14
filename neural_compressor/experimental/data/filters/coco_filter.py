@@ -20,7 +20,7 @@ from .filter import Filter, filter_registry
 tf = LazyImport('tensorflow')
 
 @filter_registry(filter_type="LabelBalanceCOCORecord", framework="tensorflow, \
-                 inteltensorflow, tensorflow_itex, tensorflow_qdq, tensorflow_itex_qdq")
+                 inteltensorflow, tensorflow_itex")
 class LabelBalanceCOCORecordFilter(Filter):
     def __init__(self, size=1):
         self.size = size
@@ -29,7 +29,7 @@ class LabelBalanceCOCORecordFilter(Filter):
         return tf.math.equal(len(label[0]), self.size)
 
 @filter_registry(filter_type="LabelBalanceCOCORaw", framework="tensorflow, \
-                 inteltensorflow, tensorflow_itex, tensorflow_qdq, tensorflow_itex_qdq, \
+                 inteltensorflow, tensorflow_itex, \
                  pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
 class LabelBalanceCOCORawFilter(Filter):
     def __init__(self, size=1):

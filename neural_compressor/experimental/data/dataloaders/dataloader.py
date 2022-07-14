@@ -24,8 +24,6 @@ from .default_dataloader import DefaultDataLoader
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "inteltensorflow": TensorflowDataLoader,
                "tensorflow_itex": TensorflowDataLoader,
-               "tensorflow_qdq": TensorflowDataLoader,
-               "tensorflow_itex_qdq": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
                "pytorch": PyTorchDataLoader,
                "pytorch_ipex": PyTorchDataLoader,

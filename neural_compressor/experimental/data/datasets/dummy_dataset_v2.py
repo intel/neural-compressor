@@ -25,7 +25,6 @@ mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
 @dataset_registry(dataset_type="dummy_v2", framework="tensorflow, inteltensorflow, tensorflow_itex, \
-                                                      tensorflow_qdq, tensorflow_itex_qdq, \
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')
@@ -145,7 +144,6 @@ class DummyDataset(IterableDataset):
         return sys.maxsize
 
 @dataset_registry(dataset_type="sparse_dummy_v2", framework="tensorflow, inteltensorflow, tensorflow_itex, \
-                                                      tensorflow_qdq, tensorflow_itex_qdq, \
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')

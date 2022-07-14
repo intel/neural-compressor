@@ -22,7 +22,7 @@ from .dataset import dataset_registry, Dataset
 
 
 @dataset_registry(dataset_type="style_transfer", framework="tensorflow, inteltensorflow, \
-                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
+                  tensorflow_itex", dataset_format='')
 class StyleTransferDataset(Dataset):
     """Dataset used for style transfer task.
        This Dataset is to construct a dataset from two specific image holders representing

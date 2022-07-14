@@ -248,7 +248,7 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex_qdq':
+    if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                   rewriter_config_pb2.RewriterConfig.OFF
@@ -448,7 +448,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex_qdq':
+    if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                  rewriter_config_pb2.RewriterConfig.OFF
@@ -530,7 +530,7 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex_qdq':
+    if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                     rewriter_config_pb2.RewriterConfig.OFF
@@ -997,8 +997,6 @@ class MXNetModel(BaseModel):
 MODELS = {'tensorflow': TensorflowModel,
           'inteltensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,
-          'tensorflow_qdq': TensorflowModel,
-          'tensorflow_itex_qdq': TensorflowModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel if TORCH else None,
           'pytorch_ipex': PyTorchIpexModel if TORCH else None,

@@ -101,7 +101,7 @@ class QuantizeNodeBase():
         """
         pass
 
-    def _insert_dummy_biasadd(self, match_node_name, matched_node):
+    def _insert_dummy_biasadd(self, match_node_name, matched_node): # pragma: no cover
          target_node_name = matched_node.node.name
          matmul_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
          matmul_a_node = self.node_name_mapping[matmul_a_node_name].node
@@ -199,7 +199,7 @@ class QuantizeNodeBase():
 
                         add_op_quantizable = True 
                         is_hardswish = False
-                        if is_shared_output:
+                        if is_shared_output:  # pragma: no cover
                             if next_node_name.find('hard_swish') != -1:
                                 self.logger.debug("Find Hard Swish pattern ......")
                                 is_hardswish = True
@@ -233,7 +233,7 @@ class QuantizeNodeBase():
                                 matched_node_name.append(next_node_name)
                                 sub_rule_len -= 1
                                 cur_node_name = next_node_name
-                            elif is_hardswish and self.new_api:
+                            elif is_hardswish and self.new_api: # pragma: no cover
                                 matched_node_name.append(next_node_name)
                                 sub_rule_len -= 1
                                 cur_node_name = next_node_name

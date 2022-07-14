@@ -116,7 +116,7 @@ class MXNetImagenetRaw(ImagenetRaw):
         return (image, label)
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="tensorflow, inteltensorflow, \
-                  tensorflow_qdq, tensorflow_itex_qdq", dataset_format='')
+                  tensorflow_itex", dataset_format='')
 class TensorflowImagenetRaw(ImagenetRaw):
     def __getitem__(self, index):
         image_path, label = self.image_list[index], self.label_list[index]

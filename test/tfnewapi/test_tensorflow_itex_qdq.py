@@ -24,7 +24,7 @@ class TestItexEnabling(unittest.TestCase):
         fake_yaml_1 = '''
         model:
           name: fake_model_cpu
-          framework: tensorflow_itex_qdq
+          framework: tensorflow_itex
           inputs: input
         device: cpu
         quantization:

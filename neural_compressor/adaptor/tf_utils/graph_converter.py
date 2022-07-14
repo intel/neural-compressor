@@ -56,8 +56,8 @@ from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
-from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeNewAPITransformer
-from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeNewAPITransformer
+#from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeNewAPITransformer
+#from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeNewAPITransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
@@ -88,7 +88,7 @@ class GraphConverter:
                  data_loader=None,
                  fake_quant=False,
                  itex_mode=False,
-                 qdq_pattern_enabled=False,
+                 qdq_enabled=False,
                  new_api=False):
         """Convert graph.
 
@@ -114,7 +114,7 @@ class GraphConverter:
         self.recipes = recipes
         self.fake_quant = fake_quant
         self.itex_mode = itex_mode
-        self.qdq_pattern_enabled = qdq_pattern_enabled
+        self.qdq_enabled = qdq_enabled
         self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
@@ -281,7 +281,7 @@ class GraphConverter:
         """
         model = self._tmp_model
         if len(self.op_wise_config) > 0:
-            if self.qdq_pattern_enabled:
+            if self.qdq_enabled:
                 model = self.quantize_with_qdq_pattern()
             else:
                 model = self.quantize()
@@ -583,7 +583,8 @@ class GraphConverter:
             self.device, self.new_api).do_transformation()
 
         if not self.fake_quant:
-            #if self.qdq_pattern_enabled:
+            # TODO Use MatMul and BatchMatMul new API
+            #if self.qdq_enabled:
             #    self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
             #        self._tmp_graph_def).do_transformation()
             #
@@ -721,7 +722,7 @@ class GraphConverter:
         for i in self.quantized_node_info:
             frame_name = self._rnn_details[i] if i in self._rnn_details else None
             sampling_graph_def, output_names = InsertPrintMinMaxNode(
-                sampling_graph_def, i[0], i[-1]).do_transformation()
+                sampling_graph_def, i[0], i[-1], frame_name).do_transformation()
             output_tensor_names.extend(output_names)
 
         if self.quantized_node_info:
