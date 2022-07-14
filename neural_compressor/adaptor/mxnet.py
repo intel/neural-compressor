@@ -78,7 +78,7 @@ class MxNetAdaptor(Adaptor):
         calib_cache = nc_model.calib_cache
 
         def calib_func(tmp_tune_cfg, dataloader):
-            quant_cfg, calib_cfg = parse_tune_config(tmp_tune_cfg, self.quantizable_nodes)
+            quant_cfg, calib_cfg, amp_cfg = parse_tune_config(tmp_tune_cfg, self.quantizable_nodes)
             logger.debug("Dump quantization configurations:")
             logger.debug(quant_cfg)
 
@@ -89,10 +89,14 @@ class MxNetAdaptor(Adaptor):
             qsym_model = calib_model(qsym_model, calib_data, calib_cfg)
             qsym_model = fuse(qsym_model, self.ctx)  # post-quantization fusion
 
+            if len(amp_cfg['excluded_sym_names']) < len(self.quantizable_nodes):
+                qsym_model = amp_convert(qsym_model, dataloader.input_desc, amp_cfg)
+
             q_nc_model = make_nc_model(nc_model, qsym_model, self.ctx, dataloader.input_desc)
             q_nc_model.calib_cache['last'] = calib_data.th_dict
             q_nc_model.q_config = {
                 'mxnet_version': mx.__version__,
+                'amp_cfg': amp_cfg,
                 'quant_cfg': quant_cfg,
                 'calib_cfg': calib_cfg,
                 'th_dict': calib_data.th_dict,
@@ -259,23 +263,38 @@ class MxNetAdaptor(Adaptor):
         Returns:
             dict: modelwise and opwise config.
         """
-        # op_type_wise and op_wise capability
-        sym_model, self.qdataloader = prepare_model_data(nc_model, self.ctx,
-                                                         self.qdataloader)
+        sym_model, self.qdataloader = prepare_model_data(nc_model, self.ctx, self.qdataloader)
+        # (TODO) to allign with other fw, set pre_optimized_model here
+        self.pre_optimized_model = sym_model
 
         self.quantizable_nodes, self._tensor_to_node, all_op_nodes = query_quantizable_nodes(
             sym_model, self.ctx, self.qdataloader)
 
+        config = self.query_handler.get_quantization_capability()['int8']
+        bf16_config = self.query_handler.get_quantization_capability().get('bf16', {})
+        valid_precisions = self.query_handler.get_mixed_precision_combination()
+        use_bf16 = ('bf16' in valid_precisions and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1'
+        if use_bf16:
+            config = combine_capabilities(config, bf16_config)
+
         op_type_wise = OrderedDict()
         op_wise = OrderedDict()
-        config = self.query_handler.get_quantization_capability()['int8']
-        # (TODO) to allign with other fw, set pre_optimized_model here
-        self.pre_optimized_model = sym_model
         for node in self.quantizable_nodes:
-            optype = node['type']
-            op_capability = config.get(optype, config['default'])
-            op_type_wise.setdefault(optype, op_capability)
+            op_capability = config.get(node['type'], config['default'])
+            op_type_wise.setdefault(node['type'], op_capability)
             op_wise.setdefault((node['name'], node['type']), op_capability)
+
+        if use_bf16:
+            for node_name, op_name in all_op_nodes.items():
+                if (node_name, op_name) not in op_wise and op_name in bf16_config:
+                    op_type_wise.setdefault(op_name, bf16_config[op_name])
+                    op_wise.setdefault((node_name, op_name), bf16_config[op_name])
+
+        # make sure configurations are independent
+        for op, cfg in op_type_wise.items():
+            op_type_wise[op] = deepcopy(cfg)
+        for key, cfg in op_wise.items():
+            op_wise[key] = deepcopy(cfg)
 
         return {'optypewise': op_type_wise, 'opwise': op_wise}
 
@@ -461,14 +480,11 @@ class MXNetQuery(QueryBackendCapability):
         """
         return deepcopy(self.cur_config['capabilities'])
 
-    def get_mixed_precision_combination(self, unsupported_precisions=None):
+    def get_mixed_precision_combination(self):
         """Get the valid precision combination base on hardware and user' config.
             e.g['fp32', 'bf16', 'int8']
         """
-        self.valid_mixed_precision = []
-        if self.cur_config['precisions']['valid_mixed_precisions']:  # pragma: no cover
-            for single in self.cur_config['precisions']['valid_mixed_precisions']:
-                if not unsupported_precisions in single:
-                    self.valid_mixed_precision.append(single)
-        return self.valid_mixed_precision if self.valid_mixed_precision \
-            else list(self.get_precisions().split(','))
+        if self.cur_config['precisions']['valid_mixed_precisions']:
+            return [i.strip() for i in self.cur_config['precisions']['valid_mixed_precisions']]
+
+        return [i.strip() for i in self.get_precisions().split(',')]

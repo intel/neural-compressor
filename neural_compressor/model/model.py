@@ -983,14 +983,14 @@ class MXNetModel(BaseModel):
         os.makedirs(os.path.dirname(root), exist_ok=True)
 
         if isinstance(self._model, mx.gluon.HybridBlock):
-            self._model.export(root)
+            self._model.export(root, remove_amp_cast=False)
             logger.info("Save quantized hybrid block model to {}.".format(root))
         else:
             symnet, args, auxs = self._model
             symnet = symnet.as_nd_ndarray()
             args = {k:v.as_nd_ndarray() for k, v in args.items()}
             auxs = {k:v.as_nd_ndarray() for k, v in auxs.items()}
-            mx.model.save_checkpoint(root, 0, symnet, args, auxs)
+            mx.model.save_checkpoint(root, 0, symnet, args, auxs, remove_amp_cast=False)
             logger.info("Save quantized symbol model to {}.".format(root))
 
 

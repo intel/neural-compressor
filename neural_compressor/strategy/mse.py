@@ -159,7 +159,7 @@ class MSETuneStrategy(TuneStrategy):
 
         if best_cfg is not None:
             # Inspect FP32 and dequantized tensor
-            if self.ordered_ops is None:
+            if self.ordered_ops is None or "ops_mse" not in locals():
                 op_lists = self.opwise_quant_cfgs.keys()
                 op_mapping = {}
                 for (op_name, op_type) in list(op_lists):

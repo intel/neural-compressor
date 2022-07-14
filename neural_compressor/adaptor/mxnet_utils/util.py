@@ -82,6 +82,20 @@ def check_mx_version(version):
     return d1 >= d2
 
 
+def combine_capabilities(current, new):
+    if isinstance(current, list):
+        assert isinstance(new, list)
+        return list(set(current) | set(new))
+    assert isinstance(current, dict) and isinstance(new, dict)
+    current = current.copy()
+    new = new.copy()
+    for k, v in current.items():
+        current[k] = combine_capabilities(v, new.get(k, type(v)()))
+        new.pop(k, None)
+    current.update(new)
+    return current
+
+
 def make_nc_model(target, sym_model, ctx, input_desc):
     """Converts a symbolic model to an Neural Compressor model.
 
@@ -155,7 +169,7 @@ def prepare_model(nc_model, ctx, input_desc):
         model_x(*create_data_example(ctx, input_desc))
         with TemporaryDirectory() as tmpdirname:
             prefix = os.path.join(tmpdirname, 'tmp')
-            model_x.export(prefix, epoch=0)
+            model_x.export(prefix, epoch=0, remove_amp_cast=False)
             sym_model = mx.model.load_checkpoint(prefix, 0)
     elif isinstance(model_x, tuple) and isinstance(model_x[0], mx.symbol.Symbol):
         sym_model = model_x
@@ -528,23 +542,18 @@ def parse_tune_config(tune_cfg, quantizable_nodes):
     excluded_symbols = []
     calib_minmax_nodes = set()
     calib_kl_nodes = set()
-
-    quantize_node_cfg = None
-    for (node_name, op), d in tune_cfg['op'].items():
-        if op == QUANTIZE_OP_NAME:
-            quantize_node_cfg = d['activation']['algorithm']
-            break
-    # assert quantize_node_cfg is not None, 'There must always be at least one quantize node'
-    if quantize_node_cfg is None:
-        quantize_node_cfg = QUANTIZE_DEFAULT_ALGORITHM
+    amp_excluded_nodes = set()
 
     for op in quantizable_nodes:
         cfg = tune_cfg['op'][(op['name'], op['type'])]['activation']
-        if cfg['dtype'] in ['fp32', 'bf16']:
+        if cfg['dtype'] not in ['bf16']:
+            amp_excluded_nodes.add(op['name'])
+        if cfg['dtype'] not in ['int8']:
             excluded_symbols.append(op['name'])
             # config for quantize node, that might be added after this node
             # (to quantize its output)
-            cfg['algorithm'] = quantize_node_cfg
+            cfg['algorithm'] = QUANTIZE_DEFAULT_ALGORITHM
+
         if cfg['algorithm'] == 'kl':
             calib_kl_nodes.add(op['name'])
         else:
@@ -563,7 +572,10 @@ def parse_tune_config(tune_cfg, quantizable_nodes):
                  'calib_kl_nodes': calib_kl_nodes,
                  'calib_minmax_nodes': calib_minmax_nodes}
 
-    return quant_cfg, calib_cfg
+    amp_cfg = {'target_dtype': 'bfloat16',
+               'excluded_sym_names': amp_excluded_nodes}
+
+    return quant_cfg, calib_cfg, amp_cfg
 
 
 def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
@@ -628,6 +640,15 @@ def calib_model(qsym_model, calib_data, calib_cfg):
         return mx.contrib.quantization.calib_graph(
             qsymnet, qargs, auxs, calib_data, calib_cfg['calib_mode'],
             quantized_dtype=calib_cfg['quantized_dtype'])
+
+
+def amp_convert(sym_model, input_desc, amp_cfg):
+    assert check_mx_version('2.0.0'), 'AMP is supported since MXNet 2.0. This error is due to ' \
+        'an error in the configuration file.'
+    from mxnet import amp
+
+    input_dtypes = {i.name: i.dtype for i in input_desc}
+    return amp.convert_model(*sym_model, input_dtypes, **amp_cfg, cast_params_offline=True)
 
 
 class DataLoaderWrap:
