@@ -50,6 +50,11 @@ dataset_locations = {
 
 support_boundary_nodes = ["tensorflow"]
 
+configs_directory = os.path.join(
+    os.path.dirname(__file__),
+    "configs",
+)
+
 
 def deprecated(func: Callable) -> Any:
     """Signal deprecated function."""
@@ -121,8 +126,7 @@ def get_predefined_config_path(framework: str, domain: str, domain_flavour: str 
     ]
     for filename in possible_filenames:
         config_path = os.path.join(
-            os.path.dirname(__file__),
-            "configs",
+            configs_directory,
             "predefined_configs",
             f"{mapped_framework}",
             filename,
@@ -294,8 +298,7 @@ def get_size(path: str, unit: str = "MB", add_unit: bool = False) -> Union[str, 
 def load_model_config() -> Dict[str, Any]:
     """Load model configs from json."""
     json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
+        configs_directory,
         "models.json",
     )
     return _load_json_as_dict(json_path)
@@ -304,8 +307,7 @@ def load_model_config() -> Dict[str, Any]:
 def load_dataloader_config() -> List[Dict[str, Any]]:
     """Load dataloader configs from json."""
     json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
+        configs_directory,
         "dataloaders.json",
     )
     return _load_json_as_list(json_path)
@@ -314,8 +316,7 @@ def load_dataloader_config() -> List[Dict[str, Any]]:
 def load_transforms_config() -> List[Dict[str, Any]]:
     """Load transforms configs from json."""
     json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
+        configs_directory,
         "transforms.json",
     )
     return _load_json_as_list(json_path)
@@ -324,8 +325,7 @@ def load_transforms_config() -> List[Dict[str, Any]]:
 def load_transforms_filter_config() -> Dict[str, Any]:
     """Load meaningful transforms configs from json."""
     json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
+        configs_directory,
         "transforms_filter.json",
     )
     return _load_json_as_dict(json_path)
@@ -334,11 +334,28 @@ def load_transforms_filter_config() -> Dict[str, Any]:
 def load_precisions_config() -> dict:
     """Load transforms configs from json."""
     json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
+        configs_directory,
         "precisions.json",
     )
     return _load_json_as_dict(json_path)
+
+
+def load_model_wise_params(framework: str) -> dict:
+    """Load model wise parameters for specified framework."""
+    json_path = os.path.join(
+        configs_directory,
+        "model_wise_params.json",
+    )
+    model_wise_params = _load_json_as_dict(json_path)
+    parameters = model_wise_params.get("common", {})
+    framework_specific_params = model_wise_params.get(framework, {})
+    for param_type, params_dict in framework_specific_params.items():
+        for param in params_dict.keys():
+            if param in parameters[param_type]:
+                parameters[param_type][param].extend(params_dict[param])
+            else:
+                parameters[param_type].update({param: params_dict[param]})
+    return {"model_wise": parameters}
 
 
 def get_metrics_dict() -> dict:
@@ -416,8 +433,7 @@ def _parse_help_in_dict(data: dict) -> list:
 def load_help_nc_params(parameter: str) -> Dict[str, Any]:
     """Load help info from json for metrics, objectives and strategies."""
     json_path = os.path.join(
-        os.path.dirname(__file__),
-        "configs",
+        configs_directory,
         f"{parameter}.json",
     )
     return _load_json_as_dict(json_path)

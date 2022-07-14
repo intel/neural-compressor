@@ -1,0 +1,19 @@
+<div class="mat-dialog-container">
+  <button mat-button id="error-close-btn" class="close-button" mat-dialog-close matTooltip="Close">&#x2573;</button>
+  <h1 mat-dialog-title>
+    Generate new configuration
+  </h1>
+
+  <div mat-dialog-content>
+    <p>Choose name for new optimization:
+      <mat-form-field appearance="fill">
+        <input matInput [(ngModel)]="optimizationName">
+      </mat-form-field>
+    </p>
+    <br />
+    <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent" class="float-right"
+      (click)="confirmGenerating()" queryParamsHandling="preserve">
+      <img src="./../../assets/056a-save-solid-white.svg">
+      Save
+    </button>
+  </div>

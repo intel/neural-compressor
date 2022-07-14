@@ -69,6 +69,7 @@ class OptimizationAddParamsInterface:
     batch_size: int
     sampling_size: int
     tuning_details: TuningDetailsInterface
+    diagnosis_config: dict
 
 
 class BenchmarkAddParamsInterface:
@@ -154,3 +155,13 @@ class TuningHistoryInterface:
         # if len(serialized_history) > 0:
         result.update({"history": serialized_history})
         return result
+
+
+class DiagnosisOptimizationParamsInterface:
+    """Interface for parameters for generating optimization from diagnosis tab."""
+
+    project_id: int
+    optimization_id: int
+    optimization_name: str
+    op_wise: dict
+    model_wise: dict

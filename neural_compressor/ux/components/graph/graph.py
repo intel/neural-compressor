@@ -65,3 +65,25 @@ class Graph(JsonSerializer):
         if id not in self._nodes:
             raise NotFoundException(f"Node id: {id} not found in Graph")
         return self._nodes[id]
+
+    def highlight_pattern(self, op_name: str, pattern: List[str]) -> None:
+        """Highlight pattern in graph."""
+        source_op = op_name
+        self.get_node(source_op).highlight = True
+        for op in pattern[1:]:
+            target_nodes = self.get_target_nodes(source_op)
+            for target_node in target_nodes:
+                if target_node.label == op:
+                    self.get_node(target_node.id).highlight = True
+                    source_op = target_node.id
+                    continue
+
+    def get_target_nodes(self, op_name: str) -> List[Node]:
+        """Get target nodes from specified op."""
+        target_nodes: List[Node] = []
+
+        for edge in self.edges:
+            if edge.source == op_name:
+                target_nodes.append(self.get_node(edge.target))
+
+        return target_nodes

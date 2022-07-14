@@ -1,0 +1,26 @@
+{
+    "common": {
+        "weight": {
+            "granularity": ["per_channel", "per_tensor"],
+            "scheme": ["asym", "sym"],
+            "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
+            "algorithm": ["minmax"],
+            "bit": 7.0
+        },
+        "activation": {
+            "granularity": ["per_channel", "per_tensor"],
+            "scheme": ["asym", "sym"],
+            "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
+            "algorithm": ["minmax", "kl"]
+        }
+    },
+    "pytorch": {
+        "weight": {
+            "scheme": ["asym_float"]
+        },
+        "activation": {
+            "compute_dtype": ["int8", "uint8", "fp32", "bf16", "None"],
+            "algorithm": ["placeholder"]
+        }
+    }
+}

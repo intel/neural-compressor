@@ -33,6 +33,7 @@ export class ModelService {
   optimizationCreated$: Subject<boolean> = new Subject<boolean>();
   benchmarkCreated$: Subject<boolean> = new Subject<boolean>();
   projectChanged$: Subject<{}> = new Subject<{}>();
+  getNodeDetails$: Subject<string> = new Subject<string>();
 
   token;
   systemInfo = {};
@@ -79,6 +80,17 @@ export class ModelService {
     }
     return this.http.get(
       this.baseUrl + 'api/model/graph' + '?path=' + path + groupsParam
+    );
+  }
+
+  highlightPatternInGraph(path: string, op_name: string, pattern: string[]) {
+    return this.http.post(
+      this.baseUrl + 'api/model/graph/highlight_pattern',
+      {
+        path: [path],
+        op_name: op_name,
+        pattern: pattern
+      }
     );
   }
 
@@ -282,6 +294,56 @@ export class ModelService {
       {
         id: id,
         name: name
+      }
+    );
+  }
+
+  getOpList(project_id: number, model_id: number) {
+    return this.http.post(
+      this.baseUrl + `api/diagnosis/op_list`,
+      {
+        project_id: project_id,
+        model_id: model_id
+      }
+    );
+  }
+
+  getOpDetails(project_id: number, model_id: number, op_name: string) {
+    return this.http.post(
+      this.baseUrl + `api/diagnosis/op_details`,
+      {
+        project_id: project_id,
+        model_id: model_id,
+        op_name: op_name
+      }
+    );
+  }
+
+  generateOptimization(changes: any) {
+    return this.http.post(
+      this.baseUrl + `api/diagnosis/generate_optimization`,
+      changes
+    );
+  }
+
+  getModelWiseParams(optimization_id: number) {
+    return this.http.post(
+      this.baseUrl + `api/diagnosis/model_wise_params`,
+      {
+        optimization_id: optimization_id
+      }
+    );
+  }
+
+  getHistogram(project_id: number, model_id: number, op_name: string, type: 'activation' | 'weights') {
+    return this.http.post(
+      this.baseUrl + `api/diagnosis/histogram`,
+      {
+        project_id: project_id,
+        model_id: model_id,
+        op_name: op_name,
+        type: type
+
       }
     );
   }

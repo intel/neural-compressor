@@ -218,3 +218,21 @@ table.rounded {
 .right {
   float: right;
 }
+
+.center {
+  text-align: center;
+}
+
+mat-button-toggle-group {
+  border: 3px solid $energy-blue;
+  border-radius: 0.5rem;
+  font-size: 150%;
+}
+
+mat-button-toggle {
+  padding: 0px 20px 0px 20px;
+}
+
+.mat-button-toggle-checked {
+  background-color: $pale-blue;
+}

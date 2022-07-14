@@ -109,6 +109,14 @@ class TestConfig(unittest.TestCase):
                 "accuracy_criterion": {"relative": 0.01},
                 "exit_policy": {"timeout": 0},
                 "random_seed": 9527,
+                "diagnosis": {
+                    "diagnosis_after_tuning": True,
+                    "op_list": ["op_1", "op_2"],
+                    "iteration_list": [1, 2],
+                    "inspect_type": "weight",
+                    "save_to_disk": True,
+                    "save_path": "/path/to/save/diagnosis/results",
+                },
             },
             "graph_optimization": {
                 "precisions": "bf16, fp32",
@@ -219,6 +227,14 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.tuning.random_seed, 9527)
         self.assertIsNone(config.tuning.tensorboard)
         self.assertIsNone(config.tuning.workspace)
+
+        self.assertIsNotNone(config.tuning.diagnosis)
+        self.assertTrue(config.tuning.diagnosis.diagnosis_after_tuning)
+        self.assertListEqual(config.tuning.diagnosis.op_list, ["op_1", "op_2"])
+        self.assertListEqual(config.tuning.diagnosis.iteration_list, [1, 2])
+        self.assertEqual(config.tuning.diagnosis.inspect_type, "weight")
+        self.assertTrue(config.tuning.diagnosis.save_to_disk)
+        self.assertEqual(config.tuning.diagnosis.save_path, "/path/to/save/diagnosis/results")
 
         self.assertIsNotNone(config.quantization)
         self.assertIsNotNone(config.quantization.calibration)
@@ -527,6 +543,14 @@ class TestConfig(unittest.TestCase):
                     "accuracy_criterion": {"relative": 0.01},
                     "exit_policy": {"timeout": 0},
                     "random_seed": 9527,
+                    "diagnosis": {
+                        "diagnosis_after_tuning": True,
+                        "op_list": ["op_1", "op_2"],
+                        "iteration_list": [1, 2],
+                        "inspect_type": "weight",
+                        "save_to_disk": True,
+                        "save_path": "/path/to/save/diagnosis/results",
+                    },
                 },
                 "graph_optimization": {
                     "precisions": "bf16,fp32",

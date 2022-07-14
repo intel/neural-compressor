@@ -40,6 +40,7 @@ from neural_compressor.ux.utils.utils import (
     load_dataloader_config,
     load_help_nc_params,
     load_model_config,
+    load_model_wise_params,
     load_transforms_config,
     normalize_string,
     parse_to_string_list,
@@ -294,6 +295,57 @@ class TestUtils(unittest.TestCase):
         """Test getting neural_compressor strategies tooltips."""
         with self.assertRaises(FileNotFoundError):
             load_help_nc_params("unknown_param")
+
+    def test_load_common_model_wise_params(self) -> None:
+        """Test getting common model wise parameters."""
+        framework = "non existing framework"
+        result = load_model_wise_params(framework)
+
+        expected = {
+            "model_wise": {
+                "weight": {
+                    "granularity": ["per_channel", "per_tensor"],
+                    "scheme": ["asym", "sym"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
+                    "algorithm": ["minmax"],
+                    "bit": 7.0,
+                },
+                "activation": {
+                    "granularity": ["per_channel", "per_tensor"],
+                    "scheme": ["asym", "sym"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
+                    "algorithm": ["minmax", "kl"],
+                },
+            },
+        }
+
+        self.assertDictEqual(result, expected)
+
+    def test_load_pytorch_model_wise_params(self) -> None:
+        """Test getting pytorch model wise parameters."""
+        framework = "pytorch"
+        result = load_model_wise_params(framework)
+
+        expected = {
+            "model_wise": {
+                "weight": {
+                    "granularity": ["per_channel", "per_tensor"],
+                    "scheme": ["asym", "sym", "asym_float"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
+                    "algorithm": ["minmax"],
+                    "bit": 7.0,
+                },
+                "activation": {
+                    "granularity": ["per_channel", "per_tensor"],
+                    "scheme": ["asym", "sym"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
+                    "algorithm": ["minmax", "kl", "placeholder"],
+                    "compute_dtype": ["int8", "uint8", "fp32", "bf16", "None"],
+                },
+            },
+        }
+
+        self.assertDictEqual(result, expected)
 
     def verify_file_path(self) -> None:
         """Check if path can be accessed."""

@@ -1,0 +1,136 @@
+<div class="container">
+  <mat-spinner style="margin:0 auto;" mode="indeterminate" class="big-spinner-center"
+    [style.display]="showSpinner ? 'block' : 'none'">
+  </mat-spinner>
+  <div class="item-no-background width-200">
+    <h3 class="center width-200">Models</h3>
+    <mat-button-toggle-group class="toggle-group width-200" [(ngModel)]="modelId"
+      (change)="getOpList(modelId)" vertical="true">
+      <mat-button-toggle *ngFor="let model of models" [value]="model.id">
+        {{ model.name }}
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <br>
+    <br>
+    <br>
+    <h3 class="center width-200">Actions</h3>
+    <button mat-raised-button color="accent" class="width-200 margin-5px" (click)="openModelWiseDialog()">
+      <img src="./../../assets/016-edit-white.svg">
+      Model wise
+    </button>
+    <br>
+    <button [disabled]="objectKeys(updatedValues).length === 0 && objectKeys(modelWise).length === 0" mat-raised-button
+      color="accent" class="width-200 margin-5px" (click)="applyChanges()">
+      <img src="./../../assets/056a-save-solid-white.svg">
+      Generate configuration
+    </button>
+    <br>
+    <button [disabled]="objectKeys(updatedValues).length === 0 && objectKeys(modelWise).length === 0" mat-raised-button
+      class="width-200 margin-5px" (click)="viewConfiguration()">
+      <img
+        [attr.src]="objectKeys(updatedValues).length === 0 && objectKeys(modelWise).length === 0 ? './../../assets/052a-browse-preview-solid-white.svg' : './../../assets/052a-browse-preview-solid-gray.svg'">
+      View configuration
+    </button>
+  </div>
+
+  <div [ngClass]="{'item': true, 'graph': showOps, 'graph-100': !showOps}">
+    <app-graph [modelPath]="modelPath" [diagnosisTab]="true" [diagnosisTabParams]="opDetails"></app-graph>
+  </div>
+
+  <div *ngIf="showOps" class="item-no-background op-table">
+    <mat-card class="overflow">
+      <table class="rounded overflow" *ngIf="opList[0]">
+        <tr>
+          <td class="header" *ngFor="let parameter of opList[0] | keyvalue : returnZero">{{ parameter.key }}
+          </td>
+        </tr>
+        <tr *ngFor="let op of opList" [ngClass]="{'active': op['OP name'] === activeOp, 'pointer': true}"
+          (click)="getOpDetails(modelId, op['OP name'])" matTooltip="Click to see details">
+          <td [ngClass]=" typeOf(parameter.value) === 'number' ? 'align-right' : 'center'"
+            *ngFor="let parameter of op | keyvalue : returnZero">
+            <span *ngIf="parameter.key === 'OP name'" matBadgeOverlap="false"
+              [matBadge]="updatedValues[parameter.value] ? objectKeys(updatedValues[parameter.value]).length : null"
+              [matBadgeHidden]="!updatedValues[parameter.value] || objectKeys(updatedValues[parameter.value]).length === 0">
+              {{ parameter.value }}
+            </span>
+            <ng-container *ngIf="parameter.key !== 'OP name' && parameter.key !== 'MSE'">
+              {{ parameter.value | number: "1.2-2" }}
+            </ng-container>
+            <ng-container *ngIf="parameter.key === 'MSE'">
+              {{ parameter.value.toExponential(3) }}
+            </ng-container>
+          </td>
+        </tr>
+      </table>
+    </mat-card>
+    <br>
+
+    <mat-card *ngIf="opDetails['OP name']">
+      <table class="rounded">
+        <tr>
+          <td class="header">{{ opDetails['OP name'] }}
+          </td>
+        </tr>
+      </table>
+
+      <div class="op-details">
+        <div class="gray-background field">
+          <h3>Pattern</h3>
+          sequence: {{ opDetails['Pattern']['sequence'] | json }}<br>
+          precision:
+          <mat-form-field class="select" appearance="outline">
+            <mat-select [(ngModel)]="precision"
+              (selectionChange)="updateValue('precision', precision, opDetails['OP name'])">
+              <mat-option *ngFor="let prec of ['int8', 'fp32']" [value]="prec">
+                {{ prec }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <h3>Weights
+            <button mat-raised-button color="primary" class="right" (click)="activeType = 'weights'">
+              <img src="./../../assets/291b-line-chart-outlined.svg">
+              Get weight histograms
+            </button>
+          </h3>
+          dtype: {{ opDetails['Weights']['dtype'] }}<br>
+          granularity:
+          <mat-form-field class="select" appearance="outline">
+            <mat-select [(ngModel)]="granularity" [disabled]="precision === 'float32'"
+              (selectionChange)="updateValue('granularity', granularity, opDetails['OP name'])">
+              <mat-option *ngFor="let gran of ['per_channel', 'per_tensor']" [value]="gran">
+                {{ gran }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="gray-background field">
+          <h3>Activation
+            <button mat-raised-button color="primary" class="right" (click)="activeType = 'activation'">
+              <img src="./../../assets/291b-line-chart-outlined.svg">
+              Get activation histograms
+            </button>
+          </h3>
+          dtype: {{ opDetails['Activation']['dtype'] }}
+        </div>
+
+        <button [disabled]="!updatedValues[opDetails['OP name']]" mat-raised-button color="warn"
+          class="right margin-5px" (click)="resetChanges(opDetails['OP name'])">
+          &#x2715; Reset changes
+        </button>
+        <br>
+        <br>
+        <br>
+
+        <div id="histograms" [hidden]="!(modelId && activeOp && activeType)">
+          <app-histogram *ngIf="modelId && activeOp && activeType" [modelId]="modelId" [opName]="activeOp"
+            [type]="activeType"></app-histogram>
+        </div>
+      </div>
+    </mat-card>
+
+  </div>

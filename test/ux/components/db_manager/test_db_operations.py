@@ -17,13 +17,16 @@
 import unittest
 from unittest.mock import patch
 
-from neural_compressor.ux.components.db_manager.db_operations import DatasetAPIInterface
+from neural_compressor.ux.components.db_manager.db_operations import (
+    DatasetAPIInterface,
+    DiagnosisAPIInterface,
+)
 from neural_compressor.ux.utils.consts import DomainFlavours, Domains, Frameworks
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 
 
 @patch("sys.argv", ["inc_bench.py", "-p5000"])
-class TestDatasetAPIInerface(unittest.TestCase):
+class TestDatasetAPIInterface(unittest.TestCase):
     """Test class for Dataset API Interface."""
 
     def test_get_predefined_dataset_without_params(self) -> None:
@@ -283,3 +286,67 @@ class TestDatasetAPIInerface(unittest.TestCase):
             "metric_param": {},
         }
         self.assertDictEqual(actual, expected)
+
+
+@patch("sys.argv", ["inc_bench.py", "-p5000"])
+class TestDiagnosisAPIInterface(unittest.TestCase):
+    """Test class for Dataset API Interface."""
+
+    def test_parse_op_wise_config(self) -> None:
+        """Test parsing op wise config."""
+        data: dict = {
+            "MobilenetV1/Logits/Conv2d_1c_1x1/Conv2D": {
+                "pattern": {
+                    "precision": "float32",
+                },
+            },
+            "MobilenetV1/MobilenetV1/Conv2d_0/Conv2D": {
+                "pattern": {
+                    "precision": "bfloat16",
+                },
+                "weight": {
+                    "granularity": "per_tensor",
+                },
+            },
+        }
+
+        parsed_data = DiagnosisAPIInterface.parse_op_wise_config(data)
+        expected = {
+            "MobilenetV1/Logits/Conv2d_1c_1x1/Conv2D": {
+                "weight": {
+                    "dtype": ["float32"],
+                },
+                "activation": {
+                    "dtype": ["float32"],
+                },
+            },
+            "MobilenetV1/MobilenetV1/Conv2d_0/Conv2D": {
+                "weight": {
+                    "dtype": ["bfloat16"],
+                    "granularity": ["per_tensor"],
+                },
+                "activation": {
+                    "dtype": ["bfloat16"],
+                },
+            },
+        }
+
+        self.assertDictEqual(parsed_data, expected)
+
+    def test_parse_model_wise_config(self) -> None:
+        """Test parsing model wise config."""
+        data: dict = {"weight": {"scheme": "sym", "bit": 7}, "activation": {"algorithm": "minmax"}}
+
+        parsed_data = DiagnosisAPIInterface.parse_model_wise_config(data)
+
+        expected = {
+            "weight": {
+                "scheme": ["sym"],
+                "bit": [7],
+            },
+            "activation": {
+                "algorithm": ["minmax"],
+            },
+        }
+
+        self.assertDictEqual(parsed_data, expected)

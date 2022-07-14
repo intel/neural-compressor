@@ -403,25 +403,6 @@
                         "value": "/path/to/vocab.txt"
                     }
                 ]
-            },
-            {
-                "name": "SquadV1ModelZoo",
-                "help": null,
-                "domains": [
-                    "Neural Language Processing"
-                ],
-                "params": [
-                    {
-                        "name": "label_file",
-                        "help": "Label file path.",
-                        "value": "/path/to/dev-v1.1.json"
-                    },
-                    {
-                        "name": "vocab_file",
-                        "help": "Vocab file path.",
-                        "value": "/path/to/vocab.txt"
-                    }
-                ]
             }
         ]
     },

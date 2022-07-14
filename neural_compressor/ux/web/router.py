@@ -27,6 +27,7 @@ from neural_compressor.ux.components.configuration_wizard.params_feeder import g
 from neural_compressor.ux.components.db_manager.db_operations import (
     BenchmarkAPIInterface,
     DatasetAPIInterface,
+    DiagnosisAPIInterface,
     DictionariesAPIInterface,
     ExamplesAPIInterface,
     ModelAPIInterface,
@@ -137,6 +138,7 @@ class Router:
             "model/list": RealtimeRoutingDefinition(ModelAPIInterface.list_models),
             "model/boundary_nodes": DeferredRoutingDefinition(get_boundary_nodes),
             "model/graph": RealtimeRoutingDefinition(get_model_graph),
+            "model/graph/highlight_pattern": RealtimeRoutingDefinition(find_pattern_in_graph),
             "model/download": RealtimeRoutingDefinition(ModelService.get_model),
             "dict/domains": RealtimeRoutingDefinition(DictionariesAPIInterface.list_domains),
             "dict/domain_flavours": RealtimeRoutingDefinition(
@@ -167,6 +169,19 @@ class Router:
             "dict/metrics": RealtimeRoutingDefinition(DictionariesAPIInterface.list_metrics),
             "dict/metrics/framework": RealtimeRoutingDefinition(
                 DictionariesAPIInterface.list_metrics_by_framework,
+            ),
+            "diagnosis/op_list": RealtimeRoutingDefinition(DiagnosisAPIInterface.get_op_list),
+            "diagnosis/op_details": RealtimeRoutingDefinition(
+                DiagnosisAPIInterface.get_op_details,
+            ),
+            "diagnosis/histogram": RealtimeRoutingDefinition(
+                DiagnosisAPIInterface.histogram,
+            ),
+            "diagnosis/generate_optimization": RealtimeRoutingDefinition(
+                DiagnosisAPIInterface.generate_optimization,
+            ),
+            "diagnosis/model_wise_params": RealtimeRoutingDefinition(
+                DiagnosisAPIInterface.model_wise_params,
             ),
         }
 
@@ -217,6 +232,25 @@ def get_model_graph(data: Dict[str, Any]) -> Graph:
         model_path=RequestDataProcessor.get_string_value(data, "path"),
         expanded_groups=data.get("group", []),
     )
+
+
+def find_pattern_in_graph(data: Dict[str, Any]) -> dict:
+    """Find OP pattern in graph for diagnosis tab."""
+    graph_reader = GraphReader()
+
+    model_path = RequestDataProcessor.get_string_value(data, "path")
+    op_name = data.get("op_name", None)
+    pattern = data.get("pattern", None)
+    if any([param is None for param in [model_path, op_name, pattern]]):
+        raise ClientErrorException(
+            "Missing parameters. Required parameters are: path, op_name and pattern.",
+        )
+    model_graph, expanded_groups = graph_reader.find_pattern_in_graph(
+        model_path=model_path,
+        op_name=op_name,
+        pattern=pattern,
+    )
+    return {"graph": model_graph.serialize(), "groups": expanded_groups}
 
 
 def get_system_info(data: Dict[str, Any]) -> dict:

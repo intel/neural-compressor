@@ -100,7 +100,6 @@ class PostprocessSchema(JsonSerializer):
         self.LabelShift = data.get("LabelShift", None)  # [Optional] >0
         self.Collect = data.get("Collect", None)
         self.SquadV1 = data.get("SquadV1", None)
-        self.SquadV1ModelZoo = data.get("SquadV1ModelZoo", None)
 
 
 class Postprocess(JsonSerializer):

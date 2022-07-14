@@ -139,20 +139,32 @@ class ConfigurationParser:
 
     def parse_transforms(self, transforms_data: List[dict]) -> List[dict]:
         """Parse transforms list."""
+        parsed_transform_data: List[dict] = []
         for transform in transforms_data:
+            parsed_transform_params: dict = {}
             params_to_parse = transform.get("params", None)
             if isinstance(params_to_parse, dict):
                 for param_name, value in params_to_parse.items():
+                    if value == "":
+                        continue
+
                     param_type: Union[Type, List[Type]] = self.get_param_type(
                         "transform",
                         param_name,
                     )
                     if transform.get("name") == "RandomResizedCrop" and param_name == "scale":
                         param_type = [float]
-                    transform["params"].update(
+
+                    parsed_transform_params.update(
                         {param_name: self.parse_value(value, param_type)},
                     )
-        return transforms_data
+            parsed_transform_data.append(
+                {
+                    "name": transform.get("name"),
+                    "params": parsed_transform_params,
+                },
+            )
+        return parsed_transform_data
 
     def parse_dataloader(self, dataloader_data: dict) -> dict:
         """Parse dataloader dict."""

@@ -59,6 +59,7 @@ class TensorflowReader:
                 Node(
                     id=current_node_id,
                     label=node_def.op,
+                    highlight=False,
                     properties={
                         "name": node_def.name,
                         "type": node_def.op,

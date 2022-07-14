@@ -25,6 +25,8 @@ import { ModelService } from '../services/model.service';
 export class GraphComponent implements OnChanges, OnInit {
 
   @Input() modelPath: string;
+  @Input() diagnosisTab?: boolean;
+  @Input() diagnosisTabParams?: {};
 
   edges: Edge[] = [];
   nodes: Node[] = [];
@@ -67,7 +69,28 @@ export class GraphComponent implements OnChanges, OnInit {
 
   ngOnChanges(): void {
     this.showSpinner = true;
-    this.getGraph();
+    if (this.diagnosisTabParams['Pattern']) {
+      this.highlightPatternInGraph();
+    } else {
+      this.getGraph();
+    }
+  }
+
+  highlightPatternInGraph() {
+    this.modelService.highlightPatternInGraph(
+      this.modelPath,
+      this.diagnosisTabParams['OP name'],
+      this.diagnosisTabParams['Pattern']['sequence']
+    )
+      .subscribe(
+        response => {
+          this.updateGraph(response['graph']);
+          this.expandedNodesArray = response['groups'];
+          this.panToNodeObservable.next(this.diagnosisTabParams['OP name']);
+        },
+        error => {
+          this.modelService.openErrorDialog(error);
+        });
   }
 
   getGraph() {
@@ -102,7 +125,8 @@ export class GraphComponent implements OnChanges, OnInit {
         attributes: node.attributes,
         properties: node.properties,
         node_type: node.node_type,
-        color: this.customColor[node.label.length % this.customColor.length]
+        highlight: node.highlight,
+        color: node.label.includes('Relu') ? this.customColor[1] : this.customColor[0]
       });
     });
     graph.edges.forEach(edge => {
@@ -117,7 +141,12 @@ export class GraphComponent implements OnChanges, OnInit {
   }
 
   getDetails(node: Node) {
-    this.nodeDetails = node;
+    if (this.diagnosisTab) {
+      this.modelService.getNodeDetails$.next(node.id);
+    } else {
+      this.nodeDetails = node;
+      this.sidenav.open()
+    }
   }
 
   close() {

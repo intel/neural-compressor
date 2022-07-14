@@ -84,19 +84,20 @@
             src="./../../assets/307-org-chart-disabled.svg">
           <div joyrideStep="graphTour" [stepContent]="graphTour"
             [matTooltip]="!project['input_model']['supports_graph'] ? 'Graph is not available for this model.' : null">
-            Graph
+            Diagnosis
           </div>
         </ng-template>
         <ng-template #graphTour>
           Here you can see the graphic visualization of the model.
         </ng-template>
         <ng-template matTabContent>
-          <app-graph *ngIf="project['input_model']['supports_graph']" [modelPath]="project['input_model']['path']">
-          </app-graph>
+          <app-diagnosis *ngIf="project['input_model']['supports_graph']" [modelPath]="project['input_model']['path']"
+            [inputModelId]="project['input_model']['id']">
+          </app-diagnosis>
           <p *ngIf="!project['input_model']['supports_graph']">Graph is not available for this model.</p>
         </ng-template>
       </mat-tab>
-    </ng-container>
+    </ng-container> -->
 
     <mat-tab>
       <ng-template mat-tab-label>

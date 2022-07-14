@@ -29,6 +29,7 @@ class Node(JsonSerializer):
         self,
         id: str,
         label: str,
+        highlight: bool = False,
         properties: Dict[str, Any] = {},
         attributes: List[Attribute] = [],
         groups: List[str] = [],
@@ -37,6 +38,7 @@ class Node(JsonSerializer):
         super().__init__()
         self.id = id
         self.label = label
+        self.highlight = highlight
         self.properties = properties
         self.attributes = attributes
         self.groups = groups
