@@ -57,7 +57,7 @@ function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
     elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --benchmark "
+        mode_cmd=" --benchmark --max_eval_samples 200 "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
