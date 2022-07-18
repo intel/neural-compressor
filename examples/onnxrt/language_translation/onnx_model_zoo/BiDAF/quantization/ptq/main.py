@@ -90,8 +90,8 @@ class EM:
         self.items = []
       
     def update(self, pred, label):
-        start = np.asscalar(pred[0])
-        end = np.asscalar(pred[1])
+        start = pred[0].item()
+        end = pred[1].item()
         self.items.append([' '.join([w[0] for w in label[0][start:end+1]]), label[1]])
         
     def reset(self):
