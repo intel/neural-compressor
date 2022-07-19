@@ -116,4 +116,6 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
             return self.output_graph
 
+        if self.remove_redundant_quant_flag:
+            self.input_graph = self.remove_redundant_quantization(self.input_graph)
         return self.input_graph

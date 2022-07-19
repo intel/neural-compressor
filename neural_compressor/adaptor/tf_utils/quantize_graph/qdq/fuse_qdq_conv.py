@@ -1694,6 +1694,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
             return self.output_graph
 
+        if self.remove_redundant_quant_flag:
+            self.input_graph = self.remove_redundant_quantization(self.input_graph)
         return self.input_graph
 
     def _is_match_conv(self, patterns, qdq_inserted=False):
