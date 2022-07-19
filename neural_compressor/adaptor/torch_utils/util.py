@@ -18,10 +18,9 @@
 import re
 import numpy as np
 from collections import UserDict
-from ...utils.utility import LazyImport
+from ...utils.utility import LazyImport, CpuInfo
 
 torch = LazyImport("torch")
-
 
 def get_embedding_contiguous(model):
     """This is a helper function for nn.Embedding,
@@ -100,3 +99,52 @@ def append_attr(fx_model, model):
         attr = getattr(model, name)
         setattr(fx_model, name, attr)
     return fx_model
+
+
+def generate_activation_observer(scheme, algorithm):
+    kl_activation_observer = {
+                    'name': 'HistogramObserver', 
+                    'bins': 2048,
+                    'upsample_rate': 128,
+                    'dtype': 'torch.quint8',
+                    'qscheme': 'torch.per_tensor_affine',
+                    'reduce_range': False,
+                    'quant_min': 0,
+                    'quant_max': 255
+                    }
+    minmax_activation_observer = {
+                    "name": "MinMaxObserver",
+                    "dtype": "torch.quint8",
+                    "qscheme": "torch.per_tensor_affine",
+                    "reduce_range": False,
+                    "quant_min": 0,
+                    "quant_max": 255
+                }
+    REDUCE_RANGE = False if CpuInfo().vnni else True
+    if REDUCE_RANGE:
+        minmax_activation_observer["reduce_range"] = REDUCE_RANGE
+        kl_activation_observer["reduce_range"] = REDUCE_RANGE
+    if scheme == "sym":
+        minmax_activation_observer["qscheme"] = "torch.per_tensor_symmetric"
+        kl_activation_observer["qscheme"] = "torch.per_tensor_symmetric"
+    if algorithm == "kl":
+        return kl_activation_observer
+    if algorithm == "minmax":
+        return minmax_activation_observer
+
+def check_cfg_and_qconfig(op_name, tune_cfg, q_op_infos):
+    op_tune_cfg_activation_infos = tune_cfg[op_name]["activation"]
+    op_tune_cfg_weight_infos = tune_cfg[op_name]["weight"]
+    input_tensor_infos = q_op_infos[op_name[0][1]]['input_tensor_infos']
+    output_tensor_infos = q_op_infos[op_name[0][1]]['output_tensor_infos']
+    if op_tune_cfg_weight_infos['dtype'] == 'fp32':
+        if len(input_tensor_infos) == 2:
+            input_tensor_infos[0]["force_dtype"] = 'torch.float32'
+            input_tensor_infos[1]["force_dtype"] = 'torch.float32'
+        else:
+            input_tensor_infos["force_dtype"] = 'torch.float32'
+
+    q_op_infos[op_name[0][1]]['activation_observer'] = generate_activation_observer( \
+                                                    op_tune_cfg_activation_infos['scheme'], \
+                                                    op_tune_cfg_activation_infos['algorithm'])
+    return q_op_infos[op_name[0][1]]

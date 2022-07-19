@@ -50,7 +50,7 @@ function run_tuning {
   mkdir -p ${tuned_checkpoint}/dlrm_inference_accuracy_log
 
   LOG=${tuned_checkpoint}/dlrm_inference_accuracy_log
-
+  CORES=`lscpu | grep Core | awk '{print $4}'`
   ARGS=""
 
   $numa_cmd python -u $MODEL_SCRIPT \
@@ -62,7 +62,7 @@ function run_tuning {
   --numpy-rand-seed=727  --inference-only --ipex-interaction \
   --print-freq=100 --print-time --mini-batch-size=2048 --test-mini-batch-size=16384 \
   --test-freq=2048 --print-auc --tune --save-model=${tuned_checkpoint} $ARGS \
-  --load-model=${input_model} | tee $LOG
+  --load-model=${input_model} --num-cpu-cores=${CORES} | tee $LOG
 }
 
 main "$@"

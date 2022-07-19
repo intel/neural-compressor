@@ -22,7 +22,17 @@ model:                                               # mandatory. used to specif
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 102400                               # optional. default value is 100. used to set how many samples should be used in calibration.
-
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    weight:
+      granularity: per_channel
+      scheme: sym
+      dtype: int8
+      algorithm: minmax
+    activation:
+      granularity: per_tensor
+      scheme: sym
+      dtype: int8
+      algorithm: minmax
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.

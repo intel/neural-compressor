@@ -55,6 +55,12 @@ try:
 except ImportError:
     from tensorboardX import SummaryWriter
 
+try:
+    from intel_extension_for_pytorch.quantization import prepare, convert
+    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+    IPEX_112 = True
+except:
+    IPEX_112 = False
 logger = logging.getLogger(__name__)
 
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys())
@@ -779,28 +785,6 @@ def main():
 
             #if args.tune:
             def eval_func(model):
-                model.eval()
-                dumpy_tensor = torch.ones((args.eval_batch_size, 384), dtype=torch.long)
-                jit_inputs = (dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                if args.tune:
-                    args.int8 = False if model.ipex_config_path is None else True
-                    args.int8_configure = "" \
-                        if model.ipex_config_path is None else model.ipex_config_path
-                    model = model.model
-                    if args.int8:
-                        conf = ipex.quantization.QuantConf(configure_file=args.int8_configure)
-                        # convert model to trace model.
-                        if args.int8_fp32:
-                            model = ipex.quantization.convert(model, conf, jit_inputs)
-                            with torch.no_grad():
-                                y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                                y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                        elif args.use_jit:
-                            with torch.no_grad():
-                                model = torch.jit.trace(model, jit_inputs, strict=False)
-                                #model = torch.jit._recursive.wrap_cpp_module(torch._C._freeze_module(model._c, preserveParameters=True))
-                                model = torch.jit.freeze(model)
-
                 all_results = []
                 start_time = timeit.default_timer()
 
@@ -932,16 +916,26 @@ def main():
                 if args.int8:
                     config_file = os.path.join(args.output_dir, "best_configure.json")
                     assert os.path.exists(config_file), "there is no ipex config file, Please tune with Neural Compressor first!"
-                    conf = ipex.quantization.QuantConf(configure_file=config_file)
-                    model = ipex.quantization.convert(model, conf, jit_inputs)
+                    if IPEX_112:
+                        qconfig = QConfig(activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8), 
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric))
+                        prepared_model = prepare(model, qconfig, example_inputs=jit_inputs, inplace=False)
+                        prepared_model.load_qconf_summary(qconf_summary = config_file)
+                        convert_model = convert(prepared_model)
+                        traced_model = torch.jit.trace(convert_model, jit_inputs)
+                        traced_model = torch.jit.freeze(traced_model)
+                        model = traced_model
+                    else:
+                        conf = ipex.quantization.QuantConf(configure_file=config_file)
+                        model = ipex.quantization.convert(model, conf, jit_inputs)
+                        if args.use_jit:
+                            with torch.no_grad():
+                                model = torch.jit.trace(model, jit_inputs, strict=False)
+                                #model = torch.jit._recursive.wrap_cpp_module(torch._C._freeze_module(model._c, preserveParameters=True))
+                                model = torch.jit.freeze(model)
                     with torch.no_grad():
                         y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
                         y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                    if args.use_jit:
-                        with torch.no_grad():
-                            model = torch.jit.trace(model, jit_inputs, strict=False)
-                            #model = torch.jit._recursive.wrap_cpp_module(torch._C._freeze_module(model._c, preserveParameters=True))
-                            model = torch.jit.freeze(model)
                 if args.benchmark:
                     if args.use_share_weight:
                         threads = []

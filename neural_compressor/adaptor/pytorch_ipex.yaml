@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: '1.10'
+    name: '1.12'
 
   precisions: &default_precisions
     names: int8, uint8, fp32
@@ -25,6 +25,69 @@
   ops:
     int8: &ops_default_s8 ['conv3d', 'conv3d', 'batchNorm2d', 'batchNorm3d', 'linear', 'relu', 'convrelu2d',
            'convrelu3d', 'linearrelu', 'convbn2d', 'convbnrelu2d', 'convsumrelu2d', 'convsumrelu3d']
+    uint8: *ops_default_s8
+    fp32: ['*'] # '*' means all op types
+
+  capabilities: &1_12_capabilities
+    int8: &cap_1_12_s8 {
+            'conv2d': &cap_s8_1_12_Conv2d {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+                    },
+          'conv1d': *cap_s8_1_12_Conv2d,
+          'conv3d': *cap_s8_1_12_Conv2d,
+          'linear': *cap_s8_1_12_Conv2d,
+          'default': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          }
+    uint8: *cap_1_12_s8
+
+  patterns:
+    fp32: &ref_default_fp32 [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'conv2d + BN2d',
+        'conv3d + BN3d',
+        'conv3d + BN2d + ReLU',
+        'conv3d + BN3d + ReLU',
+        'conv3d + Relu',
+        'conv3d + Relu',
+        'conv3d + Sum + ReLU',
+        'conv3d + Sum + ReLU',
+        'linear + ReLU',
+        ]
+    int8: *ref_default_fp32
+    uint8: *ref_default_fp32
+
+-
+  version:
+    name: '1.10'
+
+  precisions:
+    << : *default_precisions
+
+  ops:
+    int8: *ops_default_s8
     uint8: *ops_default_s8
     fp32: ['*'] # '*' means all op types
   
@@ -39,7 +102,7 @@
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym', 'asym'],
+                        'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
@@ -56,7 +119,7 @@
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym', 'asym'],
+                        'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -65,17 +128,7 @@
     uint8: *cap_1_10_s8
 
   patterns:
-    fp32: &ref_default_fp32 [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
-        'conv2d + BN2d',
-        'conv3d + BN3d',
-        'conv3d + BN2d + ReLU',
-        'conv3d + BN3d + ReLU',
-        'conv3d + Relu',
-        'conv3d + Relu',
-        'conv3d + Sum + ReLU',
-        'conv3d + Sum + ReLU',
-        'linear + ReLU',
-        ]
+    fp32: *ref_default_fp32
     int8: *ref_default_fp32
     uint8: *ref_default_fp32
 
