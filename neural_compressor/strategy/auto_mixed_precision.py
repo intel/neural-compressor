@@ -207,7 +207,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             logger.debug(filtered_opwise_tune_cfgs)
             op_cfgs['op'] = OrderedDict()
             for op in filtered_opwise_tune_cfgs.keys():
-                op_cfgs['op'][op] = copy.deepcopy(filtered_opwise_tune_cfgs[op][0])
+                if filtered_opwise_tune_cfgs[op]:
+                    op_cfgs['op'][op] = copy.deepcopy(filtered_opwise_tune_cfgs[op][0])
             yield op_cfgs
 
         return

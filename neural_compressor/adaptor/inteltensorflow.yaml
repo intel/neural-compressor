@@ -304,7 +304,8 @@
 
 -
   version:
-    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.6.1', '2.6.2', '2.7.0', '2.8.0', '2.9.1', '1.15.0-up1', '1.15.0-up2']
+    name: ['2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.6.1', '2.6.2', '2.7.0', '2.8.0', '1.15.0-up1', '1.15.0-up2']
+
 
   precisions:
     names: int8, uint8, bf16, fp32
@@ -313,7 +314,12 @@
   ops:
     int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
-    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    bf16: ["Conv2D","Conv2DBackpropFilter","Conv2DBackpropInput","Conv3D","Conv3DBackpropFilterV2","Conv3DBackpropInputV2",
+    "DepthwiseConv2dNative","DepthwiseConv2dNativeBackpropFilter","DepthwiseConv2dNativeBackpropInput","MatMul","BatchMatMul",
+    "BatchMatMulV2","Add","AddN","AddV2","AvgPool","AvgPool3D","AvgPool3DGrad","AvgPoolGrad","BiasAdd","BiasAddGrad","BiasAddV1",
+    "FusedBatchNormV2","FusedBatchNormGradV2","FusedBatchNormGradV3","LeakyRelu","LeakyReluGrad","Mul","Sub","Concat","ConcatV2",
+    "Enter","EnsureShape","Equal","Exit","ExpandDims","Identity","MaxPool","MaxPool3D","MaxPool3DGrad","MaxPoolGrad","MaxPoolV2",
+    "Maximum","Merge","NextIteration","PreventGradient","Relu","Relu6","Relu6Grad","ReluGrad","Reshape"]  #TODO need to add more bf16 op types here
     fp32: ['*'] # '*' means all op types
 
   capabilities:
@@ -441,6 +447,142 @@
 
 -
   version:
+    name: ['2.1.0', '2.2.0']
+
+  precisions: 
+    names: int8, uint8, fp32
+    valid_mixed_precisions: []
+
+  ops: 
+    int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+    fp32: ['*'] # '*' means all op types
+
+  capabilities: 
+    int8: {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+    uint8: {
+          'Conv2D': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_channel','per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          'MatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'default': {
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'algorithm': ['minmax'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
+
+  patterns: 
+    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd'
+        ]
+    int8: [
+        'Conv2D + BiasAdd',
+        'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Relu6'
+        ]
+    uint8: [
+        'Conv2D + BiasAdd + AddN + Relu',
+        'Conv2D + BiasAdd + AddN + Relu6',
+        'Conv2D + BiasAdd + AddV2 + Relu',
+        'Conv2D + BiasAdd + AddV2 + Relu6',
+        'Conv2D + BiasAdd + Add + Relu',
+        'Conv2D + BiasAdd + Add + Relu6',
+        'Conv2D + BiasAdd + Relu',
+        'Conv2D + BiasAdd + Relu6',
+        'Conv2D + Add + Relu',
+        'Conv2D + Add + Relu6',
+        'Conv2D + Relu',
+        'Conv2D + Relu6',
+        'Conv2D + BiasAdd',
+        'DepthwiseConv2dNative + BiasAdd + Relu6',
+        'DepthwiseConv2dNative + BiasAdd + Relu',
+        'DepthwiseConv2dNative + Add + Relu6',
+        'DepthwiseConv2dNative + BiasAdd',
+        'MatMul + BiasAdd + Relu',
+        'MatMul + BiasAdd',
+  ]
+
+  grappler_optimization:
+    pruning: True                                    # optional. grappler pruning optimizer,default value is True.
+    shape: True                                      # optional. grappler shape optimizer,default value is True.
+    constfold: False                                 # optional. grappler constant folding optimizer, default value is True.
+    arithmetic: False                                # optional. grappler arithmetic optimizer,default value is False.
+    dependency: True                                 # optional. grappler dependency optimizer,default value is True.
+    debug_stripper: True                             # optional. grappler debug_stripper optimizer,default value is True.
+    loop: True                                       # optional. grappler loop optimizer,default value is True.
+
+-
+  version:
     name: '1.15.0-up3'
 
   precisions:
@@ -450,7 +592,13 @@
   ops:
     int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
     uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
-    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
+    bf16: ["Conv2D","Conv2DBackpropFilter","Conv2DBackpropInput","Conv3D","Conv3DBackpropFilterV2","Conv3DBackpropInputV2",
+    "DepthwiseConv2dNative","DepthwiseConv2dNativeBackpropFilter","DepthwiseConv2dNativeBackpropInput","MatMul","BatchMatMul",
+    "BatchMatMulV2","Add","AddN","AddV2","AvgPool","AvgPool3D","AvgPool3DGrad","AvgPoolGrad","BiasAdd","BiasAddGrad","BiasAddV1",
+    "FusedBatchNormV2","FusedBatchNormGradV2","FusedBatchNormV3","FusedBatchNormGradV3","LeakyRelu","LeakyReluGrad","Mul","Sub",
+    "Concat","ConcatV2","Enter","EnsureShape","Equal", "Exit","ExpandDims","Identity","MaxPool","MaxPool3D", "MaxPool3DGrad",
+    "MaxPoolGrad","MaxPoolV2","Maximum","Merge","NextIteration","PreventGradient", "Relu","Relu6","Relu6Grad","ReluGrad", "Reshape",
+    "Select","SelectV2","Shape", "ShapeN","Slice","Split","SplitV","Squeeze","StopGradient","Switch","Transpose","ZerosLike"]  #TODO need to add more bf16 op types here
     fp32: ['*'] # '*' means all op types
 
   capabilities:
