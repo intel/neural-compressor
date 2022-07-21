@@ -42,47 +42,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             'DequantizeBatchMatMulV2MulAdd': self.apply_batchmatmulv2_mul_add_fusion
         }
 
-    def _insert_dummy_biasadd(self, match_node_name, matched_node):
-        target_node_name = matched_node.node.name
-        matmul_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
-        matmul_a_node = self.node_name_mapping[matmul_a_node_name].node
-
-        _, normal_inputs = self._get_node_input(matched_node.node.name)
-        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
-
-        quantizev2_weights_name = q_weights_inputs[0]
-        _, weights_name = self._get_node_input(quantizev2_weights_name)
-        matmul_b_node_name = weights_name[0]
-        matmul_b_node = self.node_name_mapping[matmul_b_node_name].node
-
-        if matmul_a_node.op == 'Const' and matmul_b_node.op != 'Const':
-            pass
-        else:
-            from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-            g = GraphAnalyzer()
-            g.graph = self.input_graph
-            graph_info = g.parse_graph()
-            next_node_names = graph_info[matched_node.node.name].outputs
-            bias_node_name = target_node_name + '_dummy_biasadd'
-            bias_const_node_name = target_node_name + '_fake_const'
-
-            t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
-            bias_add_length = matmul_b_node.attr['value'].tensor.tensor_shape.dim[t_b_index].size
-            bias_add_content = [0.] * bias_add_length
-
-            bias_const_node = helper.create_constant_node(
-                bias_const_node_name, bias_add_content, dtypes.float32, shape=[bias_add_length])
-            bias_node = helper.create_node('BiasAdd', bias_node_name, [target_node_name, bias_const_node_name])
-            helper.set_attr_dtype(bias_node, "T", dtypes.float32)
-
-            g.add_node(bias_node, target_node_name, next_node_names)
-            g.add_node(bias_const_node, None, [bias_node_name])
-            self.input_graph = g.dump_graph()
-            self._parse_graph(self.input_graph)
-            new_match_node_name=match_node_name[:2]+[bias_node_name]+match_node_name[2:]
-            new_match_node_name=match_node_name[:2]+[bias_node_name]+match_node_name[2:]
-
-        return new_match_node_name
 
     def apply_matmul_biasadd_relu_fusion(self, match_node_name):
         # Dequantize + MatMul + BiasAdd + Relu + QuantizeV2
@@ -117,22 +76,19 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         second_node = self.node_name_mapping[match_node_name[2]].node
         skip_node_name = match_node_name[2:]
 
-        if second_node.op in ('Relu'):
-             new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
-             self.apply_matmul_biasadd_relu_fusion(new_match_node_name)
-             return match_node_name
-
         need_insert_dummy_biasadd = 1
-        add_a_node_name = helper.node_name_from_input(second_node.input[0])
-        add_a_node = self.node_name_mapping[add_a_node_name].node
-        add_b_node_name = helper.node_name_from_input(second_node.input[1])
-        add_b_node = self.node_name_mapping[add_b_node_name].node
-        if add_a_node.op != 'Const' and add_b_node.op == 'Const':
-             need_insert_dummy_biasadd = 0
-        if need_insert_dummy_biasadd:
-             new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
-             self.apply_matmul_biasadd_fusion(new_match_node_name[:3])
-             return match_node_name[:1]
+        offset = 1
+        if len(match_node_name) == 5:
+             add_a_node_name = helper.node_name_from_input(second_node.input[0])
+             add_a_node = self.node_name_mapping[add_a_node_name].node
+             add_b_node_name = helper.node_name_from_input(second_node.input[1])
+             add_b_node = self.node_name_mapping[add_b_node_name].node
+             if add_a_node.op != 'Const' and add_b_node.op == 'Const':
+                 need_insert_dummy_biasadd = 0
+                 offset = 0
+             if need_insert_dummy_biasadd:
+                 self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
+                 return match_node_name[1:2]
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -152,9 +108,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
-                bias_node_name = self.node_name_mapping[
-                    match_node_name[2]].node.input[1]
-                relu_node_name = match_node_name[3]
+                if need_insert_dummy_biasadd:
+                    t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
+                    bias_size = weights_content.shape[t_b_index]
+                    bias_node_name = node.name + "_fake_bias"
+                    bias_node = helper.create_constant_node(
+                        bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
+                    )
+                    self.add_output_graph_node(bias_node)
+                else:
+                    bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
+                relu_node_name = match_node_name[3-offset]
                 all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
                 all_input_names.append(q_weights_min_name)
                 all_input_names.append(q_weights_max_name)
@@ -193,6 +157,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
     def apply_matmul_biasadd_fusion(self, match_node_name):
         # Dequantize + MatMul + BiasAdd + QuantizeV2
+        skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
@@ -236,29 +201,22 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
               matched_node.output
         ) > 1 else False
 
+        need_insert_dummy_biasadd = 1
         if len(match_node_name) == 3:
-             if is_shared_output:
+            if is_shared_output:
                 self.output_graph = self.input_graph
                 return []
-             #not support single matmul yet
-             new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
-             self.apply_matmul_biasadd_fusion(new_match_node_name)
-             return match_node_name[1:2]
-
-        second_node = self.node_name_mapping[match_node_name[2]].node
-        skip_node_name = match_node_name[2:]
-        need_insert_dummy_biasadd = 1
-        add_a_node_name = helper.node_name_from_input(second_node.input[0])
-        add_a_node = self.node_name_mapping[add_a_node_name].node
-        add_b_node_name = helper.node_name_from_input(second_node.input[1])
-        add_b_node = self.node_name_mapping[add_b_node_name].node
-        if add_a_node.op != 'Const' and add_b_node.op == 'Const':
-             need_insert_dummy_biasadd = 0
-        if need_insert_dummy_biasadd:
-             new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
-             #after insert dummy biasadd, that is matmul+dummybiasadd+add*+relu*
-             self.apply_matmul_biasadd_fusion(new_match_node_name[:3])
-             return match_node_name[1:2]
+        else:
+            second_node = self.node_name_mapping[match_node_name[2]].node
+            add_a_node_name = helper.node_name_from_input(second_node.input[0])
+            add_a_node = self.node_name_mapping[add_a_node_name].node
+            add_b_node_name = helper.node_name_from_input(second_node.input[1])
+            add_b_node = self.node_name_mapping[add_b_node_name].node
+            if add_a_node.op != 'Const' and add_b_node.op == 'Const':
+                 need_insert_dummy_biasadd = 0
+            if need_insert_dummy_biasadd:
+                 self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
+                 return match_node_name[1:2]
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -278,7 +236,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
-                bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
+                if need_insert_dummy_biasadd:
+                    t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
+                    bias_size = weights_content.shape[t_b_index]
+                    bias_node_name = node.name + "_fake_bias"
+                    bias_node = helper.create_constant_node(
+                        bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
+                    )
+                    self.add_output_graph_node(bias_node)
+                else:
+                    bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
+
                 all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
                 all_input_names.append(q_weights_min_name)
                 all_input_names.append(q_weights_max_name)
@@ -299,6 +267,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, "T1", dtypes.quint8)
                 helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
                 helper.set_attr_dtype(quantized_matmul_node, "Toutput", dtypes.qint32)
+                helper.set_attr_dtype(quantized_matmul_node, "Tbias", dtypes.float32)
                 helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
                                        b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
                 # helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd'])
@@ -311,7 +280,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, requantize_type, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[2], requantize_type)
+                    quantize_down_name, match_node_name[1] if need_insert_dummy_biasadd else \
+					match_node_name[2], requantize_type)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -547,7 +517,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                             continue
 
                     sub_rule_len = len(sub_rule) - 2
-                    check_hardswish = True if sub_rule_len > 4 else False
                     self.logger.debug("Try to apply rule: {}".format(sub_rule))
 
                     cur_node_name = list(self.node_name_mapping.keys())[k]

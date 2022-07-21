@@ -56,17 +56,12 @@ from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
-#from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeNewAPITransformer
-#from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeNewAPITransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
-from .graph_rewriter.itex.itex_convert import GenerateITEXModel
 from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
-from .graph_rewriter.qdq.merge_duplicated_quantize import MergeDuplicatedQuantizeOptimizer
-from .graph_rewriter.qdq.lift_qdq_above_reshape_transpose import LiftQDQAboveReshapeTransposeOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
 from .graph_util import GraphRewriterHelper as Helper
 
@@ -417,8 +412,6 @@ class GraphConverter:
                         non_pad_ops,
                         self._tmp_model.input_node_names,
                         self.op_wise_config).do_transformation()
-                if self.itex_mode:
-                    self.quantized_node_info.extend(self._search_y_pattern_for_itex())
 
                 for i in self.quantized_node_info:
                     frame_name = self._rnn_details[i] if i in self._rnn_details else None
@@ -434,13 +427,6 @@ class GraphConverter:
                         self._inference(self._sampling_model)
                     self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
 
-                if self.itex_mode:
-                    self._itex_model.graph_def = GenerateITEXModel(
-                        self._itex_model, self._calibration_data, self.device).do_transformation()
-                    self._itex_model.graph_def.library.CopyFrom(
-                        self.model.graph_def.library)
-
-                    return self._itex_model
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
@@ -740,7 +726,8 @@ class GraphConverter:
         # Insert QDQ pattern
         self._tmp_graph_def = GenerateGraphWithQDQPattern(
               self._tmp_model, self._calibration_data,
-              self.op_wise_config, self.fake_quant, self.fp32_ops, self.device).do_transformation()
+              self.op_wise_config, self.fake_quant, self.fp32_ops, self.bf16_ops, \
+              self.quantized_node_info, self.device).do_transformation()
 
     def _convert_qdq(self):
         if self.itex_mode:
@@ -768,10 +755,7 @@ class GraphConverter:
                 self._tmp_graph_def,
                 self._tmp_model.input_node_names,
                 self._tmp_model.output_node_names).do_transformation()
-    
-            # Just for the verification of ITEX QDQ test
-            # self._tmp_graph_def = MergeDuplicatedQuantizeOptimizer(self._tmp_graph_def).do_transformation()
-            self._tmp_graph_def = LiftQDQAboveReshapeTransposeOptimizer(self._tmp_graph_def).do_transformation()
+
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._itex_model.graph_def = self._tmp_graph_def
             self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)

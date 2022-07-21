@@ -35,12 +35,15 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     Return: converted model with QDQ pattern
     """
 
-    def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops, device):
+    def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
+                 bf16_ops, quantized_nodes, device):
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
         self.fake_quant = fake_quant
         self.fp32_ops = fp32_ops
+        self.bf16_ops = bf16_ops
+        self.quantized_nodes = quantized_nodes
         self.device = device
 
         self.node_name_mapping = {}
@@ -55,7 +58,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         min_max_values = {}
         for i in self.data:
             if i.find('_requant') == -1:
-                key, value = i.rsplit(':')[0], i.rsplit(':')[1]
+                key, value = i.rsplit(':', 1)[0], i.rsplit(':', 1)[1]
                 key = key.split('_eightbit_')[0][1:] + key[-5:]
                 if key not in min_max_values:
                     min_max_values[key] = [float(value[1:-1])]
@@ -127,7 +130,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
-        if node.op in ("Relu", "Relu6") or \
+        if node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0))):
             return True
@@ -136,11 +139,14 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         elif (node.op.find("QuantizedConv") != -1
               or node.op.find("QuantizedDepthwiseConv") != -1 or
               node.op.find("QuantizedMatMul") != -1
-              ) and (node.op.find("Relu") == -1 or \
+              ) and ((node.op.find("Relu") == -1 and node.op.find("Elu") == -1) or \
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
         elif self._check_op_list(node.op):
-            input_node = self.node_name_mapping[node.input[0]]
+            if "split:" in node.input[0]:
+                input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
+            else:
+                input_node = self.node_name_mapping[node.input[0]]
             return self._find_relu_node(input_node)
         else:
             return False
@@ -408,7 +414,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         computational_node.input[1] = dequant_node.name
 
     def _ignore_insert_qdq_pattern(self, matched_node_name):
-        if matched_node_name in self.fp32_ops:
+        if matched_node_name in self.fp32_ops or \
+           matched_node_name in self.bf16_ops:
+            return True
+
+        if matched_node_name not in self.op_wise_config and (matched_node_name, ) not in self.quantized_nodes:
             return True
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while

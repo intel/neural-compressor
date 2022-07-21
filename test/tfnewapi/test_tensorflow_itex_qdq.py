@@ -12,6 +12,7 @@ from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.experimental import Quantization, common
+from neural_compressor.utils.utility import CpuInfo
 
 def build_fake_yaml(fake_yaml, save_path, **kwargs):
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
@@ -97,7 +98,13 @@ class TestItexEnabling(unittest.TestCase):
                 if i.op == 'Dequantize':
                     dequant_count += 1
 
-            self.assertEqual(dequant_count, 5)
+            bf16_enabled = False
+            if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
+                bf16_enabled = True
+            if bf16_enabled:
+                self.assertEqual(dequant_count, 4)
+            else:
+                self.assertEqual(dequant_count, 5)
 
 if __name__ == '__main__':
     unittest.main()

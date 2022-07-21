@@ -1390,9 +1390,6 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         from pkg_resources import parse_version
         import tensorflow as tf
         self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
-        if not self.new_api:
-            self.qdq_enabled = False
-            self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
