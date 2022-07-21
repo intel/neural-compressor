@@ -16,7 +16,7 @@ import os
 import sys
 
 # apis moved from torch.utils.model_zoo to torch.hub
-from torch.hub import _download_url_to_file
+from torch.hub import download_url_to_file
 from torch.hub import urlparse
 from torch.hub import HASH_REGEX
 
