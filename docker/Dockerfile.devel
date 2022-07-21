@@ -56,3 +56,7 @@ RUN git clone --single-branch --branch=${INC_BRANCH} https://github.com/intel/ne
     python setup.py install
 
 WORKDIR /neural-compressor
+
+ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/third-party-programs.txt /licenses/
+ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/docker/third-party-programs-docker.txt /licenses/
+ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/LICENSE /licenses/
