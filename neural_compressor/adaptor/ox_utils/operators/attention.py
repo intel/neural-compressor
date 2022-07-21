@@ -62,14 +62,12 @@ class AttentionQuant(QuantOperatorBase):
         inputs.extend(zp)
         inputs.extend([node.input[4] if len(node.input) > 4 else ""])
 
-        qattention_name = "" if node.name == "" else node.name + "_quant"
-
         kwargs = {}
         for attribute in node.attribute:
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
         qattention_node = onnx.helper.make_node("QAttention", inputs, node.output, 
-                                                 qattention_name, **kwargs)
+                                                 node.name, **kwargs)
         self.quantizer.new_nodes.append(qattention_node)
 
         self.quantizer.remove_nodes.append(node)
@@ -86,4 +84,4 @@ class QDQAttention(QDQOperatorBase):
             super().quantize()
         else:
             self.quantizer.quantize_inputs(node, [0, 1])
-
+        node.name = node.name + "_quant"

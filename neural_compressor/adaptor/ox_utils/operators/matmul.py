@@ -56,10 +56,9 @@ class MatMulInteger(QuantOperatorBase):
         inputs.extend(quantized_name)
         inputs.extend(zp)
         matmul_integer_output = node.output[0] + "_output_quantized"
-        matmul_integer_name = node.name + "_quant" if node.name != "" else ""
         matmul_integer_node = onnx.helper.make_node("MatMulInteger",
                                                     inputs,
-                                                    [matmul_integer_output], matmul_integer_name)
+                                                    [matmul_integer_output], node.name)
         self.quantizer.new_nodes.append(matmul_integer_node)
 
         # Add cast operation to cast matmulInteger output to float.
@@ -70,8 +69,7 @@ class MatMulInteger(QuantOperatorBase):
         self.quantizer.new_nodes.append(cast_node)
 
         # Add mul operation to multiply scales of two inputs.
-        scales_mul_op = matmul_integer_name + "_scales_mul" if matmul_integer_name != "" else \
-                                 scale[0] + "_" + scale[1] + "_mul"
+        scales_mul_op = node.name + "_scales_mul"
 
         scales_mul_node = find_by_name(scales_mul_op, self.quantizer.new_nodes)
         if scales_mul_node is None:
@@ -83,9 +81,7 @@ class MatMulInteger(QuantOperatorBase):
 
         # Add mul operation to multiply mul_scales_op result with output of MatMulInteger
         # and make the output of this node the same as output of original matmul node.
-        output_scale_mul_op = ""
-        if matmul_integer_name != "":
-            output_scale_mul_op = matmul_integer_name + "_output_scale_mul"
+        output_scale_mul_op = node.name + "_output_scale_mul"
         self.quantizer.new_nodes.append(get_mul_node([cast_op_output, scales_mul_op_output], 
                                   node.output[0], 
                                   output_scale_mul_op))
@@ -112,7 +108,6 @@ class QLinearMatMul(QuantOperatorBase):
         child = self.quantizer.model.get_children(node)[0]
 
         qlinear_matmul_output = child.output[0]
-        qlinear_matmul_name = node.name + "_quant" if node.name != "" else ""
 
         qlinear_matmul_inputs = []
         for parent in parents:
@@ -122,7 +117,7 @@ class QLinearMatMul(QuantOperatorBase):
         qlinear_matmul_node = onnx.helper.make_node("QLinearMatMul", 
                                                     qlinear_matmul_inputs, 
                                                     [qlinear_matmul_output],
-                                                    qlinear_matmul_name)
+                                                    node.name)
         self.quantizer.new_nodes.append(qlinear_matmul_node)
         self.quantizer.remove_nodes.extend(parents)
         self.quantizer.remove_nodes.append(child)
@@ -145,3 +140,4 @@ class QDQMatMul(QDQOperatorBase):
 
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"

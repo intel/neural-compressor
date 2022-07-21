@@ -42,7 +42,6 @@ class QMaxPool(QuantOperatorBase):
         if parent.op_type != 'DequantizeLinear' or \
             all([i.op_type != 'QuantizeLinear' for i in children]):
             return
-        node.name = node.name + "_quant" if node.name != "" else ""
         node.input[0] = parent.input[0]
         node.output[0] = node.output[0] + '_quantized'
         for child in children:
@@ -67,4 +66,5 @@ class QDQMaxPool(QDQDirect8BitOp):
             return
 
         # Direct 8bits op
-        return super().quantize()
+        super().quantize()
+        node.name = node.name + "_quant"

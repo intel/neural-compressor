@@ -46,9 +46,6 @@ class QLinearActivation(QuantOperatorBase):
         inputs.extend(child.input[1:])
 
         qlinear_activation_output = child.output[0]
-        qlinear_activation_name = ""
-        if node.name != "":
-            qlinear_activation_name = node.name + "_quant"
         kwargs = {}
         for attribute in node.attribute:
             kwargs.update(attribute_to_kwarg(attribute))
@@ -56,7 +53,7 @@ class QLinearActivation(QuantOperatorBase):
 
         qlinear_activation_node = onnx.helper.make_node(
             "QLinear" + node.op_type, inputs,
-            [qlinear_activation_output], qlinear_activation_name, **kwargs)
+            [qlinear_activation_output], node.name, **kwargs)
 
         self.quantizer.new_nodes.append(qlinear_activation_node)
         self.quantizer.remove_nodes.extend([parent, child, node])
@@ -85,3 +82,4 @@ class QDQActivation(QDQOperatorBase):
         if not data_found:
             return
         super().quantize()
+        node.name = node.name + "_quant"

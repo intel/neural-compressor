@@ -364,7 +364,9 @@ def str2array(s):
 
 def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
     weight_channel = weight_tensor.shape[-1]
-
+    if len(min_filter_tensor) == 1:
+        return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+    # TODO to calculate the de-quantized result in a parallel way
     for i in range(weight_channel):
         data = weight_tensor[:,:,:,i]
         new_data = data.reshape(data.size,)
@@ -373,20 +375,17 @@ def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
             for j in range((data.size)):
                 new_data[j] = \
                         float(new_data[j] *(max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
-        else:
-            # per_tensor mode
-            for j in range((data.size)):
-                new_data[j] = \
-                        float(new_data[j] *(max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+
 
 
 def Dequantize(data, scale_info):
+    import numpy as np
     original_shape = data.shape
-    size = data.size
-    new_data = data.reshape(size, )
-    max_value = 255 if scale_info[0].find("Relu") != -1 else 127
-    return np.array([float(i *(scale_info[2] - scale_info[1])/ max_value) for i in new_data]\
-            ).reshape(original_shape)
+    max_value = 255.0 if scale_info[0].find("Relu") != -1.0 else 127.0
+    _scale = (np.array(scale_info[2]) - np.array(scale_info[1])) / max_value
+    de_scale = np.ones(original_shape) * _scale
+    de_data = np.multiply(data, de_scale).astype(np.float32)
+    return de_data
 
 
 class CaptureOutputToFile(object):
@@ -445,12 +444,6 @@ class MODE(Enum):
 class GLOBAL_STATE():
     STATE = MODE.QUANTIZATION
 
-
-
-import pickle
-import os
-
-
 def load_data_from_pkl(path, filename):
     """
     load data from local pkl file
@@ -469,7 +462,6 @@ def load_data_from_pkl(path, filename):
             return data
     except FileExistsError:
         logging.getLogger().info('Can not open %s.' % path)
-
 
 def dump_data_to_local(data, path, filename):
     """

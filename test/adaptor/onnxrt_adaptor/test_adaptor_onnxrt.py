@@ -21,7 +21,7 @@ def build_static_yaml():
     fake_yaml = """
         model:
           name: imagenet
-          framework: onnxrt_qlinearops
+          framework: onnxrt_qoperator
 
         quantization:                                        
           approach: post_training_static_quant  
@@ -140,6 +140,9 @@ def build_dynamic_yaml():
           exit_policy:
             timeout: 0
           random_seed: 9527
+          workspace: 
+            path: ./nc_workspace/recover/
+ 
         """
     with open("dynamic.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
@@ -345,6 +348,27 @@ def build_matmul_model():
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
     return model
 
+def build_matmul_model2():
+    A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
+    B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
+    C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
+    D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 1])
+    H = helper.make_tensor_value_info('H', TensorProto.FLOAT, [1, 1, 5, 1])
+     
+    matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    e_value = np.random.randint(2, size=(5)).astype(np.float32)
+    E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
+    add = onnx.helper.make_node('Add', ['C', 'E'], ['D'], name='add')
+     
+    f_value = np.random.randint(2, size=(5)).astype(np.float32)
+    F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 5, 1], e_value.reshape(5).tolist())
+    add2 = onnx.helper.make_node('Add', ['D', 'F'], ['H'], name='add2')
+     
+    graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H], [E_init, F_init])
+    model = helper.make_model(graph)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return  model
+
 def build_model_with_gather():
     b_value = np.random.randint(2, size=(10)).astype(np.int32)
     B_init = helper.make_tensor('B', TensorProto.INT32, [10], b_value.reshape(10).tolist())
@@ -518,6 +542,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.ir3_model = build_ir3_model()
         self.gather_model = build_model_with_gather()
         self.matmul_model = build_matmul_model()
+        self.matmul_model2 = build_matmul_model2()
         self.rename_model = build_rename_model()
         self.conv_model = build_conv_model()
         build_benchmark()
@@ -577,6 +602,47 @@ class TestAdaptorONNXRT(unittest.TestCase):
         op_list[("Conv_0", "Conv")] = None
         adaptor.inspect_tensor(self.rn50_model, self.cv_dataloader, op_list.keys(), inspect_type='activation')
 
+        for fake_yaml in ["qlinear.yaml", "qdq.yaml"]:
+            quantizer = Quantization(fake_yaml)
+            quantizer.calib_dataloader = self.cv_dataloader
+            quantizer.eval_dataloader = self.cv_dataloader
+            quantizer.model = self.rn50_model
+            q_model = quantizer.fit()
+            self.assertNotEqual(q_model, None)
+
+            quantizer.strategy.adaptor.inspect_tensor
+            adaptor._pre_optimize(common.Model(self.rn50_model))
+            opt_model = quantizer.strategy.adaptor.pre_optimized_model
+ 
+            op_list, _ = quantizer.strategy.adaptor.diagnosis_helper(opt_model, q_model, None, './nc_workspace/recover/')
+
+            fp32_tensor = quantizer.strategy.adaptor.inspect_tensor(opt_model.model, self.cv_dataloader, op_list)
+            int8_tensor = quantizer.strategy.adaptor.inspect_tensor(q_model.model, self.cv_dataloader, op_list)
+
+            self.assertTrue(len(fp32_tensor['activation']) == len(int8_tensor['activation']))
+            self.assertTrue(sorted(fp32_tensor['activation'][0].keys()) == sorted(int8_tensor['activation'][0].keys()))
+            for op in op_list:
+                self.assertTrue(sorted(fp32_tensor['activation'][0][op].keys()) == sorted(int8_tensor['activation'][0][op].keys()))
+
+            if fake_yaml == "qlinear.yaml":
+                fp32_tensor = quantizer.strategy.adaptor.inspect_tensor(opt_model.model, self.cv_dataloader, op_list, inspect_type='weight')
+                int8_tensor = quantizer.strategy.adaptor.inspect_tensor(q_model.model, self.cv_dataloader, op_list, inspect_type='weight')
+                self.assertTrue(len(fp32_tensor['weight']) == len(int8_tensor['weight']))
+                self.assertTrue(sorted(fp32_tensor['weight'].keys()) == sorted(int8_tensor['weight'].keys()))
+                for op in fp32_tensor['weight'].keys():
+                    self.assertTrue(sorted(fp32_tensor['weight'][op].keys()) == sorted(int8_tensor['weight'][op].keys()))
+
+                fp32_tensor = quantizer.strategy.adaptor.inspect_tensor(opt_model.model, self.cv_dataloader, op_list, inspect_type='all')
+                int8_tensor = quantizer.strategy.adaptor.inspect_tensor(q_model.model, self.cv_dataloader, op_list, inspect_type='all')
+                self.assertTrue(len(fp32_tensor['weight']) == len(int8_tensor['weight']))
+                self.assertTrue(len(fp32_tensor['activation']) == len(int8_tensor['activation']))
+                self.assertTrue(sorted(fp32_tensor['weight'].keys()) == sorted(int8_tensor['weight'].keys()))
+                for op in fp32_tensor['weight'].keys():
+                    self.assertTrue(sorted(fp32_tensor['weight'][op].keys()) == sorted(int8_tensor['weight'][op].keys()))
+                self.assertTrue(sorted(fp32_tensor['activation'][0].keys()) == sorted(int8_tensor['activation'][0].keys()))
+                for op in op_list:
+                    self.assertTrue(sorted(fp32_tensor['activation'][0][op].keys()) == sorted(int8_tensor['activation'][0][op].keys()))
+
     def test_set_tensor(self):
         options.onnxrt.graph_optimization.level = 'ENABLE_EXTENDED'
         options.onnxrt.graph_optimization.gemm2matmul = False
@@ -596,7 +662,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                              'imagenet')}
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
-        q_config = {self.mb_v2_model.graph.node[0].name: {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8, 'scheme': 'sym'}}}
+        q_config = {q_model.nodes()[1].name.split('_quant')[0]: {'weight': {'granularity': 'per_channel', 'dtype': onnx_proto.TensorProto.INT8, 'scheme': 'sym'}}}
         adaptor.quantize_config = q_config
         version = get_torch_version()
         q_model.save('./best_model.onnx')
@@ -609,7 +675,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
             adaptor.set_tensor(onnx.load("best_model.onnx"), 
                 {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
             adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random([32])})
-
 
     def test_adaptor(self):
         from neural_compressor.utils.constant import FP32, INT8_SYM_MINMAX_PERTENSOR, UINT8_ASYM_MINMAX_PERTENSOR
@@ -651,14 +716,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertNotEqual(q_model, None)
 
-        
-        for fake_yaml in ["qlinear.yaml", "qdq.yaml", "dynamic.yaml"]:
-            quantizer = Quantization(fake_yaml)
-            quantizer.calib_dataloader = self.cv_dataloader
-            quantizer.eval_dataloader = self.cv_dataloader
-            quantizer.model = self.rn50_model
-            q_model = quantizer.fit()
-            self.assertNotEqual(q_model, None)
+        quantizer = Quantization("dynamic.yaml")
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
 
         import copy
         tmp_model = copy.deepcopy(self.rn50_model)
@@ -725,7 +788,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model = quantizer.fit()
             self.assertNotEqual(q_model, None)
 
-            quantizer.model = self.matmul_model
+            quantizer.model = self.matmul_model2
             q_model = quantizer.fit() # error input shape test
             self.assertEqual(q_model, None)
 

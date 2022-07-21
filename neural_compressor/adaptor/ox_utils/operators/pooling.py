@@ -32,9 +32,11 @@ class QDQPool(QDQOperatorBase):
         node = self.node
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return
+
         self.quantizer.quantize_inputs(self.node)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(self.node)
+        node.name = node.name + "_quant"
 
 class QLinearPool(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -58,12 +60,11 @@ class QLinearPool(QuantOperatorBase):
             for attribute in node.attribute:
                 kwargs.update(attribute_to_kwarg(attribute))
             kwargs["domain"] = ms_domain
-            qlinear_node_name = node.name + "_quant" if node.name != "" else ""
             qnode = onnx.helper.make_node(
                 "QLinear" + node.op_type,
                 inputs,
                 [qlinear_output_name],
-                qlinear_node_name,
+                node.name,
                 **kwargs)
  
             self.quantizer.remove_nodes.extend(parents)

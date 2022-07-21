@@ -371,3 +371,56 @@ def get_tensor_val_from_graph_node(graph_node_name_mapping, node_name):
     tensor_val = tensor_util.MakeNdarray(node_tensor)
     return tensor_val
 
+def int8_node_name_reverse(node):
+    int8_postfix = '_eightbit'
+    node_name = node.name
+    if 'Quantized' in node.op:
+        index_postfix = node_name.find(int8_postfix)
+        if index_postfix != -1:
+            node_name = node_name[:index_postfix]
+    return node_name
+
+def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
+    from ...utils.utility import dump_data_to_local
+    import tensorflow as tf
+    fp32_node_mapping = {}
+    qnode_mapping = {}
+    for node in fp32_model.graph_def.node:
+        fp32_node_mapping[node.name] = node
+    for node in quan_model.graph_def.node:
+        qnode_mapping[node.name] = node
+    supported_op_lst = set(['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool', 'DepthwiseConv2dNative'])
+    fp32_node_lst = set()
+    for node in fp32_model.graph_def.node:
+        if node.op in supported_op_lst:
+            fp32_node_lst.add(node.name)
+    int8_node_lst = set()
+    bf16_node_lst = set()
+    for node in quan_model.graph_def.node:
+        node_name = node.name
+        node_name = int8_node_name_reverse(node)
+        if 'Quantized' in node.op:
+            int8_node_lst.add(node_name)
+        elif node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:
+            bf16_node_lst.add(node.name)
+        else:
+            continue
+    inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
+    dequan_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
+    dump_data_to_local(dequan_min_max, save_path, 'dequan_min_max.pkl')
+    dump_data_to_local(updated_cfg, save_path, 'cfg.pkl')
+
+    return inspect_node_lst, updated_cfg
+
+def _parse_config(q_config, cfg, op_list):
+    dequan_min_max = {}
+    if '__requant_min_max' in q_config:     
+        for node_name, val in q_config['__requant_min_max'].items():
+            node_name = node_name.split('_eightbit_requant_range')[0]
+            if node_name in op_list:
+                dequan_min_max[node_name] = {'min': val[0], 'max': val[1]}
+    updated_cfg = {'op' : {}}
+    for op_name_and_type in cfg['op'].keys():
+        if op_name_and_type[0] in op_list:
+            updated_cfg['op'][op_name_and_type] = cfg['op'][op_name_and_type]
+    return dequan_min_max, updated_cfg

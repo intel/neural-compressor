@@ -37,7 +37,6 @@ class QLinearBinaryOp(QuantOperatorBase):
         child = self.quantizer.model.get_children(node)[0]
 
         qlinear_binary_math_output = child.output[0]
-        qlinear_binary_math_name = node.name + "_quant" if node.name != "" else ""
 
         kwargs = {}
         for attribute in node.attribute:
@@ -52,7 +51,7 @@ class QLinearBinaryOp(QuantOperatorBase):
         qlinear_binary_math_node = onnx.helper.make_node("QLinear" + node.op_type, 
                                                          qlinear_binary_math_inputs,
                                                          [qlinear_binary_math_output], 
-                                                         qlinear_binary_math_name,
+                                                         node.name,
                                                          **kwargs)
 
         self.quantizer.new_nodes += [qlinear_binary_math_node]
@@ -73,3 +72,4 @@ class QDQBinaryOp(QuantOperatorBase):
         self.quantizer.quantize_inputs(node, initializer_use_weight_qType=False)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"

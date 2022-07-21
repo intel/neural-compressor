@@ -406,7 +406,7 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model), data_reader, [], augmented_model_path, white_nodes=['attention'])
         augment.augment_nodes = ['DequantizeLinear']
         augment.already_quantized = True
-        augment.augment_graph(activation_only=True, output_only=True)
+        augment.augment_graph(activation_only=True, weight_only=False)
         augmented_model = augment.augmented_model
         onnx.save(augmented_model, augmented_model_path)
 
@@ -469,7 +469,7 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model), data_reader, [], augmented_model_path, white_nodes=['conv'])
         augment.augment_nodes = ["DequantizeLinear"]
         augment.already_quantized = True
-        augment.augment_graph(activation_only=True, output_only=True)
+        augment.augment_graph(activation_only=True, weight_only=False)
         augmented_model = augment.augmented_model
         onnx.save(augmented_model, augmented_model_path)
 

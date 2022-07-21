@@ -41,6 +41,7 @@ class QDQConcat(QDQOperatorBase):
             self.quantizer.quantize_inputs(node, [idx], initializer_use_weight_qType)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"
 
 class QLinearConcat(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -72,12 +73,10 @@ class QLinearConcat(QuantOperatorBase):
             for attribute in node.attribute:
                 kwargs.update(attribute_to_kwarg(attribute))
             kwargs["domain"] = ms_domain
-            qnode_name = node.name + "_quant" if node.name != "" else ""
-
             qlconcat_node = onnx.helper.make_node("QLinearConcat", 
                                                   inputs, 
                                                   [node.output[0] + "_quantized"], 
-                                                  qnode_name, 
+                                                  node.name, 
                                                   **kwargs)        
 
             self.quantizer.new_nodes += [qlconcat_node]

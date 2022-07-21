@@ -63,8 +63,6 @@ class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
         for parent in parents:
             inputs.append(parent.input[2])
  
-        qembed_layer_norm_name = "" if node.name == "" else node.name + "_quant"
-
         '''
         Quantized Input Tensor List
         [0] input_ids (int32)
@@ -93,7 +91,7 @@ class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
 
         qembed_layer_norm_node = onnx.helper.make_node("QEmbedLayerNormalization", 
                                                        inputs, node.output,
-                                                       qembed_layer_norm_name, **kwargs)
+                                                       node.name, **kwargs)
         self.quantizer.new_nodes.append(qembed_layer_norm_node)
         self.quantizer.remove_nodes.extend(parents)
 
@@ -104,5 +102,5 @@ class QDQEmbedLayerNormalization(QDQOperatorBase): # pragma: no cover
     def quantize(self):
         node = self.node
         assert (node.op_type == "EmbedLayerNormalization")
-
         self.quantizer.quantize_inputs(node, [2, 3, 4, 5, 6])
+        node.name = node.name + "_quant"

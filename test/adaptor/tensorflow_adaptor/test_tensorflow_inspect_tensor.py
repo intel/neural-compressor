@@ -154,16 +154,6 @@ def build_fake_diagnosis_yaml2():
         yaml.dump(y, f)
     f.close()
 
-def load_data_from_pkl(path, filename):
-    try:
-        file_path = os.path.join(path, filename)
-        with open(file_path, 'rb') as fp:
-            data = pickle.load(fp)
-            return data
-    except FileExistsError:
-        logging.getLogger().info('Can not open %s.' % path)
-
-
 class TestTensorflowInspectTensor(unittest.TestCase):
 
     @classmethod
@@ -172,7 +162,6 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         build_fake_diagnosis_yaml()
         build_fake_diagnosis_yaml2()
         self.model = build_fake_model()
-        self.cfg_path = os.path.join(os.getcwd(), './nc_workspace/', 'cfg.pkl')
         self.fp32_dumped_tensor_path = os.path.join(os.getcwd(), './fake_graph_inspect_res_fp32/')
         self.quan_dumped_tensor_path = os.path.join(os.getcwd(), './fake_graph_inspect_res_quan/')
         self.fp32_dumped_tensor_file_path = os.path.join(self.fp32_dumped_tensor_path, 'inspect_result.pkl')
@@ -182,7 +171,6 @@ class TestTensorflowInspectTensor(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-        os.remove(self.cfg_path)
         os.remove(self.fp32_dumped_tensor_file_path)
         os.rmdir(self.fp32_dumped_tensor_path)
         os.remove(self.quan_dumped_tensor_file_path)
@@ -193,6 +181,7 @@ class TestTensorflowInspectTensor(unittest.TestCase):
     def test_tensorflow_inspect_tensor(self):
         import tensorflow.compat.v1 as tf
         from neural_compressor.experimental import Quantization, common
+        from neural_compressor.utils.utility import load_data_from_pkl
         tf.disable_v2_behavior()
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(128, 64, 64, 3), label=True)
@@ -211,22 +200,22 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         self.quantizer = quantizer
         self.iteration_list = [1, 5]
 
-
         logging.getLogger().debug(f'Start to inspect tensor :{self.node_list} in  fp32 model.')
         quantizer = self.quantizer
         quantizer.strategy.adaptor.inspect_tensor(self.fp32_graph_def, dataloader=self.dataloader,
                                                   op_list=self.node_list, iteration_list=self.iteration_list,
                                                   inspect_type='all', save_to_disk=True,
-                                                  save_path=self.fp32_dumped_tensor_path)
+                                                  save_path=self.fp32_dumped_tensor_path,
+                                                  quantization_cfg=quantizer.strategy.tune_cfg)
         self.assertEqual(os.path.exists(self.fp32_dumped_tensor_file_path), True)
-
 
         logging.getLogger().debug(f'Start to inspect tensor :{self.node_list} in  quan model.')
         quantizer = self.quantizer
         quantizer.strategy.adaptor.inspect_tensor(self.quan_graph_def, dataloader=self.dataloader,
                                                   op_list=self.node_list, iteration_list=self.iteration_list,
                                                   inspect_type='all', save_to_disk=True,
-                                                  save_path=self.quan_dumped_tensor_path)
+                                                  save_path=self.quan_dumped_tensor_path,
+                                                  quantization_cfg=quantizer.strategy.tune_cfg)
         self.assertEqual(os.path.exists(self.quan_dumped_tensor_file_path), True)
 
 

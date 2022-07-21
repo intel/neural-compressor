@@ -129,4 +129,11 @@ tuning:
   workspace:
     path: /path/to/saving/directory                  # optional. default workspace is ./nc_workspace/current_time_stamp, saving tuning history and deploy yaml.
     resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
-
+  
+  diagnosis:
+    diagnosis_after_tuning: False                    # optional. bool, defaults to False, whether or not dump tensor and show in Bench after tuning finish.
+    op_list: []                                      # optional. List[str], defaults to [], the op(s) to be dumped to reduce local disk consumption. the default setting means dump all quantized op instead of not dump anything.
+    iteration_list: [1]                              # optional. List[int], defaults to [1], the iteration that needs to dump activation, the default value is [1] which means dump the activation of the first iteration.
+    inspect_type: activation                         # optional. str, defaults to activation, dump weight, activation or all. can be one of 'weight', 'activation' or 'all'.
+    save_to_disk: True                               # optional. bool, defaults to True, whether or not to save the dumped tensor. 
+    save_path: './nc_workspace/inspect_saved/'       # optional. str, defaults to './nc_workspace/inspect_saved/', a path to save the dumped tensor.

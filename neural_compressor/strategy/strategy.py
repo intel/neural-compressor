@@ -421,7 +421,6 @@ class TuneStrategy(object):
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
             if need_stop:
-                dump_data_to_local(tune_cfg, './nc_workspace/', 'cfg.pkl')
                 if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
@@ -814,18 +813,18 @@ class TuneStrategy(object):
         inspect_type = self.cfg.tuning.diagnosis.inspect_type
         save_to_disk = self.cfg.tuning.diagnosis.save_to_disk
         save_path = self.cfg.tuning.diagnosis.save_path
-        inspect_node_lst = self._diagnosis_helper(self._fp32_model, self.last_qmodel)
+        inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(self._fp32_model, 
+                                                                      self.last_qmodel, 
+                                                                      self.tune_cfg, 
+                                                                      save_path = save_path)
         op_list = self.cfg.tuning.diagnosis.op_list
         if not op_list:
             op_list = list(inspect_node_lst)
         else:
             op_list = list(set(op_list).intersection(inspect_node_lst))
-        dequan_min_max, updated_cfg = self._parse_config(self.last_qmodel.q_config, self.tune_cfg, op_list)
-        dump_data_to_local(dequan_min_max, save_path, 'dequan_min_max.pkl')
-        dump_data_to_local(updated_cfg, save_path, 'cfg.pkl')
 
         logger.debug(f'*** Start to inspect tensor :{op_list} in  fp32 model.')
-        self.adaptor.inspect_tensor(self._fp32_model.graph_def,
+        self.adaptor.inspect_tensor(self._fp32_model,
                                     dataloader=self.calib_dataloader,
                                     op_list=op_list,
                                     iteration_list=iteration_list,
@@ -835,7 +834,7 @@ class TuneStrategy(object):
                                     quantization_cfg=updated_cfg)
 
         logger.debug(f'*** Start to inspect tensor :{op_list} in  quantized model.')
-        self.adaptor.inspect_tensor(self.last_qmodel.graph_def, 
+        self.adaptor.inspect_tensor(self.last_qmodel, 
                                     dataloader=self.calib_dataloader,
                                     op_list=op_list,
                                     iteration_list=iteration_list,
@@ -844,43 +843,6 @@ class TuneStrategy(object):
                                     save_path= save_path + '/quan/',
                                     quantization_cfg=updated_cfg)
     
-    def _parse_config(self, q_config, cfg, op_list):
-        import copy
-        updated_cfg = copy.deepcopy(cfg)
-        #TODO update cfg
-        dequan_min_max = {}
-        if '__requant_min_max' in q_config:     
-            for node_name, val in q_config['__requant_min_max'].items():
-                node_name = node_name.split('_eightbit_requant_range')[0]
-                if node_name in op_list:
-                    dequan_min_max[node_name] = {'min': val[0], 'max': val[1]}
-        return dequan_min_max, updated_cfg
 
-    def _diagnosis_helper(self, fp32_model, quan_model):
-        import tensorflow as tf
-        fp32_node_mapping = {}
-        qnode_mapping = {}
-        for node in fp32_model.graph_def.node:
-            fp32_node_mapping[node.name] = node
-        for node in quan_model.graph_def.node:
-            qnode_mapping[node.name] = node
-        supported_op_lst = set(['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool', 'DepthwiseConv2dNative'])
-        fp32_node_lst = set()
-        for node in fp32_model.graph_def.node:
-            if node.op in supported_op_lst:
-                fp32_node_lst.add(node.name)
-        quantized_node_name_postfix = '_eightbit_requantize'
-        int8_node_lst = set()
-        bf16_node_lst = set()
-        for node in quan_model.graph_def.node:
-            if 'Quantized' in node.op:
-                node_name = node.name.split(quantized_node_name_postfix)[0]
-                int8_node_lst.add(node_name)
-            elif node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:
-                bf16_node_lst.add(node.name)
-            else:
-                continue
-        inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
-        return inspect_node_lst
 
         

@@ -45,7 +45,6 @@ class GatherConverter(QuantOperatorBase):
             inputs.append(parents[0].input[0])
             inputs.append(node.input[1])
 
-            gather_name = node.name + "_quant" if node.name != "" else ""
             gather_new_output = node.output[0] + "_quantized"
 
             kwargs = {}
@@ -55,7 +54,7 @@ class GatherConverter(QuantOperatorBase):
             gather_node = onnx.helper.make_node("Gather",
                                                 inputs,
                                                 [gather_new_output],
-                                                gather_name,
+                                                node.name,
                                                 **kwargs)
             self.quantizer.new_nodes.append(gather_node)
             if any([i.op_type  != 'QuantizeLinear' for i in children]):
@@ -65,7 +64,7 @@ class GatherConverter(QuantOperatorBase):
                 dq_node = onnx.helper.make_node("DequantizeLinear",
                                                 dq_inputs,
                                                 [node.output[0]],
-                                                gather_name + '_DequantizeLinear')
+                                                node.name + '_DequantizeLinear')
                 self.quantizer.new_nodes.append(dq_node)
                 
             for child in children:
@@ -86,7 +85,7 @@ class GatherQuant(QuantOperatorBase):
 
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return
-
         self.quantizer.quantize_inputs(node, [0])
         if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
             self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"

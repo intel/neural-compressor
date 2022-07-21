@@ -28,6 +28,7 @@ from ..utils.utility import Statistics, GLOBAL_STATE, MODE, version1_lt_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+
 tensorflow = LazyImport('tensorflow')
 
 @adaptor_registry
@@ -928,89 +929,64 @@ class TensorFlowAdaptor(Adaptor):
                 g.replace_constant_graph_with_constant_node(min_node, current_node.input[5])
                 g.replace_constant_graph_with_constant_node(max_node, current_node.input[6])
 
-    def inspect_weight_and_bias(self, node_list, graph_def, graph_info, graph_node_name_mapping,
-                                quantized_node_name_postfix):
+    def inspect_weight_and_bias(self, node_list, graph_def, graph_info, graph_node_name_mapping):
         """
         Inspect the weights
         """
         from neural_compressor.utils.utility import DequantizeWeight
         from neural_compressor.adaptor.tf_utils.util import get_tensor_val_from_graph_node
+        from .tf_utils.util import int8_node_name_reverse
         import tensorflow as tf
         weights_result = {}
+        inspect_nodes = []
+        node_set = set(node_list)
         for node in graph_def.node:
-            # TODO: judge whether the node is in node_list
             node_name = node.name
             if 'Quantized' in node.op:
-                node_name = node_name.split(quantized_node_name_postfix)[0]
-
+                node_name = int8_node_name_reverse(node)
+            if node_name in node_set and ('Conv' in node.op or 'Mul' in node.op):
+                inspect_nodes.append(node)
+        logger.debug(f'Start to inspect weight and bias for: {[node.name for node in inspect_nodes]}.')
+        for node in inspect_nodes:
             # inspect weights and bias
-            # TODO: need more accurate conditions to determine whether it‘s a quantized op
-            if node.op in ('QuantizedConv2DWithBiasAndReluAndRequantize', 'Conv2D' ):
-                # get weights from graph_def
-                weights_node_name = node.input[1]
-                weights_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, weights_node_name)
-                weights_node_val = weights_node_val.astype('float32')
-                # dequantize the weight for quantized model
-                if 'Quantized' in node.op:
-                    # TODO: use a optimized method to get min/max
-                    min_filter_node = [node_name for node_name in node.input if '_min' in node_name][0]
-                    max_filter_node = [node_name for node_name in node.input if '_max' in node_name][0]
-                    if graph_info[min_filter_node].node.attr['value'].tensor.float_val:
-                        min_filter_val = graph_info[min_filter_node].node.attr['value'].tensor.float_val
-                        max_filter_val = graph_info[max_filter_node].node.attr['value'].tensor.float_val
-                    else:
-                        min_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, min_filter_node)
-                        max_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, max_filter_node)
-                    weights_node_val = weights_node_val.astype('float')
-                    DequantizeWeight(weights_node_val, min_filter_val, max_filter_val)
-                weights_result[node_name] = {weights_node_name: weights_node_val}
-                # get bias from fp32 model
-                if 'Quantized' not in node.op:
-                    bias_add_node = None
-                    if graph_info[node.name].outputs:
-                        bias_add_node = graph_info[graph_info[node.name].outputs[0]].node
-                    if bias_add_node and bias_add_node.op == 'BiasAdd':
-                        bias_node_name = bias_add_node.input[1]
-                        bias_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
-                        weights_result[node_name][bias_node_name] = bias_node_val
-                # get bias from quantized model directly
+            node_name = node.name
+            weight_node_name = node.input[1]
+            weight_node = graph_node_name_mapping[weight_node_name]
+            if weight_node.op != 'Const': # skip the matmul whose two inputs are previous output
+                continue
+            weight_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, weight_node_name)
+            weight_node_val = weight_node_val.astype('float32')
+            # dequantize the weight for quantized model
+            if 'Quantized' in node.op:
+                node_name = int8_node_name_reverse(node)
+                weight_node_name_pre = weight_node_name.split('_qint8_const')[0]
+                min_filter_node = weight_node_name_pre + '_min'
+                max_filter_node = weight_node_name_pre + '_max'
+                if graph_info[min_filter_node].node.attr['value'].tensor.float_val:
+                    min_filter_val = graph_info[min_filter_node].node.attr['value'].tensor.float_val
+                    max_filter_val = graph_info[max_filter_node].node.attr['value'].tensor.float_val
                 else:
+                    min_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, min_filter_node)
+                    max_filter_val = get_tensor_val_from_graph_node(graph_node_name_mapping, max_filter_node)
+                DequantizeWeight(weight_node_val, min_filter_val, max_filter_val)
+            weights_result[node_name] = {weight_node_name: weight_node_val}
+            
+            # get bias from quantized model directly
+            if 'Quantized' in node.op:
+                if 'Bias' in node.op:
                     bias_node_name = node.input[2]
                     bias_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
                     weights_result[node_name][bias_node_name] = bias_val.astype('float32')
-        return weights_result
-
-    def parse_quan_configuration(self, node_dict, postfix_dict):
-        """
-        Parse the quantization configuration
-        Args:
-            node_dict: node list configuration during quantization
-            postfix_dict: key: node type, val: postfix after quantization
-        Returns:
-            fp_and_quan_node_mapping: key: node name before quantized, val: node name after quantized
-            quan_and_fp_node_mapping: key: node name after quantized, val: node name before quantized
-            pattern_mapping: key: node name before quantized, val: {sequence : ..., precision:...}
-        """
-        fp_and_quan_node_mapping = {}  # key: node name before quantization, val:  node name after quantization
-        quan_and_fp_node_mapping = {}  # key: node name after quantization, val: node name before quantization
-        pattern_mapping = {}  # key: node name before quantization, val: fused pattern list
-        for node_name_and_type in node_dict.keys():
-            node_name, node_type = node_name_and_type
-            # TODO, more check the postfix dict, refactor code
-            if 'pattern' in node_dict[node_name_and_type]:
-                precision_type = node_dict[node_name_and_type]['pattern']['precision']
-                assert precision_type in postfix_dict
-                precision_postfix = postfix_dict[precision_type]
-                quan_node_name = node_name + precision_postfix
-                fp_and_quan_node_mapping[node_name] = quan_node_name
-                quan_and_fp_node_mapping[quan_node_name] = node_name
-                pattern_mapping[node_name] = node_dict[node_name_and_type]['pattern']
+            # get bias from fp32 model
             else:
-                quan_node_name = node_name + '_eightbit_quantized'
-                fp_and_quan_node_mapping[node_name] = quan_node_name
-                quan_and_fp_node_mapping[quan_node_name] = node_name
-                pattern_mapping[node_name] = {'sequence': node_name}
-        return fp_and_quan_node_mapping, quan_and_fp_node_mapping, pattern_mapping
+                bias_add_node = None
+                if graph_info[node.name].outputs:
+                    bias_add_node = graph_info[graph_info[node.name].outputs[0]].node
+                if bias_add_node and bias_add_node.op == 'BiasAdd':
+                    bias_node_name = bias_add_node.input[1]
+                    bias_node_val = get_tensor_val_from_graph_node(graph_node_name_mapping, bias_node_name)
+                    weights_result[node_name][bias_node_name] = bias_node_val
+        return weights_result
 
     def fused_node_mapping(self, node_list, pattern_mapping, graph_info, graph_node_name_mapping):
         """
@@ -1073,21 +1049,17 @@ class TensorFlowAdaptor(Adaptor):
                 feed_dict = dict(zip(input_tensor, inputs))
             #TODO find an optimized method to avoid multiple runs
             for i, out_t in enumerate(out_tensor_lst):
-                logger.debug(f'finished inspect {i+1}/{out_cnt} nodes.')
-                out = model.sess.run(out_t, feed_dict)
-                model_out.append(out)
+                logger.debug(f'finished inspect {i+1}/{out_cnt} nodes, current insepct node {out_t.keys()}')
+                model_out.append(model.sess.run(out_t, feed_dict))
             activation_result.append(model_out)
         return activation_result
 
     def inspect_activation(self, node_list, graph_def, graph_node_name_mapping, quantization_cfg,
-                           postfix_dict, dataloader, iteration_list, graph_info, quan_model_flag=False):
+                           dataloader, iteration_list, graph_info):
         """
         Inspect the activation.
         """
-        import tensorflow as tf
         from neural_compressor.experimental.common import Model
-        fp_and_quan_node_mapping, quan_and_fp_node_mapping, pattern_mapping = self.parse_quan_configuration(
-            quantization_cfg['op'], postfix_dict)
         original_graph_node_mapping = {}
         for node in graph_def.node:
             original_graph_node_mapping[node.name] = node
@@ -1096,34 +1068,38 @@ class TensorFlowAdaptor(Adaptor):
             node = graph_node_name_mapping[node_name]
             if 'Quantized' in node.op and 'Dequantize' in node.op:
                 inspect_node_dict['qdq_node'].append(node.name)
-            elif 'Requantize' in node.op and 'Dequantize' not in node.op:
+            elif 'Quantized' in node.op or '_Quantized' in node.op or 'Requantize' in node.op:
                 inspect_node_dict['qreq_node'].append(node.name)
             else:
                 inspect_node_dict['f_node'].append(node_name)
-        node_name_mapping = fp_and_quan_node_mapping
-        node_name_mapping_reverse = quan_and_fp_node_mapping
+        pattern_mapping = {}  
+        node_dict = quantization_cfg['op']
+        for node_name_and_type in node_dict.keys():
+            node_name, _ = node_name_and_type
+            if 'pattern' in node_dict[node_name_and_type]:
+                pattern_mapping[node_name] = node_dict[node_name_and_type]['pattern']
+            else:
+                pattern_mapping[node_name] = {'sequence': node_name}
         if inspect_node_dict['f_node']:
-            fused_mapping, fused_mapping_reverse = self.fused_node_mapping(inspect_node_dict['f_node'],
-                                                                            pattern_mapping, graph_info, 
-                                                                            graph_node_name_mapping)
-            node_name_mapping.update(fused_mapping)
-            node_name_mapping_reverse.update(fused_mapping_reverse)
-        if inspect_node_dict['f_node']:
-            inspect_node_dict['f_node'] = [node_name_mapping[n] for n in inspect_node_dict['f_node']]
-
+            fuse_map, fuse_map_reverse = self.fused_node_mapping(inspect_node_dict['f_node'], pattern_mapping, 
+                                                                 graph_info, graph_node_name_mapping)
+            inspect_node_dict['f_node'] = [fuse_map[n] for n in inspect_node_dict['f_node']]
         # build model and do inference
         model = Model(graph_def)
-        activation_result  =self._inspect_tensor_inference(inspect_node_dict,  model, dataloader, iteration_list)
+        activation_result = self._inspect_tensor_inference(inspect_node_dict, model, dataloader, iteration_list)
         final_result = []
+        int8_postfix = '_eightbit'
         for iter_res in activation_result:
             tmp_iter_result = {}
             for res in iter_res:
-                n = list(res.keys())[0]
-                val = res[n]
-                if len(val) == 3:
-                    q_node_scale = (node_name, val[1], val[2])
-                    val = Dequantize(val[0], q_node_scale)
-                tmp_iter_result[node_name_mapping_reverse[n]] = {node_name_mapping_reverse[n]: val}
+                node_name, val = list(res.keys())[0], list(res.values())[0]
+                val = Dequantize(val[0], (node_name, val[1], val[2])) if len(val) == 3 else val
+                index_postfix = node_name.find(int8_postfix)
+                if index_postfix != -1:
+                    node_name = node_name[:index_postfix]
+                    tmp_iter_result[node_name] = {node_name: val}
+                else:
+                    tmp_iter_result[fuse_map_reverse[node_name]] = {fuse_map_reverse[node_name]: val}
             final_result.append(tmp_iter_result)
         return final_result
 
@@ -1169,28 +1145,29 @@ class TensorFlowAdaptor(Adaptor):
         from neural_compressor.model.model import TensorflowBaseModel
         from neural_compressor.utils.utility import load_data_from_pkl, dump_data_to_local
         from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+        from .tf_utils.util import int8_node_name_reverse
         import tensorflow as tf
         if isinstance(model, TensorflowBaseModel):
             model = model.graph_def
         if not quantization_cfg:
+            # TODO get config from graph if config is None
             quantization_cfg = load_data_from_pkl('./nc_workspace/', 'cfg.pkl')
         node_list = op_list
         # create the mapping between node name and node, key: node_name, val: node
         graph_node_name_mapping = {}
-        quantized_node_name_postfix = '_eightbit_requantize'
         quan_model_flag = False
         for node in model.node:
-            node_name = node.name
-            if 'Quantized' in node.op or 'Requantize' in node.op:
+            node_name = int8_node_name_reverse(node)
+            if 'Quantized' in node.op:
                 quan_model_flag = True
-                node_name = node_name.split(quantized_node_name_postfix)[0]
+                node_name = int8_node_name_reverse(node)
             if node.attr['value'].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:
                 quan_model_flag = True
             graph_node_name_mapping[node_name] = node
         if quan_model_flag:
             logger.info('Dump the tensor for quantized model.')
-            
-        # create the mapping between node name and node detail, key: node_name, val: node detail
+
+        # create the mapping between node name and node detail
         g = GraphAnalyzer()
         g.graph = model
         graph_info = g.parse_graph()
@@ -1199,19 +1176,14 @@ class TensorFlowAdaptor(Adaptor):
         # inspect weight
         if inspect_type == 'weight' or inspect_type == 'all':
             logger.info('Start to inspect weight and bias.')
-            weights_result = self.inspect_weight_and_bias(node_list, model, graph_info, graph_node_name_mapping,
-                                                          quantized_node_name_postfix)
+            weights_result = self.inspect_weight_and_bias(node_list, model, graph_info, graph_node_name_mapping)
             inspect_result['weight'] = weights_result
             
         # inspect activation
         if inspect_type == 'activation' or inspect_type == 'all':
-            postfix_dict = {
-                'int8': '_eightbit_requantize',
-            }
             logger.info('Start to inspect activation.')
             activation_result = self.inspect_activation(node_list, model, graph_node_name_mapping, quantization_cfg,
-                                                        postfix_dict, dataloader, iteration_list, graph_info,
-                                                        quan_model_flag=quan_model_flag)
+                                                        dataloader, iteration_list, graph_info)
             inspect_result['activation'] = activation_result
 
         # save to disk
@@ -1405,6 +1377,10 @@ class TensorFlowAdaptor(Adaptor):
                                             new_api=self.new_api)
 
         return converter.convert_without_calib()
+    
+    def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
+        from .tf_utils.util import tf_diagnosis_helper
+        return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
 
 
 @adaptor_registry

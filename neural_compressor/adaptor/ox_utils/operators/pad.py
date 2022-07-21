@@ -36,9 +36,11 @@ class QDQPad(QDQOperatorBase):
         # If input[0] is not quantized, do not quanitize this node
         if self.quantizer.opset_version < 11:
             return
+
         self.quantizer.quantize_inputs(node, [0])
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"
 
 class QPad(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -78,7 +80,7 @@ class QPad(QuantOperatorBase):
                     padding_constant_array = \
                                           onnx.numpy_helper.to_array(padding_constant_initializer)
                     quantized_padding_constant_array = quantize_nparray(
-                                                    self.activation_dtype,
+                                                    self.weight_dtype,
                                                     padding_constant_array, scale_value, zp_value)
                     quantized_padding_constant_name = node.input[2] + "_quantized"
                     quantized_padding_constant_initializer = onnx.numpy_helper.from_array(
@@ -96,7 +98,6 @@ class QPad(QuantOperatorBase):
 
         # Create an entry for output quantized value
 
-        node.name = node.name + "_quant" if node.name != "" else ""
         node.input[0] = parent.input[0]
         node.output[0] = child.output[0]
         self.quantizer.remove_nodes.extend([parent, child])
