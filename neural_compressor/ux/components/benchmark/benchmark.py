@@ -39,6 +39,7 @@ class Benchmark:
         names_mapper = NamesMapper(MappingDirection.ToCore)
         self.project_id: str = project_data["id"]
         self.project_name: str = project_data["name"]
+        self.original_model_path: str = project_data["input_model"]["path"]
 
         self.benchmark_id: str = benchmark_data["id"]
         self.benchmark_name: str = benchmark_data["name"]
@@ -63,6 +64,8 @@ class Benchmark:
         self.cores_per_instance = benchmark_data["cores_per_instance"]
         self.batch_size = benchmark_data["batch_size"]
         self.mode = benchmark_data["mode"]
+        self.command = benchmark_data["execution_command"]
+
         self.framework: str = names_mapper.map_name(
             parameter_type="framework",
             value=benchmark_data["model"]["framework"]["name"],
@@ -82,18 +85,19 @@ class Benchmark:
             "benchmark_model.py",
         )
 
-        self.command = [
-            "python",
-            self.benchmark_script,
-            "--config",
-            self.config_path,
-            "--input-graph",
-            self.model_path,
-            "--mode",
-            self.mode,
-            "--framework",
-            self.framework,
-        ]
+        if self.framework != "pytorch":
+            self.command = [
+                "python",
+                self.benchmark_script,
+                "--config",
+                self.config_path,
+                "--input-graph",
+                self.model_path,
+                "--mode",
+                self.mode,
+                "--framework",
+                self.framework,
+            ]
 
     def execute(self) -> None:
         """Execute benchmark and collect results."""

@@ -142,5 +142,5 @@ class TuningDetails(JsonSerializer):
         self.accuracy_criterion.type = data.get("accuracy_criterion_type", "relative")
         self.accuracy_criterion.threshold = data.get("accuracy_criterion_threshold", 0.1)
         self.objective = data.get("objective", "performance")
-        self.exit_policy = data.get("exit_policy", {"timeout": 0})
+        self.exit_policy = data.get("exit_policy", {"timeout": 0, "max_trials": 10})
         self.random_seed = data.get("random_seed", 9527)

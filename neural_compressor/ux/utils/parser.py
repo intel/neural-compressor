@@ -228,7 +228,6 @@ class ProfilingParser(Parser):
             with open(log_file) as file:
                 lines = file.readlines()
             for line in reversed(lines):
-
                 header_search: Any = re.search(profiling_header, line)
                 if header_search:
                     break

@@ -119,10 +119,10 @@ def get_predefined_config_path(framework: str, domain: str, domain_flavour: str 
     mapped_framework = mapper.map_name("framework", framework)
     mapped_domain = mapper.map_name("domain", domain)
     mapped_domain_flavour = mapper.map_name("domain_flavour", domain_flavour)
-
     possible_filenames = [
         f"{mapped_domain}_{mapped_domain_flavour}.yaml",
         f"{mapped_domain}.yaml",
+        "default.yaml",
     ]
     for filename in possible_filenames:
         config_path = os.path.join(
@@ -245,6 +245,8 @@ def check_module(module_name: str) -> None:
     """Check if module exists. Raise exception when not found."""
     if module_name == "onnxrt":
         module_name = "onnxruntime"
+    if module_name == "pytorch":
+        module_name = "torch"
     module = find_spec(module_name.lower())
     if module is None:
         raise ClientErrorException(f"Could not find {module_name} module.")

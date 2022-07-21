@@ -137,7 +137,7 @@
       </p>
     </div>
 
-    <div class="item" *ngIf="optimizationDetails['tuning_details']">
+    <div class="item" *ngIf="optimizationDetails['tuning_details'] && framework.toLowerCase() !== 'pytorch'">
       <h2>Tuning details</h2>
       <table class="rounded">
         <tr>
@@ -162,26 +162,51 @@
     <div class="item" *ngIf="optimizationDetails['optimized_model']">
       <h2>Model</h2>
       <table class="rounded">
-        <ng-container *ngFor="let detail of optimizationDetails['optimized_model'] | keyvalue">
-          <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports')">
-            <th>{{ detail.key | modelList }}</th>
-            <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
-              {{ detail.value }} {{ detail.key === 'size' ? 'MB' : null }}
-            </td>
-            <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
-              {{ detail.value.name ?? (detail.value | json) }}
-            </td>
-            <td>
-              <img *ngIf="detail.key.includes('path')" class="icon-button right"
-                src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
-                (click)="copyToClipboard(detail.value)">
-            </td>
-            <td>
-              <img *ngIf="detail.key === 'path'" class="help-button right pointer" matTooltip="Download model"
-                (click)="downloadModel(optimizationDetails['optimized_model']['path'], optimizationDetails['optimized_model']['id'])"
-                src="./../../assets/160a-download-solid.svg">
-            </td>
-          </tr>
+        <ng-container *ngIf="framework.toLowerCase() !== 'pytorch'">
+          <ng-container *ngFor="let detail of optimizationDetails['optimized_model'] | keyvalue">
+            <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports') ">
+              <th>{{ detail.key | modelList }}</th>
+              <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
+                {{ detail.value }} {{ detail.key === 'size' ? 'MB' : null }}
+              </td>
+              <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
+                {{ detail.value.name ?? (detail.value | json) }}
+              </td>
+              <td>
+                <img *ngIf="detail.key.includes('path')" class="icon-button right"
+                  src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
+                  (click)="copyToClipboard(detail.value)">
+              </td>
+              <td>
+                <img *ngIf="detail.key === 'path'" class="help-button right pointer" matTooltip="Download model"
+                  (click)="downloadModel(optimizationDetails['optimized_model']['path'], optimizationDetails['optimized_model']['id'])"
+                  src="./../../assets/160a-download-solid.svg">
+              </td>
+            </tr>
+          </ng-container>
+        </ng-container>
+        <ng-container *ngIf="framework.toLowerCase() === 'pytorch'">
+          <ng-container *ngFor="let detail of optimizationDetails['optimized_model'] | keyvalue">
+            <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports')&& !detail.key.includes('domain')&& !detail.key.includes('nodes') ">
+              <th>{{ detail.key | modelList }}</th>
+              <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
+                {{ detail.value }} {{ detail.key === 'size' ? 'MB' : null }}
+              </td>
+              <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
+                {{ detail.value.name ?? (detail.value | json) }}
+              </td>
+              <td>
+                <img *ngIf="detail.key.includes('path')" class="icon-button right"
+                  src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
+                  (click)="copyToClipboard(detail.value)">
+              </td>
+              <td>
+                <img *ngIf="detail.key === 'path'" class="help-button right pointer" matTooltip="Download model"
+                  (click)="downloadModel(optimizationDetails['optimized_model']['path'], optimizationDetails['optimized_model']['id'])"
+                  src="./../../assets/160a-download-solid.svg">
+              </td>
+            </tr>
+          </ng-container>
         </ng-container>
       </table>
     </div>
@@ -197,7 +222,7 @@
           <th>last run at</th>
           <td>{{ optimizationDetails['last_run_at'] }}</td>
         </tr>
-        <tr>
+        <tr *ngIf="framework.toLowerCase() !== 'pytorch'">
           <th>config path</th>
           <td class="pointer">
             <a *ngIf="optimizationDetails['config_path']" class="file-button"
@@ -206,7 +231,16 @@
               Show config</a>
           </td>
         </tr>
-        <tr>
+        <tr *ngIf="framework.toLowerCase() === 'pytorch'">
+          <th>log path</th>
+          <td class="pointer">
+            <a *ngIf="optimizationDetails['log_path']" class="file-button"
+              href="{{ apiBaseUrl }}api/optimization/output.log?id={{ optimizationDetails.id}}&token={{ token }}"
+              target="_blank">
+              Show optimization patch</a>
+          </td>
+        </tr>
+        <tr *ngIf="framework.toLowerCase() !== 'pytorch'">
           <th>log path</th>
           <td class="pointer">
             <a *ngIf="optimizationDetails['log_path']" class="file-button"

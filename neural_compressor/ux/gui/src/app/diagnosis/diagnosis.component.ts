@@ -101,6 +101,11 @@ export class DiagnosisComponent implements OnInit {
           this.showSpinner = false;
           if (error.error === 'No row was found when one was required') {
             this.showOps = false;
+          } else if (error.error.match("No such file or directory: '.*/dequan_min_max.pkl'")) {
+            this.modelService.openWarningDialog(
+              "Diagnosis is supported only for real data quantization."
+            )
+            this.showOps = false;
           } else {
             this.modelService.openErrorDialog(error);
           }
@@ -165,8 +170,6 @@ export class DiagnosisComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
-        console.log("dialogRefAfterClose response")
-        console.log(response)
         updatedValuesToSave['optimization_name'] = response['optimizationName'];
 
         this.modelService.generateOptimization(updatedValuesToSave)

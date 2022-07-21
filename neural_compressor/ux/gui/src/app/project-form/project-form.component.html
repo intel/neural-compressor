@@ -132,7 +132,7 @@
           </div>
         </mat-card>
 
-        <ng-container *ngIf="projectFormGroup.get('framework').value">
+        <ng-container *ngIf="projectFormGroup.get('framework').value && projectFormGroup.get('framework').value !== 'PyTorch'">
           <ng-container *ngIf="showDomain">
             <h2>Model domain</h2>
             <mat-card>
@@ -163,6 +163,11 @@
                 <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
               </mat-icon>
             </mat-form-field>
+          </mat-card>
+        </ng-container>
+        <ng-container *ngIf="projectFormGroup.get('framework').value && projectFormGroup.get('framework').value === 'PyTorch'">
+          <mat-card>
+            <p>Neural Coder will be used for PyTorch script-based model optimization and benchmark.</p>
           </mat-card>
         </ng-container>
       </form>

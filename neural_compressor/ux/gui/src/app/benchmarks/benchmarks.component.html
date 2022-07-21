@@ -144,7 +144,7 @@
       </p>
     </div>
 
-    <div class="item">
+    <div class="item" *ngIf="framework.toLowerCase() !== 'pytorch'">
       <h2>Dataset</h2>
       <table class="rounded">
         <ng-container *ngFor="let detail of benchmarkDetails['dataset'] | keyvalue">
@@ -176,21 +176,41 @@
     <div class="item">
       <h2>Model</h2>
       <table class="rounded">
-        <ng-container *ngFor="let detail of benchmarkDetails['model'] | keyvalue">
-          <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports')">
-            <th>{{ detail.key | modelList }}</th>
-            <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
-              {{ detail.value }}
-            </td>
-            <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
-              {{ detail.value.name ?? (detail.value | json) }}
-            </td>
-            <td>
-              <img *ngIf="detail.key.includes('path')" class="icon-button right"
-                src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
-                (click)="copyToClipboard(detail.value)">
-            </td>
-          </tr>
+        <ng-container *ngIf="framework.toLowerCase() !== 'pytorch'">
+          <ng-container *ngFor="let detail of benchmarkDetails['model'] | keyvalue">
+            <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports')">
+              <th>{{ detail.key | modelList }}</th>
+              <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
+                {{ detail.value }}
+              </td>
+              <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
+                {{ detail.value.name ?? (detail.value | json) }}
+              </td>
+              <td>
+                <img *ngIf="detail.key.includes('path')" class="icon-button right"
+                  src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
+                  (click)="copyToClipboard(detail.value)">
+              </td>
+            </tr>
+          </ng-container>
+        </ng-container>
+        <ng-container *ngIf="framework.toLowerCase() === 'pytorch'">
+          <ng-container *ngFor="let detail of benchmarkDetails['model'] | keyvalue">
+            <tr *ngIf="detail.value && !detail.key.includes('id') && !detail.key.includes('supports') && !detail.key.includes('nodes')&& !detail.key.includes('domain')">
+              <th>{{ detail.key | modelList }}</th>
+              <td class="wrap" *ngIf="typeOf(detail.value) === 'string' || typeOf(detail.value) === 'number'">
+                {{ detail.value }}
+              </td>
+              <td *ngIf="typeOf(detail.value) === 'object' && detail.value">
+                {{ detail.value.name ?? (detail.value | json) }}
+              </td>
+              <td>
+                <img *ngIf="detail.key.includes('path')" class="icon-button right"
+                  src="./../../assets/146a-copy-solid.svg" matTooltip="Copy path to clipboard" matTooltipPosition="after"
+                  (click)="copyToClipboard(detail.value)">
+              </td>
+            </tr>
+          </ng-container>
         </ng-container>
       </table>
     </div>
@@ -206,7 +226,7 @@
           <th>last run at</th>
           <td>{{ benchmarkDetails['last_run_at'] }}</td>
         </tr>
-        <tr>
+        <tr *ngIf="framework.toLowerCase() !== 'pytorch'">
           <th>config path</th>
           <td class="pointer">
             <a *ngIf="benchmarkDetails['config_path']" class="file-button"

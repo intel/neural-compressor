@@ -82,12 +82,14 @@ PlotlyModule.plotlyjs = PlotlyJS;
 import { ConfigPreviewComponent } from './config-preview/config-preview.component';
 import { PrintJsonPipe } from './pipes/print-json.pipe';
 import { GenerateConfigDialogComponent } from './generate-config-dialog/generate-config-dialog.component';
+import { WarningComponent } from './warning/warning.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     MenuComponent,
     ErrorComponent,
+    WarningComponent,
     PredefinedModelsComponent,
     ModelListPipe,
     LongNamePipe,
@@ -168,6 +170,7 @@ import { GenerateConfigDialogComponent } from './generate-config-dialog/generate
   ],
   entryComponents: [
     ErrorComponent,
+    WarningComponent,
     FileBrowserComponent,
     ProjectRemoveComponent
   ],

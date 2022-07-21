@@ -77,6 +77,7 @@ class Benchmark(Base):
         warmup_iterations: int,
         number_of_instance: int,
         cores_per_instance: int,
+        execution_command: str,
     ) -> int:
         """
         Add benchark to database.
@@ -94,6 +95,7 @@ class Benchmark(Base):
             number_of_instance=number_of_instance,
             cores_per_instance=cores_per_instance,
             warmup_iterations=warmup_iterations,
+            execution_command=execution_command,
         )
         db_session.add(new_benchmark)
         db_session.flush()

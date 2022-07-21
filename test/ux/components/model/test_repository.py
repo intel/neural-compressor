@@ -38,7 +38,7 @@ class TestModelRepository(unittest.TestCase):
 
     def test_get_frameworks(self) -> None:
         """Test getting frameworks."""
-        expected = [Frameworks.ONNX.value, Frameworks.TF.value]
+        expected = [Frameworks.ONNX.value, Frameworks.PT.value, Frameworks.TF.value]
 
         repository = ModelRepository()
         actual = repository.get_frameworks()

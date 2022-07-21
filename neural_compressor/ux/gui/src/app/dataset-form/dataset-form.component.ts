@@ -154,6 +154,12 @@ export class DatasetFormComponent implements OnInit {
         })
       }
       this.showDatasetLocation = this.dataLoaders.find(x => x.name === event.value)?.show_dataset_location;
+      let hasRootEntry = this.dataLoaderParams.find(x => x.name == "root") !== undefined;
+      if (hasRootEntry) {
+        this.isFieldRequired('datasetLocation', true);
+      } else {
+        this.isFieldRequired('datasetLocation', false);
+      }
     }
   }
 

@@ -17,6 +17,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ErrorComponent } from '../error/error.component';
+import { WarningComponent } from '../warning/warning.component';
 
 @Injectable({
   providedIn: 'root'
@@ -353,6 +354,12 @@ export class ModelService {
       data: error
     });
   }
+
+  openWarningDialog(warning) {
+    const dialogRef = this.dialog.open(WarningComponent, {
+      data: warning
+    });
+  }
 }
 
 export interface NewModel {
@@ -368,4 +375,4 @@ export interface NewModel {
 export type FileBrowserFilter = 'models' | 'datasets' | 'directories' | 'all';
 export type DomainName = 'Image Recognition' | 'Object Detection' | 'Neural Language Processing' | 'Recommendation';
 export type DomainFlavourName = 'SSD' | 'Yolo' | '' | null;
-export type FrameworkName = 'TensorFlow' | 'ONNXRT';
+export type FrameworkName = 'TensorFlow' | 'ONNXRT' | 'PyTorch';

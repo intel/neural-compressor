@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import { ElementSchemaRegistry } from '@angular/compiler';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ModelService } from '../services/model.service';
@@ -23,14 +24,15 @@ import { ModelService } from '../services/model.service';
 export class OptimizationFormComponent implements OnInit {
 
   precisions = [];
+  precisionsPyTorch = []
+  precisionsOther = []
   precisionId: number;
-
+  showprecisionList=["tensorflow","pytorch"]
   optimizationTypes = [];
   optimizationTypeId: number;
 
   datasets = [];
-  datasetId: number;
-
+  datasetId:number = 0;	
   name: string;
 
   constructor(
@@ -51,6 +53,19 @@ export class OptimizationFormComponent implements OnInit {
         response => {
           this.precisions = response['precisions'];
           this.precisionId = this.precisions.find(x => x.name === 'int8').id;
+          this.precisions.forEach((element) => {
+            if (element.name === "int8 dynamic quantization" || element.name ==='int8 static quantization') {
+              let insert=Object.assign({},element);
+              this.precisionsPyTorch.push(insert);
+            }else{
+              let tmp=Object.assign({},element);
+              this.precisionsOther.push(tmp);}
+          });
+          if(this.data.framework === "pytorch"){
+            this.precisions=this.precisionsPyTorch;
+          }else{
+            this.precisions=this.precisionsOther;
+          }
           this.getOptimizationTypes();
         },
         error => {

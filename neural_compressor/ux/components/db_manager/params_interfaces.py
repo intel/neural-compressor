@@ -85,6 +85,7 @@ class BenchmarkAddParamsInterface:
     warmup_iterations: int
     number_of_instance: int
     cores_per_instance: int
+    command_line: str
 
 
 class ProfilingAddParamsInterface:

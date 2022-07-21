@@ -24,8 +24,10 @@ import { JoyrideService } from 'ngx-joyride';
 export class ProjectComponent implements OnInit {
 
   project = {};
+  is_pytorch=false;
   projectId;
   selectedTab = 0;
+  datasetTour;
   tabs = ['optimizations', 'benchmarks', 'profiling', 'datasets', 'graph', 'info'];
 
   constructor(
@@ -50,6 +52,11 @@ export class ProjectComponent implements OnInit {
       .subscribe(
         response => {
           this.project = response;
+          if (response['input_model']['framework']['name']==='PyTorch'){
+            this.is_pytorch=true;
+          }else{
+            this.is_pytorch=false;
+          }
         },
         error => {
           if (error.error === 'list index out of range') {
@@ -58,7 +65,7 @@ export class ProjectComponent implements OnInit {
             this.modelService.openErrorDialog(error);
           }
         }
-      )
+      )    
   }
 
   onTabChanged(event) {

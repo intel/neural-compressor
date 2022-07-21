@@ -66,7 +66,7 @@ class ConfigurationParser:
             "list<int>": ["resize_shape"],
             "float": ["crop_ratio"],
             "list<float>": ["low", "high"],
-            "list<list<int>>": ["shape"],
+            "list<list<int>>": ["shape", "input_shape", "label_shape"],
             "bool": ["train", "label"],
         }
         self.types_definitions: Dict[str, Union[Type, List[Any]]] = {
@@ -168,17 +168,20 @@ class ConfigurationParser:
 
     def parse_dataloader(self, dataloader_data: dict) -> dict:
         """Parse dataloader dict."""
+        parsed_dataloader_data: dict = {"params": {}}
         dataloader_params = dataloader_data.get("params", None)
         if isinstance(dataloader_params, dict):
             for param_name, value in dataloader_params.items():
+                if value == "":
+                    continue
                 param_type: Union[Type, List[Type]] = self.get_param_type(
                     "dataloader",
                     param_name,
                 )
-                dataloader_data["params"].update(
+                parsed_dataloader_data["params"].update(
                     {param_name: self.parse_value(value, param_type)},
                 )
-        return dataloader_data
+        return parsed_dataloader_data
 
     def get_param_type(
         self,

@@ -57,7 +57,6 @@ class Domain(Base):
         log.debug("Found domains:")
         for domain_id in domain_ids:
             log.debug(domain_id)
-
         found_domains = domain_ids.count()
         if found_domains < 1:
             raise Exception(f"Domain {domain_name} is not supported.")

@@ -28,6 +28,9 @@ from neural_compressor.ux.components.db_manager.db_operations import (
 )
 from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
 from neural_compressor.ux.components.optimization.factory import OptimizationFactory
+from neural_compressor.ux.components.optimization.neural_coder_optimization.optimize_model import (
+    optimize_pt_script,
+)
 from neural_compressor.ux.components.optimization.optimization import Optimization
 from neural_compressor.ux.components.optimization.tune.tuning import Tuning
 from neural_compressor.ux.components.optimization.tuning_history import Watcher
@@ -41,6 +44,137 @@ from neural_compressor.ux.utils.utils import get_size, normalize_string
 from neural_compressor.ux.web.communication import MessageQueue
 
 mq = MessageQueue()
+
+
+def execute_optimization_pytorch_script(
+    optimization: Any,
+    request_id: Any,
+    optimization_id: Any,
+) -> Any:
+    """Optimize PyTorch scripted models."""
+    logs = [os.path.join(optimization.workdir, "neural_coder_patch.diff")]
+
+    Workdir.clean_logs(optimization.workdir)
+    OptimizationAPIInterface.update_optimization_status(
+        {
+            "id": optimization_id,
+            "status": ExecutionStatus.WIP,
+        },
+    )
+
+    optimization.generate_config()
+
+    OptimizationAPIInterface.update_paths(
+        {
+            "id": optimization_id,
+            "config_path": optimization.config_path,
+            "log_path": logs[0],
+        },
+    )
+
+    if optimization.output_precision == "int8 static quantization":
+        optimization.command = [
+            "from neural_coder import enable; enable(code="
+            + optimization.workdir
+            + "/copy_model.py"
+            + ", features=['pytorch_inc_static_quant'], "
+            + "overwrite=False, save_patch_path="
+            + optimization.workdir
+            + "/"
+            + ")",
+        ]
+    else:
+        optimization.command = [
+            "from neural_coder import enable; enable(code="
+            + optimization.workdir
+            + "/copy_model.py"
+            + ", features=['pytorch_inc_dynamic_quant'], "
+            + "overwrite=False, save_patch_path="
+            + optimization.workdir
+            + "/"
+            + ")",
+        ]
+
+    OptimizationAPIInterface.update_execution_command(
+        {
+            "id": optimization_id,
+            "execution_command": optimization.command,
+        },
+    )
+
+    optimization_time = optimize_pt_script(optimization)
+
+    logs = [os.path.join(optimization.workdir, "neural_coder_patch.diff")]
+
+    return optimization, optimization_time, logs
+
+
+def execute_optimization_regular(
+    optimization: Any,
+    request_id: Any,
+    optimization_id: Any,
+) -> Any:
+    """Optimize PB/ONNX models."""
+    logs = [os.path.join(optimization.workdir, "output.txt")]
+    send_data = {
+        "message": "started",
+        "request_id": request_id,
+        "size_input_model": get_size(optimization.input_graph),
+        "config_path": optimization.config_path,
+        "output_path": logs[0],
+    }
+
+    Workdir.clean_logs(optimization.workdir)
+    OptimizationAPIInterface.update_optimization_status(
+        {
+            "id": optimization_id,
+            "status": ExecutionStatus.WIP,
+        },
+    )
+
+    optimization.generate_config()
+
+    OptimizationAPIInterface.update_paths(
+        {
+            "id": optimization_id,
+            "config_path": optimization.config_path,
+            "log_path": logs[0],
+        },
+    )
+
+    OptimizationAPIInterface.update_execution_command(
+        {
+            "id": optimization_id,
+            "execution_command": optimization.command,
+        },
+    )
+
+    executor = Executor(
+        workspace_path=optimization.workdir,
+        subject="optimization",
+        data=send_data,
+        log_name="output",
+    )
+
+    collect_tuning_history: bool = check_if_collect_tuning_history(optimization)
+
+    if collect_tuning_history:
+        tuning_history_watcher = Watcher(request_id, optimization)
+        threading.Thread(target=tuning_history_watcher, daemon=True).start()
+
+    proc = executor.call(optimization.command)
+
+    if collect_tuning_history:
+        tuning_history_watcher.stop(process_succeeded=proc.is_ok)
+
+    optimization_time = executor.process_duration
+    if optimization_time:
+        optimization_time = round(optimization_time, 2)
+    log.debug(f"Elapsed time: {optimization_time}")
+
+    logs = [os.path.join(optimization.workdir, "output.txt")]
+
+    return optimization, optimization_time, logs, proc
 
 
 def execute_optimization(data: Dict[str, Any]) -> dict:
@@ -71,73 +205,33 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
             project_data=project_details,
             dataset_data=dataset_details,
         )
-        logs = [os.path.join(optimization.workdir, "output.txt")]
 
-        send_data = {
-            "message": "started",
-            "request_id": request_id,
-            "size_input_model": get_size(optimization.input_graph),
-            "config_path": optimization.config_path,
-            "output_path": logs[0],
-        }
+        # execute optimization
+        is_pytorch_script = False
+        if optimization.framework == "pytorch":
+            is_pytorch_script = True
+            optimization, optimization_time, logs = execute_optimization_pytorch_script(
+                optimization,
+                request_id,
+                optimization_id,
+            )
+        else:
+            optimization, optimization_time, logs, proc = execute_optimization_regular(
+                optimization,
+                request_id,
+                optimization_id,
+            )
 
-        Workdir.clean_logs(optimization.workdir)
-        OptimizationAPIInterface.update_optimization_status(
-            {
-                "id": optimization_id,
-                "status": ExecutionStatus.WIP,
-            },
-        )
-
-        optimization.generate_config()
-
-        OptimizationAPIInterface.update_paths(
-            {
-                "id": optimization_id,
-                "config_path": optimization.config_path,
-                "log_path": logs[0],
-            },
-        )
-
-        OptimizationAPIInterface.update_execution_command(
-            {
-                "id": optimization_id,
-                "execution_command": optimization.command,
-            },
-        )
-
-        executor = Executor(
-            workspace_path=optimization.workdir,
-            subject="optimization",
-            data=send_data,
-            log_name="output",
-        )
-
-        collect_tuning_history: bool = check_if_collect_tuning_history(optimization)
-
-        if collect_tuning_history:
-            tuning_history_watcher = Watcher(request_id, optimization)
-            threading.Thread(target=tuning_history_watcher, daemon=True).start()
-
-        proc = executor.call(
-            optimization.command,
-        )
-
-        if collect_tuning_history:
-            tuning_history_watcher.stop(process_succeeded=proc.is_ok)
-
-        optimization_time = executor.process_duration
-        if optimization_time:
-            optimization_time = round(optimization_time, 2)
-        log.debug(f"Elapsed time: {optimization_time}")
-        logs = [os.path.join(optimization.workdir, "output.txt")]
-        if proc.is_ok:
+        # update optimization result
+        if is_pytorch_script or proc.is_ok:
             optimized_model_data = parse_logs(
                 optimization=optimization,
                 optimization_details=optimization_details,
                 project_details=project_details,
                 logs=logs,
             )
+            if is_pytorch_script:
+                optimized_model_data["model_path"] = logs[0]
 
             optimized_model_id = ModelAPIInterface.add_model(optimized_model_data)
             OptimizationAPIInterface.update_optimized_model(
@@ -171,15 +265,15 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
 
             mq.post_success("optimization_finish", response_data)
             return response_data
-        else:
-            log.debug("FAIL")
-            OptimizationAPIInterface.update_optimization_status(
-                {
-                    "id": optimization_id,
-                    "status": ExecutionStatus.ERROR,
-                },
-            )
-            raise ClientErrorException("Optimization failed during execution.")
+
+        log.debug("FAIL")
+        OptimizationAPIInterface.update_optimization_status(
+            {
+                "id": optimization_id,
+                "status": ExecutionStatus.ERROR,
+            },
+        )
+        raise ClientErrorException("Optimization failed during execution.")
     except Exception as err:
         mq.post_failure(
             "optimization_finish",

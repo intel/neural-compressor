@@ -76,6 +76,7 @@ from neural_compressor.ux.components.optimization.tune.tuning import (
 )
 from neural_compressor.ux.utils.consts import (
     WORKSPACE_LOCATION,
+    Domains,
     ExecutionStatus,
     OptimizationTypes,
     Precisions,
@@ -138,7 +139,6 @@ class ProjectAPIInterface:
             data["model"].update({"model_name": "Input model"})
             model_id = ProjectAPIInterface.add_model(db_session, data)
             dataset_id = ProjectAPIInterface.add_dummy_dataset(db_session, data)
-
         return {
             "project_id": project_id,
             "model_id": model_id,
@@ -176,30 +176,24 @@ class ProjectAPIInterface:
     def add_model(db_session: session.Session, data: dict) -> int:
         """Create new project with input model."""
         model_data = copy(data.get("model", {}))
-
         model_data.update({"project_id": data.get("project_id")})
-
         model_path = model_data.get("path")
         model_data.update({"model_path": model_path})
         model = ModelRepository().get_model(model_path)
-
         model_data.update({"size": model.size})
-
         supports_profiling = model.supports_profiling
         model_data.update({"supports_profiling": supports_profiling})
-
         supports_graph = model.supports_graph
         model_data.update({"supports_graph": supports_graph})
-
         framework = model.get_framework_name()
         framework_id = Framework.get_framework_id(db_session, framework)
         model_data.update({"framework_id": framework_id})
-
         precision = model_data.get("precision", "fp32")
         precision_id = Precision.get_precision_id(db_session, precision)
         model_data.update({"precision_id": precision_id})
-
         domain = model_data.get("domain")
+        if not domain:
+            domain = Domains.NONE.value
         domain_id = Domain.get_domain_id(db_session, domain)
         model_data.update({"domain_id": domain_id})
         del model_data["domain"]
@@ -207,7 +201,6 @@ class ProjectAPIInterface:
         domain_flavour = model.domain.domain_flavour
         domain_flavour_id = DomainFlavour.get_domain_flavour_id(db_session, domain_flavour)
         model_data.update({"domain_flavour_id": domain_flavour_id})
-
         model_parameters: ModelAddParamsInterface = ModelAPIInterface.parse_model_data(
             model_data,
         )
@@ -233,15 +226,28 @@ class ProjectAPIInterface:
     def add_dummy_dataset(db_session: session.Session, data: dict) -> int:
         """Add dummy dataset to project."""
         received_shape = data.get("model", {}).get("shape", None)
+        model_path = data.get("model", {}).get("path", None)
+        project_id = data.get("project_id", None)
+        if project_id is None:
+            raise InternalException("Could not find project id.")
+        if model_path is not None:
+            if ".py" == model_path[-3:]:
+                dataset_id = Dataset.add(
+                    project_id=project_id,
+                    db_session=db_session,
+                    dataset_name="dummy",
+                    dataset_type="dummy_v0",
+                    parameters={
+                        "input_shape": "NA",
+                        "label_shape": [1],
+                    },
+                )
+                return dataset_id
         if received_shape is None:
             return -1
         shape = ConfigurationParser.parse_value(received_shape, [[int]])  # type: ignore
         if len(shape[0]) <= 0:
             return -1
-
-        project_id = data.get("project_id", None)
-        if project_id is None:
-            raise InternalException("Could not find project id.")
 
         dataset_id = Dataset.add(
             project_id=project_id,
@@ -572,7 +578,11 @@ class DatasetAPIInterface:
 
         if isinstance(parameters, dict) and "root" in parameters.keys():
             parameters.update({"root": dataset_path})
-        dataset_parameters.parameters = parameters
+        dataset_parameters.parameters = ConfigurationParser().parse_dataloader(
+            {
+                "params": parameters,
+            },
+        )["params"]
         dataset_parameters.transforms = data.get("transform", [])
         dataset_parameters.metric = {"name": metric_name, "param": metric_param}
 
@@ -748,7 +758,7 @@ class OptimizationAPIInterface:
     def list_optimizations(data: dict) -> dict:
         """List optimizations assigned to project."""
         try:
-            project_id: int = int(data.get("project_id", None))
+            project_id = int(data.get("project_id", None))
         except ValueError:
             raise ClientErrorException("Incorrect project id.")
         except TypeError:
@@ -935,7 +945,6 @@ class OptimizationAPIInterface:
         """Add optimization to database."""
         parser = ConfigurationParser()
         parsed_input_data = parser.parse(data)
-
         parsed_optimization_data: OptimizationAddParamsInterface = (
             OptimizationAPIInterface.parse_optimization_data(
                 parsed_input_data,
@@ -972,7 +981,6 @@ class OptimizationAPIInterface:
             exit_policy=tuning_details.exit_policy,
             random_seed=tuning_details.random_seed,
         )
-
         optimization_id = Optimization.add(
             db_session=db_session,
             project_id=optimization_data.project_id,
@@ -1076,7 +1084,6 @@ class OptimizationAPIInterface:
             optimization_data.precision_id = int(data.get("precision_id", None))
             optimization_data.optimization_type_id = int(data.get("optimization_type_id", None))
             optimization_data.dataset_id = int(data.get("dataset_id", None))
-
             optimization_data.tuning_details = TuningDetailsInterface(data)
         except ValueError:
             raise ClientErrorException("Could not parse value")
@@ -1342,6 +1349,7 @@ class BenchmarkAPIInterface:
                 number_of_instance=benchmark_params.number_of_instance,
                 cores_per_instance=benchmark_params.cores_per_instance,
                 warmup_iterations=benchmark_params.warmup_iterations,
+                execution_command=benchmark_params.command_line,
             )
         return {
             "benchmark_id": benchmark_id,
@@ -1391,6 +1399,7 @@ class BenchmarkAPIInterface:
             benchmark_data.iterations = int(data.get("iterations", -1))
             benchmark_data.cores_per_instance = int(data.get("cores_per_instance", 4))
             benchmark_data.warmup_iterations = int(data.get("warmup_iterations", 10))
+            benchmark_data.command_line = str(data.get("command_line"))
         except ValueError:
             raise ClientErrorException("Could not parse value")
         except TypeError:
@@ -1919,6 +1928,7 @@ class ExamplesAPIInterface:
                             "batch_size": 1,
                             "iterations": -1,
                             "warmup_iterations": 5,
+                            "command_line": "",
                         },
                     )
                 )
@@ -1934,6 +1944,7 @@ class ExamplesAPIInterface:
                     number_of_instance=benchmark_data.number_of_instance,
                     cores_per_instance=benchmark_data.cores_per_instance,
                     warmup_iterations=benchmark_data.warmup_iterations,
+                    execution_command=benchmark_data.command_line,
                 )
         except Exception as e:
             mq.post_failure(

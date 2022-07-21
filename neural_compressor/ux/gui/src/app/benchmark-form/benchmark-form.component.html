@@ -24,6 +24,7 @@
         <mat-radio-button [value]="mode">{{ mode }}</mat-radio-button><br><br>
       </ng-container>
     </mat-radio-group>
+    <p *ngIf="data.framework === 'pytorch'" style="font-size: 70%;">* PyTorch script-based Model only supports the Performance mode. Accuracy mode will be supported in future.</p>
     <br>
     <div class="float-right">
       <button mat-raised-button matStepperNext>
@@ -50,7 +51,7 @@
       </button>
     </div>
   </mat-step>
-  <mat-step [completed]="false">
+  <mat-step [completed]="false" *ngIf="data.framework !== 'pytorch'">
     <ng-template matStepLabel>Dataset</ng-template>
     <h2>Dataset</h2>
     <p>Choose the dataset to run the benchmark on. If you want to add another dataset go
@@ -100,6 +101,10 @@
       <mat-form-field class="form-field" appearance="outline">
         <mat-label>number of instances</mat-label>
         <input min=1 step=1 type="number" formControlName="numOfInstance" matInput>
+      </mat-form-field>
+      <h3 *ngIf="data.framework === 'pytorch'">command line</h3>
+      <mat-form-field class="form-field" appearance="outline" *ngIf="data.framework === 'pytorch'">
+        <input type="text" formControlName="commandLine" matInput>
       </mat-form-field>
       <a class="cores-warning" *ngIf="!coresValidated()" [matTooltip]="'cores_per_instance * num_of_instance should not be greater than number of cores: ' +
          benchmarkFormGroup.get('coresPerInstance').value 
