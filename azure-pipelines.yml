@@ -16,8 +16,10 @@ stages:
           - task: Bash@3
             inputs:
               targetType: "inline"
-              script: |
-                echo "pwd" pwd
+              script: 
+              arguments:
+                cd ~/home2/wenjiaoy/frameworks.ai.lpot.intel-lpot/neural_compressor/ux/
+                pwd
                 # python dir/py-yes.py
                 # pip install pylint==2.12.1
                 # pip install intel-tensorflow
