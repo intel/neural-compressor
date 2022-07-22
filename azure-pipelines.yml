@@ -16,9 +16,9 @@ stages:
           - task: Bash@3
             inputs:
               targetType: "inline"
-              script: 
+              script: pwd
               arguments:
-                pwd
+                
                 # cd ~/home2/wenjiaoy/frameworks.ai.lpot.intel-lpot/neural_compressor/ux/
                 # pwd
                 # python dir/py-yes.py
