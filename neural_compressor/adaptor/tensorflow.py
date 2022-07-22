@@ -1037,10 +1037,10 @@ class TensorFlowAdaptor(Adaptor):
         activation_result = []
         for idx, (inputs, labels) in enumerate(dataloader):
             model_out = []
-            if idx + 1 not in iteration_list:
-                continue
             if idx + 1 > max(iteration_list):
                 break
+            if idx + 1 not in iteration_list:
+                continue
             if len(input_tensor) == 1:
                 feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
             else:
@@ -1049,7 +1049,7 @@ class TensorFlowAdaptor(Adaptor):
                 feed_dict = dict(zip(input_tensor, inputs))
             #TODO find an optimized method to avoid multiple runs
             for i, out_t in enumerate(out_tensor_lst):
-                logger.debug(f'finished inspect {i+1}/{out_cnt} nodes, current insepct node {out_t.keys()}')
+                logger.debug(f'Finished inspect {i}/{out_cnt} nodes, current inspect node {out_t.keys()}.')
                 model_out.append(model.sess.run(out_t, feed_dict))
             activation_result.append(model_out)
         return activation_result

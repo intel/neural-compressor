@@ -368,13 +368,7 @@ def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
         return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
     # TODO to calculate the de-quantized result in a parallel way
     for i in range(weight_channel):
-        data = weight_tensor[:,:,:,i]
-        new_data = data.reshape(data.size,)
-        if len(min_filter_tensor) == weight_channel:
-            # per_channel mode
-            for j in range((data.size)):
-                new_data[j] = \
-                        float(new_data[j] *(max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+        weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
 
 
 
