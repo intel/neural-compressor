@@ -789,7 +789,7 @@ class TemplateAdaptor(Adaptor):
                     model, input, device=self.device, conf=conf, running_mode='calibration')
                 if idx >= tmp_iterations - 1:
                     break
-        except ValueError:
+        except Exception as e:
             for idx, input in enumerate(dataloader):
                 output = pytorch_forward_wrapper(
                     model, input, device=self.device, conf=conf, running_mode='calibration')
@@ -2149,8 +2149,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 q_model.save_qconf_summary(qconf_summary = self.ipex_config_path)
                 q_model = ipex.quantization.convert(q_model)
                 with torch.no_grad():
-                    q_model = torch.jit.trace(q_model, example_inputs)
-                    q_model = torch.jit.freeze(q_model)
+                    try:
+                        q_model = torch.jit.trace(q_model, example_inputs)
+                        q_model = torch.jit.freeze(q_model)
+                    except:
+                        q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                        q_model = torch.jit.freeze(q_model)
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"

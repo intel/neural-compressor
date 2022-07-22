@@ -627,7 +627,7 @@ class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
         os.makedirs(root, exist_ok=True)
         try:
             with open(os.path.join(root, "best_configure.json"), 'w') as f:
-                json.dump(self.tune_cfg, f)
+                json.dump(self.tune_cfg, f, indent = 4)
             logger.info("Save config file of quantized model to {}.".format(root))
         except IOError as e:
             logger.error("Fail to save configure file and weights due to {}.".format(e))
