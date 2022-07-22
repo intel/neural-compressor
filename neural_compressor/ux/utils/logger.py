@@ -16,6 +16,7 @@
 import logging
 
 log = logging.getLogger()
+log.name = "INC Bench"
 log.setLevel(level=logging.CRITICAL)
 
 

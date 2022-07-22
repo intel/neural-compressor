@@ -70,8 +70,7 @@ class QuantizationConfigGenerator(ConfigGenerator):
         tuning.exit_policy = ExitPolicy(self.exit_policy)
         tuning.random_seed = self.random_seed
 
-        if not self.dataset_type.startswith("dummy"):
-            tuning.diagnosis = Diagnosis()
+        tuning.diagnosis = Diagnosis()
 
         tuning.set_workspace(self.workdir)
         return tuning

@@ -15,6 +15,7 @@
 # limitations under the License.
 
 """WSGI Web Server."""
+import os
 import sys
 
 import gevent.monkey
@@ -26,7 +27,7 @@ if not already_patched:
 
 from neural_compressor.ux.utils.environment import Environment  # noqa: E402
 from neural_compressor.ux.utils.exceptions import NotFoundException  # noqa: E402
-from neural_compressor.ux.utils.logger import change_log_level  # noqa: E402
+from neural_compressor.ux.utils.logger import change_log_level, log  # noqa: E402
 from neural_compressor.ux.web.configuration import Configuration  # noqa: E402
 from neural_compressor.ux.web.server import run_server  # noqa: E402
 
@@ -43,15 +44,20 @@ def main() -> None:
 
     change_log_level(configuration.log_level)
 
+    if os.geteuid() == 0:
+        log.warning("Executing INC Bench as root is not supported. Exiting.")
+        exit(0)
+
     print("Intel(r) Neural Compressor Bench Server started.\n")
+    log.info("Intel(r) Neural Compressor Bench Server started.\n")
 
     if configuration.allow_insecure_connections:
-        print(
+        log.warning(
             "Running in insecure mode.\n"
             "Everyone in your network may attempt to access this server.\n",
         )
 
-    print(f"Open address {configuration.get_url()}")
+    log.info(f"Open address {configuration.get_url()}")
 
     run_server(configuration)
 

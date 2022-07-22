@@ -115,7 +115,7 @@ class Configuration:
             "--verbose",
             "-v",
             action="count",
-            default=0,
+            default=2,
             help="verbosity of logging output, use -vv and -vvv for even more logs",
         )
         return vars(parser.parse_args())

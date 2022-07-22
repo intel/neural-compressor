@@ -47,7 +47,7 @@ class TestConfiguration(unittest.TestCase):
 
         self.assertEqual(5000, configuration.server_port)
         self.assertEqual(5000, configuration.gui_port)
-        self.assertEqual(logging.CRITICAL, configuration.log_level)
+        self.assertEqual(logging.INFO, configuration.log_level)
         self.assertEqual("127.0.0.1", configuration.server_address)
         self.assertEqual("https", configuration.scheme)
         self.assertEqual("this is a mocked token value", configuration.token)
@@ -159,7 +159,7 @@ class TestConfiguration(unittest.TestCase):
         configuration = Configuration()
         configuration.set_up()
 
-        self.assertEqual(logging.INFO, configuration.log_level)
+        self.assertEqual(logging.DEBUG, configuration.log_level)
 
     @patch("sys.argv", ["inc_bench.py", "-vvvvvvvvvvvvv"])
     def test_changing_log_level_to_not_defined_one(self) -> None:
