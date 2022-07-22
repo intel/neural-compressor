@@ -122,23 +122,6 @@ def remove_init_from_model_input(model):
         if initializer.name in name_to_input:
             inputs.remove(name_to_input[initializer.name])
 
-def split_shared_input(model):
-    for input_name, node_list in model.input_name_to_nodes.items():
-        if len(node_list) > 1 and input_name in [i.name for i in model.model.graph.initializer]:
-            for node in node_list[1:]:
-                for i, node_input_name in enumerate(node.input):
-                    if node_input_name == input_name:
-                        new_input_name = node_input_name + '_nc_split_' + node.name
-                        new_input = helper.make_tensor(
-                                        new_input_name,
-                                        model.get_initializer(input_name).data_type,
-                                        model.get_initializer(input_name).dims,
-                                        model.get_initializer(input_name).raw_data,
-                                        True)
-                        model.add_initializer(new_input)
-                        node.input[i] = new_input_name
-    return model
-
 def collate_preds(results):
     batch = results[0]
     if isinstance(batch, list):
@@ -281,7 +264,7 @@ class QuantizedValue:
                  quantized_value_type,
                  axis=None,
                  qType=QuantType.QUInt8):
-        self.original_name = name
+        self.name = name
         self.q_name = new_quantized_name
         self.scale_name = scale_name
         self.zp_name = zero_point_name

@@ -20,19 +20,7 @@ import onnx
 from onnxruntime.quantization.quant_utils import QuantizedValueType, \
                                                  attribute_to_kwarg
 from .base_operator import QuantOperatorBase 
-from .qdq_base_operator import QDQOperatorBase
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
-
-class QDQSplit(QDQOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        node = self.node
-        self.quantizer.quantize_inputs(node, [0])
-        if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
-            self.quantizer.quantize_outputs(self.node, direct_int8=True)
-        node.name = node.name + "_quant"
 
 class QSplit(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):

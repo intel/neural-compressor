@@ -441,10 +441,8 @@ class ONNXRTAdaptor(Adaptor):
         return new_bias_data
 
     def _pre_optimize(self, model, level=1):
-        from neural_compressor.adaptor.ox_utils.util import \
-            split_shared_input, remove_init_from_model_input
+        from neural_compressor.adaptor.ox_utils.util import remove_init_from_model_input
         remove_init_from_model_input(model)
-        model = split_shared_input(model)
         sess_options = ort.SessionOptions()
         level = self.query_handler.get_graph_optimization()
         if self.graph_optimization.level:

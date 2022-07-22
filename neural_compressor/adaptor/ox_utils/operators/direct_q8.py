@@ -57,9 +57,10 @@ class QDQDirect8BitOp(QDQOperatorBase):
         node = self.node
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return
-        self.quantizer.quantize_inputs(self.node)
+        self.quantizer.quantize_inputs(self.node, direct_int8=True)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(self.node, direct_int8=True)
+        node.name = node.name + "_quant"
 
 class DirectCast(CastOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):

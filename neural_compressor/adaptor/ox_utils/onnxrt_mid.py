@@ -181,6 +181,7 @@ class ONNXRTAugment:
                         else:
                             tensor = tensor.replace('_output_quantized', '') if \
                                 tensor.endswith('_output_quantized') else tensor
+
                         augment_node_name = tensor + "_new_" + augment_node_type
                         scale, zero_point = self.model_wrapper.get_scale_zero(tensor)
                         if scale:

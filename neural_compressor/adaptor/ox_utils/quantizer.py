@@ -408,7 +408,8 @@ class Quantizer:
             if tensor_name not in self.quantized_value_map:
                 self.quantized_value_map[tensor_name] = quantized_value
  
-    def quantize_inputs(self, node, indices=None, initializer_use_weight_qType=True):
+    def quantize_inputs(self, node, indices=None, 
+            initializer_use_weight_qType=True, direct_int8=False):
         # Quantize the input
         for idx, tensor_name in enumerate(node.input):
             if indices and idx not in indices:
@@ -481,7 +482,10 @@ class Quantizer:
                             "Quantization parameters are not specified for param {}."
                             "In static mode quantization params for inputs and outputs \
                             of nodes to be quantized are required.".format(tensor_name))
-
+                    if direct_int8:
+                        parent = self.model.get_parents(node)[0]
+                        if not parent.output[0].endswith('_QuantizeInput'):
+                            return
                     q_input = tensor_name
                     q_output = tensor_name + "_" + node.name + "_QuantizeLinear" if \
                         tensor_name not in self.model.input() else tensor_name + "_quantized"
@@ -741,6 +745,8 @@ class Quantizer:
                quantized weight, zero point, and scale
             This function does NOT update the nodes in the graph, just initializers and inputs
         '''
+        if weight.name in self.quantized_value_map:
+            return
         packed_weight_name = weight.name + "_quantized"
         scale_name = weight.name + "_scale"
         zero_point_name = weight.name + "_zero_point"

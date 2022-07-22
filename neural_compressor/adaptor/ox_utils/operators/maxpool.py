@@ -67,4 +67,3 @@ class QDQMaxPool(QDQDirect8BitOp):
 
         # Direct 8bits op
         super().quantize()
-        node.name = node.name + "_quant"

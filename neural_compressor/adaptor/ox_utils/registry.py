@@ -28,7 +28,7 @@ from .operators.binary_op import QLinearBinaryOp, QDQBinaryOp
 from .operators.maxpool import QMaxPool, QDQMaxPool
 from .operators.gavgpool import QGlobalAveragePool
 from .operators.lstm import LSTMQuant, QDQLSTM
-from .operators.split import QSplit, QDQSplit
+from .operators.split import QSplit
 from .operators.concat import QLinearConcat, QDQConcat
 from .operators.pad import QPad, QDQPad
 from .operators.pooling import QLinearPool, QDQPool
@@ -92,7 +92,7 @@ QDQRegistry = {
     "AveragePool": QDQPool,
     "Unsqueeze" : QDQDirect8BitOp,
     "Concat": QDQConcat,
-    "Split": QDQSplit
+    "Split": QDQDirect8BitOp
 }
 
 CastRegistry = {
