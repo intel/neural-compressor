@@ -2508,6 +2508,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             if "label" in example_inputs.keys():
                 example_inputs.pop("label")
             for key, value in example_inputs.items():
+                if key == "start_positions" or key == "end_positions":
+                    continue
                 input_tensor.append(value)
             return input_tensor
         if isinstance(example_inputs, list) or isinstance(example_inputs, tuple):
