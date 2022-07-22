@@ -17,7 +17,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                acho "pwd" pwd
+                echo "pwd" pwd
                 # python dir/py-yes.py
                 # pip install pylint==2.12.1
                 # pip install intel-tensorflow
