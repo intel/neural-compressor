@@ -149,7 +149,7 @@ Click "Download .csv file" button to get profiling data in .csv file.
 ![Profiling-details](imgs/bench/profiling-details.png "Profiling-details")
 
 ## Display model graph
-For Tensorflow frozen pb models there will be a button available ![Show graph](imgs/bench/show_graph_button.png "Show graph") in the project wizard. It is also possible to see the graph in graph tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.
+For Tensorflow frozen pb models there will be a button available ![Show graph](imgs/bench/show_graph_button.png "Show graph") in the project wizard. It is also possible to see the graph in Diagnosis tab. The graph by default is collapsed, but when you click on plus icon, sections will be unfolded.
 
 
 ![Bert model graph](imgs/bench/graph_bert.png "Bert model graph").
