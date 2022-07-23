@@ -38,7 +38,6 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                 WORKSPACE
                  pip install bandit
                  python -m bandit -r -lll -iii neural_compressor >  $(WORKSPACE)/lpot-bandit.log
                  exit_code=$?
