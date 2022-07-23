@@ -58,11 +58,11 @@ stages:
                 pip install pyspelling
                 # Update paths to validation and lpot repositories
                 VAL_REPO=${WORKSPACE}
-                TEST_REPO=${test_yaml_path}
 
                 # sed -i "s|\${VAL_REPO}|$VAL_REPO|g" ${VAL_REPO}/pyspelling_conf.yaml
                 # sed -i "s|\${LPOT_REPO}|$REPO_DIR|g" ${VAL_REPO}/pyspelling_conf.yaml
-                sed -i "s|\${VAL_REPO}|$VAL_REPO|g" $(test_yaml_path)/pyspelling_conf.yaml
+                sed -i "s|\${TEST_REPO}|$test_yaml_path|g" $(test_yaml_path)/pyspelling_conf.yaml
+                sed -i "s|\${LPOT_REPO}|$WORKSPACE|g" $(test_yaml_path)/pyspelling_conf.yaml
                 echo "Modified config:"
                 cat $(test_yaml_path)/pyspelling_conf.yaml
                 pyspelling -c $(test_yaml_path)/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
