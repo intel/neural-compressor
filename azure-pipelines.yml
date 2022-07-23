@@ -54,10 +54,10 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                    ${WORKSPACE}
+                    pwd
                     pip install pyspelling
                     # Update paths to validation and lpot repositories
-                    VAL_REPO=${WORKSPACE}
+                    VAL_REPO=${pwd}
 
                     sed -i "s|\${VAL_REPO}|$VAL_REPO|g" ${VAL_REPO}/pyspelling_conf.yaml
                     sed -i "s|\${LPOT_REPO}|$REPO_DIR|g" ${VAL_REPO}/pyspelling_conf.yaml
