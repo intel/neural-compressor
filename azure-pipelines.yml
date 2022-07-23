@@ -12,67 +12,69 @@ variables:
   WORKSPACE: $(pwd)
 
 stages:
-  # - stage: pylint
-  #   jobs:
-      # - job: pylint_test
-      #   steps:
-      #     - task: Bash@3
-      #       inputs:
-      #         targetType: "inline"
-      #         script: 
+  - stage: pylint
+    jobs:
+      - job: pylint_test
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
                 # python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > /home2/wenjiaoy/publicAzure/_work/9/s/lpot-pylint.json
-                # pip install pylint==2.12.1
-                # pip install intel-tensorflow
-                # python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > ${WORKSPACE}/lpot-pylint.json
-                # exit_code=$?
-                # if [ ${exit_code} -ne 0 ] ; then
-                #     echo "PyLint exited with non-zero exit code."; exit 1
-                # fi
-                # exit 0
+                pip install pylint==2.12.1
+                pip install intel-tensorflow
+                pip install horovod
+                pip install transformers
+                python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > $(WORKSPACE)/lpot-pylint.json
+                exit_code=$?
+                if [ ${exit_code} -ne 0 ] ; then
+                    echo "PyLint exited with non-zero exit code."; exit 1
+                fi
+                exit 0
 
-  - stage: bandit
-    jobs:
-      - job: bandit_test
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                 pip install bandit
-                 python -m bandit -r -lll -iii neural_compressor >  $(WORKSPACE)/lpot-bandit.log
-                 exit_code=$?
-                 if [ ${exit_code} -ne 0 ] ; then
-                   echo "Bandit exited with non-zero exit code."; exit 1
-                 fi
-                   exit 0
+  # - stage: bandit
+  #   jobs:
+  #     - job: bandit_test
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #                pip install bandit
+  #                python -m bandit -r -lll -iii neural_compressor >  $(WORKSPACE)/lpot-bandit.log
+  #                exit_code=$?
+  #                if [ ${exit_code} -ne 0 ] ; then
+  #                  echo "Bandit exited with non-zero exit code."; exit 1
+  #                fi
+  #                  exit 0
 
-  - stage: pyspelling
-    jobs:
-      - job: pyspelling_test
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                    pip install pyspelling
+  # - stage: pyspelling
+  #   jobs:
+  #     - job: pyspelling_test
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #                   pip install pyspelling
                     
-                    matrix:
-                    - name: Markdown
-                      hunspell:
-                        d: en_US.ISO8859-15
-                      dictionary:
-                        wordlists:
-                        - ${VAL_REPO}/lpot_dict.txt
-                        output: ${VAL_REPO}/lpot_dict.dic
-                      sources:
-                      - ${LPOT_REPO}/docs/*
-                      - ${LPOT_REPO}/*.md
-                      - ${LPOT_REPO}/examples/**/*.md|!${LPOT_REPO}/examples/pytorch/**/huggingface_models/**/*.md
-                      - ${LPOT_REPO}/neural_compressor/**/*.md
+  #                   matrix:
+  #                   - name: Markdown
+  #                     hunspell:
+  #                       d: en_US.ISO8859-15
+  #                     dictionary:
+  #                       wordlists:
+  #                       - ${VAL_REPO}/lpot_dict.txt
+  #                       output: ${VAL_REPO}/lpot_dict.dic
+  #                     sources:
+  #                     - ${LPOT_REPO}/docs/*
+  #                     - ${LPOT_REPO}/*.md
+  #                     - ${LPOT_REPO}/examples/**/*.md|!${LPOT_REPO}/examples/pytorch/**/huggingface_models/**/*.md
+  #                     - ${LPOT_REPO}/neural_compressor/**/*.md
                       
-                    pyspelling -c ${VAL_REPO}/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
-                    exit_code=$?
-                    if [ ${exit_code} -ne 0 ] ; then
-                        echo "Pyspelling exited with non-zero exit code."; exit 1
-                    fi
-                    exit 0
+  #                   pyspelling -c ${VAL_REPO}/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
+  #                   exit_code=$?
+  #                   if [ ${exit_code} -ne 0 ] ; then
+  #                       echo "Pyspelling exited with non-zero exit code."; exit 1
+  #                   fi
+  #                   exit 0
