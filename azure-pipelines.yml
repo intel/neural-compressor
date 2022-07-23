@@ -10,7 +10,7 @@ pool: wenjiao-test
 
 variables:
   WORKSPACE: $(pwd)
-  test_yaml_path: /home2/wenjiaoy/sxh/my_code/pyspelling_conf.yaml
+  test_yaml_path: /home2/wenjiaoy/sxh/my_code
 
 stages:
   # - stage: pylint
