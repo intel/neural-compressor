@@ -17,7 +17,8 @@ stages:
             inputs:
               targetType: "inline"
               script: 
-                pwd
+                WORKSPACE = pwd
+                WORKSPACE
               arguments:
                 
                 # cd ~/home2/wenjiaoy/frameworks.ai.lpot.intel-lpot/neural_compressor/ux/
