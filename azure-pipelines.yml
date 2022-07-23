@@ -9,7 +9,7 @@ trigger:
 pool: wenjiao-test
 
 variables:
-  WORKSPACE: pwd
+  WORKSPACE: $(pwd)
 
 stages:
   # - stage: pylint
