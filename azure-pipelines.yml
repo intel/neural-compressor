@@ -38,6 +38,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
+                 pwd
                  pip install bandit
                  python -m bandit -r -lll -iii neural_compressor >  /home2/wenjiaoy/publicAzure/_work/9/s/lpot-bandit.log
                  exit_code=$?
