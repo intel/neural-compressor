@@ -40,7 +40,7 @@ stages:
               script: |
                  pwd
                  pip install bandit
-                 python -m bandit -r -lll -iii neural_compressor >  pwd/lpot-bandit.log
+                 python -m bandit -r -lll -iii neural_compressor >  $(pwd)/lpot-bandit.log
                  exit_code=$?
                  if [ ${exit_code} -ne 0 ] ; then
                    echo "Bandit exited with non-zero exit code."; exit 1
