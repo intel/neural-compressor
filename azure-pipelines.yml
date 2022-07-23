@@ -17,30 +17,33 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                pip install pylint==2.12.1
-                pip install intel-tensorflow
-                python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor
-                exit_code=$?
-                if [ ${exit_code} -ne 0 ] ; then
-                    echo "PyLint exited with non-zero exit code."; exit 1
-                fi
-                exit 0
+                WORKSPACE=$(pwd)
+                echo ${WORKSPACE}
+                echo abcdefg
+                # pip install pylint==2.12.1
+                # pip install intel-tensorflow
+                # python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor
+                # exit_code=$?
+                # if [ ${exit_code} -ne 0 ] ; then
+                #     echo "PyLint exited with non-zero exit code."; exit 1
+                # fi
+                # exit 0
 
-  - stage: bandit
-    jobs:
-      - job: bandit_test
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                pip install bandit
-                python -m bandit -r -lll -iii neural_compressor
-                exit_code=$?
-                if [ ${exit_code} -ne 0 ] ; then
-                    echo "Bandit exited with non-zero exit code."; exit 1
-                fi
-                exit 0
+  # - stage: bandit
+  #   jobs:
+  #     - job: bandit_test
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #               pip install bandit
+  #               python -m bandit -r -lll -iii neural_compressor
+  #               exit_code=$?
+  #               if [ ${exit_code} -ne 0 ] ; then
+  #                   echo "Bandit exited with non-zero exit code."; exit 1
+  #               fi
+  #               exit 0
 
   # - stage: pyspelling
   #   jobs:
