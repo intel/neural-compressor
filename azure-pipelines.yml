@@ -10,6 +10,7 @@ pool: wenjiao-test
 
 variables:
   WORKSPACE: $(pwd)
+  test_yaml_path: /home2/wenjiaoy/sxh/my_code/pyspelling_conf.yaml
 
 stages:
   # - stage: pylint
@@ -60,10 +61,10 @@ stages:
 
                 # sed -i "s|\${VAL_REPO}|$VAL_REPO|g" ${VAL_REPO}/pyspelling_conf.yaml
                 # sed -i "s|\${LPOT_REPO}|$REPO_DIR|g" ${VAL_REPO}/pyspelling_conf.yaml
-                sed -i "s|\${VAL_REPO}|$VAL_REPO|g" $(WORKSPACE)/pyspelling_conf.yaml
+                sed -i "s|\${VAL_REPO}|$VAL_REPO|g" $(test_yaml_path)/pyspelling_conf.yaml
                 echo "Modified config:"
-                cat $(WORKSPACE)/pyspelling_conf.yaml
-                pyspelling -c $(WORKSPACE)/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
+                cat $(test_yaml_path)/pyspelling_conf.yaml
+                pyspelling -c $(test_yaml_path)/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
                 exit_code=$?
                 if [ ${exit_code} -ne 0 ] ; then
                     echo "Pyspelling exited with non-zero exit code."; exit 1
