@@ -23,8 +23,6 @@ stages:
                 # python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > /home2/wenjiaoy/publicAzure/_work/9/s/lpot-pylint.json
                 pip install pylint==2.12.1
                 pip install intel-tensorflow
-                pip install horovod
-                pip install transformers
                 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > $(WORKSPACE)/lpot-pylint.json
                 exit_code=$?
                 if [ ${exit_code} -ne 0 ] ; then
