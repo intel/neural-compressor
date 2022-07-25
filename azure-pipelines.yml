@@ -106,7 +106,7 @@ stages:
                             echo ${files} >> $(WORKSPACE)/copyright_issue_summary.log
                         fi
                     else
-                        echo "Skipping ${file}, supported_extensions[@], ${file\#\#*.}, [ "${supported_extensions[@]}" =~ " ${file\#\#*.} " ]"
+                        echo "Skipping ${file}, supported_extensions[@]"
                     fi
                 done
       - job: status_check
