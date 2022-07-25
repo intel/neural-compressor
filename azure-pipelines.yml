@@ -11,6 +11,7 @@ pool: wenjiao-test
 variables:
   WORKSPACE: $(pwd)
   VAL_PATH: /home2/wenjiaoy/sxh/val/frameworks.ai.lpot.lpot-validation
+  target_path: "neural_compressor"
 
 stages:
   # - stage: pylint
@@ -81,14 +82,15 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                supported_extensions=(py,sh,yaml)
+                supported_extensions="py sh yaml"
                 if ['supported_extensions' in params && params.supported_extensions != ''] ; then
                     supported_extensions = params.supported_extensions
                 fi
                 echo "supported_extensions: $(supported_extensions)"
 
+
                 set -xe
-                supported_extensions=($(echo "$(extensions)" | tr "," " "))
+                # supported_extensions=($(echo "$(extensions)" | tr "," " "))
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
                 files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
 
