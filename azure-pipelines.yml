@@ -103,6 +103,7 @@ stages:
                     fi
                 done
       - job: status_check
+        dependsOn: copyright_check
         steps:
           - task: Bash@3
             inputs:
