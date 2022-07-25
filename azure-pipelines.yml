@@ -91,8 +91,7 @@ stages:
                 supported_extensions=($(echo "$(extensions)" | tr "," " "))
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
                 files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
-                echo "--------------------"
-                cat files
+
                 echo "--------------------"
                 echo $(files)
                 echo "--------------------"                                
