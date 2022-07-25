@@ -10,42 +10,41 @@ pool: wenjiao-test
 
 variables:
   WORKSPACE: $(pwd)
-  test_yaml_path: /home2/wenjiaoy/sxh/my_code
+  VAL_PATH: /home2/wenjiaoy/sxh/val/frameworks.ai.lpot.lpot-validation
 
 stages:
-  # - stage: pylint
-  #   jobs:
-  #     - job: pylint_test
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               # python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > /home2/wenjiaoy/publicAzure/_work/9/s/lpot-pylint.json
-  #               pip install pylint==2.12.1
-  #               pip install intel-tensorflow
-  #               python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > $(WORKSPACE)/lpot-pylint.json
-  #               exit_code=$?
-  #               if [ ${exit_code} -ne 0 ] ; then
-  #                   echo "PyLint exited with non-zero exit code."; exit 1
-  #               fi
-  #               exit 0
+  - stage: pylint
+    jobs:
+      - job: pylint_test
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                pip install pylint==2.12.1
+                pip install intel-tensorflow
+                python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > $(WORKSPACE)/lpot-pylint.json
+                exit_code=$?
+                if [ ${exit_code} -ne 0 ] ; then
+                    echo "PyLint exited with non-zero exit code."; exit 1
+                fi
+                exit 0
 
-  # - stage: bandit
-  #   jobs:
-  #     - job: bandit_test
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #                pip install bandit
-  #                python -m bandit -r -lll -iii neural_compressor >  $(WORKSPACE)/lpot-bandit.log
-  #                exit_code=$?
-  #                if [ ${exit_code} -ne 0 ] ; then
-  #                  echo "Bandit exited with non-zero exit code."; exit 1
-  #                fi
-  #                  exit 0
+  - stage: bandit
+    jobs:
+      - job: bandit_test
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                pip install bandit
+                python -m bandit -r -lll -iii neural_compressor >  $(WORKSPACE)/lpot-bandit.log
+                exit_code=$?
+                if [ ${exit_code} -ne 0 ] ; then
+                  echo "Bandit exited with non-zero exit code."; exit 1
+                fi
+                  exit 0
 
   - stage: pyspelling
     jobs:
@@ -57,18 +56,61 @@ stages:
               script: |
                 pip install pyspelling
                 # Update paths to validation and lpot repositories
-                VAL_REPO=${WORKSPACE}
+                LPOT_REPO=$(WORKSPACE)
+                REPO_DIR=$(WORKSPACE)
+                VAL_REPO=$(VAL_PATH)
 
-                # sed -i "s|\${VAL_REPO}|$VAL_REPO|g" ${VAL_REPO}/pyspelling_conf.yaml
-                # sed -i "s|\${LPOT_REPO}|$REPO_DIR|g" ${VAL_REPO}/pyspelling_conf.yaml
-                sed -i "s|\${TEST_REPO}|$(test_yaml_path)|g" $(test_yaml_path)/pyspelling_conf.yaml
-                sed -i "s|\${LPOT_REPO}|$(WORKSPACE)|g" $(test_yaml_path)/pyspelling_conf.yaml
+                sed -i "s|\${VAL_REPO}|$VAL_REPO|g" ${VAL_REPO}/neural_coder/pyspelling_conf.yaml
+                sed -i "s|\${LPOT_REPO}|$REPO_DIR|g" ${VAL_REPO}/neural_coder/pyspelling_conf.yaml
+                # sed -i "s|\${TEST_REPO}|$(test_yaml_path)|g" $(test_yaml_path)/pyspelling_conf.yaml
+                # sed -i "s|\${LPOT_REPO}|$(WORKSPACE)|g" $(test_yaml_path)/pyspelling_conf.yaml
                 echo "Modified config:"
-                cat $(test_yaml_path)/pyspelling_conf.yaml
-                pyspelling -c $(test_yaml_path)/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
+                cat $(VAL_REPO)/neural_coder/pyspelling_conf.yaml
+                pyspelling -c $(VAL_REPO)/neural_coder/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
                 exit_code=$?
                 if [ ${exit_code} -ne 0 ] ; then
                     echo "Pyspelling exited with non-zero exit code."; exit 1
                 fi
                 exit 0
 
+  - stage: copyright
+    jobs:
+      - job: copyright_check
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                supported_extensions=(py sh yaml)
+                if ['supported_extensions' in params && params.supported_extensions != ''] ; then
+                    supported_extensions = params.supported_extensions
+                fi
+                echo "supported_extensions: $(supported_extensions)"
+
+                set -xe
+                supported_extensions=($(echo "$(extensions)" | tr "," " "))
+                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
+                files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
+                for file in $(files)
+                do
+                    if [[ "$(supported_extensions[@])" =~ " $(file##*.) " ]]; then
+                        echo "Checking license in $(files)"
+                        if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" $(file)) = 0 ]; then
+                            echo $(files) >> $(WORKSPACE)/copyright_issue_summary.log
+                        fi
+                    else
+                        echo "Skipping $(files)"
+                    fi
+                done
+      - job: status_check
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                ls $(WORKSPACE)/copyright_issue_summary.log
+                exit_code=$?
+                if [ ${exit_code} -ne 0 ] ; then
+                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
+                fi
+                exit 0
