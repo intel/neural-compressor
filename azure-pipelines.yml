@@ -13,22 +13,22 @@ variables:
   VAL_PATH: /home2/wenjiaoy/sxh/val/frameworks.ai.lpot.lpot-validation
 
 stages:
-  # - stage: pylint
-  #   jobs:
-  #     - job: pylint_test
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               pip install pylint==2.12.1
-  #               pip install intel-tensorflow
-  #               python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > $(WORKSPACE)/lpot-pylint.json
-  #               exit_code=$?
-  #               if [ ${exit_code} -ne 0 ] ; then
-  #                   echo "PyLint exited with non-zero exit code."; exit 1
-  #               fi
-  #               exit 0
+  - stage: pylint
+    jobs:
+      - job: pylint_test
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                pip install pylint==2.12.1
+                pip install intel-tensorflow
+                python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./neural_compressor > $(WORKSPACE)/lpot-pylint.json
+                exit_code=$?
+                if [ ${exit_code} -ne 0 ] ; then
+                    echo "PyLint exited with non-zero exit code."; exit 1
+                fi
+                exit 0
 
   # - stage: bandit
   #   jobs:
@@ -73,53 +73,53 @@ stages:
   #               fi
   #               exit 0
 
-  - stage: copyright
-    jobs:
-      - job: copyright_check
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                supported_extensions=(py sh yaml)
-                if ['supported_extensions' in params && params.supported_extensions != ''] ; then
-                    supported_extensions = params.supported_extensions
-                fi
-                echo "supported_extensions: $(supported_extensions)"
+  # - stage: copyright
+  #   jobs:
+  #     - job: copyright_check
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #               supported_extensions=(py sh yaml)
+  #               if ['supported_extensions' in params && params.supported_extensions != ''] ; then
+  #                   supported_extensions = params.supported_extensions
+  #               fi
+  #               echo "supported_extensions: $(supported_extensions)"
 
-                set -xe
-                supported_extensions=($(echo "$(extensions)" | tr "," " "))
-                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
-                files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
+  #               set -xe
+  #               supported_extensions=($(echo "$(extensions)" | tr "," " "))
+  #               git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
+  #               files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
 
-                echo "--------------------"
-                echo $(files)
-                echo "--------------------"                                
-                ls files
-                echo "--------------------"
-                for file in $(files)
-                do
-                    echo "hello world 1"
-                    if [[ "$(supported_extensions[@])" =~ " $(file##*.) " ]]; then
-                        echo "hello world 2"
-                        echo "Checking license in $(files)"
-                        if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" $(file)) = 0 ]; then
-                            echo $(files) >> $(WORKSPACE)/copyright_issue_summary.log
-                        fi
-                    else
-                        echo "Skipping $(files)"
-                    fi
-                done
-      - job: status_check
-        dependsOn: copyright_check
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                ls $(WORKSPACE)/copyright_issue_summary.log
-                exit_code=$?
-                if [ ${exit_code} -ne 0 ] ; then
-                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
-                fi
-                exit 0
+  #               echo "--------------------"
+  #               echo $(files)
+  #               echo "--------------------"                                
+  #               ls files
+  #               echo "--------------------"
+  #               for file in $(files)
+  #               do
+  #                   echo "hello world 1"
+  #                   if [[ "$(supported_extensions[@])" =~ " $(file##*.) " ]]; then
+  #                       echo "hello world 2"
+  #                       echo "Checking license in $(files)"
+  #                       if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" $(file)) = 0 ]; then
+  #                           echo $(files) >> $(WORKSPACE)/copyright_issue_summary.log
+  #                       fi
+  #                   else
+  #                       echo "Skipping $(files)"
+  #                   fi
+  #               done
+  #     - job: status_check
+  #       dependsOn: copyright_check
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #               ls $(WORKSPACE)/copyright_issue_summary.log
+  #               exit_code=$?
+  #               if [ ${exit_code} -ne 0 ] ; then
+  #                   echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
+  #               fi
+  #               exit 0
