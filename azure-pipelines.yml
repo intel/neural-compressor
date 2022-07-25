@@ -83,7 +83,7 @@ stages:
               targetType: "inline"
               script: |
                 supported_extensions=(py, sh, yaml)
-                MR_target_branch="latestHTML"
+                MR_target_branch="license-test"
                 # ###############??????          params, MR_target_branch       ????????######################
                 # if ['supported_extensions' in params && params.supported_extensions != ''] ; then
                 #     supported_extensions = params.supported_extensions
@@ -101,7 +101,7 @@ stages:
                     echo "hello world 1"
                     if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
                         echo "hello world 2"
-                        echo "Checking license in ${files}"
+                        echo "Checking license in ${file}"
                         if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
                             echo "hello world 3"
                             echo ${files} >> $(WORKSPACE)/copyright_issue_summary.log
