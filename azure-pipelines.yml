@@ -83,10 +83,11 @@ stages:
               targetType: "inline"
               script: |
                 supported_extensions="py sh yaml"
-                if ['supported_extensions' in params && params.supported_extensions != ''] ; then
-                    supported_extensions = params.supported_extensions
-                fi
-                echo "supported_extensions: $(supported_extensions)"
+                echo  $(supported_extensions)
+                # if ['supported_extensions' in params && params.supported_extensions != ''] ; then
+                #     supported_extensions = params.supported_extensions
+                # fi
+                echo  $(supported_extensions)
 
 
                 set -xe
