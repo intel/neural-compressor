@@ -99,7 +99,7 @@ stages:
                 for file in ${files}
                 do
                     echo "hello world 1"
-                    if [[ "${supported_extensions[@]}" =~ " ${file\#\#*.} " ]]; then
+                    if [[ "${supported_extensions[@]}" =~ " ${file##*.} " ]]; then
                         echo "hello world 2"
                         echo "Checking license in ${files}"
                         if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
