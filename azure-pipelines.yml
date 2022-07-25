@@ -83,12 +83,11 @@ stages:
               targetType: "inline"
               script: |
                 supported_extensions="py sh yaml"
-                echo  supported_extensions
+                # ###############??????          params, MR_target_branch       ????????######################
                 # if ['supported_extensions' in params && params.supported_extensions != ''] ; then
                 #     supported_extensions = params.supported_extensions
                 # fi
                 echo  ${supported_extensions}
-                supported_extensions
 
 
                 set -xe
@@ -96,7 +95,7 @@ stages:
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
                 files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
 
-                for file in $(files)
+                for file in ${files}
                 do
                     echo "hello world 1"
                     if [[ "$(supported_extensions[@])" =~ " $(file\#\#*.) " ]]; then
