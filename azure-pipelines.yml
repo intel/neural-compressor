@@ -94,7 +94,7 @@ stages:
                 set -xe
                 # supported_extensions=($(echo "$(extensions)" | tr "," " ")) 
                 # git --no-pager diff --name-only $(git show-ref -s remotes/origin/${MR_target_branch}) ./$(target_path) > $(WORKSPACE)/diff.log
-                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(target_path）) ./${MR_target_branch} > $(WORKSPACE)/diff.log
+                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(target_path)) ./${MR_target_branch} > $(WORKSPACE)/diff.log
                 files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
 
                 for file in ${files}
