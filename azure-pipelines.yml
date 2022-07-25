@@ -102,6 +102,8 @@ stages:
                     if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
                         echo "hello world 2"
                         echo "Checking license in ${file}"
+                        cat ${file}
+                        
                         if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
                             echo "hello world 3"
                             echo ${files} >> $(WORKSPACE)/copyright_issue_summary.log
