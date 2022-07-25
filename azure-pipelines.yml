@@ -107,7 +107,7 @@ stages:
                             echo ${files} >> $(WORKSPACE)/copyright_issue_summary.log
                         fi
                     else
-                        echo "Skipping ${file}, [[ py, sh, yaml =~  yaml  ]], [ py, sh, yaml =~  yaml  ]"
+                        echo "Skipping ${file}"
                     fi
                 done
       - job: status_check
