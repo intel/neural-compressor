@@ -46,80 +46,82 @@ stages:
   #               fi
   #                 exit 0
 
-  - stage: pyspelling
+  # - stage: pyspelling
+  #   jobs:
+  #     - job: pyspelling_test
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #               pip install pyspelling
+  #               # Update paths to validation and lpot repositories
+  #               LPOT_REPO=$(WORKSPACE)
+  #               REPO_DIR=$(WORKSPACE)
+  #               VAL_REPO=$(VAL_PATH)
+
+  #               # sed -i "s|\${VAL_REPO}|$(VAL_REPO)|g" $(VAL_REPO)/neural_coder/pyspelling_conf.yaml
+  #               # sed -i "s|\${LPOT_REPO}|$(REPO_DIR)|g" $(VAL_REPO)/neural_coder/pyspelling_conf.yaml
+  #               sed -i "s|\${TEST_REPO}|$(VAL_PATH)|g" $(VAL_PATH)/neural_coder/pyspelling_conf.yaml
+  #               sed -i "s|\${LPOT_REPO}|$(WORKSPACE)|g" $(VAL_PATH)/neural_coder/pyspelling_conf.yaml
+  #               echo "Modified config:"
+  #               cat $(VAL_PATH)/neural_coder/pyspelling_conf.yaml
+  #               pyspelling -c $(VAL_PATH)/neural_coder/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
+  #               exit_code=$?
+  #               if [ ${exit_code} -ne 0 ] ; then
+  #                   echo "Pyspelling exited with non-zero exit code."; exit 1
+  #               fi
+  #               exit 0
+
+  - stage: copyright
     jobs:
-      - job: pyspelling_test
+      - job: copyright_check
         steps:
           - task: Bash@3
             inputs:
               targetType: "inline"
               script: |
-                pip install pyspelling
-                # Update paths to validation and lpot repositories
-                LPOT_REPO=$(WORKSPACE)
-                REPO_DIR=$(WORKSPACE)
-                VAL_REPO=$(VAL_PATH)
+                supported_extensions=(py sh yaml)
+                if ['supported_extensions' in params && params.supported_extensions != ''] ; then
+                    supported_extensions = params.supported_extensions
+                fi
+                echo "supported_extensions: $(supported_extensions)"
 
-                # sed -i "s|\${VAL_REPO}|$(VAL_REPO)|g" $(VAL_REPO)/neural_coder/pyspelling_conf.yaml
-                # sed -i "s|\${LPOT_REPO}|$(REPO_DIR)|g" $(VAL_REPO)/neural_coder/pyspelling_conf.yaml
-                sed -i "s|\${TEST_REPO}|$(VAL_PATH)|g" $(VAL_PATH)/neural_coder/pyspelling_conf.yaml
-                sed -i "s|\${LPOT_REPO}|$(WORKSPACE)|g" $(VAL_PATH)/neural_coder/pyspelling_conf.yaml
-                echo "Modified config:"
-                cat $(VAL_PATH)/neural_coder/pyspelling_conf.yaml
-                pyspelling -c $(VAL_PATH)/neural_coder/pyspelling_conf.yaml > $(WORKSPACE)/pyspelling_output.log
+                set -xe
+                supported_extensions=($(echo "$(extensions)" | tr "," " "))
+                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
+                files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
+
+                echo "--------------------"
+                echo '1####'
+                echo "2####"
+                echo 3\#\#\#
+                echo "--------------------"                                
+                echo '[4####]'
+                echo "--------------------"
+                for file in $(files)
+                do
+                    echo "hello world 1"
+                    if [[ "$(supported_extensions[@])" =~ " $(file##*.) " ]]; then
+                        echo "hello world 2"
+                        echo "Checking license in $(files)"
+                        if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" $(file)) = 0 ]; then
+                            echo $(files) >> $(WORKSPACE)/copyright_issue_summary.log
+                        fi
+                    else
+                        echo "Skipping $(files)"
+                    fi
+                done
+      - job: status_check
+        dependsOn: copyright_check
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                ls $(WORKSPACE)/copyright_issue_summary.log
                 exit_code=$?
                 if [ ${exit_code} -ne 0 ] ; then
-                    echo "Pyspelling exited with non-zero exit code."; exit 1
+                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
                 fi
                 exit 0
-
-  # - stage: copyright
-  #   jobs:
-  #     - job: copyright_check
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               supported_extensions=(py sh yaml)
-  #               if ['supported_extensions' in params && params.supported_extensions != ''] ; then
-  #                   supported_extensions = params.supported_extensions
-  #               fi
-  #               echo "supported_extensions: $(supported_extensions)"
-
-  #               set -xe
-  #               supported_extensions=($(echo "$(extensions)" | tr "," " "))
-  #               git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
-  #               files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
-
-  #               echo "--------------------"
-  #               echo $(files)
-  #               echo "--------------------"                                
-  #               ls files
-  #               echo "--------------------"
-  #               for file in $(files)
-  #               do
-  #                   echo "hello world 1"
-  #                   if [[ "$(supported_extensions[@])" =~ " $(file##*.) " ]]; then
-  #                       echo "hello world 2"
-  #                       echo "Checking license in $(files)"
-  #                       if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" $(file)) = 0 ]; then
-  #                           echo $(files) >> $(WORKSPACE)/copyright_issue_summary.log
-  #                       fi
-  #                   else
-  #                       echo "Skipping $(files)"
-  #                   fi
-  #               done
-  #     - job: status_check
-  #       dependsOn: copyright_check
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               ls $(WORKSPACE)/copyright_issue_summary.log
-  #               exit_code=$?
-  #               if [ ${exit_code} -ne 0 ] ; then
-  #                   echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
-  #               fi
-  #               exit 0
