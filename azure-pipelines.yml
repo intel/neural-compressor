@@ -92,7 +92,11 @@ stages:
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
                 files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
                 echo "--------------------"
-                echo files
+                cat files
+                echo "--------------------"
+                echo $(files)
+                echo "--------------------"                                
+                ls files
                 echo "--------------------"
                 for file in $(files)
                 do
