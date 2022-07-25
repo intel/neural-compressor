@@ -2141,7 +2141,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                                    qscheme=torch.per_channel_symmetric))
 
                 example_inputs = self.get_example_inputs(dataloader)
-                ipex.quantization.prepare(q_model, static_qconfig, \
+                q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                         example_inputs=example_inputs, inplace=True)
                 q_model.load_qconf_summary(qconf_summary = self.ipex_config_path)
                 self.model_calibration(q_model, dataloader, iterations,
@@ -2423,7 +2423,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                         weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                    qscheme=torch.per_channel_symmetric))
                     example_inputs = self.get_example_inputs(self.q_dataloader)
-                    ipex.quantization.prepare(init_model, static_qconfig, \
+                    init_model = ipex.quantization.prepare(init_model, static_qconfig, \
                                             example_inputs=example_inputs, inplace=True)
                     self.model_calibration(init_model, self.q_dataloader)
                     init_model.save_qconf_summary(qconf_summary = self.ipex_config_path)
