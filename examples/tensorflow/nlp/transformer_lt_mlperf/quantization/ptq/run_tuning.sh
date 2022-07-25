@@ -12,6 +12,7 @@ function main {
 # init params
 function init_params {
   # set default value
+  topology="transformer_lt_mlperf"
   input_model="./transformer_mlperf_fp32.pb"
   dataset_location="./transformer_uniform_data"
   output_model="./output_transformer_mlperf_int8.pb"
@@ -26,6 +27,9 @@ function init_params {
   for var in "$@"
   do
     case $var in
+      --topology=*)
+          topology=$(echo $var |cut -f2 -d=)
+      ;;
       --input_model=*)
           input_model=$(echo ${var} |cut -f2 -d=)
       ;;
