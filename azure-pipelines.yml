@@ -81,7 +81,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                supported_extensions=(py sh yaml)
+                supported_extensions=(py,sh,yaml)
                 if ['supported_extensions' in params && params.supported_extensions != ''] ; then
                     supported_extensions = params.supported_extensions
                 fi
@@ -92,17 +92,10 @@ stages:
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(MR_target_branch)) ./$(target_path) > $(WORKSPACE)/diff.log
                 files=$(cat $(WORKSPACE)/diff.log | awk '!a[$0]++')
 
-                echo "--------------------"
-                echo '1####'
-                echo "2####"
-                echo 3\#\#\#
-                echo "--------------------"                                
-                echo '[4####]'
-                echo "--------------------"
                 for file in $(files)
                 do
                     echo "hello world 1"
-                    if [[ "$(supported_extensions[@])" =~ " $(file##*.) " ]]; then
+                    if [[ "$(supported_extensions[@])" =~ " $(file\#\#*.) " ]]; then
                         echo "hello world 2"
                         echo "Checking license in $(files)"
                         if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" $(file)) = 0 ]; then
