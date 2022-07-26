@@ -41,6 +41,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
+                $(Build.SourcesDirectory)
                 pip install bandit
                 python -m bandit -r -lll -iii neural_compressor >  $(Build.SourcesDirectory)/lpot-bandit.log
                 exit_code=$?
