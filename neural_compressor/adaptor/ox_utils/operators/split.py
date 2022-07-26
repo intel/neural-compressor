@@ -21,6 +21,18 @@ from onnxruntime.quantization.quant_utils import QuantizedValueType, \
                                                  attribute_to_kwarg
 from .base_operator import QuantOperatorBase 
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from .qdq_base_operator import QDQOperatorBase
+
+class QDQSplit(QDQOperatorBase):
+    def __init__(self, onnx_quantizer, onnx_node):
+        super().__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        node = self.node
+        self.quantizer.quantize_inputs(node, [0])
+        if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
+            self.quantizer.quantize_outputs(self.node, direct_int8=True)
+        node.name = node.name + "_quant"
 
 class QSplit(QuantOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -30,7 +42,7 @@ class QSplit(QuantOperatorBase):
         node = self.node
         parent = self.quantizer.model.get_parents(node)[0]
         children = self.quantizer.model.get_children(node)
-        if len(children) == 0:
+        if parent.op_type != 'DequantizeLinear' or len(children) == 0:
             return
         kwargs = {}
         for attribute in node.attribute:

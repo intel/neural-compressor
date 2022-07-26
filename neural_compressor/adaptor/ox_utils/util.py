@@ -60,6 +60,24 @@ def _get_qrange_for_qType(qType, reduce_range=False):
     else:
         raise ValueError('unsupported quantization data type')
 
+def split_shared_bias(model):
+    for input_name, node_list in model.input_name_to_nodes.items():
+        if len(node_list) > 1 and input_name in [i.name for i in model.model.graph.initializer]:
+            for node in node_list[1:]:
+                if node.op_type not in ['Conv', 'FusedConv']:
+                    continue
+                if node.input[2] == input_name:
+                    new_input_name = node.input[2] + '_nc_split_' + node.name
+                    new_input = helper.make_tensor(
+                                    new_input_name,
+                                    model.get_initializer(input_name).data_type,
+                                    model.get_initializer(input_name).dims,
+                                    model.get_initializer(input_name).raw_data,
+                                    True)
+                    model.add_initializer(new_input)
+                    node.input[2] = new_input_name
+    return model    
+
 def convert_np_to_float16(np_array, min_positive_val=1e-7, max_finite_val=1e4): # pragma: no cover
     '''
     Convert float32 numpy array to float16 without changing sign or finiteness.

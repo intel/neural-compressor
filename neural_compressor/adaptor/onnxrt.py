@@ -31,6 +31,7 @@ from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
 from neural_compressor.utils.utility import Statistics
 from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.conf.dotdict import deep_get
+from neural_compressor.adaptor.ox_utils.util import split_shared_bias
 import math
 
 onnx = LazyImport("onnx")
@@ -465,6 +466,7 @@ class ONNXRTAdaptor(Adaptor):
             if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
         model = self._revert_fusedconv(model)
+        model = split_shared_bias(model)
         model.topological_sort()
         self.pre_optimized_model = model
 
