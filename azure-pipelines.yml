@@ -87,6 +87,9 @@ stages:
               targetType: "inline"
               script: |
                 supported_extensions=(py, sh, yaml)
+                echo "tf diff ---- start ------" 
+                tf diff
+                echo "tf diff ---- end -------"
                 MR_target_branch="license-test"
                 # -----------------  ??????   params, MR_target_branch    ????????  ---------------
                 # if ['supported_extensions' in params && params.supported_extensions != ''] ; then
@@ -94,7 +97,8 @@ stages:
                 # fi
                 echo  ${supported_extensions}
 
-
+                
+              
                 set -xe
                 # supported_extensions=($(echo "$(extensions)" | tr "," " ")) 
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/${MR_target_branch}) ./$(target_path) > $(WORKSPACE)/diff.log
