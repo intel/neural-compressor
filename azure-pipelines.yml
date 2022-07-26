@@ -93,6 +93,7 @@ stages:
                 echo $(Agent.BuildDirectory)
                 echo $(Pipeline.Workspace)
                 echo $(System.DefaultWorkingDirectory)
+                pwd
                  
                 set -xe
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) ./$(target_path) > $(WORKSPACE)/diff.log
