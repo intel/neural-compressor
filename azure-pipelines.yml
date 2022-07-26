@@ -86,8 +86,8 @@ stages:
               targetType: "inline"
               script: |
                 echo "---------------- pullRequest ------------------"
-                $(System.PullRequest.SourceBranch)
-                $(System.PullRequest.TargetBranch)
+                echo $(System.PullRequest.SourceBranch)
+                echo $(System.PullRequest.TargetBranch)
                 echo "---------------- pullRequest ------------------"
                 supported_extensions=(py, sh, yaml)
                 echo "tf diff ---- start ------" 
