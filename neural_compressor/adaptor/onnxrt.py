@@ -31,7 +31,6 @@ from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
 from neural_compressor.utils.utility import Statistics
 from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.conf.dotdict import deep_get
-from neural_compressor.adaptor.ox_utils.util import split_shared_bias
 import math
 
 onnx = LazyImport("onnx")
@@ -442,7 +441,8 @@ class ONNXRTAdaptor(Adaptor):
         return new_bias_data
 
     def _pre_optimize(self, model, level=1):
-        from neural_compressor.adaptor.ox_utils.util import remove_init_from_model_input
+        from neural_compressor.adaptor.ox_utils.util import \
+            remove_init_from_model_input, split_shared_bias
         remove_init_from_model_input(model)
         sess_options = ort.SessionOptions()
         level = self.query_handler.get_graph_optimization()
