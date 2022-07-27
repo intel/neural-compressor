@@ -271,7 +271,7 @@ class Quantizer:
                         if all([i.op_type in ['QuantizeLinear', 'DequantizeLinear'] \
                             for i in self.model.get_children(match_nodes[0])]):
                             self.remove_nodes.append(match_nodes[0])
-                else:
+                else: # pragma: no cover
                     parent = self.model.get_parents(match_nodes[0])[0]
                     children = self.model.get_children(match_nodes[1])
                     input_dtype = '1' # float32
@@ -326,9 +326,12 @@ class Quantizer:
             if initializer is not None:
                 if initializer.data_type != onnx_proto.TensorProto.FLOAT: 
                     continue
-                cast_tensor(initializer, cfg, min_positive_val, max_finite_val)
-                self.new_value_info[tensor_name] = ValueInfo(tensor_name,
-                                                         TensorProto.FLOAT, dtype_mapping[cfg])
+                new_tensor = cast_tensor(initializer, cfg)
+                if new_tensor:
+                    self.model.remove_initializer(initializer)
+                    self.model.add_initializer(new_tensor)
+                    self.new_value_info[tensor_name] = ValueInfo(tensor_name,
+                                                             TensorProto.FLOAT, dtype_mapping[cfg])
             else:
                 if tensor_name in self.value_infos and \
                     self.value_infos[tensor_name].type.HasField('tensor_type') and \
@@ -681,7 +684,7 @@ class Quantizer:
                 qlinear_node = make_quant_node(weight_name + "_QuantizeLinear",
                         [weight_name, scale_name, zp_name], [weight_name + "_quantized"])
                 dequant_node = make_dquant_node(weight_name + "_DequantizeLinear",
-                            [weight_name + "_QuantizeLinear", scale_name, zp_name], 
+                            [weight_name + "_quantized", scale_name, zp_name], 
                             [weight_name + "_dequantized"])
                 self.replace_input.append([node, weight_name, dequant_node.output[0]])
                 self.new_nodes.extend([qlinear_node, dequant_node])

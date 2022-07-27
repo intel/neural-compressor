@@ -830,6 +830,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
             from neural_compressor.utils.utility import recover
             model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)
             self.assertTrue(model.model == q_model.model)
+
+        quantizer = Quantization("qdq.yaml")
+        quantizer.calib_dataloader = self.matmul_dataloader
+        quantizer.eval_dataloader = self.matmul_dataloader
+        quantizer.model = self.matmul_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
         options.onnxrt.qdq_setting.AddQDQPairToWeight = False
  
         options.onnxrt.qdq_setting.DedicatedQDQPair = True
