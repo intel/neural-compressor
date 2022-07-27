@@ -19,7 +19,7 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from .direct_q8 import QDQDirect8BitOp
-from onnxruntime.quantization.quant_utils import QuantizedValueType
+from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
 

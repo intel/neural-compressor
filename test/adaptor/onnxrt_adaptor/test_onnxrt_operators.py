@@ -5,9 +5,8 @@ import copy
 import onnx
 import numpy as np
 from onnx import helper, TensorProto, numpy_helper, onnx_pb
-from onnxruntime.quantization.quant_utils import QuantizationMode
 from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
-from neural_compressor.adaptor.ox_utils.util import QuantizedInitializer, QuantizedValue
+from neural_compressor.adaptor.ox_utils.util import QuantizedInitializer, QuantizedValue, QuantizationMode
 import onnxruntime as ort
 from neural_compressor import options
 

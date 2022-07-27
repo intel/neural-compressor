@@ -20,7 +20,7 @@ import onnx
 import numpy
 from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
-from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, QuantType
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, QuantType
 from onnx import onnx_pb as onnx_proto
 '''
     Quantize LSTM

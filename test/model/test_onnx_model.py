@@ -251,6 +251,12 @@ class TestOnnxModel(unittest.TestCase):
     def test_save(self):
         self.model.save_model_to_file('./test_model_6.onnx', use_external_data_format=True)
 
+    def test_find_by_name(self):
+        from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name, dtype_mapping
+        initializer = find_by_name('X1_weight', self.model.initializer())
+        self.assertIsNotNone(initializer)
+        initializer = find_by_name('X1', self.model.initializer())
+        self.assertIsNone(initializer)
     
 if __name__ == "__main__":
     unittest.main()

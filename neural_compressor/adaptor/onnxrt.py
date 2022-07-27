@@ -100,7 +100,7 @@ class ONNXRTAdaptor(Adaptor):
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
-        from onnxruntime.quantization.quant_utils import QuantizationMode
+        from neural_compressor.adaptor.ox_utils.util import QuantizationMode
         if self.backend in ["qlinearops", "qoperator"]:
             backend = QuantizationMode.QLinearOps
             if self.backend == "qlinearops":
@@ -218,7 +218,7 @@ class ONNXRTAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
 
-        from onnxruntime.quantization.quant_utils import QuantizationMode
+        from neural_compressor.adaptor.ox_utils.util import QuantizationMode
         if self.backend in ["qlinearops", "qoperator"]:
             backend = QuantizationMode.QLinearOps
         elif self.backend == "qdq":
@@ -471,7 +471,7 @@ class ONNXRTAdaptor(Adaptor):
         self.pre_optimized_model = model
 
     def _revert_fusedconv(self, model):
-        from onnxruntime.quantization.quant_utils import attribute_to_kwarg
+        from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
         from onnx import onnx_pb as onnx_proto
         new_nodes = []
         remove_nodes = []
@@ -813,7 +813,7 @@ class ONNXRTAdaptor(Adaptor):
 
     def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
         from neural_compressor.utils.utility import dump_data_to_local
-        from neural_compressor.model.onnx_model import find_by_name
+        from neural_compressor.adaptor.ox_utils.util import find_by_name
         if self.backend in ["qlinearops", "qoperator"]:
             supported_optype = ['Conv', 'MatMul', 'Concat', 'Attention', 'FusedConv',
                 'Add', 'Mul', 'LeakyRelu', 'Sigmoid', 'GlobalAveragePool', 'AveragePool']

@@ -18,7 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
-from onnxruntime.quantization.quant_utils import QuantizedValueType, \
+from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
         attribute_to_kwarg, ms_domain
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue

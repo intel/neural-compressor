@@ -18,11 +18,11 @@
 
 import numpy
 import onnx
-from onnxruntime.quantization.quant_utils import QuantizedValueType, \
+from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
                                                  attribute_to_kwarg
 from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from neural_compressor.adaptor.ox_utils.util import QuantizedValue, quantize_nparray
 
 class QDQPad(QDQOperatorBase):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -101,11 +101,3 @@ class QPad(QuantOperatorBase):
         node.input[0] = parent.input[0]
         node.output[0] = child.output[0]
         self.quantizer.remove_nodes.extend([parent, child])
-
-def quantize_nparray(qtype, arr, scale, zero_point, low=None, high=None):
-    dtype = numpy.uint8 if qtype == "uint8" else numpy.int8
-    cliplow = max(0 if dtype == numpy.uint8 else -127, -127 if low is None else low)
-    cliphigh = min(255 if dtype == numpy.uint8 else 127, 255 if high is None else high)
-    arr_fp32 = numpy.asarray((arr.astype(numpy.float32) / scale).round() + zero_point)
-    numpy.clip(arr_fp32, cliplow, cliphigh, out=arr_fp32)
-    return arr_fp32.astype(dtype)

@@ -27,18 +27,16 @@ import copy
 from onnx import onnx_pb as onnx_proto
 from onnx import TensorProto
 from onnx import shape_inference
-from onnxruntime.quantization.quant_utils import QuantizedValueType
-from onnxruntime.quantization.quant_utils import find_by_name, get_elem_index, get_mul_node, \
-                                generate_identified_filename, attribute_to_kwarg, type_to_name
-from onnxruntime.quantization.quant_utils import __producer__, __version__, onnx_domain
 from onnxruntime import SessionOptions, InferenceSession, GraphOptimizationLevel
-from onnxruntime.quantization.quant_utils import QuantizationMode
 
 from neural_compressor.adaptor.ox_utils.registry import CreateQDQQuantizer, \
     CreateOpConverter, CreateCaster
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue, QuantizedInitializer, \
-    quantize_data_with_scale_zero, quantize_data, dtype_mapping, support_pair, ValueInfo, \
-    _get_qrange_for_qType, convert_np_to_float16, cast_tensor, make_quant_node, make_dquant_node
+    _get_qrange_for_qType, cast_tensor, make_quant_node, make_dquant_node
+from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
+from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name
+from neural_compressor.adaptor.ox_utils.util import __producer__, __version__
+from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping, support_pair, ValueInfo
 from neural_compressor import options
 from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
@@ -791,7 +789,8 @@ class Quantizer:
             weights = onnx.numpy_helper.to_array(initializer)
         else:
             raise ValueError('Only float type quantization is supported. \
-               Weights {} is {}. '.format(initializer.name, type_to_name[initializer.data_type]))
+                Weights {} is {}.'.format(initializer.name, 
+                    dtype_to_name(dtype_mapping, initializer.data_type)))
         return weights
 
     def _get_quantization_params(self, param_name):

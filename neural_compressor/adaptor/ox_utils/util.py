@@ -20,7 +20,14 @@ import os
 import numpy as np
 from onnx import helper
 from onnx import onnx_pb as onnx_proto  
-from onnxruntime.quantization.quant_utils import QuantType       
+from enum import Enum
+from pathlib import Path
+import abc
+
+__producer__ = "onnx.quantize"
+__version__ = "0.1.0"
+onnx_domain = "ai.onnx"
+ms_domain = "com.microsoft"      
 
 support_pair = {
     'uint8 uint8': True,
@@ -35,10 +42,28 @@ support_pair = {
 
 dtype_mapping = {
     'fp32': 1,
-    'fp16': 10,
-    'int8': 3,
     'uint8': 2,
+    'int8': 3,
+    'uint16': 4,
+    'int16': 5,
+    'int32': 6,
+    'int64': 7,
+    'string': 8,
+    'bool': 9,
+    'fp16': 10,
+    'double': 11,
+    'uint32': 12,
+    'uint64': 13,
+    'complex64': 14,
+    'complex128': 15,
 }
+
+def dtype_to_name(dtype_mapping, dtype):
+    return list(dtype_mapping.keys())[list(dtype_mapping.values()).index(dtype)]
+
+class QuantType(Enum): # pragma: no cover
+    QInt8 = 0
+    QUInt8 = 1
 
 def make_quant_node(name, inputs, outputs):
     return helper.make_node("QuantizeLinear", inputs, outputs, name)
@@ -318,3 +343,63 @@ class QuantizedInitializer:
         self.axis = axis
         # If empty, single zero point and scales computed from a single rmin and rmax
         self.qType = qType
+
+
+class QuantizationMode(Enum): # pragma: no cover
+    IntegerOps = 0
+    QLinearOps = 1
+
+class QuantizedValueType(Enum): # pragma: no cover
+    Input = 0
+    Initializer = 1
+
+class QuantFormat(Enum): # pragma: no cover
+    QOperator = 0
+    QDQ = 1
+
+def quantize_nparray(qtype, arr, scale, zero_point, low=None, high=None):
+    dtype = np.uint8 if qtype == "uint8" else np.int8
+    cliplow = max(0 if dtype == np.uint8 else -127, -127 if low is None else low)
+    cliphigh = min(255 if dtype == np.uint8 else 127, 255 if high is None else high)
+    arr_fp32 = np.asarray((arr.astype(np.float32) / scale).round() + zero_point)
+    np.clip(arr_fp32, cliplow, cliphigh, out=arr_fp32)
+    return arr_fp32.astype(dtype)
+
+def attribute_to_kwarg(attribute):
+    '''
+    Convert attribute to kwarg format for use with onnx.helper.make_node.
+    '''
+    attribute_mapping = {
+        1: attribute.f,
+        2: attribute.i,
+        3: attribute.s,
+        4: attribute.t,
+        5: attribute.g,
+        6: attribute.floats,
+        7: attribute.ints,
+        8: attribute.strings,
+        9: attribute.tensors,
+        10: attribute.graphs
+    }
+    if attribute.type in attribute_mapping:
+        value = attribute_mapping[attribute.type]
+    else: # pragma: no cover
+        raise ValueError(
+            'attribute {} has no type specified '
+            'or unsupported type {}.'.format(attribute.name, attribute.type))
+    return {attribute.name: value}
+
+def find_by_name(name, item_list):
+    '''
+    Helper function to find item by name in a list.
+    '''
+    items = []
+    for item in item_list:
+        assert hasattr(item, "name"), \
+            "{} should have a 'name' atrribute defined".format(item) # pragma: no cover
+        if item.name == name:
+            items.append(item)
+    if len(items) > 0:
+        return items[0]
+    else:
+        return None

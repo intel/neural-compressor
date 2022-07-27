@@ -19,7 +19,7 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
-from onnxruntime.quantization.quant_utils import find_by_name, get_mul_node, \
+from neural_compressor.adaptor.ox_utils.util import find_by_name, \
                                                  QuantizedValueType, attribute_to_kwarg
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
@@ -88,8 +88,8 @@ class ConvInteger(QuantOperatorBase):
 
         scales_mul_node = find_by_name(scales_mul_op, self.quantizer.new_nodes)
         if scales_mul_node is None:
-            scales_mul_node = get_mul_node([scale_0, scale_1],
-                scales_mul_op + ":0", scales_mul_op)
+            scales_mul_node = onnx.helper.make_node("Mul", [scale_0, scale_1], 
+                                        [scales_mul_op + ":0"], scales_mul_op)
             self.quantizer.new_nodes.append(scales_mul_node)
 
         scales_mul_op_output = scales_mul_node.output[0]
@@ -97,8 +97,8 @@ class ConvInteger(QuantOperatorBase):
         # Add mul operation to multiply mul_scales_op result with output of ConvInteger
         # and make the output of this node the same as output of original conv node.
         output_scale_mul_op = node.name + "_output_scale_mul"
-        self.quantizer.new_nodes.append(get_mul_node([cast_op_output, scales_mul_op_output], 
-                                                  node.output[0], output_scale_mul_op))
+        self.quantizer.new_nodes.append(onnx.helper.make_node("Mul",
+            [cast_op_output, scales_mul_op_output], [node.output[0]], output_scale_mul_op))
         self.quantizer.remove_nodes.extend(parents[1:])
         self.quantizer.remove_nodes.append(node)
 

@@ -18,7 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
-from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, \
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, \
                                                  QuantizedValueType
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue                                                 
 class QGlobalAveragePool(QuantOperatorBase):
