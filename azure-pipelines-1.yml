@@ -33,8 +33,8 @@ stages:
     - script: |
         Workspace=`pwd`
         docker run --init --name=test-inc -d -u root:root -w ${Workspace} ${IMAGE_NAME}:${IMAGE_TAG} tail -f /dev/null
-        docker exec test-inc  python3 -c "import neural_compressor as nc;print(nc.version.__version__)"
-        docker exec test-inc  python3.8 -c "import neural_compressor as nc;print(nc.version.__version__)"
+        docker exec test-inc  /usr/local/bin/python3 -c "import neural_compressor as nc;print(nc.version.__version__)"
+        docker exec test-inc  /usr/local/bin/python -c "import neural_compressor as nc;print(nc.version.__version__)"
         docker exec test-inc pwd && ls -l && pip list && python test/test_metrics.py
         
       displayName: 'Run python sciprt'
