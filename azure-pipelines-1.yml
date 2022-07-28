@@ -1,0 +1,40 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+pr:
+- wenxin-test
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  PYTHON: 'python3.8'
+  INC_VER: '1.12'
+  IMAGE_NAME: 'neural-compressor'
+  IMAGE_TAG: '1.12'
+  INC_BRANCH: 'master'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:    
+    - script: docker build --build-arg PYTHON=${PYTHON} --build-arg INC_BRANCH=${INC_BRANCH} -f docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+      displayName: 'Build Container'
+
+    - script: |
+        docker images | grep -i neural-compressor
+      displayName: 'Check docker'
+
+    - script: |
+        Workspace=`pwd`
+        docker run --init --name=test-inc -d -u root:root -w ${Workspace} ${IMAGE_NAME}:${IMAGE_TAG} tail -f /dev/null
+        docker exec test-inc  python3 -c "import neural_compressor as nc;print(nc.version.__version__)"
+        docker exec test-inc  python3.8 -c "import neural_compressor as nc;print(nc.version.__version__)"
+        docker exec test-inc pwd && ls -l && pip list && python test/test_metrics.py
+        
+      displayName: 'Run python sciprt'
