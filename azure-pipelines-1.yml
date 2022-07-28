@@ -32,8 +32,8 @@ stages:
 
     - script: |
         Workspace=`pwd`
-        docker run -w ${Workspace} ${IMAGE_NAME}:${IMAGE_TAG} /usr/local/bin/python -c "import neural_compressor as nc;print(nc.version.__version__)"
-        docker run -w ${Workspace} ${IMAGE_NAME}:${IMAGE_TAG} /usr/local/bin/python /neural-compressor/test/test_metrics.py
+        docker run ${IMAGE_NAME}:${IMAGE_TAG} /usr/local/bin/python -c "import neural_compressor as nc;print(nc.version.__version__)"
+        docker run ${IMAGE_NAME}:${IMAGE_TAG} /usr/local/bin/python /neural-compressor/test/test_metrics.py
         docker run --init --name=test-inc -d -u root:root -w ${Workspace} ${IMAGE_NAME}:${IMAGE_TAG} tail -f /dev/null
         docker exec test-inc  /usr/local/bin/python3 -c "import neural_compressor as nc;print(nc.version.__version__)"
         docker exec test-inc  /usr/local/bin/python -c "import neural_compressor as nc;print(nc.version.__version__)"
