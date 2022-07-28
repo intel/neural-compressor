@@ -364,6 +364,26 @@ models = [
                   'input/item_onehot':np.array([[0] * 3706] * 10, dtype='float32')
                   },
         'output': ['evaluation/TopKV2',]
-    }
+    },
+    # EfficientDet-D2-768x768
+    {
+        'model_name': 'EfficientDet-D2-768x768',
+        'input': {'input': generate_data([768, 768, 3]),},
+        'output': ['class_net/class-predict_1/BiasAdd', 'class_net/class-predict_2/BiasAdd', 
+        'class_net/class-predict_3/BiasAdd', 'class_net/class-predict_4/BiasAdd', 'box_net/box-predict_1/BiasAdd', 
+        'box_net/box-predict_2/BiasAdd', 'box_net/box-predict_3/BiasAdd', 'box_net/box-predict_4/BiasAdd'],
+        'low': -1.0,
+        'high': 1.0
+    },
+    # EfficientDet-D4-1024x1024
+    {
+        'model_name': 'EfficientDet-D4-1024x1024',
+        'input': {'input': generate_data([1024, 1024, 3]),},
+        'output': ['class_net/class-predict_1/BiasAdd', 'class_net/class-predict_2/BiasAdd', 
+        'class_net/class-predict_3/BiasAdd', 'class_net/class-predict_4/BiasAdd', 'box_net/box-predict_1/BiasAdd', 
+        'box_net/box-predict_2/BiasAdd', 'box_net/box-predict_3/BiasAdd', 'box_net/box-predict_4/BiasAdd'],
+        'low': -1.0,
+        'high': 1.0
+    },
 ]
 
