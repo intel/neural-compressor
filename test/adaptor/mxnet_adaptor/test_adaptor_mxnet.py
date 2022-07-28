@@ -159,23 +159,23 @@ class TestAdaptorMXNet(unittest.TestCase):
         fc_node_name2 = fc_op_name + '_1'
 
         insp = inspect_tensor(quantizer.model, quantizer.calib_dataloader,
-                              op_list=[(fc_node_name1, fc_op_name),
-                                       (fc_node_name2, fc_op_name)], iteration_list=[1, 3])
+                              op_list=[fc_node_name1, 
+                                       fc_node_name2 ], iteration_list=[1, 3])
         qinsp = inspect_tensor(qmodel, quantizer.calib_dataloader,
-                               op_list=[(fc_node_name1, fc_op_name),
-                                        (fc_node_name2, fc_op_name)], iteration_list=[1, 3])
+                               op_list=[fc_node_name1,
+                                        fc_node_name2], iteration_list=[1, 3])
 
         self.assertNotEqual(len(insp['activation']), 0)
         self.assertEqual(len(insp['activation']), len(qinsp['activation']))
 
         for tensors, qtensors in zip(insp['activation'], qinsp['activation']):
           for k in (set(tensors.keys()) & set(qtensors.keys())):
-            tensor, qtensor = tensors[k][k[0]], qtensors[k][k[0]]
+            tensor, qtensor = tensors[k][k], qtensors[k][k]
             self.assertEqual(tensor.shape, qtensor.shape)
 
         #test inspect with an empty iteration_list
         inspect_tensor(qmodel, quantizer.calib_dataloader,
-                       op_list=[(fc_node_name1, fc_op_name)],
+                       op_list=[fc_node_name1],
                        iteration_list=[])
 
         # test recovery for symbolic model

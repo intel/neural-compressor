@@ -758,11 +758,11 @@ class TensorCollector(CollectorBase):
 
     def __init__(self, include_nodes, qtensor_to_tensor, tensor_to_node):
         self.tensors_dicts = []
-        self.include_nodes = dict(include_nodes)
+        self.include_nodes = include_nodes
         self.qtensor_to_tensor = qtensor_to_tensor
         self.tensor_to_node = tensor_to_node
 
-        rest = set(self.include_nodes.keys()) - set(self.tensor_to_node.values())
+        rest = set(self.include_nodes) - set(self.tensor_to_node.values())
         assert len(rest) == 0, 'Unexpected tensors set to be collected: {}'.format(rest)
 
     def collect_gluon(self, name, _, arr):
@@ -779,9 +779,7 @@ class TensorCollector(CollectorBase):
 
         node = self.tensor_to_node[name]
         if node in self.include_nodes:
-            op = self.include_nodes[node]
-            key = (node, op)
-            self.tensors_dicts[-1].setdefault(key, {})[name] = (is_quantized, arr.copy())
+            self.tensors_dicts[-1].setdefault(node, {})[name] = (is_quantized, arr.copy())
 
     def pre_batch(self, m, b):
         self.tensors_dicts.append({})

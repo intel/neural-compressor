@@ -320,7 +320,8 @@ class MxNetAdaptor(Adaptor):
         return collector.tensors_dicts
 
     def inspect_tensor(self, nc_model, data_x, op_list=[], iteration_list=[],
-                       inspect_type='activation', save_to_disk=False):
+                       inspect_type='activation', save_to_disk=False,
+                       save_path = None, quantization_cfg = None):
         """The function is used by tune strategy class for dumping tensor info.
 
         Args:
@@ -352,7 +353,7 @@ class MxNetAdaptor(Adaptor):
                     tensor_dict[key][tensor_name] = tensor_dict[key][tensor_name].asnumpy()
 
                 # transform to format expected by neural_compressor (assume only 1 tensor for now)
-                node, op = key
+                node = key
                 assert len(tensors) == 1, 'Multiple tensors from a single node are not supported'
                 tensor = list(tensor_dict[key].values())[0]
                 tensor_dict[key] = {node: tensor}
