@@ -10,7 +10,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  PYTHON: 'python'
+  PYTHON: 'python3.8'
   INC_VER: '1.12'
   IMAGE_NAME: 'neural-compressor'
   IMAGE_TAG: '1.12'
