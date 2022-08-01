@@ -19,10 +19,10 @@ function init_params {
   file_out="./output_translation_result.txt"
   config="./transformer_lt_mlperf.yaml"
   batch_size=64
-  warmup_steps=5
+  warmup_steps=10
   bleu_variant="uncased"
   num_inter=2
-  num_intra=56
+  num_intra=28
 
   for var in "$@"
   do

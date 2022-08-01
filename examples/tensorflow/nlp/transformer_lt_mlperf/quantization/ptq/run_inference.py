@@ -34,6 +34,7 @@ from utils import metrics
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.data import DATALOADERS
 from neural_compressor.utils.utility import dump_elapsed_time
+from neural_compressor.utils import logger
 
 
 INPUT_TENSOR_NAMES = ['input_tokens:0']
@@ -70,10 +71,10 @@ flags.DEFINE_integer(
     "num_inter", 2,
     """Number of inter op parallelism thread to use.""")
 flags.DEFINE_integer(
-    "num_intra", 56,
+    "num_intra", 28,
     """Number of intra op parallelism thread to use.""")
 flags.DEFINE_integer(
-    "warmup_steps", 5,
+    "warmup_steps", 10,
     """Number of warmup steps before benchmarking the model.""")
 flags.DEFINE_integer(
     "iters", -1,
@@ -94,7 +95,7 @@ def load_graph(file_name):
             text_format.Merge(f.read(), graph_def)
     with tf.Graph().as_default() as graph:
         tf.import_graph_def(graph_def, name='')
-    tf.compat.v1.logging.info('Loaded graph from: ' + file_name)
+    logger.info('Loaded graph from: ' + file_name)
     return graph
 
 def _trim_and_decode(ids, subtokenizer):
@@ -227,25 +228,20 @@ def eval_func(infer_graph):
         assert iteration <= len(dataloader), \
             "'iteration' must be less than or equal to len(dataloader)."
         if FLAGS.mode == "benchmark":
-            tf.compat.v1.logging.info \
-                ('******** Start to get performance of the model ********')
+            logger.info('******** Start to get performance of the model ********')
         else:
-            tf.compat.v1.logging.info \
-                ('******** Start to get accuracy and performance of the model ********')
+            logger.info('******** Start to get accuracy and performance of the model ********')
         if warmup > 0:
-            tf.compat.v1.logging.info \
-                ('Start to do warm-up with {}/{} (steps/total_iterations) before getting performance.' \
-                    .format(warmup, iteration))
+            logger.info('Start to do warm-up with {}/{} (steps/total_iterations) before getting performance.' \
+                .format(warmup, iteration))
         else:
-            tf.compat.v1.logging.info \
-                ('Start to get performance with {} iterations.'.format(iteration))
+            logger.info('Start to get performance with {} iterations.'.format(iteration))
         for idx, (input_data, _) in enumerate(dataloader):
             if idx < iteration:
                 if idx == warmup and warmup > 0:
-                    tf.compat.v1.logging.info('The warm-up is over.')
-                    tf.compat.v1.logging.info \
-                        ('Start to get performance with {}/{} (steps/total_iterations).' \
-                            .format(iteration - warmup, iteration))
+                    logger.info('The warm-up is over.')
+                    logger.info('Start to get performance with {}/{} (steps/total_iterations).' \
+                        .format(iteration - warmup, iteration))
                 feed_dict = {input_tensors[0]: input_data}
                 time_start = time.time()
                 dec_tensor = sess.run(output_tensors, feed_dict)
@@ -255,9 +251,9 @@ def eval_func(infer_graph):
             else:
                 break
     latency = np.array(time_list[warmup:]).mean() / FLAGS.batch_size
-    tf.compat.v1.logging.info('Batch-size = {}'.format(FLAGS.batch_size))
-    tf.compat.v1.logging.info('Latency: {:.3f} ms'.format(latency * 1000))
-    tf.compat.v1.logging.info('Throughput: {:.3f} items/sec'.format(1./ latency))
+    logger.info('Batch-size = {}'.format(FLAGS.batch_size))
+    logger.info('Latency: {:.3f} ms'.format(latency * 1000))
+    logger.info('Throughput: {:.3f} items/sec'.format(1./ latency))
 
     if FLAGS.mode != "benchmark":
         """Write translations to file and calculate BLEU score."""
@@ -269,8 +265,7 @@ def eval_func(infer_graph):
                 for k,otr in enumerate(itr):
                     translation_count += 1
                     decoded_translations.append(_trim_and_decode(otr, subtokenizer))
-        tf.compat.v1.logging.info \
-            ('Total number of sentences translated:%d' % (translation_count))
+        logger.info('Total number of sentences translated:%d' % (translation_count))
         tf.io.gfile.makedirs(os.path.dirname(FLAGS.file_out))
         with tf.io.gfile.GFile(FLAGS.file_out, "w") as f:
             for i in sorted_keys:
@@ -279,14 +274,16 @@ def eval_func(infer_graph):
         global uregex
         uregex = UnicodeRegex()
         score_uncased = bleu_wrapper(FLAGS.reference_file, FLAGS.file_out, False)
-        tf.compat.v1.logging.info("Case-insensitive results: {:.8f}".format(score_uncased))
+        logger.info("Case-insensitive results: {:.8f}".format(score_uncased))
         score_cased = bleu_wrapper(FLAGS.reference_file, FLAGS.file_out, True)
-        tf.compat.v1.logging.info("Case-sensitive results: {:.8f}".format(score_cased))
+        logger.info("Case-sensitive results: {:.8f}".format(score_cased))
         assert FLAGS.bleu_variant in ["uncased", "cased"], \
              "'bleu_variant' must be one of two options: 'uncased'/'cased'."
         if FLAGS.bleu_variant == "uncased":
+            logger.info("Accuracy: {:.8f}".format(score_uncased))
             return score_uncased
         else:
+            logger.info("Accuracy: {:.8f}".format(score_cased))
             return score_cased
 
 def main(unused_args):
