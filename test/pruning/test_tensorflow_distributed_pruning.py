@@ -299,7 +299,7 @@ class TestTensorflowPruning(unittest.TestCase):
         prune.evaluation_distributed = True
         prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=16)
         prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
-        prune.model = './baseline_model'
+        prune.model = '/tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model'
         pruned_model = prune()
         stats, sparsity = pruned_model.report_sparsity()
         logger.info(stats)
@@ -315,8 +315,6 @@ if __name__ == '__main__':
     with open('fake_ut.py', 'w', encoding="utf-8") as f:
         f.write(fake_ut)
         build_fake_yaml()
-        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
-        os.popen(cmd).readlines()
 
 
 def build_fake_yaml():
@@ -361,14 +359,14 @@ class TestDistributed(unittest.TestCase):
     def setUpClass(cls):
         build_fake_ut()
         build_fake_yaml()
-        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
-        os.popen(cmd).readlines()
+        if not os.path.exists(r'/tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model'):
+            print("resnet_v2 baseline_model doesn't exist")
+            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestDistributed)
 
     @classmethod
     def tearDownClass(cls):
         os.remove('fake_ut.py')
         os.remove('fake_yaml.yaml')
-        shutil.rmtree('baseline_model', ignore_errors=True)
         shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_tf_distributed_pruning(self):

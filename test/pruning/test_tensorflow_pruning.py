@@ -223,7 +223,7 @@ subtract_pixel_mean = True
 n = 1
 depth = n * 9 + 2
 
-def train():
+def train(dst_path):
     # Load the CIFAR10 data.
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -269,7 +269,7 @@ def train():
     scores = model.evaluate(x_test, y_test, verbose=1)
     print('Test loss:', scores[0])
     print('Test accuracy:', scores[1])
-    model.save("baseline_model")
+    model.save(dst_path)
 
 class TrainDataset(object):
     def __init__(self):
@@ -322,16 +322,17 @@ class EvalDataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 class TestTensorflowPruning(unittest.TestCase):
+    dst_path = '/tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model'
     @classmethod
     def setUpClass(self):
-        build_fake_yaml()
-        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
-        os.popen(cmd).readlines()
+        build_fake_yaml()        
+        if not os.path.exists(self.dst_path):
+            print("resnet_v2 baseline_model doesn't exist")
+            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestTensorflowPruning)
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-        shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('nc_workspace',ignore_errors=True)
 
     @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
@@ -387,7 +388,7 @@ class TestTensorflowPruning(unittest.TestCase):
         prune = Pruning("./fake_yaml.yaml")
         prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
         prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
-        prune.model = './baseline_model'
+        prune.model = self.dst_path
         pruned_model = prune()
         stats, sparsity = pruned_model.report_sparsity()
         logger.info(stats)
