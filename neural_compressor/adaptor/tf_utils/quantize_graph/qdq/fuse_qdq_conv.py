@@ -290,7 +290,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 elif is_relu_add_fusion:
                     helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Sum'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# both cpu and gpu use float32 in New API
@@ -300,7 +300,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -434,7 +434,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -444,7 +444,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -567,7 +567,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu'])
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -576,7 +576,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -693,7 +693,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                       dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum, # if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -702,7 +702,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -777,7 +777,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 # helper.set_attr_string(quantized_conv_node, '_kernel', b'QuantizedMklOp')
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     #dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -786,7 +786,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,])
@@ -913,7 +913,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if is_elu:
                     fused_ops = [b'BiasAdd', b'Elu'] 
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -922,7 +922,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1028,7 +1028,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 #if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1037,7 +1037,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1114,7 +1114,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 # 
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     #dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1123,7 +1123,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1271,7 +1271,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 elif is_relu_add_fusion:
                     helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Sum'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1281,7 +1281,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1408,7 +1408,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'_FusedHardSwish'])
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1417,7 +1417,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1525,7 +1525,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 if self.device == 'gpu' else dtypes.qint32)
                 fused_ops = [b'BiasAdd', b'_FusedSwish']
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1534,7 +1534,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1632,7 +1632,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1642,7 +1642,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])

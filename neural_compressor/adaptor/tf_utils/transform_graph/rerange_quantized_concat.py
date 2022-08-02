@@ -287,5 +287,5 @@ class RerangeQuantizedConcat(GraphTransformBase):
                         tensor=tensor_util.make_tensor_proto(
                             int32_bias, dtypes.int32, bias_tensor.shape)))
                 bias_node.attr['value'].tensor.dtype = dtypes.qint32.as_datatype_enum
-                if 'input_types' in original_conv_node.attr:
-                    original_conv_node.attr['input_types'].list.type[2] = original_conv_node.attr['Tbias'].type
+                if 'Thost_inputs' in original_conv_node.attr:
+                    original_conv_node.attr['Thost_inputs'].list.type[2] = original_conv_node.attr['Tbias'].type
