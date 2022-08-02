@@ -33,7 +33,6 @@ evaluation:
      configs:                                         # optional. if not specified, use all cores in 1 socket.
        cores_per_instance: 4
        num_of_instance: 1
-  accuracy:
 
 tuning:
   accuracy_criterion:
