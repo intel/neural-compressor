@@ -269,59 +269,29 @@ class ONNXRTAdaptor(Adaptor):
         for precision in self.query_handler.get_precisions():
             if precision != 'fp32':
                 fp32_op_list += self.query_handler.get_op_types_by_precision(precision=precision)
+        qdq_ops = ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]
         res = {}
         for op_type in fp32_op_list:
             res[op_type] = {'INT8':0, 'BF16': 0, 'FP16': 0, 'FP32':0}
-        for op_type in ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]:
+        for op_type in qdq_ops:
             res[op_type] = {'INT8':0, 'BF16': 0, 'FP16': 0, 'FP32':0}
 
-
-        if self.backend in ["qlinearops", "qdq", "qoperator"] :
-            int8_op_list = ["QLinearConv", "QLinearMatMul", "QAttention",
-                            "QLinearMul", "QLinearRelu", "QLinearClip",
-                            "QLinearLeakyRelu", "QLinearSigmoid", "MaxPool","Squeeze",
-                            "EmbedLayerNormalization", "QLinearGlobalAveragePool", 
-                            "QLinearAdd", "Pad", "Split", "Gather", "Reshape", "Concat",
-                            "QuantizeLinear", "DequantizeLinear", "QLinearAveragePool",
-                            "Unsqueeze", "Transpose"
-            ]
-        else:
-            int8_op_list = ["ConvInteger", "MatMulInteger", "QAttention",
-                            "DynamicQuantizeLSTM", "Gather", "EmbedLayerNormalization",
-                            "DynamicQuantizeLinear"
-            ]
-
         for node in model.model.graph.node:
-            possible_int8_res = [name for name in int8_op_list if node.op_type.find(name) != -1]
- 
-            if any(possible_int8_res):
+            if node.name.endswith('_quant'):
                 if self.backend in ["qlinearops", "qdq", "qoperator"]:
-                    if node.op_type == "QuantizeLinear" or node.op_type == "DequantizeLinear" \
-                            or node.op_type == "DynamicQuantizeLinear":
-                        origin_op_type = node.op_type
-                    else:
-                        origin_op_type = possible_int8_res[0].split('QLinear')[-1]
+                    origin_op_type = node.op_type.split('QLinear')[-1]
                 else:
-                    origin_op_type = possible_int8_res[0].split('Integer')[0]
-
-                if node.op_type in ["Pad", "Split", "Gather", "Concat", "Reshape", "Unsqueeze", 
-                    "Squeeze", "Transpose"]:
-                    if any([output.endswith('_quantized') for output in node.output]) or \
-                        any(['_DequantizeLinear' in inp for inp in node.input]):
-                        origin_op_type = node.op_type
-                    else:
-                        if node.op_type in res:
-                            res[node.op_type]['FP32'] += 1
-                        continue
+                    origin_op_type = node.op_type.split('Integer')[0]
 
                 if origin_op_type == "QAttention":
                     origin_op_type = "Attention"
-                if origin_op_type == "DynamicQuantizeLSTM":
+                elif origin_op_type == "DynamicQuantizeLSTM":
                     origin_op_type = "LSTM"
+                elif origin_op_type == "QEmbedLayerNormalization":
+                    origin_op_type = "EmbedLayerNormalization"
                 res[origin_op_type]['INT8'] += 1
 
-            elif node.op_type in fp32_op_list and \
-                any(['_DequantizeLinear' in inp for inp in node.input]):
+            elif node.op_type in qdq_ops:
                 res[node.op_type]['INT8'] += 1
 
             elif node.op_type in fp32_op_list and node.name in self.quantize_config:
@@ -329,6 +299,9 @@ class ONNXRTAdaptor(Adaptor):
                     res[node.op_type]['FP32'] += 1
                 else:
                     res[node.op_type][self.quantize_config[node.name].upper()] += 1
+
+            elif node.op_type in res:
+                res[node.op_type]['FP32'] += 1
 
         output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
             res[op_type]['BF16'], res[op_type]['FP16'], res[op_type]['FP32']] for \

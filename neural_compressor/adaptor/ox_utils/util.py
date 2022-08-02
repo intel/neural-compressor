@@ -91,7 +91,7 @@ def split_shared_bias(model):
             for node in node_list[1:]:
                 if node.op_type not in ['Conv', 'FusedConv']:
                     continue
-                if node.input[2] == input_name:
+                if len(node.input) > 2 and node.input[2] == input_name:
                     new_input_name = node.input[2] + '_nc_split_' + node.name
                     new_input = helper.make_tensor(
                                     new_input_name,

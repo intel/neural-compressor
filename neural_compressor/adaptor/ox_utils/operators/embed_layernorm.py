@@ -47,7 +47,8 @@ class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
         [7] mask (int32) (optional)
         '''
 
-        parents = self.quantizer.model.get_parents(node)
+        parents = [i for i in self.quantizer.model.get_parents(node) \
+            if i.op_type == 'DequantizeLinear']
         inputs = []
         # 'input_ids'
         inputs.extend([node.input[0]])

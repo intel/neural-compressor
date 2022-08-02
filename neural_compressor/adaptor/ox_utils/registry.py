@@ -20,7 +20,7 @@ from .operators.base_operator import QuantOperatorBase
 from .operators.qdq_base_operator import QDQOperatorBase
 from .operators.matmul import MatMulInteger, QLinearMatMul, QDQMatMul
 from .operators.attention import AttentionQuant, QDQAttention
-from .operators.embed_layernorm import EmbedLayerNormalizationQuant
+from .operators.embed_layernorm import EmbedLayerNormalizationQuant, QDQEmbedLayerNormalization
 from .operators.gather import GatherConverter, GatherQuant
 from .operators.conv import QLinearConv, ConvInteger, QDQConv
 from .operators.activation import QLinearActivation, QDQRemovableActivation, QDQActivation
@@ -92,7 +92,8 @@ QDQRegistry = {
     "AveragePool": QDQPool,
     "Unsqueeze" : QDQDirect8BitOp,
     "Concat": QDQConcat,
-    "Split": QDQSplit
+    "Split": QDQSplit,
+    "EmbedLayerNormalization": QDQEmbedLayerNormalization
 }
 
 CastRegistry = {
