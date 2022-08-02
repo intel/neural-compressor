@@ -2717,13 +2717,25 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE,
                                     observer=torch.quantization.MovingAverageMinMaxObserver),
-                            weight=torch.quantization.default_weight_fake_quant)
+                            weight=torch.quantization.default_weight_fake_quant) \
+                        if self.version < PyTorchVersionMode.PT110.value else \
+                          torch.quantization.QConfig(
+                            activation=torch.quantization.FusedMovingAvgObsFakeQuantize.with_args(
+                                       dtype=torch.quint8,
+                                       qscheme=torch.per_tensor_affine,
+                                       reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_fused_per_channel_wt_fake_quant)
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         quantized_ops = {op[0]:q_cfgs for op in quantizable_ops}
         if self.version < PyTorchVersionMode.PT111.value:
             quantized_ops["default_qconfig"] = None
+        else:
+            from torch.ao.quantization import default_embedding_qat_qconfig
+            for op in quantizable_ops:
+                if op[1] in ['Embedding', 'EmbeddingBag']:
+                    quantized_ops[op[0]] = default_embedding_qat_qconfig
         from torch.quantization.quantize_fx import prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         self.model._model.train()
@@ -3136,35 +3148,35 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         try:
             tmp_model = copy.deepcopy(model._model)
-        except Exception as e:   # pragma: no cover
-            tmp_model = model._model
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
-        tmp_model.train() if is_qat else tmp_model.eval()
-        from torch.fx import GraphModule
-        from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
-        if model.kwargs is not None:
-            prepare_custom_config_dict = model.kwargs.get(
-                                            'prepare_custom_config_dict', {})
-        else:
-            prepare_custom_config_dict = {}
-        skipped_module_names = prepare_custom_config_dict.get(\
-                                            'non_traceable_module_name', [])
-        skipped_module_classes = prepare_custom_config_dict.get(\
-                                            'non_traceable_module_class', [])
-        try:
-            tracer = QuantizationTracer(
-                skipped_module_names, skipped_module_classes)
-            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version >= PyTorchVersionMode.PT111.value:   # pragma: no cover
-                # pylint: disable=E1124
-                fused_model = _fuse_fx(graph_module, is_qat,
-                                       fuse_custom_config_dict=prepare_custom_config_dict)
+            tmp_model.train() if is_qat else tmp_model.eval()
+            from torch.fx import GraphModule
+            from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
+            if model.kwargs is not None:
+                prepare_custom_config_dict = model.kwargs.get(
+                                                'prepare_custom_config_dict', {})
             else:
-                fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
-        except:
-            self.sub_module_list = []
-            self._fuse_sub_graph(tmp_model, prefix='', is_qat=is_qat)
-            fused_model = tmp_model
+                prepare_custom_config_dict = {}
+            skipped_module_names = prepare_custom_config_dict.get(\
+                                                'non_traceable_module_name', [])
+            skipped_module_classes = prepare_custom_config_dict.get(\
+                                                'non_traceable_module_class', [])
+            try:
+                tracer = QuantizationTracer(
+                    skipped_module_names, skipped_module_classes)
+                graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
+                if self.version >= PyTorchVersionMode.PT111.value:   # pragma: no cover
+                    # pylint: disable=E1124
+                    fused_model = _fuse_fx(graph_module, is_qat,
+                                        fuse_custom_config_dict=prepare_custom_config_dict)
+                else:
+                    fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
+            except:
+                self.sub_module_list = []
+                self._fuse_sub_graph(tmp_model, prefix='', is_qat=is_qat)
+                fused_model = tmp_model
+        except Exception as e:   # pragma: no cover
+            fused_model = model._model
+            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
         return fused_model
 
     def _fuse_sub_graph(self, model, prefix, is_qat):

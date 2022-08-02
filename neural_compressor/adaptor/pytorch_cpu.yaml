@@ -30,7 +30,7 @@
             'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
     bf16: ['Linear', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
-            '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell', 'Tanh']
+            '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell']
     fp32: ['*'] # '*' means all op types
   
   capabilities: &1_11_capabilities

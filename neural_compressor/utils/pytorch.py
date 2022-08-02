@@ -108,6 +108,11 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, **kwargs):
         version = get_torch_version()
         if version < PyTorchVersionMode.PT111.value:
             quantized_ops["default_qconfig"] = None
+        else:
+            from torch.ao.quantization import default_embedding_qat_qconfig
+            for op in tune_cfg['quantizable_ops']:
+                if op[1] in ['Embedding', 'EmbeddingBag']:
+                    quantized_ops[op[0]] = default_embedding_qat_qconfig
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         model.train()
         if tune_cfg['sub_module_list'] is None:
