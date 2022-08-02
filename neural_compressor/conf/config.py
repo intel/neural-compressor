@@ -1242,8 +1242,12 @@ class Conf(object):
                 with open(cfg_fname, 'w') as f:
                     f.write(content)
 
-            return validated_cfg
-
+            return validated_cfg   
+        except FileNotFoundError as f:
+            logger.error("{}.".format(f))
+            raise RuntimeError(
+                "The yaml file is not exist. Please check the file name or path."
+            )
         except Exception as e:
             logger.error("{}.".format(e))
             raise RuntimeError(

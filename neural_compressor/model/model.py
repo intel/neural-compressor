@@ -179,7 +179,8 @@ def get_model_fwk_name(model):
         fwk_name = handler(model)
         if fwk_name != 'NA':
             break
-    assert fwk_name != 'NA', 'Framework is not detected correctly from model format.'
+    assert fwk_name != 'NA', 'Framework is not detected correctly from model format. This could be \
+caused by unsupported model or inappropriate framework installation.'
 
     return fwk_name
 

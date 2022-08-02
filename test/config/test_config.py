@@ -843,6 +843,12 @@ class TestConf(unittest.TestCase):
         transform_cfg = cfg['quantization']['calibration']['dataloader']['transform']['BilinearImagenet']
         self.assertTrue(isinstance(transform_cfg['mean_value'], list))
 
+    def test_yaml_detection(self):
+        try:
+            cfg = conf.Conf('not_exist.yaml').usr_cfg
+        except:
+            pass
+
     def test_deep_set(self):
       from neural_compressor.conf.dotdict import DotDict, deep_set
       cfg = {'evaluation': {'accuracy': {}}}
@@ -860,7 +866,6 @@ class TestConf(unittest.TestCase):
       multi_metrics2 = dot_cfg['evaluation']['accuracy']['multi_metrics']
       self.assertTrue(multi_metrics1 == multi_metrics2)
       self.assertTrue(list(multi_metrics1.keys()) == ['weight', 'mAP'])
-      
 
 if __name__ == "__main__":
     unittest.main()
