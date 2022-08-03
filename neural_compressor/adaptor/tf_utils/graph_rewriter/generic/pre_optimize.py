@@ -108,6 +108,11 @@ class PreOptimization():
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
+        # Put FuseDecomposedBNOptimizer before GraphFoldConstantOptimizer
+        # The 'Sub' op in the small decomposed ops of BN will be converted to const by GraphFoldConstantOptimizer.
+        # Then the FuseDecomposedBNOptimizer can't fuse the small decomposed ops to BN.
+        self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
+
         # disable fold constant for itex qdq mode
         if not itex_mode:
             self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
@@ -120,8 +125,6 @@ class PreOptimization():
         self._tmp_graph_def = FuseGeluOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphCseOptimizer(self._tmp_graph_def).do_transformation()
-
-        self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(
             self._tmp_graph_def).do_transformation()
