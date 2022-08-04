@@ -6,8 +6,7 @@
 pr:
 - wenxin-test
 
-pool:
-  vmImage: ubuntu-latest
+pool: suyue-test
 
 variables:
   PYTHON: 'python3.8'
