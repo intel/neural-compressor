@@ -599,7 +599,8 @@ class TensorFlowAdaptor(Adaptor):
         int8_op_prefix_list = ['QuantizedConv2D', '_QuantizedConv3D', 'QuantizedDepthwise',
                                'QuantizedMaxPool', 'QuantizedAvgPool',
                                'QuantizedConcatV2', 'QuantizedMatMul',
-                               '_QuantizedFusedBatchNorm']
+                               '_QuantizedFusedBatchNorm', '_QuantizedMatMul',
+                               '_QuantizedBatchMatMul']
         from tensorflow.python.framework import dtypes
 
         res = {}
@@ -620,6 +621,8 @@ class TensorFlowAdaptor(Adaptor):
                     origin_op_type = 'FusedBatchNormV3'
                 if origin_op_type == 'Depthwise':
                     origin_op_type = 'DepthwiseConv2dNative'
+                if origin_op_type == 'BatchMatMul':
+                    origin_op_type = 'BatchMatMulV2'
                 res[origin_op_type]['INT8'] += 1
 
             if i.op in fp32_op_list:

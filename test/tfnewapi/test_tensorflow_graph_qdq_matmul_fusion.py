@@ -74,12 +74,12 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
-                    #if i.op == '_QuantizedFusedMatMulAndRequantize':
-                    if i.op == 'QuantizedMatMulWithBiasAndReluAndRequantize':
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Requantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)
- 
+
     @disable_random()
     def test_first_matmul_biasadd_relu_fusion(self):
         x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
@@ -137,8 +137,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
-                    #if i.op == '_QuantizedFusedMatMulAndDequantize':
-                    if i.op == 'QuantizedMatMulWithBiasAndDequantize':
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr["fused_ops"].list.s == [b'BiasAdd', b'Dequantize']:
                         found_quantized_matmul = True
                         break
                         
@@ -169,8 +169,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
-                    #if i.op == '_QuantizedFusedMatMulAndDequantize' and i.name == 'op_to_store':
-                    if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
+                    if i.op == '_QuantizedMatMul' and i.name == 'op_to_store' and \
+                       i.attr["fused_ops"].list.s == [b'BiasAdd', b'Dequantize']:
                         found_quantized_matmul = True
                         break
             self.assertEqual(found_quantized_matmul, True)
@@ -201,8 +201,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
-                    #if i.op == '_QuantizedFusedMatMulAndDequantize' and i.name == 'op_to_store':
-                    if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
+                    if i.op == '_QuantizedMatMul' and i.name == 'op_to_store':
                         found_quantized_matmul = True
                         break
             self.assertEqual(found_quantized_matmul, False)
@@ -233,13 +232,11 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
-                    #if i.op == '_QuantizedFusedMatMulAndDequantize' and i.name == 'op_to_store':
-                    if i.op == 'QuantizedMatMulWithBiasAndDequantize' and i.name == 'op_to_store':
+                    if i.op == '_QuantizedMatMul' and i.name == 'op_to_store':
                         found_quantized_matmul = True
                         break
             self.assertEqual(found_quantized_matmul, False)
 
-    
     @disable_random()
     def test_matmul_with_reshape_transpose(self):
         g = tf.Graph()
@@ -340,8 +337,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                     count=0
                     for i in output_graph.model.as_graph_def().node:
-                        #if i.op == '_QuantizedFusedMatMulAndDequantize':
-                        if i.op == 'QuantizedMatMulWithBiasAndDequantize':
+                        if i.op == '_QuantizedMatMul':
                             count += 1
                     found_quantized_matmul = bool(count > 1)
             self.assertEqual(found_quantized_matmul, False)
@@ -465,13 +461,12 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     break
  
             self.assertEqual(found_quantized_matmul, False)
-    
-    """
+
     @disable_random()
     def test_batchmatmulv2_dequantize_fusion(self):
         g = tf.Graph()
         with g.as_default():
-            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            x_data = np.array([[0.1, 0.2], [0.5, 0.6]])
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
@@ -490,44 +485,105 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
                 output_graph = quantizer.fit()
-
                 for i in output_graph.graph_def.node:
-                    if i.op == '_QuantizedBatchMatMulV2AndDequantize':
+                    if i.op == '_QuantizedBatchMatMul':
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)
-    
+
     @disable_random()
-    def test_batchmatmulv2_mul_add_dequantize_fusion(self):
-        x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-        y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
-        x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
-        y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
-        z = tf.raw_ops.BatchMatMulV2(x=x, y=y)
-        z = tf.raw_ops.Mul(x=z, y=[[0.4, 0.5], [0.3, 0.8]])
-        z = tf.raw_ops.Add(x=z, y=[[2.0, 1.5], [2.0, 2.5]])
+    def test_batchmatmulv2_mul_dequantize_fusion(self):
+        np_input = np.random.randn(1, 2, 4, 6).astype(np.float32)
+        np_filter = np.random.randn(1, 2, 6, 5).astype(np.float32)
+        input = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 2, 4, 6))
+        filter = tf.constant(np_filter)
+        mul = tf.constant(0.2)
+        z = tf.raw_ops.BatchMatMulV2(x=input, y=filter)
+        z = tf.raw_ops.Mul(x=z, y=mul)
         z = tf.nn.relu(z, name='op_to_store')
 
         with tf.Session() as sess:
-
-            sess.run(z, feed_dict={x: x_data, y: y_data})
+            sess.run(z, feed_dict={input: np_input, filter: np_filter})
             float_graph_def = sess.graph.as_graph_def()
 
             from neural_compressor.experimental import Quantization, common
             quantizer = Quantization('fake_yaml.yaml')
-            dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+            dataset = quantizer.dataset('dummy', shape=(1, 2, 4, 6), label=True)
             quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
             quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
             quantizer.model = float_graph_def
             output_graph = quantizer.fit()
             found_quantized_matmul = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedFusedBatchMatMulV2AndDequantize':
+                if i.op == '_QuantizedBatchMatMul':
                     found_quantized_matmul = True
                     break
 
             self.assertEqual(found_quantized_matmul, True)
-    """
+
+    @disable_random()
+    def test_batchmatmulv2_add_dequantize_fusion(self):
+        np_input = np.random.randn(1, 2, 4, 6).astype(np.float32)
+        np_filter = np.random.randn(1, 2, 6, 5).astype(np.float32)
+        np_add = np.random.randn(1, 2, 4, 5).astype(np.float32)
+        input = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 2, 4, 6))
+        filter = tf.constant(np_filter)
+        add = tf.constant(np_add)
+        z = tf.raw_ops.BatchMatMulV2(x=input, y=filter)
+        z = tf.raw_ops.Add(x=z, y=add)
+        z = tf.nn.relu(z, name='op_to_store')
+
+        with tf.Session() as sess:
+            sess.run(z, feed_dict={input: np_input, filter: np_filter})
+            float_graph_def = sess.graph.as_graph_def()
+
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(1, 2, 4, 6), label=True)
+            quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+            quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+            quantizer.model = float_graph_def
+            output_graph = quantizer.fit()
+            found_quantized_matmul = False
+            for i in output_graph.graph_def.node:
+                if i.op == '_QuantizedBatchMatMul':
+                    found_quantized_matmul = True
+                    break
+
+            self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_batchmatmulv2_mul_add_dequantize_fusion(self):
+        np_input = np.random.randn(1, 2, 4, 6).astype(np.float32)
+        np_filter = np.random.randn(1, 2, 6, 5).astype(np.float32)
+        np_add = np.random.randn(1, 2, 4, 5).astype(np.float32)
+        input = tf.compat.v1.placeholder(dtype=tf.float32, shape=(1, 2, 4, 6))
+        filter = tf.constant(np_filter)
+        mul = tf.constant(0.2)
+        add = tf.constant(np_add)
+        z = tf.raw_ops.BatchMatMulV2(x=input, y=filter)
+        z = tf.raw_ops.Mul(x=z, y=mul)
+        z = tf.raw_ops.Add(x=z, y=add)
+        z = tf.nn.relu(z, name='op_to_store')
+
+        with tf.Session() as sess:
+            sess.run(z, feed_dict={input: np_input, filter: np_filter})
+            float_graph_def = sess.graph.as_graph_def()
+
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(1, 2, 4, 6), label=True)
+            quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+            quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+            quantizer.model = float_graph_def
+            output_graph = quantizer.fit()
+            found_quantized_matmul = False
+            for i in output_graph.graph_def.node:
+                if i.op == '_QuantizedBatchMatMul':
+                    found_quantized_matmul = True
+                    break
+
+            self.assertEqual(found_quantized_matmul, True)
 
 if __name__ == '__main__':
     unittest.main()

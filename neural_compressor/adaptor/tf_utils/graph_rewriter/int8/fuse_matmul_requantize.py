@@ -261,8 +261,8 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
         return self.graph_analyzer.dump_graph()
 
-class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
-    """Fuse _QuantizedFusedMatMul + Requantize + Dequantize into _QuantizedFusedMatMulAndDequantize.
+class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
+    """Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
     """
     def __init__(self, model, device='cpu'):
         super().__init__(model)
@@ -275,20 +275,13 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
         self.eps = 1e-5
 
     def do_transformation(self):
-        fuse_pattern = [["_QuantizedFusedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
+        fuse_pattern = [["_QuantizedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
 
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
-            # TODO Remove below checker once the TF's limitation removed.
-            if len(i) == 5:
-                continue
-
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
             requantize_node_name = i[1]
-            requantize_node = self.graph_info[requantize_node_name].node
-            requested_output_min_name = requantize_node.input[3]
-            requested_output_max_name = requantize_node.input[4]
             deq_node_name = i[2]
 
             quantized_node_op = i[-1][0]
@@ -299,26 +292,30 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
 
             new_node = node_def_pb2.NodeDef()
 
-            new_node.op = quantized_node_op + "AndDequantize"
+            new_node.op = quantized_node_op
             new_node.name = requantize_node_name
             for _, value in enumerate(quantized_node.input):
                 new_node.input.append(value)
 
-            #new_node.input.append(requested_output_min_name)
-            #new_node.input.append(requested_output_max_name)
             if 'T1' in quantized_node.attr:
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
                 new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
-            if 'num_args' in quantized_node.attr:
-                new_node.attr["num_args"].CopyFrom(quantized_node.attr['num_args'])
+            if 'Tbias' in quantized_node.attr:
+                new_node.attr["Tbias"].CopyFrom(quantized_node.attr['Tbias'])
             if 'fused_ops' in quantized_node.attr:
                 new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
-
+            if 'input_quant_mode' in quantized_node.attr:
+                new_node.attr["input_quant_mode"].CopyFrom(quantized_node.attr["input_quant_mode"])
+            if 'output_quant_mode' in quantized_node.attr:
+                new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
+            if 'Thost_inputs' in quantized_node.attr:
+                new_node.attr["Thost_inputs"].CopyFrom(quantized_node.attr["Thost_inputs"])
+            Helper.set_attr_type_list(new_node, 'Thost_outputs', [dtypes.float32.as_datatype_enum])
+            Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Dequantize'])
             top_node_name = Helper.node_name_from_input(quantized_node.input[0])
             float32_type = dtypes.float32.as_datatype_enum
-            new_node.attr["Targs"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
-            new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
+            new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
             self.graph_analyzer.remove_node(requantize_node_name)
 
@@ -338,7 +335,7 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
 
         return self.graph_analyzer.dump_graph()
 
-class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
+class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
     """Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
     """
     def __init__(self, model, device='cpu'):
@@ -358,7 +355,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cov
 
         while True:
             target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-                [["_QuantizedFusedMatMul"], ['Requantize']])
+                [["_QuantizedMatMul"], ['Requantize']])
             if len(target_nodes) == 0:
                 break
 
@@ -377,23 +374,41 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cov
 
             new_node = node_def_pb2.NodeDef()
 
-            new_node.op = quantized_node_op + "AndRequantize"
+            new_node.op = quantized_node_op
             new_node.name = requantize_node_name
             for _, value in enumerate(quantized_node.input):
                 new_node.input.append(value)
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
+
             if 'T1' in quantized_node.attr:
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
                 new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
-            if 'num_args' in quantized_node.attr:
-                new_node.attr["num_args"].CopyFrom(quantized_node.attr["num_args"])
-            if 'Targs' in quantized_node.attr:
-                new_node.attr["Targs"].CopyFrom(quantized_node.attr["Targs"])
-            if 'fused_ops' in quantized_node.attr:
-                new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
-            new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+            if 'Tbias' in quantized_node.attr:
+                new_node.attr["Tbias"].CopyFrom(quantized_node.attr["Targs"])
+            if 'U' in quantized_node.attr:
+                new_node.attr["U"].CopyFrom(quantized_node.attr["U"])
+            if 'input_quant_mode' in quantized_node.attr:
+                new_node.attr["input_quant_mode"].CopyFrom(quantized_node.attr["input_quant_mode"])
+            if 'output_quant_mode' in quantized_node.attr:
+                new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
+            Helper.set_attr_type_list(new_node, "Thost_inputs", [
+                                      dtypes.quint8.as_datatype_enum,
+                                      dtypes.qint8.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum])
+            Helper.set_attr_type_list(new_node, 'Thost_outputs', [
+                                      dtypes.quint8.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum])
+            Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Requantize'])
+            new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
             self.graph_analyzer.replace_single_node(

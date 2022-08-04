@@ -157,9 +157,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if each_input_name[0] == '^':
                 continue
 
-            if self.node_name_mapping[original_node.name].op == "MatMul" or \
-               self.node_name_mapping[original_node.name].op == "BatchMatMulV2":
+            if self.node_name_mapping[original_node.name].op == "MatMul":
                 dtype = dtypes.quint8
+            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2":
+                dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
                 if input_node_name in self.graph_info:

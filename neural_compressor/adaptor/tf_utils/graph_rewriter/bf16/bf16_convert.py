@@ -129,11 +129,10 @@ class BF16Convert(GraphRewriterBase):
             return
         else:
             self.converted_ops.append(bf16_node.name)
-
+        
         inputs_dt, outputs_dt = self._dtype(bf16_node)
         inputs_dt_val, outputs_dt_val = self._dtype_val(bf16_node)
         allowed_dt_val = self._allowed_dtype_val(bf16_node)
-
         for index, input_name in enumerate(bf16_node.input):
             if input_name.startswith('^'):
                 continue
@@ -142,7 +141,6 @@ class BF16Convert(GraphRewriterBase):
                 input_name)]
             input_node = input_detail.node
             input_node_outputs = input_detail.outputs
-
             if inputs_dt[index] in allowed_dt_val and \
                                         dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
                 continue
@@ -239,6 +237,10 @@ class BF16Convert(GraphRewriterBase):
             if bf16_node_name not in self.cur_graph.node_name_details:
                 self.bf16_ops.remove(bf16_node_name)
                 continue
+            else:
+                if "fused_ops" in self.cur_graph.node_name_details[bf16_node_name].node.attr:
+                    self.bf16_ops.remove(bf16_node_name)
+                    continue
         for bf16_node_name in set(self.bf16_ops):
             self._bf16_convert(bf16_node_name)
         return self.cur_graph.dump_graph()
