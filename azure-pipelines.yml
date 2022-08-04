@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 pr:
-  - main
+  - letong_performance
 
 pool: wenjiao-test
 
