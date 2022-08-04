@@ -227,9 +227,9 @@ def main_worker(args):
             return model
 
         prune.model = common.Model(model)
-        prune._train_dataloader = train_loader
-        prune._eval_dataloader = val_loader 
-        prune._pruning_func = train_func 
+        prune.train_dataloader = train_loader
+        prune.eval_dataloader = val_loader
+        prune.train_func = train_func
         model = prune.fit()
         model.save(args.output_model)
         return
