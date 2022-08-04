@@ -549,7 +549,7 @@ class TensorFlowAdaptor(Adaptor):
                 batch_size = get_model_input_shape(model)
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, batch_size))
+                        format(data_loader.batch_size, batch_size))
                 data_loader.batch(batch_size)
                 self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
