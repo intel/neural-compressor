@@ -97,79 +97,75 @@ def get_torch_white_list(approach):
 
 
 def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
-    if device == "ipex" and IPEX_110: # pragma: no cover 
-        if isinstance(input, torch.Tensor):
-            if running_mode == "calibration":
-                with ipex.quantization.calibrate(conf, default_recipe=True):
-                    input = input.contiguous(memory_format=torch.channels_last)
-                    output = model(input)
-            else:
-                input = input.contiguous(memory_format=torch.channels_last)
-                output = model(input)
-        elif isinstance(input, list) or isinstance(input, tuple):
-            if running_mode == "calibration":
-                with ipex.quantization.calibrate(conf, default_recipe=True):
-                    output = model(*input)
-            else:
-                output = model(*input)
-        elif isinstance(input, dict):
-            if running_mode == "calibration":
-                with ipex.quantization.calibrate(conf, default_recipe=True):
-                    output = model(**input)
-            else:
-                output = model(**input)
-    elif device == "ipex" and IPEX_112: # pragma: no cover 
-        if isinstance(input, torch.Tensor):
-            input = input.contiguous(memory_format=torch.channels_last)
-            output = model(input)
-        elif isinstance(input, list) or isinstance(input, tuple):
-            output = model(*input)
-        elif isinstance(input, dict):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        if device=='cpu':
             output = model(**input)
-    else:
-        if isinstance(input, dict) or isinstance(input, UserDict):
-            if device=='cpu':
+        elif device=='ipex': # pragma: no cover
+            # have to split the case to avoid exposing ipex.DEVICE outside
+            # which require intel extension installed
+            if IPEX_110:
+                if running_mode == "calibration":
+                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                        output = model(**input)
+                else:
+                    output = model(**input)
+            elif IPEX_112:
                 output = model(**input)
-            elif device=='ipex': # pragma: no cover
-                # have to split the case to avoid exposing ipex.DEVICE outside
-                # which require intel extension installed
+            else:
                 for inp in input.keys():
                     input[inp] = input[inp].to(ipex.DEVICE) \
                         if isinstance(input[inp], torch.Tensor) else input[inp]
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(**input)
-            else:   # pragma: no cover
-                for inp in input.keys():
-                    input[inp] = input[inp].to("dpcpp" if device=="gpu" else device) \
-                        if isinstance(input[inp], torch.Tensor) else input[inp]
-                output = model(**input)
-        elif isinstance(input, list) or isinstance(input, tuple):
-            if device=='cpu':
+        else:   # pragma: no cover
+            for inp in input.keys():
+                input[inp] = input[inp].to("dpcpp" if device=="gpu" else device) \
+                    if isinstance(input[inp], torch.Tensor) else input[inp]
+            output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if device=='cpu':
+            output = model(*input)
+        elif device=='ipex': # pragma: no cover
+            if IPEX_110:
+                if running_mode == "calibration":
+                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                        output = model(*input)
+                else:
+                    output = model(*input)
+            elif IPEX_112:
                 output = model(*input)
-            elif device=='ipex': # pragma: no cover
+            else:
                 input = [inp.to(ipex.DEVICE) \
                          if isinstance(inp, torch.Tensor) else inp
                          for inp in input]
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(*input)
-            else:   # pragma: no cover
-                tmp_device = "dpcpp" if device=="gpu" else device
-                input = [inp.to(tmp_device) \
-                        if isinstance(inp, torch.Tensor) else inp
-                        for inp in input] # pylint: disable=E1133
-                output = model(*input)
-        else:
-            if device=='cpu' or not isinstance(input, torch.Tensor):
+        else:   # pragma: no cover
+            tmp_device = "dpcpp" if device=="gpu" else device
+            input = [inp.to(tmp_device) \
+                    if isinstance(inp, torch.Tensor) else inp
+                    for inp in input] # pylint: disable=E1133
+            output = model(*input)
+    else:
+        if device=='cpu' or not isinstance(input, torch.Tensor):
+            output = model(input)
+        elif device=='ipex': # pragma: no cover
+            if IPEX_110:
+                if running_mode == "calibration":
+                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                        output = model(input)
+                else:
+                    output = model(input)
+            elif IPEX_112:
                 output = model(input)
-            elif device=='ipex': # pragma: no cover
+            else:
                 input = input.to(ipex.DEVICE)
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(input)
-            else:   # pragma: no cover
-                input = input.to("dpcpp" if device=="gpu" else device) # pylint: disable=no-member
-                output = model(input)
+        else: # pragma: no cover
+            input = input.to("dpcpp" if device=="gpu" else device) # pylint: disable=no-member
+            output = model(input)
     return output
-
 
 def get_ops_recursively(model, prefix, ops={}):
     """This is a helper function for `graph_info`,
