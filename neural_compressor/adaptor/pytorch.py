@@ -731,16 +731,6 @@ class TemplateAdaptor(Adaptor):
         self.sub_module_list = None
         self.default_qconfig = framework_specific_info['default_qconfig'] \
             if 'default_qconfig' in framework_specific_info else None
-        self.fused_op = ['nni.ConvReLU1d',
-                         'nni.ConvReLU2d',
-                         'nni.ConvReLU3d',
-                         'nni.LinearReLU',
-                         'nni.BNReLU2d',
-                         'nni.BNReLU3d',
-                         'nniqat.ConvReLU2d',
-                         'nniqat.ConvBn2d',
-                         'nniqat.ConvBnReLU2d',
-                         'nni.LinearReLU']
 
         if 'approach' in framework_specific_info:   # pragma: no cover
             self.approach = framework_specific_info['approach']
@@ -1016,9 +1006,7 @@ class TemplateAdaptor(Adaptor):
             (bool): is fused or not
         """
         op_type = str(type(module))
-        op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
-        op_type = 'nni.' + op_type
-        if op_type in self.fused_op:
+        if 'fused' in op_type:
             return True
         else:
             return False
@@ -1385,8 +1373,18 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
 
-        for name, child in model.named_children():
-            op_name = prefix + '.' + name if prefix != '' else name
+        module_dict = dict(model.named_modules())
+        for op_name, child in model.named_modules():
+            if self.is_fused_module(child):
+                for name, _ in child.named_children():
+                    module_prefix = op_name + '.' + name
+                    if module_prefix in module_dict:
+                        module_dict.pop(module_prefix) # remove sub-modules of fused modules
+                    if op_name in self.fused_dict:
+                        self.fused_dict[op_name] = [self.fused_dict[op_name], module_prefix]
+                    else:
+                        self.fused_dict[op_name] = module_prefix
+        for op_name, child in module_dict.items():
             # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
             # so remove it here
             if op_name in self.non_quant_dict['skipped_module_names'] or \
@@ -1399,15 +1397,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
                     str(child.__class__.__name__)))
-                if self.is_fused_module(child):
-                    for name, _ in child.named_children():
-                        module_prefix = op_name + '.' + name
-                        if op_name in self.fused_dict:
-                            self.fused_dict[op_name] = [self.fused_dict[op_name], module_prefix]
-                        else:
-                            self.fused_dict[op_name] = module_prefix
-            else:
-                self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
     def _get_scale_zeropoint(self, model, tune_cfg):
         """get activation scale and zero_point for converted model.
@@ -1422,9 +1411,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         modules = dict(model.named_modules())
-        for key in tune_cfg['op']:
-            value = tune_cfg['op'][key]
-            assert isinstance(value, dict)
+        for key, value in tune_cfg['op'].items():
             if hasattr(modules[key[0]], 'scale'):
                 value['activation']['scale'] = float(modules[key[0]].scale)
             if hasattr(modules[key[0]], 'zero_point'):
@@ -2965,8 +2952,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             None
         """
 
-        for name, child in model.named_children():
-            op_name = prefix + '.' + name if prefix != '' else name
+        for op_name, child in model.named_modules():
             if type(child) in self.white_list \
                and type(child) != torch.nn.Sequential \
                and type(child) != torch.quantization.stubs.DeQuantStub:
@@ -2974,8 +2960,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
                     str(child.__class__.__name__)))
-            else:
-                self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.
