@@ -46,13 +46,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     libgl1-mesa-glx \
     libglib2.0-0
 
-ARG INC_BRANCH=v1.12
-RUN git clone --single-branch --branch=${INC_BRANCH} https://github.com/intel/neural-compressor.git && \
-    cd neural-compressor && \
-    git submodule sync && \
-    git submodule update --init --recursive && \
-    python -m pip install --no-cache-dir pycocotools && \
-    python -m pip install --no-cache-dir -r requirements.txt && \
-    python setup.py install
+#ARG INC_BRANCH=v1.12
+#RUN git clone --single-branch --branch=${INC_BRANCH} https://github.com/intel/neural-compressor.git && \
+#    cd neural-compressor && \
+#    git submodule sync && \
+#    git submodule update --init --recursive && \
+#    python -m pip install --no-cache-dir pycocotools && \
+#    python -m pip install --no-cache-dir -r requirements.txt && \
+#    python setup.py install
 
+WORKDIR /
+COPY ./ /neural_compressor
+RUN pwd
+RUN ls -l
+RUN ${PYTHON} setup.py install
 WORKDIR /neural-compressor
