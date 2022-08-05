@@ -23,7 +23,7 @@ stages:
     - script: |
           pwd
           ls -l
-          docker run ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir pycocotools && python -m pip install --no-cache-dir -r requirements.txt && python setup.py install && pip list"
+          #docker run ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir pycocotools && python -m pip install --no-cache-dir -r requirements.txt && python setup.py install && pip list"
       displayName: 'find repo'
 
     - script: |
