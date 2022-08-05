@@ -21,13 +21,16 @@ stages:
     displayName: Build
     steps:    
     - script: |
-          pwd
-          ls -l
-          docker run -v /home/azureuser-inc/myagent/workspace/1/s:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir pycocotools && python -m pip install --no-cache-dir -r requirements.txt && python setup.py install && pip list && python test/test_basic.py"
+        pwd
+        ls -l
+        docker run -v /home/azureuser-inc/myagent/workspace/1/s:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir pycocotools && python -m pip install --no-cache-dir -r requirements.txt && python setup.py install && pip list && python test/test_basic.py"
       displayName: 'find repo'
 
     - script: |
         docker images | grep -i neural-compressor
         docker ps
       displayName: 'Check docker'
-
+    
+    - script: |
+        sudo rm -fr /home/azureuser-inc/myagent/workspace/1/s/*
+      displayName: 'clean up'
