@@ -20,8 +20,10 @@ stages:
   - job: Build
     displayName: Build
     steps:    
-    - script: docker build --build-arg PYTHON=${PYTHON} -f docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-      displayName: 'Build Container'
+    - script: |
+          pwd
+          ls -l
+      displayName: 'find repo'
 
     - script: |
         docker images | grep -i neural-compressor
