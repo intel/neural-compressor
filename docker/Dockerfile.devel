@@ -56,8 +56,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
 #    python setup.py install
 
 WORKDIR /
-COPY ./ /neural_compressor
-RUN pwd
-RUN ls -l
-RUN ${PYTHON} setup.py install
-WORKDIR /neural-compressor
+#COPY ./ /neural_compressor
+#RUN pwd
+#RUN ls -l
+#RUN ${PYTHON} setup.py install
+#WORKDIR /neural-compressor
