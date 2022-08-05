@@ -6,7 +6,7 @@
 pr:
 - wenxin-test
 
-pool: suyue-test
+pool: docker-agent
 
 variables:
   PYTHON: 'python3.8'
