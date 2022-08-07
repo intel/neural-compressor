@@ -43,7 +43,7 @@ class ResponseGenerator:
             path,
             mimetype=mimetype,
             as_attachment=as_attachment,
-            cache_timeout=0,
+            max_age=0,
         )
 
     @staticmethod
