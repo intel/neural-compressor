@@ -3,7 +3,7 @@ set -x
 
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run basic adaptor"
-
+env | sort
 echo "set up UT env..."
 bash env_setup.sh
 
