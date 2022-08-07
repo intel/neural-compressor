@@ -36,6 +36,7 @@ stages:
     - script: |
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
+        docker image rm neural-compressor:pr || true
         env | sort
       displayName: 'Clean Docker'
 
