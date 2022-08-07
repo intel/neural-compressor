@@ -50,7 +50,7 @@ stages:
       displayName: 'Check docker image'
 
     - script: |
-         docker run -tid --disable-content-trust --privileged --name="pr-test" --hostname="pr-test-container" ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/.azure-pipelines/scripts/ut/run_basic_adaptor.sh
+         docker run --disable-content-trust --privileged --name="pr-test" --hostname="pr-test-container" ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/.azure-pipelines/scripts/ut/run_basic_adaptor.sh
       displayName: 'Run UT'
 
 #- stage:
