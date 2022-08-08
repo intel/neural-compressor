@@ -212,6 +212,8 @@
         'Dequantize + Conv2D + Relu6 + QuantizeV2',
         'Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2',
+        'Dequantize + Conv2D + Sigmoid + QuantizeV2',
         'Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + Add + QuantizeV2',

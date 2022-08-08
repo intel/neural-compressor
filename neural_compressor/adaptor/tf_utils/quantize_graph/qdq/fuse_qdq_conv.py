@@ -52,6 +52,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DEluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
+                'DequantizeConv2DBiasAddSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
+                'DequantizeConv2DSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
@@ -813,6 +815,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         # Dequantize + Conv2D + Elu + QuantizeV2
         # Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2
         # Dequantize + Conv2D + LeakyRelu + QuantizeV2
+        # Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2
+        # Dequantize + Conv2D + Sigmoid + QuantizeV2
         # Dequantize + Conv2D + Add + Relu6 + QuantizeV2
         # Dequantize + Conv2D + Add + Relu + QuantizeV2
         # Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2
@@ -826,7 +830,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         matched_node = self.node_name_mapping[match_node_name[1]]
 
         second_node = self.node_name_mapping[match_node_name[2]].node
-        if second_node.op in ('Relu', 'Relu6', 'LeakyRelu', 'Elu'):
+        if second_node.op in ('Relu', 'Relu6', 'LeakyRelu', 'Elu', 'Sigmoid'):
              new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
              return self.apply_newly_conv_biasadd_relu_fusion(new_match_node_name)
 
@@ -882,6 +886,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     [bias_node_name] + all_input_names[2:] + control_inputs
                 is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
                 is_elu = self.node_name_mapping[relu_node_name].node.op == "Elu"
+                is_sigmoid = self.node_name_mapping[relu_node_name].node.op == "Sigmoid"
 
                 node_op = '_QuantizedDepthwiseConv2D'
                 if node.op == 'Conv2D':
@@ -911,7 +916,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if is_leakyrelu:
                     fused_ops = [b'BiasAdd', b'LeakyRelu']
                 if is_elu:
-                    fused_ops = [b'BiasAdd', b'Elu'] 
+                    fused_ops = [b'BiasAdd', b'Elu']
+                if is_sigmoid:
+                    fused_ops = [b'BiasAdd', b'Sigmoid']
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
                 helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
