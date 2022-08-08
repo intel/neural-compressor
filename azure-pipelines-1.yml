@@ -19,7 +19,10 @@ stages:
   jobs:
   - job: Build
     displayName: Build
-    steps:    
+    steps:
+    - checkout: self
+      clean: true  
+         
     - script: |
         pwd
         ls -l
@@ -32,6 +35,5 @@ stages:
       displayName: 'Check docker'
     
     - script: |
-        #sudo rm -fr /home/azureuser-inc/myagent/workspace/1/s/*
-        echo "clean up"
+        sudo rm -fr /home/azureuser-inc/myagent/workspace/1/s/*
       displayName: 'clean up'
