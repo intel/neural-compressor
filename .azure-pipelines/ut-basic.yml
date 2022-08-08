@@ -43,7 +43,7 @@ stages:
     - script: |
         echo ${INC_BRANCH}
         echo ${REPO}
-        docker build --build-arg PYTHON=${PYTHON} --build-arg REPO=${REPO} --build-arg SOURCE_BRANCH=${INC_BRANCH} -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+        docker build --build-arg --build-arg REPO=${REPO} --build-arg SOURCE_BRANCH=${INC_BRANCH} -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
       displayName: 'Build Image'
 
     - script: |
