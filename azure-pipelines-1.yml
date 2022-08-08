@@ -27,7 +27,9 @@ stages:
         sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
       displayName: 'Clean workspace'
     
-    - checkout: self
+    - script: |
+        git -c fetch --force --tags --prune --prune-tags --progress --no-recurse-submodules origin
+      displayName: "checkout repo"
     
     - script: |
         if [[ ! $(docker images | grep -i neural-compressor) ]]; then
