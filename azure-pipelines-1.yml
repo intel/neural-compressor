@@ -19,7 +19,9 @@ stages:
   jobs:
   - job: Clean
     steps:
+    - checkout: none
     - script: sudo rm -fr $(Agent.BuildDirectory) || true
+    - script: echo $(Pipeline.Workspace) && echo $(Agent.BuildDirectory)
     #workspace:
     #  clean: all
   
