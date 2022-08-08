@@ -20,9 +20,14 @@ stages:
   - job: Build
     displayName: Build
     steps:
+    - script: |
+        docker stop $(docker ps -aq)
+        docker rm -vf $(docker ps -aq) || true
+      displayName: 'Clean Docker'
+      
     - checkout: self
       clean: true  
-         
+
     - script: |
         pwd
         ls -l
