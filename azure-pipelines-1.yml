@@ -27,7 +27,7 @@ stages:
       displayName: 'Clean workspace'
     
     - checkout: self
-    
+
     - script: |
         echo "checkout repo"
         #mkdir -p ${BUILD_SOURCESDIRECTORY} && cd ${BUILD_SOURCESDIRECTORY}
@@ -36,6 +36,7 @@ stages:
       displayName: "checkout repo"
     
     - script: |
+        sudo chmod 666 /var/run/docker.sock
         if [[ ! $(docker images | grep -i neural-compressor) ]]; then
             docker build -f docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
         fi
