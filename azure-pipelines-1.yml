@@ -17,31 +17,35 @@ stages:
 - stage: Build
   displayName: Build and push stage
   jobs:
-  - job: Clean
-    steps:
-    - checkout: none
-    - script: sudo rm -fr $(Agent.BuildDirectory) || true
-      displayName: 'Clean workspace'
-      
   - job: Build
     displayName: Build
     steps:
+    - checkout: none
+    
+    - script: |
+        echo ${BUILD_SOURCESDIRECTORY}
+        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+      displayName: 'Clean workspace'
+    
     - checkout: self
-      clean: true  
+    
+    - script: |
+        if [[ ! $(docker images | grep -i neural-compressor) ]]; then
+            docker build -f docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+        fi
+      displayName: "build images"
+
     - script: |
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
       displayName: 'Clean Docker'
-      
+
     - script: |
-        docker run --rm -v /home/azureuser-inc/myagent/workspace/1/s:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir -r requirements.txt && pip install intel-tensorflow && python setup.py sdist bdist_wheel && pip install dist/neural_compressor-1.13-py3-none-any.whl && pip list && python test/strategy/test_bayesian.py"
+        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir -r requirements.txt && pip install intel-tensorflow && python setup.py sdist bdist_wheel && pip install dist/neural_compressor-*.whl && pip list && python test/strategy/test_bayesian.py"
       displayName: 'find repo'
 
     - script: |
         docker images | grep -i neural-compressor
         docker ps
       displayName: 'Check docker'
-    
-    - script: |
-        sudo rm -fr /home/azureuser-inc/myagent/workspace/1/s/*
-      displayName: 'clean up'
+
