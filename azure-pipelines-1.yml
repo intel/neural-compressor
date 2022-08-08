@@ -28,7 +28,9 @@ stages:
       displayName: 'Clean workspace'
     
     - script: |
-        git -c fetch --force --tags --prune --prune-tags --progress --no-recurse-submodules origin ${BUILD_SOURCESDIRECTORY}
+        cd ${BUILD_SOURCESDIRECTORY}
+        git clone --single-branch --branch=$(System.PullRequest.SourceBranch) $(Build.Repository.Uri)
+        #git -c fetch --force --tags --prune --prune-tags --progress --no-recurse-submodules origin ${BUILD_SOURCESDIRECTORY}
       displayName: "checkout repo"
     
     - script: |
