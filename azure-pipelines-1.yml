@@ -20,16 +20,18 @@ stages:
   - job: Build
     displayName: Build
     steps:
-    - checkout: none
     
     - script: |
         echo ${BUILD_SOURCESDIRECTORY}
         sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
       displayName: 'Clean workspace'
     
+    - checkout: self
+    
     - script: |
+        echo "checkout repo"
         #mkdir -p ${BUILD_SOURCESDIRECTORY} && cd ${BUILD_SOURCESDIRECTORY}
-        git clone --single-branch --branch=$(System.PullRequest.SourceBranch) $(Build.Repository.Uri)
+        #git clone --single-branch --branch=$(System.PullRequest.SourceBranch) $(Build.Repository.Uri)
         #git -c fetch --force --tags --prune --prune-tags --progress --no-recurse-submodules origin ${BUILD_SOURCESDIRECTORY}
       displayName: "checkout repo"
     
