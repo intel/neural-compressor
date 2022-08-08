@@ -17,6 +17,10 @@ stages:
 - stage: Build
   displayName: Build and push stage
   jobs:
+  - job: Clean
+    workspace:
+      clean: all
+  
   - job: Build
     displayName: Build
     steps:
@@ -24,7 +28,7 @@ stages:
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
       displayName: 'Clean Docker'
-      
+
     - checkout: self
       clean: true  
 
