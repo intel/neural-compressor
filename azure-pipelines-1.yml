@@ -28,7 +28,7 @@ stages:
       displayName: 'Clean workspace'
     
     - script: |
-        git -c fetch --force --tags --prune --prune-tags --progress --no-recurse-submodules origin
+        git -c fetch --force --tags --prune --prune-tags --progress --no-recurse-submodules origin ${BUILD_SOURCESDIRECTORY}
       displayName: "checkout repo"
     
     - script: |
