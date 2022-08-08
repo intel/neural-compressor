@@ -23,7 +23,7 @@ stages:
     - script: |
         pwd
         ls -l
-        docker run -v /home/azureuser-inc/myagent/workspace/1/s:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir -r requirements.txt && pip install intel-tensorflow && python setup.py install && pip list && python test/test_algorithm.py"
+        docker run -v /home/azureuser-inc/myagent/workspace/1/s:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash +x -c "cd /neural_compressor && python -m pip install --no-cache-dir -r requirements.txt && pip install intel-tensorflow && python setup.py sdist bdist_wheel && pip install dist/neural_compressor-1.13-py3-none-any.whl && pip list && python test/strategy/test_bayesian.py"
       displayName: 'find repo'
 
     - script: |
