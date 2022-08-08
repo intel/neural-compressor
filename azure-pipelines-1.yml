@@ -18,8 +18,10 @@ stages:
   displayName: Build and push stage
   jobs:
   - job: Clean
-    workspace:
-      clean: all
+    steps:
+    - script: sudo rm -fr $(Agent.BuildDirectory) || true
+    #workspace:
+    #  clean: all
   
   - job: Build
     displayName: Build
