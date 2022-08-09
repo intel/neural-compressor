@@ -65,6 +65,15 @@
     },
     "bert_large_ipex":{
       "model_src_dir": "nlp/huggingface_models/question-answering/quantization/ptq_static/ipex",
+      "dataset_location": "",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batchsize": 8,
+      "new_benchmark": false
+    },
+    "bert_large_1_10_ipex":{
+      "model_src_dir": "nlp/huggingface_models/question-answering/quantization/ptq_static/ipex",
       "dataset_location": "/tf_dataset/pytorch/squad/dev-v1.1.json",
       "input_model": "/tf_dataset/pytorch/bert_large_ipex",
       "yaml": "conf.yaml",

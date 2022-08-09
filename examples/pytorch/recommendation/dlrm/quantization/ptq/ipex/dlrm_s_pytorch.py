@@ -428,8 +428,8 @@ def trace_model(args, dlrm, test_ld, inplace=True):
             dlrm = dlrm
         else:
             dlrm = ipex.optimize(dlrm, dtype=torch.float, inplace=inplace)
-        if not IPEX_112:
-            if args.int8 and not args.tune:
+        if not IPEX_112 and not args.tune:
+            if args.int8:
                 dlrm = freeze(dlrm)
             else:
                 with torch.cpu.amp.autocast(enabled=args.bf16):

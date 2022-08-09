@@ -2116,6 +2116,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 self.model_calibration(q_model, dataloader, iterations,
                                        ipex_conf, tune_cfg.get('calib_sampling_size', 1))
                 ipex_conf.save(self.ipex_config_path)
+                example_inputs = self.get_example_inputs(dataloader)
+                ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)
+                q_model = ipex.quantization.convert(q_model, ipex_conf, example_inputs)
             if IPEX_112:
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 static_qconfig = QConfig(activation=MinMaxObserver.with_args(
