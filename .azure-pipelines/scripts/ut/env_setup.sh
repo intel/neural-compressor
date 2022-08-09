@@ -4,7 +4,6 @@ if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
-    pip install protobuf==3.20.1
 fi
 
 pip install torch==${pytorch_version} -f https://download.pytorch.org/whl/torch_stable.html
