@@ -3,7 +3,10 @@
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
-    pip install /tf_dataset/tf_binary/tensorflow*.whl || exit 1
+    pip install /tf_dataset/tf_binary/tensorflow*.whl
+    if [[ $? -ne 0 ]]; then
+      exit 1
+    fi
 elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
 fi

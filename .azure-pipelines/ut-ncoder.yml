@@ -29,8 +29,6 @@ stages:
       displayName: "Checkout out Repo"
 
     - script: |
-        # for test
-        docker image rm ${IMAGE_NAME}:${IMAGE_TAG}
         if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
             docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
         fi
