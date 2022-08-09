@@ -40,10 +40,11 @@ from .transform_graph.bias_correction import BiasCorrection
 from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2,version1_lt_version2
 from .util import version1_gte_version2,version1_lte_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from .quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
+from .quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
 
-from .graph_rewriter.graph_util import GraphAnalyzer
+from .graph_util import GraphAnalyzer
 from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
@@ -60,9 +61,9 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
-from .graph_rewriter.itex.itex_convert import GenerateITEXModel
+from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphRewriterHelper as Helper
+from .graph_util import GraphRewriterHelper as Helper
 
 
 TF_SUPPORTED_MAX_VERSION = '2.9.1'
@@ -82,6 +83,7 @@ class GraphConverter:
                  data_loader=None,
                  fake_quant=False,
                  itex_mode=False,
+                 qdq_enabled=False,
                  new_api=False):
         """Convert graph.
 
@@ -107,6 +109,7 @@ class GraphConverter:
         self.recipes = recipes
         self.fake_quant = fake_quant
         self.itex_mode = itex_mode
+        self.qdq_enabled = qdq_enabled
         self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
@@ -273,7 +276,10 @@ class GraphConverter:
         """
         model = self._tmp_model
         if len(self.op_wise_config) > 0:
-            model = self.quantize()
+            if self.qdq_enabled:
+                model = self.quantize_with_qdq_pattern()
+            else:
+                model = self.quantize()
 
         if self.itex_mode:
             return self._itex_model
@@ -352,175 +358,6 @@ class GraphConverter:
         self._fp32_model.graph_def = fp32_graph_def
         return self._fp32_model
 
-    def inspect_tensor(self, original_op_list, iteration_list, work_dir, inspect_type):
-        """dump the specified op's output tensor content
-
-        Args:
-            original_op_list (string list): the ops name
-            iteration_list (int list): the specified iteration to dump tensor
-
-        Returns:
-            dict: key is op name while value is the content saved in np.array format.
-        """
-        assert iteration_list is not None, "The parameter iterations list could not be empty."
-        graph_node_name_mapping = {}
-        q_node_name = []
-        fp32_node_name = []
-        fp32_node_name_mapping = {}
-        q_node_scale = {}
-        sorted_graph = QuantizeGraphHelper().get_sorted_graph(
-            self._fp32_model.graph_def,
-            self._fp32_model.input_node_names,
-            self._fp32_model.output_node_names)
-
-        graph_q_node_name = []
-        op_name_type_dict = {}
-        quantized_node_name_postfix = '_eightbit_requantize'
-        weights_tensor = {}
-        g = GraphAnalyzer()
-        g.graph = sorted_graph
-        graph_info = g.parse_graph()
-
-        for node in sorted_graph.node:
-            node_name = node.name
-            if node.op.find("Quantized") != -1:
-                node_name = node.name.split(quantized_node_name_postfix)[0]
-                graph_q_node_name.append(node_name)
-            graph_node_name_mapping[node_name] = node
-
-        for node in sorted_graph.node:
-            node_name = node.name
-            if node.op.find("Quantized") != -1:
-                node_name = node.name.split(quantized_node_name_postfix)[0]
-
-            if inspect_type in ('weight', 'all') and node.op.find("Conv") != -1:
-                if node.op.find("Quantized") == -1:
-                    weights_tensor[node_name] = {node.input[1]: tensor_util.MakeNdarray(
-                        graph_node_name_mapping[\
-                                node.input[1]].attr['value'].tensor).transpose(3,2,0,1)}
-                    bias_node = None if \
-                        not graph_info[node.name].outputs \
-                            else graph_info[graph_info[node.name].outputs[0]].node
-                    if bias_node and bias_node.op == 'BiasAdd':
-                        weights_tensor[node_name][bias_node.name] = tensor_util.MakeNdarray(
-                            graph_node_name_mapping[bias_node.input[1]].attr['value'].tensor)
-
-                else:
-                    if graph_info[node.input[5]].node.attr['value'].tensor.float_val:
-                        min_filter_tensor = graph_info[\
-                                node.input[5]].node.attr['value'].tensor.float_val
-                        max_filter_tensor = graph_info[\
-                                node.input[6]].node.attr['value'].tensor.float_val
-                    else:
-                        min_filter_tensor = tensor_util.MakeNdarray(\
-                                graph_info[node.input[5]].node.attr['value'].tensor)
-                        max_filter_tensor = tensor_util.MakeNdarray(\
-                                graph_info[node.input[6]].node.attr['value'].tensor)
-
-                    weight_tensor = tensor_util.MakeNdarray(\
-                            graph_node_name_mapping[node.input[1]].attr['value'].tensor)
-                    weight_tensor = weight_tensor = weight_tensor.astype('float')
-
-                    DequantizeWeight(weight_tensor, min_filter_tensor,max_filter_tensor)
-                    weights_tensor[node_name] = {node.input[1]:weight_tensor.transpose(3,2,0,1)}
-
-                    weights_tensor[node_name][node.input[2]] = tensor_util.MakeNdarray(
-                            graph_node_name_mapping[node.input[2]].attr['value'].tensor)
-
-        for op_name in original_op_list:
-            if isinstance(op_name, tuple):
-                op_name = op_name[0]
-                op_type = op_name[1]
-            else:
-                #TODO op_type set to conv2d for fast_bias_correction and weigh correction.
-                op_type = "conv2d" #TODO
-
-            if op_type not in ["conv2d"]:
-                continue
-
-            op_name_type_dict[op_name] = op_type
-            if op_name in graph_q_node_name:
-                q_node_name.append(op_name + quantized_node_name_postfix)
-                q_node = graph_node_name_mapping[op_name]
-                q_out_min = graph_node_name_mapping[
-                    q_node.input[-2]].attr["value"].tensor.float_val[0]
-                q_out_max = graph_node_name_mapping[
-                    q_node.input[-1]].attr["value"].tensor.float_val[0]
-                q_node_scale[op_name + quantized_node_name_postfix] = (q_node.op, q_out_min,
-                                                                       q_out_max)
-            else:
-                fp32_node_name.append(op_name)
-                node_op =  graph_node_name_mapping[op_name].op
-                if node_op in ("Conv2D", "DepthwiseConv2dNative"):
-                    _, matched_nodes = FuseNodeStartWithConv2d(
-                        input_graph=sorted_graph,
-                        patterns=self.int8_sequences[node_op],
-                        remove_redundant_quant_flag=True,
-                        op_wise_cfg=(False, "minmax", False, 7.0),
-                        op_wise_config_name_list=list(self.op_wise_config.keys()),
-                        start_node_name=op_name,
-                        device=self.device,
-                        new_api=False).get_longest_fuse()
-
-                    if matched_nodes:
-                        fp32_node_name_mapping[matched_nodes[-1]] = op_name
-                else:
-                    fp32_node_name_mapping[op_name] = op_name
-
-        InsertLogging(sorted_graph,
-                      node_name_list=fp32_node_name_mapping.keys(),
-                      message="__KL:",
-                      summarize=-1,
-                      dump_fp32=True).do_transformation()
-
-        if q_node_name:
-            sorted_graph = InsertLogging(sorted_graph,
-                                         node_name_list=q_node_name,
-                                         message="__KL:",
-                                         summarize=-1).do_transformation()
-
-        tmp_dump_file = os.path.join(work_dir, 'kl.log')
-
-        model = Model(sorted_graph)
-        model.output_tensor_names = self.output_tensor_names
-        model.input_tensor_names = self.input_tensor_names
-        with CaptureOutputToFile(tmp_dump_file):
-            self._inference(model)
-
-        with open(tmp_dump_file) as f:
-            disk_content = f.readlines()
-
-        filter_content = (i for i in disk_content if i.startswith(';'))
-
-        dump_tensor_content = {}
-
-        for i in filter_content:
-            contents = i.split('__print__;__KL:')
-            node_name = contents[0][1:]
-            node_content = str2array(contents[1])
-
-            if node_name not in dump_tensor_content:
-                dump_tensor_content[node_name] = []
-            dump_tensor_content[node_name].append(node_content)
-
-        activation_content = []
-        for iter_idx in iteration_list:
-            result_disk = {}
-            for k, v in dump_tensor_content.items():
-                if k in fp32_node_name_mapping:
-                    key = fp32_node_name_mapping[k]
-                    result_disk[(key, op_name_type_dict[key])] = \
-                            {key: v[iter_idx - 1].transpose(0,3,1,2)}
-                else:
-                    result_key = k.split(quantized_node_name_postfix)[0]
-                    result_disk[(result_key, op_name_type_dict[result_key])] = \
-                            {result_key: Dequantize(v[0], q_node_scale[k]).transpose(0,3,1,2)}
-            activation_content.append(result_disk)
-
-        final_result = {'weight': weights_tensor, 'activation': activation_content}
-
-        return final_result
-
     def _search_y_pattern_for_itex(self):
         """Search the Y pattern for itex and return the op name.
         """
@@ -575,8 +412,6 @@ class GraphConverter:
                         non_pad_ops,
                         self._tmp_model.input_node_names,
                         self.op_wise_config).do_transformation()
-                if self.itex_mode:
-                    self.quantized_node_info.extend(self._search_y_pattern_for_itex())
 
                 for i in self.quantized_node_info:
                     frame_name = self._rnn_details[i] if i in self._rnn_details else None
@@ -592,13 +427,6 @@ class GraphConverter:
                         self._inference(self._sampling_model)
                     self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
 
-                if self.itex_mode:
-                    self._itex_model.graph_def = GenerateITEXModel(
-                        self._itex_model, self._calibration_data, self.device).do_transformation()
-                    self._itex_model.graph_def.library.CopyFrom(
-                        self.model.graph_def.library)
-
-                    return self._itex_model
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
@@ -741,6 +569,14 @@ class GraphConverter:
             self.device, self.new_api).do_transformation()
 
         if not self.fake_quant:
+            # TODO Use MatMul and BatchMatMul new API
+            #if self.qdq_enabled:
+            #    self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
+            #        self._tmp_graph_def).do_transformation()
+            #
+            #    self._tmp_graph_def = FuseMatMulRequantizeDequantizeNewAPITransformer(
+            #        self._tmp_graph_def).do_transformation()
+            #else:
             self._tmp_graph_def = FuseMatMulRequantizeTransformer(
                 self._tmp_graph_def).do_transformation()
 
@@ -788,3 +624,152 @@ class GraphConverter:
 
         elif gfile.Exists(self._int8_logged_model_path + '.pb'):
             os.remove(self._int8_logged_model_path + '.pb')
+
+    def quantize_with_qdq_pattern(self):
+        """ Quantize model by inserting QDQ
+            step 1: insert QDQ pairs and update node info
+            step 2: convert Q-DQ-node-Q-DQ to Q-newAPI node-DQ
+        """
+        try:
+            self._insert_qdq_pairs()
+            self._convert_qdq()
+
+        except ValueError as e:
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
+            self._tmp_model = None
+            raise
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self._tmp_model = None
+            logger.error("Fail to quantize graph due to {}.".format(str(e)))
+            return self._tmp_model
+        finally:
+            if not debug:
+                self._post_clean()
+        return self._tmp_model
+
+    def _insert_qdq_pairs(self):
+        # Fuse Pad into Conv2D, Conv3D, DepthwiseConv2dNative 
+        non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+        self._tmp_graph_def = FusePadWithConv2DOptimizer(
+                    self._tmp_graph_def,
+                    non_pad_ops,
+                    self._tmp_model.input_node_names,
+                    self.op_wise_config,
+                    self.new_api,
+                    True).do_transformation()
+
+        # Sort graph
+        self._tmp_graph_def = QuantizeGraphHelper().get_sorted_graph(
+            self._tmp_graph_def,
+            self._tmp_model.input_node_names,
+            self._tmp_model.output_node_names)
+
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+
+        # Find out the quantized nodes
+        self.quantized_node_info = OptimizeQDQGraph(self._tmp_graph_def,
+                                               self._tmp_model.input_node_names,
+                                               self._tmp_model.output_node_names,
+                                               self.op_wise_config,
+                                               self.int8_sequences,
+                                               self.device,
+                                               self.fake_quant,
+                                               self.new_api).get_quantized_nodes()
+
+        self._rnn_details = Helper.analysis_rnn_model(self._tmp_graph_def,
+                                                      bf16_ops=self.bf16_ops,
+                                                      fp32_ops=self.fp32_ops)
+        self.quantized_node_info.extend(self._rnn_details.keys())
+        self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
+
+        if self.itex_mode:
+            self.quantized_node_info.extend(self._search_y_pattern_for_itex())
+
+        if self._enable_kl_op_names:
+            self._get_fp32_print_node_names(self._enable_kl_op_names)
+            self._generate_calibration_data(self._fp32_logged_model_path,
+                                            self._fp32_print_data,
+                                            True)
+
+        # Calibration using sampling model
+        output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
+        sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+        # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph
+        # after enabling pad+conv2d in new API.
+        non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+        sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
+                                    sampling_graph_def,
+                                    non_pad_ops,
+                                    self._tmp_model.input_node_names,
+                                    self.op_wise_config).do_transformation()
+
+        for i in self.quantized_node_info:
+            frame_name = self._rnn_details[i] if i in self._rnn_details else None
+            sampling_graph_def, output_names = InsertPrintMinMaxNode(
+                sampling_graph_def, i[0], i[-1], frame_name).do_transformation()
+            output_tensor_names.extend(output_names)
+
+        if self.quantized_node_info:
+            sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._sampling_model.graph_def = sampling_graph_def
+            self._sampling_model.output_tensor_names = output_tensor_names
+            tmp_dump_file = tempfile.mkstemp(suffix='.log')[1]
+            with CaptureOutputToFile(tmp_dump_file):
+                self._inference(self._sampling_model)
+            self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
+
+        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+        self._tmp_model.graph_def = self._tmp_graph_def
+
+        # Insert QDQ pattern
+        self._tmp_graph_def = GenerateGraphWithQDQPattern(
+              self._tmp_model, self._calibration_data,
+              self.op_wise_config, self.fake_quant, self.fp32_ops, self.bf16_ops, \
+              self.quantized_node_info, self.device).do_transformation()
+
+    def _convert_qdq(self):
+        if self.itex_mode:
+            self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
+                self._tmp_graph_def,
+                self._calibration_data,
+                '__max:').do_transformation()
+            self._tmp_graph_def, quantizev2_min = FreezeValueTransformer(
+                self._tmp_graph_def,
+                self._calibration_data,
+                '__min:').do_transformation()
+            self._tmp_graph_def, requant_min_max= FreezeValueTransformer(
+                self._tmp_graph_def,
+                self._calibration_data,
+                '__requant_min_max',
+                tensor_data= self._kl_op_dict,
+                device=self.device,
+                ).do_transformation()
+
+            self.scale_info.update(quantizev2_max)
+            self.scale_info.update(quantizev2_min)
+            self.scale_info.update(requant_min_max)
+
+            self._tmp_graph_def = StripUnusedNodesOptimizer(
+                self._tmp_graph_def,
+                self._tmp_model.input_node_names,
+                self._tmp_model.output_node_names).do_transformation()
+
+            self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._itex_model.graph_def = self._tmp_graph_def
+            self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
+        else:
+            self._tmp_graph_def = OptimizeQDQGraph(self._tmp_graph_def,
+                                                   self._tmp_model.input_node_names,
+                                                   self._tmp_model.output_node_names,
+                                                   self.op_wise_config,
+                                                   self.int8_sequences,
+                                                   self.device,
+                                                   self.fake_quant,
+                                                   self.new_api).do_transform()
+
+            if len(self._calibration_data) > 0:
+                self._freeze_requantization_ranges(self._kl_op_dict)
+                self._fuse_requantize_with_fused_quantized_node()
+

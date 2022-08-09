@@ -22,8 +22,8 @@ class Pruning():
         # This attribute needs to be set before invoking self.__call__().
         ...
 
-    @pruning_func.setter
-    def pruning_func(self, user_pruning_func)
+    @train_func.setter
+    def train_func(self, user_pruning_func)
         # The training function provided by user. This function takes framework runtime model object as input parameter,
         # and executes entire training process with self contained training hyper-parameters.
         # It is optional if training could be configured by neural_compressor built-in dataloader/optimizer/criterion.
@@ -53,15 +53,15 @@ class Pruning():
         # The hook point used by pruning algorithm
         ...
 
-    def on_batch_begin(self, batch):
+    def on_step_begin(self, batch):
         # The hook point used by pruning algorithm
         ...
 
-    def on_batch_end(self):
+    def on_step_end(self):
         # The hook point used by pruning algorithm
         ...
 
-    def on_post_grad(self):
+    def on_before_optimizer_step(self):
         # The hook point used by pruning algorithm
         ...
 

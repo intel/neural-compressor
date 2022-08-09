@@ -40,6 +40,7 @@ RUN ln -sf $(which ${PYTHON}) /usr/local/bin/python && \
 ARG INC_VER=1.12
 
 ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/third-party-programs.txt /licenses/
+ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/docker/third-party-programs-docker.txt /licenses/
 ADD https://raw.githubusercontent.com/intel/neural-compressor/v${INC_VER}/LICENSE /licenses/
 
 RUN python -m pip install --no-cache-dir neural-compressor${INC_VER:+==${INC_VER}}

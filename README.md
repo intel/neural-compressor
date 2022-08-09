@@ -7,6 +7,7 @@ Intel® Neural Compressor
 [![python](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-1.12-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
+[![coverage](https://img.shields.io/badge/coverage-90%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 </div>
 
@@ -28,16 +29,20 @@ Intel® Neural Compressor has been one of the critical AI software components in
 
 **Install on Linux**
   ```Shell
-  # install stable version from pip
+  # install stable basic version from pip
   pip install neural-compressor
+  # install stable full version from pip (including GUI)
+  pip install neural-compressor-full
 
-  # install basic nightly version from pip
+  # install nightly basic version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # install full nightly version from pip (including GUI)
+  # install nightly full version from pip (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
 
-  # install stable version from from conda
-  conda install neural-compressor -c conda-forge -c intel 
+  # install stable basic version from from conda
+  conda install neural-compressor -c conda-forge -c intel
+  # install stable full version from from conda (including GUI)
+  conda install neural-compressor-full -c conda-forge -c intel  
   ```
 More installation methods can be found at [Installation Guide](./docs/installation_guide.md). Please check out our [FAQ](./docs/faq.md) for more details.
 
@@ -103,18 +108,18 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
     <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.8.2>2.8.2</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.7.3>2.7.3</a><br>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0>2.8.0</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0>2.8.0</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.7.0>2.7.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v1.15.0up3>1.15.0UP3</a></td>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.10.0+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.9.0+cpu</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.11.0>1.11.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.10.0>1.10.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.9.0>1.9.0</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.10.0>1.10.0</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.9.0>1.9.0</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.8.0>1.8.0</a></td>
+    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.12.0+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.10.0+cpu</a></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.0>1.12.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.10.0>1.11.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.9.0>1.10.0</a></td>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.10.0>1.10.0</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.9.0>1.9.0</a></td>
     <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
     <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br>
     <a href=https://github.com/apache/incubator-mxnet/tree/1.6.0>1.6.0</a></td>
@@ -126,11 +131,11 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 > Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 to enable oneDNN optimizations if you are using TensorFlow from v2.6 to v2.8. oneDNN has been fully default from TensorFlow v2.9.
 
 ### Validated Models
-Intel® Neural Compressor validated 420+ [examples](./examples) with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. 
+Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. And also provided 30+ pruning and knowledge distillation samples.  
 More details for validated models are available [here](docs/validated_model_list.md).   
 
-<a target="_blank" href="./docs/imgs/INC-release-data.png">
-  <img src="./docs/imgs/inc-release.png" alt="Architecture" width=800 height=500>
+<a target="_blank" href="./docs/imgs/release_data.png">
+  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=500>
 </a>
 
 ## Documentation
@@ -144,10 +149,9 @@ More details for validated models are available [here](docs/validated_model_list
   <tbody>
     <tr>
       <td colspan="3" align="center"><a href="docs/design.md">Architecture</a></td>
-      <td colspan="2" align="center"><a href="docs/tutorial.md">Tutorial</a></td>
       <td colspan="2" align="center"><a href="./examples">Examples</a></td>
-      <td colspan="1" align="center"><a href="docs/bench.md">GUI</a></td>
-      <td colspan="1" align="center"><a href="docs/api-introduction.md">APIs</a></td>
+      <td colspan="2" align="center"><a href="docs/bench.md">GUI</a></td>
+      <td colspan="2" align="center"><a href="docs/api-introduction.md">APIs</a></td>
     </tr>
     <tr>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
@@ -201,6 +205,8 @@ More details for validated models are available [here](docs/validated_model_list
 </table>
 
 ## Selected Publications
+* [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
+* [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
 * [Intel® Deep Learning Boost - Boost Network Security AI Inference Performance in Google Cloud Platform (GCP)](https://networkbuilders.intel.com/solutionslibrary/intel-deep-learning-boost-boost-network-security-ai-inference-performance-in-google-cloud-platform-gcp-technology-guide) (Apr 2022)
 * [Intel® Neural Compressor joined PyTorch ecosystem tool ](https://pytorch.org/ecosystem/) (Apr 2022)
 * [New instructions in the Intel® Xeon® Scalable processors combined with optimized software frameworks enable real-time AI within network workloads](https://builders.intel.com/docs/networkbuilders/ai-technologies-unleash-ai-innovation-in-network-applications-solution-brief-1637303210.pdf) (Feb 2022)

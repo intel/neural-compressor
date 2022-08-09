@@ -53,5 +53,4 @@ class Model(object):
         else:
             model = MODELS[framework](root, **kwargs)
         return model
-    
 

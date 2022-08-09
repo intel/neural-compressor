@@ -20,7 +20,7 @@ import re
 from tensorflow.python.framework import dtypes
 from tensorflow.core.framework import node_def_pb2
 from .quantize_graph_base import QuantizeNodeBase
-from .quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):

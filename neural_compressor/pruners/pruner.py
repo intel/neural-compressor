@@ -93,22 +93,22 @@ class Pruner:
     def on_epoch_begin(self, epoch):
         raise NotImplementedError
 
-    def on_batch_begin(self, batch_id):
+    def on_step_begin(self, batch_id):
         raise NotImplementedError
 
     def on_epoch_end(self):
         raise NotImplementedError
 
-    def on_batch_end(self):
+    def on_step_end(self):
         raise NotImplementedError
 
-    def on_post_grad(self):
+    def on_before_optimizer_step(self):
         pass
 
-    def pre_epoch_begin(self):
+    def on_train_begin(self):
         pass
 
-    def post_epoch_end(self):
+    def on_train_end(self):
         pass
 
     def update_sparsity(self, epoch):

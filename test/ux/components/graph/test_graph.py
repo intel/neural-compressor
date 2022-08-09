@@ -16,6 +16,7 @@
 
 import unittest
 import uuid
+from typing import List
 
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.node import Node
@@ -29,6 +30,54 @@ def _get_random_string() -> str:
 def _get_random_node() -> Node:
     """Create a Node with random values."""
     return Node(id=_get_random_string(), label=_get_random_string())
+
+
+def _get_fake_graph() -> Graph:
+    """Create graph with fake data."""
+    node_1 = Node(id="node_1", label="Input")
+    node_2 = Node(id="node_2", label="SomeNode")
+    node_3 = Node(id="node_3", label="SomeNode")
+    node_4 = Node(id="node_4", label="SomeNode")
+    node_5 = Node(id="node_5", label="Softmax")
+
+    graph = Graph()
+    graph.add_node(node_1)
+    graph.add_node(node_2)
+    graph.add_node(node_3)
+    graph.add_node(node_4)
+    graph.add_node(node_5)
+
+    graph.add_edge(source_id=node_1.id, target_id=node_2.id)
+    graph.add_edge(source_id=node_1.id, target_id=node_3.id)
+    graph.add_edge(source_id=node_1.id, target_id=node_4.id)
+    graph.add_edge(source_id=node_2.id, target_id=node_5.id)
+    graph.add_edge(source_id=node_3.id, target_id=node_5.id)
+    graph.add_edge(source_id=node_4.id, target_id=node_5.id)
+
+    return graph
+
+
+def _get_fake_sequential_graph() -> Graph:
+    """Create graph with fake data."""
+    node_1 = Node(id="node_1", label="Input")
+    node_2 = Node(id="node_2", label="Conv2D")
+    node_3 = Node(id="node_3", label="AddBias")
+    node_4 = Node(id="node_4", label="ReLU")
+    node_5 = Node(id="node_5", label="Softmax")
+
+    graph = Graph()
+    graph.add_node(node_1)
+    graph.add_node(node_2)
+    graph.add_node(node_3)
+    graph.add_node(node_4)
+    graph.add_node(node_5)
+
+    graph.add_edge(source_id=node_1.id, target_id=node_2.id)
+    graph.add_edge(source_id=node_2.id, target_id=node_3.id)
+    graph.add_edge(source_id=node_3.id, target_id=node_4.id)
+    graph.add_edge(source_id=node_4.id, target_id=node_5.id)
+
+    return graph
 
 
 class TestGraph(unittest.TestCase):
@@ -86,6 +135,47 @@ class TestGraph(unittest.TestCase):
         """Test if comparing Graph to something other fails."""
         with self.assertRaises(NotImplementedError):
             Graph() == 1
+
+    def test_highlight_pattern(self) -> None:
+        """Test highlight_pattern."""
+        graph = _get_fake_sequential_graph()
+        op_name = "node_2"
+        pattern = ["Conv2D", "AddBias", "ReLU"]
+
+        graph.highlight_pattern(op_name, pattern)
+
+        self.assertFalse(graph.get_node("node_1").highlight)
+        self.assertTrue(graph.get_node("node_2").highlight)
+        self.assertTrue(graph.get_node("node_3").highlight)
+        self.assertTrue(graph.get_node("node_4").highlight)
+        self.assertFalse(graph.get_node("node_5").highlight)
+
+    def test_get_multiple_target_nodes(self) -> None:
+        """Test getting multiple target nodes using get_target_nodes."""
+        graph = _get_fake_graph()
+        result = [node.id for node in graph.get_target_nodes("node_1")]
+
+        expected = ["node_2", "node_3", "node_4"]
+
+        self.assertListEqual(result, expected)
+
+    def test_get_single_target_node(self) -> None:
+        """Test getting single target node using get_target_nodes."""
+        graph = _get_fake_graph()
+        result = [node.id for node in graph.get_target_nodes("node_3")]
+
+        expected = ["node_5"]
+
+        self.assertListEqual(result, expected)
+
+    def test_get_target_node_for_last_node(self) -> None:
+        """Test getting target node for last node using get_target_nodes."""
+        graph = _get_fake_graph()
+        result = [node.id for node in graph.get_target_nodes("node_5")]
+
+        expected: List[str] = []
+
+        self.assertListEqual(result, expected)
 
 
 if __name__ == "__main__":

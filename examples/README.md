@@ -2,6 +2,24 @@ Examples
 ===
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/validated_model_list.md).
 
+## Helloworld Examples
+
+* [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric. 
+* [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.  
+* [tf_example3](/examples/helloworld/tf_example3): quantize slim model. 
+* [tf_example4](/examples/helloworld/tf_example4): quantize checkpoint with dummy dataloader.  
+* [tf_example5](/examples/helloworld/tf_example5): config performance and accuracy measurement.  
+* [tf_example6](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model. 
+* [tf_example7](/examples/helloworld/tf_example7): enable quantization and benchmark with python-flavor config.
+* [tf_example8](/examples/helloworld/tf_example8): quantize with pure python API.
+
+## Notebook Examples
+
+* [BERT Mini SST2 performance boost with INC](/examples/notebook/bert_mini_distillation): train a BERT-Mini model on SST-2 dataset through distillation, and leverage quantization to accelerate the inference while maintaining the accuracy using Intel® Neural Compressor.
+* [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly. 
+* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor. 
+* [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor: 
+
 # TensorFlow Examples
 ## Quantization
 <table>
@@ -211,6 +229,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/object_detection/tensorflow_models/quantization/ptq">SavedModel</a></td>
+  </tr>
+  <tr>
+    <td>Faster R-CNN ResNet50</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Mask R-CNN Inception V2</td>
@@ -832,6 +856,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/language_translation/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
+    <td>BiDAF</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./onnxrt/language_translation/onnx_model_zoo/BiDAF/quantization/ptq">integerops</a></td>
+  </tr>
+  <tr>
     <td>SSD MobileNet V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
@@ -890,6 +920,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/object_detection/onnx_model_zoo/yolov4/quantization/ptq">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>Emotion FERPlus</td>
+    <td>Body Analysis</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
+  </tr>
+  <tr>
+    <td>Ultra Face</td>
+    <td>Body Analysis</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq">qlinearops</a></td>
   </tr>
 </tbody>
 </table>

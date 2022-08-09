@@ -52,17 +52,20 @@ class Distillation(Component):
         self.best_model = None
         self._train_cfg = None
 
-    def _pre_epoch_begin(self):
+    def _on_train_begin(self):
         """ called before training """
         assert self.teacher_model, 'teacher_model must be set.'
         assert self._model, 'student_model must be set.'
         if self._eval_func is not None:
-            score = self._eval_func(self.teacher_model \
-                    if getattr(self._eval_func, 'builtin', None) else self.teacher_model.model)
+            score = self._eval_func(
+                self.teacher_model if getattr(self._eval_func, 'builtin', None)
+                else self.teacher_model.model
+            )
             logger.info("teacher model score is {}.".format(str(score)))
 
-            score = self._eval_func(self._model \
-                    if getattr(self._eval_func, 'builtin', None) else self._model.model)
+            score = self._eval_func(
+                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
+            )
             logger.info("initial model score is {}.".format(str(score)))
             if self.eval_frequency > 0:
                 self.best_score = score
@@ -71,29 +74,37 @@ class Distillation(Component):
                 else:
                     self.best_model = self._model
 
-    def _on_batch_begin(self, batch_id):
+    def _on_step_begin(self, batch_id):
         """ called on the beginning of batches"""
         if self.criterion is not None and hasattr(self.criterion, 'clear_features'):
             self.criterion.clear_features()
 
-    def on_post_forward(self, input, teacher_output=None):
+    def _on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         """ called after model forward """
-        assert self.criterion and hasattr(self.criterion, "teacher_model_forward"), \
-            'criterion must be set and have teacher_model_forward func.'
-        if teacher_output is not None:
-            self.criterion.teacher_outputs = teacher_output
-        else:
-            self.criterion.teacher_model_forward(input, teacher_model=self.teacher_model.model)
+        if self.criterion is None:
+            self.create_criterion()
+        assert self.criterion, \
+            'criterion must be set in yaml config file.'
+        if teacher_output is None:
+            teacher_output = self.criterion.teacher_model_forward(
+                input, teacher_model=self.teacher_model._model
+            )
+        return self.criterion.loss_cal_sloss(student_output, teacher_output, student_loss)
+
+    def on_post_forward(self, input, teacher_output=None):
+        assert False, "This method is deprecated. please use `on_after_compute_loss` instead." \
+                      "on_after_compute_loss(input, student_output, student_loss, teacher_output=None)"
 
     def _on_epoch_end(self):
         """ called on the end of epochs"""
         self._epoch_runned += 1
         if self._eval_func is not None and self.eval_frequency > 0 and \
            self._epoch_runned % self.eval_frequency == 0:
-            score = self._eval_func(self._model \
-                    if getattr(self._eval_func, 'builtin', None) else self._model.model)
+            score = self._eval_func(
+                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
+            )
             logger.info("model score of epoch {} is {}.".format(self._epoch_runned, str(score)))
-            if (isinstance(score, list) and all([s > b_s for s, b_s in \
+            if (isinstance(score, list) and all([s > b_s for s, b_s in
                 zip(score, self.best_score)])) or score > self.best_score:
                 self.best_score = score
                 if self.framework == "pytorch":
@@ -106,7 +117,7 @@ class Distillation(Component):
             # train section of distillation section in yaml file should be configured.
             self._train_cfg = self.cfg.distillation.train
         assert self._train_cfg, "train field of distillation section in yaml file must " \
-                            "be configured for distillation if train_func is NOT set."
+                                "be configured for distillation if train_func is NOT set."
 
     def create_criterion(self):
         self.init_train_cfg()
@@ -123,21 +134,21 @@ class Distillation(Component):
             criterion_tuple = criterion_builder()
             assert self.teacher_model and self.student_model, \
                 "teacher_model and student_model must be set."
-            if self.framework == 'tensorflow': # new, for tf
+            if self.framework == 'tensorflow':  # new, for tf
                 teacher_model = self.teacher_model._model
                 student_model = self.student_model._model
-            else: # for pytorch and other frameworks
+            else:  # for pytorch and other frameworks
                 teacher_model = self.teacher_model.model
                 student_model = self.student_model.model
             criterion_tuple[1]["student_model"] = student_model
             criterion_tuple[1]["teacher_model"] = teacher_model
             self.criterion = criterion_tuple[0](**criterion_tuple[1])
         else:
-            logger.warning("Use user defined criterion, " \
-                            "ignoring the criterion setting in yaml file.")
-        
+            logger.warning("Use user defined criterion, "
+                           "ignoring the criterion setting in yaml file.")
+
         self._train_cfg.criterion = self.criterion
-            
+
     def create_optimizer(self):
         self.init_train_cfg()
         if self.optimizer is None:
@@ -154,12 +165,13 @@ class Distillation(Component):
             if self.framework == 'tensorflow':
                 self.optimizer = optimizer_tuple[0](**optimizer_tuple[1])
             elif self.framework == 'pytorch':
-                self.optimizer = optimizer_tuple[0](self.model.model.parameters(), \
-                                                **optimizer_tuple[1])
+                # pylint: disable=no-member
+                self.optimizer = optimizer_tuple[0](self.model.model.parameters(),
+                                                    **optimizer_tuple[1])
         else:
-            logger.warning("Use user defined optimizer, " \
-                            "ignoring the optimizer setting in yaml file.")
-        
+            logger.warning("Use user defined optimizer, "
+                           "ignoring the optimizer setting in yaml file.")
+
         self._train_cfg.optimizer = self.optimizer
 
     def pre_process(self):
@@ -186,8 +198,8 @@ class Distillation(Component):
             self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
 
         if self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-            self.cfg.evaluation.accuracy.dataloader and \
-            self._eval_dataloader is None and self._eval_func is None:
+           self.cfg.evaluation.accuracy.dataloader and \
+           self._eval_dataloader is None and self._eval_func is None:
             eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
             assert eval_dataloader_cfg is not None, \
                    'dataloader field of evaluation ' \
@@ -207,33 +219,36 @@ class Distillation(Component):
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation
             assert eval_cfg, "eval field of distillation section in yaml file must " \
-                              "be configured for distillation if eval_func is NOT set."
-            self._eval_func = create_eval_func(self.framework, \
-                                               self.eval_dataloader, \
-                                               self.adaptor, \
-                                               eval_cfg.accuracy.metric, \
-                                               eval_cfg.accuracy.postprocess, \
-                                               fp32_baseline = False)
+                             "be configured for distillation if eval_func is NOT set."
+            self._eval_func = create_eval_func(self.framework,
+                                               self.eval_dataloader,
+                                               self.adaptor,
+                                               eval_cfg.accuracy.metric,
+                                               eval_cfg.accuracy.postprocess,
+                                               fp32_baseline=False)
 
     def execute(self):
-        self._train_func(self._model \
-                if getattr(self._train_func, 'builtin', None) else self._model.model)
+        self._train_func(
+            self._model if getattr(self._train_func, 'builtin', None) else self._model.model
+        )
         if self.criterion is not None and hasattr(self.criterion, 'remove_all_hooks'):
             self.criterion.remove_all_hooks()
         logger.info("Model distillation is done.")
         if self._eval_func is not None:
             logger.info("Start to evaluate the distilled model.")
             self._model = self.best_model if self.best_model else self._model
-            score = self._eval_func(self._model \
-                    if getattr(self._eval_func, 'builtin', None) else self._model.model)
+            score = self._eval_func(
+                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
+            )
 
             logger.info("distilled model score is {}.".format(str(score)))
         return self._model
 
     def generate_hooks(self):
         # register hooks for distillation
-        self.register_hook('on_batch_begin', self._on_batch_begin)
-        self.register_hook('pre_epoch_begin', self._pre_epoch_begin)
+        self.register_hook('on_train_begin', self._on_train_begin)
+        self.register_hook('on_step_begin', self._on_step_begin)
+        self.register_hook('on_after_compute_loss', self._on_after_compute_loss)
         self.register_hook('on_epoch_end', self._on_epoch_end)
 
     def __call__(self):
@@ -366,7 +381,7 @@ class Distillation(Component):
     @evaluation_distributed.setter
     def evaluation_distributed(self, distributed):
         self._evaluation_distributed = distributed
-    
+
     @property
     def train_distributed(self):
         """ Getter to know whether need distributed training dataloader"""

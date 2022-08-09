@@ -25,17 +25,22 @@ class FastBiasCorrection(Algorithm):
     def __init__(self, threshold=2.0, channel_axis=1):
         self.threshold = threshold
         self.channel_axis = channel_axis
+        self.quantization_cfg = None
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, iterations):
         # (TODO) assume int8 model also use fp32 op list
         # in adaptor fp32 op will be mapped to corresponding int8 op
         graph_info = origin_model.graph_info
         op_list = [op_name for op_name, op_type in graph_info.items() if 'conv' in op_type.lower()]
-        
-        fp32_data = adaptor.inspect_tensor(origin_model, dataloader, op_list=op_list, \
-            iteration_list=list(range(1, iterations+1)), inspect_type='all')
-        q_data = adaptor.inspect_tensor(q_model, dataloader, op_list=op_list, \
-            iteration_list=list(range(1, iterations+1)), inspect_type='all')
+        iteration_list = list(range(1, iterations+1))
+        fp32_data = adaptor.inspect_tensor(origin_model.graph_def, dataloader, \
+            op_list=op_list, iteration_list=iteration_list, \
+            inspect_type='all', save_to_disk=False, save_path='', 
+            quantization_cfg=self.quantization_cfg)
+        q_data = adaptor.inspect_tensor(q_model.graph_def, dataloader, \
+            op_list=op_list, iteration_list=iteration_list, \
+            inspect_type='all', save_to_disk=False, save_path='', 
+            quantization_cfg=self.quantization_cfg)
 
         fp32_weights = fp32_data['weight']
         q_weights = q_data['weight']
@@ -52,7 +57,7 @@ class FastBiasCorrection(Algorithm):
 
         # node_mapping = adaptor.mapping(q_model, fp32_model)
         fp32_activations = {}
-        for i in range(len(fp32_activations_list)):
+        for i, _ in enumerate(iteration_list):
             for name, value in fp32_activations_list[i].items():
                 if isinstance(name, tuple):
                     name = name[0]
@@ -63,7 +68,7 @@ class FastBiasCorrection(Algorithm):
                     fp32_activations[name] = take_out_array(value)
 
         q_activations ={}
-        for i in range(len(q_activations_list)):
+        for i, _ in enumerate(iteration_list):
             for name, value in q_activations_list[i].items():
                 if isinstance(name, tuple):
                     name = name[0]

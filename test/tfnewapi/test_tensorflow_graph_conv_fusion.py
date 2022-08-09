@@ -7,7 +7,7 @@ import yaml
 import numpy as np
 import tensorflow as tf
 
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
@@ -539,61 +539,6 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                         found_conv_biasadd_fusion = True
             self.assertEqual(found_conv_sumadd_fusion, False)
             self.assertEqual(found_conv_biasadd_fusion, True)
-
-
-class TestGraphConvFusion(unittest.TestCase):
-    rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
-    pb_path = '/tmp/.neural_compressor/resnet50_fp32_pretrained_model.pb'
-    inputs = ['input']
-    outputs = ['predict']
-
-    op_wise_config = {
-        "v0/resnet_v13/conv14/conv2d/Conv2D": (False, 'minmax', False, 7.0),
-        "v0/resnet_v13/conv11/conv2d/Conv2D": (False, 'minmax', False, 7.0),
-        "v0/resnet_v17/conv27/conv2d/Conv2D": (False, 'minmax', False, 7.0)
-    }
-
-    @classmethod
-    def setUpClass(self):
-        if not os.path.exists(self.pb_path):
-            os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
-        self.input_graph = tf.compat.v1.GraphDef()
-        with open(self.pb_path, "rb") as f:
-            self.input_graph.ParseFromString(f.read())
-        self.new_api = True \
-            if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
-
-    @disable_random()
-    def test_conv_biasadd_relu_fusion(self):
-        self._tmp_graph_def = graph_util.remove_training_nodes(self.input_graph, self.outputs)
-
-        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
-                                                        self.inputs, self.outputs).do_transformation()
-
-        self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
-        op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../../neural_compressor/adaptor/tensorflow.yaml")).get_eightbit_patterns()
-
-        output_graph, _ = QuantizeGraphForIntel(self._tmp_graph_def, self.inputs, self.outputs,
-                                             self.op_wise_config, op_wise_sequences,
-                                             'cpu', new_api=self.new_api).do_transform()
-
-        node_name_type_mapping = {}
-        for i in output_graph.node:
-            node_name_type_mapping[i.name] = dict(op="", fused_ops=[])
-            node_name_type_mapping[i.name]["op"] = i.op
-            node_name_type_mapping[i.name]["fused_ops"] = i.attr['fused_ops'].list.s
-
-        should_enable_sum_node_name = 'v0/resnet_v13/conv11/conv2d/Conv2D_eightbit_quantized_conv'
-        should_disable_sum_node_name = 'v0/resnet_v17/conv27/conv2d/Conv2D_eightbit_quantized_conv'
-        should_enable_sum_flag = should_enable_sum_node_name in node_name_type_mapping \
-            and node_name_type_mapping[should_enable_sum_node_name]["op"] == '_QuantizedConv2D' \
-                and node_name_type_mapping[should_enable_sum_node_name]["fused_ops"] == [b'BiasAdd', b'Sum', b'Relu']
-        should_disable_sum_flag = should_disable_sum_node_name in node_name_type_mapping \
-            and node_name_type_mapping[should_disable_sum_node_name]["op"] == '_QuantizedConv2D'\
-                and node_name_type_mapping[should_disable_sum_node_name]["fused_ops"] == [b'BiasAdd']
-        self.assertEqual(should_enable_sum_flag, True)
-        self.assertEqual(should_disable_sum_flag, True)
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ from typing import List, Type
 
 from neural_compressor.ux.components.model.model import Model
 from neural_compressor.ux.components.model.onnxrt.model import OnnxrtModel
+from neural_compressor.ux.components.model.pytorch.model import PyTorchScriptModel
 from neural_compressor.ux.components.model.tensorflow.frozen_pb import FrozenPbModel
 from neural_compressor.ux.components.model.tensorflow.keras import KerasModel
 from neural_compressor.ux.components.model.tensorflow.meta_graph import MetaGraphModel
@@ -36,6 +37,7 @@ class ModelRepository:
             MetaGraphModel,
             OnnxrtModel,
             SavedModelModel,
+            PyTorchScriptModel,
         ]
 
     def get_model(self, path: str) -> Model:

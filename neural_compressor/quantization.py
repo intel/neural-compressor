@@ -144,10 +144,10 @@ class Quantization(object):
         logger.warning("This API is going to be deprecated. Please import "
             "neural_compressor.experimental.Quantization, initialize an instance of `Quantization`,"
             "set its dataloader and metric attributes, then invoke its __call__ method.")
-        
+
         self.exp_quantizer.model = model
         if q_dataloader is not None:
-            self.exp_quantizer.calib_dataloader = q_dataloader 
+            self.exp_quantizer.calib_dataloader = q_dataloader
         elif q_func is not None:
             self.exp_quantizer.q_func = q_func
 
@@ -172,10 +172,12 @@ class Quantization(object):
 
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
                    sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
-        return DATALOADERS[self.exp_quantizer.framework](dataset=dataset,
-                          batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
-                          sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
-                          pin_memory=pin_memory)
+        return DATALOADERS[self.exp_quantizer.framework](
+            dataset=dataset,
+            batch_size=batch_size, collate_fn=collate_fn, last_batch=last_batch,
+            sampler=sampler, batch_sampler=batch_sampler, num_workers=num_workers,
+            pin_memory=pin_memory
+        )
 
     def metric(self, name, metric_cls, **kwargs):
         from .experimental.common import Metric as NCMetric
@@ -187,3 +189,8 @@ class Quantization(object):
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_quantizer.postprocess = nc_postprocess
 
+
+def fit(model, conf, calib_dataloader=None, eval_func=None):
+    quantizer = Quantization(conf)
+    quantizer.model = model
+    quantizer(model, calib_dataloader, eval_func)

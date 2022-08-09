@@ -1,0 +1,58 @@
+<div class="mat-dialog-container">
+  <button mat-button id="error-close-btn" class="close-button" mat-dialog-close matTooltip="Close">&#x2573;</button>
+  <h1 mat-dialog-title>
+    Model wise parameters
+  </h1>
+
+  <div *ngIf="modelWiseParams" mat-dialog-content>
+
+
+    <ng-container *ngFor="let type of ['weight','activation']">
+      <h2>{{ type | titlecase }}
+      </h2>
+
+      <div *ngFor="let id of paramIndex[type]; let index = index">
+        <mat-form-field *ngIf="id" class="select" appearance="outline">
+          <mat-label>param name</mat-label>
+          <mat-select [(ngModel)]="params[type][index]" (selectionChange)="selectParameter(type, params[type][index])">
+            <ng-container *ngFor="let param of selectorParams[type]">
+              <mat-option *ngIf="params[type].indexOf(param) === -1 || params[type].indexOf(param) === index"
+                [value]="param">
+                {{ param }}
+              </mat-option>
+            </ng-container>
+          </mat-select>
+        </mat-form-field>
+        <ng-container *ngIf="params[type][index]">
+          <mat-form-field class="select" appearance="outline">
+            <mat-label>param value</mat-label>
+            <mat-select *ngIf="params[type][index] !== 'bit'" [(ngModel)]="chosenParams[type][params[type][index]]">
+              <mat-option *ngFor="let param of modelWiseParams[type][params[type][index]]" [value]="param">
+                {{ param }}
+              </mat-option>
+            </mat-select>
+            <input matInput type="number" min="0" max="7" step="1" *ngIf="params[type][index] === 'bit'"
+              appearance="outline" [(ngModel)]="chosenParams[type][params[type][index]]">
+          </mat-form-field>
+        </ng-container>
+        <button *ngIf="id" mat-icon-button color="warn" class="browse"
+          (click)="removeParameter(type, index, params[type][index])" matTooltip="Remove this parameter">
+          <img class="icon" src="./../../assets/057b-trash-outlined.svg">
+        </button>
+      </div>
+      <button id="finish-adv-btn" mat-raised-button color="accent" class="browse" (click)="addNewParam(type)"
+        queryParamsHandling="preserve">
+        <img src="./../../assets/008a-plus-solid.svg">
+        Add parameter
+      </button>
+    </ng-container>
+
+    <br />
+    <div class="float-right">
+      <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent" class="browse"
+        (click)="saveModelWise()" queryParamsHandling="preserve">
+        <img src="./../../assets/056a-save-solid-white.svg">
+        Save changes
+      </button>
+    </div>
+  </div>

@@ -24,8 +24,8 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2, version1_lt_version2
 
 
@@ -254,6 +254,148 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
+            self.graph_analyzer.replace_single_node(
+                new_node, [parent_node_name], quantized_node_name,
+                [self.graph_info[requantize_node_name].outputs[0]], requantize_node_name)
+            self.graph_analyzer.remove_node(quantized_node_name)
+
+        return self.graph_analyzer.dump_graph()
+
+class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
+    """Fuse _QuantizedFusedMatMul + Requantize + Dequantize into _QuantizedFusedMatMulAndDequantize.
+    """
+    def __init__(self, model, device='cpu'):
+        super().__init__(model)
+        self.device = device
+        self.graph_analyzer = GraphAnalyzer()
+        self.graph_analyzer.graph = self.model
+
+        self.graph_info = self.graph_analyzer.parse_graph()
+
+        self.eps = 1e-5
+
+    def do_transformation(self):
+        fuse_pattern = [["_QuantizedFusedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
+
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
+        for i in target_nodes:
+            # TODO Remove below checker once the TF's limitation removed.
+            if len(i) == 5:
+                continue
+
+            quantized_node_name = i[0]
+            quantized_node = self.graph_info[quantized_node_name].node
+            requantize_node_name = i[1]
+            requantize_node = self.graph_info[requantize_node_name].node
+            requested_output_min_name = requantize_node.input[3]
+            requested_output_max_name = requantize_node.input[4]
+            deq_node_name = i[2]
+
+            quantized_node_op = i[-1][0]
+            
+            if "BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
+               and "Relu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8'):
+                continue
+
+            new_node = node_def_pb2.NodeDef()
+
+            new_node.op = quantized_node_op + "AndDequantize"
+            new_node.name = requantize_node_name
+            for _, value in enumerate(quantized_node.input):
+                new_node.input.append(value)
+
+            #new_node.input.append(requested_output_min_name)
+            #new_node.input.append(requested_output_max_name)
+            if 'T1' in quantized_node.attr:
+                new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
+            if 'T2' in quantized_node.attr:
+                new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
+            if 'num_args' in quantized_node.attr:
+                new_node.attr["num_args"].CopyFrom(quantized_node.attr['num_args'])
+            if 'fused_ops' in quantized_node.attr:
+                new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
+
+            top_node_name = Helper.node_name_from_input(quantized_node.input[0])
+            float32_type = dtypes.float32.as_datatype_enum
+            new_node.attr["Targs"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
+            new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
+
+            self.graph_analyzer.remove_node(requantize_node_name)
+
+            if self.graph_info[deq_node_name].outputs:
+                self.graph_analyzer.replace_single_node(
+                    new_node, [top_node_name], quantized_node_name,
+                    self.graph_info[deq_node_name].outputs, deq_node_name)
+                self.graph_analyzer.remove_node(deq_node_name)
+            else:
+                self.graph_analyzer.remove_node(deq_node_name)
+
+                new_node.name = deq_node_name
+                self.graph_analyzer.replace_single_node(
+                    new_node, [top_node_name], quantized_node_name, [], deq_node_name)
+
+            self.graph_analyzer.remove_node(quantized_node_name)
+
+        return self.graph_analyzer.dump_graph()
+
+class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
+    """Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
+    """
+    def __init__(self, model, device='cpu'):
+        super().__init__(model)
+        self.device = device
+        self.graph_analyzer = GraphAnalyzer()
+        self.graph_analyzer.graph = self.model
+        self.eps = 1e-05
+        self.graph_info = self.graph_analyzer.parse_graph()
+
+    def do_transformation(self):
+        """Fuse the quantized op with the following requantize op.
+        Returns:
+            [graphdef]: the optimized graphdef object
+        """
+        uint8_type = dtypes.quint8.as_datatype_enum
+
+        while True:
+            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
+                [["_QuantizedFusedMatMul"], ['Requantize']])
+            if len(target_nodes) == 0:
+                break
+
+            i = target_nodes[0]
+            quantized_node_name = i[0]
+            quantized_node = self.graph_info[quantized_node_name].node
+            requantize_node_name = i[1]
+            requantize_node = self.graph_info[requantize_node_name].node
+            requested_output_min_name = requantize_node.input[3]
+            requested_output_max_name = requantize_node.input[4]
+
+            quantized_node_op = i[-1][0]
+            if "BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
+               and "Relu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8'):
+                break
+
+            new_node = node_def_pb2.NodeDef()
+
+            new_node.op = quantized_node_op + "AndRequantize"
+            new_node.name = requantize_node_name
+            for _, value in enumerate(quantized_node.input):
+                new_node.input.append(value)
+            new_node.input.append(requested_output_min_name)
+            new_node.input.append(requested_output_max_name)
+            if 'T1' in quantized_node.attr:
+                new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
+            if 'T2' in quantized_node.attr:
+                new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
+            if 'num_args' in quantized_node.attr:
+                new_node.attr["num_args"].CopyFrom(quantized_node.attr["num_args"])
+            if 'Targs' in quantized_node.attr:
+                new_node.attr["Targs"].CopyFrom(quantized_node.attr["Targs"])
+            if 'fused_ops' in quantized_node.attr:
+                new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
+            new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+
+            parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
             self.graph_analyzer.replace_single_node(
                 new_node, [parent_node_name], quantized_node_name,
                 [self.graph_info[requantize_node_name].outputs[0]], requantize_node_name)

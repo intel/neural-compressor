@@ -196,32 +196,32 @@ def percent_to_float(data):
 
 ops_schema = Schema({
     Optional('weight', default=None): {
-        Optional('granularity', default=None): And(
+        Optional('granularity'): And(
             list,
             lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-        Optional('scheme', default=None): And(
+        Optional('scheme'): And(
             list,
             # asym_float are only for PyTorch framework
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
-        Optional('dtype', default=None): And(
+        Optional('dtype'): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
-        Optional('algorithm', default=None): And(
+        Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
-        Optional('bit', default=None):  And(
+        Optional('bit'):  And(
             Or(float, list),
             Use(input_to_list_float),
             lambda s: all(0.0 < i <= 7.0 for i in s))
     },
     Optional('activation', default=None): {
-        Optional('granularity', default=None): And(
+        Optional('granularity'): And(
             list,
             lambda s: all(i in ['per_channel', 'per_tensor'] for i in s)),
-        Optional('scheme', default=None): And(
+        Optional('scheme'): And(
             list,
             lambda s: all(i in ['asym', 'sym'] for i in s)),
-        Optional('dtype', default=None): And(
+        Optional('dtype'): And(
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         # compute_dtypeis only for PyTorch framework
@@ -229,7 +229,7 @@ ops_schema = Schema({
             list,
             lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
         # placeholder are only for PyTorch framework
-        Optional('algorithm', default=None): And(
+        Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))
     }
@@ -253,7 +253,30 @@ graph_optimization_schema = Schema({
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+            }
+    }
+})
+
+mixed_precision_schema = Schema({
+
+    Optional('precisions', default={'precisions': ['fp32']}): And(
+        Or(str, list),
+        Use(input_to_list),
+        lambda s: all(i in [ 'fp32', 'bf16', 'fp16'] for i in s)),
+
+    Optional('op_wise', default={'weight': {}, 'activation': {}}): {
+        Optional('weight', default=None): {
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+        },
+        Optional('activation', default=None): {
+            Optional('dtype', default=None): And(
+                Or(str, list),
+                Use(input_to_list),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
             }
     }
 })
@@ -761,12 +784,16 @@ schema = Schema({
                     lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s)),
             }
         },
+        Optional('optype_wise', default=None): {
+            str: ops_schema
+        },
         Optional('op_wise', default=None): {
             str: ops_schema
         },
     },
 
     Optional('graph_optimization'): graph_optimization_schema,
+    Optional('mixed_precision'): mixed_precision_schema,
 
     Optional('model_conversion'): model_conversion_schema,
 
@@ -776,7 +803,9 @@ schema = Schema({
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
-        'workspace': {'path': default_workspace}}): {
+        'workspace': {'path': default_workspace},
+        'diagnosis': False,
+        }): {
         Optional('strategy', default={'name': 'basic'}): {
             'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
@@ -811,7 +840,22 @@ schema = Schema({
         Optional('workspace', default={'path': default_workspace}): {
             Optional('path', default=None): str,
             Optional('resume'): str
-        }
+        },
+        Optional('diagnosis', default = {
+            'diagnosis_after_tuning': False,
+            'op_list': [],
+            'iteration_list': [1],
+            'inspect_type': 'activation',
+            'save_to_disk': True,
+            'save_path': './nc_workspace/inspect_saved/',
+        }):{
+            Optional('diagnosis_after_tuning', default=False): And(bool, lambda s: s in [True, False]),
+            Optional('op_list', default=[]): And(Or(str, list), Use(input_to_list)),
+            Optional('iteration_list', default=[1]): And(Or(int, list), Use(input_to_list_int)),
+            Optional('inspect_type', default='all'): And(str, lambda s : s in ['all', 'activation', 'weight']),
+            Optional('save_to_disk', default=True): And(bool, lambda s: s in [True, False]),
+            Optional('save_path', default='./nc_workspace/inspect_saved/'): str,
+        },
     },
     Optional('evaluation'): {
         Hook('accuracy', handler=_valid_multi_metrics): object,
@@ -975,14 +1019,23 @@ schema = Schema({
     },
 
     Optional('nas'): {
-        Optional("approach", default=None): str,
+        Optional("approach", default=None): Or(str, None),
         Optional("search"): {
-            Optional("search_space", default=None): dict,
-            Optional("search_algorithm", default=None): str,
+            Optional("search_space", default=None): Or(dict, None),
+            Optional("search_algorithm", default=None): Or(str, None),
             Optional("metrics", default=None): list,
             Optional("higher_is_better", default=None): list,
             Optional("max_trials", default=None): int,
             Optional("seed", default=42): int,
+            },
+        Optional("dynas"): {
+            Optional("supernet", default=None): str,
+            Optional("metrics", default=None): list,
+            Optional("population", default=50): int,
+            Optional("num_evals", default=100000): int,
+            Optional("results_csv_path", default=None): str,
+            Optional("dataset_path", default=None): str,
+            Optional("batch_size", default=64): int,
             },
     },
 
@@ -1066,6 +1119,36 @@ graph_optimization_default_schema = Schema({
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
     Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict 
+})
+
+mixed_precision_default_schema = Schema({
+    Optional('model', default={'name': 'resnet50', \
+                               'framework': 'NA', \
+                                'inputs': [], 'outputs': []}): dict,
+
+    Optional('version', default=float(__version__.split('.')[0])): str,
+
+    Optional('device', default='cpu'): str,
+
+    Optional('quantization', default={'approach': 'post_training_static_quant', 
+                                    'calibration': {'sampling_size': [100]},
+                                    'recipes': {'scale_propagation_max_pooling': True,
+                                                    'scale_propagation_concat': True,
+                                                    'first_conv_or_matmul_quantization': True},
+                                    'model_wise': {'weight': {'bit': [7.0]},
+                                                    'activation': {}}}): dict,
+
+    Optional('tuning', default={
+        'strategy': {'name': 'basic'},
+        'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
+        'objective': 'performance',
+        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
+        'random_seed': 1978, 'tensorboard': False,
+        'workspace': {'path': default_workspace}}): dict,
+
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
+
+    Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict 
 })
 
 benchmark_default_schema = Schema({
@@ -1218,7 +1301,7 @@ class Quantization_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, quantization_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(quantization_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(quantization_default_schema.validate(dict()))
         self._model_wise_tune_space = None
@@ -1227,8 +1310,7 @@ class Quantization_Conf(Conf):
     def _merge_dicts(self, src, dst):
         """Helper function to merge src dict into dst dict.
 
-           If the key in src doesn't exist in dst, then add this key and value
-           pair to dst.
+           If the key in src doesn't exist in dst, then skip
            If the key in src is in dst and the value intersects with the one in
            dst, then override the value in dst with the intersect value.
 
@@ -1250,9 +1332,6 @@ class Quantization_Conf(Conf):
                              if value in dst[key] or isinstance(value, float)]
                     if value != []:
                         dst[key] = value
-            else:
-                if not isinstance(src[key], dict):
-                    dst[key] = src[key]
 
         return dst
 
@@ -1261,8 +1340,14 @@ class Quantization_Conf(Conf):
 
         self._model_wise_tune_space = OrderedDict()
         for optype in model_wise_quant.keys():
-            self._model_wise_tune_space[optype] = self._merge_dicts(cfg.quantization.model_wise,
-                                                                    model_wise_quant[optype])
+            if cfg.quantization.optype_wise and optype in cfg.quantization.optype_wise:
+                self._model_wise_tune_space[optype] = self._merge_dicts(
+                    cfg.quantization.optype_wise[optype],
+                    model_wise_quant[optype])
+            else:
+                self._model_wise_tune_space[optype] = self._merge_dicts(
+                    cfg.quantization.model_wise,
+                    model_wise_quant[optype])
 
         return self._model_wise_tune_space
 
@@ -1313,19 +1398,17 @@ class Quantization_Conf(Conf):
             return True
 
         opwise = copy.deepcopy(opwise_quant)
-        for k, v in opwise.items():
-            opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
 
         cfg = self.usr_cfg
         if cfg.quantization.op_wise:
             for k, v in cfg.quantization.op_wise.items():
                 is_regex = _is_regex(k)
                 for k_op, _ in opwise.items():
-                    if not is_regex and k == k_op[0]:
+                    if (not is_regex and k == k_op[0]) or (is_regex and re.match(k, k_op[0])):
                         opwise[k_op] = self._merge_dicts(v, opwise[k_op])
 
-                    if is_regex and re.match(k, k_op[0]):
-                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])
+        for k, v in opwise.items():
+            opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
 
         self._opwise_tune_space = opwise
         return self._opwise_tune_space
@@ -1414,7 +1497,7 @@ class Pruning_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, pruning_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(pruning_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(pruning_default_schema.validate(dict()))
 
@@ -1431,9 +1514,26 @@ class Graph_Optimization_Conf(Quantization_Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, graph_optimization_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(graph_optimization_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(graph_optimization_default_schema.validate(dict()))
+
+class MixedPrecision_Conf(Quantization_Conf):
+    """config parser.
+
+    Args:
+        cfg: The path to the configuration file or DotDict object or None.
+
+    """
+
+    def __init__(self, cfg=None):
+        if isinstance(cfg, str):
+            self.usr_cfg = DotDict(self._read_cfg(cfg))
+        elif isinstance(cfg, DotDict):
+            self.usr_cfg = DotDict(self._convert_cfg(
+                cfg, copy.deepcopy(mixed_precision_default_schema.validate(dict()))))
+        else:
+            self.usr_cfg = DotDict(mixed_precision_default_schema.validate(dict()))
 
 class Benchmark_Conf(Conf):
     """config parser.
@@ -1448,7 +1548,7 @@ class Benchmark_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, benchmark_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(benchmark_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))
 
@@ -1465,9 +1565,41 @@ class Distillation_Conf(Conf):
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(
-                cfg, distillation_default_schema.validate(dict()))))
+                cfg, copy.deepcopy(distillation_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
+
+class NASConfig(Conf):
+    """config parser.
+
+    Args:
+        approach: The approach of the NAS.
+        search_algorithm: The search algorithm for NAS procedure.
+
+    """
+
+    def __init__(self, approach=None, search_space=None, search_algorithm=None):
+        assert approach is None or (isinstance(approach, str) and approach), \
+            "Should set approach with a string."
+        usr_cfg = {
+            'model': {'name': 'nas', 'framework': 'NA'},
+            'nas': {'approach': approach,
+                    'search': {
+                        'search_space': search_space,
+                        'search_algorithm': search_algorithm}
+                    },
+        }
+        self.usr_cfg = DotDict(usr_cfg)
+        if approach and approach != 'basic':
+            self.usr_cfg.nas[approach] = DotDict({})
+            self.__setattr__(approach, self.usr_cfg.nas[approach])
+
+    def validate(self):
+        self.usr_cfg = schema.validate(self.usr_cfg)
+        
+    @property
+    def nas(self):
+        return self.usr_cfg.nas
 
 class DefaultConf(DotDict):
     def __getitem__(self, key):
@@ -1485,3 +1617,4 @@ PruningConf = Pruning_Conf
 GraphOptConf = Graph_Optimization_Conf
 BenchmarkConf = Benchmark_Conf
 DistillationConf = Distillation_Conf
+MixedPrecisionConf = MixedPrecision_Conf

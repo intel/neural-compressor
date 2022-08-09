@@ -19,8 +19,6 @@
 
 import itertools
 from .base_operator import QuantOperatorBase
-from onnxruntime.quantization.quant_utils import QuantizedValue, QuantizedValueType, \
-                                                    attribute_to_kwarg, quantize_nparray
 
 
 class QDQOperatorBase(QuantOperatorBase):

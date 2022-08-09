@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
     valid_mixed_precisions: []
 
   ops: &common_ops
-    int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', #'FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3',
-           'MatMul', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
-    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+    int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', #'FusedBatchNorm', 'FusedBatchNormV2','FusedBatchNormV3',
+           'MatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
     bf16: ['Conv2D', 'Conv2DBackpropFilter', 'Conv2DBackpropInput', 'Conv3D', 'Conv3DBackpropFilterV2',
            'Conv3DBackpropInputV2', 'DepthwiseConv2dNative', 'DepthwiseConv2dNativeBackpropFilter',
            'DepthwiseConv2dNativeBackpropInput', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', # allow_list
@@ -105,6 +105,20 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'BatchMatMulV2': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -158,6 +172,20 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'BatchMatMulV2': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8', 'fp32'],
+                        'scheme': ['asym', 'sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'default': {
             'activation': {
                         'dtype': ['uint8', 'fp32'],
@@ -177,90 +205,91 @@
         'Conv2D + BiasAdd'
         ]
     int8: [
-        'Conv2D + BiasAdd',
-        'Conv2D + BiasAdd + Add + Relu6 + Mul + Mul',
-        'Conv2D + Add + Relu6 + Mul + Mul',
-        'Conv2D + BiasAdd + swish_f32',
-        'Conv2D + Add + swish_f32',
-        'Conv2D + AddV2 + swish_f32',
-        'Conv2D + swish_f32',
-        'Conv2D + BiasAdd + Relu',
-        'Conv2D + Relu',
-        'Conv2D + BiasAdd + Elu',
-        'Conv2D + Elu',
-        'Conv2D + BiasAdd + Relu6',
-        'Conv2D + Relu6',
-        'Conv2D + BiasAdd + LeakyRelu',
-        'Conv2D + LeakyRelu',
-        'Conv2D + BiasAdd + LeakyRelu + AddV2',
-        'Conv2D + LeakyRelu + AddV2',
-        'Conv2D + Add',
-        'Conv2D + AddV2',
-        'Conv2D + AddV2 + Add',
-        'Conv2D + Add + Add',
-        'Conv2D + BiasAdd + Add',
-        'Conv3D + Add',
-        'Conv3D + AddV2',
-        'Conv3D + BiasAdd',
-        'Conv3D + BiasAdd + Add',
-        'Conv3D + BiasAdd + AddV2',
-        'Conv3D + AddV2 + AddV2',
-        'DepthwiseConv2dNative + BiasAdd + Add + Relu6 + Mul + Mul',
-        'DepthwiseConv2dNative + Add + Relu6 + Mul + Mul',
-        'DepthwiseConv2dNative + BiasAdd + swish_f32',
-        'DepthwiseConv2dNative + Add + swish_f32',
-        'DepthwiseConv2dNative + AddV2 + swish_f32',
-        'DepthwiseConv2dNative + swish_f32',
-        'DepthwiseConv2dNative + BiasAdd + LeakyRelu',
-        'DepthwiseConv2dNative + LeakyRelu',
-        'DepthwiseConv2dNative + BiasAdd + Relu6',
-        'DepthwiseConv2dNative + Relu6',
-        'DepthwiseConv2dNative + BiasAdd + Relu',
-        'DepthwiseConv2dNative + Relu',
-        'DepthwiseConv2dNative + Add + Relu6',
-        'DepthwiseConv2dNative + BiasAdd',
-        #'FusedBatchNormV3 + Relu'
+        'Dequantize + Conv2D + BiasAdd + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2',
+        'Dequantize + Conv2D + Add + Relu6 + Mul + Mul + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + swish_f32 + QuantizeV2',
+        'Dequantize + Conv2D + Add + swish_f32 + QuantizeV2',
+        'Dequantize + Conv2D + AddV2 + swish_f32 + QuantizeV2',
+        'Dequantize + Conv2D + swish_f32 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + Conv2D + Relu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Elu + QuantizeV2',
+        'Dequantize + Conv2D + Elu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2D + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + Add + QuantizeV2',
+        'Dequantize + Conv2D + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + AddV2 + Add + QuantizeV2',
+        'Dequantize + Conv2D + Add + Add + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Add + QuantizeV2',
+        'Dequantize + Conv3D + Add + QuantizeV2',
+        'Dequantize + Conv3D + AddV2 + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + Add + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + AddV2 + QuantizeV2',
+        'Dequantize + Conv3D + AddV2 + AddV2 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Add + Relu6 + Mul + Mul + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + swish_f32 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Add + swish_f32 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + AddV2 + swish_f32 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + swish_f32 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + LeakyRelu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + LeakyRelu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
+        #'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2'
         ]
     uint8: [
-        'Conv2D + BiasAdd + AddN + Relu',
-        'Conv2D + AddN + Relu',
-        'Conv2D + BiasAdd + AddN + Relu6',
-        'Conv2D + AddN + Relu6',
-        'Conv2D + BiasAdd + AddV2 + Relu',
-        'Conv2D + AddV2 + Relu',
-        'Conv2D + BiasAdd + AddV2 + Relu6',
-        'Conv2D + AddV2 + Relu6',
-        'Conv2D + BiasAdd + Add + Relu',
-        'Conv2D + Add + Relu',
-        'Conv2D + BiasAdd + Add + Relu6',
-        'Conv2D + Add + Relu6',
-        'Conv2D + BiasAdd + Relu',
-        'Conv2D + BiasAdd + Relu6',
-        'Conv2D + Add + Relu',        
-        'Conv2D + Add + Relu6',
-        'Conv2D + Relu',
-        'Conv2D + Relu6',
-        'Conv2D + BiasAdd',
-        'Conv2D + Add + Add + Relu',
-        'DepthwiseConv2dNative + BiasAdd + Relu6',
-        'DepthwiseConv2dNative + Relu6',
-        'DepthwiseConv2dNative + BiasAdd + Relu',
-        'DepthwiseConv2dNative + Relu',
-        'DepthwiseConv2dNative + Add + Relu6',
-        'DepthwiseConv2dNative + BiasAdd',
-        'MatMul + BiasAdd + Relu',
-        'MatMul + BiasAdd',
-        'MatMul + Relu',
-        'Conv3D + AddV2 + AddV2 + Relu',
-        'Conv3D + Add + Relu',
-        'Conv3D + AddV2 + Relu',
-        'Conv3D + Relu',
-        'Conv3D + Relu6',
-        'Conv3D + Add + Relu',
-        'Conv3D + AddV2 + Relu',
-        'Conv3D + AddV2 + Relu',
-        'Conv3D + Eelu',
-        'Conv3D + LeakyRelu'
+        'Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2',
+        'Dequantize + Conv2D + AddN + Relu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + AddN + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + AddN + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + AddV2 + Relu + QuantizeV2',
+        'Dequantize + Conv2D + AddV2 + Relu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + AddV2 + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + AddV2 + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2',
+        'Dequantize + Conv2D + Add + Relu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Add + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + Add + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + Add + Relu + QuantizeV2',
+        'Dequantize + Conv2D + Add + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + Relu + QuantizeV2',
+        'Dequantize + Conv2D + Relu6 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + QuantizeV2',
+        'Dequantize + Conv2D + Add + Add + Relu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
+        'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + QuantizeV2',
+        'Dequantize + MatMul + Relu + QuantizeV2',
+        'Dequantize + BatchMatMulV2',
+        'Dequantize + BatchMatMulV2 + Mul + Add',
+        'Dequantize + Conv3D + AddV2 + AddV2 + Relu + QuantizeV2',
+        'Dequantize + Conv3D + Add + Relu + QuantizeV2',
+        'Dequantize + Conv3D + AddV2 + Relu + QuantizeV2',
+        'Dequantize + Conv3D + Relu + QuantizeV2',
+        'Dequantize + Conv3D + Relu6 + QuantizeV2',
+        'Dequantize + Conv3D + Add + Relu6 + QuantizeV2',
+        'Dequantize + Conv3D + AddV2 + Relu6 + QuantizeV2',
+        'Dequantize + Conv3D + Eelu + QuantizeV2',
+        'Dequantize + Conv3D + LeakyRelu + QuantizeV2'
 
   ]
 
@@ -275,7 +304,7 @@
 
 -
   version:
-    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.6.1', '2.6.2', '2.7.0', '2.8.0', '1.15.0-up1', '1.15.0-up2']
+    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.6.1', '2.6.2', '2.7.0', '2.8.0', '2.9.1', '1.15.0-up1', '1.15.0-up2']
 
   precisions:
     names: int8, uint8, bf16, fp32

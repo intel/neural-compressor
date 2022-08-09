@@ -242,6 +242,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
+    # the range of dummy data
+    low = 1.0
+    high = 20.0
     # benchmark PB model directly
     find_graph_def = tf_v1.GraphDef()
     if args.model_path and not args.model_name:
@@ -290,6 +293,10 @@ if __name__ == "__main__":
                 model_detail = model
                 model_detail['model_dir'] = args.model_path
                 model_detail['ckpt'] = args.is_meta
+                if 'low' in model_detail.keys():
+                    low = model_detail['low']
+                if 'high' in model_detail.keys():
+                    high = model_detail['high']
                 break
         if not model_detail:
             logger.error("Model undefined.")
@@ -336,7 +343,7 @@ if __name__ == "__main__":
         else:
             dataset = quantizer.dataset(dataset_type='dummy',
                                         shape=inputs_shape,
-                                        low=1.0, high=20.0,
+                                        low=low, high=high,
                                         dtype=inputs_dtype,
                                         label=True)
             dataloader_dict = {'wide_deep': WidedeepDataloader}

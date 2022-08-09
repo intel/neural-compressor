@@ -28,10 +28,19 @@ try:
     try:
         import intel_pytorch_extension as ipex
         IPEX_110 = False
+        IPEX_112 = False
     except:
-        import intel_extension_for_pytorch as ipex
-        import torch.fx.experimental.optimization as optimization
-        IPEX_110 = True
+        try:
+            import intel_extension_for_pytorch as ipex
+            from intel_extension_for_pytorch.quantization import prepare, convert
+            from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+            IPEX_110 = False
+            IPEX_112 = True
+        except:
+            import intel_extension_for_pytorch as ipex
+            import torch.fx.experimental.optimization as optimization
+            IPEX_110 = True
+            IPEX_112 = False
     TEST_IPEX = True
     model_names = sorted(name for name in models.__dict__
         if name.islower() and not name.startswith("__")
@@ -61,7 +70,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     help='model architecture: ' +
                         ' | '.join(model_names) +
                         ' (default: resnet18)')
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -330,7 +339,7 @@ def main_worker(gpu, ngpus_per_node, args):
         ipex_config_path = None
         if args.int8:
             if args.ipex:
-                if not IPEX_110:
+                if not IPEX_110 and not IPEX_112:
                     # TODO: It will remove when IPEX spport to save script model.
                     model.to(ipex.DEVICE)
                     try:
@@ -349,7 +358,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
             if args.ipex:
-                if not IPEX_110:
+                if not IPEX_110 and not IPEX_112:
                     # TODO: It will remove when IPEX spport to save script model.
                     model.to(ipex.DEVICE)
                     try:
@@ -449,13 +458,13 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
     # switch to evaluate mode
     model.eval()
     if args.ipex:
-        if not IPEX_110:
+        if not IPEX_110 and not IPEX_112:
             conf = (
                 ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
                 if ipex_config_path is not None
                 else ipex.AmpConf(None)
                 )
-        else:
+        if IPEX_110:
             if ipex_config_path is not None:
                 conf = ipex.quantization.QuantConf(configure_file=ipex_config_path)
                 model = optimization.fuse(model, inplace=True)
@@ -463,6 +472,22 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
                     x = input.contiguous(memory_format=torch.channels_last)
                     break
                 model = ipex.quantization.convert(model, conf, x)
+            else:
+                model = model
+        if IPEX_112:
+            if ipex_config_path is not None:
+                x = torch.randn(args.batch_size, 3, 224, 224).contiguous(memory_format=torch.channels_last) 
+                qconfig = QConfig(
+                        activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_symmetric, dtype=torch.qint8),
+                        weight= PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric))
+                prepared_model = ipex.quantization.prepare(model, qconfig, x, inplace=True)
+                prepared_model.load_qconf_summary(qconf_summary=ipex_config_path)
+                model = ipex.quantization.convert(prepared_model)
+                model = torch.jit.trace(model, x)
+                model = torch.jit.freeze(model.eval())
+                y = model(x)
+                y = model(x)
+                print("running int8 model\n")
             else:
                 model = model
     with torch.no_grad():
@@ -475,7 +500,7 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
 
             # compute output
             if args.ipex:
-                if not IPEX_110:
+                if not IPEX_110 and not IPEX_112:
                     with ipex.AutoMixPrecision(conf, running_mode='inference'):
                         output = model(input.to(ipex.DEVICE))
                     target = target.to(ipex.DEVICE)

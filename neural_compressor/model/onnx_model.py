@@ -23,20 +23,9 @@ from neural_compressor.model.base_model import BaseModel
 
 onnx = LazyImport('onnx')
 ort = LazyImport("onnxruntime")
+ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 
 logger = logging.getLogger()
-
-
-def find_by_name(item_name, item_list):
-    '''
-    Helper function to find item by name in a list.
-        parameter item_name: name of the item.
-        parameter item_list: list of items.
-        return: item if found. None otherwise.
-    '''
-    items = [item for item in item_list if item.name == item_name]
-    return items[0] if len(items) > 0 else None
-
 
 class ONNXModel(BaseModel):
     def __init__(self, model, **kwargs):
@@ -132,7 +121,7 @@ class ONNXModel(BaseModel):
         self._model.graph.node.extend(nodes_to_add)
 
     def add_initializer(self, tensor):
-        if find_by_name(tensor.name, self._model.graph.initializer) is None:
+        if ortq.find_by_name(tensor.name, self._model.graph.initializer) is None:
             self._model.graph.initializer.extend([tensor])
 
     def get_initializer(self, name):
@@ -229,7 +218,7 @@ class ONNXModel(BaseModel):
         '''
         graph_nodes_list = list(graph.node)  #deep copy
         graph_nodes_list.extend(new_nodes_list)
-        node = find_by_name(node_name, graph_nodes_list)
+        node = ortq.find_by_name(node_name, graph_nodes_list)
         return node
 
     def find_nodes_by_initializer(self, graph, initializer):

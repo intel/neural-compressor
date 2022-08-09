@@ -1,0 +1,71 @@
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: 1.0
+
+model:                                               # mandatory. used to specify model specific information.
+  name: faster_rcnn_resnet50
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  inputs: image_tensor
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  calibration:
+    sampling_size: 10, 50, 100, 200                  # optional. default value is 100. used to set how many samples should be used in calibration.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
+      dataset:
+        COCORecord:
+          root: /path/to/calibration/dataset         # NOTE: modify to coco2017 validation dataset TFRecord
+      transform:
+        Resize:
+          size: 600
+
+evaluation:                                          # optional. used to config evaluation process.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+    metric: 
+      COCOmAPv2:
+        output_index_mapping:
+          num_detections: 0
+          boxes: 1
+          scores: 2
+          classes: 3
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
+      batch_size: 10
+      dataset:
+        COCORecord:
+          root: /path/to/evaluation/dataset          # NOTE: modify to coco2017 validation dataset TFRecord
+      transform:
+        Resize:
+          size: 600
+  performance:
+    iteration: 100
+    configs:
+      cores_per_instance: 28
+      num_of_instance: 1
+      kmp_blocktime: 1
+    dataloader:
+      batch_size: 10
+      dataset:
+        COCORecord:
+          root: /path/to/evaluation/dataset
+      transform:
+        Resize:
+          size: 600
+tuning:
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.

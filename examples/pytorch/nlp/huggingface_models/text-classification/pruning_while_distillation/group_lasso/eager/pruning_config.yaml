@@ -1,0 +1,25 @@
+version: 1.0
+
+model:
+  name: bert_prune
+  framework: pytorch
+
+pruning:
+  approach:
+    weight_compression:
+      initial_sparsity: 0.0
+      target_sparsity: 0.9
+      start_epoch: 0
+      end_epoch: 4
+      pruners:
+        - !Pruner
+            start_epoch: 0
+            end_epoch: 1
+            target_sparsity: 0.7
+            prune_type: group_lasso
+            update_frequency: 1
+            parameters: {
+                alpha: 0.006,
+                pattern: tile_pattern_1x4
+            }
+            names: ['bert.encoder.layer.0.attention.output.dense.weight']

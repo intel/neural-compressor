@@ -100,7 +100,6 @@ class PostprocessSchema(JsonSerializer):
         self.LabelShift = data.get("LabelShift", None)  # [Optional] >0
         self.Collect = data.get("Collect", None)
         self.SquadV1 = data.get("SquadV1", None)
-        self.SquadV1ModelZoo = data.get("SquadV1ModelZoo", None)
 
 
 class Postprocess(JsonSerializer):
@@ -186,7 +185,6 @@ class Evaluation(JsonSerializer):
 
         if self.accuracy and self.accuracy.postprocess:
             for single_transform in transforms:
-                print(f'\nSetting {single_transform["name"]} postprocess transform')
                 if single_transform["name"] in postprocess_transforms:
                     self.accuracy.postprocess.transform = {  # type: ignore
                         single_transform["name"]: single_transform["params"],

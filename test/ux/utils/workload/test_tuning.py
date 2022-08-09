@@ -21,6 +21,7 @@ from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.workload.config import Config
 from neural_compressor.ux.utils.workload.tuning import (
     AccCriterion,
+    Diagnosis,
     ExitPolicy,
     Strategy,
     Tuning,
@@ -211,6 +212,63 @@ class TestWorkspaceConfig(unittest.TestCase):
         )
 
 
+class TestDiagnosisConfig(unittest.TestCase):
+    """Diagnosis config tests."""
+
+    def test_diagnosis_constructor(self) -> None:
+        """Test Diagnosis config constructor."""
+        data = {
+            "diagnosis_after_tuning": True,
+            "op_list": ["op_1", "op_2"],
+            "iteration_list": [1, 2],
+            "inspect_type": "weight",
+            "save_to_disk": True,
+            "save_path": "/path/to/save/diagnosis/results",
+        }
+        diagnosis = Diagnosis(data)
+
+        self.assertTrue(diagnosis.diagnosis_after_tuning)
+        self.assertListEqual(diagnosis.op_list, ["op_1", "op_2"])
+        self.assertListEqual(diagnosis.iteration_list, [1, 2])
+        self.assertEqual(diagnosis.inspect_type, "weight")
+        self.assertTrue(diagnosis.save_to_disk)
+        self.assertEqual(diagnosis.save_path, "/path/to/save/diagnosis/results")
+
+    def test_diagnosis_constructor_defaults(self) -> None:
+        """Test Diagnosis config constructor defaults."""
+        diagnosis = Diagnosis()
+
+        self.assertTrue(diagnosis.diagnosis_after_tuning)
+        self.assertIsNone(diagnosis.op_list)
+        self.assertIsNone(diagnosis.iteration_list)
+        self.assertIsNone(diagnosis.inspect_type)
+        self.assertTrue(diagnosis.save_to_disk)
+        self.assertIsNone(diagnosis.save_path)
+
+    def test_diagnosis_serializer(self) -> None:
+        """Test Diagnosis config serializer."""
+        data = {
+            "diagnosis_after_tuning": True,
+            "op_list": ["op_1", "op_2"],
+            "iteration_list": [1, 2],
+            "inspect_type": "weight",
+            "additional_field": 1,
+        }
+        diagnosis = Diagnosis(data)
+        result = diagnosis.serialize()
+
+        self.assertDictEqual(
+            result,
+            {
+                "diagnosis_after_tuning": True,
+                "op_list": ["op_1", "op_2"],
+                "iteration_list": [1, 2],
+                "inspect_type": "weight",
+                "save_to_disk": True,
+            },
+        )
+
+
 class TestTuningConfig(unittest.TestCase):
     """Tuning config tests."""
 
@@ -242,6 +300,14 @@ class TestTuningConfig(unittest.TestCase):
                 "path": "/path/to/workspace",
                 "resume": "/path/to/snapshot/file",
             },
+            "diagnosis": {
+                "diagnosis_after_tuning": True,
+                "op_list": ["op_1", "op_2"],
+                "iteration_list": [1, 2],
+                "inspect_type": "weight",
+                "save_to_disk": True,
+                "save_path": "/path/to/save/diagnosis/results",
+            },
         }
         tuning = Tuning(data)
 
@@ -268,6 +334,14 @@ class TestTuningConfig(unittest.TestCase):
         self.assertIsNotNone(tuning.workspace)
         self.assertEqual(tuning.workspace.path, "/path/to/workspace")
         self.assertEqual(tuning.workspace.resume, "/path/to/snapshot/file")
+
+        self.assertIsNotNone(tuning.diagnosis)
+        self.assertTrue(tuning.diagnosis.diagnosis_after_tuning)
+        self.assertListEqual(tuning.diagnosis.op_list, ["op_1", "op_2"])
+        self.assertListEqual(tuning.diagnosis.iteration_list, [1, 2])
+        self.assertEqual(tuning.diagnosis.inspect_type, "weight")
+        self.assertTrue(tuning.diagnosis.save_to_disk)
+        self.assertEqual(tuning.diagnosis.save_path, "/path/to/save/diagnosis/results")
 
         config = Config(
             {

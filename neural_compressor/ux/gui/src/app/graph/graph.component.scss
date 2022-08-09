@@ -29,6 +29,10 @@
 .node-container {
   border-radius: 0.5rem;
   background-color: white;
+
+  .yellow-background {
+    background-color: #FFE17A !important;
+  }
 }
 
 .group-node-container {
@@ -51,7 +55,7 @@
   font-family: IntelClearBd;
 
   :hover {
-    color: #EDB200;
+    color: #FFE17A;
   }
 }
 
@@ -82,7 +86,7 @@
 
 @media all and (max-height:1500px) {
   .wrapper {
-    height: 1000px;
+    height: 1200px;
   }
 }
 
@@ -148,4 +152,16 @@
 .graph-button {
   cursor: pointer;
   margin-left: 5px;
+}
+
+.mat-drawer-container {
+  background-color: white;
+}
+
+.yellow {
+  color: #FFE17A !important;
+}
+
+.yellow-background {
+  background-color: #f3e1a6 !important;
 }

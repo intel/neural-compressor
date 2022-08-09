@@ -60,20 +60,25 @@
       </mat-tab>
     </ng-container>
 
-    <mat-tab>
+    <mat-tab  [disabled]="is_pytorch">
       <ng-template mat-tab-label>
-        <img class="tab-icon" src="./../../assets/234a-database-solid.svg">
-        <div joyrideStep="datasetTour" [stepContent]="datasetTour">
+        <img *ngIf="project['input_model']['framework']['name'] !== 'PyTorch'" class="tab-icon"
+        src="./../../assets/234a-database-solid.svg">
+        <img *ngIf="project['input_model']['framework']['name'] === 'PyTorch'" class="tab-icon"
+        src="./../../assets/234a-database-solid-disable.svg">
+        <div joyrideStep="datasetTour" [stepContent]="datasetTour"
+          [matTooltip]="!is_pytorch ? null :'Datasets is not available for PyTorch Script-based Model.'">
           Datasets
         </div>
       </ng-template>
-      <ng-template #datasetTour>
+      <ng-template #datasetsTour *ngIf="project['input_model']['framework']['name'] !== 'PyTorch'">
         Add new datasets to experiment with the model.
       </ng-template>
-      <app-datasets *ngIf="project['input_model']" [framework]="project['input_model']['framework']['name']"
+      <app-datasets *ngIf="project['input_model']['framework']['name'] !== 'PyTorch'" [framework]="project['input_model']['framework']['name']"
         [domain]="project['input_model']['domain']['name']"
         [domainFlavour]="project['input_model']['domain_flavour']['name']">
       </app-datasets>
+      <p *ngIf="project['input_model']['framework']['name'] === 'PyTorch'">Datasets is not available for PyTorch Script-based Model.</p>
     </mat-tab>
 
     <ng-container *ngIf="project['input_model']">
@@ -84,19 +89,20 @@
             src="./../../assets/307-org-chart-disabled.svg">
           <div joyrideStep="graphTour" [stepContent]="graphTour"
             [matTooltip]="!project['input_model']['supports_graph'] ? 'Graph is not available for this model.' : null">
-            Graph
+            Diagnosis
           </div>
         </ng-template>
         <ng-template #graphTour>
           Here you can see the graphic visualization of the model.
         </ng-template>
         <ng-template matTabContent>
-          <app-graph *ngIf="project['input_model']['supports_graph']" [modelPath]="project['input_model']['path']">
-          </app-graph>
+          <app-diagnosis *ngIf="project['input_model']['supports_graph']" [modelPath]="project['input_model']['path']"
+            [inputModelId]="project['input_model']['id']">
+          </app-diagnosis>
           <p *ngIf="!project['input_model']['supports_graph']">Graph is not available for this model.</p>
         </ng-template>
       </mat-tab>
-    </ng-container>
+    </ng-container> -->
 
     <mat-tab>
       <ng-template mat-tab-label>

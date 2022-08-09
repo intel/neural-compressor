@@ -30,7 +30,7 @@ class GroupLassoPruner(BasicMagnitudePruner):
         self.is_masks_set = False
         self.alpha = local_config.parameters['alpha']
 
-    def on_post_grad(self):
+    def on_before_optimizer_step(self):
         if self.cur_weights:
             for weight_name in self.weights:
                 weight_grad = self.model.get_gradient(weight_name)

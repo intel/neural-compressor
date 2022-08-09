@@ -14,7 +14,7 @@
 # limitations under the License.
 """Configuration quantization module."""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.workload.dataloader import Dataloader
@@ -37,25 +37,31 @@ class Calibration(JsonSerializer):
 class WiseConfigDetails(JsonSerializer):
     """Configuration WiseConfigDetails class."""
 
-    def __init__(self, data: Dict[str, Any] = {}) -> None:
+    def __init__(self, data: Dict[str, Any] = None) -> None:
         """Initialize Configuration WiseConfigDetails class."""
         super().__init__()
+        if data is None:
+            data = {}
+
         # [Optional] One of "per_channel", "per_tensor"
-        self.granularity = data.get("granularity", None)
+        self.granularity: Optional[List[str]] = data.get("granularity", None)
         # [Optional] One of "asym", "sym"
-        self.scheme = data.get("scheme", None)
+        self.scheme: Optional[List[str]] = data.get("scheme", None)
         # [Optional] One of "int8", "uint8", "fp32", "bf16"
-        self.dtype = data.get("dtype", None)
+        self.dtype: Optional[List[str]] = data.get("dtype", None)
         # [Optional] One of "minmax", "kl"
-        self.algorithm = data.get("algorithm", None)
+        self.algorithm: Optional[List[str]] = data.get("algorithm", None)
 
 
 class WiseConfig(JsonSerializer):
     """Configuration WiseConfig class."""
 
-    def __init__(self, data: Dict[str, Any] = {}) -> None:
+    def __init__(self, data: Dict[str, Any] = None) -> None:
         """Initialize Configuration WiseConfig class."""
         super().__init__()
+        if data is None:
+            data = {}
+
         self.weight = None
         if isinstance(data.get("weight"), dict):
             self.weight = WiseConfigDetails(data.get("weight", {}))  # [Optional]

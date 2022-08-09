@@ -70,6 +70,19 @@ class Precision(Base):
     )
 
     @staticmethod
+    def add(db_session: SessionType, name: str) -> int:
+        """
+        Add precision to DB.
+
+        returns id of added precision
+        """
+        new_precision = Precision(name=name)
+        db_session.add(new_precision)
+        db_session.flush()
+
+        return int(new_precision.id)
+
+    @staticmethod
     def list(db_session: SessionType) -> dict:
         """List available types of optimization."""
         precisions = []

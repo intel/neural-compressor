@@ -20,7 +20,7 @@ import onnx
 import numpy
 from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
-from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, QuantType
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, QuantType
 from onnx import onnx_pb as onnx_proto
 '''
     Quantize LSTM
@@ -118,7 +118,7 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
-        quant_lstm_name = "" if node.name == "" else node.name + "_quant"
+        quant_lstm_name = node.name + "_quant"
         quant_lstm_node = onnx.helper.make_node("DynamicQuantizeLSTM", 
                                                 inputs, node.output, quant_lstm_name, **kwargs)
         self.quantizer.remove_nodes.append(node)

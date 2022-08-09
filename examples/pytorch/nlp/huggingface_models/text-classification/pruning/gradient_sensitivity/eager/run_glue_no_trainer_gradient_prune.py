@@ -219,7 +219,7 @@ def take_train_steps(args, model, eval_dataloader, metric, prune):
 
         tmp_eval_loss.backward()
 
-        prune.on_batch_end()
+        prune.on_step_end()
         nb_eval_steps += 1
         predictions = logits.argmax(dim=-1)
         # if preds is None:

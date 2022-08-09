@@ -70,7 +70,7 @@ class Scheduler(object):
        customized dataloaders/datasets/metrics are needed, the code usage is like below:
 
        prune = Pruning('/path/to/pruning.yaml')
-       prune.pruning_func = ...                   # optional if it is configured in user yaml.
+       prune.train_func = ...                   # optional if it is configured in user yaml.
        prune.eval_dataloader = ...                # optional if it is configured in user yaml.
        prune.eval_func = ...                      # optional if it is configured in user yaml.
 
@@ -90,6 +90,8 @@ class Scheduler(object):
 
     def __init__(self):
         self._model = None
+        self._train_func = None
+        self._eval_func = None
         self.components = []
 
     def append(self, *args):
@@ -146,6 +148,10 @@ class Scheduler(object):
                         ))
 
             component.model = model
+            if self._train_func is not None:
+                component.train_func = self._train_func
+            if self._eval_func is not None:
+                component.eval_func = self._eval_func
             model = component()
 
         return model
@@ -260,9 +266,9 @@ class Scheduler(object):
                     component_train_cfg.criterion = combine_component.train_cfg.criterion
                     component_train_cfg.optimizer = combine_component.train_cfg.optimizer
                     dist_component.criterion = combine_component.train_cfg.criterion
-                    dist_component.on_post_forward = combine_component.on_post_forward
+                    dist_component.on_after_compute_loss = combine_component.on_after_compute_loss
                     dist_component.teacher_model = combine_component.teacher_model
-                    self._sync_config(train_cfg, component_train_cfg) 
+                    self._sync_config(train_cfg, component_train_cfg)
                 # Only sync train_cfg of distillation because criterion should include only one element
                 else:
                     component_train_cfg = DotDict()
@@ -347,3 +353,42 @@ class Scheduler(object):
         else:
             self._model = user_model
 
+    @property
+    def train_func(self):
+        """ not support get train_func """
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+        return None
+
+    @train_func.setter
+    def train_func(self, user_train_func):
+        """Training function.
+
+        Args:
+            user_training_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If training_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed. training_func will return
+                         a trained model.
+        """
+        self._train_func = user_train_func
+
+    @property
+    def eval_func(self):
+        """ not support get eval_func """
+        assert False, 'Should not try to get the value of `eval_func` attribute.'
+        return None
+
+    @eval_func.setter
+    def eval_func(self, user_eval_func):
+        """evaluation function.
+
+        Args:
+            user_eval_func: This function takes "model" as input parameter
+                         and executes entire evaluation process with self
+                         contained metrics. If eval_func set,
+                         an evaluation process must be triggered 
+                         to make evaluation of the model executed.
+        """
+        self._eval_func = user_eval_func

@@ -40,7 +40,6 @@ class NamesMapper:
             "domain_flavour": self.domain_flavour_mappings,
             "precision": self.precision_mappings,
         }
-
         mapping = mappings.get(parameter_type, None)
         if mapping is None:
             return value
@@ -60,10 +59,12 @@ class NamesMapper:
             MappingDirection.ToCore: {
                 Frameworks.TF.value: "tensorflow",
                 Frameworks.ONNX.value: "onnxrt_qlinearops",
+                Frameworks.PT.value: "pytorch",
             },
             MappingDirection.ToBench: {
                 "tensorflow": Frameworks.TF.value,
                 "onnxrt_qlinearops": Frameworks.ONNX.value,
+                "pytorch": Frameworks.PT.value,
             },
         }
 
@@ -72,12 +73,14 @@ class NamesMapper:
         """Get domain mappings."""
         return {
             MappingDirection.ToCore: {
+                Domains.NONE.value: "",
                 Domains.IMAGE_RECOGNITION.value: "image_recognition",
                 Domains.OBJECT_DETECTION.value: "object_detection",
                 Domains.RECOMMENDATION.value: "recommendation",
                 Domains.NLP.value: "nlp",
             },
             MappingDirection.ToBench: {
+                "": Domains.NONE.value,
                 "image_recognition": Domains.IMAGE_RECOGNITION.value,
                 "object_detection": Domains.OBJECT_DETECTION.value,
                 "recommendation": Domains.RECOMMENDATION.value,

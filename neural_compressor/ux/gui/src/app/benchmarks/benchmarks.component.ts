@@ -137,7 +137,9 @@ export class BenchmarksComponent implements OnInit {
       data:
       {
         projectId: this.activatedRoute.snapshot.params.id,
-        index: this.benchmarks.length
+        index: this.benchmarks.length,
+        framework: this.framework.toLowerCase()
+
       }
     });
 

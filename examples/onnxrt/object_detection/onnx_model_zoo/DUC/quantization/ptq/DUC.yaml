@@ -30,10 +30,10 @@ evaluation:
        dataset:
          dummy:
            shape: [1,3,800,800]
+     configs:                                         # optional. if not specified, use all cores in 1 socket.
+       cores_per_instance: 4
+       num_of_instance: 1
   accuracy:
-    configs:                                         # optional. if not specified, use all cores in 1 socket.
-      cores_per_instance: 4
-      num_of_instance: 1
 
 tuning:
   accuracy_criterion:

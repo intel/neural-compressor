@@ -1,10 +1,10 @@
-intel-tensorflow==2.5.0
-onnx>=1.11
+intel-tensorflow
+onnx
 onnxruntime
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==1.9.0+cpu
-torchvision==0.10.0+cpu
-mxnet-mkl==1.6.0
+torch
+torchvision
+mxnet-mkl
 numpy
 neural-compressor
 pandas
@@ -16,3 +16,7 @@ sigopt
 horovod
 tensorflow-addons
 onnxruntime-extensions
+autograd==1.4
+fvcore==0.1.5.post20220119
+ofa==0.1.0.post202203231606
+pymoo==0.5.0

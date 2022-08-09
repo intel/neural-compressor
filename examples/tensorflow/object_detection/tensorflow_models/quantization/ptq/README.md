@@ -8,6 +8,7 @@ Currently, we've enabled below models.
  * ssd_mobilenet_v1
  * fastrcnn_inception_resnet_v2
  * fastrcnn_resnet101
+ * fastrcnn_resnet50
  * maskrcnn_inception_v2
 ## Prerequisite
 
@@ -101,6 +102,13 @@ tar -xvzf faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
 ```shell
 wget http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz
 tar -xvzf faster_rcnn_resnet101_coco_2018_01_28.tar.gz
+```
+
+##### faster_rcnn_resnet50
+
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/faster_rcnn_resnet50_fp32_coco_pretrained_model.tar.gz
+tar -xvf faster_rcnn_resnet50_fp32_coco_pretrained_model.tar.gz
 ```
 
 ##### mask_rcnn_inception_v2

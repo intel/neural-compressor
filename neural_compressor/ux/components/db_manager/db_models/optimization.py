@@ -59,6 +59,7 @@ class Optimization(Base):
     created_at = Column(DateTime, nullable=False, default=func.now())
     last_run_at = Column(DateTime, nullable=True)
     duration = Column(Integer, nullable=True)
+    diagnosis_config = Column(String, nullable=True, default="null")
 
     project: Any = relationship("Project", back_populates="optimizations")
     precision = relationship("Precision", foreign_keys=[precision_id])
@@ -95,6 +96,7 @@ class Optimization(Base):
         batch_size: int,
         sampling_size: int,
         tuning_details_id: Optional[int] = None,
+        diagnosis_config: Optional[dict] = None,
     ) -> int:
         """
         Add optimization to database.
@@ -110,6 +112,7 @@ class Optimization(Base):
             tuning_details_id=tuning_details_id,
             batch_size=batch_size,
             sampling_size=sampling_size,
+            diagnosis_config=json.dumps(diagnosis_config),
         )
         db_session.add(new_optimization)
         db_session.flush()
@@ -338,6 +341,52 @@ class Optimization(Base):
         }
 
     @staticmethod
+    def get_optimization_by_project_and_model(
+        db_session: session.Session,
+        project_id: int,
+        model_id: int,
+    ) -> dict:
+        """Get optimization details for specific model."""
+        (
+            optimization,
+            precision,
+            optimization_type,
+            dataset,
+            tuning_details,
+            tuning_history,
+            optimized_model,
+        ) = (
+            db_session.query(
+                Optimization,
+                Precision,
+                OptimizationType,
+                Dataset,
+                TuningDetails,
+                TuningHistory,
+                Model,
+            )
+            .join(Optimization.precision)
+            .join(Optimization.optimization_type)
+            .join(Optimization.dataset)
+            .outerjoin(Optimization.tuning_details)
+            .outerjoin(Optimization.optimized_model)
+            .outerjoin(Optimization.tuning_history)
+            .filter(Optimization.project_id == project_id)
+            .filter(Optimization.optimized_model_id == model_id)
+            .one()
+        )
+        optimization_info = Optimization.build_info(
+            optimization=optimization,
+            precision=precision,
+            optimization_type=optimization_type,
+            dataset=dataset,
+            tuning_details=tuning_details,
+            tuning_history=tuning_history,
+            optimized_model=optimized_model,
+        )
+        return optimization_info
+
+    @staticmethod
     def details(db_session: session.Session, optimization_id: int) -> dict:
         """Get optimization details."""
         (
@@ -419,6 +468,10 @@ class Optimization(Base):
         optimized_model: Optional[Model] = None,
     ) -> dict:
         """Get optimization info."""
+        diagnosis_config = None
+        if optimization.diagnosis_config is not None:
+            diagnosis_config = json.loads(optimization.diagnosis_config)
+
         optimization_info: dict = {
             "project_id": optimization.project_id,
             "id": optimization.id,
@@ -448,6 +501,7 @@ class Optimization(Base):
             "accuracy_benchmark_id": optimization.accuracy_benchmark_id,
             "performance_benchmark_id": optimization.performance_benchmark_id,
             "tuning_details": None,
+            "diagnosis_config": diagnosis_config,
         }
         if optimized_model is not None:
             model_info = Model.build_info(optimized_model)

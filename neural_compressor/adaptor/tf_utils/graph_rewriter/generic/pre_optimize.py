@@ -17,7 +17,7 @@
 
 
 import logging
-from neural_compressor.adaptor.tf_utils.graph_rewriter.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from .remove_training_nodes import RemoveTrainingNodesOptimizer
@@ -67,7 +67,7 @@ class PreOptimization():
         return self._excluded_node_names
 
     @dump_elapsed_time("Pass Pre Optimization")
-    def get_optimized_model(self):
+    def get_optimized_model(self, itex_mode=False):
         """Executed the non-precision dependant graph optimization.
         The input graph will be optimized with following passes:
         1. Remove the training nodes like Identity Op.
@@ -108,7 +108,9 @@ class PreOptimization():
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
+        # disable fold constant for itex qdq mode
+        if not itex_mode:
+            self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = FuseColumnWiseMulOptimizer(self._tmp_graph_def).do_transformation()
 

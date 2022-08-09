@@ -19,8 +19,8 @@ import tensorflow as tf
 from tensorflow.python.framework import tensor_util
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 class FusePadWithConv2DOptimizer(GraphRewriterBase):
@@ -28,12 +28,13 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
     Pad + Conv2D --> Conv2D
     """
 
-    def __init__(self, model, excluded_op_names, inputs, cfg, new_api):
+    def __init__(self, model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False):
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs
         self.cfg = cfg
         self.new_api = new_api
+        self.itex_qdq_mode = itex_qdq_mode
 
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
@@ -72,15 +73,24 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
-            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or self.new_api)
+            if self.itex_qdq_mode:
+                enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
+                                          version1_gt_version2(tf.version.VERSION, '2.7'))
+            else:
+                enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or self.new_api)
 
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)
             cur_graph.remove_node(pad_node.input[1])
             conv_node = graph_info[node_combination[1]].node
-            Helper.set_attr_int_list(conv_node, "padding_list", padding_tensor)
-            if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
-                Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
+            if self.itex_qdq_mode:
+                if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
+                    Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
+                    Helper.set_attr_int_list(conv_node, "explicit_paddings", padding_tensor)
+            else:
+                Helper.set_attr_int_list(conv_node, "padding_list", padding_tensor)
+                if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
+                    Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
 
         return cur_graph.dump_graph()

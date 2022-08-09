@@ -23,6 +23,7 @@ quantization:                                        # optional. tuning constrai
   approach: post_training_static_quant
   calibration:
     sampling_size: 800
+
 tuning:
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.

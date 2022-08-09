@@ -18,9 +18,9 @@
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 from neural_compressor.utils.utility import dump_elapsed_time
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 
 from .quantize_graph_base import QuantizeGraphBase
-from .quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph_conv import FuseNodeStartWithConv2d
 from .quantize_graph_concatv2 import FuseNodeStartWithConcatV2
 from .quantize_graph_matmul import FuseNodeStartWithMatmul

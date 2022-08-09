@@ -21,8 +21,8 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
 from ..graph_base import GraphRewriterBase
-from ..graph_util import GraphAnalyzer
-from ..graph_util import GraphRewriterHelper as Helper
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseConvRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized Conv Op with the successor Requantize Op.
@@ -211,7 +211,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                     new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
                 elif quantized_node.attr["padding"].s == b"EXPLICIT":
                     new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
-            
+            elif "explicit_paddings" in quantized_node.attr:
+                new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['explicit_paddings'])           
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])
             
@@ -471,6 +472,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                     new_node.attr["padding_list"].CopyFrom(quantized_node.attr['padding_list'])
                 elif quantized_node.attr["padding"].s == b"EXPLICIT":
                     new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['padding_list'])
+            elif "explicit_paddings" in quantized_node.attr:
+                new_node.attr["explicit_paddings"].CopyFrom(quantized_node.attr['explicit_paddings'])
 
             if "dilations" in quantized_node.attr:
                 new_node.attr["dilations"].CopyFrom(quantized_node.attr['dilations'])

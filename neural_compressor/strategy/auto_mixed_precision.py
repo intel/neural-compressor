@@ -23,7 +23,7 @@ from ..utils import logger
 
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
-    """The graph optimization strategy which tunes the mixed precision model with below order.
+    """The auto-mixed precision strategy which tunes the mixed precision model with below order.
 
     1. modelwise tuning for all tunable ops.
     2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
@@ -90,45 +90,53 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 higher_is_better in self.metric_criterion]
 
         logger.debug("Start AutoMixedPrecision strategy by model-wise tuning")
-        for i, iterations in enumerate(self.calib_iter):
-            op_cfgs['calib_iteration'] = int(iterations)
-            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[i])
+        op_cfgs['calib_iteration'] = 1
+        op_cfgs['calib_sampling_size'] = 100
 
-            for combined_cfg in self.combined_model_wise_quant_cfgs:
-                op_cfgs['op'] = OrderedDict()
-                for op, op_cfg in self.opwise_quant_cfgs.items():
-                    if op[1] in combined_cfg.keys() and len(op_cfg) > 0:
-                        op_cfgs['op'][op] = copy.deepcopy(
-                            self._get_common_cfg(combined_cfg[op[1]], op_cfg))
-                    elif op[1] not in combined_cfg.keys() or not op_cfg:
-                        pass
-                    else:
-                        op_cfgs['op'][op] = copy.deepcopy(
-                            self.opwise_tune_cfgs[op][0])
+        # filter quantization dtype
+        target_dtype = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
+            else self.cfg.mixed_precision.precisions
+        filtered_quant_cfgs = filter(lambda x: all([v['activation']['dtype'] in target_dtype \
+            for k, v in x.items()]), self.combined_model_wise_quant_cfgs)
+        filtered_opwise_tune_cfgs = OrderedDict()
+        for k, v in self.opwise_tune_cfgs.items():
+            filtered_opwise_tune_cfgs[k] = list(filter(lambda x: x['activation']['dtype'] \
+                in target_dtype or x['activation']['dtype'] == 'fp32', v))
+        for combined_cfg in filtered_quant_cfgs:
+            op_cfgs['op'] = OrderedDict()
+            for op, op_cfg in self.opwise_quant_cfgs.items():
+                if op[1] in combined_cfg.keys() and len(op_cfg) > 0:
+                    op_cfgs['op'][op] = copy.deepcopy(
+                        self._get_common_cfg(combined_cfg[op[1]], op_cfg))
+                elif op[1] not in combined_cfg.keys() or not op_cfg:
+                    pass
+                else:
+                    op_cfgs['op'][op] = copy.deepcopy(
+                        filtered_opwise_tune_cfgs[op][0])
 
-                yield op_cfgs
-                acc, _ = self.last_tune_result
-                # if acc >= best_acc or self.eval_dataloader is None:
-                if not isinstance(acc, list) and ((self.higher_is_better and acc >= best_acc) \
-                    or (not self.higher_is_better and acc <= best_acc)):
+            yield op_cfgs
+            acc, _ = self.last_tune_result
+            # if acc >= best_acc or self.eval_dataloader is None:
+            if not isinstance(acc, list) and ((self.higher_is_better and acc >= best_acc) \
+                or (not self.higher_is_better and acc <= best_acc)):
+                best_acc = acc
+                best_cfg = copy.deepcopy(op_cfgs)
+            elif len(self.metric_name) > 1 and self.metric_weight is not None:
+                acc = np.mean(np.array(acc) * self.metric_weight)
+                if (self.higher_is_better and acc >= best_acc) or \
+                    (not self.higher_is_better and acc <= best_acc):
                     best_acc = acc
                     best_cfg = copy.deepcopy(op_cfgs)
-                elif len(self.metric_name) > 1 and self.metric_weight is not None:
-                    acc = np.mean(np.array(acc) * self.metric_weight)
-                    if (self.higher_is_better and acc >= best_acc) or \
-                        (not self.higher_is_better and acc <= best_acc):
-                        best_acc = acc
-                        best_cfg = copy.deepcopy(op_cfgs)
-                elif len(self.metric_name) > 1 and self.metric_weight is None:
-                    if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
-                        acc_i, best_i, higher_is_better in \
-                        zip(acc, best_acc, self.metric_criterion)]):
-                        best_acc = acc
-                        best_cfg = copy.deepcopy(op_cfgs)
+            elif len(self.metric_name) > 1 and self.metric_weight is None:
+                if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
+                    acc_i, best_i, higher_is_better in \
+                    zip(acc, best_acc, self.metric_criterion)]):
+                    best_acc = acc
+                    best_cfg = copy.deepcopy(op_cfgs)
 
         if best_cfg is not None:
             fallback_dtypes = []
-            for data_type in ["bf16", "fp16", "fp32"]:
+            for data_type in ["fp32"]:
                 for _, tune_space in self.modelwise_tune_space.items():
                     if (data_type in tune_space["activation"]["dtype"] and
                         data_type not in fallback_dtypes):
@@ -139,7 +147,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                     "Continue basic strategy by sorting opwise {} fallback priority".format
                     (fallback_dtype))
                 ops_acc = OrderedDict()
-                for op, configs in reversed(self.opwise_tune_cfgs.items()):
+                for op, configs in reversed(filtered_opwise_tune_cfgs.items()):
                     op_cfgs = copy.deepcopy(best_cfg)
                     for cfg in configs:
                         if fallback_dtype == cfg['activation']['dtype']:
@@ -159,7 +167,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                          reverse=self.higher_is_better)
                     for op in ordered_ops:
                         old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                        for cfg in self.opwise_tune_cfgs[op]:
+                        for cfg in filtered_opwise_tune_cfgs[op]:
                             if fallback_dtype == cfg['activation']['dtype']:
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
@@ -186,7 +194,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
                     op_cfgs = copy.deepcopy(best_cfg)
                     for op in ordered_ops:
-                        for cfg in self.opwise_tune_cfgs[op]:
+                        for cfg in filtered_opwise_tune_cfgs[op]:
                             if fallback_dtype == cfg['activation']['dtype']:
                                 op_cfgs['op'][op]['activation'].clear()
                                 op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
@@ -196,17 +204,17 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                     op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
                         yield op_cfgs
         else:
-            logger.debug(self.opwise_tune_cfgs)
+            logger.debug(filtered_opwise_tune_cfgs)
             op_cfgs['op'] = OrderedDict()
-            for op in self.opwise_tune_cfgs.keys():
-                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
+            for op in filtered_opwise_tune_cfgs.keys():
+                op_cfgs['op'][op] = copy.deepcopy(filtered_opwise_tune_cfgs[op][0])
             yield op_cfgs
 
         return
 
     def traverse(self):
         # get fp32 model baseline
-        if self.baseline is None and self.eval_dataloader:
+        if self.baseline is None and (self.eval_dataloader or self.eval_func):
             logger.info("Get FP32 model baseline.")
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
@@ -251,12 +259,12 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 logger.warn("Find evaluated tuning config, skip.")
                 continue
 
-            logger.debug("Dump current graph optimization configuration:")
+            logger.debug("Dump current mixed precision configuration:")
             logger.debug(tune_cfg)
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
-            if self.eval_dataloader:
+            if self.eval_dataloader or self.eval_func:
                 self.last_tune_result = self._evaluate(self.last_qmodel)
 
                 need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)

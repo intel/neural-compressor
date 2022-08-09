@@ -69,7 +69,7 @@ class Distillation():
         # The criterion used in training phase. It is optional if criterion is configured in user-define yaml.
         ...
 
-    def pre_epoch_begin(self):
+    def on_train_begin(self):
         # The hook point used by distillation algorithm
         ...
 
@@ -77,7 +77,7 @@ class Distillation():
         # The hook point used by distillation algorithm
         ...
 
-    def on_post_forward(self, batch, teacher_output=None):
+    def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         # The hook point used by distillation algorithm
         ...
 
@@ -194,8 +194,8 @@ User can pass the customized training/evaluation functions to `Distillation` for
 Neural Compressor defines several hooks for user pass
 
 ```
-pre_epoch_begin() : Hook executed before training begins
-on_post_forward(batch) : Hook executed after each batch inference of student model
+on_train_begin() : Hook executed before training begins
+on_after_compute_loss(input, student_output, student_loss) : Hook executed after each batch inference of student model
 on_epoch_end() : Hook executed at each epoch end
 ```
 
@@ -203,7 +203,7 @@ Following section shows how to use hooks in user pass-in training function which
 
 ```python
 def train_func(model):
-    distiller.pre_epoch_begin()
+    distiller.on_train_begin()
     for nepoch in range(epochs):
         model.train()
         cnt = 0
@@ -213,11 +213,12 @@ def train_func(model):
             teacher_logits, input_ids, segment_ids, input_mask, target = batch
             cnt += 1
             output = model(input_ids, segment_ids, input_mask)
-            distiller.on_post_forward({'input_ids':input_ids, 
-                                       'segment_ids':segment_ids, 
-                                       'input_mask':input_mask}, \
-                                      teacher_logits)
-            loss = distiller.criterion(output, target)
+            loss = criterion(output, target)
+            loss = distiller.on_after_compute_loss(
+                {'input_ids':input_ids, 'segment_ids':segment_ids, 'input_mask':input_mask},
+                output,
+                loss,
+                teacher_logits)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

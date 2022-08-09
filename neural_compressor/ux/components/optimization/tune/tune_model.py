@@ -91,10 +91,11 @@ def set_eager_execution(input_graph: str) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    set_eager_execution(args.input_graph)
-    tune_model(
-        input_graph=args.input_graph,
-        output_graph=args.output_graph,
-        config=args.config,
-        framework=args.framework,
-    )
+    if args.framework != "pytorch":
+        set_eager_execution(args.input_graph)
+        tune_model(
+            input_graph=args.input_graph,
+            output_graph=args.output_graph,
+            config=args.config,
+            framework=args.framework,
+        )

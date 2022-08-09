@@ -20,7 +20,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
 
-from .quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 from .quantize_graph_base import QuantizeNodeBase
 from tensorflow.python.framework import tensor_util
 
@@ -264,7 +264,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             fusion_name = ''.join(matched_rule)
             if fusion_name in self.fusion_mapping:
                 matched_nodes = self.fusion_mapping[fusion_name](matched_node_name)
-            else:
+            else: # pragma: no cover
                 self.logger.debug("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)

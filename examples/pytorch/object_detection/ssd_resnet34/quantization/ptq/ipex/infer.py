@@ -32,6 +32,12 @@ import time
 import numpy as np
 import torch.fx.experimental.optimization as optimization
 
+try:
+    from intel_extension_for_pytorch.quantization import prepare, convert
+    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+    IPEX_112 = True
+except:
+    IPEX_112 = False
 
 import intel_extension_for_pytorch as ipex
 use_ipex = False
@@ -245,29 +251,8 @@ def eval_ssd_r34_mlperf_coco(args):
 
         if args.tune:
             args.int8 = False if model.ipex_config_path is None else True
-            args.int8_configure = "" \
-                if model.ipex_config_path is None else model.ipex_config_path
-            model = model.model
-        
+
         if args.int8:
-            model = model.eval()
-            print('int8 conv_bn_fusion enabled')
-            model.model = optimization.fuse(model.model)
-            print("INT8 LLGA start trace")
-            # insert quant/dequant based on configure.json
-            conf = ipex.quantization.QuantConf(configure_file = args.int8_configure)
-            model = ipex.quantization.convert(model, conf, torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last))
-            print("done ipex default recipe.......................")
-            # freeze the module
-            # model = torch.jit._recursive.wrap_cpp_module(torch._C._freeze_module(model._c, preserveParameters=True))
-
-            # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-            # At the 2nd run, the llga pass will be triggered and the model is turned into an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-            with torch.no_grad():
-                for i in range(2):
-                    #_, _ = model(torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last))
-                    _, _ = model(torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last))
-
             print('runing int8 real inputs inference path')
             with torch.no_grad():
                 total_iteration = 0
@@ -649,6 +634,41 @@ def eval_ssd_r34_mlperf_coco(args):
          return
 
     if args.benchmark or args.accuracy_mode:
+        if args.int8:
+            config_file = os.path.join(args.tuned_checkpoint, "best_configure.json")
+            assert os.path.exists(config_file), "there is no ipex config file, Please tune with Neural Compressor first!"
+            if IPEX_112:
+                ssd_r34 = ssd_r34.eval()
+                print('int8 conv_bn_fusion enabled')
+                with torch.no_grad():
+                    ssd_r34.model = optimization.fuse(ssd_r34.model, inplace=False)
+                    qconfig = QConfig(activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric))
+                    example_inputs = torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last)
+                    prepared_model = prepare(ssd_r34, qconfig, example_inputs=example_inputs, inplace=False)
+                    print("INT8 LLGA start trace")
+                    # insert quant/dequant based on configure.json
+                    prepared_model.load_qconf_summary(qconf_summary = config_file)
+                    convert_model = convert(prepared_model)
+                    with torch.no_grad():
+                       model = torch.jit.trace(convert_model, example_inputs, check_trace=False).eval()
+                    model = torch.jit.freeze(model)
+                    print("done ipex default recipe.......................")
+                    # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
+                    # At the 2nd run, the llga pass will be triggered and the model is turned into an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
+                    with torch.no_grad():
+                        for i in range(2):
+                            _, _ = model(example_inputs)
+                    ssd_r34 = model
+            else:
+                ssd_r34 = ssd_r34.eval()
+                print('int8 conv_bn_fusion enabled')
+                ssd_r34.model = optimization.fuse(ssd_r34.model)
+                print("INT8 LLGA start trace")
+                # insert quant/dequant based on configure.json
+                conf = ipex.quantization.QuantConf(configure_file = config_file)
+                ssd_r34 = ipex.quantization.convert(ssd_r34, conf, torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last))
+                print("done ipex default recipe.......................")
         coco_eval(ssd_r34)
         return
 

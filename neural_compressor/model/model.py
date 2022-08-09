@@ -20,7 +20,7 @@ import os
 import importlib
 from collections import OrderedDict
 from abc import abstractmethod
-from neural_compressor.utils.utility import LazyImport, compute_sparsity
+from neural_compressor.utils.utility import LazyImport, compute_sparsity, get_backend
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
 from neural_compressor.conf.dotdict import deep_get, deep_set
@@ -248,6 +248,10 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
+    if get_backend() == 'tensorflow_itex':
+        from tensorflow.core.protobuf import rewriter_config_pb2
+        config.graph_options.rewrite_options.constant_folding = \
+                  rewriter_config_pb2.RewriterConfig.OFF
     sess = tf.compat.v1.Session(graph=model, config=config)
 
     input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
@@ -444,6 +448,10 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
+    if get_backend() == 'tensorflow_itex':
+        from tensorflow.core.protobuf import rewriter_config_pb2
+        config.graph_options.rewrite_options.constant_folding = \
+                 rewriter_config_pb2.RewriterConfig.OFF
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
     with graph.as_default():
@@ -522,6 +530,10 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
+    if get_backend() == 'tensorflow_itex':
+        from tensorflow.core.protobuf import rewriter_config_pb2
+        config.graph_options.rewrite_options.constant_folding = \
+                    rewriter_config_pb2.RewriterConfig.OFF
     if not os.listdir(os.path.join(model,'variables')):
         sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
         loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
@@ -971,14 +983,14 @@ class MXNetModel(BaseModel):
         os.makedirs(os.path.dirname(root), exist_ok=True)
 
         if isinstance(self._model, mx.gluon.HybridBlock):
-            self._model.export(root)
+            self._model.export(root, remove_amp_cast=False)
             logger.info("Save quantized hybrid block model to {}.".format(root))
         else:
             symnet, args, auxs = self._model
             symnet = symnet.as_nd_ndarray()
             args = {k:v.as_nd_ndarray() for k, v in args.items()}
             auxs = {k:v.as_nd_ndarray() for k, v in auxs.items()}
-            mx.model.save_checkpoint(root, 0, symnet, args, auxs)
+            mx.model.save_checkpoint(root, 0, symnet, args, auxs, remove_amp_cast=False)
             logger.info("Save quantized symbol model to {}.".format(root))
 
 
@@ -991,3 +1003,17 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
           }
+
+
+def export(model: BaseModel, path: str, to_onnx: bool = False):
+    """_summary_
+
+    Args:
+        model (BaseModel): optimized model
+        path (str): path to save model
+        to_onnx (bool, optional): whether to convert to onnx model. Defaults to False.
+    """
+    if to_onnx:
+        assert False, "Not support yet!"
+    else:
+        model.save(path)

@@ -25,11 +25,9 @@ from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
-from ..adaptor import FRAMEWORKS
-from .common import Model as NCModel
 from ..model import BaseModel
 from ..conf.config import QuantConf
-from ..utils.utility import set_backend
+from warnings import warn
 
 class Quantization(Component):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -64,7 +62,6 @@ class Quantization(Component):
         random.seed(seed)
         np.random.seed(seed)
         self._calib_dataloader = None
-        self._calib_func = None
 
     def _create_eval_dataloader(self, cfg):
         # when eval_func is set, will be directly used and eval_dataloader can be None
@@ -84,13 +81,13 @@ class Quantization(Component):
 
     def _create_calib_dataloader(self, cfg):
         approach_cfg = deep_get(cfg, 'quantization.approach')
-        if self._calib_func:
+        if self._train_func:
             assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
                    'set for {}'.format(approach_cfg)
             assert self._calib_dataloader is None, 'q_func has provided by user, ' \
                    'calib_dataloader property should not be set.'
 
-        if self._calib_dataloader is None and self._calib_func is None:
+        if self._calib_dataloader is None and self._train_func is None:
             if approach_cfg == 'post_training_static_quant':
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
                 assert calib_dataloader_cfg is not None, \
@@ -137,13 +134,13 @@ class Quantization(Component):
             self._model,
             self.conf,
             self._calib_dataloader,
-            self._calib_func,
+            self._train_func,
             self._eval_dataloader,
             self._eval_func,
             _resume,
             self.hooks)
         if getattr(self._calib_dataloader, 'distributed', False):
-            self.register_hook('pre_epoch_begin', self.strategy.adaptor._pre_hook_for_hvd)
+            self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         try:
@@ -297,7 +294,7 @@ class Quantization(Component):
         metrics = METRICS(self.framework)
         metrics.register(name, metric_cls)
         self._metric = user_metric
- 
+
     @property
     def objective(self):
         assert False, 'Should not try to get the value of `objective` attribute.'
@@ -309,7 +306,7 @@ class Quantization(Component):
             deep_get(self.conf.usr_cfg, "tuning.objective"):
             logger.warning("Override the value of `objective` field defined in yaml file" \
                            " as user defines the value of `objective` attribute by code.")
-        
+
         user_obj_cfg = "tuning.objective" if deep_get(self.conf.usr_cfg, "tuning.objective") \
             else "tuning.multi_objectives.objective"
         from ..objective import objective_custom_registry
@@ -319,7 +316,7 @@ class Quantization(Component):
         deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
         objective_custom_registry(name, objective_cls)
-    
+
     @property
     def postprocess(self, user_postprocess):
         assert False, 'Should not try to get the value of `postprocess` attribute.'
@@ -378,7 +375,9 @@ class Quantization(Component):
                          set eval_dataloader with metric configured or directly eval_func
                          to make evaluation of the model executed.
         """
-        self._calib_func = user_q_func
+        warn('This method is deprecated. please use `train_func` instead.',
+             DeprecationWarning, stacklevel=2)
+        self._train_func = user_q_func
 
     def __repr__(self):
         return 'Quantization'

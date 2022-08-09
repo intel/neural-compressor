@@ -184,7 +184,10 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
 
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+TENSORFLOW_ITEX_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 INTELTENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+TENSORFLOW_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
+TENSORFLOW_ITEX_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
@@ -192,7 +195,7 @@ ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "inteltensorflow": INTELTENSORFLOW_TRANSFORMS,
-                       "tensorflow_itex": TENSORFLOW_TRANSFORMS,
+                       "tensorflow_itex": TENSORFLOW_ITEX_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
                        "pytorch": PYTORCH_TRANSFORMS,
                        "pytorch_ipex": PYTORCH_TRANSFORMS,
@@ -205,7 +208,8 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
 
 class TRANSFORMS(object):
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", "onnxrt_qoperator",
+        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", \
+                             "onnxrt_qoperator", \
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt"
@@ -334,8 +338,8 @@ def get_torchvision_map(interpolation):
         return interpolation
 
 @transform_registry(transform_type="Compose", process="general", \
-                 framework="onnxrt_qlinearops, onnxrt_integerops, \
-                            tensorflow, inteltensorflow")
+                    framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
+                    inteltensorflow, tensorflow_itex")
 class ComposeTransform(BaseTransform):
     """Composes several transforms together.
 
@@ -432,7 +436,7 @@ class ONNXRTCropToBoundingBox(CropToBoundingBox):
         return (image, label)
 
 @transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
-                framework="tensorflow, inteltensorflow")
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class TensorflowCropToBoundingBox(CropToBoundingBox):
     """Crops an image to a specified bounding box.
 
@@ -511,7 +515,7 @@ class ResizeWithRatio(BaseTransform):
         return image, (bbox, str_label, int_label, image_id)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
-                framework="tensorflow")
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class TensorflowResizeWithRatio(BaseTransform):
     """Resize image with aspect ratio and pad it to max shape(optional).
        If the image is padded, the label will be processed at the same time.
@@ -593,7 +597,7 @@ class Transpose(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="Transpose", process="preprocess", \
-                    framework="tensorflow, inteltensorflow")
+                    framework="tensorflow, tensorflow_itex, inteltensorflow")
 class TensorflowTranspose(Transpose):
     """Transpose image according to perm.
 
@@ -663,7 +667,7 @@ class RandomVerticalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
-        framework="tensorflow, inteltensorflow")
+                    framework="tensorflow, tensorflow_itex, inteltensorflow")
 class TensorflowRandomVerticalFlip(BaseTransform):
     """Vertically flip the given image randomly.
 
@@ -696,7 +700,7 @@ class RandomHorizontalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
-        framework="tensorflow, inteltensorflow")
+                    framework="tensorflow, tensorflow_itex, inteltensorflow")
 class TensorflowRandomHorizontalFlip(BaseTransform):
     """Horizontally flip the given image randomly.
 
@@ -714,8 +718,8 @@ class TensorflowRandomHorizontalFlip(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="ToArray", process="preprocess", \
-        framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
-                   inteltensorflow, pytorch, mxnet")
+                    framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
+                    tensorflow_itex, inteltensorflow, pytorch, mxnet")
 class ToArray(BaseTransform):
     """Convert PIL Image or NDArray to numpy array.
 
@@ -740,8 +744,8 @@ np_dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64,
            'float16': np.float16, 'float64': np.float64, 'bool': np.bool,
            'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
 
-@transform_registry(transform_type="Cast",
-                    process="general", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="Cast", process="general", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class CastTFTransform(BaseTransform):
     """Convert image to given dtype.
 
@@ -815,8 +819,8 @@ class CastPyTorchTransform(BaseTransform):
         image = image.type(self.dtype)
         return (image, label)
 
-@transform_registry(transform_type="CenterCrop",
-                    process="preprocess", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="CenterCrop", process="preprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class CenterCropTFTransform(BaseTransform):
     """Crops the given image at the center to the given size.
 
@@ -856,7 +860,7 @@ class CenterCropTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="PaddedCenterCrop", process="preprocess", \
-                framework="tensorflow, inteltensorflow")
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class PaddedCenterCropTransform(BaseTransform):
     def __init__(self, size, crop_padding=0):
         if isinstance(size, int):
@@ -882,8 +886,8 @@ class PaddedCenterCropTransform(BaseTransform):
         image = image[y0:y0 + padded_center_crop_size, x0:x0 + padded_center_crop_size, :]
         return (image, label)
 
-@transform_registry(transform_type="Resize",
-                    process="preprocess", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="Resize", process="preprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class ResizeTFTransform(BaseTransform):
     """Resize the input image to the given size.
 
@@ -944,8 +948,8 @@ class ResizePytorchTransform(BaseTransform):
                                         interpolation=self.interpolation)
         return (transformer(image), label)
 
-@transform_registry(transform_type="RandomCrop",
-                    process="preprocess", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="RandomCrop", process="preprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class RandomCropTFTransform(BaseTransform):
     """Crop the image at a random location to the given size.
 
@@ -1078,8 +1082,8 @@ class RandomResizedCropMXNetTransform(BaseTransform):
         return (transformer(image), label)
 
 
-@transform_registry(transform_type="RandomResizedCrop",
-                    process="preprocess", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class RandomResizedCropTFTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
@@ -1178,8 +1182,8 @@ class RandomResizedCropTFTransform(BaseTransform):
             image, label = transform(sample)
         return (image, label)
 
-@transform_registry(transform_type="Normalize", process="preprocess",
-                        framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="Normalize", process="preprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class NormalizeTFTransform(BaseTransform):
     """Normalize a image with mean and standard deviation.
 
@@ -1222,7 +1226,7 @@ class NormalizeTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='KerasRescale', process="preprocess", \
-                framework='tensorflow, inteltensorflow')
+                    framework='tensorflow, inteltensorflow, tensorflow_itex')
 class RescaleKerasPretrainTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
@@ -1240,7 +1244,7 @@ class RescaleKerasPretrainTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
-                framework='tensorflow, inteltensorflow')
+                    framework='tensorflow, inteltensorflow, tensorflow_itex')
 class RescaleTFTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
@@ -1272,7 +1276,8 @@ class RescaleTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
-    framework='tensorflow, inteltensorflow, onnxrt_qlinearops, onnxrt_integerops, mxnet')
+                    framework='tensorflow, inteltensorflow, tensorflow_itex, \
+                               onnxrt_qlinearops, onnxrt_integerops, mxnet')
 class AlignImageChannelTransform(BaseTransform):
     """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
         [H,W,3]->[H,W].
@@ -1415,7 +1420,7 @@ class ResizeTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", \
-                framework="tensorflow, inteltensorflow")
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class CropResizeTFTransform(BaseTransform):
     """Crop the input image with given location and resize it.
 
@@ -2142,8 +2147,8 @@ class CollectTransform(BaseTransform):
             self.all_sample = ([self.unique_id, self.start_logits, self.end_logits], label)
         return self.all_sample
 
-@transform_registry(transform_type="SquadV1", \
-                process="postprocess", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="SquadV1", process="postprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class TFSquadV1PostTransform(BaseTransform):
     """Postprocess the predictions of bert on SQuAD.
 
@@ -2369,7 +2374,8 @@ class TFModelZooCollectTransform(CollectTransform):
         return self.all_sample
 
 @transform_registry(transform_type="SquadV1ModelZoo", \
-                process="postprocess", framework="tensorflow")
+                    process="postprocess", framework="tensorflow, inteltensorflow, \
+                              tensorflow_itex")
 class TFSquadV1ModelZooPostTransform(TFSquadV1PostTransform):
     """ Postprocess the predictions of bert on SQuADV1.1
         See class TFSquadV1PostTransform for more details """
@@ -2384,8 +2390,8 @@ class TFSquadV1ModelZooPostTransform(TFSquadV1PostTransform):
         sample = self.collect_data(sample)
         return self.get_postprocess_result(sample)
 
-@transform_registry(transform_type="ParseDecodeVoc", \
-                    process="preprocess", framework="tensorflow, inteltensorflow")
+@transform_registry(transform_type="ParseDecodeVoc", process="preprocess", \
+                    framework="tensorflow, inteltensorflow, tensorflow_itex")
 class ParseDecodeVocTransform(BaseTransform):
     """Parse features in Example proto.
 

@@ -39,8 +39,7 @@
       "Transpose"
     ],
     "nlp": [
-      "SquadV1",
-      "SquadV1ModelZoo"
+      "SquadV1"
     ]
   },
   "onnxrt": {

@@ -217,21 +217,19 @@ class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
                                   'should be framework related.')
 
     def loss_cal(self, student_outputs, targets):
+        return self.student_targets_loss_cal(student_outputs, targets)
+
+    def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
         if self.loss_weights[0] > 0:
-            origin_loss = self.student_targets_loss_cal(student_outputs, targets)
+            origin_loss = student_loss
         else:
             origin_loss = 0
 
         if self.loss_weights[1] > 0:
-            assert self.teacher_outputs is not None, 'Output of teacher model is required, ' \
-                'please run teacher_model_forward to get output of teacher model first.'
-
             student_out_ = student_outputs / self.temperature
-            teacher_out_ = self.teacher_outputs / self.temperature
+            teacher_out_ = teacher_outputs / self.temperature
             distillation_loss = self.teacher_student_loss_cal(student_out_, teacher_out_)
-            distillation_loss *=  self.temperature ** 2
-            # reset teacher_outputs to None to force updating it every loss call 
-            self.teacher_outputs = None 
+            distillation_loss *= self.temperature ** 2
         else:
             distillation_loss = 0
 
@@ -280,6 +278,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         return torch.nn.functional.kl_div(log_prob, targets_prob)
 
     def teacher_model_forward(self, input, teacher_model=None, device=None):
+        outputs = None
         if self.loss_weights[1] > 0:
             model = self.teacher_model if teacher_model is None else teacher_model
             assert isinstance(model, torch.nn.Module), \
@@ -296,6 +295,7 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             with torch.no_grad():
                 outputs = pytorch_forward_wrapper(model, input, device=device)
             self.teacher_outputs = outputs
+        return outputs
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
@@ -368,10 +368,17 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         return tf.math.reduce_mean(tf.math.reduce_sum(- targets_prob * log_prob, axis=-1), axis=-1)
 
     def teacher_model_forward(self, input, teacher_model=None):
+        outputs = None
         if self.loss_weights[1] > 0 and input is not None:
             model = self.teacher_model if teacher_model is None else teacher_model
-            outputs = model.predict(input)
+            if isinstance(input, list) or isinstance(input, tuple):  # pragma: no cover
+                outputs = model(*input, training=True)
+            elif isinstance(input, dict):  # pragma: no cover
+                outputs = model(**input, training=True)
+            else:
+                outputs = model(input, training=True)
             self.teacher_outputs = outputs
+        return outputs
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
@@ -447,10 +454,17 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
                                                         self.loss_weights[1]))
 
     def teacher_model_forward(self, input, teacher_model=None):
+        outputs = None
         if self.loss_weights[1] > 0 and input is not None:
             model = self.teacher_model if teacher_model is None else teacher_model
-            outputs = model.predict(input)
+            if isinstance(input, list) or isinstance(input, tuple):  # pragma: no cover
+                outputs = model(*input, training=True)
+            elif isinstance(input, dict):  # pragma: no cover
+                outputs = model(**input, training=True)
+            else:
+                outputs = model(input, training=True)
             self.teacher_outputs = outputs
+        return outputs
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
@@ -470,7 +484,7 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
             )
         self.student_features = {}
         self.teacher_features = {}
-        
+
         self.layer_mappings = []
         self.layer_output_process = []
         for item in layer_mappings:
@@ -495,7 +509,7 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         for student_layer, teacher_layer in self.layer_mappings:
             self.student_features[student_layer] = []
             self.teacher_features[teacher_layer] = []
-            
+
         self.loss_weights = [1.0 / len(layer_mappings)] * len(layer_mappings) \
                             if loss_weights is None else loss_weights
         self.loss_types = ['MSE'] * len(layer_mappings) \
@@ -525,6 +539,9 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
     def loss_cal(self):
         raise NotImplementedError('Function loss_cal should be framework related.')
 
+    def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        return self.loss_cal()
+
     def clear_features(self):
         for student_layer in self.student_features:
             self.student_features[student_layer] = []
@@ -532,7 +549,8 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
             self.teacher_features[teacher_layer] = []
 
     def __call__(self, student_outputs, targets):
-        return self.loss_cal()
+        return 0
+
 
 class PyTorchIntermediateLayersKnowledgeDistillationLoss(
                 IntermediateLayersKnowledgeDistillationLoss

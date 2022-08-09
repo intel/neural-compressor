@@ -53,21 +53,27 @@ class ConfigurationParser:
                 "filenames",
                 "compression_type",
                 "data_path",
+                "data_dir",
                 "image_list",
                 "img_dir",
                 "anno_dir",
                 "content_folder",
+                "content_path",
                 "style_folder",
+                "style_path",
                 "image_format",
                 "dtype",
                 "label_file",
+                "model_name_or_path",
+                "task",
+                "model_type",
             ],
-            "int": ["buffer_size", "num_parallel_reads", "num_cores"],
+            "int": ["buffer_size", "num_parallel_reads", "num_cores", "max_seq_length"],
             "list<int>": ["resize_shape"],
             "float": ["crop_ratio"],
             "list<float>": ["low", "high"],
-            "list<list<int>>": ["shape"],
-            "bool": ["train", "label"],
+            "list<list<int>>": ["shape", "input_shape", "label_shape"],
+            "bool": ["train", "label", "do_lower_case", "dynamic_length"],
         }
         self.types_definitions: Dict[str, Union[Type, List[Any]]] = {
             "str": str,
@@ -139,34 +145,49 @@ class ConfigurationParser:
 
     def parse_transforms(self, transforms_data: List[dict]) -> List[dict]:
         """Parse transforms list."""
+        parsed_transform_data: List[dict] = []
         for transform in transforms_data:
+            parsed_transform_params: dict = {}
             params_to_parse = transform.get("params", None)
             if isinstance(params_to_parse, dict):
                 for param_name, value in params_to_parse.items():
+                    if value == "":
+                        continue
+
                     param_type: Union[Type, List[Type]] = self.get_param_type(
                         "transform",
                         param_name,
                     )
                     if transform.get("name") == "RandomResizedCrop" and param_name == "scale":
                         param_type = [float]
-                    transform["params"].update(
+
+                    parsed_transform_params.update(
                         {param_name: self.parse_value(value, param_type)},
                     )
-        return transforms_data
+            parsed_transform_data.append(
+                {
+                    "name": transform.get("name"),
+                    "params": parsed_transform_params,
+                },
+            )
+        return parsed_transform_data
 
     def parse_dataloader(self, dataloader_data: dict) -> dict:
         """Parse dataloader dict."""
+        parsed_dataloader_data: dict = {"params": {}}
         dataloader_params = dataloader_data.get("params", None)
         if isinstance(dataloader_params, dict):
             for param_name, value in dataloader_params.items():
+                if value == "":
+                    continue
                 param_type: Union[Type, List[Type]] = self.get_param_type(
                     "dataloader",
                     param_name,
                 )
-                dataloader_data["params"].update(
+                parsed_dataloader_data["params"].update(
                     {param_name: self.parse_value(value, param_type)},
                 )
-        return dataloader_data
+        return parsed_dataloader_data
 
     def get_param_type(
         self,

@@ -18,11 +18,11 @@
     name: '1.6.0'
   
   precisions: &common_precisions
-    names: int8, uint8, fp16, fp32
+    names: int8, uint8, fp32
     valid_mixed_precisions: []
   
   ops: &common_ops
-    int8: ['Gather', 'MatMul', 'Attention', 'Conv', 'EmbedLayerNormalization', 'FusedConv']
+    int8: ['Gather', 'MatMul', 'Attention', 'Conv', 'EmbedLayerNormalization', 'FusedConv', 'LSTM']
     fp16: ['Compress', 'Concat', 'Dropout', 'DynamicSlice', 'Expand', 'Flatten',
         'Gather', 'GatherElements', 'GatherND', 'Identity', 'If', 'IsNaN', 'Loop',
         'Max', 'Min', 'Mod', 'Reshape', 'ReverseSequence', 'Round', 'Scan',

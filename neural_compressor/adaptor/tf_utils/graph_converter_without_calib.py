@@ -27,9 +27,9 @@ from neural_compressor.experimental.common import Model
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from .quantize_graph.quantize_graph_common import QuantizeGraphHelper
+from .quantize_graph_common import QuantizeGraphHelper
 
-from .graph_rewriter.graph_util import GraphAnalyzer
+from .graph_util import GraphAnalyzer
 from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOptimizer
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer

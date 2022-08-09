@@ -45,8 +45,9 @@ logger.debug("Reduce range is {}".format(str(REDUCE_RANGE)))
 
 class PyTorchVersionMode(Enum):
 
-    PT111 = LooseVersion("1.11")
-    PT110 = LooseVersion("1.10")
+    PT112 = LooseVersion("1.12.0")
+    PT111 = LooseVersion("1.11.0")
+    PT110 = LooseVersion("1.10.0")
     PT19 = LooseVersion("1.9")
     PT18 = LooseVersion("1.8")
     PT17 = LooseVersion("1.7")
@@ -64,13 +65,15 @@ try: # pragma: no cover
     try:
         import intel_pytorch_extension as ipex
         IPEX_110 = False
+        IPEX_112 = False
     except:
         import intel_extension_for_pytorch as ipex
         import torch.fx.experimental.optimization as optimization
+        IPEX_112 = True
         IPEX_110 = True
 except:
     IPEX_110 = None
-
+    IPEX_112 = None
 
 def get_torch_white_list(approach):
     version = get_torch_version()
@@ -115,6 +118,14 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
                     output = model(**input)
             else:
                 output = model(**input)
+    elif device == "ipex" and IPEX_112: # pragma: no cover 
+        if isinstance(input, torch.Tensor):
+            input = input.contiguous(memory_format=torch.channels_last)
+            output = model(input)
+        elif isinstance(input, list) or isinstance(input, tuple):
+            output = model(*input)
+        elif isinstance(input, dict):
+            output = model(**input)
     else:
         if isinstance(input, dict) or isinstance(input, UserDict):
             if device=='cpu':
@@ -778,7 +789,7 @@ class TemplateAdaptor(Adaptor):
                     model, input, device=self.device, conf=conf, running_mode='calibration')
                 if idx >= tmp_iterations - 1:
                     break
-        except ValueError:
+        except Exception as e:
             for idx, input in enumerate(dataloader):
                 output = pytorch_forward_wrapper(
                     model, input, device=self.device, conf=conf, running_mode='calibration')
@@ -1259,15 +1270,16 @@ class PyTorchAdaptor(TemplateAdaptor):
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
         if hooks is not None:
-            pre_epoch_begin = hooks['pre_epoch_begin']
-            post_epoch_end = hooks['post_epoch_end']
+            on_train_begin = hooks['on_train_begin']
+            on_train_end = hooks['on_train_end']
             on_epoch_begin = hooks['on_epoch_begin']
             on_epoch_end = hooks['on_epoch_end']
-            on_batch_begin = hooks['on_batch_begin']
-            on_batch_end = hooks['on_batch_end']
-            on_post_grad = hooks['on_post_grad']
+            on_step_begin = hooks['on_step_begin']
+            on_step_end = hooks['on_step_end']
+            on_after_compute_loss = hooks['on_after_compute_loss']
+            on_before_optimizer_step = hooks['on_before_optimizer_step']
         if hooks is not None:
-            pre_epoch_begin()
+            on_train_begin()
         for nepoch in range(start_epochs, end_epochs):
             model_.to(device)
             model_.train()
@@ -1282,20 +1294,20 @@ class PyTorchAdaptor(TemplateAdaptor):
                 # TODO: to support adjust lr with epoch
                 target = target.to(device)
                 if hooks is not None:
-                    on_batch_begin(cnt)
+                    on_step_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = pytorch_forward_wrapper(model_, image, device=device)
-                if hasattr(criterion, "teacher_model_forward"):
-                    criterion.teacher_model_forward(image, device=device)
                 loss = criterion(output, target)
+                if hooks is not None:
+                    loss = on_after_compute_loss(image, output, loss)
                 self.optimizer.zero_grad()
                 loss.backward()
                 if hooks is not None:
-                    on_post_grad()
+                    on_before_optimizer_step()
                 self.optimizer.step()
                 if hooks is not None:
-                    on_batch_end()
+                    on_step_end()
                 if cnt >= iters:
                     break
             if hooks is not None:
@@ -1305,7 +1317,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             model_.to(self.device)
 
         if hooks is not None:
-            post_epoch_end()
+            on_train_end()
 
         return model_
 
@@ -2016,10 +2028,16 @@ class PyTorchAdaptor(TemplateAdaptor):
 
 
 unify_op_type_mapping_ipex = {
-    "Convolution_Relu": "Conv2d",
-    "Convolution_Sum_Relu": "Conv2d",
-    "Convolution_BatchNorm": "Conv2d",
-    "Linear_Relu": "Linear"
+    "Convolution_Relu": "conv2d",
+    "Convolution_Sum_Relu": "conv2d",
+    "Convolution_BatchNorm": "conv2d",
+    "<class 'torch.nn.modules.conv.Conv2d'>": "conv2d",
+    "<class 'torch.nn.modules.activation.ReLU'>": "relu",
+    "<method 'add' of 'torch._C._TensorBase' objects>": "add",
+    "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "adaptiveavgpool2d",
+    "Linear_Relu": "linear",
+    "<class 'torch.nn.modules.linear.Linear'>": "linear",
+    "<class 'torch.nn.modules.pooling.MaxPool2d'>": "maxpool2d"
 }
 
 
@@ -2033,8 +2051,13 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
     """
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
-
-        assert IPEX_110 is not None, 'Please install intel_extension_for_pytorch.'
+ 
+        global IPEX_110, IPEX_112
+        assert IPEX_110 is not None and IPEX_112 is not None, 'Please install intel_extension_for_pytorch.'
+        self.version = get_torch_version()
+        IPEX_110 = True if PyTorchVersionMode.PT110.value <= self.version and \
+                            self.version <= PyTorchVersionMode.PT111.value else False
+        IPEX_112 = True if self.version >= PyTorchVersionMode.PT112.value else False
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
@@ -2069,28 +2092,33 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
                            format(repr(e)))
             model_ = model
-        try:
-            if not IPEX_110:
-                q_model = torch.jit.script(model_._model.eval().to(ipex.DEVICE))
-            else:
-                q_model = model_._model.eval()
-        except:
-            try:
-                for input, _ in dataloader:
-                    q_model = torch.jit.trace(model_._model.eval().to(ipex.DEVICE),
-                                              input.to(ipex.DEVICE)).to(ipex.DEVICE)
-                    break
-            except:
-                logger.info("Fail to convert this model to PyTorch Script model.")
-                q_model = model_._model.eval().to(ipex.DEVICE)
-        qscheme = self._cfg_to_qconfig(tune_cfg)
 
+        if not IPEX_110 and not IPEX_112:
+            try:
+                q_model = torch.jit.script(model_.model.eval().to(ipex.DEVICE))
+            except:
+                try:
+                    for input, _ in dataloader:
+                        q_model = torch.jit.trace(model_.model.eval().to(ipex.DEVICE),
+                                                  input.to(ipex.DEVICE)).to(ipex.DEVICE)
+                        break
+                except:
+                    logger.info("Fail to convert this model to PyTorch Script model.")
+                    q_model = model_.model.eval().to(ipex.DEVICE)
+
+        if IPEX_110 or IPEX_112:
+            q_model = model_._model.eval()
+        qscheme = self._cfg_to_qconfig(tune_cfg)
         if self.approach == 'post_training_static_quant':
-            if not IPEX_110:
+            iterations = tune_cfg.get('calib_iteration', 1)
+            if not IPEX_110 and not IPEX_112:
                 ipex_conf = ipex.AmpConf(
                     torch.int8, configure_file=self.ipex_config_path
                 )
-            else:
+                self.model_calibration(q_model, dataloader, iterations,
+                                       ipex_conf, tune_cfg.get('calib_sampling_size', 1))
+                ipex_conf.save(self.ipex_config_path)
+            if IPEX_110:
                 ipex_conf = ipex.quantization.QuantConf(
                     configure_file=self.ipex_config_path, qscheme = qscheme
                 )
@@ -2102,10 +2130,31 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                     q_model.model = optimization.fuse(q_model.model)
                 except:
                     q_model = q_model
-            iterations = tune_cfg.get('calib_iteration', 1)
-            self.model_calibration(q_model, dataloader, iterations,
-                                   ipex_conf, tune_cfg.get('calib_sampling_size', 1))
-            ipex_conf.save(self.ipex_config_path)
+                self.model_calibration(q_model, dataloader, iterations,
+                                       ipex_conf, tune_cfg.get('calib_sampling_size', 1))
+                ipex_conf.save(self.ipex_config_path)
+            if IPEX_112:
+                from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                    qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                   qscheme=torch.per_channel_symmetric))
+
+                example_inputs = self.get_example_inputs(dataloader)
+                q_model = ipex.quantization.prepare(q_model, static_qconfig, \
+                                        example_inputs=example_inputs, inplace=True)
+                q_model.load_qconf_summary(qconf_summary = self.ipex_config_path)
+                self.model_calibration(q_model, dataloader, iterations,
+                                   None, tune_cfg.get('calib_sampling_size', 1))
+                q_model.save_qconf_summary(qconf_summary = self.ipex_config_path)
+                q_model = ipex.quantization.convert(q_model)
+                with torch.no_grad():
+                    try:
+                        q_model = torch.jit.trace(q_model, example_inputs)
+                        q_model = torch.jit.freeze(q_model)
+                    except:
+                        q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                        q_model = torch.jit.freeze(q_model)
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
@@ -2151,29 +2200,43 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             }
         """
         assert self.cfgs is not None, "No configure for IPEX int8 model..."
-        for key in tune_cfg['op']:
-            try:
-                scheme = tune_cfg['op'][key]['activation']['scheme']
-            except:
-                scheme = 'asym'
-            if scheme not in ['asym','sym']:
-                scheme = 'asym'
-            break
-
-        for key in tune_cfg['op']:
-            value = tune_cfg['op'][key]
-            if IPEX_110:
-                pattern = self.get_pattern(key, self.fuse_patterns)
-            assert isinstance(value, dict)
-            assert 'activation' in value
-            if value['activation']['dtype'] == 'fp32':
-                if 'weight' in value:
-                    assert value['weight']['dtype'] == 'fp32'
-                for op_cfg in self.cfgs:
-                    if op_cfg["id"] == key[0]:
-                        if not IPEX_110:
+        if not IPEX_110 and not IPEX_112:
+            for key in tune_cfg['op']:
+                value = tune_cfg['op'][key]
+                assert isinstance(value, dict)
+                assert 'activation' in value
+                if value['activation']['dtype'] == 'fp32':
+                    if 'weight' in value:
+                        assert value['weight']['dtype'] == 'fp32'
+                    for op_cfg in self.cfgs:
+                        if op_cfg["id"] == key[0]:
                             op_cfg["quantized"] = False
-                        else:
+                else:
+                    for op_cfg in self.cfgs:
+                        if op_cfg["id"] == key[0]:
+                            op_cfg["quantized"] = True
+            with open(self.ipex_config_path, 'w') as write_f:
+                json.dump(self.cfgs, write_f)
+            return None
+        if IPEX_110:
+            for key in tune_cfg['op']:
+                try:
+                    scheme = tune_cfg['op'][key]['activation']['scheme']
+                except:
+                    scheme = 'asym'
+                if scheme not in ['asym','sym']:
+                    scheme = 'asym'
+                break
+            for key in tune_cfg['op']:
+                value = tune_cfg['op'][key]
+                pattern = self.get_pattern(key, self.fuse_patterns)
+                assert isinstance(value, dict)
+                assert 'activation' in value
+                if value['activation']['dtype'] == 'fp32':
+                    if 'weight' in value:
+                        assert value['weight']['dtype'] == 'fp32'
+                    for op_cfg in self.cfgs:
+                        if op_cfg["id"] == key[0]:
                             if key[1] in ['relu_','add_']:
                                 continue
                             num_inputs = len(op_cfg["inputs_quantized"])
@@ -2188,12 +2251,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                                 tune_cfg['op'][pattern]['activation']['dtype'] = 'fp32'
                                 if 'weight' in  tune_cfg['op'][pattern]:
                                     tune_cfg['op'][pattern]['weight']['dtype'] = 'fp32'
-            else:
-                for op_cfg in self.cfgs:
-                    if op_cfg["id"] == key[0]:
-                        if not IPEX_110:
-                            op_cfg["quantized"] = True
-                        else:
+                else:
+                    for op_cfg in self.cfgs:
+                        if op_cfg["id"] == key[0]:
                             if key[1] in ['relu_','add_']:
                                 continue
                             num_inputs = len(op_cfg["inputs_quantized"])
@@ -2204,14 +2264,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                             for o_num in range(num_outputs):
                                 op_cfg["outputs_quantized"][o_num] = \
                                              self.default_cfgs[key[0]]["outputs_quantized"][o_num]
-        with open(self.ipex_config_path, "w") as write_f:
-            json.dump(self.cfgs, write_f)
-        if not IPEX_110:
+            with open(self.ipex_config_path, "w") as write_f:
+                json.dump(self.cfgs, write_f)
+            if scheme == "asym":
+                return torch.per_tensor_affine
+            else:
+                return torch.per_tensor_symmetric
+        if IPEX_112:
+            from .torch_utils.util import check_cfg_and_qconfig
+            for op_name in tune_cfg['op']:
+                op_info = check_cfg_and_qconfig(op_name, tune_cfg['op'], self.cfgs[op_name[0][0]]["q_op_infos"])
+                self.cfgs[op_name[0][0]]['q_op_infos'][op_name[0][1]] = op_info
+            with open(self.ipex_config_path, "w") as write_f:
+                json.dump(self.cfgs, write_f, indent = 4)
             return None
-        elif scheme == "asym":
-            return torch.per_tensor_affine
-        elif scheme == "sym":
-            return torch.per_tensor_symmetric
 
     def get_pattern(self, fallback_op, fuse_patterns):
         for fuse_pattern in fuse_patterns:
@@ -2248,7 +2314,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
 
         model_ = model._model
         model_.eval()
-        if self.is_baseline and not IPEX_110:
+        if self.is_baseline and not IPEX_110 and not IPEX_112:
             model_.eval()
             model_.to(ipex.DEVICE)
 
@@ -2261,29 +2327,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             if not self.benchmark
             else os.path.join(self.workspace_path, "best_configure.json")
         )
-        if not IPEX_110:
+        if not IPEX_110 and not IPEX_112:
             conf = (
                 ipex.AmpConf(torch.int8, configure_file=ipex_config)
                 if not self.is_baseline
                 else ipex.AmpConf(None)
             )
-        else:
+        if IPEX_110:
             conf = (
                 ipex.quantization.QuantConf(configure_file=ipex_config)
                 if not self.is_baseline
                 else ipex.quantization.QuantConf(None)
             )
-            if not self.is_baseline:
-                try:
-                    model_ = optimization.fuse(model_, inplace=True)
-                except:
-                    model_ = model_
-                for idx, (input, label) in enumerate(dataloader):
-                    x = input.contiguous(memory_format=torch.channels_last)
-                    break
-                model_ = ipex.quantization.convert(model_, conf, x)
-                with torch.no_grad():
-                    y = model_(x)
+        if IPEX_112:
+            conf = None
 
         return self.model_eval(
             model_, dataloader, postprocess, metrics, measurer, iteration, conf
@@ -2320,7 +2377,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                     "The model passed in is not the instance of torch.nn.Module"
 
             model_ = copy.deepcopy(model)
-            if not IPEX_110:
+            if not IPEX_110 and not IPEX_112:
                 model_.eval().to(ipex.DEVICE)
                 try:
                     init_model = torch.jit.script(model_)
@@ -2340,11 +2397,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
 
             # create a quantization config file for intel pytorch extension model
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
-            if not IPEX_110: 
+            if not IPEX_110 and not IPEX_112: 
                 ipex_conf = ipex.AmpConf(torch.int8)
-            else:
+            if IPEX_110:
                 ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
-
                 try:
                     init_model = optimization.fuse(init_model)
                 except:
@@ -2353,24 +2409,46 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                     init_model.model = optimization.fuse(init_model.model)
                 except:
                     init_model = init_model
-            self.model_calibration(
-                init_model,
-                self.q_dataloader,
-                conf=ipex_conf,
-            )
-            ipex_conf.save(self.ipex_config_path)
+                self.model_calibration(
+                    init_model,
+                    self.q_dataloader,
+                    conf=ipex_conf,
+                )
+                ipex_conf.save(self.ipex_config_path)
+            if IPEX_112:
+                if self.approach == 'post_training_static_quant':
+                    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                   qscheme=torch.per_channel_symmetric))
+                    example_inputs = self.get_example_inputs(self.q_dataloader)
+                    init_model = ipex.quantization.prepare(init_model, static_qconfig, \
+                                            example_inputs=example_inputs, inplace=True)
+                    self.model_calibration(init_model, self.q_dataloader)
+                    init_model.save_qconf_summary(qconf_summary = self.ipex_config_path)
             del init_model
 
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
-            if IPEX_110: 
+            if IPEX_110:
                 self.default_cfgs = copy.deepcopy(self.cfgs)
                 self.fuse_patterns = self.get_fuse_pattern(self.cfgs)
-            for op_cfg in self.cfgs:
-                quantizable_ops.append((op_cfg["id"],
-                                       unify_op_type_mapping_ipex[op_cfg["name"]]
-                                       if op_cfg["name"] in unify_op_type_mapping_ipex else
-                                       op_cfg["name"]))
+            if not IPEX_112 or IPEX_110:
+                for op_cfg in self.cfgs:
+                    quantizable_ops.append((op_cfg["id"],
+                                           unify_op_type_mapping_ipex[op_cfg["name"]]
+                                           if op_cfg["name"] in unify_op_type_mapping_ipex else
+                                           op_cfg["name"]))
+            if IPEX_112:
+                for module_key in self.cfgs.keys():
+                    for op_cfg_id in self.cfgs[module_key]['q_op_infos']:
+                        quantizable_ops.append(((module_key, op_cfg_id), unify_op_type_mapping_ipex \
+                                               [self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']] \
+                                               if self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type'] \
+                                               in unify_op_type_mapping_ipex else \
+                                               self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']))
+
         os.remove(self.ipex_config_path)
 
     def get_fuse_pattern(self, default_cfgs):
@@ -2426,6 +2504,24 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                        inspect_type='activation', save_to_disk=False):
         assert False, "Inspect_tensor didn't support IPEX backend now!"
 
+    def get_example_inputs(self, dataloader):
+        it = iter(dataloader)
+        example_inputs = next(it)
+        if isinstance(example_inputs, dict):
+            input_tensor = []
+            if "label" in example_inputs.keys():
+                example_inputs.pop("label")
+            for key, value in example_inputs.items():
+                if key == "start_positions" or key == "end_positions":
+                    continue
+                input_tensor.append(value)
+            return input_tensor
+        if isinstance(example_inputs, list) or isinstance(example_inputs, tuple):
+            if len(example_inputs) > 1:
+                return example_inputs[0]
+            return example_inputs
+        if isinstance(example_inputs, torch.Tensor):
+            return example_inputs
 
 @adaptor_registry
 class PyTorch_FXAdaptor(TemplateAdaptor):
@@ -2674,16 +2770,17 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         criterion = criterion_tuple[0](**criterion_tuple[1])
         # prepare hooks first to ensure model will be converted correctly
         if hooks is not None:   # pragma: no cover
-            pre_epoch_begin = hooks['pre_epoch_begin']
-            post_epoch_end = hooks['post_epoch_end']
+            on_train_begin = hooks['on_train_begin']
+            on_train_end = hooks['on_train_end']
             on_epoch_begin = hooks['on_epoch_begin']
             on_epoch_end = hooks['on_epoch_end']
-            on_batch_begin = hooks['on_batch_begin']
-            on_batch_end = hooks['on_batch_end']
-            on_post_grad = hooks['on_post_grad']
+            on_step_begin = hooks['on_step_begin']
+            on_step_end = hooks['on_step_end']
+            on_after_compute_loss = hooks['on_after_compute_loss']
+            on_before_optimizer_step = hooks['on_before_optimizer_step']
         model._model.train()
         if hooks is not None:
-            pre_epoch_begin()
+            on_train_begin()
         start_epochs = kwargs['kwargs']['start_epoch']
         end_epochs = kwargs['kwargs']['end_epoch']
         iters = kwargs['kwargs']['iteration']
@@ -2695,18 +2792,20 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             for input, target in dataloader:
                 target = target.to(device)
                 if hooks is not None:
-                    on_batch_begin(cnt)
+                    on_step_begin(cnt)
                 print('.', end='', flush=True)
                 cnt += 1
                 output = pytorch_forward_wrapper(model._model, input, device=device)
                 loss = criterion(output, target)
                 if hooks is not None:
-                    on_post_grad()
+                    loss = on_after_compute_loss(input, output, loss)
                 optimizer.zero_grad()
                 loss.backward()
+                if hooks is not None:
+                    loss = on_before_optimizer_step()
                 optimizer.step()
                 if hooks is not None:
-                    on_batch_end()
+                    on_step_end()
                 if cnt >= iters:
                     break
             if hooks is not None:
@@ -2716,7 +2815,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             model._model.to(self.device)
 
         if hooks is not None:
-            post_epoch_end()
+            on_train_end()
 
         return model._model
 

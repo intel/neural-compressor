@@ -159,14 +159,22 @@ class MSETuneStrategy(TuneStrategy):
 
         if best_cfg is not None:
             # Inspect FP32 and dequantized tensor
-            if self.ordered_ops is None:
+            if self.ordered_ops is None or "ops_mse" not in locals():
                 op_lists = self.opwise_quant_cfgs.keys()
-                fp32_dump_content = self.adaptor.inspect_tensor(
-                    self.model, self.calib_dataloader, op_lists, [1])
+                op_mapping = {}
+                for (op_name, op_type) in list(op_lists):
+                    op_mapping[op_name] = (op_name, op_type)
+                op_lists = [op_name for (op_name, op_type) in list(op_lists)]
+                fp32_dump_content = self.adaptor.inspect_tensor(self.model, 
+                    self.calib_dataloader, op_lists, [1], inspect_type='activation', 
+                    save_to_disk=True, save_path="./nc_workspace/", 
+                    quantization_cfg=best_cfg)
                 fp32_tensor_dict = fp32_dump_content['activation'][0]
                 best_qmodel = self.adaptor.quantize(best_cfg, self.model, self.calib_dataloader)
-                quant_dump_content = self.adaptor.inspect_tensor(
-                    best_qmodel, self.calib_dataloader, op_lists, [1])
+                quant_dump_content = self.adaptor.inspect_tensor(best_qmodel, 
+                    self.calib_dataloader, op_lists, [1], inspect_type='activation',
+                    save_to_disk=True, save_path="./nc_workspace/", 
+                    quantization_cfg=best_cfg)
                 dequantize_tensor_dict = quant_dump_content['activation'][0]
                 ops_mse = {
                     op: self.mse_metric_gap(
@@ -215,6 +223,7 @@ class MSETuneStrategy(TuneStrategy):
 
                 op_cfgs = copy.deepcopy(best_cfg)
                 for op in ordered_ops:
+                    op = op_mapping[op]
                     op_cfgs['op'][op]['activation'].clear()
                     op_cfgs['op'][op]['activation']['dtype'] = 'fp32'
                     if 'weight' in op_cfgs['op'][op] and op_cfgs['op'][op]['weight'] is not None:

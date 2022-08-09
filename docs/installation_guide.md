@@ -10,25 +10,25 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 - Python version: 3.7 or 3.8 or 3.9 or 3.10
 
-- C++ compiler: 7.2.1 or above
-
-- CMake: 3.12 or above
-
 > If you get some build issues, please check [frequently asked questions](faq.md) at first.
 
 ### Option 1 Install from binary
 
   ```Shell
-  # install stable version from pip
+  # install stable basic version from pip
   pip install neural-compressor
+  # install stable full version from pip (including GUI)
+  pip install neural-compressor-full
 
-  # install basic nightly version from pip
+  # install nightly basic version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # install full nightly version from pip (including GUI)
+  # install nightly full version from pip (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
 
-  # install stable version from from conda
-  conda install neural-compressor -c conda-forge -c intel 
+  # install stable basic version from from conda
+  conda install neural-compressor -c conda-forge -c intel
+  # install stable full version from from conda (including GUI)
+  conda install neural-compressor-full -c conda-forge -c intel  
   ```
 
 ### Option 2 Install from source
@@ -87,8 +87,6 @@ The following prerequisites and requirements must be satisfied for a successful 
   ```shell
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
-  git submodule sync
-  git submodule update --init --recursive
   pip install -r requirements.txt
   python setup.py install
   ```

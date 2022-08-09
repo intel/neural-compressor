@@ -71,15 +71,29 @@ import { MatRadioModule } from '@angular/material/radio';
 import { PinBenchmarkComponent } from './pin-benchmark/pin-benchmark.component';
 import { ProjectRemoveComponent } from './project-remove/project-remove.component';
 import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-dialog.component';
+import { DiagnosisComponent } from './diagnosis/diagnosis.component';
+import { MatBadgeModule } from '@angular/material/badge';
+import { ModelWiseComponent } from './model-wise/model-wise.component';
+import * as PlotlyJS from 'plotly.js-dist-min';
+import { PlotlyModule } from 'angular-plotly.js';
+import { HistogramComponent } from './histogram/histogram.component';
+
+PlotlyModule.plotlyjs = PlotlyJS;
+import { ConfigPreviewComponent } from './config-preview/config-preview.component';
+import { PrintJsonPipe } from './pipes/print-json.pipe';
+import { GenerateConfigDialogComponent } from './generate-config-dialog/generate-config-dialog.component';
+import { WarningComponent } from './warning/warning.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     MenuComponent,
     ErrorComponent,
+    WarningComponent,
     PredefinedModelsComponent,
     ModelListPipe,
     LongNamePipe,
+    PrintJsonPipe,
     FileBrowserComponent,
     GraphComponent,
     HomeComponent,
@@ -97,7 +111,12 @@ import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-
     NotificationComponent,
     PinBenchmarkComponent,
     ProjectRemoveComponent,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    DiagnosisComponent,
+    ModelWiseComponent,
+    HistogramComponent,
+    ConfigPreviewComponent,
+    GenerateConfigDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -109,6 +128,7 @@ import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-
     HttpClientModule,
     JoyrideModule.forRoot(),
     MatExpansionModule,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
@@ -131,6 +151,7 @@ import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-
     NgDatePipesModule,
     NgxChartsModule,
     NgxGraphModule,
+    PlotlyModule,
     ReactiveFormsModule,
   ],
   providers: [
@@ -149,6 +170,7 @@ import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-
   ],
   entryComponents: [
     ErrorComponent,
+    WarningComponent,
     FileBrowserComponent,
     ProjectRemoveComponent
   ],

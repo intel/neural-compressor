@@ -113,6 +113,22 @@ class Workspace(JsonSerializer):
         self.resume: Optional[str] = data.get("resume", None)  # [Optional]
 
 
+class Diagnosis(JsonSerializer):
+    """Configuration Diagnosis class."""
+
+    def __init__(self, data: Optional[Dict[str, Any]] = None) -> None:
+        """Initialize Configuration Diagnosis class."""
+        super().__init__()
+        if data is None:
+            data = {}
+        self.diagnosis_after_tuning: bool = data.get("diagnosis_after_tuning", True)
+        self.op_list: Optional[List[str]] = data.get("op_list", None)
+        self.iteration_list: Optional[List[int]] = data.get("iteration_list", None)
+        self.inspect_type: Optional[str] = data.get("inspect_type", None)
+        self.save_to_disk: bool = data.get("save_to_disk", True)
+        self.save_path: Optional[str] = data.get("save_path", None)
+
+
 class Tuning(JsonSerializer):
     """Configuration Tuning class."""
 
@@ -142,6 +158,10 @@ class Tuning(JsonSerializer):
         self.workspace: Optional[Workspace] = None
         if data.get("workspace", {}):
             self.workspace = Workspace(data.get("workspace", {}))
+
+        self.diagnosis: Optional[Diagnosis] = None
+        if data.get("diagnosis", {}):
+            self.diagnosis = Diagnosis(data.get("diagnosis", {}))
 
     def set_timeout(self, timeout: int) -> None:
         """Update tuning timeout in config."""
@@ -202,3 +222,6 @@ class Tuning(JsonSerializer):
         if self.workspace is None:
             self.workspace = Workspace()
         self.workspace.path = path
+
+        if self.diagnosis is not None:
+            self.diagnosis.save_path = path

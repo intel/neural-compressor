@@ -18,12 +18,12 @@
 from .component import Component
 from ..pruners import PRUNERS
 from ..utils import logger
-from ..utils.utility import singleton, time_limit, set_backend, GLOBAL_STATE, MODE
+from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from ..model import BaseModel
-from .common import Model
 from ..adaptor import FRAMEWORKS
 from ..conf.config import PruningConf
+from warnings import warn
 
 class Pruning(Component):
     """This is base class of pruning object.
@@ -48,38 +48,37 @@ class Pruning(Component):
             self.conf = PruningConf(conf_fname_or_obj)
         self._init_with_conf()
 
-        self._pruning_func = None
         self.pruners = []
         self.callbacks = dict(tf_pruning=TfPruningCallback)
 
-    def _pre_epoch_begin(self):
+    def _on_train_begin(self):
         """ called before training """
         for pruner in self.pruners:
-            pruner.pre_epoch_begin()
+            pruner.on_train_begin()
 
     def _on_epoch_begin(self, epoch):
         """ called on the beginning of epochs"""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
-    def _on_batch_begin(self, batch_id):
+    def _on_step_begin(self, batch_id):
         """ called on the beginning of batches"""
         res = []
         for pruner in self.pruners:
-            res.append(pruner.on_batch_begin(batch_id))
+            res.append(pruner.on_step_begin(batch_id))
         return res
 
-    def _on_post_grad(self):
+    def _on_before_optimizer_step(self):
         """ called after gradient computed """
         """ usually for getting gradients """
         for pruner in self.pruners:
-            pruner.on_post_grad()
+            pruner.on_before_optimizer_step()
 
-    def _on_batch_end(self):
+    def _on_step_end(self):
         """ called on the end of batches"""
         res = []
         for pruner in self.pruners:
-            res.append(pruner.on_batch_end())
+            res.append(pruner.on_step_end())
         return res
 
     def _on_epoch_end(self):
@@ -92,10 +91,10 @@ class Pruning(Component):
         logger.info(sparsity)
         return res
 
-    def _post_epoch_end(self):
+    def _on_train_end(self):
         """ called after training """
         for pruner in self.pruners:
-            pruner.post_epoch_end()
+            pruner.on_train_end()
 
     def pre_process(self):
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
@@ -115,7 +114,7 @@ class Pruning(Component):
         self.generate_hooks()
         self.generate_pruners()
 
-        if self._train_dataloader is None and self._pruning_func is None:
+        if self._train_dataloader is None and self._train_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader
             assert train_dataloader_cfg is not None, \
                    'dataloader field of train field of pruning section ' \
@@ -131,12 +130,12 @@ class Pruning(Component):
             eval_dataloader_cfg.distributed = self.evaluation_distributed
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
-        if self._pruning_func is None:
+        if self._train_func is None:
             # train section of pruning section in yaml file should be configured.
             train_cfg = self.cfg.pruning.train
             assert train_cfg, "train field of pruning section in yaml file must " \
                               "be configured for pruning if pruning_func is NOT set."
-            self._pruning_func = create_train_func(self.framework, \
+            self._train_func = create_train_func(self.framework, \
                                                    self.train_dataloader, \
                                                    self.adaptor, \
                                                    train_cfg, \
@@ -154,7 +153,7 @@ class Pruning(Component):
                                                eval_cfg.accuracy.postprocess, \
                                                fp32_baseline = False)
         if getattr(self.train_dataloader, 'distributed', False):
-            self.register_hook('pre_epoch_begin', self.adaptor._pre_hook_for_hvd)
+            self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         logger.info("Start to get the baseline model's score before pruning.")
@@ -162,7 +161,7 @@ class Pruning(Component):
                         else self._model.model)
         logger.info("Baseline model's score is {}.".format(str(self.baseline_score)))
         logger.info("Model pruning begins.")
-        self._pruning_func(self._model if getattr(self._pruning_func, 'builtin', None) \
+        self._train_func(self._model if getattr(self._train_func, 'builtin', None) \
                         else self._model.model)
         logger.info("Model pruning is done. Start to evaluate the pruned model.")
         self.last_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
@@ -172,13 +171,13 @@ class Pruning(Component):
 
     def generate_hooks(self):
         # register hooks for pruning
-        self.register_hook('pre_epoch_begin', self._pre_epoch_begin)
-        self.register_hook('post_epoch_end', self._post_epoch_end)
+        self.register_hook('on_train_begin', self._on_train_begin)
+        self.register_hook('on_train_end', self._on_train_end)
         self.register_hook('on_epoch_begin', self._on_epoch_begin)
         self.register_hook('on_epoch_end', self._on_epoch_end)
-        self.register_hook('on_batch_begin', self._on_batch_begin)
-        self.register_hook('on_batch_end', self._on_batch_end)
-        self.register_hook('on_post_grad', self._on_post_grad)
+        self.register_hook('on_step_begin', self._on_step_begin)
+        self.register_hook('on_step_end', self._on_step_end)
+        self.register_hook('on_before_optimizer_step', self._on_before_optimizer_step)
 
     def generate_pruners(self):
         for name in self.cfg.pruning.approach:
@@ -264,7 +263,9 @@ class Pruning(Component):
                          set eval_dataloader with metric configured or directly eval_func
                          to make evaluation of the model executed.
         """
-        self._pruning_func = user_pruning_func
+        warn('This method is deprecated. please use `train_func` instead.',
+             DeprecationWarning, stacklevel=2)
+        self._train_func = user_pruning_func
 
     @property
     def evaluation_distributed(self):
@@ -276,7 +277,7 @@ class Pruning(Component):
     @evaluation_distributed.setter
     def evaluation_distributed(self, distributed):
         self._evaluation_distributed = distributed
-    
+
     @property
     def train_distributed(self):
         """ Getter to know whether need distributed training dataloader"""
@@ -291,12 +292,13 @@ class Pruning(Component):
     def __repr__(self):
         return 'Pruning'
 
+
 class TfPruningCallback(object):
     def __init__(self, nc_model, input_model, hooks):
         self.hooks = hooks
         self.nc_model = nc_model
         self.model = input_model
-        
+
     def __getitem__(self, func):
         return getattr(self, func)
 
@@ -307,11 +309,21 @@ class TfPruningCallback(object):
                 res[index] = layer.get_weights()[0]
         self.nc_model.weights = res
 
-    def pre_epoch_begin(self, logs=None):
-        self.hooks['pre_epoch_begin']()
+    def on_train_begin(self, logs=None):
+        self.hooks['on_train_begin']()
 
-    def post_epoch_end(self, logs=None):
-        self.hooks['post_epoch_end']()
+    def on_train_end(self, logs=None):
+        self.hooks['on_train_end']()
+
+    def pre_epoch_begin(self, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_train_begin` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_train_begin(logs)
+
+    def post_epoch_end(self, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_train_end` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_train_end(logs)
 
     def on_epoch_begin(self, epoch, logs=None):
         self._set_weights()
@@ -325,18 +337,31 @@ class TfPruningCallback(object):
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
-    def on_batch_begin(self, batch, logs=None):
+    def on_step_begin(self, batch, logs=None):
         self._set_weights()
-        res = self.hooks['on_batch_begin'](batch)
+        res = self.hooks['on_step_begin'](batch)
         for layer_index, weights in res[0][0].items():
             get_weights = self.model.layers[layer_index].get_weights()
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
-    def on_batch_end(self, logs=None):
+    def on_batch_begin(self, batch, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_step_begin` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_step_begin(batch, logs)
+
+    def on_after_compute_loss(self, input, s_outputs, s_loss, t_outputs=None):
+        return self.hooks['on_after_compute_loss'](input, s_outputs, s_loss, t_outputs)
+
+    def on_step_end(self, logs=None):
         self._set_weights()
-        res = self.hooks['on_batch_end']()
+        res = self.hooks['on_step_end']()
         for layer_index, weights in res[0][0].items():
             get_weights = self.model.layers[layer_index].get_weights()
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
+
+    def on_batch_end(self, logs=None):  # pragma: no cover
+        warn('This method is deprecated. please use `on_step_end` instead.',
+             DeprecationWarning, stacklevel=2)
+        self.on_step_end(logs)

@@ -21,7 +21,7 @@
     <p>Choose precision of the optimization. Precision determines available optimization types.</p>
     <div class="custom-slider">
       <mat-button-toggle-group class="toggle-group" [(ngModel)]="precisionId" (change)="getOptimizationTypes()">
-        <mat-button-toggle *ngFor="let precision of precisions" [value]="precision.id">
+        <mat-button-toggle *ngFor="let precision of precisionsOther" [value]="precision.id">
           {{ precision.name }}
         </mat-button-toggle>
       </mat-button-toggle-group>
@@ -34,29 +34,28 @@
       </button>
     </div>
   </mat-step>
-  <!-- <mat-step [completed]="false" *ngIf="data.framework === 'tensorflow'">
-    <ng-template matStepLabel>Optimization type</ng-template>
-    <h2>Optimization type</h2>
-    <p>Choose optimization type. Quantization is available only for int8 and graph optimization is available for fp32
-      and bf16.</p>
-    <mat-form-field class="form-field" appearance="outline">
-      <mat-label>Optimization type</mat-label>
-      <mat-select [(ngModel)]="optimizationTypeId" required>
-        <mat-option *ngFor="let opt of optimizationTypes" [value]="opt.id" matTooltipPosition="right"
-          [matTooltip]="opt.help" [disabled]="!opt.is_supported">
-          {{ opt.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+
+<mat-step [completed]="false" *ngIf="data.framework === 'pytorch'">
+    <ng-template matStepLabel>Precision</ng-template>
+    <h2 matTooltip="Check framework user guide for precision support.">Precision</h2>
+    <p>Choose precision of the optimization. Precision determines available optimization types.</p>
+    <div class="custom-slider">
+      <mat-button-toggle-group class="toggle-group" [(ngModel)]="precisionId" (change)="getOptimizationTypes()">
+        <mat-button-toggle *ngFor="let precision of precisionsPyTorch" [value]="precision.id">
+          {{ precision.name }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
     <br>
     <div class="float-right">
-      <button mat-raised-button matStepperNext>
-        <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
-        Next
+      <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent" (click)="addOptimization()"
+        queryParamsHandling="preserve">
+        <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
+        Finish
       </button>
-    </div>
-  </mat-step> -->
-  <mat-step [completed]="false">
+    </div>  
+  </mat-step>
+  <mat-step [completed]="false" *ngIf="data.framework !== 'pytorch'">
     <ng-template matStepLabel>Dataset</ng-template>
     <h2>Dataset</h2>
     <p>Choose the dataset to use with this optimization. If you want to add another dataset go

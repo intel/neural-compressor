@@ -82,6 +82,20 @@ def check_mx_version(version):
     return d1 >= d2
 
 
+def combine_capabilities(current, new):
+    if isinstance(current, list):
+        assert isinstance(new, list)
+        return list(set(current) | set(new))
+    assert isinstance(current, dict) and isinstance(new, dict)
+    current = current.copy()
+    new = new.copy()
+    for k, v in current.items():
+        current[k] = combine_capabilities(v, new.get(k, type(v)()))
+        new.pop(k, None)
+    current.update(new)
+    return current
+
+
 def make_nc_model(target, sym_model, ctx, input_desc):
     """Converts a symbolic model to an Neural Compressor model.
 
@@ -150,12 +164,12 @@ def prepare_model(nc_model, ctx, input_desc):
 
     model_x = nc_model.model
     if isinstance(model_x, mx.gluon.HybridBlock):
-        if not model_x._active and not isinstance(model_x, mx.gluon.SymbolBlock):
+        if not model_x._active:
             model_x.hybridize(static_alloc=False, static_shape=False)
         model_x(*create_data_example(ctx, input_desc))
         with TemporaryDirectory() as tmpdirname:
             prefix = os.path.join(tmpdirname, 'tmp')
-            model_x.export(prefix, epoch=0)
+            model_x.export(prefix, epoch=0, remove_amp_cast=False)
             sym_model = mx.model.load_checkpoint(prefix, 0)
     elif isinstance(model_x, tuple) and isinstance(model_x[0], mx.symbol.Symbol):
         sym_model = model_x
@@ -200,7 +214,7 @@ def prepare_dataloader(nc_model, ctx, data_x):
     if isinstance(model_x, mx.gluon.HybridBlock):
         data = ensure_list(next(iter(dataloader)))  # data example
         data = [ndarray_to_device(d, ctx) for d in data]
-        if not model_x._active and not isinstance(model_x, mx.gluon.SymbolBlock):
+        if not model_x._active:
             model_x.hybridize(static_alloc=False, static_shape=False)
         while True:
             try:
@@ -281,6 +295,23 @@ def query_quantizable_nodes(sym_model, ctx, dataloader):
     qsymnet = qmodel[0]
     qnodes_ops = {n['name']: n['op'].lower() for n in json.loads(qsymnet.tojson())['nodes']}
 
+    # collect fp32 tensors
+    collector = NameCollector()
+    run_forward(sym_model, ctx, dataloader, [True], collector)
+    tensors = set(collector.names)
+
+    # map tensors to nodes
+    tensor_to_node = {}
+    nodes = set(nodes_ops.keys())
+    for tensor in tensors:
+        node = _tensor_to_node(tensor, nodes)
+        if node != '':
+            tensor_to_node[tensor] = node
+        elif tensor in calib_tensors:
+            tensor_to_node[tensor] = tensor
+    assert set(calib_tensors).issubset(set(tensor_to_node.keys()))
+    calib_nodes = [tensor_to_node[ct] for ct in calib_tensors]
+
     quantizable = {}
     for qsym in qsymnet.get_internals():
         if qnodes_ops[qsym.name] in NULL_OP_NAMES:
@@ -290,31 +321,15 @@ def query_quantizable_nodes(sym_model, ctx, dataloader):
         node_name = sym_name if node_name == '' else node_name
         assert qnodes_ops[qsym.name] not in QUANTIZE_OP_NAMES or (op_type == OpType.QUANTIZE), \
             'Quantize node was not recognised properly. Node name: "{}"'.format(node_name)
-        if op_type == OpType.QUANTIZE:
-            quantizable[node_name] = QUANTIZE_OP_NAME
-        elif op_type == OpType.QUANTIZED:
-            quantizable[node_name] = nodes_ops[node_name]
+        if node_name in calib_nodes:
+            if op_type == OpType.QUANTIZE:
+                quantizable[node_name] = QUANTIZE_OP_NAME
+            elif op_type == OpType.QUANTIZED:
+                quantizable[node_name] = nodes_ops[node_name]
 
-    quantizable_nodes = [{'name': name, 'type': op}
-                         for (name, op) in quantizable.items()]
-
-    # getting tensors to nodes mapping (for adaptor.inspect_tensor)
-
-    # collect fp32 tensors
-    collector = NameCollector()
-    run_forward(sym_model, ctx, dataloader, [True], collector)
-    tensors = set(collector.names)
-
-    # map tensors to nodes
-    tensor_to_node = {}
-    nodes = set(quantizable.keys())
-    for tensor in tensors:
-        node = _tensor_to_node(tensor, nodes)
-        if node != '':
-            tensor_to_node[tensor] = node
-    assert set(calib_tensors).issubset(set(tensor_to_node.keys()))
-
-    return quantizable_nodes, tensor_to_node
+    quantizable_nodes = [{'name': name, 'type': op} for (name, op) in quantizable.items()]
+    op_nodes = {k: v for k, v in nodes_ops.items() if v not in NULL_OP_NAMES}
+    return quantizable_nodes, tensor_to_node, op_nodes
 
 
 def quantize_sym_model(sym_model, ctx, qconfig):
@@ -527,23 +542,18 @@ def parse_tune_config(tune_cfg, quantizable_nodes):
     excluded_symbols = []
     calib_minmax_nodes = set()
     calib_kl_nodes = set()
-
-    quantize_node_cfg = None
-    for (node_name, op), d in tune_cfg['op'].items():
-        if op == QUANTIZE_OP_NAME:
-            quantize_node_cfg = d['activation']['algorithm']
-            break
-    # assert quantize_node_cfg is not None, 'There must always be at least one quantize node'
-    if quantize_node_cfg is None:
-        quantize_node_cfg = QUANTIZE_DEFAULT_ALGORITHM
+    amp_excluded_nodes = set()
 
     for op in quantizable_nodes:
         cfg = tune_cfg['op'][(op['name'], op['type'])]['activation']
-        if cfg['dtype'] in ['fp32', 'bf16']:
+        if cfg['dtype'] not in ['bf16']:
+            amp_excluded_nodes.add(op['name'])
+        if cfg['dtype'] not in ['int8']:
             excluded_symbols.append(op['name'])
             # config for quantize node, that might be added after this node
             # (to quantize its output)
-            cfg['algorithm'] = quantize_node_cfg
+            cfg['algorithm'] = QUANTIZE_DEFAULT_ALGORITHM
+
         if cfg['algorithm'] == 'kl':
             calib_kl_nodes.add(op['name'])
         else:
@@ -562,7 +572,10 @@ def parse_tune_config(tune_cfg, quantizable_nodes):
                  'calib_kl_nodes': calib_kl_nodes,
                  'calib_minmax_nodes': calib_minmax_nodes}
 
-    return quant_cfg, calib_cfg
+    amp_cfg = {'target_dtype': 'bfloat16',
+               'excluded_sym_names': amp_excluded_nodes}
+
+    return quant_cfg, calib_cfg, amp_cfg
 
 
 def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
@@ -593,8 +606,13 @@ def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
     assert len(kl_tensors & minmax_tensors) == 0, 'same `calib_tensors` entries matched both kl ' \
         'and minmax nodes. Entries: {}'.format(kl_tensors & minmax_tensors)
 
+    # `rest` are the nodes that require callibration because of some node being excluded
+    # for example: input -> quantize -> conv_1 -> pooling -> conv_2
+    # when conv_1 is quantized, pooling output does not require callibration
+    # when conv_1 is excluded, pooling output requires callibration (as it is input of a quantized
+    # node): input -> conv_1 -> pooling -> quantize -> conv_2
     rest = calib_tensors - (kl_tensors | minmax_tensors)
-    assert len(rest) == 0, 'Unexpected `calib_tensors` entries. Entries: {}'.format(rest)
+    minmax_tensors |= rest # assign them to the minmax algorithm by default
 
     return (kl_tensors, minmax_tensors)
 
@@ -622,6 +640,15 @@ def calib_model(qsym_model, calib_data, calib_cfg):
         return mx.contrib.quantization.calib_graph(
             qsymnet, qargs, auxs, calib_data, calib_cfg['calib_mode'],
             quantized_dtype=calib_cfg['quantized_dtype'])
+
+
+def amp_convert(sym_model, input_desc, amp_cfg):
+    assert check_mx_version('2.0.0'), 'AMP is supported since MXNet 2.0. This error is due to ' \
+        'an error in the configuration file.'
+    from mxnet import amp
+
+    input_dtypes = {i.name: i.dtype for i in input_desc}
+    return amp.convert_model(*sym_model, input_dtypes, **amp_cfg, cast_params_offline=True)
 
 
 class DataLoaderWrap:
@@ -731,11 +758,11 @@ class TensorCollector(CollectorBase):
 
     def __init__(self, include_nodes, qtensor_to_tensor, tensor_to_node):
         self.tensors_dicts = []
-        self.include_nodes = dict(include_nodes)
+        self.include_nodes = include_nodes
         self.qtensor_to_tensor = qtensor_to_tensor
         self.tensor_to_node = tensor_to_node
 
-        rest = set(self.include_nodes.keys()) - set(self.tensor_to_node.values())
+        rest = set(self.include_nodes) - set(self.tensor_to_node.values())
         assert len(rest) == 0, 'Unexpected tensors set to be collected: {}'.format(rest)
 
     def collect_gluon(self, name, _, arr):
@@ -752,12 +779,7 @@ class TensorCollector(CollectorBase):
 
         node = self.tensor_to_node[name]
         if node in self.include_nodes:
-            op = self.include_nodes[node]
-            key = (node, op)
-            # rewriting should only take place for quantize nodes
-            assert (key not in self.tensors_dicts[-1] or name not in self.tensors_dicts[-1][key]
-                    or op == QUANTIZE_OP_NAME)
-            self.tensors_dicts[-1].setdefault(key, {})[name] = (is_quantized, arr.copy())
+            self.tensors_dicts[-1].setdefault(node, {})[name] = (is_quantized, arr.copy())
 
     def pre_batch(self, m, b):
         self.tensors_dicts.append({})

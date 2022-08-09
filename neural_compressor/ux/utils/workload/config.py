@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from neural_compressor.conf.config import Pruner
-from neural_compressor.ux.utils.consts import postprocess_transforms
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.logger import log
@@ -297,7 +296,7 @@ class Config(JsonSerializer):
     def process_transform(config: OrderedDict, transform: List[Dict[str, Any]]) -> None:
         """Process transformation."""
         for single_transform in transform:
-            if single_transform["name"] in postprocess_transforms:
+            if single_transform["name"] == "SquadV1":
                 continue
             trans_obj = Transform(
                 single_transform["name"],

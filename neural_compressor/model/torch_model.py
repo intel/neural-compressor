@@ -618,7 +618,7 @@ class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
             tune_cfg_file), "tune configure file %s didn't exist" % tune_cfg_file
 
         with open(tune_cfg_file, 'r') as f:
-            self.tune_cfg= json.load(f)
+            self.tune_cfg = json.load(f)
 
     def save(self, root=None):
         if not root:
@@ -627,7 +627,7 @@ class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
         os.makedirs(root, exist_ok=True)
         try:
             with open(os.path.join(root, "best_configure.json"), 'w') as f:
-                json.dump(self.tune_cfg, f)
+                json.dump(self.tune_cfg, f, indent = 4)
             logger.info("Save config file of quantized model to {}.".format(root))
         except IOError as e:
             logger.error("Fail to save configure file and weights due to {}.".format(e))

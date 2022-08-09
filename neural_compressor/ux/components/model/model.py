@@ -56,6 +56,12 @@ class Model(ABC):
         """Get model graph."""
         raise NotImplementedError(f"Reading graph for model {self.path} is not supported.")
 
+    def get_tensors_info(self) -> dict:
+        """Get information about tensors."""
+        raise NotImplementedError(
+            f"Getting tensors informarmation for model {self.path} is not supported.",
+        )
+
     @property
     def domain(self) -> Domain:
         """Get model domain."""

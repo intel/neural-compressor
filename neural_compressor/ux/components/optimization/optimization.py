@@ -59,7 +59,7 @@ class Optimization(JsonSerializer):
         self.input_precision: str = project_data["input_model"]["precision"]["name"]
         normalized_model_name = self.output_model_dir
         self.output_graph: str = os.path.join(normalized_model_name, self.output_model_name)
-
+        self.output_precision = self.optimization.output_precision
         self.framework: str = names_mapper.map_name(
             parameter_type="framework",
             value=project_data["input_model"]["framework"]["name"],

@@ -26,7 +26,7 @@ import yaml
 import numpy as np
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
-from ..utils.utility import Statistics
+from ..utils.utility import Statistics, dump_data_to_local
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
@@ -34,6 +34,7 @@ from ..utils import OPTIONS
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
 from ..algorithm import AlgorithmScheduler
+from ..algorithm.fast_bias_correction import FastBiasCorrection
 
 """The tuning strategies supported by neural_compressor, including basic, random, bayesian and mse.
 
@@ -141,6 +142,9 @@ class TuneStrategy(object):
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
 
+        self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
+            bool('graph_optimization' in self.cfg)
+
         if 'tensorflow' in framework:
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
@@ -150,13 +154,19 @@ class TuneStrategy(object):
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnxrt' in framework.lower():
-            framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
+            if self.mixed_precision_mode:
+                framework_specific_info.update({"backend": "integerops"})
+                framework_specific_info.update({"approach": "post_training_dynamic_quant"})
+            else:
+                framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
             framework_specific_info.update({'recipes': self.cfg.quantization.recipes})
             framework_specific_info.update(
                                 {'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
+            if self.mixed_precision_mode:
+                framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update(
                 {"workspace_path": os.path.dirname(self.deploy_path)})
@@ -210,8 +220,6 @@ class TuneStrategy(object):
                              deep_get(self.cfg, 'tuning.multi_objectives.higher_is_better'),
                              deep_get(self.cfg, 'tuning.multi_objectives.weight'))
         self.capability = self.adaptor.query_fw_capability(model)
-        self.graph_optimization_mode = bool('graph_optimization' in self.cfg)
-
         self.modelwise_tune_space = conf.modelwise_tune_space(self.capability['optypewise'])
         self.opwise_tune_space = conf.opwise_tune_space(self.capability['opwise'])
         self.model_wise_tune_cfgs = OrderedDict()
@@ -230,7 +238,7 @@ class TuneStrategy(object):
         else:
             self.calib_iter = [1]
 
-        fallback_precision_list = ['fp32'] if self.graph_optimization_mode \
+        fallback_precision_list = ['fp32'] if self.mixed_precision_mode \
             else ['fp32', 'bf16', 'fp16']
         self.model_wise_quant_cfgs = OrderedDict()
         for optype in self.model_wise_tune_cfgs.keys():
@@ -250,8 +258,11 @@ class TuneStrategy(object):
             cfg_list = self.opwise_tune_cfgs[key]
             new_list = []
             for cfg in cfg_list:
-                if self.graph_optimization_mode:
-                    if cfg['activation']['dtype'] in self.cfg.graph_optimization.precisions:
+                if self.mixed_precision_mode:
+                    if (self.cfg.graph_optimization and \
+                        cfg['activation']['dtype'] in self.cfg.graph_optimization.precisions) or \
+                        (self.cfg.mixed_precision and \
+                        cfg['activation']['dtype'] in self.cfg.mixed_precision.precisions):
                         new_list.append(cfg)
                 else:
                     if ('weight' in cfg
@@ -339,6 +350,7 @@ class TuneStrategy(object):
         # get fp32 model baseline
         if self.baseline is None:
             logger.info("Get FP32 model baseline.")
+            self._fp32_model = self.model
             self.baseline = self._evaluate(self.model)
             # record the FP32 baseline
             self._add_tuning_history()
@@ -393,6 +405,8 @@ class TuneStrategy(object):
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
             self.algo.origin_model = self.adaptor.pre_optimized_model
+            if self.cfg.quantization.recipes.fast_bias_correction:
+                self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
@@ -405,7 +419,11 @@ class TuneStrategy(object):
                                     saved_last_tune_result,
                                     q_config=self.q_model.q_config)
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
+            self.tune_cfg = tune_cfg
             if need_stop:
+                if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
+                    logger.debug(f'*** Start to do diagnosis (inspect tensor).')
+                    self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
                     self.best_tune_result is not None:
                     best_trail, best_result = self.objectives.best_result(
@@ -787,3 +805,44 @@ class TuneStrategy(object):
 
     def _fake_eval_func(self, model):
         return 1.
+
+    def _diagnosis(self):
+        import logging
+        logger = logging.getLogger()
+        iteration_list = self.cfg.tuning.diagnosis.iteration_list
+        inspect_type = self.cfg.tuning.diagnosis.inspect_type
+        save_to_disk = self.cfg.tuning.diagnosis.save_to_disk
+        save_path = self.cfg.tuning.diagnosis.save_path
+        inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(self._fp32_model, 
+                                                                      self.last_qmodel, 
+                                                                      self.tune_cfg, 
+                                                                      save_path = save_path)
+        op_list = self.cfg.tuning.diagnosis.op_list
+        if not op_list:
+            op_list = list(inspect_node_lst)
+        else:
+            op_list = list(set(op_list).intersection(inspect_node_lst))
+
+        logger.debug(f'*** Start to inspect tensor :{op_list} in  fp32 model.')
+        self.adaptor.inspect_tensor(self._fp32_model,
+                                    dataloader=self.calib_dataloader,
+                                    op_list=op_list,
+                                    iteration_list=iteration_list,
+                                    inspect_type=inspect_type, 
+                                    save_to_disk=save_to_disk,
+                                    save_path= save_path + '/fp32/',
+                                    quantization_cfg=updated_cfg)
+
+        logger.debug(f'*** Start to inspect tensor :{op_list} in  quantized model.')
+        self.adaptor.inspect_tensor(self.last_qmodel, 
+                                    dataloader=self.calib_dataloader,
+                                    op_list=op_list,
+                                    iteration_list=iteration_list,
+                                    inspect_type=inspect_type, 
+                                    save_to_disk=save_to_disk,
+                                    save_path= save_path + '/quan/',
+                                    quantization_cfg=updated_cfg)
+    
+
+
+        

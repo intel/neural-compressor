@@ -40,7 +40,10 @@ class Tuning(Optimization):
         """Initialize Tuning class."""
         super().__init__(optimization_data, project_data, dataset_data)
         self.sampling_size = optimization_data["sampling_size"]
-        self.tuning_details: TuningDetails = TuningDetails(optimization_data["tuning_details"])
+        self.tuning_details: TuningDetails = TuningDetails(
+            optimization_data.get("tuning_details", {}),
+        )
+        self.diagnosis_config: dict = optimization_data.get("diagnosis_config", {})
         self.template_path = dataset_data["template_path"]
         self.script_path: Optional[str] = None
         if self.template_path:
@@ -81,6 +84,7 @@ class Tuning(Optimization):
                 "objective": self.tuning_details.objective,
                 "exit_policy": self.tuning_details.exit_policy,
                 "random_seed": self.tuning_details.random_seed,
+                "diagnosis_config": self.diagnosis_config,
             },
         )
         return configuration_data
@@ -127,14 +131,16 @@ class TuningDetails(JsonSerializer):
     exit_policy: dict
     random_seed: int
 
-    def __init__(self, data: dict):
+    def __init__(self, data: Optional[dict]):
         """Initialize tuning details with data."""
         super().__init__()
         """Initialize tuning detials interface with data."""
+        if data is None:
+            data = {}
         self.strategy = data.get("tuning_strategy", Strategies.BASIC.value)
         self.accuracy_criterion = AccuracyCriterion()
         self.accuracy_criterion.type = data.get("accuracy_criterion_type", "relative")
         self.accuracy_criterion.threshold = data.get("accuracy_criterion_threshold", 0.1)
         self.objective = data.get("objective", "performance")
-        self.exit_policy = data.get("exit_policy", {"timeout": 0})
+        self.exit_policy = data.get("exit_policy", {"timeout": 0, "max_trials": 25})
         self.random_seed = data.get("random_seed", 9527)

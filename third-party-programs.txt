@@ -14,57 +14,66 @@ terms are listed below.
 -------------------------------------------------------------
 1. Intel® AI Quantization Tools for Tensorflow*
 
-   transformers
+   blendcnn
 
-   gluon-cv
-
-   gluon-nlp
+   examples-PyTorch-imagenet_recognition-efficientnet
+   Copyright 2020 Ross Wightman
 
    examples-PyTorch-PeleeNet
 
    examples-PyTorch-ResNest
 
-   pytorch-mobilenet-v3
-
-   mlperf-inference
-
    example-Tensorflow-albert
 
-   example-tensorflow-models
-   Copyright 2016, The Authors.
+   example-tensorflow-bert
 
-   IntelAI Models
+   example-Tensorflow-dataset_tools
 
    example-tensorflow-DIEN
    Copyright 2015 The TensorFlow Authors. All Rights Reserved.
 
-   example-tensorflow-bert
+   example-tensorflow-models
+   Copyright 2016, The Authors.
 
-   examples-PyTorch-imagenet_recognition-efficientnet
-   Copyright 2020 Ross Wightman
+   Gluon-CV
 
-   blendcnn
+   Gluon-NLP
 
-   tensor2tensor
+   IntelAI Models
 
-   rxjs
-   Copyright (c) 2015-2018 Google, Inc., Netflix, Inc., Microsoft Corp. and contributors
+   Intel TensorFlow Quantization Tool
+
+   keras-example-resnetv2
+
+   mlperf-inference
 
    mlperf-training
    Copyright 2018 The MLPerf Authors
 
-   tensorflow-yolo-v3
-
    nvidia-bert
-
-   opencv-openbert
 
    onnx/models
 
-   sparsednn
+   opencv-openbert
 
-   keras-example-resnetv2
+   pytorch-mobilenet-v3
 
+   rxjs
+   Copyright (c) 2015-2018 Google, Inc., Netflix, Inc., Microsoft Corp. and contributors
+
+   tensor2tensor
+
+   tensorflow-yolo-v3
+
+   Transformer
+
+   nnUnet
+   Copyright [2019] [Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany]
+
+   Ultra-Light-Fast-Generic-Face-Detector-1MB
+   Copyright (c) 2019 linzai
+
+   plotly
 
                                 Apache License
                             Version 2.0, January 2004
@@ -317,74 +326,79 @@ terms are listed below.
     MMdnn
     Copyright (c) Microsoft Corporation. All rights reserved.
 
-	@angular/animations
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/animations
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/cdk
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/cdk
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/common
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/common
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/compiler
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/compiler
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/core
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/core
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/flex-layout
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/flex-layout
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/forms
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/forms
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/material
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/material
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/platform-browser
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/platform-browser
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/platform-browser-dynamic
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/platform-browser-dynamic
+    Copyright (c) 2010-2020 Google LLC.
 
-	@angular/router
-	Copyright (c) 2010-2020 Google LLC.
+    @angular/router
+    Copyright (c) 2010-2020 Google LLC.
 
-	socket.io-client
-	Copyright (c) 2014 Guillermo Rauch
+    socket.io-client
+    Copyright (c) 2014 Guillermo Rauch
 
-	ts-md5
-	Copyright (C) 2014 Raymond Hill
+    ts-md5
+    Copyright (C) 2014 Raymond Hill
 
-	zone.js
-	Copyright (c) 2010-2020 Google LLC.
+    zone.js
+    Copyright (c) 2010-2020 Google LLC.
 
-	js-sha256
-	Copyright (c) 2014-2017 Chen, Yi-Cyuan
+    js-sha256
+    Copyright (c) 2014-2017 Chen, Yi-Cyuan
 
-	@swimlane/ngx-graph
-	Copyright (c) 2016 Swimlane <info@swimlane.com>
+    @swimlane/ngx-graph
+    Copyright (c) 2016 Swimlane <info@swimlane.com>
 
-	ngx-pipes
-	Copyright (c) Dan Revah
+    ngx-pipes
+    Copyright (c) Dan Revah
 
-	ngx-charts
+    ngx-charts
 
-	ngx-slider
-	Copyright (c) 2013 Rafal Zajac <rzajac@gmail.com>
-	Copyright (c) 2018 Piotr Dziwinski <piotrdz@gmail.com>
+    ngx-joyride
+    Copyright (c) 2018 Tommasi Nicola.
 
-	example-pytorch-WideResNet-cifar10
-	Copyright (c) 2019 xternalz
+    example-pytorch-WideResNet-cifar10
+    Copyright (c) 2019 xternalz
 
-	example-pytorch-plain_cnn-cifar100
-	Copyright (c) 2019 Iman Mirzadeh
+    example-pytorch-plain_cnn-cifar100
+    Copyright (c) 2019 Iman Mirzadeh
 
-	haq/model/mobilenetv2
-	Copyright (c) 2019 MIT HAN Lab
+    haq/model/mobilenetv2
+    Copyright (c) 2019 MIT HAN Lab
 
     mnist
     Copyright (c) Microsoft Corporation. All rights reserved.
+
+	onnxconverter-common
+	Copyright (c) Microsoft Corporation. All rights reserved.
+
+	FileSaver.js
+	Copyright © 2016 Eli Grey.
 
     The MIT License (MIT)
 
@@ -657,11 +671,8 @@ terms are listed below.
     3-clause BSD license
     =======================================================================================
 
-    3rdparty/mkldnn/src/cpu/x64/xbyak
-    3rdparty/mkldnn/tests/gtests/gtest
     3rdparty/mkldnn/cmake/FindOpenCL.cmake (Copy of the License available at licenses/BSD3-cmake)
     3rdparty/mkldnn/src/cpu/x64/jit_utils/jitprofiling/
-    3rdparty/onnx-tensorrt/third_party/onnx/third_party/pybind11/tools/FindPythonLibsNew.cmake
     3rdparty/ctc_include/contrib/moderngpu
     3rdparty/nvidia_cub
     3rdparty/nvidia_cub/test/mersenne.h
@@ -679,8 +690,6 @@ terms are listed below.
     =======================================================================================
 
     3rdparty/dmlc-core/include/dmlc/concurrentqueue.h
-    3rdparty/onnx-tensorrt/third_party/onnx/third_party/pybind11/tools/FindEigen3.cmake  (Copy of the License available at licenses/BSD2)
-    3rdparty/onnx-tensorrt/third_party/onnx/third_party/pybind11/tools/FindPythonLibsNew.cmake
     3rdparty/tvm/3rdparty/picojson/picojson.h
 
     =======================================================================================
@@ -740,7 +749,6 @@ terms are listed below.
     LLVM Release License
     =======================================================================================
 
-    3rdparty/onnx-tensorrt/third_party/onnx/third_party/pybind11/tools/clang
 
     =======================================================================================
     Unlicense
@@ -1864,12 +1872,45 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
    POSSIBILITY OF SUCH DAMAGE.
 
+-------------------------------------------------------------
+9. protobuf
+   Copyright 2008 Google Inc.  All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+    * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Code generated by the Protocol Buffer compiler is owned by the owner
+of the input file used when generating it.  This code is not
+standalone and requires a support library to be linked with it.  This
+support library is itself covered by the above license.
 ------------------------------------------------------------------
 
 The following third party programs have their own third party program files. These additional
 third party program files are as follows:
 
-1. Intel® AI Quantization Tools for Tensorflow*: https://github.com/IntelAI/tools/blob/master/api/third-party-programs.txt
+1. Intel® AI Quantization Tools for Tensorflow*: python3.7/site-packages/neural_compressor-1.11.dist-info
 -------------------------------------------------------------
 Other names and brands may be claimed as the property of others

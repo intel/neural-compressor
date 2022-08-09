@@ -115,6 +115,7 @@ function set_args {
   efficientnet-b7_auto_aug
   vggvox
   ava-person-vehicle-detection-stage2-2_0_0
+  DIEN_Deep-Interest-Evolution-Network
   --------
   )
 

@@ -27,6 +27,7 @@ WORKSPACE_LOCATION = os.path.join(os.environ.get("HOME", ""), "workdir")
 class Domains(Enum):
     """Model domains enumeration."""
 
+    NONE = ""
     IMAGE_RECOGNITION = "Image Recognition"
     OBJECT_DETECTION = "Object Detection"
     NLP = "Neural Language Processing"
@@ -46,6 +47,7 @@ class Frameworks(Enum):
 
     TF = "TensorFlow"
     ONNX = "ONNXRT"
+    PT = "PyTorch"
 
 
 class OptimizationTypes(Enum):
@@ -69,6 +71,8 @@ class Precisions(Enum):
     FP32 = "fp32"
     BF16 = "bf16"
     INT8 = "int8"
+    INT8_STATIC_QUANTIZATION = "int8 static quantization"
+    INT8_DYNAMIC_QUANTIZATION = "int8 dynamic quantization"
 
 
 class Strategies(Enum):
@@ -84,8 +88,12 @@ class Strategies(Enum):
 
 
 precision_optimization_types = {
-    OptimizationTypes.QUANTIZATION: [Precisions.INT8],
+    OptimizationTypes.QUANTIZATION: [
+        Precisions.INT8,
+        Precisions.INT8_STATIC_QUANTIZATION,
+        Precisions.INT8_DYNAMIC_QUANTIZATION,
+    ],
     OptimizationTypes.GRAPH_OPTIMIZATION: [Precisions.BF16, Precisions.FP32],
 }
 
-postprocess_transforms = ["SquadV1", "SquadV1ModelZoo"]
+postprocess_transforms = ["SquadV1"]

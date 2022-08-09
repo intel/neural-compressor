@@ -1,0 +1,9 @@
+# config file: adding a distillation option in original sparsity code
+task: sst2 # none
+external_datasets: 
+  data_1: jmamou/augmented-glue-sst2 # none 
+  data_2: https://github.com/clairett/pytorch-sentiment-classification/raw/master/data/SST2/test.tsv
+
+teacher_model:
+  name: none
+  path: none

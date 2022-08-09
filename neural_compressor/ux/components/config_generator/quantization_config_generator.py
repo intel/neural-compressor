@@ -13,14 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Configuration generator class."""
-from typing import Any
+from typing import Any, Optional
 
 from neural_compressor.ux.components.config_generator.config_generator import ConfigGenerator
 from neural_compressor.ux.utils.workload.config import Config
 from neural_compressor.ux.utils.workload.evaluation import Accuracy, Evaluation, Metric
-from neural_compressor.ux.utils.workload.quantization import Calibration, Quantization
+from neural_compressor.ux.utils.workload.quantization import Calibration, Quantization, WiseConfig
 from neural_compressor.ux.utils.workload.tuning import (
     AccCriterion,
+    Diagnosis,
     ExitPolicy,
     MultiObjectives,
     Strategy,
@@ -41,6 +42,14 @@ class QuantizationConfigGenerator(ConfigGenerator):
         self.objective: str = data["objective"]
         self.exit_policy: dict = data["exit_policy"]
         self.random_seed: int = data["random_seed"]
+        diagnosis_config: Optional[dict] = data.get("diagnosis_config", {})
+        if diagnosis_config is None:
+            diagnosis_config = {}
+
+        self.op_wise: Optional[dict] = diagnosis_config.get("op_wise", None)
+        self.model_wise: Optional[WiseConfig] = WiseConfig(
+            diagnosis_config.get("model_wise", None),
+        )
 
     def generate(self) -> None:
         """Generate yaml config file."""
@@ -60,6 +69,9 @@ class QuantizationConfigGenerator(ConfigGenerator):
         tuning.multi_objectives = MultiObjectives({"objective": self.objective})
         tuning.exit_policy = ExitPolicy(self.exit_policy)
         tuning.random_seed = self.random_seed
+
+        tuning.diagnosis = Diagnosis()
+
         tuning.set_workspace(self.workdir)
         return tuning
 
@@ -70,6 +82,13 @@ class QuantizationConfigGenerator(ConfigGenerator):
         quantization.calibration.sampling_size = self.sampling_size
         if self.dataset_type != "custom":
             quantization.calibration.dataloader = self.generate_dataloader_config()
+
+        if self.op_wise:
+            quantization.op_wise = self.op_wise
+
+        if self.model_wise:
+            quantization.model_wise = self.model_wise
+
         return quantization
 
     def generate_evaluation_config(self) -> Evaluation:

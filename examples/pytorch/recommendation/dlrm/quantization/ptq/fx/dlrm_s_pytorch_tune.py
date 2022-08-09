@@ -70,7 +70,6 @@ import numpy as np
 import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-import onnx
 
 # pytorch
 import torch
@@ -1308,6 +1307,7 @@ if __name__ == "__main__":
 
     # export the model in onnx
     if args.save_onnx:
+        import onnx
         with open("dlrm_s_pytorch.onnx", "w+b") as dlrm_pytorch_onnx_file:
             (X, lS_o, lS_i, _) = train_data[0]  # get first batch of elements
             torch.onnx._export(

@@ -34,7 +34,6 @@ def get_available_models() -> List[Dict[str, Any]]:
     model_list = []
     full_list = load_model_config()
     installed_frameworks = get_installed_frameworks()
-
     for framework, framework_version in installed_frameworks.items():
         framework_dict = full_list.get(framework, {})
 
@@ -71,7 +70,7 @@ def validate_model_list(model_list: List[dict]) -> None:
         raise ClientErrorException(
             "Examples require installed TensorFlow in specific version. "
             "Please install TensorFlow in one of following versions: "
-            "2.0.x, 2.3.x or 2.4.x, 2.5.x, 2.6.x or 2.7.x.",
+            "2.0.x or 2.3.x - 2.10.x ",
         )
 
 
@@ -80,6 +79,7 @@ def get_framework_module_name(framework_name: str) -> str:
     modules_map: Dict[str, str] = {
         Frameworks.TF.value: "tensorflow",
         Frameworks.ONNX.value: "onnx",
+        Frameworks.PT.value: "torch",
     }
     module_name = modules_map.get(framework_name, None)
     if module_name is None:
@@ -93,7 +93,6 @@ def get_installed_frameworks() -> dict:
     """Check environment for installed frameworks."""
     installed_frameworks = {}
     supported_frameworks = ModelRepository.get_supported_frameworks()
-
     for framework in supported_frameworks:
         try:
             framework_module_name = get_framework_module_name(framework)

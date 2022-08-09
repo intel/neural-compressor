@@ -54,6 +54,7 @@ from neural_compressor.ux.components.db_manager.db_models.tuning_history import 
 from neural_compressor.ux.components.db_manager.params_interfaces import (
     BenchmarkAddParamsInterface,
     DatasetAddParamsInterface,
+    DiagnosisOptimizationParamsInterface,
     ModelAddParamsInterface,
     OptimizationAddParamsInterface,
     ProfilingAddParamsInterface,
@@ -61,14 +62,21 @@ from neural_compressor.ux.components.db_manager.params_interfaces import (
     TuningHistoryInterface,
     TuningHistoryItemInterface,
 )
+from neural_compressor.ux.components.diagnosis.factory import DiagnosisFactory
+from neural_compressor.ux.components.diagnosis.op_details import OpDetails
 from neural_compressor.ux.components.model.repository import ModelRepository
 from neural_compressor.ux.components.model_zoo.download_model import download_model
 from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
+from neural_compressor.ux.components.optimization.factory import OptimizationFactory
+from neural_compressor.ux.components.optimization.optimization import (
+    Optimization as OptimizationInterface,
+)
 from neural_compressor.ux.components.optimization.tune.tuning import (
     TuningDetails as TuningDetailsInterface,
 )
 from neural_compressor.ux.utils.consts import (
     WORKSPACE_LOCATION,
+    Domains,
     ExecutionStatus,
     OptimizationTypes,
     Precisions,
@@ -79,6 +87,7 @@ from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import (
     get_predefined_config_path,
     load_model_config,
+    load_model_wise_params,
     normalize_string,
 )
 from neural_compressor.ux.utils.workload.config import Config
@@ -130,7 +139,6 @@ class ProjectAPIInterface:
             data["model"].update({"model_name": "Input model"})
             model_id = ProjectAPIInterface.add_model(db_session, data)
             dataset_id = ProjectAPIInterface.add_dummy_dataset(db_session, data)
-
         return {
             "project_id": project_id,
             "model_id": model_id,
@@ -168,30 +176,24 @@ class ProjectAPIInterface:
     def add_model(db_session: session.Session, data: dict) -> int:
         """Create new project with input model."""
         model_data = copy(data.get("model", {}))
-
         model_data.update({"project_id": data.get("project_id")})
-
         model_path = model_data.get("path")
         model_data.update({"model_path": model_path})
         model = ModelRepository().get_model(model_path)
-
         model_data.update({"size": model.size})
-
         supports_profiling = model.supports_profiling
         model_data.update({"supports_profiling": supports_profiling})
-
         supports_graph = model.supports_graph
         model_data.update({"supports_graph": supports_graph})
-
         framework = model.get_framework_name()
         framework_id = Framework.get_framework_id(db_session, framework)
         model_data.update({"framework_id": framework_id})
-
         precision = model_data.get("precision", "fp32")
         precision_id = Precision.get_precision_id(db_session, precision)
         model_data.update({"precision_id": precision_id})
-
         domain = model_data.get("domain")
+        if not domain:
+            domain = Domains.NONE.value
         domain_id = Domain.get_domain_id(db_session, domain)
         model_data.update({"domain_id": domain_id})
         del model_data["domain"]
@@ -199,7 +201,6 @@ class ProjectAPIInterface:
         domain_flavour = model.domain.domain_flavour
         domain_flavour_id = DomainFlavour.get_domain_flavour_id(db_session, domain_flavour)
         model_data.update({"domain_flavour_id": domain_flavour_id})
-
         model_parameters: ModelAddParamsInterface = ModelAPIInterface.parse_model_data(
             model_data,
         )
@@ -225,15 +226,28 @@ class ProjectAPIInterface:
     def add_dummy_dataset(db_session: session.Session, data: dict) -> int:
         """Add dummy dataset to project."""
         received_shape = data.get("model", {}).get("shape", None)
+        model_path = data.get("model", {}).get("path", None)
+        project_id = data.get("project_id", None)
+        if project_id is None:
+            raise InternalException("Could not find project id.")
+        if model_path is not None:
+            if ".py" == model_path[-3:]:
+                dataset_id = Dataset.add(
+                    project_id=project_id,
+                    db_session=db_session,
+                    dataset_name="dummy",
+                    dataset_type="dummy_v0",
+                    parameters={
+                        "input_shape": "NA",
+                        "label_shape": [1],
+                    },
+                )
+                return dataset_id
         if received_shape is None:
             return -1
         shape = ConfigurationParser.parse_value(received_shape, [[int]])  # type: ignore
         if len(shape[0]) <= 0:
             return -1
-
-        project_id = data.get("project_id", None)
-        if project_id is None:
-            raise InternalException("Could not find project id.")
 
         dataset_id = Dataset.add(
             project_id=project_id,
@@ -564,7 +578,11 @@ class DatasetAPIInterface:
 
         if isinstance(parameters, dict) and "root" in parameters.keys():
             parameters.update({"root": dataset_path})
-        dataset_parameters.parameters = parameters
+        dataset_parameters.parameters = ConfigurationParser().parse_dataloader(
+            {
+                "params": parameters,
+            },
+        )["params"]
         dataset_parameters.transforms = data.get("transform", [])
         dataset_parameters.metric = {"name": metric_name, "param": metric_param}
 
@@ -740,7 +758,7 @@ class OptimizationAPIInterface:
     def list_optimizations(data: dict) -> dict:
         """List optimizations assigned to project."""
         try:
-            project_id: int = int(data.get("project_id", None))
+            project_id = int(data.get("project_id", None))
         except ValueError:
             raise ClientErrorException("Incorrect project id.")
         except TypeError:
@@ -927,7 +945,6 @@ class OptimizationAPIInterface:
         """Add optimization to database."""
         parser = ConfigurationParser()
         parsed_input_data = parser.parse(data)
-
         parsed_optimization_data: OptimizationAddParamsInterface = (
             OptimizationAPIInterface.parse_optimization_data(
                 parsed_input_data,
@@ -964,7 +981,6 @@ class OptimizationAPIInterface:
             exit_policy=tuning_details.exit_policy,
             random_seed=tuning_details.random_seed,
         )
-
         optimization_id = Optimization.add(
             db_session=db_session,
             project_id=optimization_data.project_id,
@@ -975,6 +991,7 @@ class OptimizationAPIInterface:
             batch_size=optimization_data.batch_size,
             sampling_size=optimization_data.sampling_size,
             tuning_details_id=tuning_details_id,
+            diagnosis_config=optimization_data.diagnosis_config,
         )
         return optimization_id
 
@@ -1067,7 +1084,6 @@ class OptimizationAPIInterface:
             optimization_data.precision_id = int(data.get("precision_id", None))
             optimization_data.optimization_type_id = int(data.get("optimization_type_id", None))
             optimization_data.dataset_id = int(data.get("dataset_id", None))
-
             optimization_data.tuning_details = TuningDetailsInterface(data)
         except ValueError:
             raise ClientErrorException("Could not parse value")
@@ -1076,6 +1092,7 @@ class OptimizationAPIInterface:
 
         optimization_data.batch_size = int(data.get("batch_size", 100))
         optimization_data.sampling_size = int(data.get("sampling_size", 100))
+        optimization_data.diagnosis_config = dict(data.get("diagnosis_config", {}))
 
         return optimization_data
 
@@ -1332,6 +1349,7 @@ class BenchmarkAPIInterface:
                 number_of_instance=benchmark_params.number_of_instance,
                 cores_per_instance=benchmark_params.cores_per_instance,
                 warmup_iterations=benchmark_params.warmup_iterations,
+                execution_command=benchmark_params.command_line,
             )
         return {
             "benchmark_id": benchmark_id,
@@ -1381,6 +1399,7 @@ class BenchmarkAPIInterface:
             benchmark_data.iterations = int(data.get("iterations", -1))
             benchmark_data.cores_per_instance = int(data.get("cores_per_instance", 4))
             benchmark_data.warmup_iterations = int(data.get("warmup_iterations", 10))
+            benchmark_data.command_line = str(data.get("command_line"))
         except ValueError:
             raise ClientErrorException("Could not parse value")
         except TypeError:
@@ -1909,6 +1928,7 @@ class ExamplesAPIInterface:
                             "batch_size": 1,
                             "iterations": -1,
                             "warmup_iterations": 5,
+                            "command_line": "",
                         },
                     )
                 )
@@ -1924,6 +1944,7 @@ class ExamplesAPIInterface:
                     number_of_instance=benchmark_data.number_of_instance,
                     cores_per_instance=benchmark_data.cores_per_instance,
                     warmup_iterations=benchmark_data.warmup_iterations,
+                    execution_command=benchmark_data.command_line,
                 )
         except Exception as e:
             mq.post_failure(
@@ -1974,6 +1995,258 @@ class ExamplesAPIInterface:
             )
         )
         return optimization_data
+
+
+class DiagnosisAPIInterface:
+    """Interface for queries connected with diagnosis of models."""
+
+    @staticmethod
+    def get_op_list(data: dict) -> List[dict]:
+        """Get OP list for model."""
+        try:
+            project_id: int = int(data.get("project_id", None))
+            model_id: int = int(data.get("model_id", None))
+        except ValueError:
+            raise ClientErrorException("Incorrect parameter values.")
+        except TypeError:
+            raise ClientErrorException("Could not find all required parameters.")
+
+        with Session.begin() as db_session:
+            optimization_details = Optimization.get_optimization_by_project_and_model(
+                db_session,
+                project_id,
+                model_id,
+            )
+
+        dataset_details = DatasetAPIInterface.get_dataset_details(
+            {"id": optimization_details["dataset"]["id"]},
+        )
+        project_id = optimization_details["project_id"]
+        project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+        optimization: OptimizationInterface = OptimizationFactory.get_optimization(
+            optimization_data=optimization_details,
+            project_data=project_details,
+            dataset_data=dataset_details,
+        )
+
+        diagnosis = DiagnosisFactory.get_diagnosis(optimization)
+
+        return diagnosis.get_op_list()
+
+    @staticmethod
+    def get_op_details(data: dict) -> dict:
+        """Get OP details for specific OP in model."""
+        try:
+            project_id: int = int(data.get("project_id", None))
+            model_id: int = int(data.get("model_id", None))
+            op_name: str = str(data.get("op_name", None))
+        except ValueError:
+            raise ClientErrorException("Incorrect parameter values.")
+        except TypeError:
+            raise ClientErrorException("Could not find all required parameters.")
+
+        with Session.begin() as db_session:
+            optimization_details = Optimization.get_optimization_by_project_and_model(
+                db_session,
+                project_id,
+                model_id,
+            )
+
+        dataset_details = DatasetAPIInterface.get_dataset_details(
+            {"id": optimization_details["dataset"]["id"]},
+        )
+        project_id = optimization_details["project_id"]
+        project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+        optimization: OptimizationInterface = OptimizationFactory.get_optimization(
+            optimization_data=optimization_details,
+            project_data=project_details,
+            dataset_data=dataset_details,
+        )
+
+        diagnosis = DiagnosisFactory.get_diagnosis(optimization)
+
+        op_details: Optional[OpDetails] = diagnosis.get_op_details(op_name)
+        if op_details is None:
+            return {}
+        return op_details.serialize()
+
+    @staticmethod
+    def histogram(data: dict) -> list:
+        """Get histogram of specific tensor in model."""
+        try:
+            project_id: int = int(data.get("project_id", None))
+            model_id: int = int(data.get("model_id", None))
+            op_name: str = str(data.get("op_name", None))
+            histogram_type: str = str(data.get("type", None))
+        except ValueError:
+            raise ClientErrorException("Incorrect parameter values.")
+        except TypeError:
+            raise ClientErrorException("Could not find all required parameters.")
+
+        histogram_type_map = {
+            "weights": "weight",
+            "activation": "activation",
+        }
+
+        parsed_histogram_type: Optional[str] = histogram_type_map.get(histogram_type, None)
+        if parsed_histogram_type is None:
+            raise ClientErrorException(
+                f"Histogram type not supported. "
+                f"Use one of following: {histogram_type_map.keys()}",
+            )
+
+        with Session.begin() as db_session:
+            optimization_details = Optimization.get_optimization_by_project_and_model(
+                db_session,
+                project_id,
+                model_id,
+            )
+
+        dataset_details = DatasetAPIInterface.get_dataset_details(
+            {"id": optimization_details["dataset"]["id"]},
+        )
+        project_id = optimization_details["project_id"]
+        project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+        optimization: OptimizationInterface = OptimizationFactory.get_optimization(
+            optimization_data=optimization_details,
+            project_data=project_details,
+            dataset_data=dataset_details,
+        )
+
+        diagnosis = DiagnosisFactory.get_diagnosis(optimization)
+
+        histogram_data = diagnosis.get_histogram_data(op_name, parsed_histogram_type)
+        return histogram_data
+
+    @staticmethod
+    def generate_optimization(data: dict) -> int:
+        """Parse input data and get optimization details."""
+        optimization_data = DiagnosisAPIInterface.parse_optimization_data(data)
+
+        original_optimization = OptimizationAPIInterface.get_optimization_details(
+            {"id": optimization_data.optimization_id},
+        )
+
+        new_optimization_data: OptimizationAddParamsInterface = (
+            OptimizationAPIInterface.parse_optimization_data(
+                {
+                    "project_id": optimization_data.project_id,
+                    "name": optimization_data.optimization_name,
+                    "precision_id": original_optimization["precision"]["id"],
+                    "optimization_type_id": original_optimization["optimization_type"]["id"],
+                    "dataset_id": original_optimization["dataset"]["id"],
+                    "batch_size": original_optimization["batch_size"],
+                    "sampling_size": original_optimization["sampling_size"],
+                    "diagnosis_config": {
+                        "op_wise": optimization_data.op_wise,
+                        "model_wise": optimization_data.model_wise,
+                    },
+                },
+            )
+        )
+
+        with Session.begin() as db_session:
+            optimization_id = OptimizationAPIInterface.add_quantization_optimization(
+                db_session=db_session,
+                optimization_data=new_optimization_data,
+            )
+
+        return optimization_id
+
+    @staticmethod
+    def model_wise_params(data: dict) -> dict:
+        """Get model wise parameters for specified optimization."""
+        try:
+            optimization_id: int = int(data.get("optimization_id", None))
+        except ValueError:
+            raise ClientErrorException("Incorrect optimization id.")
+        except TypeError:
+            raise ClientErrorException("Could not find optimization id.")
+        optimization = OptimizationAPIInterface.get_optimization_details({"id": optimization_id})
+
+        try:
+            framework = optimization["optimized_model"]["framework"]["name"]
+        except KeyError:
+            raise ClientErrorException("Could not find framework name for specified optimization.")
+        return load_model_wise_params(framework)
+
+    @staticmethod
+    def parse_optimization_data(data: dict) -> DiagnosisOptimizationParamsInterface:
+        """Parse optimization parameters from diagnosis tab."""
+        optimization_params = DiagnosisOptimizationParamsInterface()
+        try:
+            optimization_params.project_id = int(data.get("project_id", None))
+            optimization_params.optimization_id = int(data.get("optimization_id", None))
+            optimization_params.optimization_name = str(data.get("optimization_name", None))
+            optimization_params.op_wise = DiagnosisAPIInterface.parse_op_wise_config(
+                data.get("op_wise", {}),
+            )
+            optimization_params.model_wise = DiagnosisAPIInterface.parse_model_wise_config(
+                data.get("model_wise", {}),
+            )
+        except ValueError:
+            raise ClientErrorException("Could not parse value")
+        except TypeError:
+            raise ClientErrorException("Could not find required parameter.")
+
+        if not optimization_params.op_wise and not optimization_params.model_wise:
+            raise ClientErrorException("At least one of OP and Model wise setting is required.")
+
+        return optimization_params
+
+    @staticmethod
+    def parse_op_wise_config(op_wise_params: dict) -> dict:
+        """Parse OP wise configuration."""
+        parsed_op_wise_config: dict = {}
+        for op_name, param_types in op_wise_params.items():
+            parsed_op_params = DiagnosisAPIInterface.parse_wise_parameters(param_types)
+            parsed_op_wise_config.update({op_name: parsed_op_params})
+        return parsed_op_wise_config
+
+    @staticmethod
+    def parse_wise_parameters(params_per_type: dict) -> dict:
+        """Parse model or OP wise parameters."""
+        parsed_params: dict = {}
+        for param_type, params in params_per_type.items():
+            parsed_params_per_type = parsed_params.get(param_type, {})
+            for param_name, param_value in params.items():
+                if param_type == "pattern" and param_name == "precision":
+                    parsed_params = DiagnosisAPIInterface.set_op_wise_pattern_precision(
+                        parsed_params,
+                        param_value,
+                    )
+                parsed_params_per_type.update({param_name: [param_value]})
+            if param_type == "pattern" or not bool(parsed_params_per_type):
+                log.debug(f"Skipping adding parameters for {param_type}")
+                continue
+            parsed_params.update({param_type: parsed_params_per_type})
+        return parsed_params
+
+    @staticmethod
+    def set_op_wise_pattern_precision(op_wise_params: dict, precision: str) -> dict:
+        """Set precision from op wise pattern setting."""
+        weight_config = op_wise_params.get("weight", None)
+        if weight_config is None:
+            weight_config = {}
+        weight_config.update({"dtype": [precision]})
+
+        activation_config = op_wise_params.get("activation", None)
+        if activation_config is None:
+            activation_config = {}
+        activation_config.update({"dtype": [precision]})
+
+        op_wise_params.update(
+            {
+                "weight": weight_config,
+                "activation": activation_config,
+            },
+        )
+        return op_wise_params
+
+    @staticmethod
+    def parse_model_wise_config(data: dict) -> dict:
+        """Parse Model wise configuration."""
+        return DiagnosisAPIInterface.parse_wise_parameters(data)
 
 
 def set_database_version() -> None:

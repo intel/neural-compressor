@@ -145,10 +145,10 @@ class Pruning(object):
     def on_epoch_begin(self, epoch):
         ...
 
-    def on_batch_begin(self, batch_id):
+    def on_step_begin(self, batch_id):
         ...
 
-    def on_batch_end(self):
+    def on_step_end(self):
         ...
 
     def on_epoch_end(self):

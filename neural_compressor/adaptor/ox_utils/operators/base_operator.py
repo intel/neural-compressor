@@ -22,13 +22,13 @@ class QuantOperatorBase:
         self.node = onnx_node
         self.disable_qdq_for_node_output = True if onnx_node.op_type in \
             onnx_quantizer.op_types_to_exclude_output_quantization else False
+        self.per_channel = False
+        self.algorithm = 'minmax'
+        self.weight_scheme = 'sym'
+        self.weight_dtype = None
+        self.activation_dtype = None
+        self.activation_scheme = 'asym'
         if self.node.name in self.quantizer.config:
-            self.per_channel = False
-            self.algorithm = 'minmax'
-            self.weight_scheme = 'sym'
-            self.weight_dtype = None
-            self.activation_dtype = None
-            self.activation_scheme = 'asym'
             if self.quantizer.config[self.node.name] != 'fp32':
                 if 'weight' in self.quantizer.config[self.node.name].keys():
                     self.per_channel = self.quantizer.config[self.node.name]\

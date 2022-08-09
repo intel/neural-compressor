@@ -63,6 +63,7 @@ class OnnxrtReader:
                 Node(
                     id=current_node_id,
                     label=node_def.op_type,
+                    highlight=False,
                     properties={
                         "name": node_def.name,
                         "type": node_def.op_type,
@@ -150,6 +151,7 @@ class OnnxrtReader:
                     Node(
                         id=node.name,
                         label=node_type,
+                        highlight=False,
                         properties={
                             "name": node.name,
                             "type": node_type,

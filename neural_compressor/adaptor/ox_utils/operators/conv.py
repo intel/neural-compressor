@@ -19,7 +19,7 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
-from onnxruntime.quantization.quant_utils import find_by_name, get_mul_node, \
+from neural_compressor.adaptor.ox_utils.util import find_by_name, \
                                                  QuantizedValueType, attribute_to_kwarg
 from onnx import onnx_pb as onnx_proto
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue
@@ -55,7 +55,6 @@ class ConvInteger(QuantOperatorBase):
             bias_present = True
 
         conv_integer_output = node.output[0] + "_output_quantized"
-        conv_integer_name = node.name + "_quant" if node.name != "" else ""
 
         kwargs = {}
         for attribute in node.attribute:
@@ -67,7 +66,7 @@ class ConvInteger(QuantOperatorBase):
         conv_integer_node = onnx.helper.make_node("ConvInteger", 
                                                   inputs,
                                                   [conv_integer_output], 
-                                                  conv_integer_name, **kwargs)
+                                                  node.name, **kwargs)
         self.quantizer.new_nodes.append(conv_integer_node)
 
         # Add bias add nodes
@@ -85,25 +84,21 @@ class ConvInteger(QuantOperatorBase):
         self.quantizer.new_nodes.append(cast_node)
 
         # Add mul operation to multiply scales of two inputs.
-        if conv_integer_name != "":
-            scales_mul_op = conv_integer_name + "_scales_mul"
-        else:
-            scales_mul_op = scale_0 + "_" + scale_1 + "_mul"
+        scales_mul_op = node.name + "_scales_mul"
 
         scales_mul_node = find_by_name(scales_mul_op, self.quantizer.new_nodes)
         if scales_mul_node is None:
-            scales_mul_node = get_mul_node([scale_0, scale_1],
-                scales_mul_op + ":0", scales_mul_op)
+            scales_mul_node = onnx.helper.make_node("Mul", [scale_0, scale_1], 
+                                        [scales_mul_op + ":0"], scales_mul_op)
             self.quantizer.new_nodes.append(scales_mul_node)
 
         scales_mul_op_output = scales_mul_node.output[0]
 
         # Add mul operation to multiply mul_scales_op result with output of ConvInteger
         # and make the output of this node the same as output of original conv node.
-        output_scale_mul_op = conv_integer_name + "_output_scale_mul" if \
-                                                  conv_integer_name != "" else ""
-        self.quantizer.new_nodes.append(get_mul_node([cast_op_output, scales_mul_op_output], 
-                                                  node.output[0], output_scale_mul_op))
+        output_scale_mul_op = node.name + "_output_scale_mul"
+        self.quantizer.new_nodes.append(onnx.helper.make_node("Mul",
+            [cast_op_output, scales_mul_op_output], [node.output[0]], output_scale_mul_op))
         self.quantizer.remove_nodes.extend(parents[1:])
         self.quantizer.remove_nodes.append(node)
 
@@ -128,7 +123,6 @@ class QLinearConv(QuantOperatorBase):
             qlinear_conv_inputs.append(parents[-1].input[0])
 
         qlinear_conv_output = child.output[0]
-        qlinear_conv_name = node.name + "_quant" if node.name != "" else ""
 
         kwargs = {}
         for attribute in node.attribute:
@@ -139,7 +133,7 @@ class QLinearConv(QuantOperatorBase):
             kwargs.update(attribute_to_kwarg(attribute))
         qlinear_conv_node = onnx.helper.make_node("QLinearConv", qlinear_conv_inputs, 
                                                   [qlinear_conv_output],
-                                                  qlinear_conv_name, **kwargs)
+                                                  node.name, **kwargs)
         self.quantizer.new_nodes.append(qlinear_conv_node)
         self.quantizer.remove_nodes.extend(parents)
         self.quantizer.remove_nodes.append(child)
@@ -152,6 +146,16 @@ class QDQConv(QDQOperatorBase):
     def quantize(self):
         node = self.node
         assert (node.op_type in ["Conv", "FusedConv"])
+        if node.op_type == "FusedConv":
+            kwargs = {}
+            for attribute in node.attribute:
+                if attribute.name == 'activation' and attribute.s in [b'Relu', b'Clip']:
+                    continue
+                if attribute.name == 'activation_params':
+                    continue
+                kwargs.update(attribute_to_kwarg(attribute))
+            conv = onnx.helper.make_node("Conv", node.input, node.output, node.name, **kwargs)
+            node.CopyFrom(conv)
 
         self.quantizer.quantize_inputs(node, [0])
 
@@ -165,4 +169,6 @@ class QDQConv(QDQOperatorBase):
             self.quantizer.quantize_outputs(node)
         
         if len(node.input) == 3:
-            self.quantizer.quantize_bias_tensor(node.input[2], node.input[0], node.input[1])
+            self.quantizer.quantize_bias_tensor(node)
+
+        node.name = node.name + "_quant"

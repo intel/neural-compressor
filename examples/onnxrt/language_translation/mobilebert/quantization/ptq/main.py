@@ -101,6 +101,8 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor.experimental import Quantization, common
+        from neural_compressor import options
+        options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = ['MatMul']
         quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         q_model = quantize()

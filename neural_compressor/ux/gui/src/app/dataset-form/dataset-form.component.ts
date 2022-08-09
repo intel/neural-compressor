@@ -108,16 +108,14 @@ export class DatasetFormComponent implements OnInit {
   getPredefinedDatasets() {
     this.modelService.getPredefinedDatasets(this.data.framework, this.data.domain, this.data.domainFlavour)
       .subscribe(response => {
-
         for (let i = 0; i < response['transform'].length; i++) {
           this.addNewTransformation(response['transform'][i]['name']);
-          this.transformations = response['transform'];
-          this.setDefaultTransformationParam({ value: response['transform'][i]['name'] }, i);
+          this.setDefaultTransformationParam({ value: response['transform'][i] }, i);
         }
 
         this.datasetFormGroup.get('dataLoader').setValue(response['dataloader']['name']);
         this.setDefaultDataLoaderParam({ value: response['dataloader']['name'] });
-        if (response['dataloader']['params'][0].name === 'root') {
+        if (response['dataloader']['params']?.[0].name === 'root') {
           this.datasetLocationPlaceholder = response['dataloader']['params'][0].value;
           this.isFieldRequired('datasetLocation', true);
         } else {
@@ -145,7 +143,7 @@ export class DatasetFormComponent implements OnInit {
 
   setDefaultDataLoaderParam(event) {
     if (this.dataLoaders.length) {
-      const parameters = this.dataLoaders.find(x => x.name === event.value).params;
+      const parameters = this.dataLoaders.find(x => x.name === event.value)?.params;
       this.dataLoaderParams = [];
       if (Array.isArray(parameters)) {
         parameters.forEach((param, index) => {
@@ -155,7 +153,13 @@ export class DatasetFormComponent implements OnInit {
           });
         })
       }
-      this.showDatasetLocation = this.dataLoaders.find(x => x.name === event.value).show_dataset_location;
+      this.showDatasetLocation = this.dataLoaders.find(x => x.name === event.value)?.show_dataset_location;
+      let hasRootEntry = this.dataLoaderParams.find(x => x.name == "root") !== undefined;
+      if (hasRootEntry) {
+        this.isFieldRequired('datasetLocation', true);
+      } else {
+        this.isFieldRequired('datasetLocation', false);
+      }
     }
   }
 
@@ -170,7 +174,17 @@ export class DatasetFormComponent implements OnInit {
 
 
   setDefaultTransformationParam(event, index: number) {
-    this.transformationParams[index]['params'] = this.transformations.find(x => x.name === event.value).params;
+    if (!event.value.hasOwnProperty("params")) {
+      // Case when event source is MatSelect
+      this.transformationParams[index]['params'] = this.transformations.find(x => x.name === event.value).params;
+      return
+    }
+
+    let tranformParameters: { name: string, value: any }[] = this.transformations.find(x => x.name === event.value.name).params
+    event.value.params.forEach(item => {
+      tranformParameters.find(x => x.name === item.name).value = item.value;
+    })
+    this.transformationParams[index]['params'] = tranformParameters;
   }
 
   addNewTransformation(name?: string) {
@@ -183,7 +197,7 @@ export class DatasetFormComponent implements OnInit {
 
   setDefaultMetricParam(event) {
     if (this.metrics.length) {
-      this.metricParams = this.metrics.find(x => x.name === event.value).params;
+      this.metricParams = this.metrics.find(x => x.name === event.value)?.params;
       if (this.metricParams) {
         this.metricParam = this.metricParams[0].value;
         if (Array.isArray(this.metricParams[0].value)) {

@@ -432,6 +432,15 @@
       "batch_size": 1,
       "new_benchmark": true
     },
+    "faster_rcnn_resnet50": {
+      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
+      "yaml": "faster_rcnn_resnet50.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    },
     "faster_rcnn_resnet101_saved": {
       "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
@@ -2393,6 +2402,15 @@
       "yaml": "3dunet-mlperf.yaml",
       "strategy": "basic",
       "batch_size": 100,
+      "new_benchmark": false
+    },
+    "transformer_lt_mlperf": {
+      "model_src_dir": "nlp/transformer_lt_mlperf/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/transformer_uniform_data",
+      "input_model": "/tf_dataset2/models/tensorflow/transformer_lt_mlperf/fp32/transformer_mlperf_fp32.pb",
+      "yaml": "transformer_lt_mlperf.yaml",
+      "strategy": "basic",
+      "batch_size": 64,
       "new_benchmark": false
     }
   }

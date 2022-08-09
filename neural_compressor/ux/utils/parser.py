@@ -217,6 +217,10 @@ class ProfilingParser(Parser):
     def process(self) -> Dict[str, Any]:
         """Process profiling logs."""
         parsed_data: List[dict] = []
+        profiling_header = self.patterns.get("profiling_header", None)
+        profiling_entry = self.patterns.get("profiling_entry", None)
+        if any(pattern is None for pattern in [profiling_header, profiling_entry]):
+            raise InternalException("Could not find patterns to search.")
 
         for log_file in self._logs:
             log.debug(f"Read from {log_file}")
@@ -224,10 +228,10 @@ class ProfilingParser(Parser):
             with open(log_file) as file:
                 lines = file.readlines()
             for line in reversed(lines):
-                header_search: Any = re.search(self.patterns.get("profiling_header"), line)
+                header_search: Any = re.search(profiling_header, line)
                 if header_search:
                     break
-                entry_search: Any = re.search(self.patterns.get("profiling_entry"), line)
+                entry_search: Any = re.search(profiling_entry, line)
                 if entry_search:
                     node_name = str(entry_search.group(1))
                     total_execution_time = str(entry_search.group(2))

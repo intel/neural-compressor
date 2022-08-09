@@ -87,18 +87,9 @@ pip install -r requirements.txt
 python setup.py install
 ```
 
-## Tutorials and Examples
-
-Read the following resources to learn how to use Neural Compressor.
-
-### Tutorial
-
-The [Tutorial](../docs/tutorial.md) provides comprehensive instructions on how to utilize Intel® Neural Compressor's features with examples.
-
-### Examples
+## Examples
 
 [Examples](examples_readme.md) are provided to demonstrate the usage of Intel® Neural Compressor in different frameworks: TensorFlow, PyTorch, MXNet, and ONNX Runtime. Hello World examples are also available.
-
 
 ## Developer Documentation
 

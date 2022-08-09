@@ -43,10 +43,14 @@ class WeightCorrection(Algorithm):
         op_list = [op_name for op_name, op_type in graph_info.items() if 'conv' in op_type.lower()]
 
         #(TODO) assume the weight format should be(oc, ic, h, w)
-        fp32_data = adaptor.inspect_tensor(origin_model, dataloader, op_list=op_list, \
-            iteration_list=list(range(1, iterations+1)), inspect_type='weight')
-        q_data = adaptor.inspect_tensor(q_model, dataloader, op_list=op_list, \
-            iteration_list=list(range(1, iterations+1)), inspect_type='weight')
+        cap = adaptor.query_fw_capability(origin_model)
+        quantize_cfg = {'op': cap['opwise']}
+        fp32_data = adaptor.inspect_tensor(origin_model, dataloader, op_list=op_list, 
+                                           iteration_list=list(range(1, iterations+1)), 
+                                           inspect_type='weight', quantization_cfg = quantize_cfg)
+        q_data = adaptor.inspect_tensor(q_model, dataloader, op_list=op_list, 
+                                        iteration_list=list(range(1, iterations+1)), 
+                                        inspect_type='weight', quantization_cfg = quantize_cfg)
 
         fp32_weights = fp32_data['weight']
         q_weights = q_data['weight']

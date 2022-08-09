@@ -310,8 +310,8 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
     completed_steps = 0
 
     if agent:
-        agent.pre_epoch_begin()
-        model = agent.model.model   
+        agent.on_train_begin()
+        model = agent.model.model
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
@@ -319,7 +319,7 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
             agent.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             if agent:
-                agent.on_batch_begin(step)
+                agent.on_step_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = torch.vstack(list(batch['teacher_logits']))
@@ -337,24 +337,25 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
                 else:
                     criterion.teacher_model_forward(batch)
                 loss = criterion(outputs_for_kd, labels)
+                loss = agent.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                optimizer.step()
                 if agent:
-                    agent.on_post_grad()
+                    agent.on_before_optimizer_step()
+                optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
             if agent:
-                agent.on_batch_end()
+                agent.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
         if agent:
             agent.on_epoch_end()
         evaluation(args, model, accelerator, eval_dataloader, metric)
     if agent:
-        agent.post_epoch_end()
+        agent.on_train_end()
 
 # Create and fill numpy array of size len_of_validation_data * max_length_of_output_tensor
 def create_and_fill_np_array(start_or_end_logits, dataset, max_len):

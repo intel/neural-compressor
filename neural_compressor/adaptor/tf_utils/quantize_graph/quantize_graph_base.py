@@ -22,8 +22,10 @@ import tensorflow as tf
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
-from .quantize_graph_common import QuantizeGraphHelper as helper
-from ..util import version1_gt_version2, version1_lt_version2, version1_eq_version2
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
 
 class QuantizeGraphBase():
     """
@@ -99,7 +101,7 @@ class QuantizeNodeBase():
         """
         pass
 
-    def _insert_dummy_biasadd(self, match_node_name, matched_node):
+    def _insert_dummy_biasadd(self, match_node_name, matched_node): # pragma: no cover
          target_node_name = matched_node.node.name
          matmul_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
          matmul_a_node = self.node_name_mapping[matmul_a_node_name].node
@@ -109,7 +111,7 @@ class QuantizeNodeBase():
          if matmul_a_node.op == 'Const' and matmul_b_node.op != 'Const':
              pass
          else:
-             from ..graph_rewriter.graph_util import GraphAnalyzer
+             from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
              g = GraphAnalyzer()
              g.graph = self.input_graph
              graph_info = g.parse_graph()
@@ -197,7 +199,7 @@ class QuantizeNodeBase():
 
                         add_op_quantizable = True 
                         is_hardswish = False
-                        if is_shared_output:
+                        if is_shared_output:  # pragma: no cover
                             if next_node_name.find('hard_swish') != -1:
                                 self.logger.debug("Find Hard Swish pattern ......")
                                 is_hardswish = True
@@ -231,7 +233,7 @@ class QuantizeNodeBase():
                                 matched_node_name.append(next_node_name)
                                 sub_rule_len -= 1
                                 cur_node_name = next_node_name
-                            elif is_hardswish and self.new_api:
+                            elif is_hardswish and self.new_api: # pragma: no cover
                                 matched_node_name.append(next_node_name)
                                 sub_rule_len -= 1
                                 cur_node_name = next_node_name

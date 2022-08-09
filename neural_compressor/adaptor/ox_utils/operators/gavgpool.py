@@ -18,7 +18,7 @@
 
 import onnx
 from .base_operator import QuantOperatorBase
-from onnxruntime.quantization.quant_utils import attribute_to_kwarg, ms_domain, \
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, \
                                                  QuantizedValueType
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue                                                 
 class QGlobalAveragePool(QuantOperatorBase):
@@ -39,7 +39,6 @@ class QGlobalAveragePool(QuantOperatorBase):
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
         kwargs["channels_last"] = 0
-        qnode_name = node.name + "_quant" if node.name != "" else ""
 
         inputs = parent.input
         inputs.extend(child.input[1:])
@@ -48,7 +47,7 @@ class QGlobalAveragePool(QuantOperatorBase):
             "QLinear" + node.op_type,
             inputs,
             child.output,
-            qnode_name, **kwargs)
+            node.name, **kwargs)
         self.quantizer.new_nodes += [qnode]
         self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(parent)

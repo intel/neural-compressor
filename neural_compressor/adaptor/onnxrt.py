@@ -75,6 +75,7 @@ class ONNXRTAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.quantize_config = {} # adaptor should know current configs at any time
         self.quantize_params = {} # adaptor should know current params at any time
+        self.min_max = None
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -99,7 +100,7 @@ class ONNXRTAdaptor(Adaptor):
             return model
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
-        from onnxruntime.quantization.quant_utils import QuantizationMode
+        from neural_compressor.adaptor.ox_utils.util import QuantizationMode
         if self.backend in ["qlinearops", "qoperator"]:
             backend = QuantizationMode.QLinearOps
             if self.backend == "qlinearops":
@@ -217,7 +218,7 @@ class ONNXRTAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
 
-        from onnxruntime.quantization.quant_utils import QuantizationMode
+        from neural_compressor.adaptor.ox_utils.util import QuantizationMode
         if self.backend in ["qlinearops", "qoperator"]:
             backend = QuantizationMode.QLinearOps
         elif self.backend == "qdq":
@@ -315,6 +316,8 @@ class ONNXRTAdaptor(Adaptor):
 
                 if origin_op_type == "QAttention":
                     origin_op_type = "Attention"
+                if origin_op_type == "DynamicQuantizeLSTM":
+                    origin_op_type = "LSTM"
                 res[origin_op_type]['INT8'] += 1
 
             elif node.op_type in fp32_op_list and \
@@ -346,29 +349,36 @@ class ONNXRTAdaptor(Adaptor):
                   os.path.join(self.work_space, 'augmented_model.onnx'), \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])))
+        self.min_max = augment.dump_minmax()
         quantize_params = augment.dump_calibration()
         return quantize_params
 
-    def inspect_tensor(self, model, data_loader, op_list=[],
+    def inspect_tensor(self, model, dataloader, op_list=[],
                        iteration_list=[],
                        inspect_type='activation',
-                       save_to_disk=False):
+                       save_to_disk=False,
+                       save_path=None,
+                       quantization_cfg=None):
         '''The function is used by tune strategy class for dumping tensor info.
         '''
         from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
         from neural_compressor.model.onnx_model import ONNXModel
+        from neural_compressor.utils.utility import dump_data_to_local
         if not isinstance(model, ONNXModel):
             model = ONNXModel(model)
+
         if len(op_list) > 0 and isinstance(op_list, KeysView):
             op_list = [item[0] for item in op_list]
-        augment = ONNXRTAugment(model, data_loader, [], \
+        augment = ONNXRTAugment(model, dataloader, [], \
                   os.path.join(self.work_space, 'augment_for_inspect.onnx'), \
                   iterations=iteration_list,
                   white_nodes=op_list)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
                                       weight=(inspect_type!='activation'))
         if save_to_disk:
-            np.savez(os.path.join(self.work_space, 'dumped_tensors.npz'), tensors)
+            if not save_path:
+                save_path = self.work_space
+            dump_data_to_local(tensors, save_path, 'inspect_result.pkl')
         return tensors
 
     def set_tensor(self, model, tensor_dict):
@@ -432,9 +442,8 @@ class ONNXRTAdaptor(Adaptor):
 
     def _pre_optimize(self, model, level=1):
         from neural_compressor.adaptor.ox_utils.util import \
-            split_shared_input, remove_init_from_model_input
+            remove_init_from_model_input, split_shared_bias
         remove_init_from_model_input(model)
-        model = split_shared_input(model)
         sess_options = ort.SessionOptions()
         level = self.query_handler.get_graph_optimization()
         if self.graph_optimization.level:
@@ -456,13 +465,13 @@ class ONNXRTAdaptor(Adaptor):
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
             if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
-        if self.backend != "integerops":
-            model = self._revert_fusedconv(model)
+        model = self._revert_fusedconv(model)
+        model = split_shared_bias(model)
         model.topological_sort()
         self.pre_optimized_model = model
 
     def _revert_fusedconv(self, model):
-        from onnxruntime.quantization.quant_utils import attribute_to_kwarg
+        from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
         from onnx import onnx_pb as onnx_proto
         new_nodes = []
         remove_nodes = []
@@ -474,23 +483,17 @@ class ONNXRTAdaptor(Adaptor):
                     if attr.name == 'activation':
                         activation_type = attr.s.decode('utf-8')
                     elif attr.name == 'activation_params':
-                        activation_params = attr.floats
+                        continue
                     else:
                         kwargs.update(attribute_to_kwarg(attr))
+                if activation_type in ['Relu', 'Clip']:
+                    continue
                 conv = onnx.helper.make_node(
                     'Conv', node.input, [node.name], node.name.split('fused ')[-1], **kwargs)
-                if activation_params:
-                    init_name = ['_'.join((conv.name, activation_type, key)) \
-                                                                for key in ['min', 'max']]
-                    model.model.graph.initializer.extend([onnx.helper.make_tensor(
-                        name, onnx_proto.TensorProto.FLOAT, [], [val]) for \
-                        name, val in zip(init_name, activation_params)])
-                    activation_input = list(conv.output) + init_name
-                else:
-                    activation_input = conv.output
+                activation_input = conv.output
 
                 activation = onnx.helper.make_node(activation_type,
-                    activation_input, node.output, '_'.join((conv.name, activation_type)))
+                    conv.output, node.output, '_'.join((conv.name, activation_type)))
                 new_nodes.extend([conv, activation])
                 remove_nodes.append(node)
         model.model.graph.node.extend(new_nodes)
@@ -605,10 +608,11 @@ class ONNXRTAdaptor(Adaptor):
  
         precisions = self.query_handler.get_precisions()
         optype_wise = OrderedDict()
+        quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
 
         op_wise = OrderedDict()
         for precision in precisions:
-            if precision == 'fp16' and self.device == 'cpu':
+            if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
                 continue
             if precision in self.query_handler.get_quantization_capability():
                 special_config_types = list(self.query_handler.get_quantization_capability() \
@@ -623,6 +627,8 @@ class ONNXRTAdaptor(Adaptor):
                 self.query_handler.get_op_types_by_precision(precision) != ['*'] else \
                 optype_wise.keys()
             for op in optypes:
+                if op not in quantizable_optype:
+                    continue
                 if op not in special_config_types:
                     op_capability = default_config
                 else:
@@ -804,6 +810,35 @@ class ONNXRTAdaptor(Adaptor):
 
         acc = 0 if metrics is None else [metric.result() for metric in metrics]
         return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
+
+    def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
+        from neural_compressor.utils.utility import dump_data_to_local
+        from neural_compressor.adaptor.ox_utils.util import find_by_name
+        if self.backend in ["qlinearops", "qoperator"]:
+            supported_optype = ['Conv', 'MatMul', 'Concat', 'Attention', 'FusedConv',
+                'Add', 'Mul', 'LeakyRelu', 'Sigmoid', 'GlobalAveragePool', 'AveragePool']
+        elif self.backend == "qdq":
+            supported_optype = ['Conv', 'MatMul', 'Concat', 'Attention', 'FusedConv',
+                'LeakyRelu', 'Sigmoid', 'GlobalAveragePool', 'AveragePool']
+        else:
+            supported_optype = ['Conv', 'MatMul', 'Attention', 'LSTM']
+        inspect_node_list = []
+        int8_node_names = [i.name for i in int8_model.nodes()]
+        for node in fp32_model.nodes():
+            if node.op_type in supported_optype and node.name + '_quant' in int8_node_names:
+                inspect_node_list.append(node.name)
+
+        filtered_params = {}
+        if self.min_max:
+            for node_name in inspect_node_list:
+                node = find_by_name(node_name, fp32_model.nodes())
+                filtered_params[node_name] = {
+                    'min': np.array(self.min_max[node.output[0]][0], dtype=np.float32),
+                    'max': np.array(self.min_max[node.output[0]][1], dtype=np.float32)}
+        if save_path:
+            dump_data_to_local(filtered_params, save_path, 'dequan_min_max.pkl')
+            dump_data_to_local(tune_cfg, save_path, 'cfg.pkl')
+        return inspect_node_list, tune_cfg
 
     def save(self, model, path):
         """ save model

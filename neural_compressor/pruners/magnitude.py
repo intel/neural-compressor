@@ -32,7 +32,7 @@ class BasicMagnitudePruner(Pruner):
         if epoch >= self.start_epoch and epoch <= self.end_epoch:
             self.compute_mask()
 
-    def on_batch_begin(self, batch_id):
+    def on_step_begin(self, batch_id):
         res = dict()
 
         for weight in self.weights:
@@ -80,7 +80,7 @@ class BasicMagnitudePruner(Pruner):
                     res[weight] = new_weight
         return res
 
-    def on_batch_end(self):
+    def on_step_end(self):
         res = dict()
         for weight in self.weights:
             if weight in self.masks:

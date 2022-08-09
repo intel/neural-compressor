@@ -41,14 +41,16 @@
 
           <ng-template #nodeTemplate let-node>
             <ng-container *ngIf="node.node_type === 'node'">
-              <svg:g class="node" (click)="getDetails(node); sidenav.open()" [matTooltip]="'Click to see details'">
-                <svg:foreignObject width="350" height="60" class="node-container"
+              <svg:g class="node" (click)="getDetails(node)" [matTooltip]="'Click to see details'">
+                <svg:foreignObject width="350" height="60"
+                  [ngClass]="{'node-container': true, 'yellow-background': node.highlight }"
                   [ngStyle]="{'border': node.color ? node.color + ' 2px solid' : '#005B85 2px solid' }">
-                  <div class="node-header" [ngStyle]="{'background-color': node.color}">
+                  <div [ngClass]="{'node-header': true, 'yellow': node.highlight }"
+                    [ngStyle]="{'background-color': node.color}">
                     {{ node.label }}
                   </div>
                   <div style="padding: 0.4rem;">
-                    <p class="node-text">
+                    <p [ngClass]="{'node-text': true}">
                       {{ node.properties.name }}
                     </p>
                   </div>

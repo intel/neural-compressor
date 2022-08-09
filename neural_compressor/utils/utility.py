@@ -364,29 +364,22 @@ def str2array(s):
 
 def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
     weight_channel = weight_tensor.shape[-1]
-
+    if len(min_filter_tensor) == 1:
+        return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+    # TODO to calculate the de-quantized result in a parallel way
     for i in range(weight_channel):
-        data = weight_tensor[:,:,:,i]
-        new_data = data.reshape(data.size,)
-        if len(min_filter_tensor) == weight_channel:
-            # per_channel mode
-            for j in range((data.size)):
-                new_data[j] = \
-                        float(new_data[j] *(max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
-        else:
-            # per_tensor mode
-            for j in range((data.size)):
-                new_data[j] = \
-                        float(new_data[j] *(max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
+        weight_tensor[:,:,:,i] = weight_tensor[:,:,:,i] * ((max_filter_tensor[i] - min_filter_tensor[i])/ 127.0)
+
 
 
 def Dequantize(data, scale_info):
+    import numpy as np
     original_shape = data.shape
-    size = data.size
-    new_data = data.reshape(size, )
-    max_value = 255 if scale_info[0].find("Relu") != -1 else 127
-    return np.array([float(i *(scale_info[2] - scale_info[1])/ max_value) for i in new_data]\
-            ).reshape(original_shape)
+    max_value = 255.0 if scale_info[0].find("Relu") != -1.0 else 127.0
+    _scale = (np.array(scale_info[2]) - np.array(scale_info[1])) / max_value
+    de_scale = np.ones(original_shape) * _scale
+    de_data = np.multiply(data, de_scale).astype(np.float32)
+    return de_data
 
 
 class CaptureOutputToFile(object):
@@ -444,3 +437,42 @@ class MODE(Enum):
 
 class GLOBAL_STATE():
     STATE = MODE.QUANTIZATION
+
+def load_data_from_pkl(path, filename):
+    """
+    load data from local pkl file
+    Args:
+        path: the directory to load data
+        filename: filename to load
+
+    Returns:
+        None
+
+    """
+    try:
+        file_path = os.path.join(path, filename)
+        with open(file_path, 'rb') as fp:
+            data = pickle.load(fp)
+            return data
+    except FileExistsError:
+        logging.getLogger().info('Can not open %s.' % path)
+
+def dump_data_to_local(data, path, filename):
+    """
+    Dump data to local as pkl file
+    Args:
+        data: data used to dump
+        path: the directory to save data
+        filename: filename to dump
+
+    Returns:
+        loaded data
+
+    """
+    from pathlib import Path
+    if not os.path.exists(path):
+        Path(path).mkdir(parents=True, exist_ok=True)
+    file_path = os.path.join(path, filename)
+    with open(file_path, 'wb') as fp:
+        pickle.dump(data, fp)
+        logging.getLogger().info("Dumped data to %s" % file_path)

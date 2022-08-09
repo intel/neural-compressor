@@ -28,17 +28,13 @@
     valid_mixed_precisions: []
 
   ops: &common_ops
-    fp32: [ 'Flatten', 'Pooling', 'Convolution', 'FullyConnected',
-            '_sg_mkldnn_conv', '_sg_mkldnn_fully_connected',
-            '_sg_mkldnn_selfatt_qk', '_sg_mkldnn_selfatt_valatt',
-            '_sg_onednn_conv', '_sg_onednn_fully_connected',
-            '_sg_onednn_selfatt_qk', '_sg_onednn_selfatt_valatt' ]
     int8: [ 'quantize_output',
             'Flatten', 'Pooling', 'Convolution', 'FullyConnected',
             '_sg_mkldnn_conv', '_sg_mkldnn_fully_connected',
             '_sg_mkldnn_selfatt_qk', '_sg_mkldnn_selfatt_valatt',
             '_sg_onednn_conv', '_sg_onednn_fully_connected',
             '_sg_onednn_selfatt_qk', '_sg_onednn_selfatt_valatt' ]
+    fp32: ['*']
 
   capabilities: &common_capabilities
     int8: {
@@ -204,13 +200,42 @@
     name: '2.0.0'
 
   precisions:
-    <<: *common_precisions
+    names: int8, fp32, bf16
+    valid_mixed_precisions: []
 
   ops:
     <<: *common_ops
+    bf16: [ 'Convolution', 'Deconvolution', 'FullyConnected',
+            '_sg_mkldnn_conv', '_sg_mkldnn_fully_connected',
+            '_sg_mkldnn_selfatt_qk', '_sg_mkldnn_selfatt_valatt',
+            '_sg_onednn_conv', '_sg_onednn_fully_connected',
+            '_sg_onednn_selfatt_qk', '_sg_onednn_selfatt_valatt' ]
 
   capabilities:
     << : *common_capabilities
+    bf16: {
+        'Convolution': &bf16_capability_conv {
+            'activation': {'dtype': ['bf16', 'fp32']},
+            'weight':     {'dtype': ['bf16', 'fp32']},
+        },
+        'FullyConnected': &bf16_capability_fc {
+            'activation': {'dtype': ['bf16', 'fp32']},
+            'weight':     {'dtype': ['bf16', 'fp32']},
+        },
+        '_sg_mkldnn_conv': *bf16_capability_conv,
+        '_sg_mkldnn_fully_connected': *bf16_capability_fc,
+        '_sg_mkldnn_selfatt_qk': &bf16_capability_mkldnn_qk {
+            'activation': {'dtype': ['bf16', 'fp32']},
+        },
+        '_sg_mkldnn_selfatt_valatt': &bf16_capability_mkldnn_valatt {
+            'activation': {'dtype': ['bf16', 'fp32']},
+        },
+        '_sg_onednn_conv': *bf16_capability_conv,
+        '_sg_onednn_fully_connected': *bf16_capability_fc,
+        '_sg_onednn_selfatt_qk': *bf16_capability_mkldnn_qk,
+        '_sg_onednn_selfatt_valatt':  *bf16_capability_mkldnn_valatt
+      }
+
 
   patterns:
     << : *common_patterns

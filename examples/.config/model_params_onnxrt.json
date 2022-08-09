@@ -602,6 +602,33 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "emotion_ferplus": {
+      "model_src_dir": "body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/emotion_data/emotion_ferplus/fer2013/fer2013.csv",
+      "input_model": "/tf_dataset2/models/onnx/emotion_ferplus/emotion-ferplus-12.onnx",
+      "yaml": "emotion_ferplus.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    },
+    "ultraface": {
+      "model_src_dir": "body_analysis/onnx_model_zoo/ultraface/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/wider_face_data/WIDER_val",
+      "input_model": "/tf_dataset2/models/onnx/ultraface/version-RFB-320-12.onnx",
+      "yaml": "ultraface.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    },
+    "BiDAF": {
+      "model_src_dir": "language_translation/onnx_model_zoo/BiDAF/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/squad/dev-v1.1.json",
+      "input_model": "/tf_dataset2/models/onnx/BiDAF/bidaf-11.onnx",
+      "yaml": "bidaf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     }
   }
 }

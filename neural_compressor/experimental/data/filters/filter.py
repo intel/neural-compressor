@@ -50,6 +50,7 @@ class MXNetFilters(object):
 
 TENSORFLOW_FILTERS = {}
 INTELTENSORFLOW_FILTERS = {}
+TENSORFLOW_ITEX_FILTERS = {}
 ONNXRT_IT_FILTERS = {}
 ONNXRT_QL_FILTERS = {}
 PYTORCH_FILTERS = {}
@@ -70,7 +71,7 @@ framework_filters = {"tensorflow": TensorflowFilters,
 
 registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
                     "inteltensorflow": INTELTENSORFLOW_FILTERS,
-                    "tensorflow_itex": TENSORFLOW_FILTERS,
+                    "tensorflow_itex": TENSORFLOW_ITEX_FILTERS,
                     "pytorch": PYTORCH_FILTERS,
                     "pytorch_ipex": PYTORCH_FILTERS,
                     "pytorch_fx": PYTORCH_FILTERS,
@@ -82,8 +83,8 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
 
 class FILTERS(object):
     def __init__(self, framework):
-        assert framework in ["tensorflow", "inteltensorflow", "tensorflow_itex", "onnxrt_qdq",
-                            "pytorch", "pytorch_ipex", "pytorch_fx", "mxnet",
+        assert framework in ["tensorflow", "inteltensorflow", "tensorflow_itex",
+                             "mxnet", "onnxrt_qdq", "pytorch", "pytorch_ipex", "pytorch_fx", 
                              "onnxrt_integerops", "onnxrt_qlinearops", "onnxrt_qoperator"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.filters = framework_filters[framework]().filters

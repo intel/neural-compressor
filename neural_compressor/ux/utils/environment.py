@@ -43,11 +43,11 @@ class Environment:
         try:
             os.makedirs(workdir, exist_ok=True)
         except Exception as e:
-            print(f"Unable to create workdir at {workdir}: {e}.\n{error_message_tail}")
+            log.error(f"Unable to create workdir at {workdir}: {e}.\n{error_message_tail}")
             log.error(e)
             sys.exit(1)
         if not os.access(workdir, os.W_OK):
-            print(f"Unable to create files at {workdir}.\n{error_message_tail}")
+            log.error(f"Unable to create files at {workdir}.\n{error_message_tail}")
             sys.exit(2)
 
     @staticmethod
