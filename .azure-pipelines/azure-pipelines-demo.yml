@@ -29,11 +29,14 @@ stages:
       displayName: "Checkout out Repo"
     
     - script: |
-        if [[ ! $(docker images | grep -i neural-compressor) ]]; then
+        if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
             docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
         fi
-        docker images | grep -i neural-compressor
-        [[ $? -ne 0 ]] && exit 1
+        docker images | grep -i ${IMAGE_NAME}
+        if [[ $? -ne 0 ]]; then
+          echo "NO Such Image ${IMAGE_NAME}"
+          exit 1
+        fi
       displayName: "Build Devel Images"
 
     - script: |
