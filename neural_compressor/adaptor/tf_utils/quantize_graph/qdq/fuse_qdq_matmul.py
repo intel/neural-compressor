@@ -187,7 +187,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         weights_max_name = weights_name[2]
 
         weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
-
         # FIXME We only quantize the MatMul op which second input node type is const. This is a
         # workaround for RNN model like LTSM.
         if weight_node.op != 'Const':
@@ -195,9 +194,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             return []
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
-        # transpose_a/transpose_a could be set to True.
-        if matched_node.node.attr["transpose_a"].b == True or \
-            matched_node.node.attr["transpose_b"].b == True:
+        # transpose_a could be set to True.
+        if matched_node.node.attr["transpose_a"].b == True:
             self.output_graph = self.input_graph
             return []
 
@@ -582,9 +580,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
                     if cur_node.op == "MatMul":
                         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
-                        # transpose_a/transpose_a could be set to True.
-                        if cur_node.attr["transpose_a"].b == True or \
-                           cur_node.attr["transpose_b"].b == True:
+                        # transpose_a could be set to True.
+                        if cur_node.attr["transpose_a"].b == True:
                             continue
 
                         weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)

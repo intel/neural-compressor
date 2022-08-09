@@ -423,10 +423,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             return True
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
-        # transpose_a/transpose_a could be set to True.
+        # transpose_a could be set to True.
         if self.graph_info[matched_node_name].node.op == "MatMul":
-            if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True or \
-               self.graph_info[matched_node_name].node.attr["transpose_b"].b == True:
+            if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
 
         return False

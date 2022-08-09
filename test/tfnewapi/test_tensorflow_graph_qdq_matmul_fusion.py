@@ -176,7 +176,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
-    def test_disable_matmul_fusion(self):
+    def test_matmul_fusion_with_transpose_b_true(self):
         g = tf.Graph()
         with g.as_default():
 
@@ -184,7 +184,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
-            z = tf.matmul(x, y, name='no_quant_matmul')
+            z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)
             z = tf.nn.relu6(z, name='op_to_store')
             found_quantized_matmul = False
 
@@ -201,13 +201,13 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 output_graph = quantizer.fit()
 
                 for i in output_graph.graph_def.node:
-                    if i.op == '_QuantizedMatMul' and i.name == 'op_to_store':
+                    if i.op == '_QuantizedMatMul':
                         found_quantized_matmul = True
                         break
-            self.assertEqual(found_quantized_matmul, False)
-
+            self.assertEqual(found_quantized_matmul, True)
+            
     @disable_random()
-    def test_disable_matmul_fusion_with_transpose_b_true(self):
+    def test_disable_matmul_fusion(self):
         g = tf.Graph()
         with g.as_default():
 
@@ -215,7 +215,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
-            z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)
+            z = tf.matmul(x, y, name='no_quant_matmul')
             z = tf.nn.relu6(z, name='op_to_store')
             found_quantized_matmul = False
 

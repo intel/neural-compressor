@@ -276,7 +276,6 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
 
     def do_transformation(self):
         fuse_pattern = [["_QuantizedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
-
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
             quantized_node_name = i[0]
@@ -301,6 +300,10 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
                 new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
+            if 'transpose_b' in quantized_node.attr:
+                new_node.attr["transpose_b"].CopyFrom(quantized_node.attr['transpose_b'])
+            if 'transpose_a' in quantized_node.attr:
+                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])               
             if 'Tbias' in quantized_node.attr:
                 new_node.attr["Tbias"].CopyFrom(quantized_node.attr['Tbias'])
             if 'fused_ops' in quantized_node.attr:
@@ -358,7 +361,6 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                 [["_QuantizedMatMul"], ['Requantize']])
             if len(target_nodes) == 0:
                 break
-
             i = target_nodes[0]
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
@@ -381,6 +383,10 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
 
+            if 'transpose_b' in quantized_node.attr:
+                new_node.attr["transpose_b"].CopyFrom(quantized_node.attr['transpose_b'])
+            if 'transpose_a' in quantized_node.attr:
+                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])  
             if 'T1' in quantized_node.attr:
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
