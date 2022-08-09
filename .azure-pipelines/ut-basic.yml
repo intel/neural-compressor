@@ -87,7 +87,7 @@ stages:
       displayName: 'Clean docker'
 
     - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
+        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
         bash -c "cd /neural-compressor/.azure-pipelines/scripts \
         && bash install_nc.sh \
         && bash ut/run_basic_adaptor_tfnewapi.sh"

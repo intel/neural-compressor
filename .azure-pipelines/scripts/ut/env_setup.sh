@@ -2,17 +2,31 @@
 
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
+elif [[ "${tensorflow_version}" == "spr-base" ]]; then
+    pip install /tf_dataset/tf_binary/tensorflow*.whl
 elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
 fi
 
-pip install torch==${pytorch_version} -f https://download.pytorch.org/whl/torch_stable.html
-pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
+if [[ "${pytorch_version}" != "" ]]; then
+    pip install torch==${pytorch_version} -f https://download.pytorch.org/whl/torch_stable.html
+fi
 
-pip install onnx==${onnx_version}
-pip install onnxruntime==${onnxruntime_version}
+if [[ "${torchvision_version}" != "" ]]; then
+    pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
+fi
 
-pip install mxnet==${mxnet_version}
+if [[ "${onnx}" != "" ]]; then
+    pip install onnx==${onnx_version}
+fi
+
+if [[ "${onnxruntime}" != "" ]]; then
+    pip install onnxruntime==${onnxruntime_version}
+fi
+
+if [[ "${mxnet}" != "" ]]; then
+    pip install mxnet==${mxnet_version}
+fi
 
 cd /neural-compressor/test
 if [ -f "requirements.txt" ]; then

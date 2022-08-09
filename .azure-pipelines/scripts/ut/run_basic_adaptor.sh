@@ -19,9 +19,9 @@ LOG_DIR=/neural-compressor/log_dir
 ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
 
 echo "cat run.sh..."
-cat run.sh
+cat run.sh | tee ${ut_log_name}
 echo "-------------"
-bash run.sh 2>&1 | tee ${ut_log_name}
+bash run.sh 2>&1 | tee -a ${ut_log_name}
 
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
     exit 1
