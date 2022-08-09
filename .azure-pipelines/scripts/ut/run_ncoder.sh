@@ -10,6 +10,7 @@ cd /neural-compressor/test || exit 1
 find ./neural_coder -name "test*.py" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
 
 LOG_DIR=/neural-compressor/log_dir
+mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_neural_coder.log
 
 echo "cat run.sh..."

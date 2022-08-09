@@ -22,6 +22,7 @@ sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
 
 LOG_DIR=/neural-compressor/log_dir
+mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
 
 echo "cat run.sh..."
