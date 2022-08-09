@@ -98,7 +98,7 @@ stages:
   dependsOn: []
   jobs:
   - job:
-  steps:
+    steps:
     - script: |
         echo ${BUILD_SOURCESDIRECTORY}
         sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
