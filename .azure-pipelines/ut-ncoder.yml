@@ -4,7 +4,7 @@ pr:
   branches:
     include:
     - master
-  path:
+  paths:
     include:
     - neural_coder
 
