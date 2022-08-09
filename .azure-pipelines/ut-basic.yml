@@ -40,8 +40,8 @@ stages:
       displayName: 'Clean Docker'
 
     - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} 
-        bash -x -c "cd /neural-compressor/.azure-pipelines/scripts \
+        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
+        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
         && bash install_nc.sh \
         && bash ut/run_basic_adaptor.sh"
       displayName: 'Install Neural Compressor and Run UT'
