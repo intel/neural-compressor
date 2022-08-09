@@ -169,6 +169,13 @@ class FuseDecomposedBNOptimizer():
 
             # Mul (input, Mul)
             input_data_op = node_from_map(input_node_map, data_scale_mul_op.input[0])
+            # Workaround for model ava-person-vehicle-detection-stage2-2_0_0
+            # FusedBatchNorm requires a 4D Tensor for input data, but MatMul only support 2D output.
+            # Don't fuse the small ops to FusedBatchNorm when the upstream has MatMul.
+            ancestor_input_data_op = node_from_map(input_node_map, input_data_op.input[0])
+            if input_data_op.op == "MatMul" or ancestor_input_data_op.op == "MatMul":
+                continue
+                    
             scale_op = node_from_map(input_node_map, data_scale_mul_op.input[1])
 
             if scale_op.op == "Rsqrt":
