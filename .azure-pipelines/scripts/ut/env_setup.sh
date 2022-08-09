@@ -22,6 +22,7 @@ fi
 
 if [[ "${onnxruntime}" != "" ]]; then
     pip install onnxruntime==${onnxruntime_version}
+    pip install onnxruntime-extensions
 fi
 
 if [[ "${mxnet}" != "" ]]; then
@@ -33,9 +34,9 @@ if [ -f "requirements.txt" ]; then
     sed -i '/^neural-compressor/d' requirements.txt
     sed -i '/^intel-tensorflow/d' requirements.txt
     sed -i '/find-links https:\/\/download.pytorch.org\/whl\/torch_stable.html/d' requirements.txt
-    sed -i '/^torch/d' requirements.txt
+    sed -i '/^torch/d;/^torchvision/d' requirements.txt
     sed -i '/^mxnet-mkl/d' requirements.txt
-    sed -i '/^onnx>=/d;/^onnx==/d;/^onnxruntime>=/d;/^onnxruntime==/d' requirements.txt
+    sed -i '/^onnx/d;/^onnxruntime/d;/^onnxruntime-extensions/d' requirements.txt
     n=0
     until [ "$n" -ge 3 ]
     do
