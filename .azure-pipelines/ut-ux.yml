@@ -11,35 +11,45 @@ pr:
 pool: suyue-test
 
 variables:
-  PYTHON: 'python3.8'
   IMAGE_NAME: 'neural-compressor'
-  IMAGE_TAG: 'pr'
+  IMAGE_TAG: 'py38'
 
 stages:
 - stage:
   displayName: Unit Test for UX
   jobs:
   - job:
-    variables:
-      INC_BRANCH: $(System.PullRequest.SourceBranch)
-      REPO: $(Build.Repository.Uri)
     steps:
+    - script: |
+        echo ${BUILD_SOURCESDIRECTORY}
+        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+      displayName: 'Clean workspace'
+
+    - checkout: self
+      displayName: "Checkout out Repo"
+
+    - script: |
+        # for test
+        docker image rm ${IMAGE_NAME}:${IMAGE_TAG}
+        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
+            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+        fi
+        docker images | grep -i ${IMAGE_NAME}
+        if [[ $? -ne 0 ]]; then
+          echo "NO Such Image ${IMAGE_NAME}"
+          exit 1
+        fi
+      displayName: "Build develop docker image"
+
     - script: |
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
         env | sort
-      displayName: 'Clean Docker'
+      displayName: 'Clean docker'
 
     - script: |
-        echo ${INC_BRANCH}
-        echo ${REPO}
-        docker build --build-arg PYTHON=${PYTHON} --build-arg REPO=${REPO} --build-arg SOURCE_BRANCH=${INC_BRANCH} -f $BUILD_SOURCESDIRECTORY/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-      displayName: 'Build Image'
-
-    - script: |
-        docker images | grep -i neural-compressor
-      displayName: 'Check docker Image'
-
-    - script: |
-        docker run -tid --disable-content-trust --privileged --name="pr-test" --hostname="pr-test-container" ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/.azure-pipelines/scripts/ut/run_ux.sh
-      displayName: 'Run UT'
+        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
+        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+        && bash install_nc_full.sh \
+        && bash ut/run_ux.sh"
+      displayName: 'Install Neural Compressor and run UT'

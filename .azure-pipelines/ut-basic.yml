@@ -43,6 +43,7 @@ stages:
           exit 1
         fi
       displayName: "Build develop docker image"
+
     - script: |
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
@@ -80,6 +81,7 @@ stages:
           exit 1
         fi
       displayName: "Build develop docker image"
+
     - script: |
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
@@ -117,6 +119,7 @@ stages:
           exit 1
         fi
       displayName: "Build develop docker image"
+
     - script: |
         docker stop $(docker ps -aq)
         docker rm -vf $(docker ps -aq) || true
