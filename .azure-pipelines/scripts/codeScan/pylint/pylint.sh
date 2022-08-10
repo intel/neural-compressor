@@ -2,6 +2,7 @@
 # $2: $(target_path) 
 
 pip install pylint==2.12.1
+pip install flask==2.1.3
 pip install google
 pip install horovod
 pip install ofa
