@@ -1,5 +1,7 @@
 #!/bin/bash
 set -x
+python -c "import neural_compressor as nc;print(nc.version.__version__)"
+echo "run basic"
 
 echo "specify fwk version..."
 export tensorflow_version='2.9.1'
@@ -13,7 +15,11 @@ echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
 
 cd /neural-compressor/test || exit 1
-find ./adaptor -name "test*.py" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
+find . -name "test*.py" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
+sed -i '/ adaptor\//d' run.sh
+sed -i '/ tfnewapi\//d' run.sh
+sed -i '/ ux\//d' run.sh
+sed -i '/ neural_coder\//d' run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
