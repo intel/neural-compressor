@@ -127,7 +127,7 @@ stages:
         
   - stage: copyright
     displayName: copyright code scan
-      dependsOn: []
+    dependsOn: []
     jobs:
     - job: Build
       displayName: Build
