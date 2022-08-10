@@ -8,7 +8,7 @@ pr:
     include:
     - neural_compressor
     exclude:
-    - neural_compressor.ux
+    - neural_compressor/ux
 
 pool: suyue-test
 

@@ -6,7 +6,7 @@ pr:
     - master
   paths:
     include:
-    - neural_compressor.ux
+    - neural_compressor/ux
 
 pool: suyue-test
 
