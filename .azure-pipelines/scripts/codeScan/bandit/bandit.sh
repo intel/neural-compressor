@@ -4,7 +4,7 @@
 pip install bandit
 
 
-python -m bandit -r -lll -iii $2 >  /lpot-bandit.log
+python -m bandit -r -lll -iii $1 >  $1/lpot-bandit.log
 
 exit_code=$?
 if [ ${exit_code} -ne 0 ] ; then

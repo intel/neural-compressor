@@ -2,9 +2,10 @@
 # $2: $(BUILD_DIRECTORY) - $(Build.SourcesDirectory)
 
 pip install pyspelling
-pip install aspell
-pip install aspell-en 
 pip install -r requirements.txt
+
+apt-get install aspell
+apt-get install aspell-en 
 
 
 sed -i "s|\${VAL_REPO}|$1|g" $1/pyspelling/pyspelling_conf.yaml
