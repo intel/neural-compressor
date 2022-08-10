@@ -19,16 +19,16 @@ if [[ "${torchvision_version}" != "" ]]; then
     pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
 fi
 
-if [[ "${onnx}" != "" ]]; then
+if [[ "${onnx_version}" != "" ]]; then
     pip install onnx==${onnx_version}
 fi
 
-if [[ "${onnxruntime}" != "" ]]; then
+if [[ "${onnxruntime_version}" != "" ]]; then
     pip install onnxruntime==${onnxruntime_version}
     pip install onnxruntime-extensions
 fi
 
-if [[ "${mxnet}" != "" ]]; then
+if [[ "${mxnet_version}" != "" ]]; then
     pip install mxnet==${mxnet_version}
 fi
 
