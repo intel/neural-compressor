@@ -2,9 +2,7 @@
 # $2: $(BUILD_DIRECTORY) - $(Build.SourcesDirectory)
 
 pip install pyspelling
-
 pip install aspell
-
 pip install aspell-en 
 pip install -r requirements.txt
 
