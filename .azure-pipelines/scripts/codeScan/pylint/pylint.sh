@@ -5,21 +5,6 @@ pip install pylint==2.12.1
 pip install -r requirements.txt
 
 
-# echo "---------------------"
-# pwd
-# echo "---------------------"
-# ls
-# echo "---------------------"
-# $1
-# echo "---------------------"
-# cd $1
-# ls
-# cd .azure-pipelines/scripts/codeScan/pylint
-# ls 
-# echo "---------------------"
-
-
-
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./$2
 #  > /lpot-pylint.json
 # python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ./$2 > $1/pylint/lpot-pylint.json
