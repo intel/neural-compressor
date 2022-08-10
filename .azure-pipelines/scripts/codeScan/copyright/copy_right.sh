@@ -9,14 +9,6 @@
                     
     set -xe
 
-    echo "------------------"
-    $1
-    echo "------------------"
-    $2
-    echo "------------------"
-    $3
-    echo "------------------"
-
     git --no-pager diff --name-only $(git show-ref -s remotes/origin/master) ./$1 > $3/copyright/diff.log
     # git --no-pager diff --name-only $(git show-ref -s remotes/origin$2) ./$1 > $3/copyright/diff.log
 
