@@ -2,6 +2,8 @@
 # $2: $(target_path) 
 
 pip install pylint==2.12.1
+pip install -r requirements.txt
+
 
 # echo "---------------------"
 # pwd

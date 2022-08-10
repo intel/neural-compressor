@@ -6,6 +6,8 @@ pip install pyspelling
 pip install aspell
 
 pip install aspell-en 
+pip install -r requirements.txt
+
 
 sed -i "s|\${VAL_REPO}|$1|g" $1/pyspelling/pyspelling_conf.yaml
 sed -i "s|\${LPOT_REPO}|.|g" $1/pyspelling/pyspelling_conf.yaml
