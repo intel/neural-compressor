@@ -9,7 +9,7 @@ pool: docker-agent
 variables:
   IMAGE_NAME: 'code-scan'
   IMAGE_TAG: '1.0'
-  VAL_PATH: /.azure-pipelines/scripts/codeScan
+  VAL_PATH: /neural_compressor/.azure-pipelines/scripts/codeScan
   target_path: "neural_compressor"
   BUILD_DIRECTORY: $(Build.SourcesDirectory)
   TARGET_BRANCH: $(System.PullRequest.TargetBranch)
