@@ -1,4 +1,12 @@
 #!/bin/bash
+set -x
+
+echo $tensorflow_version
+echo $pytorch_version
+echo $torchvision_version
+echo $onnx_version
+echo $onnxruntime_version
+echo $mxnet_version
 
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
@@ -31,6 +39,7 @@ fi
 if [[ "${mxnet_version}" != "" ]]; then
     pip install mxnet==${mxnet_version}
 fi
+
 
 cd /neural-compressor/test
 if [ -f "requirements.txt" ]; then
