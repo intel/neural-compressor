@@ -9,7 +9,7 @@
                     
     set -xe
 
-    git --no-pager diff --name-only $(git show-ref -s remotes/origin/master) ./$1 > $3/copyright/diff.log
+    git --no-pager diff --name-only $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor > $3/copyright/diff.log
     # git --no-pager diff --name-only $(git show-ref -s remotes/origin$2) ./$1 > $3/copyright/diff.log
 
     files=$(cat $3/copyright/diff.log | awk '!a[$0]++')
