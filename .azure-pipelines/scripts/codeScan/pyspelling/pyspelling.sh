@@ -4,8 +4,8 @@
 pip install pyspelling
 pip install -r requirements.txt
 
-apt-get install aspell
-apt-get install aspell-en 
+apt-get install aspell -y
+apt-get install aspell-en -y
 
 
 sed -i "s|\${VAL_REPO}|$1|g" $1/pyspelling/pyspelling_conf.yaml
