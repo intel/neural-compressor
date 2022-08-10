@@ -12,48 +12,56 @@ pool: suyue-test
 variables:
   IMAGE_NAME: 'code-scan'
   IMAGE_TAG: '1.0'
-  VAL_PATH: /neural_compressor/.azure-pipelines/scripts/codeScan
-  target_path: "neural_compressor"
+  VAL_PATH: '/neural_compressor/.azure-pipelines/scripts/codeScan'
+  TARGET_PATH: '/neural_compressor'
   BUILD_DIRECTORY: $(Build.SourcesDirectory)
   TARGET_BRANCH: $(System.PullRequest.TargetBranch)
+  BANDIT_CONTAINER_NAME: 'bandit'
 
 stages:
-  # - stage: bandit
-  #   displayName: bandit code scan
-  #   dependsOn: []
-  #   jobs:
-  #   - job: Build
-  #     displayName: Build
-  #     steps:
-  #     - script: |
-  #         echo ${BUILD_SOURCESDIRECTORY}
-  #         sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-  #         # sudo docker system prune || true
-  #         # echo y | docker system prune
-  #       displayName: 'Clean workspace'
+  - stage: bandit
+    displayName: bandit code scan
+    dependsOn: []
+    jobs:
+    - job: Build
+      displayName: Build
+      steps:
+      - script: |
+          echo ${BUILD_SOURCESDIRECTORY}
+          sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+          # sudo docker system prune || true
+          # echo y | docker system prune
+        displayName: 'Clean workspace'
       
-  #     - checkout: self
-  #       displayName: "Checkout out Repo"
+      - checkout: self
+        displayName: "Checkout out Repo"
       
-  #     - script: |
-  #         if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-  #             docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-  #         fi
-  #         docker images | grep -i ${IMAGE_NAME}
-  #         if [[ $? -ne 0 ]]; then
-  #           echo "NO Such Image ${IMAGE_NAME}"
-  #           exit 1
-  #         fi
-  #       displayName: "Build Devel Images"
+      - script: |
+          if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+              docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+          fi
+          docker images | grep -i ${IMAGE_NAME}
+          if [[ $? -ne 0 ]]; then
+            echo "NO Such Image ${IMAGE_NAME}"
+            exit 1
+          fi
+        displayName: "Build Devel Images"
 
-  #     - script: |
-  #         docker stop $(docker ps -aq)
-  #         docker rm -vf $(docker ps -aq) || true
-  #       displayName: 'Clean Docker'
+      - script: |
+          docker stop $(docker ps -aq)
+          docker rm -vf $(docker ps -aq) || true
+        displayName: 'Clean Docker'
 
-  #     - script: |
-  #         docker run --disable-content-trust --privileged --name="bandit" --hostname="bandit-host" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd /neural_compressor && bash $(VAL_PATH)/bandit/bandit.sh  $(VAL_PATH)"
-  #       displayName: 'bandit code scan'
+      - script: |
+          docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(VAL_PATH)/bandit/bandit.sh  $(VAL_PATH)"
+          docker cp $(BANDIT_CONTAINER_NAME): $1/lpot-bandit.log $1/lpot-bandit.log
+
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: $1/lpot-bandit.log
+          artifact: $(BANDIT_CONTAINER_NAME)
+          publishLocation: 'pipeline'
+        displayName: 'bandit code scan'
 
 
   # - stage: pylint
@@ -128,39 +136,39 @@ stages:
   #          docker run --disable-content-trust --privileged --name="pyspelling" --hostname="pyspelling-host" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash -x -c "cd /neural_compressor && bash $(VAL_PATH)/pyspelling/pyspelling.sh  $(VAL_PATH) $(BUILD_DIRECTORY)"
   #       displayName: 'pyspelling code scan'
         
-  - stage: copyright
-    displayName: copyright code scan
-    dependsOn: []
-    jobs:
-    - job: Build
-      displayName: Build
-      steps:
-      - script: |
-          echo ${BUILD_SOURCESDIRECTORY}
-          sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-          # echo y | docker system prune
-        displayName: 'Clean workspace'
+  # - stage: copyright
+  #   displayName: copyright code scan
+  #   dependsOn: []
+  #   jobs:
+  #   - job: Build
+  #     displayName: Build
+  #     steps:
+  #     - script: |
+  #         echo ${BUILD_SOURCESDIRECTORY}
+  #         sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+  #         # echo y | docker system prune
+  #       displayName: 'Clean workspace'
       
-      - checkout: self
-        displayName: "Checkout out Repo"
+  #     - checkout: self
+  #       displayName: "Checkout out Repo"
       
-      - script: |
-          if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-              docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-          fi
-          docker images | grep -i ${IMAGE_NAME}
-          if [[ $? -ne 0 ]]; then
-            echo "NO Such Image ${IMAGE_NAME}"
-            exit 1
-          fi
-        displayName: "Build Devel Images"
+  #     - script: |
+  #         if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+  #             docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+  #         fi
+  #         docker images | grep -i ${IMAGE_NAME}
+  #         if [[ $? -ne 0 ]]; then
+  #           echo "NO Such Image ${IMAGE_NAME}"
+  #           exit 1
+  #         fi
+  #       displayName: "Build Devel Images"
 
-      - script: |
-          docker stop $(docker ps -aq)
-          docker rm -vf $(docker ps -aq) || true
-        displayName: 'Clean Docker'
+  #     - script: |
+  #         docker stop $(docker ps -aq)
+  #         docker rm -vf $(docker ps -aq) || true
+  #       displayName: 'Clean Docker'
 
-      - script: |
-          docker run --env PYTHONPATH="/neural-compressor" ${IMAGE_NAME}:${IMAGE_TAG}  /bin/bash +x  -c "pwd && bash $(VAL_PATH)/copyright/copy_right.sh  $(target_path) $(TARGET_BRANCH) $(VAL_PATH)"         
-          # docker run --disable-content-trust --privileged --name="copyright" --hostname="copyright-host" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd /neural_compressor && bash $(VAL_PATH)/copyright/copy_right.sh  $(target_path)   $(TARGET_BRANCH)  $(VAL_PATH)"
-        displayName: 'copyright code scan'
+  #     - script: |
+  #         docker run --env PYTHONPATH="/neural-compressor" ${IMAGE_NAME}:${IMAGE_TAG}  /bin/bash +x  -c "pwd && bash $(VAL_PATH)/copyright/copy_right.sh  $(target_path) $(TARGET_BRANCH) $(VAL_PATH)"         
+  #         # docker run --disable-content-trust --privileged --name="copyright" --hostname="copyright-host" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd /neural_compressor && bash $(VAL_PATH)/copyright/copy_right.sh  $(target_path)   $(TARGET_BRANCH)  $(VAL_PATH)"
+  #       displayName: 'copyright code scan'
