@@ -1,8 +1,11 @@
 trigger: 
   - code-scan
 
-pr: none
-  # - master
+pr: 
+  - master
+
+# pr: none
+#   # - master
 
 pool: docker-agent
 
