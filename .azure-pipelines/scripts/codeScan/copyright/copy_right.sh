@@ -9,8 +9,6 @@
                     
     set -xe
     git config --global --add safe.directory /neural_compressor
-    git config --global user.email xuehao.sun@intel.com
-    git config --global user.password 271828Sxh!
     git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor > /diff.log
     # git --no-pager diff --name-only $(git show-ref -s remotes/origin$2) ./$1 > $3/copyright/diff.log
 
