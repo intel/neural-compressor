@@ -55,6 +55,7 @@ stages:
       - script: |
           # docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(VAL_PATH)/bandit/bandit.sh  $(VAL_PATH)"
           docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(VAL_PATH)/bandit/bandit.sh  $(VAL_PATH)"
+          pwd
           docker cp "bandit":$(VAL_PATH)/lpot-bandit.log /neural_compressor/lpot-bandit.log
 
       - task: PublishPipelineArtifact@1
