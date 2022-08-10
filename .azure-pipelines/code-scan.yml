@@ -161,6 +161,6 @@ stages:
         displayName: 'Clean Docker'
 
       - script: |
-          docker run --env PYTHONPATH="/neural-compressor" ${IMAGE_NAME}:${IMAGE_TAG} bash $(VAL_PATH)/copyright/copy_right.sh  $(target_path)   $(TARGET_BRANCH)  $(VAL_PATH)          
+          docker run --env PYTHONPATH="/neural-compressor" ${IMAGE_NAME}:${IMAGE_TAG}  /bin/bash +x $(VAL_PATH)/copyright/copy_right.sh  $(target_path)   $(TARGET_BRANCH)  $(VAL_PATH)          
           # docker run --disable-content-trust --privileged --name="copyright" --hostname="copyright-host" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd /neural_compressor && bash $(VAL_PATH)/copyright/copy_right.sh  $(target_path)   $(TARGET_BRANCH)  $(VAL_PATH)"
         displayName: 'copyright code scan'
