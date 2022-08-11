@@ -17,6 +17,7 @@ variables:
   BUILD_DIRECTORY: $(Build.SourcesDirectory)
   TARGET_BRANCH: $(System.PullRequest.TargetBranch)
   BANDIT_CONTAINER_NAME: 'bandit'
+  CURRENT_PATH: $(pwd)
 
 stages:
   - stage: bandit
@@ -56,11 +57,11 @@ stages:
           # docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(VAL_PATH)/bandit/bandit.sh  $(VAL_PATH)"
           docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(VAL_PATH)/bandit/bandit.sh  $(VAL_PATH)"
           pwd
-          docker cp "bandit":$(VAL_PATH)/lpot-bandit.log /neural_compressor/lpot-bandit.log
+          docker cp "bandit":$(VAL_PATH)/lpot-bandit.log $(CURRENT_PATH)/$(VAL_PATH)/bandit/lpot-bandit.log
 
       - task: PublishPipelineArtifact@1
         inputs:
-          targetPath: /neural_compressor/lpot-bandit.log
+          targetPath: $(CURRENT_PATH)/$(VAL_PATH)/bandit/lpot-bandit.log
           artifact: $(BANDIT_CONTAINER_NAME)
           publishLocation: 'pipeline'
         displayName: 'bandit code scan'
