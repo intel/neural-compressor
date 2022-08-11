@@ -156,7 +156,9 @@ stages:
         displayName: CopyRight
         steps:
           - script: |
-
+              echo "--------Clean workspace-----------"
+              git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor                
+              echo "-----------1-----------------"
               echo ${BUILD_SOURCESDIRECTORY}
               sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
               echo y | docker system prune
@@ -164,6 +166,9 @@ stages:
           - checkout: self
             displayName: "Checkout out Repo"
           - script: |
+              echo "--------Build Devel Images-----------"
+              git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor                
+              echo "-----------1-----------------"
               if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
                   docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
               fi
@@ -174,6 +179,9 @@ stages:
               fi
             displayName: "Build Devel Images"
           - script: |
+              echo "--------Clean Docker-----------"
+              git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor                
+              echo "-----------1-----------------"
               docker stop $(docker ps -aq)
               docker rm -vf $(docker ps -aq) || true
             displayName: "Clean Docker"
@@ -183,11 +191,7 @@ stages:
               targetType: "inline"
               script: |
                 echo "--------BEFORE docker Run-----------"
-                git show-ref -s remotes/origin/master
-                echo "-----------11--------------"
-
-                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor
-                
+                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor                
                 echo "-----------1-----------------"
                 $(System.PullRequest.TargetBranch)
                 echo "-----------1--------------"
