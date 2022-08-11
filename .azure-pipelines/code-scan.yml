@@ -183,8 +183,11 @@ stages:
               script: |
                 echo "--------BEFORE docker Run-----------"
                 git show-ref -s remotes/origin/master
-                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /$(CURRENT_PATH)/neural_compressor    
-                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /$(CURRENT_PATH)/neural_compressor/neural_compressor                            
+                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) $(CURRENT_PATH)/neural_compressor    
+                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) $(CURRENT_PATH)/neural_compressor/neural_compressor 
+                echo "--------neural_compressor Path-----------"
+                cd  $(CURRENT_PATH)/neural_compressor
+                ls               
                 echo "-----------pr-----------------"
                 $(System.PullRequest.TargetBranch)
                 echo "-----------pr--------------"
