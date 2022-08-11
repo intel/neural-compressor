@@ -154,23 +154,17 @@ stages:
       - job: CopyRight
         displayName: CopyRight
         steps:
-          - script: |
-              echo "--------run with script-----------"
-              git show-ref -s remotes/origin/master
-              git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) $(CURRENT_PATH)/neural_compressor    
-            
-
           - task: Bash@3
             inputs:
               targetType: "inline"
               script: |
                 echo "--------BEFORE docker Run-----------"
                 git show-ref -s remotes/origin/master
-                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) $(CURRENT_PATH)/neural_compressor    
+                git --no-pager diff --name-only $(git show-ref -s remotes/origin/master) $(CURRENT_PATH)/neural_compressor    
                 echo "--------neural_compressor Path-----------"
                 echo $(CURRENT_PATH)
-                cd  $(CURRENT_PATH)/neural_compressor
-                ls               
+                cd  $(CURRENT_PATH)
+                ll -a                
                 echo "-----------pr-----------------"
                 $(System.PullRequest.TargetBranch)
                 echo "-----------pr--------------"
