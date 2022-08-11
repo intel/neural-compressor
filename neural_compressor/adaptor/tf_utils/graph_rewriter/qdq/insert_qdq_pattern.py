@@ -407,7 +407,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             else:
                 Helper.set_attr_int(quant_node, 'axis', -1)
                 Helper.set_attr_int(dequant_node, 'axis', -1)
-
+        if host_op_type == 'DepthwiseConv2dNative':
+            Helper.set_attr_int(quant_node, 'axis', 2)
+            Helper.set_attr_int(dequant_node, 'axis', 2)
+        
         self.g_weight.add_node(quant_node, weight_node.name, [])
         self.g_weight.add_node(min_node, None, [quant_node.name])
         self.g_weight.add_node(max_node, None, [quant_node.name])

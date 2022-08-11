@@ -36,8 +36,24 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         self.fusion_mapping = {
             'DequantizeMatMulBiasAddQuantizeV2': self.apply_matmul_biasadd_fusion,
             'DequantizeMatMulQuantizeV2': self.apply_matmul_biasadd_fusion,
+            'DequantizeMatMulBiasAddAddQuantizeV2': self.apply_matmul_biasadd_fusion,
+            'DequantizeMatMulAddQuantizeV2': self.apply_matmul_biasadd_fusion,
+            'DequantizeMatMulBiasAddAddV2QuantizeV2': self.apply_matmul_biasadd_fusion,
+            'DequantizeMatMulAddV2QuantizeV2': self.apply_matmul_biasadd_fusion,
             'DequantizeMatMulBiasAddReluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulBiasAddRelu6QuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulBiasAddLeakyReluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulBiasAddGeluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulBiasAddEluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulBiasAddTanhQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulBiasAddSigmoidQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
             'DequantizeMatMulReluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulRelu6QuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulLeakyReluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulGeluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulEluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulTanhQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeMatMulSigmoidQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
             'DequantizeBatchMatMulV2QuantizeV2': self.apply_batchmatmulv2_fusion,
             'DequantizeBatchMatMulV2MulQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
             'DequantizeBatchMatMulV2AddQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
@@ -50,6 +66,18 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
     def apply_matmul_biasadd_relu_fusion(self, match_node_name):
         # Dequantize + MatMul + BiasAdd + Relu + QuantizeV2
         # Dequantize + MatMul + Relu + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + Relu6 + QuantizeV2
+        # Dequantize + MatMul + Relu6 + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + LeakyRelu + QuantizeV2
+        # Dequantize + MatMul + LeakyRelu + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + Gelu + QuantizeV2
+        # Dequantize + MatMul + Gelu + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + Elu + QuantizeV2
+        # Dequantize + MatMul + Elu + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + Tanh + QuantizeV2
+        # Dequantize + MatMul + Tanh + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + Sigmoid + QuantizeV2
+        # Dequantize + MatMul + Sigmoid + QuantizeV2
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
 
@@ -139,9 +167,29 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, "T1", dtypes.quint8)
                 helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
                 helper.set_attr_dtype(quantized_matmul_node, "Tout", dtypes.qint32)
-                helper.set_attr_string(quantized_matmul_node, 'input_quant_mode', b'SCALED')
+                helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
+                                       b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
+                # TODO TFDO will extend output quantization mode to MIN_FIRST in future.
                 helper.set_attr_string(quantized_matmul_node, 'output_quant_mode', b'SCALED')
-                helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Relu'])
+                if self.node_name_mapping[relu_node_name].node.op == "Relu":
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Relu'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Relu6":
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Relu6'])
+                elif self.node_name_mapping[relu_node_name].node.op == "LeakyRelu":
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Gelu":
+                    if self.node_name_mapping[relu_node_name].node.attr["approximate"].b:
+                        helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', \
+                                                   [b'BiasAdd', b'GeluApproximate'])
+                    else:
+                        helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', \
+                                                   [b'BiasAdd', b'GeluExact'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Elu":
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Elu'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Tanh":
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Tanh'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Sigmoid":
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Sigmoid'])
                 helper.set_attr_dtype(quantized_matmul_node, 'Tbias', dtypes.float32)
                 helper.set_attr_dtype(quantized_matmul_node, 'U', dtypes.float32)
 
@@ -173,6 +221,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
     def apply_matmul_biasadd_fusion(self, match_node_name):
         # Dequantize + MatMul + QuantizeV2
         # Dequantize + MatMul + BiasAdd + QuantizeV2
+        # Dequantize + MatMul + Add + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + Add + QuantizeV2
+        # Dequantize + MatMul + AddV2 + QuantizeV2
+        # Dequantize + MatMul + BiasAdd + AddV2 + QuantizeV2
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(
@@ -228,9 +280,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             add_b_node = self.node_name_mapping[add_b_node_name].node
             if add_a_node.op != 'Const' and add_b_node.op == 'Const':
                  need_insert_dummy_biasadd = 0
-            if need_insert_dummy_biasadd:
-                 self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
-                 return match_node_name[1:2]
+            # if need_insert_dummy_biasadd:
+            #      self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
+            #      return match_node_name[1:2]
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -258,16 +310,40 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
                     )
                     self.add_output_graph_node(bias_node)
+
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
+
+                sum_node_name = ""
+                if len(match_node_name) == 4:
+                    if self.node_name_mapping[match_node_name[2]].node.op == "Add" or \
+                       self.node_name_mapping[match_node_name[2]].node.op == "AddV2":
+                        sum_index = 1 \
+                        if match_node_name[1] == self.node_name_mapping[match_node_name[2]].node.input[0] \
+                        else 0
+                        sum_node_name = self.node_name_mapping[match_node_name[2]].node.input[sum_index]
+                if len(match_node_name) == 5:
+                    if self.node_name_mapping[match_node_name[3]].node.op == "Add" or \
+                       self.node_name_mapping[match_node_name[3]].node.op == "AddV2":
+                        sum_index = 1 \
+                        if match_node_name[2] == self.node_name_mapping[match_node_name[3]].node.input[0] \
+                        else 0
+                        sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
 
                 all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
                 all_input_names.append(q_weights_min_name)
                 all_input_names.append(q_weights_max_name)
 
-                quantized_node_input_names = all_input_names[:2] + [
-                    bias_node_name
-                ] + all_input_names[2:] + control_inputs
+                if sum_node_name:
+                    quantized_node_input_names = all_input_names[:2] + [
+                        bias_node_name
+                    ] + [
+                        sum_node_name
+                    ] + all_input_names[2:]  + control_inputs
+                else:
+                    quantized_node_input_names = all_input_names[:2] + [
+                        bias_node_name
+                    ] + all_input_names[2:] + control_inputs
 
                 quantized_matmul_node = helper.create_node(
                     "_QuantizedMatMul", quantized_node_name,
@@ -277,20 +353,35 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, "T1", dtypes.quint8)
                 helper.set_attr_dtype(quantized_matmul_node, "T2", dtypes.qint8)
                 helper.set_attr_dtype(quantized_matmul_node, "Tout", dtypes.qint32)
-                helper.set_attr_string(quantized_matmul_node, 'input_quant_mode', b'SCALED')
+                helper.set_attr_dtype(quantized_matmul_node, 'U', dtypes.float32)
+                helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
+                                       b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
+                # TODO TFDO will extend output quantization mode to MIN_FIRST in future.
                 helper.set_attr_string(quantized_matmul_node, 'output_quant_mode', b'SCALED')
-                helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd'])
                 helper.set_attr_dtype(quantized_matmul_node, 'Tbias', dtypes.float32)
-
-                helper.set_attr_type_list(quantized_matmul_node, 'Thost_inputs', [
-                        dtypes.quint8.as_datatype_enum,
-                        dtypes.qint8.as_datatype_enum,
-                        dtypes.float32.as_datatype_enum,
-                        dtypes.float32.as_datatype_enum,
-                        dtypes.float32.as_datatype_enum,
-                        dtypes.float32.as_datatype_enum,
-                        dtypes.float32.as_datatype_enum
-                     ])
+                if sum_node_name:
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd', b'Add'])
+                    helper.set_attr_type_list(quantized_matmul_node, 'Thost_inputs', [
+                            dtypes.quint8.as_datatype_enum,
+                            dtypes.qint8.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum
+                        ])
+                else:
+                    helper.set_attr_string_list(quantized_matmul_node, 'fused_ops', [b'BiasAdd'])
+                    helper.set_attr_type_list(quantized_matmul_node, 'Thost_inputs', [
+                            dtypes.quint8.as_datatype_enum,
+                            dtypes.qint8.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum,
+                            dtypes.float32.as_datatype_enum
+                        ])
                 helper.set_attr_type_list(quantized_matmul_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
@@ -301,9 +392,14 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, requantize_type, False)
-                self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[1] if need_insert_dummy_biasadd else \
-                    match_node_name[2], requantize_type)
+                if sum_node_name:
+                    self._intel_cpu_add_dequantize_result_node(
+                        quantize_down_name, match_node_name[2] if need_insert_dummy_biasadd else \
+                        match_node_name[3], requantize_type)
+                else:
+                    self._intel_cpu_add_dequantize_result_node(
+                        quantize_down_name, match_node_name[1] if need_insert_dummy_biasadd else \
+                        match_node_name[2], requantize_type)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)

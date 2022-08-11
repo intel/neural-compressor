@@ -207,7 +207,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             self.assertEqual(found_quantized_matmul, True)
             
     @disable_random()
-    def test_disable_matmul_fusion(self):
+    def test_matmul_dummybiasadd_relu6_fusion(self):
         g = tf.Graph()
         with g.as_default():
 
@@ -215,7 +215,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
-            z = tf.matmul(x, y, name='no_quant_matmul')
+            z = tf.matmul(x, y, name='quant_matmul')
             z = tf.nn.relu6(z, name='op_to_store')
             found_quantized_matmul = False
 
@@ -235,7 +235,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     if i.op == '_QuantizedMatMul' and i.name == 'op_to_store':
                         found_quantized_matmul = True
                         break
-            self.assertEqual(found_quantized_matmul, False)
+            self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
     def test_matmul_with_reshape_transpose(self):
@@ -438,7 +438,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
         y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
         a = tf.matmul(x, y)
         b = tf.matmul(x, y)
-        add = tf.raw_ops.AddV2(x=a, y=b, name='addv2')
+        c = tf.nn.relu(b)
+        add = tf.raw_ops.AddV2(x=a, y=c, name='addv2')
         z = tf.nn.relu(add,  name='op_to_store')
 
         with tf.Session() as sess:
@@ -456,11 +457,11 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
             found_quantized_matmul = False
             for i in output_graph.graph_def.node:
-                if i.op == 'QuantizeV2' and i.name == 'MatMul_eightbit_quantize_x' and i.attr["T"].type == dtypes.quint8:
+                if i.op == '_QuantizedMatMul':
                     found_quantized_matmul = True
                     break
  
-            self.assertEqual(found_quantized_matmul, False)
+            self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
     def test_batchmatmulv2_dequantize_fusion(self):
@@ -584,6 +585,597 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     break
 
             self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_relu6_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.nn.relu6(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu6', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_leakyrelu_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.nn.leaky_relu(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'LeakyRelu', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+    
+    @disable_random()
+    def test_matmul_biasadd_geluapproximate_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.nn.gelu(z, approximate=True, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'GeluApproximate', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_geluexact_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.nn.gelu(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'GeluExact', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_elu_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.nn.elu(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Elu', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_tanh_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.math.tanh(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Tanh', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_sigmoid_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.math.sigmoid(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sigmoid', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_relu_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y, name='quant_matmul')
+            z = tf.nn.relu(z, name='op_to_store')
+            found_quantized_matmul = False
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Requantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_relu6_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.relu6(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu6', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_leakyrelu_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.leaky_relu(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'LeakyRelu', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_geluapproximate_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.gelu(z, approximate=True, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'GeluApproximate', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_geluexact_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.gelu(z, approximate=False, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'GeluExact', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_elu_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.elu(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Elu', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_tanh_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.math.tanh(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Tanh', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_dummy_biasadd_sigmoid_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.math.sigmoid(z, name='op_to_store')
+            found_quantized_matmul = False
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sigmoid', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_add_const_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            transpose = tf.transpose(y, perm=[1, 0])
+            reshape = tf.reshape(transpose, [2, 2])
+            z = tf.matmul(x, reshape, name='quant_matmul')
+            z = tf.math.add(z, [1, 2], name='op_to_store')
+            found_quantized_matmul = False
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_add_non_const_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            transpose = tf.transpose(y, perm=[1, 0])
+            reshape = tf.reshape(transpose, [2, 2])
+            z = tf.matmul(x, reshape, name='quant_matmul')
+            z = tf.math.add(z, x, name='addv2')
+            z = tf.nn.relu(z, name='op_to_store')
+            found_quantized_matmul = False
+
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Add', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_add_const_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.math.add(z, [1, 2], name='op_to_store')
+            found_quantized_matmul = False
+            
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Add', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
+
+    @disable_random()
+    def test_matmul_biasadd_add_non_const_fusion(self):
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y)
+            z = tf.nn.bias_add(z, [1, 2])
+            z = tf.math.add(z, x, name='op_to_store')
+            found_quantized_matmul = False
+            
+            with tf.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+
+                for i in output_graph.graph_def.node:
+                    if i.op == '_QuantizedMatMul' and \
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Add', b'Dequantize']:
+                        found_quantized_matmul = True
+                        break
+                self.assertEqual(found_quantized_matmul, True)
 
 if __name__ == '__main__':
     unittest.main()
