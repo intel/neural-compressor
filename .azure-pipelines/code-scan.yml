@@ -65,7 +65,7 @@ stages:
 
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: (CURRENT_PATH)
+              targetPath: $(CURRENT_PATH)
               artifact: $(BANDIT_CONTAINER_NAME)
               publishLocation: "pipeline"
 

@@ -1,11 +1,5 @@
 pip install bandit
 
-echo "-------------------"
-pwd
-echo "-------------------"
-ls
-echo "-------------------"
-
 python -m bandit -r -lll -iii /neural_compressor >  /lpot-bandit.log
 # python -m bandit -r -lll -iii $(TARGET_PATH) >  /lpot-bandit.log
 
