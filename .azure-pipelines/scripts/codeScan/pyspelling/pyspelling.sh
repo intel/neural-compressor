@@ -4,6 +4,13 @@ pip install -r requirements.txt
 apt-get install aspell -y
 apt-get install aspell-en -y
 
+echo "---------------------"
+${TARGET_PATH}
+echo "---------------------"
+${PYSPELLING_CONTAINER_NAME}
+echo "---------------------"
+cd ${TARGET_PATH}/${PYSPELLING_CONTAINER_NAME}
+echo "---------------------------------------"
 
 sed -i "s|\${VAL_REPO}|${TARGET_PATH}|g" ${TARGET_PATH}/${PYSPELLING_CONTAINER_NAME}pyspelling_conf.yaml
 sed -i "s|\${LPOT_REPO}|.|g" ${TARGET_PATH}/${PYSPELLING_CONTAINER_NAME}pyspelling_conf.yaml
