@@ -137,7 +137,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                docker run --disable-content-trust --privileged --name=$(PYSPELLING_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(PYSPELLING_CONTAINER_NAME)/pyspelling.sh  $(CURRENT_PATH)/$(CODE_SCAN_PATH) $(PYSPELLING_CONTAINER_NAME)"
+                docker run --disable-content-trust --privileged --name=$(PYSPELLING_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(PYSPELLING_CONTAINER_NAME)/pyspelling.sh  $(TARGET_PATH)"
                 docker cp $(PYSPELLING_CONTAINER_NAME):/lpot_pyspelling.log $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot_pyspelling.log
 
           - task: PublishPipelineArtifact@1
