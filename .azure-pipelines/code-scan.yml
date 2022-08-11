@@ -54,9 +54,9 @@ stages:
                 echo "---------2-----------"
                 ls
                 echo "--------------------"
-                $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
+                $(CURRENT_PATH)/$(CODE_SCAN_PATH)
                 echo "---------1-----------"                
-                cd $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
+                cd $(CURRENT_PATH)/$(CODE_SCAN_PATH)
                 echo "---------2-----------"
                 ls
                 echo "--------------------"
