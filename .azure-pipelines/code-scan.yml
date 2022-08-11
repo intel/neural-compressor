@@ -47,11 +47,11 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                echo "------------------------"                
-                cd $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
-                ls -a
                 echo "------------------------"
                 cd $(CURRENT_PATH)/.azure-pipelines/scripts/codeScan
+                ls -a
+                echo "------------------------"
+-               cd $(CURRENT_PATH)/.azure-pipelines/scripts/codeScan/scanLog
                 ls -a
                 echo "------------------------"
 
