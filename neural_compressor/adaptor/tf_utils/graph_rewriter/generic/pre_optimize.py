@@ -43,7 +43,7 @@ from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
-
+from .dilated_contraction import DilatedContraction
 
 class PreOptimization():
     def __init__(self, model, optimization, new_api):
@@ -167,6 +167,8 @@ class PreOptimization():
         self._tmp_graph_def = ConvertNanToRandom(
             self._tmp_graph_def).do_transformation()
 
+        self._tmp_graph_def = DilatedContraction(
+            self._tmp_graph_def).do_transformation()
         self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 

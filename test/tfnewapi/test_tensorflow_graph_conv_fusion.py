@@ -97,6 +97,38 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])
 
             self.assertEqual(find_single_qconv, [True, False])
+    @disable_random()
+    def test_spacetobatchnd_conv2d_batchtospacend_fusion(self):
+        i = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        x = tf.space_to_batch_nd(i, block_shape=[2,2], paddings=[[0, 0], [0, 0]])
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        y = tf.compat.v1.batch_to_space_nd(conv, block_shape=[2,2], crops=[[0, 0], [0, 0]])
+        out = tf.identity(y, name="op_to_store")
+        out_name = out.name.split(':')[0]
+
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            found_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'SpaceToBatchND' or i.op=='BatchToSpaceND':
+                    found_op = True
+                    break
+
+            self.assertEqual(found_op, False)
 
     @disable_random()
     def test_conv_relu_fusion(self):
