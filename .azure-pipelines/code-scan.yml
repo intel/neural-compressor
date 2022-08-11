@@ -101,11 +101,6 @@ stages:
               targetPath: $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-pylint.json
               artifact: $(PYLINT_CONTAINER_NAME)
               publishLocation: "pipeline"
-  
-
-
-      - script: |
-        displayName: 'pylint code scan'
 
   # - stage: pyspelling
   #   displayName: pyspelling code scan
