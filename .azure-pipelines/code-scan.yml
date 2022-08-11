@@ -180,8 +180,8 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                echo "$(TARGET_BRANCH)""
-                echo "$(System.PullRequest.TargetBranch)""
+                echo "$(TARGET_BRANCH)"
+                echo "$(System.PullRequest.TargetBranch)"
                 echo "${SYSTEM_PULLREQUEST_TARGETBRANCH}"
                 docker run --disable-content-trust --privileged --name=$(PYSPELLING_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(COPYRIGHT_CONTAINER_NAME)/copy_right.sh "
                 docker cp $(COPYRIGHT_CONTAINER_NAME):/copyright_issue_summary.log $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
