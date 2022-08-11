@@ -158,7 +158,7 @@ stages:
           - script: |        
               echo "--------Clean workspace-----------"
               git show-ref -s remotes/origin/master
-              git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor                
+              git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) ./neural_compressor             
               echo "-----------1-----------------"
               echo ${BUILD_SOURCESDIRECTORY}
               sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
