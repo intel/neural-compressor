@@ -1,10 +1,7 @@
-# $1: $(VAL_PATH) 
-# $2: $(target_path) 
-
 pip install bandit
 
 
-python -m bandit -r -lll -iii $1 >  $1/lpot-bandit.log
+python -m bandit -r -lll -iii $(TARGET_PATH) >  /lpot-bandit.log
 
 exit_code=$?
 if [ ${exit_code} -ne 0 ] ; then
