@@ -1,6 +1,7 @@
 trigger:
   - code-scan
-pr: none
+pr: 
+  - master
 pool: suyue-test
 
 variables:
@@ -20,34 +21,34 @@ variables:
   CURRENT_PATH: $(Build.SourcesDirectory)
 
 stages:
-  # - stage: BanditCodeScan
-  #   displayName: Bandit Code Scan
-  #   dependsOn: []
-  #   jobs:
-  #     - job: Bandit
-  #       displayName: Bandit
-  #       steps:
-  #         - script: |
-  #             echo ${BUILD_SOURCESDIRECTORY}
-  #             sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-  #             echo y | docker system prune
-  #           displayName: "Clean workspace"
-  #         - checkout: self
-  #           displayName: "Checkout out Repo"
-  #         - script: |
-  #             if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-  #                 docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-  #             fi
-  #             docker images | grep -i ${IMAGE_NAME}
-  #             if [[ $? -ne 0 ]]; then
-  #               echo "NO Such Image ${IMAGE_NAME}"
-  #               exit 1
-  #             fi
-  #           displayName: "Build Devel Images"
-  #         - script: |
-  #             docker stop $(docker ps -aq)
-  #             docker rm -vf $(docker ps -aq) || true
-  #           displayName: "Clean Docker"
+  - stage: BanditCodeScan
+    displayName: Bandit Code Scan
+    dependsOn: []
+    jobs:
+      - job: Bandit
+        displayName: Bandit
+        steps:
+          - script: |
+              echo ${BUILD_SOURCESDIRECTORY}
+              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+              echo y | docker system prune
+            displayName: "Clean workspace"
+          - checkout: self
+            displayName: "Checkout out Repo"
+          - script: |
+              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              fi
+              docker images | grep -i ${IMAGE_NAME}
+              if [[ $? -ne 0 ]]; then
+                echo "NO Such Image ${IMAGE_NAME}"
+                exit 1
+              fi
+            displayName: "Build Devel Images"
+          - script: |
+              docker stop $(docker ps -aq)
+              docker rm -vf $(docker ps -aq) || true
+            displayName: "Clean Docker"
 
   #         - task: Bash@3
   #           inputs:
