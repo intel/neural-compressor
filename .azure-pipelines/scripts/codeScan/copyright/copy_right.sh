@@ -1,7 +1,6 @@
     # $1: $(target_path) 
     # $2: $(TARGET_BRANCH) - $(System.PullRequest.TargetBranch)
     # $3: $(VAL_PATH)
-    
 
     supported_extensions=(py, sh, yaml)
                     
