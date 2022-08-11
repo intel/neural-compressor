@@ -154,7 +154,6 @@ stages:
       - job: CopyRight
         displayName: CopyRight
         steps:
-          -
           - task: Bash@3
             inputs:
               targetType: "inline"
