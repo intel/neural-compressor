@@ -7,7 +7,6 @@
 *.csv
 *.pb
 *.ckpt
-*.log
 *.swp
 *.onnx
 *.so
