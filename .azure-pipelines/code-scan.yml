@@ -61,11 +61,11 @@ stages:
                 ls
                 echo "--------------------"
                 docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash /$(CODE_SCAN_PATH)/bandit/bandit.sh  $(TARGET_PATH)"
-                docker cp 'bandit':/lpot-bandit.log $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
+                docker cp 'bandit':/lpot-bandit.log $(CURRENT_PATH)/lpot-bandit.log
 
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: (CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
+              targetPath: (CURRENT_PATH)
               artifact: $(BANDIT_CONTAINER_NAME)
               publishLocation: "pipeline"
 
