@@ -53,7 +53,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(BANDIT_CONTAINER_NAME)/bandit.sh  --TARGET_PATH $(TARGET_PATH)"
+                docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(BANDIT_CONTAINER_NAME)/bandit.sh $(TARGET_PATH)"
                 docker cp $(BANDIT_CONTAINER_NAME):/lpot-bandit.log $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
 
           - task: PublishPipelineArtifact@1

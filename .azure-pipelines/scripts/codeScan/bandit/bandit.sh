@@ -1,10 +1,10 @@
 pip install bandit
 
 echo "--------------------"
-${TARGET_PATH} 
+$1
 echo "--------------------"
 
-python -m bandit -r -lll -iii ${TARGET_PATH} >  /lpot-bandit.log
+python -m bandit -r -lll -iii $1 >  /lpot-bandit.log
 
 exit_code=$?
 if [ ${exit_code} -ne 0 ] ; then
