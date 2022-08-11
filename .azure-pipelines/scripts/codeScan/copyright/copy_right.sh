@@ -5,7 +5,7 @@
     supported_extensions=(py, sh, yaml)
 
     echo "-----------------------"
-    $1
+    echo $1
     echo "-----------------------"
                     
     set -xe
