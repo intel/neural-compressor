@@ -3,6 +3,10 @@
     # $3: $(VAL_PATH)
 
     supported_extensions=(py, sh, yaml)
+
+    echo "-----------------------"
+    $1
+    echo "-----------------------"
                     
     set -xe
     git config --global --add safe.directory /neural_compressor
