@@ -1,5 +1,4 @@
-trigger:
-  - code-scan
+trigger: none
 pr: 
   - master
 pool: suyue-test
@@ -155,35 +154,14 @@ stages:
       - job: CopyRight
         displayName: CopyRight
         steps:
-          - script: |        
-              echo ${BUILD_SOURCESDIRECTORY}
-              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune
-            displayName: "Clean workspace"
-          - checkout: self
-            displayName: "Checkout out Repo"
-          - script: |
-              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-              fi
-              docker images | grep -i ${IMAGE_NAME}
-              if [[ $? -ne 0 ]]; then
-                echo "NO Such Image ${IMAGE_NAME}"
-                exit 1
-              fi
-            displayName: "Build Devel Images"
-          - script: |
-              docker stop $(docker ps -aq)
-              docker rm -vf $(docker ps -aq) || true
-            displayName: "Clean Docker"
-
+          -
           - task: Bash@3
             inputs:
               targetType: "inline"
               script: |
                 echo "--------BEFORE docker Run-----------"
                 git show-ref -s remotes/origin/master
-                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) $(CURRENT_PATH)/neural_compressor    
+                git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) $CURRENT_PATH/neural_compressor    
                 echo "--------neural_compressor Path-----------"
                 echo $(CURRENT_PATH)
                 cd  $(CURRENT_PATH)/neural_compressor
