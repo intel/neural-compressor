@@ -155,8 +155,9 @@ stages:
       - job: CopyRight
         displayName: CopyRight
         steps:
-          - script: |
+          - script: |        
               echo "--------Clean workspace-----------"
+              git show-ref -s remotes/origin/master
               git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor                
               echo "-----------1-----------------"
               echo ${BUILD_SOURCESDIRECTORY}
