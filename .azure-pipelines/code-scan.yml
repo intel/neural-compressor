@@ -185,8 +185,13 @@ stages:
                 echo "--------BEFORE docker Run-----------"
                 git show-ref -s remotes/origin/master
                 echo "-------------------------"
+                
+                pwd
 
                 git --no-pager diff --name-only --no-index $(git show-ref -s remotes/origin/master) /neural_compressor/neural_compressor
+                
+                echo "----------------------------"
+                $(System.PullRequest.TargetBranch)
                 echo "-------------------------"
 
                 docker run --disable-content-trust --privileged --name=$(PYSPELLING_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(COPYRIGHT_CONTAINER_NAME)/copy_right.sh "
