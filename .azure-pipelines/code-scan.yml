@@ -7,7 +7,7 @@ pr:
 # pr: none
 #   # - master
 
-pool: suyue-test
+pool: docker-agent
 
 variables:
   IMAGE_NAME: 'code-scan'
