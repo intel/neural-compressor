@@ -7,7 +7,7 @@ variables:
   IMAGE_NAME: "code-scan"
   IMAGE_TAG: "1.0"
   CODE_SCAN_PATH: ".azure-pipelines/scripts/codeScan"
-  CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
+  CODE_SCAN_LOG_PATH: "scanLog"
   TARGET_PATH: "/neural_compressor"
   TARGET_BRANCH: $(System.PullRequest.TargetBranch)
   BANDIT_CONTAINER_NAME: "bandit"
@@ -47,12 +47,12 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural_compressor ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/bandit/bandit.sh  $(TARGET_PATH)"
-                docker cp 'bandit':/lpot-bandit.log $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
+                docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(BANDIT_CONTAINER_NAME)/bandit.sh  --TARGET_PATH $(TARGET_PATH)"
+                docker cp 'bandit':/lpot-bandit.log $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
 
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
+              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
               artifact: $(BANDIT_CONTAINER_NAME)
               publishLocation: "pipeline"
 

@@ -1,7 +1,6 @@
 pip install bandit
 
-python -m bandit -r -lll -iii /neural_compressor >  /lpot-bandit.log
-# python -m bandit -r -lll -iii $(TARGET_PATH) >  /lpot-bandit.log
+python -m bandit -r -lll -iii ${TARGET_PATH} >  /lpot-bandit.log
 
 exit_code=$?
 if [ ${exit_code} -ne 0 ] ; then
