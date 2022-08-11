@@ -16,7 +16,7 @@ pip install onnxruntime_extensions
 
 
 
-python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime ${TARGET_PATH} > /lpot-pylint.json
+python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime $1 > /lpot-pylint.json
 
 exit_code=$?
 if [ ${exit_code} -ne 0 ] ; then
