@@ -29,8 +29,8 @@ stages:
           - checkout: self
             displayName: "Checkout out Repo"
           - script: |
-              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              if [[  $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} --no-cache.
               fi
               docker images | grep -i ${IMAGE_NAME}
               if [[ $? -ne 0 ]]; then
