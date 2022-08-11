@@ -1,7 +1,7 @@
 trigger:
   - code-scan
 pr: none
-pool: docker-agent
+pool: suyue-test
 
 variables:
   IMAGE_NAME: "code-scan"
