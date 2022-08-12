@@ -495,7 +495,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             new_node.attr["Tsummand"].CopyFrom(attr_value_pb2.AttrValue(type=summand_op_type))
- 
+
             if new_node.op in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D', '_QuantizedConv3D'):
                 original_input = list(new_node.input)
                 new_input = []
