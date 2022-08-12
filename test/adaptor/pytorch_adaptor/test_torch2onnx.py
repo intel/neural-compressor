@@ -5,6 +5,7 @@ from torch.quantization import QuantStub, DeQuantStub
 import unittest
 import os
 import onnx
+import numpy as np
 from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental import Quantization, common
@@ -62,6 +63,13 @@ def build_pytorch_yaml():
 
     with open('dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_dyn_yaml)
+
+    fake_qat_yaml = fake_ptq_yaml.replace(
+        'post_training_static_quant', 
+        'quant_aware_training',
+    )
+    with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_qat_yaml)
 
 
 def build_pytorch_fx_yaml():
@@ -130,10 +138,10 @@ class TestPytorchAdaptor(unittest.TestCase):
     def tearDownClass(self):
         os.remove('ptq_yaml.yaml')
         os.remove('dynamic_yaml.yaml')
+        os.remove('qat_yaml.yaml')
         shutil.rmtree('runs', ignore_errors=True)
         os.remove('fp32-model.onnx')
         os.remove('int8-model.onnx')
-        os.remove('int8-model.tmp')
 
     @unittest.skipIf(not BF16_MODE, "Unsupport BF16 Mode with ONNX Version Below 1.11")
     def test_bf16_onnx(self):
@@ -163,22 +171,37 @@ class TestPytorchAdaptor(unittest.TestCase):
                         "output": {0: "batch_size"}},
             do_constant_folding=True,
         )
-        for fake_yaml in ['dynamic_yaml.yaml', ]:
+        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', 'qat_yaml.yaml']:
             model = M()
             quantizer = Quantization(fake_yaml)
             quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
             dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
             quantizer.model = model
-            quantizer.calib_dataloader = common.DataLoader(dataset)
+            if fake_yaml == 'qat_yaml.yaml':
+                def train_func(model):
+                    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+                    optimizer.zero_grad()
+                    model.train()
+                    input = torch.randn([1, 3, 224, 224])
+                    # compute output
+                    output = model(input)
+                    loss = output.abs().sum()
+                    loss.backward()
+                    optimizer.step()
+                    return model
+                quantizer.q_func = train_func
+            elif fake_yaml == 'ptq_yaml.yaml':
+                quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer.fit()
 
             int8_jit_model = q_model.export_to_jit(example_inputs)
             # INC will keep fallbacked fp32 modules when exporting onnx model
-            if 'ptq_yaml.yaml':
-                calib_dataloader = quantizer.calib_dataloader
-            else:
+            if fake_yaml == 'dynamic_yaml.yaml':
                 calib_dataloader = None
+            else:
+                quantizer.calib_dataloader = common.DataLoader(dataset)
+                calib_dataloader = quantizer.calib_dataloader
             q_model.export_to_int8_onnx(
                 save_path='int8-model.onnx',
                 example_inputs=example_inputs,
@@ -191,6 +214,14 @@ class TestPytorchAdaptor(unittest.TestCase):
                 fp32_model=model,
                 calib_dataloader=calib_dataloader,
             )
+            if fake_yaml == 'qat_yaml.yaml':
+                model = onnx.load('int8-model.onnx')
+                tensor_list = {tensor.name:tensor for tensor in model.graph.initializer}
+                torch_data = q_model.model.conv.weight().dequantize().detach().cpu().numpy()
+                from onnx.numpy_helper import to_array
+                onnx_data = to_array(tensor_list['conv.weight_quantized'])
+                onnx_scale = to_array(tensor_list['conv.weight_scale'])
+                self.assertTrue(np.allclose(torch_data, onnx_data * onnx_scale, atol=0.001))
 
     def test_input_tuple(self):
         from neural_compressor.adaptor.torch_utils.util import input2tuple
@@ -214,7 +245,6 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         os.remove('fx_dynamic_yaml.yaml')
         shutil.rmtree('runs', ignore_errors=True)
         os.remove('int8-model.onnx')
-        os.remove('int8-model.tmp')
 
     def test_fx_quant(self):
         for fake_yaml in ['fx_dynamic_yaml.yaml', 'fx_ptq_yaml.yaml']:

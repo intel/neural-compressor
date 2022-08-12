@@ -409,14 +409,15 @@ class PyTorchModel(PyTorchBaseModel):
         original_initializer = copy.deepcopy(model.graph.initializer)
         for tensor in original_initializer:
             if tensor.name in bf16_tensor_name_list:
-                bf16_tensor = helper.make_tensor(
-                    name=tensor.name,
-                    data_type=TensorProto.BFLOAT16,
-                    dims=tensor.dims,
-                    vals=numpy_helper.to_array(tensor),
-                )
-                model.graph.initializer.remove(tensor)
-                model.graph.initializer.append(bf16_tensor)
+                def fp32_to_bf16(fp32_np):
+                    assert(fp32_np.dtype==np.float32)
+                    int32_np = fp32_np.view(dtype=np.int32)
+                    int32_np = int32_np >> 16
+                    bf16_np = int32_np.astype(np.int16)
+                    return bf16_np
+                fp16_data = fp32_to_bf16(numpy_helper.to_array(tensor))
+                tensor.raw_data = fp16_data.tobytes()
+                tensor.data_type = TensorProto.BFLOAT16
         onnx.save(model, save_path)
         os.remove(fp32_path)
 
@@ -430,7 +431,6 @@ class PyTorchModel(PyTorchBaseModel):
         self,
         save_path='int8-model.onnx',
         example_inputs = torch.rand([1, 1, 1, 1]),
-        example_input_names = 'input',
         opset_version=14,
         dynamic_axes={"input": {0: "batch_size"},
                     "output": {0: "batch_size"}},
@@ -497,6 +497,45 @@ class PyTorchModel(PyTorchBaseModel):
             fp32_model=fp32_model
         )
         model = onnx.load(fp32_path)
+
+        if self.q_config['approach'] == 'quant_aware_training':
+            # collect weights, bias from int8 PT model
+            model_dict = self._model.state_dict()
+            int8_model_dict = {}
+            for name, param in model_dict.items():
+                # '_packed_params._packed_weight' is specific for quantized Embedding
+                if '_packed_params._packed_weight' in name:
+                    name = name.replace('._packed_params._packed_weight', '').split('.module')[0]
+                    int8_model_dict[name+'.weight'] = param.dequantize()
+                # '_packed_params._packed_params' is specific for quantized Linear
+                elif '_packed_params._packed_params' in name and isinstance(param, tuple):
+                    name = name.replace('._packed_params._packed_params', '').split('.module')[0]
+                    int8_model_dict[name+'.bias'] = param[1]
+                    int8_model_dict[name+'.weight'] = param[0].dequantize()
+                # '.weight' and '.bias' is specific for quantized Conv
+                elif '.weight' in name:
+                    int8_model_dict[name] = param.dequantize()
+                elif '.bias' in name:
+                    int8_model_dict[name] = param
+                else:
+                    int8_model_dict[name] = param
+
+            # replace weight and bias in onnx fp32 model for QAT
+            from onnx import helper
+            tensor_list = [tensor for tensor in model.graph.initializer]
+            for tensor in tensor_list:
+                if tensor.name in int8_model_dict:
+                    np_tensor = int8_model_dict[tensor.name].detach().cpu().numpy()
+                    new_tensor = helper.make_tensor(
+                        name=tensor.name,
+                        data_type=tensor.data_type,
+                        dims=tensor.dims,
+                        vals=np_tensor,
+                    )
+                    model.graph.initializer.remove(tensor)
+                    model.graph.initializer.append(new_tensor)
+            onnx.save(model, fp32_path)
+
         from neural_compressor.adaptor.onnxrt import ONNXRTAdaptor
         # pylint: disable=E1120
         inc_model = ONNXRTAdaptor._replace_gemm_with_matmul(model)
