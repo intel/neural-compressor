@@ -317,15 +317,21 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
             if 'transpose_b' in quantized_node.attr:
                 new_node.attr["transpose_b"].CopyFrom(quantized_node.attr['transpose_b'])
             if 'transpose_a' in quantized_node.attr:
-                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a']) 
+                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])
             if 'input_quant_mode' in quantized_node.attr:
                 new_node.attr["input_quant_mode"].CopyFrom(quantized_node.attr["input_quant_mode"])
             if 'output_quant_mode' in quantized_node.attr:
                 new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
 
             top_node_name = Helper.node_name_from_input(quantized_node.input[0])
-            max_filter_node = self.graph_info[new_node.input[7]].node
-            min_filter_node = self.graph_info[new_node.input[6]].node
+            attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
+                               .decode('UTF-8', 'ignore').strip() if x.isprintable())
+            if "BiasAddAdd" in attr_fused_ops:
+                max_filter_node = self.graph_info[new_node.input[7]].node
+                min_filter_node = self.graph_info[new_node.input[6]].node
+            else:
+                max_filter_node = self.graph_info[new_node.input[6]].node
+                min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
             max_input_node = self.graph_info[last_node.input[-1]].node
@@ -371,9 +377,6 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                 type_bias = float32_type
 
             new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=type_bias))
-
-            attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
-                               .decode('UTF-8', 'ignore').strip() if x.isprintable())
 
             if "BiasAddAdd" in attr_fused_ops:
                 Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Add', b'Dequantize'])
