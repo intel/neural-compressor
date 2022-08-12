@@ -7,95 +7,93 @@ variables:
   IMAGE_NAME: "code-scan"
   IMAGE_TAG: "1.0"
 
-  # TARGET_PATH: "/neural_compressor"
   CODE_SCAN_PATH: ".azure-pipelines/scripts/codeScan"
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
-
   CURRENT_PATH: $(Build.SourcesDirectory)
 
 stages:
-  # - stage: BanditCodeScan
-  #   displayName: Bandit Code Scan
-  #   dependsOn: []
-  #   jobs:
-  #     - job: Bandit
-  #       displayName: Bandit
-  #       steps:
-  #         - script: |
-  #             echo ${BUILD_SOURCESDIRECTORY}
-  #             sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-  #             echo y | docker system prune
-  #           displayName: "Clean workspace"
-  #         - checkout: self
-  #           displayName: "Checkout out Repo"
-  #         - script: |
-  #             if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-  #                 docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-  #             fi
-  #             docker images | grep -i ${IMAGE_NAME}
-  #             if [[ $? -ne 0 ]]; then
-  #               echo "NO Such Image ${IMAGE_NAME}"
-  #               exit 1
-  #             fi
-  #           displayName: "Build Devel Images"
-  #         - script: |
-  #             docker stop $(docker ps -aq)
-  #             docker rm -vf $(docker ps -aq) || true
-  #           displayName: "Clean Docker"
+  - stage: BanditCodeScan
+    displayName: Bandit Code Scan
+    dependsOn: []
+    jobs:
+      - job: Bandit
+        displayName: Bandit
+        steps:
+          - script: |
+              echo ${BUILD_SOURCESDIRECTORY}
+              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+              echo y | docker system prune
+            displayName: "Clean workspace"
+          - checkout: self
+            displayName: "Checkout out Repo"
+          - script: |
+              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              fi
+              docker images | grep -i ${IMAGE_NAME}
+              if [[ $? -ne 0 ]]; then
+                echo "NO Such Image ${IMAGE_NAME}"
+                exit 1
+              fi
+            displayName: "Build Devel Images"
+          - script: |
+              docker stop $(docker ps -aq)
+              docker rm -vf $(docker ps -aq) || true
+            displayName: "Clean Docker"
 
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/bandit/bandit.sh
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/bandit/bandit.sh
           
-  #         - task: PublishPipelineArtifact@1
-  #           inputs:
-  #             targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
-  #             artifact: bandit
-  #             publishLocation: "pipeline"
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
+              artifact: bandit
+              publishLocation: "pipeline"
 
         
-  # - stage: PylintCodeScan
-  #   displayName: Pylint Code Scan
-  #   dependsOn: []
-  #   jobs:
-  #     - job: Pylint
-  #       displayName: Pylint
-  #       steps:
-  #         - script: |
-  #             echo ${BUILD_SOURCESDIRECTORY}
-  #             sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-  #             echo y | docker system prune
-  #           displayName: "Clean workspace"
-  #         - checkout: self
-  #           displayName: "Checkout out Repo"
-  #         - script: |
-  #             if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-  #                 docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-  #             fi
-  #             docker images | grep -i ${IMAGE_NAME}
-  #             if [[ $? -ne 0 ]]; then
-  #               echo "NO Such Image ${IMAGE_NAME}"
-  #               exit 1
-  #             fi
-  #           displayName: "Build Devel Images"
-  #         - script: |
-  #             docker stop $(docker ps -aq)
-  #             docker rm -vf $(docker ps -aq) || true
-  #           displayName: "Clean Docker"
+  - stage: PylintCodeScan
+    displayName: Pylint Code Scan
+    dependsOn: []
+    jobs:
+      - job: Pylint
+        displayName: Pylint
+        steps:
+          - script: |
+              echo ${BUILD_SOURCESDIRECTORY}
+              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+              echo y | docker system prune
+            displayName: "Clean workspace"
+          - checkout: self
+            displayName: "Checkout out Repo"
+          - script: |
+              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              fi
+              docker images | grep -i ${IMAGE_NAME}
+              if [[ $? -ne 0 ]]; then
+                echo "NO Such Image ${IMAGE_NAME}"
+                exit 1
+              fi
+            displayName: "Build Devel Images"
+          - script: |
+              docker stop $(docker ps -aq)
+              docker rm -vf $(docker ps -aq) || true
+            displayName: "Clean Docker"
 
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               docker run --disable-content-trust --privileged --name="pylint" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/pylint/pylint.sh
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                docker run --disable-content-trust --privileged --name="pylint" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/pylint/pylint.sh
          
-  #         - task: PublishPipelineArtifact@1
-  #           inputs:
-  #             targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-pylint.json
-  #             artifact: pylint
-  #             publishLocation: "pipeline"
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-pylint.json
+              artifact: pylint
+              publishLocation: "pipeline"
 
   - stage: PyspellingCodeScan
     displayName: Pyspelling Code Scan
@@ -138,47 +136,47 @@ stages:
               artifact: pyspelling
               publishLocation: "pipeline"              
 
-  # - stage: CopyRight
-  #   displayName: CopyRight Code Scan
-  #   dependsOn: []
-  #   jobs:
-  #     - job: CopyRight
-  #       displayName: CopyRight
-  #       steps:
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               set -ex
-  #               supported_extensions=(py, sh, yaml)
+  - stage: CopyRight
+    displayName: CopyRight Code Scan
+    dependsOn: []
+    jobs:
+      - job: CopyRight
+        displayName: CopyRight
+        steps:
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                set -ex
+                supported_extensions=(py, sh, yaml)
 
-  #               git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(CURRENT_PATH)/neural_compressor > $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log
-  #               files=$(cat $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log | awk '!a[$0]++')
+                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(CURRENT_PATH)/neural_compressor > $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log
+                files=$(cat $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log | awk '!a[$0]++')
 
-  #               for file in ${files}
-  #               do
-  #                   if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
-  #                       echo "Checking license in 1 ${file}"
-  #                       if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
-  #                           echo ${file} >>  $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-  #                       fi
-  #                   else
-  #                       echo "Skipping ${file}"
-  #                   fi
-  #               done
+                for file in ${files}
+                do
+                    if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
+                        echo "Checking license in 1 ${file}"
+                        if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
+                            echo ${file} >>  $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+                        fi
+                    else
+                        echo "Skipping ${file}"
+                    fi
+                done
 
-  #         - task: PublishPipelineArtifact@1
-  #           inputs:
-  #             targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-  #             artifact: $(COPYRIGHT_CONTAINER_NAME)
-  #             publishLocation: "pipeline" 
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+              artifact: $(COPYRIGHT_CONTAINER_NAME)
+              publishLocation: "pipeline" 
 
-  #         - task: Bash@3
-  #           inputs:
-  #             targetType: "inline"
-  #             script: |
-  #               ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-  #               if [ $? -eq 0 ] ; then
-  #                   echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
-  #               fi
-  #               exit 0
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+                if [ $? -eq 0 ] ; then
+                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
+                fi
+                exit 0
