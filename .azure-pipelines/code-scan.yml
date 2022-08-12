@@ -9,7 +9,7 @@ variables:
   CODE_SCAN_PATH: ".azure-pipelines/scripts/codeScan"
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
   CURRENT_PATH: $(Build.SourcesDirectory)
-  CURRENT_STATUS: true
+  CURRENT_STATUS: 'false'
 
 stages:
   - stage: BanditCodeScan
@@ -18,7 +18,7 @@ stages:
     jobs:
       - job: Bandit
         displayName: Bandit
-        condition: variables['CURRENT_STATUS']
+        condition: and(succeeded(), eq(variables.CURRENT_PATH, 'true'))
         steps:
           - script: |
               if [ $(CURRENT_STATUS) -ne 0 ] ; then
