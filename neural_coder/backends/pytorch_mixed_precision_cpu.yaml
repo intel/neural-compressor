@@ -12,8 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import enable
-from .interface import bench
-from .interface import superbench
-# from .interface import superreport
-from .interface import auto_quant
+transformation:
+  location:
+    - insert_above_inference_line
+    - indent_inference_line
+  content:
+    - |-
+      [+] import torch
+      [+] with torch.cpu.amp.autocast(enabled=True, dtype=torch.bfloat16):
+    - 1
+  order:
+    - below:
+      above:
+    - below:
+      above:

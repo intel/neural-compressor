@@ -12,4 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from ... import globals
+import re
+def determine_domain(path) -> str:
+    codes = open(path, 'r').read()
+    if 'import torchvision.models' in codes or 'from torchvision.models' in codes:
+        return 'torchvision'
+    elif re.search(r'from (.*)transformers import', codes) and re.search(r'(.*)Model(.*)', codes):
+        if 'Trainer' in codes or 'trainer' in codes:
+            return 'transformers_trainer'
+        else:
+            return 'transformers_no_trainer'
+    else:
+        return 'random model'

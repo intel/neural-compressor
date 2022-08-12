@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 import platform
@@ -203,9 +202,10 @@ class Launcher():
         if enable_tcmalloc:
             find_tc = self.add_lib_preload(lib_type="tcmalloc")
             if not find_tc:
-                logger.warning("Unable to find the {} library file lib{}.so in $CONDA_PREFIX/lib or $VIRTUAL_ENV/lib"
-                               " or /.local/lib/ or /usr/local/lib/ or \
-                                /usr/local/lib64/ or /usr/lib or /usr/lib64 or "
+                logger.warning("Unable to find the {} library file lib{}.so in $CONDA_PREFIX/lib \
+                                or $VIRTUAL_ENV/lib"
+                               " or /.local/lib/ or /usr/local/lib/ or /usr/local/lib64/ or /usr/lib \
+                                or /usr/lib64 or "
                                "{}/.local/lib/ so the LD_PRELOAD environment variable will not be set."
                                "you can use 'conda install -c conda-forge gperftools' to install tcmalloc"
                                .format("TCmalloc", "tcmalloc", expanduser("~")))
@@ -215,9 +215,10 @@ class Launcher():
         elif enable_jemalloc:
             find_je = self.add_lib_preload(lib_type="jemalloc")
             if not find_je:
-                logger.warning("Unable to find the {} library file lib{}.so in $CONDA_PREFIX/lib or $VIRTUAL_ENV/lib"
-                               " or /.local/lib/ or /usr/local/lib/ or \
-                                /usr/local/lib64/ or /usr/lib or /usr/lib64 or "
+                logger.warning("Unable to find the {} library file lib{}.so in \
+                                $CONDA_PREFIX/lib or $VIRTUAL_ENV/lib"
+                               " or /.local/lib/ or /usr/local/lib/ or /usr/local/lib64/ or \
+                                /usr/lib or /usr/lib64 or "
                                "{}/.local/lib/ so the LD_PRELOAD environment variable will not be set."
                                "you can use 'conda install -c conda-forge jemalloc' to install jemalloc"
                                .format("JeMalloc", "jemalloc", expanduser("~")))
@@ -262,14 +263,11 @@ class Launcher():
 
     # set_kmp_affinity is used to control whether to set KMP_AFFINITY or not.
     # In scenario that use all cores on all nodes, including logical cores,
-    # setting KMP_AFFINITY disables logical cores. In this case, KMP_AFFINITY should not be set.
-    def set_multi_thread_and_allocator(self,
-                                       ncore_per_instance,
-                                       disable_iomp=False,
-                                       set_kmp_affinity=True,
-                                       enable_tcmalloc=True,
-                                       enable_jemalloc=False,
-                                       use_default_allocator=False):
+    # setting KMP_AFFINITY disables logical cores.
+    # In this case, KMP_AFFINITY should not be set.
+    def set_multi_thread_and_allocator(self, ncore_per_instance, disable_iomp=False,
+                                       set_kmp_affinity=True, enable_tcmalloc=True,
+                                       enable_jemalloc=False, use_default_allocator=False):
         '''
         Set multi-thread configuration and enable Intel openMP and TCMalloc/JeMalloc.
         By default, GNU openMP and PTMalloc are used in PyTorch. 
@@ -282,7 +280,8 @@ class Launcher():
         if not disable_iomp:
             find_iomp = self.add_lib_preload(lib_type="iomp5")
             if not find_iomp:
-                logger.warning("Unable to find the {} library file lib{}.so in $CONDA_PREFIX/lib or $VIRTUAL_ENV/lib"
+                logger.warning("Unable to find the {} library file lib{}.so \
+                                in $CONDA_PREFIX/lib or $VIRTUAL_ENV/lib"
                                " or /.local/lib/ or /usr/local/lib/ or \
                                 /usr/local/lib64/ or /usr/lib or /usr/lib64 or "
                                "{}/.local/lib/ so the LD_PRELOAD environment variable will not be set."
@@ -325,7 +324,8 @@ class MultiInstanceLauncher(Launcher):
                 else:
                     cores = self.cpuinfo.get_all_logical_cores()
                     # When using all cores on all nodes, including logical cores,
-                    # setting KMP_AFFINITY disables logical cores. Thus, KMP_AFFINITY should not be set.
+                    # setting KMP_AFFINITY disables logical cores.
+                    # Thus, KMP_AFFINITY should not be set.
                     set_kmp_affinity = False
             else:
                 if args.node_id != -1:
@@ -365,7 +365,7 @@ class MultiInstanceLauncher(Launcher):
                 logger.warning(
                     '--throughput_mode is exclusive to --ninstances, \
                         --ncore_per_instance, --node_id and --use_logical_core. \
-                        They won\'t take effect even they are set explicitly.')
+                            They won\'t take effect even they are set explicitly.')
                 args.ninstances = self.cpuinfo.node_nums()
                 cores = self.cpuinfo.get_all_physical_cores()
                 args.ncore_per_instance = len(cores) // args.ninstances
@@ -492,12 +492,11 @@ class DistributedTrainingLauncher(Launcher):
         Set ENVs and launch MPI process for distributed training.
         '''
         if args.nnodes > 1 and not os.path.exists(args.hostfile):
-            raise ValueError("hostfile is necessary when you use \
-                            multi-node distributed training,"
+            raise ValueError("hostfile is necessary when you use multi-node distributed training,"
                              "Please create hostfile which include the ip list you used for distributed running")
         elif args.nnodes > 1:
-            ipv4_addr_pattern = \
-                r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+            ipv4_addr_pattern \
+                = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
             ip_list = []
             with open(args.hostfile) as f:
                 for line in f:
@@ -523,7 +522,7 @@ class DistributedTrainingLauncher(Launcher):
             if not master_check:
                 logger.error(
                     "MASTER_ADDR is incorrect. Please make sure the first line {} \
-                        in your hostfile is ip address of the current node".format(ip_list[0]))
+                    in your hostfile is ip address of the current node".format(ip_list[0]))
                 exit(-1)
 
             logger.info("Begin to validate the ip connect")
@@ -533,7 +532,8 @@ class DistributedTrainingLauncher(Launcher):
                     "ssh -o PasswordAuthentication=no {} ':'".format(ip), shell=True)  # nosec
                 if completed_process.returncode != 0:
                     logger.error(
-                        "Passwordless SSH login to {} failed, please make sure you have setup SSH public key right")
+                        "Passwordless SSH login to {} failed, please \
+                            make sure you have setup SSH public key right")
                     exit(-1)
                 else:
                     logger.info("connection from master node {} to slave node {} is OK".format(
@@ -643,13 +643,13 @@ def add_multi_instance_params(parser):
     group.add_argument("--ncore_per_instance", metavar='\b', default=-1, type=int,
                        help="Cores per instance")
     group.add_argument("--ninstances", metavar='\b', default=-1, type=int,
-                       help="For multi-instance, you should give the cores number you used for per instance.")
+                       help="For multi-instance,\ \
+                        you should give the cores number you used for per instance.")
     group.add_argument("--instance_idx", metavar='\b', default="-1", type=int,
                        help="Specify instance index to assign ncores_per_instance for instance_idx; \
                         otherwise ncore_per_instance will be assigned sequentially to ninstances. \
-                        Please refer to \
-                        https://github.com/intel/intel-extension-for-pytorch/\
-                            blob/master/docs/tutorials/performance_tuning/launch_script.md")
+                            Please refer to https://github.com/intel/intel-extension-for-pytorch/\
+                                blob/master/docs/tutorials/performance_tuning/launch_script.md")
     group.add_argument("--latency_mode", action='store_true', default=False,
                        help="By detault 4 core per instance and use all physical cores")
     group.add_argument("--throughput_mode", action='store_true', default=False,
@@ -661,10 +661,11 @@ def add_multi_instance_params(parser):
     group.add_argument("--disable_numactl", action='store_true', default=False,
                        help="Disable numactl")
     group.add_argument("--core_list", metavar='\b', default=None, type=str,
-                       help="Specify the core list as 'core_id, core_id, ....', otherwise, \
-                        all the cores will be used.")
+                       help="Specify the core list as 'core_id, core_id, ....', \
+                        otherwise, all the cores will be used.")
     group.add_argument("--log_path", metavar='\b', default="", type=str,
-                       help="The log file directory. Default path is '', which means disable logging to files.")
+                       help="The log file directory. Default path is '', \
+                        which means disable logging to files.")
     group.add_argument("--log_file_prefix", metavar='\b', default="run", type=str,
                        help="log file prefix")
 
@@ -802,6 +803,3 @@ def exec_launcher(ncore_per_instance, ninstances, program, program_args, log_pat
     launcher.launch(args)
     for x in sorted(set(os.environ.keys()) - env_before):
         logger.debug('{0}={1}'.format(x, os.environ[x]))
-
-# if __name__ == "__main__":
-#     main()

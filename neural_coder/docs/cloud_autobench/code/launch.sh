@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import enable
-from .interface import bench
-from .interface import superbench
-# from .interface import superreport
-from .interface import auto_quant
+set -x
+
+export PATH=/home/anaconda3/bin:$PATH
+source activate test
+echo "[INFO] Start running auto benchmark..."
+python -c "from neural_coder import superreport; superreport(code='resnet50.py')"
+# Note: you need to uncomment superreport in neural_coder/interface.py and neural_coder/__init__.py to use this API.

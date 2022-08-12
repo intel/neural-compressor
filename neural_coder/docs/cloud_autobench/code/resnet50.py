@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import enable
-from .interface import bench
-from .interface import superbench
-# from .interface import superreport
-from .interface import auto_quant
+import torch
+import torchvision.models as models
+model = models.resnet50(pretrained=True)
+model.eval()
+batch_size = 1
+input = torch.rand(batch_size, 3, 224, 224)
+with torch.no_grad():
+    model(input)

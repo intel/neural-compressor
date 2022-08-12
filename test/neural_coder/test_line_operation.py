@@ -20,15 +20,15 @@ class TestLineOperation(unittest.TestCase):
 
     def test_is_eval_func_model_name(self):
         f = line_operation.is_eval_func_model_name
-        self.assertEqual(f("model", "model(input)"), True)
-        self.assertEqual(f("model", "model()"), True)
-        self.assertEqual(f("model", "# model(input)"), False)
-        self.assertEqual(f("model", "test # model(input)"), False)
-        self.assertEqual(f("model", "output = model(input)"), True)
-        self.assertEqual(f("model", "model = Net()"), False)
+        self.assertEqual(f("model", "model(input)")[0], True)
+        self.assertEqual(f("model", "model()")[0], True)
+        self.assertEqual(f("model", "# model(input)")[0], False)
+        self.assertEqual(f("model", "test # model(input)")[0], False)
+        self.assertEqual(f("model", "output = model(input)")[0], True)
+        self.assertEqual(f("model", "model = Net()")[0], False)
 
-    def test_get_line_lhs(self):
-        f = line_operation.get_line_lhs
+    def test_get_line_left_hand_side(self):
+        f = line_operation.get_line_left_hand_side
         self.assertEqual(f("output = model(input)"), "output")
         self.assertEqual(f("output=model(input)"), "output")
         self.assertEqual(f("test = num"), "test")

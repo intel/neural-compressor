@@ -12,9 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 def move_element_to_front(list, element):
     if element in list:
         idx = list.index(element)
         list.insert(0, list.pop(idx))
+    return list
+
+
+def move_element_to_last(list, element):
+    if element in list:
+        idx = list.index(element)
+        list.insert(len(list), list.pop(idx))
     return list

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 import subprocess
 import logging
@@ -29,10 +28,9 @@ def enable(
     features,
     target_batch_size=1,  # effective for feature "pytorch_change_batch_size"
     num_benchmark_iteration=30,  # effective for feature "pytorch_benchmark"
+    eval_accuracy=False,
     generate_patch=True,
     overwrite=False,
-    # TO-ADD: return a folder with user-input code and artificial pip folders
-    brutal_mode=False,
     save_patch_path="",
     patch_suffix=".diff",
     remove_copy=True,
@@ -47,13 +45,18 @@ def enable(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
+    test_code_line=False, # print code line info for debug use
+    brutal_mode=False, # TO-ADD: return a folder with user-input code and artificial pip folders
 ):
+    """enable a feature or a couple of features for the code
 
-    # Preparation
+    """
+
+    ### Preparation
 
     # set up workspace
     ws_path = "neural_coder_workspace/" + \
-        "enable" + str(int(time.time())) + "/"
+        "enable" + str(time.time()).replace(".","") + "/"
     os.makedirs(ws_path)
 
     # user parameters
@@ -64,10 +67,10 @@ def enable(
     # set up logging
     logger = logging.getLogger(ws_path)
     logger.setLevel(globals.logging_level)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s: - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: - %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
 
-    fh = logging.FileHandler(ws_path+'enable.log')
+    fh = logging.FileHandler(ws_path + 'enable.log')
     fh.setLevel(globals.logging_level)
     fh.setFormatter(formatter)
     ch = logging.StreamHandler()
@@ -84,30 +87,39 @@ def enable(
 
     # feature list for reference
     '''
-    feature_list = ["pytorch_jit_script",
-                    "pytorch_jit_script_ofi",
-                    "pytorch_inc_dynamic_quant",
-                    "pytorch_inc_static_quant",
-                    "pytorch_ipex_fp32",
-                    "pytorch_ipex_bf16",
-                    "pytorch_ipex_int8_static_quant",
-                    "pytorch_ipex_int8_dynamic_quant",
-                    "pytorch_channels_last",
-                    "pytorch_mixed_precision_cpu",
-                    "pytorch_mixed_precision_cuda",
-                    "pytorch_torchdynamo_jit_script",
-                    "pytorch_torchdynamo_jit_script_ofi",
-                    "pytorch_torchdynamo_jit_trace",
-                    "pytorch_torchdynamo_jit_trace_ofi",
-                    "pytorch_benchmark",
-                    "pytorch_change_batch_size",
-                    "pytorch_cuda_to_cpu",
-                    "pytorch_lightning_bf16_cpu",
-                    "tensorflow_amp",
-                    "keras_amp",]
+    feature_list = [
+        "pytorch_jit_script",
+        "pytorch_jit_script_ofi",
+        "pytorch_jit_trace",
+        "pytorch_jit_trace_ofi",
+        "pytorch_inc_dynamic_quant",
+        "pytorch_inc_static_quant_fx",
+        "pytorch_inc_static_quant_ipex",
+        "pytorch_inc_bf16",
+        "pytorch_ipex_fp32",
+        "pytorch_ipex_bf16",
+        "pytorch_ipex_int8_static_quant",
+        "pytorch_ipex_int8_dynamic_quant",
+        "pytorch_channels_last",
+        "pytorch_mixed_precision_cpu",
+        "pytorch_mixed_precision_cuda",
+        "pytorch_torchdynamo_jit_script",
+        "pytorch_torchdynamo_jit_script_ofi",
+        "pytorch_torchdynamo_jit_trace",
+        "pytorch_torchdynamo_jit_trace_ofi",
+        "pytorch_torch_profiler",
+        "pytorch_benchmark",
+        "pytorch_change_batch_size",
+        "pytorch_cuda_to_cpu",
+        "pytorch_lightning_bf16_cpu",
+        "pytorch_aliblade",
+        "tensorflow_amp",
+        "keras_amp",
+    ]
     '''
 
-    # Benchmark
+    ### Enable Benchmark (if run_bench)
+    
     if run_bench:
         # add "pytorch_change_batch_size" to features
         from .utils.cpu_info import get_num_cpu_cores
@@ -131,27 +143,35 @@ def enable(
         logger.info(
             f"Will perform benchmark on [{mode}] mode with batch size [{target_batch_size}] ...")
 
-    # Rearrange Feature Order (due to certain regulations: e.g. channels_last is before IPEX, and IPEX is before JIT)
-    from .utils.common import move_element_to_front
-    for feature in ["pytorch_benchmark",
-                    "pytorch_channels_last",
-                    "pytorch_ipex_fp32",
-                    "pytorch_ipex_bf16",
-                    "pytorch_ipex_int8_static_quant",
-                    "pytorch_ipex_int8_dynamic_quant",
-                    "pytorch_jit_script",
-                    "pytorch_jit_script_ofi",
-                    "pytorch_torchdynamo_jit_script",
-                    "pytorch_torchdynamo_jit_script_ofi",
-                    "pytorch_torchdynamo_jit_trace",
-                    "pytorch_torchdynamo_jit_trace_ofi",
-                    "pytorch_inc_static_quant",
-                    "pytorch_inc_dynamic_quant",
-                    "pytorch_mixed_precision_cpu",
-                    "pytorch_mixed_precision_cuda", ]:
-        features = move_element_to_front(features, feature)
+    #### Feature Enabling
 
-    # Enabling
+    globals.num_benchmark_iteration = str(num_benchmark_iteration + 5)
+
+    globals.eval_accuracy = eval_accuracy
+
+    # move "pytorch_benchmark" to the last
+    from .utils.common import move_element_to_last
+    features = move_element_to_last(features, "pytorch_benchmark")
+
+    # not in harness scope
+    features_not_using_harness = [
+        "pytorch_change_batch_size",
+        "pytorch_cuda_to_cpu",
+        "pytorch_lightning_bf16_cpu",
+        "tensorflow_mixed_precision",
+    ]
+    
+    # # features that need creating dummy dataloader (when needed) first
+    # if "pytorch_inc_static_quant_fx" in features or \
+    #     "pytorch_inc_static_quant_ipex" in features:
+    #     features = ["pytorch_dummy_dataloader"] + features
+    
+    # features that need detecting inputs first
+    if "pytorch_jit_trace" in features or \
+        "pytorch_jit_trace_ofi" in features or \
+        "pytorch_inc_static_quant_fx" in features or \
+        "pytorch_inc_static_quant_ipex" in features:
+        features = ["pytorch_reclaim_inputs"] + features
 
     transformed_list_code_path = []
 
@@ -161,168 +181,89 @@ def enable(
         globals.reset_globals()
 
         from .utils import handle_user_input
-        globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(
-            code)
+        globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(code)
         if len(transformed_list_code_path) > 0:
             globals.list_code_path = transformed_list_code_path
 
         # common for all features (transformations),
         list_transformed_code = []
-        # in this list, each item stores the transformed code of the corresponding original code
+        # in this list, each item stores the transformed code
+        # of the corresponding original code
         # by the order in code_path
 
         # global behaviors
         logger.info(
             f"Performing code transformation for feature: [{feature}] ...")
 
-        from .graphers.code_line import register_code_line
-        from .graphers.model import register_nnModule_class, register_nnModule_instance_definition
-        from .graphers.function import register_func_wrap_pair
-        from .coders.transform import execute_insert_transformation, execute_indenting_transformation
-
-        register_code_line()
-        register_func_wrap_pair()
-        register_nnModule_class()
-        register_nnModule_instance_definition()
-
-        # AMP
-        if "pytorch_mixed_precision_cpu" == feature:
-            from .coders.pytorch.amp import PTAMP
-            opt = PTAMP("cpu")
-            opt.register_transformation()
-        elif "pytorch_mixed_precision_cuda" == feature:
-            from .coders.pytorch.amp import PTAMP
-            opt = PTAMP("cuda")
-            opt.register_transformation()
-
-        # TorchDynamo
-        if "pytorch_torchdynamo_jit_script" == feature:
-            from .coders.pytorch.torchdynamo import TorchDynamo
-            opt = TorchDynamo()
-            opt.register_transformation()
-            from .coders.pytorch.torchdynamo import TorchDynamoJITScript
-            opt = TorchDynamoJITScript(
-                globals.list_model_def_instance, "plain")
-            opt.register_transformation()
-        elif "pytorch_torchdynamo_jit_script_ofi" == feature:
-            from .coders.pytorch.torchdynamo import TorchDynamo
-            opt = TorchDynamo()
-            opt.register_transformation()
-            from .coders.pytorch.torchdynamo import TorchDynamoJITScript
-            opt = TorchDynamoJITScript(globals.list_model_def_instance, "ofi")
-            opt.register_transformation()
-        elif "pytorch_torchdynamo_jit_trace" == feature:
-            from .coders.pytorch.torchdynamo import TorchDynamo
-            opt = TorchDynamo()
-            opt.register_transformation()
-            from .coders.pytorch.torchdynamo import TorchDynamoJITTrace
-            opt = TorchDynamoJITTrace(globals.list_model_def_instance, "plain")
-            opt.register_transformation()
-        elif "pytorch_torchdynamo_jit_trace_ofi" == feature:
-            from .coders.pytorch.torchdynamo import TorchDynamo
-            opt = TorchDynamo()
-            opt.register_transformation()
-            from .coders.pytorch.torchdynamo import TorchDynamoJITTrace
-            opt = TorchDynamoJITTrace(globals.list_model_def_instance, "ofi")
-            opt.register_transformation()
-
-        # Channels Last
-        if "pytorch_channels_last" == feature:
-            from .coders.pytorch.channels_last import ChannelsLast
-            opt = ChannelsLast(globals.list_model_def_instance)
-            opt.register_transformation()
-
-        # JIT
-        if "pytorch_jit_script" == feature:
-            from .coders.pytorch.jit import JITScript
-            opt = JITScript(globals.list_model_def_instance, "plain")
-            opt.register_transformation()
-
-        elif "pytorch_jit_script_ofi" == feature:
-            from .coders.pytorch.jit import JITScript
-            opt = JITScript(globals.list_model_def_instance, "ofi")
-            opt.register_transformation()
-
-        # IPEX
-        if "pytorch_ipex_fp32" == feature:
-            from .coders.pytorch.intel_extension_for_pytorch.ipex import IPEX
-            opt = IPEX(globals.list_model_def_instance, "fp32")
-            opt.register_transformation()
-
-        elif "pytorch_ipex_bf16" == feature:
-            from .coders.pytorch.intel_extension_for_pytorch.ipex import IPEX
-            opt = IPEX(globals.list_model_def_instance, "bf16")
-            opt.register_transformation()
-            from .coders.pytorch.amp import PTAMP  # enable amp together
-            opt = PTAMP("cpu")
-            opt.register_transformation()
-
-        elif "pytorch_ipex_int8_static_quant" == feature:
-            from .coders.pytorch.intel_extension_for_pytorch.ipex import IPEX
-            opt = IPEX(globals.list_model_def_instance, "int8_static_quant")
-            opt.register_transformation()
-
-        elif "pytorch_ipex_int8_dynamic_quant" == feature:
-            from .coders.pytorch.intel_extension_for_pytorch.ipex import IPEX
-            opt = IPEX(globals.list_model_def_instance, "int8_dynamic_quant")
-            opt.register_transformation()
-
-        # INC
-        if "pytorch_inc_dynamic_quant" == feature:
-            from .coders.pytorch.neural_compressor.dynamic_quant import DynamicQuant
-            opt = DynamicQuant(globals.list_model_def_instance)
-            opt.register_transformation()
-
-        elif "pytorch_inc_static_quant" == feature:
-            from .coders.pytorch.dummy_dataloader import DummyDataLoader  # detect dataloader first
-            opt = DummyDataLoader(globals.list_model_def_instance)
-            opt.register_transformation()
-            from .coders.pytorch.neural_compressor.static_quant import StaticQuant
-            opt = StaticQuant(globals.list_model_def_instance)
-            opt.register_transformation()
-
-        # Benchmark
-        if "pytorch_benchmark" == feature:
-            from .coders.pytorch.benchmark import Benchmark
-            globals.num_benchmark_iteration = str(num_benchmark_iteration)
-            opt = Benchmark()
-            opt.register_transformation()
-
-        # transformation execution
         for i in globals.list_code_path:
             list_transformed_code.append(open(i, 'r').read())
-        list_transformed_code = execute_indenting_transformation(
-            list_transformed_code)
-        list_transformed_code = execute_insert_transformation(
-            list_transformed_code)
 
-        # other features (which use direct line transform instead of register-and-execute transform,
-        # these features will be transformed here)
-        for i in range(len(list_transformed_code)):
-            # Batch Size
-            if "pytorch_change_batch_size" == feature:
-                from .coders.pytorch.batch_size import BatchSizeCoder
-                globals.target_batch_size = str(target_batch_size)
-                list_transformed_code[i] = BatchSizeCoder(
-                    list_transformed_code[i]).transform()
+        ## 1. Features in Harness Scope
+        if feature not in features_not_using_harness:
+            from .graphers.code_line import register_code_line
+            from .graphers.model import register_nnModule_class, register_nnModule_instance_definition
+            from .graphers.function import register_func_wrap_pair
+            from .coders.transform import execute_insert_transformation, execute_indent_transformation
 
-            # CUDA to CPU
-            if "pytorch_cuda_to_cpu" == feature:
-                from .coders.pytorch.cuda_to_cpu import CudaToCpu
-                list_transformed_code[i] = CudaToCpu(
-                    list_transformed_code[i]).transform()
+            # code analysis (call graph, type inference etc)
+            register_code_line()
+            register_func_wrap_pair()
+            register_nnModule_class()
+            register_nnModule_instance_definition()
+            # register transformation
+            if feature == "pytorch_dummy_dataloader": # is not in harness scope, but needs call graph and type inference
+                from .coders.pytorch.dummy_dataloader import DummyDataLoader
+                opt = DummyDataLoader(globals.list_model_def_instance)
+                opt.register_transformation()
+            elif feature == "pytorch_reclaim_inputs": # is not in harness scope, but needs call graph and type inference
+                from .coders.pytorch.reclaim_inputs import ReclaimInputs
+                opt = ReclaimInputs(globals.list_model_def_instance)
+                opt.register_transformation()
+            elif feature in [
+                    "pytorch_inc_dynamic_quant",
+                    "pytorch_inc_static_quant_fx",
+                    "pytorch_inc_static_quant_ipex",
+                ]:
+                from .coders.autoinc.autoinc_harness import AutoInc_Harness
+                from .coders.autoinc.calib_dataloader import Calib_Dataloader
+                from .coders.autoinc.eval_func import Eval_Func
+                opt = Calib_Dataloader()
+                opt.register_transformation()
 
-            # Lightning
-            if "pytorch_lightning_bf16_cpu" == feature:
-                from .coders.pytorch.lightning import Lightning
-                list_transformed_code[i] = Lightning(
-                    list_transformed_code[i]).transform()
+                opt = Eval_Func()
+                opt.register_transformation()
 
-            # TF & Keras AMP
-            if "tensorflow_mixed_precision" == feature:
-                from .coders.tensorflow.amp import TensorFlowKerasAMP
-                list_transformed_code[i] = TensorFlowKerasAMP(
-                    list_transformed_code[i]).transform()
+                opt = AutoInc_Harness(backend=feature)
+                opt.register_transformation()
+            else:
+                from .coders.pytorch.harness import Harness
+                opt = Harness(backend=feature)
+                opt.register_transformation()
+
+            # execute transformation
+            list_transformed_code = execute_indent_transformation(list_transformed_code)
+            list_transformed_code = execute_insert_transformation(list_transformed_code)
+
+        ## 2. Features NOT in Harness Scope
+        else:
+            for i in range(len(list_transformed_code)):
+                # Batch Size
+                if "pytorch_change_batch_size" in features:
+                    from .coders.pytorch.batch_size import BatchSizeCoder
+                    globals.target_batch_size = str(target_batch_size)
+                    list_transformed_code[i] = BatchSizeCoder(list_transformed_code[i]).transform()
+                # CUDA to CPU
+                if "pytorch_cuda_to_cpu" in features:
+                    from .coders.pytorch.cuda_to_cpu import CudaToCpu
+                    list_transformed_code[i] = CudaToCpu(list_transformed_code[i]).transform()
+                # Lightning
+                if "pytorch_lightning_bf16_cpu" in features:
+                    from .coders.pytorch.lightning import Lightning
+                    list_transformed_code[i] = Lightning(list_transformed_code[i]).transform()
+                # TF & Keras AMP
+                if "tensorflow_mixed_precision" in features:
+                    from .coders.tensorflow.amp import TensorFlowKerasAMP
+                    list_transformed_code[i] = TensorFlowKerasAMP(list_transformed_code[i]).transform()
 
         logger.info(f"Code transformation for feature: [{feature}] finished.")
 
@@ -331,14 +272,42 @@ def enable(
                 path_transformed = path
             else:
                 path_transformed = path[:-3] + "_nc_enabled.py"
-            open(path_transformed, "w").write(
-                list_transformed_code[globals.list_code_path.index(path)])
-            globals.list_code_path[globals.list_code_path.index(
-                path)] = path_transformed
+            open(path_transformed, "w").write(list_transformed_code[globals.list_code_path.index(path)])
+            globals.list_code_path[globals.list_code_path.index(path)] = path_transformed
         transformed_list_code_path = globals.list_code_path
 
-    # Output of Enabling
+    # test code_line.py
+    if test_code_line:
+        # reset globals
+        globals.reset_globals()
+        globals.print_code_line_info = True
 
+        from .utils import handle_user_input
+        globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(code)
+        if len(transformed_list_code_path) > 0:
+            globals.list_code_path = transformed_list_code_path
+
+        # common for all features (transformations),
+        list_transformed_code = []
+        # in this list, each item stores the transformed code
+        # of the corresponding original code
+        # by the order in code_path
+
+        for i in globals.list_code_path:
+            list_transformed_code.append(open(i, 'r').read())
+        
+        from .graphers.code_line import register_code_line
+        from .graphers.model import register_nnModule_class, register_nnModule_instance_definition
+        from .graphers.function import register_func_wrap_pair
+        from .coders.transform import execute_insert_transformation, execute_indent_transformation
+
+        # code analysis (call graph, type inference etc)
+        register_code_line()
+        register_func_wrap_pair()
+        register_nnModule_class()
+        register_nnModule_instance_definition()
+
+    ### Output of Enabling
     globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(
         code)
 
@@ -395,7 +364,7 @@ def enable(
             except:
                 pass
 
-    # Benchmark
+    ### Benchmark
     if run_bench:
         bench_performance, bench_mode, bench_ws_path = bench(
             code=code,
@@ -412,15 +381,6 @@ def enable(
         return bench_performance, bench_mode, bench_ws_path
 
 
-'''
-bench API works on either "optimized code", or "patch" + "original code"
-it does not enable benchmark, or enable change of batch size, all the enabling is done in enable API
-which means the "optimized code" should already have "pytorch_benchmark" and "pytorch_change_batch_size" enabled
-or the "patch" should already have the code modification for "pytorch_benchmark" and 
-"pytorch_change_batch_size" in it
-'''
-
-
 def bench(
     code,
     entry_code="",
@@ -433,9 +393,16 @@ def bench(
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
 ):
-
+    """benchmark on either "optimized code", or "patch" + "original code"
+    it does not enable benchmark code lines, or enable change of batch size
+    all the enabling should be done within enable API
+    which means the "optimized code" should already have
+    "pytorch_benchmark" and "pytorch_change_batch_size" enabled
+    or the "patch" should already have the code modification
+    for "pytorch_benchmark" and "pytorch_change_batch_size" in it
+    """
     # set up workspace
-    ws_path = "neural_coder_workspace/" + "bench" + str(int(time.time())) + "/"
+    ws_path = "neural_coder_workspace/" + "bench" + str(time.time()).replace(".","") + "/"
     os.makedirs(ws_path)
 
     # set up logging
@@ -447,7 +414,7 @@ def bench(
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s: - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-    fh = logging.FileHandler(ws_path+'bench.log')
+    fh = logging.FileHandler(ws_path + 'bench.log')
     fh.setLevel(globals.logging_level)
     fh.setFormatter(formatter)
     ch = logging.StreamHandler()
@@ -464,8 +431,8 @@ def bench(
 
     # entry code
     if entry_code == "":
-        # if not specify entry_code, then code has to be a list of one element,
-        # or a single string of single path, otherwise quit
+        # if not specify entry_code,
+        # then code has to be a list of one element, or a single string of single path, otherwise quit
         if type(code) == list and len(code) == 1:
             entry_code = code[0]
         elif type(code) == str:
@@ -477,20 +444,20 @@ def bench(
 
     # patch
     if patch_path != "":
-        sp_patch = subprocess.Popen("patch -d/ -p0 < " + patch_path,
-                                    env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
+        sp_patch = subprocess.Popen(
+            "patch -d/ -p0 < " + patch_path, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
         sp_patch.wait()
 
     # if mode is "self_defined", user must specify ncpi, nins and bs
     if mode == "self_defined":
         if ncore_per_instance == -1 or ninstances == -1 or bench_batch_size == -1:
             logger.error(
-                f"You have to specify ncore_per_instance, ninstances and bench_batch_size for \
-                    self-defined benchmark mode.")
+                f"You have to specify ncore_per_instance,"
+                f"ninstances and bench_batch_size for self-defined benchmark mode.")
             quit()
 
     # numactl
-    from . import numa_launcher
+    from .utils import numa_launcher
 
     from .utils.cpu_info import get_num_cpu_cores
     ncores = get_num_cpu_cores()
@@ -520,8 +487,8 @@ def bench(
         cmd_env += ' && '
         cmd_env += 'export LD_PRELOAD=${LD_PRELOAD}:${CONDA_PREFIX}/lib/libiomp5.so'
         cmd_env += ' && '
-        cmd_env += 'export MALLOC_CONF="oversize_threshold:1,background_thread:true,metadata_thp:auto,\
-            dirty_decay_ms:9000000000,muzzy_decay_ms:9000000000"'
+        cmd_env += 'export MALLOC_CONF="oversize_threshold:1,background_thread:true,metadata_thp:auto,'
+        cmd_env += 'dirty_decay_ms:9000000000,muzzy_decay_ms:9000000000"'
         cmd_env += ' && '
         cmd_env += 'export KMP_AFFINITY="granularity=fine,compact,1,0"'
         cmd_env += ' && '
@@ -546,8 +513,8 @@ def bench(
         ncore_per_instance, ninstances, entry_code, entry_code_args, bench_log_path)
 
     # get performance (throughput and latency)
-    bench_log = open(bench_log_path, "r").read().split('\n')
-    IPS = 0
+    bench_log = open(bench_log_path, "r", encoding='unicode_escape').read().split('\n')
+    IPS = []
     MSPI = 0
     count_MSPI = 0
     P50 = 0
@@ -556,10 +523,11 @@ def bench(
     count_P90 = 0
     P99 = 0
     count_P99 = 0
+    acc = 0
     for line in bench_log:
         if "Neural_Coder_Bench_IPS" in line:
             try:
-                IPS += float(line[line.find(":")+3:])
+                IPS.append(float(line[line.find(":")+3:]))
             except ValueError as ve:
                 pass
         if "Neural_Coder_Bench_MSPI" in line:
@@ -586,8 +554,21 @@ def bench(
                 count_P99 += 1
             except ValueError as ve:
                 pass
+        if "Acc@5" in line:
+            try:
+                acc += float(line[line.find(":")+3:])
+            except ValueError as ve:
+                pass
 
-    FPS = round(IPS * bench_batch_size, 3)
+    if len(IPS) >= 4:  # handle extreme values
+        IPS.sort()
+        IPS[0] = IPS[1]
+        IPS[-1] = IPS[-2]
+
+    try:
+        FPS = round(sum(IPS) / len(IPS) * ninstances * bench_batch_size, 3)
+    except:
+        FPS = 0
     try:
         MSPI = round(MSPI / count_MSPI, 3)
     except:
@@ -595,21 +576,22 @@ def bench(
     try:
         P50 = round(P50 / count_P50, 3)
     except:
-        MSPI = 0
+        P50 = 0
     try:
         P90 = round(P90 / count_P90, 3)
     except:
-        MSPI = 0
+        P90 = 0
     try:
         P99 = round(P99 / count_P99, 3)
     except:
-        MSPI = 0
+        P99 = 0
 
     logger.info(f"Collected throughput on the code is: [{FPS}] (fps)")
     logger.info(f"Collected latency on the code is: [{MSPI}] (mspi)")
     logger.info(f"Collected latency_p50 on the code is: [{P50}] (mspi)")
     logger.info(f"Collected latency_p90 on the code is: [{P90}] (mspi)")
     logger.info(f"Collected latency_p99 on the code is: [{P99}] (mspi)")
+    logger.info(f"Collected accuracy on the code is: [{acc}]")
 
     # unpatch
     if patch_path != "":
@@ -617,7 +599,7 @@ def bench(
             "patch -R -d/ -p0 < " + patch_path, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
         sp_unpatch.wait()
 
-    return [FPS, MSPI, P50, P90, P99], mode, os.path.abspath(ws_path)
+    return [FPS, MSPI, P50, P90, P99, acc], mode, os.path.abspath(ws_path)
 
 
 def superbench(
@@ -627,18 +609,21 @@ def superbench(
     sweep_objective="feature",
     bench_feature=[],
     mode="throughput",
-    num_benchmark_iteration=30,
+    num_benchmark_iteration=5,
+    iteration_dynamic_adjust=True,
     logging_level="info",
     cpu_conversion=True,
     cpu_set_env=True,
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
+    eval_accuracy=False,
+    auto_quant=False,
 ):
 
     # set up workspace
     ws_path = "neural_coder_workspace/" + \
-        "superbench" + str(int(time.time())) + "/"
+        "superbench" + str(time.time()).replace(".","") + "/"
     os.makedirs(ws_path)
 
     # set up logging
@@ -669,7 +654,8 @@ def superbench(
 
     # entry code
     if entry_code == "":
-        # if not specify entry_code, then code has to be a list of one element,
+        # if not specify entry_code,
+        # then code has to be a list of one element,
         # or a single string of single path, otherwise quit
         if type(code) == list and len(code) == 1:
             entry_code = code[0]
@@ -682,42 +668,43 @@ def superbench(
 
     if sweep_objective == "feature":
         list_FPS = []
+        list_accuracy = []
         list_features = []
         list_mode = []
         list_ws_path = []
         result = []
 
         # features that is a "backend":
-        backends = ["",
-                    "pytorch_ipex_fp32",
-                    "pytorch_ipex_bf16",
-                    "pytorch_ipex_int8_static_quant",
-                    "pytorch_ipex_int8_dynamic_quant",
-                    "pytorch_inc_static_quant",
-                    "pytorch_inc_dynamic_quant",
-                    ]
+        backends = [
+            "",
+            "pytorch_ipex_fp32",
+            "pytorch_ipex_bf16",
+            "pytorch_inc_static_quant_fx",
+            "pytorch_inc_static_quant_ipex",
+            "pytorch_inc_dynamic_quant",
+            "pytorch_ipex_int8_static_quant",
+            "pytorch_ipex_int8_dynamic_quant",
+        ]
 
         # features that can be standalone (either use alone or use with "backend"):
-        standalones_pool = ["pytorch_channels_last",
-                            "pytorch_mixed_precision_cpu",
-                            "pytorch_jit_script",
-                            "pytorch_jit_script_ofi",
-                            "pytorch_torchdynamo_jit_script",
-                            "pytorch_torchdynamo_jit_script_ofi",
-                            "pytorch_torchdynamo_jit_trace",
-                            "pytorch_torchdynamo_jit_trace_ofi",
-                            ]
+        standalones_pool = [
+            "pytorch_mixed_precision_cpu",
+            "pytorch_channels_last",
+        ]
 
-        if logging_level == "debug":
+        if logging_level == "debug" or auto_quant:
             # features that is a "backend":
-            backends = ["",
-                        "pytorch_ipex_fp32",
-                        "pytorch_inc_static_quant",
-                        ]
+            backends = [
+                [],
+                ["pytorch_inc_bf16"],
+                ["pytorch_inc_dynamic_quant"],
+                ["pytorch_inc_static_quant_fx"],
+                ["pytorch_inc_static_quant_ipex"],
+            ]
 
             # features that can be standalone (either use alone or use with "backend"):
-            standalones_pool = ["pytorch_channels_last",
-                                ]
+            standalones_pool = [
+            ]
 
         standalones = []
         standalones.append("")
@@ -730,12 +717,16 @@ def superbench(
                     if "jit" in i:
                         jit_feature_count += 1
                 if jit_feature_count <= 1:
-                    standalones.append(list(item))  # only appends one JIT item
+                    standalones.append(list(item))  # only appends the item with one JIT feature in it
 
+        dry_run = True
         for backend in backends:
             for standalone in standalones:
                 features = []
-                features.append(backend)
+                if logging_level == "debug":
+                    features += backend
+                else:
+                    features.append(backend)
                 features += standalone
 
                 # exclude conflict features (like jit and jit_ofi)
@@ -747,7 +738,9 @@ def superbench(
                     continue
                 if "pytorch_ipex_int8_dynamic_quant" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
-                if "pytorch_inc_static_quant" in features and "pytorch_mixed_precision_cpu" in features:
+                if "pytorch_inc_static_quant_fx" in features and "pytorch_mixed_precision_cpu" in features:
+                    continue
+                if "pytorch_inc_static_quant_ipex" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
                 if "pytorch_inc_dynamic_quant" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
@@ -757,6 +750,9 @@ def superbench(
 
                 if features[0] == "" and len(features) > 1:
                     features = features[1:]  # remove ""
+
+                if dry_run:
+                    t_start = time.time()
 
                 bench_performance, bench_mode, bench_ws_path = enable(
                     code=code,
@@ -770,7 +766,32 @@ def superbench(
                     ncore_per_instance=ncore_per_instance,
                     ninstances=ninstances,
                     bench_batch_size=bench_batch_size,
+                    eval_accuracy=False,
                 )
+                if eval_accuracy:
+                    bench_acc, bench_mode, bench_ws_path = enable(
+                        code=code,
+                        entry_code=entry_code,
+                        entry_code_args=entry_code_args,
+                        features=features,
+                        mode=mode,
+                        run_bench=True,
+                        num_benchmark_iteration=num_benchmark_iteration,
+                        cpu_set_env=cpu_set_env,
+                        ncore_per_instance=ncore_per_instance,
+                        ninstances=ninstances,
+                        bench_batch_size=bench_batch_size,
+                        eval_accuracy=True,
+                    )
+
+
+                if dry_run:
+                    t_end = time.time()
+                    if iteration_dynamic_adjust:
+                        num_benchmark_iteration = max(int(300 / (t_end - t_start)), 5)
+                    logger.info(
+                        f"Adjusted number of benchmark iterations after dry-run is {num_benchmark_iteration}")
+                    dry_run = False
 
                 def remove_if_have(list, element):
                     if element in list:
@@ -782,32 +803,77 @@ def superbench(
                     features, "pytorch_change_batch_size")
                 features = remove_if_have(features, "pytorch_cuda_to_cpu")
 
-                logger.info(
-                    f"Benchmark result of acceleration set [{features}] is [{bench_performance[0]}] (FPS)")
+                if not eval_accuracy:
+                    logger.info(
+                        f"Benchmark result (performance) of optimization set [{features}]"
+                        f" is [{bench_performance[0]}] (FPS)")
+                else:
+                    logger.info(
+                        f"Benchmark result (performance) of optimization set [{features}]"
+                        f" is [{bench_performance[0]}] (FPS)")
+                    logger.info(
+                        f"Benchmark result (accuracy) of optimization set [{features}] is [{bench_acc[5]}]")
 
                 d = {}  # initialize dict
                 d["features"] = features
                 d["FPS"] = bench_performance[0]
+                if eval_accuracy:
+                    d["accuracy"] = bench_acc[5]
                 d["mode"] = bench_mode
                 d["workspace_path"] = bench_ws_path
                 result.append(d)
 
                 list_FPS.append(bench_performance[0])
+                if eval_accuracy:
+                    list_accuracy.append(bench_acc[5])
                 list_features.append(features)
                 list_mode.append(bench_mode)
                 list_ws_path.append(bench_ws_path)
 
         # print result
-        logger.info(
-            f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
-        print("{:<20} {:<20} {:<120}".format(
-            'Numactl Mode', 'Performance (FPS)', 'Features Applied'))
-        sort_index = sorted(range(len(list_FPS)),
-                            key=lambda k: list_FPS[k], reverse=True)
-        for i in sort_index:
-            if list_FPS[i] != 0:
-                print("{:<20} {:<20} {:<120}".format(
-                    str(list_mode[i]), str(list_FPS[i]), str(list_features[i])))
+        if not eval_accuracy:
+            logger.info(
+                f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
+            print("{:<20} {:<20} {:<120}".format(
+                'Numactl Mode', 'Performance (FPS)', 'Features Applied'))
+
+            sort_index = sorted(
+                range(len(list_FPS)),
+                key=lambda k: list_FPS[k],
+                reverse=True,
+            )
+
+            for i in sort_index:
+                if list_FPS[i] != 0:
+                    print(
+                        "{:<20} {:<20} {:<120}".format(
+                            str(list_mode[i]),
+                            str(list_FPS[i]),
+                            str(list_features[i]),
+                        )
+                    )
+        else:
+            logger.info(
+                f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
+            print("{:<20} {:<20} {:<20} {:<120}".format(
+                'Numactl Mode', 'Performance (FPS)', 'Accuracy', 'Features Applied'))
+
+            sort_index = sorted(
+                range(len(list_FPS)),
+                key=lambda k: list_FPS[k],
+                reverse=True,
+            )
+
+            for i in sort_index:
+                if list_FPS[i] != 0:
+                    print(
+                        "{:<20} {:<20} {:<20} {:<120}".format(
+                            str(list_mode[i]),
+                            str(list_FPS[i]),
+                            str(list_accuracy[i]),
+                            str(list_features[i]),
+                        )
+                    )
 
         # for superbench report generation
         list_optimization_set_top3 = []
@@ -829,9 +895,15 @@ def superbench(
                 if list_features[i] == []:
                     original_model_performance = list_FPS[i]
                     break
+        
+        logger.info(f"The best optimization set for your model is: {list_optimization_set_top3[0]}")
+        logger.info(
+            f"You can get up to: "
+            f"{round(list_performance_top3[0] / original_model_performance, 1)}"
+            f" X performance boost with the suggested optimization set."
+        )
 
-        return list_optimization_set_top3, \
-            list_performance_top3, original_model_ranking, original_model_performance
+        return list_optimization_set_top3, list_performance_top3, original_model_ranking, original_model_performance
 
     elif sweep_objective == "bench_config":
         result_ncpi = []
@@ -843,8 +915,8 @@ def superbench(
         result_p99_thp = []
         if bench_feature == []:
             logger.error(
-                f'You must specify a feature (optimization set) for benchmark when "sweep_objective" \
-                    is "bench_config"')
+                f'You must specify a feature (optimization set) '
+                f'for benchmark when "sweep_objective" is "bench_config"')
             quit()
         else:
             from .utils.cpu_info import get_num_cpu_cores
@@ -856,6 +928,7 @@ def superbench(
             list_ncpi.sort()
             logger.debug(f"list_ncpi = {list_ncpi}")
 
+            dry_run = True
             for this_ncpi in list_ncpi:
                 ncore_per_instance = this_ncpi
                 ninstances = int(ncores / this_ncpi)
@@ -870,6 +943,10 @@ def superbench(
                 for this_bs in list_bs:
                     bench_batch_size = this_bs
                     try:
+
+                        if dry_run:
+                            t_start = time.time()
+
                         bench_performance, bench_mode, bench_ws_path = enable(
                             code=code,
                             entry_code=entry_code,
@@ -882,7 +959,16 @@ def superbench(
                             ncore_per_instance=ncore_per_instance,
                             ninstances=ninstances,
                             bench_batch_size=bench_batch_size,
+                            eval_accuracy=eval_accuracy,
                         )
+
+                        if dry_run:
+                            t_end = time.time()
+                            if iteration_dynamic_adjust:
+                                num_benchmark_iteration = max(int(300 / (t_end - t_start)), 5)
+                            logger.info(
+                                f"Adjusted number of benchmark iterations after dry-run is {num_benchmark_iteration}")
+                            dry_run = False
 
                         socket_regular_thp = bench_performance[0]
                         socket_p50_thp = round(
@@ -901,14 +987,16 @@ def superbench(
                         result_p99_thp.append(socket_p99_thp)
 
                         logger.info(
-                            f"ncpi: {ncore_per_instance}, nins: {ninstances}, bs: {bench_batch_size}, \
-                                regular_thp: {socket_regular_thp}, p50_thp: {socket_p50_thp}, \
-                                    p90_thp: {socket_p90_thp}, p99_thp: {socket_p99_thp}")
+                            f"ncpi: {ncore_per_instance}, nins: {ninstances}, bs: {bench_batch_size}, "
+                            f"regular_thp: {socket_regular_thp}, p50_thp: {socket_p50_thp}, "
+                            f"p90_thp: {socket_p90_thp}, p99_thp: {socket_p99_thp}"
+                        )
 
                     except:
                         logger.warning(
-                            f"ncpi: {ncore_per_instance}, nins: {ninstances}, bs: {bench_batch_size}, Benchmark \
-                                failed. It might be due to HW limitation such as CPU load limit.")
+                            f"ncpi: {ncore_per_instance}, nins: {ninstances}, bs: {bench_batch_size}, "
+                            f"Benchmark failed. It might be due to HW limitation such as CPU load limit."
+                        )
                         continue
 
         # print result
@@ -945,3 +1033,117 @@ def superbench(
                 break  # only fetch the top result
 
         return list_config_best_ncpi, list_config_best_nins, list_config_best_bs, list_config_best_performance
+
+
+# def superreport(
+#     code,
+#     save_path="superbench_report.pdf",
+#     logging_level="info",
+#     eval_accuracy=False,
+#     platform="bare_metal",
+#     bare_metal_machine_type="SPR",
+# ):
+
+#     from .utils.pdf_report import PDFReport
+
+#     logging_level = logging_level
+#     res1, res2, res3, res4 = superbench(
+#         code=code,
+#         sweep_objective="feature",
+#         mode="throughput",
+#         logging_level=logging_level,
+#         eval_accuracy=eval_accuracy,
+#     )
+
+#     res5, res6, res7, res8 = superbench(
+#         code=code,
+#         sweep_objective="bench_config",
+#         bench_feature=res1[0],
+#         logging_level=logging_level,
+#         eval_accuracy=eval_accuracy,
+#     )
+#     res1[0] = res1[0][0:-2]
+
+#     if platform == "AWS":
+#         # get AWS cloud_vendor and cloud_instance_type
+#         # pricing: https://aws.amazon.com/ec2/pricing/on-demand/
+#         import subprocess
+#         res = subprocess.Popen(
+#             "grep 'DMI' /var/log/dmesg", 
+#             shell=True,                  
+#             stdout=subprocess.PIPE,      
+#             stderr=subprocess.PIPE,      
+#         )
+#         res.wait()
+#         result = res.stdout.read()       
+#         result = str(result, encoding="utf-8")
+#         cloud_vendor = result.split()[4] + ' ' + result.split()[5]
+#         if cloud_vendor == 'Amazon EC2':
+#             cloud_vendor = 'AWS'
+#         cloud_instance_type = result.split()[6].strip(',').strip('/')
+
+#         # pricing to get automatically from AWS website
+#         import pandas as pd
+#         url = 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-2/index.csv'
+#         df = pd.read_csv(url, skiprows=5, delimiter=',')
+#         for i in range(len(df)):
+#             if df['Location Type'][i] == "AWS Region" and df['Instance Type'][i] == cloud_instance_type \
+#                 and df['Tenancy'][i] == "Shared" and df['Operating System'][i] == "Linux" \
+#                 and df['operation'][i] == "RunInstances" and df['CapacityStatus'][i] == "UnusedCapacityReservation":
+#                 cloud_unit_price = float(df['PricePerUnit'][i])
+#     elif platform == "bare_metal":
+#         cloud_vendor="Intel internal machine"
+#         cloud_instance_type=bare_metal_machine_type
+#         cloud_unit_price="1"
+            
+#     report = PDFReport(
+#         path=save_path,
+#         list_optimization_set_top3=res1,
+#         list_performance_top3=res2,
+#         original_model_ranking=res3,
+#         original_model_performance=res4,
+#         list_config_best_ncpi=res5,
+#         list_config_best_nins=res6,
+#         list_config_best_bs=res7,
+#         list_config_best_performance=res8,
+#         TCO_unit_pricing=cloud_unit_price,  # 2.448
+#         cloud_vendor=cloud_vendor,  # "AWS"
+#         cloud_instance_type=cloud_instance_type,  # "c6i"
+#     )
+
+
+def auto_quant(
+    code,
+    entry_code="",
+    entry_code_args="",
+    sweep_objective="feature",
+    bench_feature=[],
+    mode="throughput",
+    num_benchmark_iteration=5,
+    iteration_dynamic_adjust=True,
+    logging_level="info",
+    cpu_conversion=True,
+    cpu_set_env=True,
+    ncore_per_instance=-1,  # only for "self_defined" mode
+    ninstances=-1,  # only for "self_defined" mode
+    bench_batch_size=-1,  # only for "self_defined" mode
+    eval_accuracy=False,
+):
+    return superbench(
+        code,
+        entry_code=entry_code,
+        entry_code_args=entry_code_args,
+        sweep_objective=sweep_objective,
+        bench_feature=bench_feature,
+        mode=mode,
+        num_benchmark_iteration=num_benchmark_iteration,
+        iteration_dynamic_adjust=iteration_dynamic_adjust,
+        logging_level=logging_level,
+        cpu_conversion=cpu_conversion,
+        cpu_set_env=cpu_set_env,
+        ncore_per_instance=ncore_per_instance,  # only for "self_defined" mode
+        ninstances=ninstances,  # only for "self_defined" mode
+        bench_batch_size=bench_batch_size,  # only for "self_defined" mode
+        eval_accuracy=eval_accuracy,
+        auto_quant=True,
+    )

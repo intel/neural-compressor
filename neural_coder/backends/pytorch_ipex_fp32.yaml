@@ -12,4 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+transformation:
+  location:
+    - insert_below_model_definition_line
+  content:
+    - |-
+      [+] import torch
+      [+] import intel_extension_for_pytorch as ipex
+      [+] with torch.no_grad():
+      [+]     MODEL_NAME.eval()
+      [+]     MODEL_NAME = ipex.optimize(MODEL_NAME, dtype=torch.float32)
+  order:
+    - below:
+        - pytorch_channels_last
+      above:
+        - pytorch_jit_script
+        - pytorch_jit_script_ofi
+        - pytorch_jit_trace
+        - pytorch_jit_trace_ofi

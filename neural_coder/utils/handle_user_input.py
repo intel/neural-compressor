@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 from typing import List
 from .. import globals
@@ -76,10 +75,51 @@ def get_user_code_path(user_input: str) -> List:
 
 def get_imports_path(user_code_path: List) -> List:
 
-    pip_name_exceptions = ["torch", "numpy", "os", "time", "logging", "inspect", "random", "math",
-                           "sys", "timeit", "tqdm", "importlib", "json", "warnings", "argparse",
-                           "collections", "threading", "subprocess", "shutil", "h5py", "PIL", "ast",
-                           "imageio", "glob", "traceback", "requests", "pandas", "unittest", "tempfile", "linecache"]
+    pip_name_exceptions = [
+        "argparse",
+        "ast",
+        "collections",
+        "datasets",
+        "dataclasses",
+        "einops",
+        "fx",
+        "glob",
+        "h5py",
+        "imageio",
+        "importlib",
+        "inspect",
+        "intel_extension_for_pytorch",
+        "jax",
+        "json",
+        "keras",
+        "libcst",
+        "linecache",
+        "logging",
+        "math",
+        "neural_coder",
+        "neural_compressor",
+        "numpy",
+        "os",
+        "pandas",
+        "PIL",
+        "random",
+        "requests",
+        "shutil",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "typing",
+        "tensorflow",
+        "threading",
+        "time",
+        "timeit",
+        "torch",
+        "torchdynamo",
+        "tqdm",
+        "traceback",
+        "unittest",
+        "warnings",
+    ]
 
     list_pip_path = []
     list_pip_name = []
@@ -109,6 +149,10 @@ def get_imports_path(user_code_path: List) -> List:
                 list_pip_name.append(pip_name)
     list_pip_name = list(
         set(list_pip_name).difference(set(pip_name_exceptions)))
+    for item in list_pip_name:
+        if "_nc" in item:
+            list_pip_name.remove(item)
+
     logger.debug(f"list pip name: {list_pip_name}")
 
     # get list of pip path
@@ -117,8 +161,9 @@ def get_imports_path(user_code_path: List) -> List:
         exec(cmd_import)
     except ModuleNotFoundError as mnfe:
         logger.error(
-            f"Please install all required pip modules defined in your Python scripts \
-                before running Neural Coder: {mnfe}")
+            f"Please install all required pip modules defined in your Python scripts "
+            f"before running Neural Coder: {mnfe}"
+        )
         quit()
 
     import inspect
@@ -129,12 +174,12 @@ def get_imports_path(user_code_path: List) -> List:
             for path, dir_list, file_list in os.walk(pip_dir_path):
                 for file_name in file_list:
                     file_path = os.path.join(path, file_name)
-                    if file_path[-3:] == ".py" and file_path[-11:] != "__init__.py" \
-                            and file_path[-8:] != "setup.py":
+                    if file_path[-3:] == ".py" and file_path[-11:] != "__init__.py" and file_path[-8:] != "setup.py":
                         list_pip_path.append(os.path.abspath(file_path))
         except TypeError as te:
             logger.error(
-                f"Please reinstall certain pip modules as its detected \
-                    as a built-in module and the installation path cannot be retrieved: {te}")
+                f"Please reinstall certain pip modules as its detected as a built-in module "
+                f"and the installation path cannot be retrieved: {te}"
+            )
 
     return list_pip_path
