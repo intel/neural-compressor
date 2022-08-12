@@ -159,7 +159,7 @@ stages:
               script: |
                 set -ex
                 echo "---------------------------"
-                ehco $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
+                echo $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
                 cd $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
                 ls
                 echo "---------------------------"
