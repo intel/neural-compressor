@@ -10,65 +10,16 @@ variables:
   # TARGET_PATH: "/neural_compressor"
   CODE_SCAN_PATH: ".azure-pipelines/scripts/codeScan"
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
-  DOCKER_CODE_SCAN_PATH: "neural-compressor/.azure-pipelines/scripts/codeScan"
-
-
-  BANDIT_CONTAINER_NAME: "bandit"
-  PYLINT_CONTAINER_NAME: "pylint"
-  PYSPELLING_CONTAINER_NAME: "pyspelling"
-  COPYRIGHT_CONTAINER_NAME: "copyright"
 
   CURRENT_PATH: $(Build.SourcesDirectory)
 
 stages:
-  - stage: BanditCodeScan
-    displayName: Bandit Code Scan
-    dependsOn: []
-    jobs:
-      - job: Bandit
-        displayName: Bandit
-        steps:
-          - script: |
-              echo ${BUILD_SOURCESDIRECTORY}
-              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune
-            displayName: "Clean workspace"
-          - checkout: self
-            displayName: "Checkout out Repo"
-          - script: |
-              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
-                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-              fi
-              docker images | grep -i ${IMAGE_NAME}
-              if [[ $? -ne 0 ]]; then
-                echo "NO Such Image ${IMAGE_NAME}"
-                exit 1
-              fi
-            displayName: "Build Devel Images"
-          - script: |
-              docker stop $(docker ps -aq)
-              docker rm -vf $(docker ps -aq) || true
-            displayName: "Clean Docker"
-
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /$(DOCKER_CODE_SCAN_PATH)/$(BANDIT_CONTAINER_NAME)/bandit.sh
-                # docker cp $(BANDIT_CONTAINER_NAME):/lpot-bandit.log $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
-              artifact: $(BANDIT_CONTAINER_NAME)
-              publishLocation: "pipeline"
-
-        
-  # - stage: PylintCodeScan
-  #   displayName: Pylint Code Scan
+  # - stage: BanditCodeScan
+  #   displayName: Bandit Code Scan
   #   dependsOn: []
   #   jobs:
-  #     - job: Pylint
-  #       displayName: Pylint
+  #     - job: Bandit
+  #       displayName: Bandit
   #       steps:
   #         - script: |
   #             echo ${BUILD_SOURCESDIRECTORY}
@@ -96,14 +47,55 @@ stages:
   #           inputs:
   #             targetType: "inline"
   #             script: |
-  #               docker run --disable-content-trust --privileged --name=$(PYLINT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:$(TARGET_PATH) ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash  +x -c "cd $(TARGET_PATH) && bash $(TARGET_PATH)/$(CODE_SCAN_PATH)/$(PYLINT_CONTAINER_NAME)/pylint.sh $(TARGET_PATH)"
-  #               docker cp $(PYLINT_CONTAINER_NAME):/lpot-pylint.json $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-pylint.json
-
+  #               docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/bandit/bandit.sh
+          
   #         - task: PublishPipelineArtifact@1
   #           inputs:
-  #             targetPath: $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-pylint.json
-  #             artifact: $(PYLINT_CONTAINER_NAME)
+  #             targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
+  #             artifact: bandit
   #             publishLocation: "pipeline"
+
+        
+  - stage: PylintCodeScan
+    displayName: Pylint Code Scan
+    dependsOn: []
+    jobs:
+      - job: Pylint
+        displayName: Pylint
+        steps:
+          - script: |
+              echo ${BUILD_SOURCESDIRECTORY}
+              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+              echo y | docker system prune
+            displayName: "Clean workspace"
+          - checkout: self
+            displayName: "Checkout out Repo"
+          - script: |
+              if [[ ! $(docker images | grep -i ${IMAGE_NAME}) ]]; then
+                  docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              fi
+              docker images | grep -i ${IMAGE_NAME}
+              if [[ $? -ne 0 ]]; then
+                echo "NO Such Image ${IMAGE_NAME}"
+                exit 1
+              fi
+            displayName: "Build Devel Images"
+          - script: |
+              docker stop $(docker ps -aq)
+              docker rm -vf $(docker ps -aq) || true
+            displayName: "Clean Docker"
+
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                docker run --disable-content-trust --privileged --name="pylint" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/pylint/pylint.sh
+         
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-pylint.log
+              artifact: pylint
+              publishLocation: "pipeline"
 
   # - stage: PyspellingCodeScan
   #   displayName: Pyspelling Code Scan
