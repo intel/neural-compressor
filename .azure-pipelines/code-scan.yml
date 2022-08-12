@@ -18,13 +18,8 @@ stages:
     jobs:
       - job: Bandit
         displayName: Bandit
-        condition: and(succeeded(), eq(variables.CURRENT_PATH, 'true'))
+        condition: eq(variables['CURRENT_STATUS'], 'true')
         steps:
-          - script: |
-              if [ $(CURRENT_STATUS) -ne 0 ] ; then
-                  exit 1
-              fi
-              exit 0
           - script: |
               echo ${BUILD_SOURCESDIRECTORY}
               sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
