@@ -10,7 +10,7 @@ variables:
   # TARGET_PATH: "/neural_compressor"
   CODE_SCAN_PATH: ".azure-pipelines/scripts/codeScan"
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
-  DOCKER_CODE_SCAN_PATH: "neural_compressor/.azure-pipelines/scripts/codeScan"
+  DOCKER_CODE_SCAN_PATH: "neural-compressor/.azure-pipelines/scripts/codeScan"
 
 
   BANDIT_CONTAINER_NAME: "bandit"
