@@ -56,7 +56,7 @@ stages:
               script: |
                 docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /$(DOCKER_CODE_SCAN_PATH)/$(BANDIT_CONTAINER_NAME)/bandit.sh
                 echo "-----------$(CURRENT_PATH)/neural-compressor------------------"
-                cd $(CURRENT_PATH)/docker
+                cd $(CURRENT_PATH)/.azure-pipelines/scripts/codeScan/scanLog
                 ls
                 echo "-----------------------------"
 
