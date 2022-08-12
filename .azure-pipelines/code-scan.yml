@@ -152,47 +152,47 @@ stages:
   #             artifact: $(PYSPELLING_CONTAINER_NAME)
   #             publishLocation: "pipeline"              
 
-  - stage: CopyRight
-    displayName: CopyRight Code Scan
-    dependsOn: []
-    jobs:
-      - job: CopyRight
-        displayName: CopyRight
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                set -ex
-                supported_extensions=(py, sh, yaml)
+  # - stage: CopyRight
+  #   displayName: CopyRight Code Scan
+  #   dependsOn: []
+  #   jobs:
+  #     - job: CopyRight
+  #       displayName: CopyRight
+  #       steps:
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #               set -ex
+  #               supported_extensions=(py, sh, yaml)
 
-                git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(CURRENT_PATH)/neural_compressor > $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log
-                files=$(cat $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log | awk '!a[$0]++')
+  #               git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(CURRENT_PATH)/neural_compressor > $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log
+  #               files=$(cat $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log | awk '!a[$0]++')
 
-                for file in ${files}
-                do
-                    if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
-                        echo "Checking license in 1 ${file}"
-                        if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
-                            echo ${file} >>  $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-                        fi
-                    else
-                        echo "Skipping ${file}"
-                    fi
-                done
+  #               for file in ${files}
+  #               do
+  #                   if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
+  #                       echo "Checking license in 1 ${file}"
+  #                       if [ $(grep -E -c "Copyright \\(c\\) ([0-9]{4})(-[0-9]{4})? Intel Corporation" ${file}) = 0 ]; then
+  #                           echo ${file} >>  $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+  #                       fi
+  #                   else
+  #                       echo "Skipping ${file}"
+  #                   fi
+  #               done
 
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-              artifact: $(COPYRIGHT_CONTAINER_NAME)
-              publishLocation: "pipeline" 
+  #         - task: PublishPipelineArtifact@1
+  #           inputs:
+  #             targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+  #             artifact: $(COPYRIGHT_CONTAINER_NAME)
+  #             publishLocation: "pipeline" 
 
-          - task: Bash@3
-            inputs:
-              targetType: "inline"
-              script: |
-                ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-                if [ $? -eq 0 ] ; then
-                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
-                fi
-                exit 0
+  #         - task: Bash@3
+  #           inputs:
+  #             targetType: "inline"
+  #             script: |
+  #               ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+  #               if [ $? -eq 0 ] ; then
+  #                   echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
+  #               fi
+  #               exit 0
