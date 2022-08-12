@@ -176,14 +176,18 @@ stages:
                     fi
                 done
 
-                ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-                if [ $? -eq 0 ] ; then
-                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
-                fi
-                exit 0
-
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
               artifact: $(COPYRIGHT_CONTAINER_NAME)
               publishLocation: "pipeline" 
+
+          - task: Bash@3
+            inputs:
+              targetType: "inline"
+              script: |
+                ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
+                if [ $? -eq 0 ] ; then
+                    echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
+                fi
+                exit 0
