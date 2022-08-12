@@ -1,4 +1,5 @@
-trigger: code-scan
+trigger:
+  - code-scan
 pr: 
   - master
 pool: suyue-test
