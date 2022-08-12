@@ -1,0 +1,43 @@
+Auto-Quant Feature
+===========================
+This feature helps automatically enable quantization features on a PyTorch model script and automatically evaluates for the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a PyTorch model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision.
+
+
+## Features Supported
+- Post-Training Static Quantization for [Stock PyTorch](https://pytorch.org/tutorials/prototype/fx_graph_mode_ptq_static.html) (with FX backend)
+- Post-Training Static Quantization for [IPEX](https://github.com/intel/intel-extension-for-pytorch/blob/v1.12.0/docs/tutorials/features/int8.md)
+- Post-Training Dynamic Quantization for [Stock PyTorch](https://pytorch.org/tutorials/recipes/recipes/dynamic_quantization.html)
+- Mixed Precision for [Stock PyTorch](https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html)
+
+## Models Supported
+- HuggingFace [Transformers](https://github.com/huggingface/transformers) models
+- [torchvision](https://pytorch.org/vision/stable/index.html) models
+- Broad models (under development)
+
+## Usage
+- PyPI distribution with a one-line API call
+
+## Example
+### PyPI distribution:
+HuggingFace [Transformers](https://github.com/huggingface/transformers) models: [text-classification/run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py)
+```
+from neural_coder import auto_quant
+auto_quant(
+    code="../examples/nlp/run_glue.py",
+    entry_code_args=" \
+        --model_name_or_path albert-base-cased \
+        --task_name SST2 \
+        --do_eval \
+        --output_dir result \
+        --overwrite_output_dir",
+)
+```
+
+[torchvision](https://pytorch.org/vision/stable/index.html) models: [imagenet/main.py](https://github.com/pytorch/examples/blob/main/imagenet/main.py)
+```
+from neural_coder import auto_quant
+auto_quant(
+    code="../examples/vision/main.py",
+    entry_code_args="-a alexnet /path/to/imagenet/",
+)
+```

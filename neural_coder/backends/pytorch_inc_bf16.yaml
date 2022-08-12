@@ -12,8 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import enable
-from .interface import bench
-from .interface import superbench
-# from .interface import superreport
-from .interface import auto_quant
+transformation:
+  location:
+    - insert_below_model_definition_line
+  content:
+    - |-
+      [+] from neural_compressor.experimental import MixedPrecision
+      [+] converter = MixedPrecision()
+      [+] converter.precisions = 'bf16'
+      [+] converter.model = MODEL_NAME
+      [+] MODEL_NAME = converter()
+  order:
+    - below:
+      above:
+        - pytorch_jit_script
+        - pytorch_jit_script_ofi
+        - pytorch_jit_trace
+        - pytorch_jit_trace_ofi
+        - pytorch_channels_last

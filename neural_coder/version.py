@@ -12,8 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import enable
-from .interface import bench
-from .interface import superbench
-# from .interface import superreport
-from .interface import auto_quant
+__version__ = "0.3"

@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interface import enable
-from .interface import bench
-from .interface import superbench
-# from .interface import superreport
-from .interface import auto_quant
+transformation:
+  location:
+    - ["insert_below_model_definition_line", "insert_below_input_definition_line"]
+  content:
+    - |-
+      [+] import torch_blade
+      [+] with torch.no_grad():
+      [+]     MODEL_NAME = torch_blade.optimize(MODEL_NAME, allow_tracing=True, model_inputs=tuple(INPUT_NAME))
+  order:
+    - below:
+      above:
