@@ -56,11 +56,6 @@ stages:
               script: |
                 docker run --disable-content-trust --privileged --name=$(BANDIT_CONTAINER_NAME) -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /$(DOCKER_CODE_SCAN_PATH)/$(BANDIT_CONTAINER_NAME)/bandit.sh
                 # docker cp $(BANDIT_CONTAINER_NAME):/lpot-bandit.log $(CURRENT_PATH)/$(CODE_SCAN_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
-                echo "---------$bandit_log_dir-------------"
-                echo $bandit_log_dir
-                echo "---------$(bandit_log_dir)-------------"
-                echo $(bandit_log_dir)
-                echo "----------------------"
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: $(CURRENT_PATH)/$(DOCKER_CODE_SCAN_PATH)/lpot-bandit.log
