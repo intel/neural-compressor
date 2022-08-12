@@ -164,6 +164,8 @@ stages:
                 ls
                 echo "---------------------------"
 
+                supported_extensions=(py, sh, yaml)
+
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(CURRENT_PATH)/neural_compressor > $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log
                 files=$(cat $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log | awk '!a[$0]++')
 
