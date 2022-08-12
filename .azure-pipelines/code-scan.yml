@@ -51,7 +51,7 @@ stages:
             inputs:
               targetType: "inline"
               script: |
-                docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/bandit/bandit.sh $(CURRENT_STATUS)
+                docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/bandit/bandit.sh
           
           - task: PublishPipelineArtifact@1
             inputs:
