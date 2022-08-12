@@ -135,7 +135,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 More details for validated models are available [here](docs/validated_model_list.md).   
 
 <a target="_blank" href="./docs/imgs/release_data.png">
-  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=500>
+  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=600>
 </a>
 
 ## Documentation
