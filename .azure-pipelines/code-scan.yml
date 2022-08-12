@@ -176,8 +176,7 @@ stages:
                 done
 
                 ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-                exit_code=$?
-                if [ ${exit_code} -e 0 ] ; then
+                if [ $? -eq 0 ] ; then
                     echo "------------------Check <copyright_issue_summary.log> for wrong file list !!!!!!!!!!!!!!!!!!!!!!!"; exit 1
                 fi
                 exit 0
