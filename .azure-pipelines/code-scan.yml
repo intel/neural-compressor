@@ -8,8 +8,8 @@ variables:
   IMAGE_TAG: "1.0"
 
   # TARGET_PATH: "/neural_compressor"
-  CODE_SCAN_PATH: "/neural_compressor/.azure-pipelines/scripts/codeScan"
-  CODE_SCAN_LOG_PATH: "neural_compressor/.azure-pipelines/scripts/codeScan/scanLog"
+  CODE_SCAN_PATH: ".azure-pipelines/scripts/codeScan"
+  CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
 
   BANDIT_CONTAINER_NAME: "bandit"
   PYLINT_CONTAINER_NAME: "pylint"
