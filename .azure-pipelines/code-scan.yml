@@ -18,7 +18,7 @@ stages:
     jobs:
       - job: Bandit
         displayName: Bandit
-        continueOnError: true
+        condition: false
         steps:
           - script: |
               if [ $(CURRENT_STATUS) -ne 0 ] ; then
