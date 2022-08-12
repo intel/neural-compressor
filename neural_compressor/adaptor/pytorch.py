@@ -2385,6 +2385,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
             if not IPEX_110 and not IPEX_112: 
                 ipex_conf = ipex.AmpConf(torch.int8)
+                self.model_calibration(
+                                init_model,
+                                self.q_dataloader,
+                                conf=ipex_conf,
+                                )
+                ipex_conf.save(self.ipex_config_path)
             if IPEX_110:
                 ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
                 try:

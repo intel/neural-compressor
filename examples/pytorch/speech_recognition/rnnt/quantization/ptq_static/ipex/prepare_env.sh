@@ -30,7 +30,8 @@
   pip install sklearn onnx tqdm lark-parser
   pip install -e git+https://github.com/mlperf/logging@0.7.0-rc2#egg=mlperf-logging
   conda install ninja pyyaml setuptools cmake cffi typing --yes
-  conda install intel-openmp mkl mkl-include numpy --no-update-deps --yes
+  conda install numpy=1.21.5 --yes
+  conda install intel-openmp mkl mkl-include  --no-update-deps --yes
   conda install -c conda-forge gperftools --yes
   conda install jemalloc=5.0.1 --yes
   pip install opencv-python absl-py opencv-python-headless intel-openmp
