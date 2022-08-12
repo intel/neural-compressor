@@ -168,7 +168,7 @@ stages:
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
-              artifact: $(COPYRIGHT_CONTAINER_NAME)
+              artifact: copyright
               publishLocation: "pipeline" 
 
           - task: Bash@3
