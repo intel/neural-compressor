@@ -10,6 +10,7 @@ variables:
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
   CURRENT_PATH: $(Build.SourcesDirectory)
   CURRENT_STATUS: true
+  ER: "1212"
 
 stages:
   - stage: BanditCodeScan
@@ -49,7 +50,8 @@ stages:
                 docker run --disable-content-trust --privileged --name="bandit" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} bash /neural-compressor/$(CODE_SCAN_PATH)/bandit/bandit.sh $(CURRENT_STATUS)
                 echo "------$(CURRENT_STATUS)-------"
                 echo $(CURRENT_STATUS)
-                echo "-------------"
+                
+                echo "---$(ER)----$(QR)------"
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/lpot-bandit.log
