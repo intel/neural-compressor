@@ -158,19 +158,12 @@ stages:
               targetType: "inline"
               script: |
                 set -ex
-                echo "---------------------------"
-                echo $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
-                cd $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)
-                ls
-                echo "---------------------------"
-
                 supported_extensions=(py, sh, yaml)
 
                 git --no-pager diff --name-only $(git show-ref -s remotes/origin/$(System.PullRequest.TargetBranch)) $(CURRENT_PATH)/neural_compressor > $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log
                 files=$(cat $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/diff.log | awk '!a[$0]++')
 
                 for file in ${files}
-
                 do
                     if [[ "${supported_extensions[@]}" =~ "${file##*.}" ]]; then
                         echo "Checking license in 1 ${file}"
@@ -181,7 +174,6 @@ stages:
                         echo "Skipping ${file}"
                     fi
                 done
-
 
                 ls $(CURRENT_PATH)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
                 exit_code=$?
