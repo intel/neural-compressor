@@ -6,7 +6,7 @@ python -m bandit -r -lll -iii /neural-compressor/neural_compressor >  $bandit_lo
 
 exit_code=$?
 if [ ${exit_code} -eq 0 ] ; then
-    sed -i "s|CURRENT_STATUS:.*|CURRENT_STATUS: false|g" /neural-compressor/azure-pipelines.yml
+    sed -i "s|CURRENT_STATUS\: true|CURRENT_STATUS\: false|g" /neural-compressor/azure-pipelines.yml
 
     # sed -i 's/CURRENT_STATUS:.*$/CURRENT_STATUS: false' /neural-compressor/azure-pipelines.yml
     echo "Bandit exited with non-zero exit code."; exit 1
