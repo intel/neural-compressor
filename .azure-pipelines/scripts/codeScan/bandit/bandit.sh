@@ -1,5 +1,5 @@
 set -ex
-bandit_log_dir = "/neural-compressor/neural_compressor/.azure-pipelines/scripts/codeScan/scanLog"
+bandit_log_dir="/neural-compressor/neural_compressor/.azure-pipelines/scripts/codeScan/scanLog"
 
 pip install bandit
 
@@ -12,4 +12,4 @@ if [ ${exit_code} -ne 0 ] ; then
 fi
 exit 0
 
-export bandit_log_dir
+    
