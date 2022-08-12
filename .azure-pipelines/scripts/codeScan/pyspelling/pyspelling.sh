@@ -10,7 +10,7 @@ apt-get install aspell-en -y
 
 
 
-sed -i "s|\${VAL_REPO}|$1|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
+sed -i "s|\${VAL_REPO}|$pyspelling_dir|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
 sed -i "s|\${LPOT_REPO}|.|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
 
 pyspelling -c $pyspelling_dir/pyspelling/pyspelling_conf.yaml > $pyspelling_log_dir/lpot_pyspelling.log
