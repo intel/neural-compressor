@@ -11,7 +11,7 @@ pip install autograd
 pip install pymoo
 pip install tf_slim
 pip install transformers
-pip install -r requirements.txt
+pip install -r /neural-compressor/requirements.txt
 pip install onnxruntime_extensions
 
 
