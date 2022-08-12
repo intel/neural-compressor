@@ -3,7 +3,7 @@ pyspelling_dir="/neural-compressor/.azure-pipelines/scripts/codeScan"
 pyspelling_log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 
 pip install pyspelling
-pip install -r requirements.txt
+pip install -r /neural-compressor/requirements.txt
 
 apt-get install aspell -y
 apt-get install aspell-en -y
