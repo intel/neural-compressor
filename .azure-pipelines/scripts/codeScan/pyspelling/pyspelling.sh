@@ -1,17 +1,19 @@
-# $1: $(VAL_PATH) 
-# $2: $(BUILD_DIRECTORY) - $(Build.SourcesDirectory)
+set -ex
+pyspelling_dir="/neural-compressor/.azure-pipelines/scripts/codeScan"
+pyspelling_log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 
 pip install pyspelling
+pip install -r /neural-compressor/requirements.txt
 
-pip install aspell
+apt-get install aspell -y
+apt-get install aspell-en -y
 
-pip install aspell-en 
 
-sed -i "s|\${VAL_REPO}|$1|g" $1/pyspelling/pyspelling_conf.yaml
-sed -i "s|\${LPOT_REPO}|.|g" $1/pyspelling/pyspelling_conf.yaml
-echo "Modified config:"
-cat $1/pyspelling/pyspelling_conf.yaml
-pyspelling -c $1/pyspelling/pyspelling_conf.yaml > $1/pyspelling/pyspelling_output.log
+
+sed -i "s|\${VAL_REPO}|$pyspelling_dir|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
+sed -i "s|\${LPOT_REPO}|/neural-compressor|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
+
+pyspelling -c $pyspelling_dir/pyspelling/pyspelling_conf.yaml > $pyspelling_log_dir/lpot_pyspelling.log
 exit_code=$?
 if [ ${exit_code} -ne 0 ] ; then
     echo "Pyspelling exited with non-zero exit code."; exit 1
