@@ -78,6 +78,21 @@ inc_bench
   <img src="./docs/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
+* Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
+
+```python
+from neural_coder import auto_quant
+auto_quant(
+    code="../examples/nlp/run_glue.py",
+    entry_code_args=" \
+        --model_name_or_path albert-base-cased \
+        --task_name SST2 \
+        --do_eval \
+        --output_dir result \
+        --overwrite_output_dir",
+)
+```
+
 ## System Requirements
 
 Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
