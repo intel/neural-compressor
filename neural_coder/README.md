@@ -2,7 +2,7 @@ Neural Coder
 ===========================
 ## What do we offer?
 
-Neural Coder is a novel deployment toolkit for one-click acceleration on Deep Learning scripts via performing automated code insertions of CUDA to CPU platform conversions and Deep Learning optimization APIs. Subsequently, Neural Coder can perform automated benchmark on all applicable optimization sets acquired from the automated enabling, and evaluate for the best out-of-box performance.
+Neural Coder is a novel component under Intel® Neural Compressor to further simplify the deployment of deep learning models via one-click automated code changes for device switch (e.g., CUDA to CPU) and optimization enabling. Subsequently, Neural Coder can also perform automated benchmark on all applicable optimization sets acquired from the automated enabling, and evaluate for the best out-of-box performance.
 
 Neural Coder leverages static program analysis techniques and heuristic optimization rules to simplify the usage of various Deep Learning optimization APIs for increasing computation efficiency of AI models and improving user experience for general AI customers. We demonstrate great improvement of developer productivity and aim to facilitate enhanced Deep Learning acceleration adoption via this toolkit.
 
@@ -75,4 +75,4 @@ superbench(code="examples/vision/resnet50.py",
 ```
 
 ## Contact
-Please contact us at [kai.yao@intel.com](mailto:kai.yao@intel.com) for any Neural Coder related question.
+Please contact us at [inc.maintainers@intel.com](mailto:inc.maintainers@intel.com) for any Neural Coder related question.
