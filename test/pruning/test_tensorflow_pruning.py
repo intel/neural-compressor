@@ -12,6 +12,8 @@ import numpy as np
 import os
 import shutil
 import unittest
+import time
+import hashlib
 from neural_compressor.experimental import Pruning, common
 from neural_compressor.utils import logger
 import types
@@ -19,6 +21,7 @@ from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.utils.create_obj_from_config import create_train_func
 from neural_compressor.experimental.pruning import TfPruningCallback
 from neural_compressor.conf.dotdict import DotDict
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 def build_fake_yaml():
     fake_yaml = """
@@ -271,6 +274,24 @@ def train(dst_path):
     print('Test accuracy:', scores[1])
     model.save(dst_path)
 
+def dir_md5_check(dir):
+    files_list = []
+    md5_list = []
+    def get_files_list(path, list_name):
+        for file in sorted(os.listdir(path)):
+            file_path = os.path.join(path, file)
+            if os.path.isdir(file_path):
+                get_files_list(file_path, list_name)
+            else:
+                list_name.append(file_path)
+    get_files_list(dir, files_list)
+    for file_path in files_list:
+        with open(file_path, 'rb') as fp:
+            data = fp.read()
+        file_md5 = hashlib.md5(data).hexdigest()
+        md5_list.append(file_md5)
+    return md5_list
+
 class TrainDataset(object):
     def __init__(self):
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -322,20 +343,30 @@ class EvalDataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 class TestTensorflowPruning(unittest.TestCase):
-    dst_path = '/tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model'
+    dst_path = './baseline_model'
     @classmethod
-    def setUpClass(self):
-        build_fake_yaml()        
-        if not os.path.exists(self.dst_path):
-            print("resnet_v2 baseline_model doesn't exist")
-            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestTensorflowPruning)
+    def setUpClass(cls):
+        build_fake_yaml()
+        cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
+        os.popen(cmd).readlines()
+        if not os.path.exists(cls.dst_path):
+            logger.warning("resnet_v2 baseline_model doesn't exist.")
+            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestDistributed)
+        elif dir_md5_check(cls.dst_path) != \
+            ['65625fef42f44e6853d4d6d5e4188a49', 'a783396652bf62db3db4c9f647953175',
+            'c7259753419d9fc053df5b2059aef8c0', '77f2a1045cffee9f6a43f2594a5627ba']:
+            logger.warning("resnet_v2 baseline_model md5 verification failed.")
+            return unittest.skip("resnet_v2 baseline_model md5 verification failed.")(TestDistributed)
+        else:
+            logger.info("resnet_v2 baseline_model md5 verification succeeded.")
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         os.remove('fake_yaml.yaml')
         shutil.rmtree('nc_workspace',ignore_errors=True)
+        shutil.rmtree('baseline_model', ignore_errors=True)
 
-    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    @unittest.skipIf(version1_lt_version2(tensorflow.version.VERSION, '2.3.0'), "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_create_train_func1(self):
         framework = 'tensorflow'
         framework_specific_info = DotDict({'device': 'cpu',
@@ -357,7 +388,7 @@ class TestTensorflowPruning(unittest.TestCase):
         pruning_func1 = create_train_func(framework, dataloader, adaptor, train_cfg, hooks, callbacks)
         self.assertTrue(isinstance(pruning_func1, types.FunctionType))
 
-    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    @unittest.skipIf(version1_lt_version2(tensorflow.version.VERSION, '2.3.0'), "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_create_train_func2(self):
         framework = 'tensorflow'
         framework_specific_info = DotDict({'device': 'cpu',
@@ -383,7 +414,7 @@ class TestTensorflowPruning(unittest.TestCase):
         pruning_func2 = create_train_func(framework, dataloader, adaptor, train_cfg)
         self.assertTrue(isinstance(pruning_func2, types.FunctionType))
 
-    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0', "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    @unittest.skipIf(version1_lt_version2(tensorflow.version.VERSION, '2.3.0'), "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_tensorflow_pruning(self):
         prune = Pruning("./fake_yaml.yaml")
         prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
