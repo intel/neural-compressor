@@ -19,7 +19,7 @@ Recommend python 3.6 or higher version.
 #### Install transformers
 
 ```bash
-pip install transformers==4.10.0
+pip install transformers
 ```
 
 #### Install dependency
@@ -35,44 +35,15 @@ pip install torch
 
 ## 2. Prepare pretrained model
 
-Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
+Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model or reuse fine-tuned models in [model hub](https://huggingface.co/models), You should also install the additional packages required by the examples.
 
-### Text-classification
-
-#### BERT
-* For BERT base and glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
-
-```shell
-export TASK_NAME=MRPC
-
-python run_glue_tune.py \
-  --model_name_or_path bert-base-cased \
-  --task_name $TASK_NAME \
-  --do_train \
-  --do_eval \
-  --max_seq_length 128 \
-  --per_device_train_batch_size 32 \
-  --learning_rate 2e-5 \
-  --num_train_epochs 3 \
-  --output_dir /tmp/$TASK_NAME/
-```
-> NOTE 
->
-> model_name_or_path : Path to pretrained model or model identifier from huggingface.co/models
->
-> task_name : where task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI.
-
-The dev set results will be present within the text file 'eval_results.txt' in the specified output_dir. In case of MNLI, since there are two separate dev sets, matched and mismatched, there will be a separate output folder called '/tmp/MNLI-MM/' in addition to '/tmp/MNLI/'.
-
-please refer to [BERT base scripts and instructions](common/examples/text-classification/README.md#PyTorch version).
-
-* After fine tuning, you can get a checkpoint dir which include pretrained model, tokenizer and training arguments. This checkpoint dir will be used by neural_compressor tuning as below.
 
 # Start to neural_compressor tune for Model Quantization
 ```shell
 cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager
 ```
 ## Glue task
+### 1. To get the tuned model and its accuracy:
 
 ```bash
 sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/glue/data/dir --input_model=/path/to/checkpoint/dir
@@ -83,12 +54,73 @@ sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/glue/data/
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir 
 
+or
+
+```bash
+python -u ./run_glue_tune.py \
+        --model_name_or_path distilbert-base-uncased-finetuned-sst-2-english \
+        --task_name sst2 \
+        --do_eval \
+        --do_train \
+        --max_seq_length 128 \
+        --per_device_eval_batch_size 16 \
+        --no_cuda \
+        --output_dir ./int8_model_dir \
+        --tune \
+        --overwrite_output_dir
+``` 
+
+### 2. To get the benchmark of tuned model, includes batch_size and throughput: 
+
+```bash
+python -u ./run_glue_tune.py \
+        --model_name_or_path ./int8_model_dir \
+        --task_name sst2 \
+        --do_eval \
+        --max_seq_length 128 \
+        --per_device_eval_batch_size 1 \
+        --no_cuda \
+        --output_dir ./output_log \
+        --benchmark \
+        --int8 \
+        --overwrite_output_dir
+```
+# HuggingFace model hub
+## To upstream into HuggingFace model hub
+We provide an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and int8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
+```
+from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+...
+
+save_for_huggingface_upstream(q_model, tokenizer, output_dir)
+```
+Users can upstream files in the `output_dir` into model hub and reuse them with our `OptimizedModel` API.
+
+----
+
+## To download into HuggingFace model hub
+We provide an API `OptimizedModel` to initialize int8 models from HuggingFace model hub and its usage is the same as the model class provided by [transformers](https://github.com/huggingface/transformers).
+```python
+from neural_compressor.utils.load_huggingface import OptimizedModel
+model = OptimizedModel.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+```
+
+We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
+
+----
+
 Examples of enabling Intel® Neural Compressor
 ============================================================
 
 This is a tutorial of how to enable BERT model with Intel® Neural Compressor.
 
-# User Code Analysis
+## User Code Analysis
 
 Intel® Neural Compressor supports two usages:
 

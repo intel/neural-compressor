@@ -19,7 +19,7 @@ Recommend python 3.6 or higher version.
 #### Install BERT model
 
 ```bash
-pip install transformers==4.10.0
+pip install transformers
 ```
 
 #### Install dependency
@@ -35,27 +35,7 @@ pip install torch
 
 ## 2. Prepare pretrained model
 
-Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model, You should also install the additional packages required by the examples:
-
-### bert
-For glue tasks(task name can be one of CoLA, SST-2, MRPC, STS-B, QQP, MNLI, QNLI, RTE, WNLI...)
-
-```shell
-cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx
-export TASK_NAME=MRPC
-export batch_size=16
-
-python run_glue.py 
-  --model_name_or_path bert_base_uncased
-  --task_name ${TASK_NAME}
-  --do_train
-  --do_eval
-  --max_seq_length 128
-  --per_device_train_batch_size ${batch_size}
-  --learning_rate 5e-5
-  --num_train_epochs 5
-  --output_dir /path/to/checkpoint/dir
-```
+Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model or reuse fine-tuned models in [model hub](https://huggingface.co/models), You should also install the additional packages required by the examples.
 
 # Start to neural_compressor tune for Model Quantization
  - Here we implemented several models in fx mode.
@@ -64,27 +44,65 @@ cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_
 ```
 ## Glue task
 
+### 1. To get the tuned model and its accuracy: 
 ```bash
 python -u ./run_glue.py \
-        --model_name_or_path /path/to/checkpoint/dir \
-        --task_name ${TASK_NAME} \
+        --model_name_or_path distilbert-base-uncased-finetuned-sst-2-english \
+        --task_name sst2 \
         --do_eval \
         --do_train \
         --max_seq_length 128 \
-        --per_device_eval_batch_size ${batch_size} \
+        --per_device_eval_batch_size 16 \
         --no_cuda \
-        --output_dir /path/to/checkpoint/dir \
+        --output_dir ./int8_model_dir \
         --tune \
-        --overwrite_output_dir \
-        --dataloader_drop_last
+        --overwrite_output_dir
+``` 
+
+### 2. To get the benchmark of tuned model, includes Batch_size and Throughput: 
+
+```bash
+python -u ./run_glue.py \
+        --model_name_or_path ./int8_model_dir \
+        --task_name sst2 \
+        --do_eval \
+        --max_seq_length 128 \
+        --per_device_eval_batch_size 1 \
+        --no_cuda \
+        --output_dir ./output_log \
+        --benchmark \
+        --int8 \
+        --overwrite_output_dir
 ```
-> NOTE
->
-> /path/to/checkpoint/dir is the path to finetune output_dir 
 
+# HuggingFace model hub
+## To upstream into HuggingFace model hub
+We provide an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and int8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
+```
+from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+...
 
----------------------
+save_for_huggingface_upstream(q_model, tokenizer, output_dir)
+```
+Users can upstream files in the `output_dir` into model hub and reuse them with our `OptimizedModel` API.
 
+## To download into HuggingFace model hub
+We provide an API `OptimizedModel` to initialize int8 models from HuggingFace model hub and its usage is the same as the model class provided by [transformers](https://github.com/huggingface/transformers).
+```python
+from neural_compressor.utils.load_huggingface import OptimizedModel
+model = OptimizedModel.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+```
+
+We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
+
+----
+----
 ## This is a tutorial of how to enable NLP model with Intel® Neural Compressor.
 
 
@@ -108,13 +126,6 @@ device: cpu
 
 quantization:
   approach: post_training_static_quant
-  op_wise: {
-            # PyTorch limitation: PyTorch unsupport specific qconfig for function when version <=1.10, will remove furture.
-            'default_qconfig': {
-              'activation':  {'dtype': ['fp32']},
-              'weight': {'dtype': ['fp32']}
-            },
-           }
 
 tuning:
   accuracy_criterion:

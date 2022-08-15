@@ -31,7 +31,7 @@ WEIGHTS_NAME = "pytorch_model.bin"
 
 
 class OptimizedModel:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):   # pragma: no cover
         raise EnvironmentError(
             f"{self.__class__.__name__} is designed to be instantiated using the"
             f"`{self.__class__.__name__}.from_pretrained(model_name_or_path)` method."
@@ -64,6 +64,7 @@ class OptimizedModel:
         Returns:
             q_model: Quantized model.
         """
+        from neural_compressor.utils.pytorch import load
         config = kwargs.pop("config", None)
         cache_dir = kwargs.pop("cache_dir", None)
         force_download = kwargs.pop("force_download", False)
@@ -80,12 +81,19 @@ class OptimizedModel:
                 use_auth_token=use_auth_token,
                 revision=revision,
                 **kwargs,
-                )
+            )
 
         model_class = eval(f'transformers.{config.architectures[0]}')
         if config.torch_dtype is not torch.int8:
-            logger.info("the prunging/distillation optimized model is loading.")
-            model = model_class.from_pretrained(model_name_or_path)
+            model = model_class.from_pretrained(
+                model_name_or_path,
+                cache_dir=cache_dir,
+                force_download=force_download,
+                resume_download=resume_download,
+                use_auth_token=use_auth_token,
+                revision=revision,
+                **kwargs,
+            )
             return model
         else:
             logger.info("the quantization optimized model is loading.")
@@ -108,7 +116,7 @@ class OptimizedModel:
             missing_keys_to_ignore_on_load = [r"weight", r"bias"]
             if keys_to_ignore_on_load_missing is None:
                 model_class._keys_to_ignore_on_load_missing = missing_keys_to_ignore_on_load
-            else:
+            else:   # pragma: no cover
                 model_class._keys_to_ignore_on_load_missing.extend(missing_keys_to_ignore_on_load)
 
             model = model_class.from_pretrained(
@@ -137,7 +145,7 @@ class OptimizedModel:
                         resume_download=resume_download,
                         use_auth_token=use_auth_token,
                     )
-                except EnvironmentError as err:
+                except EnvironmentError as err:   # pragma: no cover
                     logger.error(err)
                     msg = (
                         f"Can't load weights for '{model_name_or_path}'. Make sure that:\n\n"
@@ -163,4 +171,14 @@ class OptimizedModel:
                     os.path.expanduser(model_name_or_path)), WEIGHTS_NAME)
                 q_model = load(weights_file, model)
 
+            del model
             return q_model
+
+
+def save_for_huggingface_upstream(model, tokenizer, output_dir):
+    tokenizer.save_pretrained(output_dir)
+    torch.save(model.quantized_state_dict(), os.path.join(output_dir, WEIGHTS_NAME))
+    # save configure dtype as int8 for load identification
+    model.model.config.architectures = [model.model.__class__.__name__]
+    model.model.config.torch_dtype = "int8"
+    model.model.config.save_pretrained(output_dir)
