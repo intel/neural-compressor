@@ -646,11 +646,17 @@ def superbench(
     logger.addHandler(fh)
 
     # print key inputs
-    logger.info(f"Superbench started ...")
-    logger.info(f"code: {code}")
-    logger.info(f"mode: {mode}")
-    logger.info(f"sweep_objective: {sweep_objective}")
-    logger.info(f"num_benchmark_iteration: {num_benchmark_iteration}")
+    if auto_quant:
+        logger.info(f"Auto-Quant started ...")
+        logger.info(f"Code: {code}")
+        logger.info(f"Benchmark Mode: {mode} mode")
+        logger.info(f"Number of benchmark iterations: {num_benchmark_iteration}")
+    else:
+        logger.info(f"SuperBench started ...")
+        logger.info(f"Code: {code}")
+        logger.info(f"Benchmark Mode: {mode} mode")
+        logger.info(f"Sweep Objective: {sweep_objective}")
+        logger.info(f"Number of benchmark iterations: {num_benchmark_iteration}")
 
     # entry code
     if entry_code == "":
@@ -696,10 +702,10 @@ def superbench(
             # features that is a "backend":
             backends = [
                 [],
-                ["pytorch_inc_bf16"],
                 ["pytorch_inc_dynamic_quant"],
                 ["pytorch_inc_static_quant_fx"],
                 ["pytorch_inc_static_quant_ipex"],
+                ["pytorch_inc_bf16"],
             ]
 
             # features that can be standalone (either use alone or use with "backend"):
@@ -723,7 +729,7 @@ def superbench(
         for backend in backends:
             for standalone in standalones:
                 features = []
-                if logging_level == "debug":
+                if logging_level == "debug" or auto_quant:
                     features += backend
                 else:
                     features.append(backend)

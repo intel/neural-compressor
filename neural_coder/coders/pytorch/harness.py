@@ -116,6 +116,15 @@ class Harness(object):
                                     input_def_line_indent_level = get_line_indent_level(line)
                                     input_def_line_idx = i
                     
+                    # search trainer definition in this file (for transformers trainer only)
+                    trainer_def_line_idx = -1
+                    for i in range(len(lines)):
+                        line = lines[i]
+                        if not single_line_comment_or_empty_line_detection(line):
+                            if "trainer = Trainer(" in line:
+                                trainer_def_line_indent_level = get_line_indent_level(line)
+                                trainer_def_line_idx = i
+
                     # serach model definition line and its end line index
                     # (only has 1 model definition line, because it's in loop of globals.list_model_def_instance)
                     for i in range(len(lines)):
@@ -180,6 +189,9 @@ class Harness(object):
                         trans_insert_location = \
                             min(max(model_definition_end_line_idx,
                                 put_below_idx), put_above_idx)
+                        if trainer_def_line_idx > 0:
+                            trans_insert_location = trainer_def_line_idx - 1
+                            # for transformers trainer to put right above trainer def
                     if "insert_below_dataloader_definition_line" in loc:
                         try:
                             dataloader_def_line_idx
@@ -204,7 +216,8 @@ class Harness(object):
                                                             put_below_idx), put_above_idx))
                     
                     insert_indent_level = get_line_indent_level(lines[trans_insert_location - 1])
-
+                    if trainer_def_line_idx > 0: # for transformers trainer to put right above trainer def
+                        insert_indent_level = get_line_indent_level(lines[trans_insert_location])
                     ### content
 
                     # lines to insert
@@ -354,6 +367,7 @@ class Harness(object):
                                         )
                                         globals.list_trans_insert_lines_to_insert[idx].append(lines_to_insert)
 
+                                break # already transformed this line, so skip any further model_name search
                         line_idx += 1
 
             # PART 3 - for customized location

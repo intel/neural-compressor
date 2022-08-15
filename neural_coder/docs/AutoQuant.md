@@ -23,10 +23,10 @@ HuggingFace [Transformers](https://github.com/huggingface/transformers) models: 
 ```
 from neural_coder import auto_quant
 auto_quant(
-    code="../examples/nlp/run_glue.py",
+    code="neural_coder/examples/nlp/run_glue.py",
     entry_code_args=" \
-        --model_name_or_path albert-base-cased \
-        --task_name SST2 \
+        --model_name_or_path albert-base-v2 \
+        --task_name sst2 \
         --do_eval \
         --output_dir result \
         --overwrite_output_dir",
@@ -37,7 +37,7 @@ auto_quant(
 ```
 from neural_coder import auto_quant
 auto_quant(
-    code="../examples/vision/main.py",
-    entry_code_args="-a alexnet /path/to/imagenet/",
+    code="neural_coder/examples/vision/main.py",
+    entry_code_args="-a alexnet -e /path/to/imagenet/",
 )
 ```

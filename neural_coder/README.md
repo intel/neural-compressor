@@ -34,7 +34,12 @@ simultaneously on below PyTorch evaluation code, we generate the optimized code 
 ```
 
 ## Getting Started!
-We currently provide 3 user-facing APIs: enable, bench and superbench.
+
+### Auto-Quant Feature
+We provide a feature named Auto-Quant that helps automatically enable quantization features on a PyTorch model script and automatically evaluates for the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a PyTorch model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision. For more details please refer to this [guide](docs/AutoQuant.md).
+
+### General Guide
+We currently provide 3 main user-facing APIs: enable, bench and superbench.
 #### Enable
 Users can use ```enable()``` to enable specific features into DL scripts:
 ```

@@ -30,7 +30,12 @@ transformation:
       [+]         count_iter_ = count_iter_ + 1
       [+]         if count_iter_ > num_warmup_iter_:
       [+]             t1_ = time.time()
-      [+]         with torch.no_grad():
+      [+]         try:
+      [+]             torch
+      [+]             no_grad = torch.no_grad
+      [+]         except:
+      [+]             from torch import no_grad
+      [+]         with no_grad():
     - |-
       [+]         if count_iter_ > num_warmup_iter_:
       [+]             t2_ = time.time()

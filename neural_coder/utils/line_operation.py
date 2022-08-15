@@ -82,13 +82,27 @@ def is_eval_func_model_name(model_name: str, line: str) -> str:
     judge_4 = line_.find("(") > -1
     judge_5 = (line_.find("=") > 0 and
                line_.find("=") < line_.find(model_name) and
-               line_[line_.find("=")+1:line_.find(".")] == model_name) or line_.find(model_name) == 0 
-    exclude_function_list = ["__init__", "to", "eval", "optimize", "model", "framework"]
+               line_[line_.find("=")+1:line_.find(".")] == model_name) or line_.find(model_name) == 0
+    exclude_function_list = [
+        "__init__",
+        "to",
+        "eval",
+        "train",
+        "optimize",
+        "model",
+        "framework",
+        "config",
+        "load_state_dict",
+    ]
     judge_6 = line_[line_.find(".")+1:line_.find("(")] not in exclude_function_list
+    judge_7 = "model.config" not in line
+    judge_8 = "trainer.evaluate(" in line
 
     if judge_1 and judge_2:
         return True, "forward"
-    elif judge_3 and judge_4 and judge_5 and judge_6:
+    elif judge_3 and judge_4 and judge_5 and judge_6 and judge_7:
+        return True, "non-forward"
+    elif judge_8:
         return True, "non-forward"
     else:
         return False, "not an eval func"

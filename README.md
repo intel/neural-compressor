@@ -83,10 +83,10 @@ inc_bench
 ```python
 from neural_coder import auto_quant
 auto_quant(
-    code="../examples/nlp/run_glue.py",
+    code="neural_coder/examples/nlp/run_glue.py",
     entry_code_args=" \
-        --model_name_or_path albert-base-cased \
-        --task_name SST2 \
+        --model_name_or_path albert-base-v2 \
+        --task_name sst2 \
         --do_eval \
         --output_dir result \
         --overwrite_output_dir",
