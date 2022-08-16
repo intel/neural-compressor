@@ -49,7 +49,9 @@ class DilatedContraction(GraphRewriterBase):
             block_value = [i for i in tensor_util.MakeNdarray(
                 block_shape_node.attr['value'].tensor).flat]
             new_dilation = [1, block_value[0], block_value[1], 1]
-
+            # if padding input of SpaceToBatchND can't be directly fetched, we continue
+            if stob_padding_node.op != 'Const':
+                continue
             padding_value = [i for i in tensor_util.MakeNdarray(
                 stob_padding_node.attr['value'].tensor).flat]
             crops_value = [i for i in tensor_util.MakeNdarray(
