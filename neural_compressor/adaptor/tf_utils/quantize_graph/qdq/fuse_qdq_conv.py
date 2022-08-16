@@ -55,6 +55,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DBiasAddSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DAddReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
@@ -1189,8 +1191,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         forth_node = self.node_name_mapping[match_node_name[4]].node
-        if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
-            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
+        if forth_node.op != 'LeakyRelu':
+            if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
+                return self.apply_newly_conv_biasadd_fusion(match_node_name[:3])
 
         is_leakyrelu_add_fusion = third_node.op == 'LeakyRelu' and forth_node.op.find('Add') != -1
         is_relu_add_fusion = third_node.op == 'Relu' and forth_node.op.find('Add') != -1
@@ -1227,6 +1230,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 else:
                     relu_node_name = match_node_name[4]
                 is_relu6 = self.node_name_mapping[relu_node_name].node.op == "Relu6"
+                is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
 
                 sum_index = 1 if match_node_name[2 + relu_offset] == self.node_name_mapping[
                     match_node_name[3 + relu_offset]].node.input[0] else 0
@@ -1265,7 +1269,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
                     helper.copy_attr(quantized_conv_node, "alpha",
                     self.node_name_mapping[relu_node_name].node.attr["alpha"])
-                helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'Relu'])
+                if is_leakyrelu:
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'LeakyRelu'])
+                else:
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'Relu'])
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
@@ -1291,7 +1298,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 self.add_output_graph_node(quantized_conv_node)
 
-                if is_leakyrelu_add_fusion:
+                if is_leakyrelu_add_fusion or is_leakyrelu:
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(

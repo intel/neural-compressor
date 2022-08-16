@@ -8,14 +8,9 @@ import numpy as np
 import tensorflow as tf
 import logging
 
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import function
-from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
-from pkg_resources import parse_version
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -326,7 +321,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
-
+   
     @disable_random()
     def test_conv_fusion_with_last_conv(self):
         logging.getLogger().info("test_conv_fusion_with_last_conv")
