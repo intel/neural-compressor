@@ -1,4 +1,7 @@
+#!/bin/bash
 set -ex
+
+mkdir -p /neural-compressor/.azure-pipelines/scripts/codeScan/scanLog
 pylint_log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 
 pip install pylint==2.12.1
@@ -13,7 +16,6 @@ pip install tf_slim
 pip install transformers
 pip install -r /neural-compressor/requirements.txt
 pip install onnxruntime_extensions
-
 
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime /neural-compressor/neural_compressor > $pylint_log_dir/lpot-pylint.json

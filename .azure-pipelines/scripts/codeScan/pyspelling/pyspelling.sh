@@ -1,4 +1,7 @@
+#!/bin/bash
 set -ex
+
+mkdir -p /neural-compressor/.azure-pipelines/scripts/codeScan/scanLog
 pyspelling_dir="/neural-compressor/.azure-pipelines/scripts/codeScan"
 pyspelling_log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 
@@ -8,10 +11,9 @@ pip install -r /neural-compressor/requirements.txt
 apt-get install aspell -y
 apt-get install aspell-en -y
 
-
-
 sed -i "s|\${VAL_REPO}|$pyspelling_dir|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
 sed -i "s|\${LPOT_REPO}|/neural-compressor|g" $pyspelling_dir/pyspelling/pyspelling_conf.yaml
+
 
 pyspelling -c $pyspelling_dir/pyspelling/pyspelling_conf.yaml > $pyspelling_log_dir/lpot_pyspelling.log
 exit_code=$?
