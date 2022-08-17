@@ -21,15 +21,6 @@ from neural_compressor.utils.utility import LazyImport
 resnet18 = LazyImport("torchvision.models.resnet18")
 q_resnet18 = LazyImport("torchvision.models.quantization.resnet18")
 
-try:
-    try:
-        import intel_pytorch_extension as ipex
-    except:
-        import intel_extension_for_pytorch as ipex
-    TEST_IPEX = True
-except:
-    TEST_IPEX = False
-
 PT_VERSION = nc_torch.get_torch_version()
 if PT_VERSION >= PyTorchVersionMode.PT18.value:
     FX_MODE = True
@@ -262,34 +253,6 @@ def build_pytorch_fx_yaml():
     fake_fx_qat_yaml = fake_qat_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_qat_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_fx_qat_yaml)
-
-
-def build_ipex_yaml():
-    fake_yaml = '''
-        model:
-          name: imagenet
-          framework: pytorch_ipex
-
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-          performance:
-            warmup: 5
-            iteration: 10
-
-        tuning:
-          accuracy_criterion:
-            relative:  0.01
-          exit_policy:
-            timeout: 0
-          random_seed: 9527
-          workspace:
-            path: saved
-        '''
-    with open('ipex_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
-
 
 def build_dump_tensors_yaml():
     fake_yaml = '''
@@ -795,41 +758,6 @@ class TestPytorchAdaptor(unittest.TestCase):
         qy = model.model(x)
         tol = {'atol': 1e-01, 'rtol': 1e-03}
         self.assertTrue(np.allclose(y, qy, **tol))
-
-
-@unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
-class TestPytorchIPEXAdaptor(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        build_ipex_yaml()
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove('ipex_yaml.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
-    def test_tuning_ipex(self):
-        from neural_compressor.experimental import Quantization
-        model = M()
-        quantizer = Quantization('ipex_yaml.yaml')
-        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
-        quantizer.model = model
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        nc_model = quantizer.fit()
-        nc_model.save('./saved')
-        try:
-            script_model = torch.jit.script(model.to(ipex.DEVICE))
-        except:
-            script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from neural_compressor.experimental import Benchmark
-        evaluator = Benchmark('ipex_yaml.yaml')
-        evaluator.model = script_model
-        evaluator.b_dataloader = common.DataLoader(dataset)
-        evaluator.fit('accuracy')
-
 
 @unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
