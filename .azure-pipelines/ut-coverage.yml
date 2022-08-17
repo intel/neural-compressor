@@ -12,7 +12,7 @@ variables:
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   OS: 'linux'
   PLATFORM: 'clx8280'
-  ARTIFACT_NAME: 'UT_coverage_log'
+  ARTIFACT_NAME: 'UT_coverage_report'
 
 stages:
 - stage: Strategy
@@ -49,7 +49,7 @@ stages:
     - script: |
         docker run --disable-content-trust --privileged --name="ut-stra" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
         bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
+        && bash install_nc_coverage.sh \
         && bash ut/run_basic_strategy.sh"
         # docker cp 'ut-stra':/neural-compressor/log_dir/.coverage.strategy $(UPLOAD_PATH)/
         ls -l $(UPLOAD_PATH)
@@ -95,7 +95,7 @@ stages:
     - script: |
         docker run --disable-content-trust --privileged --name="ut-util" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
         bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
+        && bash install_nc_coverage.sh \
         && bash ut/run_basic_utils.sh"
         # docker cp 'ut-util':/neural-compressor/log_dir/.coverage.util $(UPLOAD_PATH)/
         ls -l $(UPLOAD_PATH)
@@ -144,25 +144,17 @@ stages:
             echo "------ Collecting logs ------"
             echo "--- create container ---"
             docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
-            echo "------ make coverage datas directory"
-            docker exec collectLogs /bin/bash  +x -c "mkdir -p /neural-compressor/.azure-pipelines/scripts/ut/coverage_datas"
-            echo "--- copy files into container ---"
-            docker cp $(DOWNLOAD_PATH)/ 'collectLogs':/neural-compressor/.azure-pipelines/scripts/ut/coverage_datas/
+            #echo "------ make coverage datas directory"
+            #docker exec collectLogs /bin/bash  +x -c "mkdir -p /neural-compressor/.azure-pipelines/scripts/ut/coverage_datas"
+            #echo "--- copy files into container ---"
+            #docker cp $(DOWNLOAD_PATH)/ 'collectLogs':/neural-compressor/log_dir
             echo "--- docker ps ---"
             docker ps
             echo "--- collect logs ---"
-            docker exec collectLogs /bin/bash  +x -c \
-            "cd /neural-compressor/.azure-pipelines/scripts/ut/coverage_datas/log_dir \
-            && cp ut-coverage-strategy/.coverage.strategy ./ \
-            && cp ut-coverage-util/.coverage.util ./ \
-            && bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh \
-            && export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file \
-            && coverage combine --keep --rcfile=${COVERAGE_RCFILE} \
-            && cp .coverage /neural-compressor/.coverage \
-            && cd /neural-compressor/ && coverage report -m --rcfile=${COVERAGE_RCFILE} \
-            && cat coverage_report.html"
-            echo "--- docker cp ---"
-            docker cp 'collectLogs':/neural-compressor/.azure-pipelines/scripts/ut/coverage_datas/ $(UPLOAD_PATH)/
+            docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
+             && bash install_nc_coverage.sh \
+             && bash collect_log.sh"
+            #docker cp 'collectLogs':/neural-compressor/log_dir/htmlcov $(UPLOAD_PATH)/htmlcov
           displayName: 'collect logs'
         - task: PublishPipelineArtifact@1
           inputs:
