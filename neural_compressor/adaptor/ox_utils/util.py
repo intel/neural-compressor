@@ -155,11 +155,12 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
             - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
                 m = max(abs(rmin), abs(rmax))
     '''
+    data = np.asarray(data)
     if qType == onnx_proto.TensorProto.INT8 and scheme == 'sym':
         # signed byte type
-        quantized_data = (np.asarray(data) / scale).round().astype('b')
+        quantized_data = (data.astype(np.float32) / scale).round().astype('b')
     elif qType == onnx_proto.TensorProto.UINT8 and scheme == 'asym':
-        quantized_data = ((np.asarray(data) / scale).round() + zero_point).astype('B')
+        quantized_data = ((data.astype(np.float32) / scale).round() + zero_point).astype('B')
     else:
         raise ValueError("Unexpected combination of data type {} and scheme {}.".format(
                                                                         qType, scheme))
