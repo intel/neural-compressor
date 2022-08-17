@@ -873,6 +873,23 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'preserved_attributes': []}
                               })
         self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+
+        # Test the functionality of older model saving type
+        state_dict = torch.load("./saved/best_model.pt")
+        tune_cfg = state_dict.pop('best_configure')
+        import yaml
+        with open("./saved/best_configure.yaml", 'w') as f:
+            yaml.dump(tune_cfg, f, default_flow_style=False)
+        torch.save(state_dict, "./saved/best_model_weights.pt")
+        os.remove('./saved/best_model.pt')
+        model_fx = load("./saved", model,
+                            **{'prepare_custom_config_dict': \
+                                    {'non_traceable_module_name': ['a']},
+                               'convert_custom_config_dict': \
+                                    {'preserved_attributes': []}
+                              })
+        self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
+
         # recover int8 model with only tune_cfg
         history_file = './saved/history.snapshot'
         model_fx_recover = recover(model, history_file, 0,

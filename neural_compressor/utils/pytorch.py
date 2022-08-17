@@ -160,9 +160,19 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             weights_file = checkpoint_dir
             stat_dict = torch.load(weights_file)
         elif os.path.isdir(checkpoint_dir):
-            weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
-                                        'best_model.pt')
-            stat_dict = torch.load(weights_file)
+            try:
+                weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                            'best_model.pt')
+                stat_dict = torch.load(weights_file)
+            except:
+                tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                            'best_configure.yaml')
+                weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                            'best_model_weights.pt')
+                stat_dict = torch.load(weights_file)
+                with open(tune_cfg_file, 'r') as f:
+                    tune_cfg = yaml.safe_load(f)
+                stat_dict['best_configure'] = tune_cfg
         else:
             logger.error("Unexpected checkpoint type:{}. \
               Only file dir/path or state_dict is acceptable")
