@@ -226,8 +226,8 @@ class Harness(object):
                     lines_to_insert = lines_to_insert.replace(
                         "[+] ", " " * insert_indent_level)
                     # add begin indicator
-                    lines_to_insert = " " * insert_indent_level + "# [coder] " + \
-                        self.backend + " for " + model_name + " [begin]\n" + lines_to_insert
+                    lines_to_insert = " " * insert_indent_level + "# [NeuralCoder] " + \
+                        self.backend + " for " + model_name + " [Beginning Line]\n" + lines_to_insert
                     # replace INDICATIONS with real stuff
                     lines_to_insert = lines_to_insert \
                         .replace("MODEL_NAME", model_name) \
@@ -237,8 +237,8 @@ class Harness(object):
                         .replace("\n", " # [coder-enabled]\n")
                     # add end indicator
                     lines_to_insert += " # [coder-enabled]\n" + \
-                        " " * insert_indent_level + "# [coder] " + self.backend + " for " + \
-                        model_name + " [end] # [coder-enabled]"
+                        " " * insert_indent_level + "# [NeuralCoder] " + self.backend + " for " + \
+                        model_name + " [Ending Line] # [coder-enabled]"
 
                     ### register
 
@@ -329,8 +329,8 @@ class Harness(object):
                                     lines_to_insert = lines_to_insert.replace(
                                         "[+] ", " " * insert_indent_level)
                                     # add begin indicator
-                                    lines_to_insert = " " * insert_indent_level + "# [coder] " + \
-                                        self.backend + " [begin] \n" + lines_to_insert
+                                    lines_to_insert = " " * insert_indent_level + "# [NeuralCoder] " + \
+                                        self.backend + " [Beginning Line] \n" + lines_to_insert
                                     # replace INDICATIONS with real stuff 
                                     # (for now, inference_line related transformations )
                                     # (have nothing to do with input, dataloader etc, )
@@ -338,8 +338,8 @@ class Harness(object):
                                     lines_to_insert = lines_to_insert.replace("\n", " # [coder-enabled]\n")
                                     # add end indicator
                                     lines_to_insert += " # [coder-enabled]\n" + \
-                                        " " * insert_indent_level + "# [coder] " + \
-                                        self.backend + " [end] # [coder-enabled]"
+                                        " " * insert_indent_level + "# [NeuralCoder] " + \
+                                        self.backend + " [Ending Line] # [coder-enabled]"
 
                                     # customized argument
                                     if self.backend == "pytorch_benchmark":

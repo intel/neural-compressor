@@ -20,16 +20,20 @@ transformation:
   content:
     - |-
       [+] if not ACCURACY_MODE:
-      [+]     import time
+      [+]     try:
+      [+]         time
+      [+]         time_nc = time.time
+      [+]     except:
+      [+]         from time import time as time_nc
       [+]     count_iter_ = 0
       [+]     total_time_ = 0
       [+]     num_iter_ = NUM_BENCHMARK_ITERATION
-      [+]     num_warmup_iter_ = 3
+      [+]     num_warmup_iter_ = 5
       [+]     list_batch_time_ = []
       [+]     for i_ in range(num_iter_):
       [+]         count_iter_ = count_iter_ + 1
       [+]         if count_iter_ > num_warmup_iter_:
-      [+]             t1_ = time.time()
+      [+]             t1_ = time_nc()
       [+]         try:
       [+]             torch
       [+]             no_grad = torch.no_grad
@@ -38,7 +42,7 @@ transformation:
       [+]         with no_grad():
     - |-
       [+]         if count_iter_ > num_warmup_iter_:
-      [+]             t2_ = time.time()
+      [+]             t2_ = time_nc()
       [+]             batch_time_ = t2_ - t1_
       [+]             list_batch_time_.append(batch_time_)
       [+]             total_time_ = total_time_ + batch_time_

@@ -16,6 +16,7 @@ import os
 import subprocess
 import logging
 import time
+import yaml
 
 from . import globals
 
@@ -39,14 +40,14 @@ def enable(
     logging_level="info",
     run_bench=False,
     entry_code="",
-    entry_code_args="",
+    args="",
     mode="throughput",
     cpu_set_env=True,
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
     test_code_line=False, # print code line info for debug use
-    brutal_mode=False, # TO-ADD: return a folder with user-input code and artificial pip folders
+    cache_load_transformers=True,
 ):
     """enable a feature or a couple of features for the code
 
@@ -145,16 +146,18 @@ def enable(
 
     #### Feature Enabling
 
-    globals.num_benchmark_iteration = str(num_benchmark_iteration + 5)
+    globals.num_benchmark_iteration = str(num_benchmark_iteration + 5) # 5: warmup iteration number
 
     globals.eval_accuracy = eval_accuracy
+
+    globals.cache_load_transformers = cache_load_transformers
 
     # move "pytorch_benchmark" to the last
     from .utils.common import move_element_to_last
     features = move_element_to_last(features, "pytorch_benchmark")
 
     # not in harness scope
-    features_not_using_harness = [
+    features_outside_harness = [
         "pytorch_change_batch_size",
         "pytorch_cuda_to_cpu",
         "pytorch_lightning_bf16_cpu",
@@ -166,7 +169,7 @@ def enable(
     #     "pytorch_inc_static_quant_ipex" in features:
     #     features = ["pytorch_dummy_dataloader"] + features
     
-    # features that need detecting inputs first
+    # features that need reclaiming inputs first (e.g. for "for step, inputs in enumerate(dataloader)")
     if "pytorch_jit_trace" in features or \
         "pytorch_jit_trace_ofi" in features or \
         "pytorch_inc_static_quant_fx" in features or \
@@ -175,7 +178,7 @@ def enable(
 
     transformed_list_code_path = []
 
-    for feature in features:
+    for idx_feature, feature in enumerate(features):
 
         # reset globals
         globals.reset_globals()
@@ -199,7 +202,7 @@ def enable(
             list_transformed_code.append(open(i, 'r').read())
 
         ## 1. Features in Harness Scope
-        if feature not in features_not_using_harness:
+        if feature not in features_outside_harness:
             from .graphers.code_line import register_code_line
             from .graphers.model import register_nnModule_class, register_nnModule_instance_definition
             from .graphers.function import register_func_wrap_pair
@@ -209,6 +212,11 @@ def enable(
             register_code_line()
             register_func_wrap_pair()
             register_nnModule_class()
+            if cache_load_transformers:
+                preload_file = open(os.path.dirname(__file__) +
+                    "/graphers/preloads/" + "transformers" + ".yaml")
+                preload_dict = yaml.load(preload_file, Loader=yaml.BaseLoader)
+                globals.list_class_name += preload_dict["class"]
             register_nnModule_instance_definition()
             # register transformation
             if feature == "pytorch_dummy_dataloader": # is not in harness scope, but needs call graph and type inference
@@ -267,13 +275,16 @@ def enable(
 
         logger.info(f"Code transformation for feature: [{feature}] finished.")
 
-        for path in globals.list_code_path:
+        for idx_path, path in enumerate(globals.list_code_path):
             if path[-14:] == "_nc_enabled.py":
                 path_transformed = path
             else:
                 path_transformed = path[:-3] + "_nc_enabled.py"
-            open(path_transformed, "w").write(list_transformed_code[globals.list_code_path.index(path)])
-            globals.list_code_path[globals.list_code_path.index(path)] = path_transformed
+            if idx_feature != len(features) - 1:
+                open(path_transformed, "w").write(list_transformed_code[idx_path])
+            else:
+                open(path_transformed, "w").write(list_transformed_code[idx_path].replace(" # [coder-enabled]", ""))
+            globals.list_code_path[idx_path] = path_transformed
         transformed_list_code_path = globals.list_code_path
 
     # test code_line.py
@@ -308,8 +319,7 @@ def enable(
         register_nnModule_instance_definition()
 
     ### Output of Enabling
-    globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(
-        code)
+    globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(code)
 
     if save_patch_path == "":
         save_patch_path = ws_path
@@ -366,10 +376,14 @@ def enable(
 
     ### Benchmark
     if run_bench:
+        if "github.com" in code and ".py" in code:
+            code = globals.list_code_path[0]
+            entry_code = globals.list_code_path[0]
+
         bench_performance, bench_mode, bench_ws_path = bench(
             code=code,
             entry_code=entry_code,
-            entry_code_args=entry_code_args,
+            args=args,
             patch_path=abs_patch_path,
             mode=mode,
             cpu_set_env=cpu_set_env,
@@ -384,7 +398,7 @@ def enable(
 def bench(
     code,
     entry_code="",
-    entry_code_args="",
+    args="",
     patch_path="",
     mode="throughput",  # throughput, latency, multi_instance or self_defined
     logging_level="info",
@@ -508,9 +522,9 @@ def bench(
     bench_log_path = ws_path + "performance.log"
     os.remove(bench_log_path) if os.path.exists(bench_log_path) else 0
 
-    entry_code_args = [entry_code_args]
+    args = [args]
     numa_launcher.exec_launcher(
-        ncore_per_instance, ninstances, entry_code, entry_code_args, bench_log_path)
+        ncore_per_instance, ninstances, entry_code, args, bench_log_path)
 
     # get performance (throughput and latency)
     bench_log = open(bench_log_path, "r", encoding='unicode_escape').read().split('\n')
@@ -605,9 +619,10 @@ def bench(
 def superbench(
     code,
     entry_code="",
-    entry_code_args="",
-    sweep_objective="feature",
-    bench_feature=[],
+    args="",
+    sweep_objective="feature",  # "feature" or "bench_config"
+    specify_features=[],
+    bench_feature=[],  # only effective when sweep_objective is "bench_config"
     mode="throughput",
     num_benchmark_iteration=5,
     iteration_dynamic_adjust=True,
@@ -650,13 +665,13 @@ def superbench(
         logger.info(f"Auto-Quant started ...")
         logger.info(f"Code: {code}")
         logger.info(f"Benchmark Mode: {mode} mode")
-        logger.info(f"Number of benchmark iterations: {num_benchmark_iteration}")
+        logger.debug(f"Number of benchmark iterations: {num_benchmark_iteration}")
     else:
         logger.info(f"SuperBench started ...")
         logger.info(f"Code: {code}")
         logger.info(f"Benchmark Mode: {mode} mode")
-        logger.info(f"Sweep Objective: {sweep_objective}")
-        logger.info(f"Number of benchmark iterations: {num_benchmark_iteration}")
+        logger.debug(f"Sweep Objective: {sweep_objective}")
+        logger.debug(f"Number of benchmark iterations: {num_benchmark_iteration}")
 
     # entry code
     if entry_code == "":
@@ -680,26 +695,7 @@ def superbench(
         list_ws_path = []
         result = []
 
-        # features that is a "backend":
-        backends = [
-            "",
-            "pytorch_ipex_fp32",
-            "pytorch_ipex_bf16",
-            "pytorch_inc_static_quant_fx",
-            "pytorch_inc_static_quant_ipex",
-            "pytorch_inc_dynamic_quant",
-            "pytorch_ipex_int8_static_quant",
-            "pytorch_ipex_int8_dynamic_quant",
-        ]
-
-        # features that can be standalone (either use alone or use with "backend"):
-        standalones_pool = [
-            "pytorch_mixed_precision_cpu",
-            "pytorch_channels_last",
-        ]
-
-        if logging_level == "debug" or auto_quant:
-            # features that is a "backend":
+        if auto_quant:
             backends = [
                 [],
                 ["pytorch_inc_dynamic_quant"],
@@ -707,9 +703,30 @@ def superbench(
                 ["pytorch_inc_static_quant_ipex"],
                 ["pytorch_inc_bf16"],
             ]
-
+            standalones_pool = []
+        elif len(specify_features) != 0:
+            backends = [
+                [],
+            ]
+            for item in specify_features:
+                backends.append([item])
+            standalones_pool = []
+        else:
+            # features that is a "backend":
+            backends = [
+                "",
+                "pytorch_ipex_fp32",
+                "pytorch_ipex_bf16",
+                "pytorch_inc_static_quant_fx",
+                "pytorch_inc_static_quant_ipex",
+                "pytorch_inc_dynamic_quant",
+                "pytorch_ipex_int8_static_quant",
+                "pytorch_ipex_int8_dynamic_quant",
+            ]
             # features that can be standalone (either use alone or use with "backend"):
             standalones_pool = [
+                "pytorch_mixed_precision_cpu",
+                "pytorch_channels_last",
             ]
 
         standalones = []
@@ -729,7 +746,9 @@ def superbench(
         for backend in backends:
             for standalone in standalones:
                 features = []
-                if logging_level == "debug" or auto_quant:
+                if auto_quant:
+                    features += backend
+                elif len(specify_features) != 0:
                     features += backend
                 else:
                     features.append(backend)
@@ -763,7 +782,7 @@ def superbench(
                 bench_performance, bench_mode, bench_ws_path = enable(
                     code=code,
                     entry_code=entry_code,
-                    entry_code_args=entry_code_args,
+                    args=args,
                     features=features,
                     mode=mode,
                     run_bench=True,
@@ -778,7 +797,7 @@ def superbench(
                     bench_acc, bench_mode, bench_ws_path = enable(
                         code=code,
                         entry_code=entry_code,
-                        entry_code_args=entry_code_args,
+                        args=args,
                         features=features,
                         mode=mode,
                         run_bench=True,
@@ -795,8 +814,8 @@ def superbench(
                     t_end = time.time()
                     if iteration_dynamic_adjust:
                         num_benchmark_iteration = max(int(300 / (t_end - t_start)), 5)
-                    logger.info(
-                        f"Adjusted number of benchmark iterations after dry-run is {num_benchmark_iteration}")
+                        logger.debug(
+                            f"Adjusted number of benchmark iterations after dry-run is {num_benchmark_iteration}")
                     dry_run = False
 
                 def remove_if_have(list, element):
@@ -956,7 +975,7 @@ def superbench(
                         bench_performance, bench_mode, bench_ws_path = enable(
                             code=code,
                             entry_code=entry_code,
-                            entry_code_args=entry_code_args,
+                            args=args,
                             features=bench_feature,
                             mode="self_defined",  # sweep bench_config, so mode set to "self_defined"
                             run_bench=True,
@@ -972,8 +991,9 @@ def superbench(
                             t_end = time.time()
                             if iteration_dynamic_adjust:
                                 num_benchmark_iteration = max(int(300 / (t_end - t_start)), 5)
-                            logger.info(
-                                f"Adjusted number of benchmark iterations after dry-run is {num_benchmark_iteration}")
+                                logger.debug(
+                                    f"Adjusted number of benchmark iterations after dry-run is "
+                                    f"{num_benchmark_iteration}")
                             dry_run = False
 
                         socket_regular_thp = bench_performance[0]
@@ -1121,12 +1141,12 @@ def superbench(
 def auto_quant(
     code,
     entry_code="",
-    entry_code_args="",
+    args="",
     sweep_objective="feature",
     bench_feature=[],
     mode="throughput",
     num_benchmark_iteration=5,
-    iteration_dynamic_adjust=True,
+    iteration_dynamic_adjust=False,
     logging_level="info",
     cpu_conversion=True,
     cpu_set_env=True,
@@ -1138,7 +1158,7 @@ def auto_quant(
     return superbench(
         code,
         entry_code=entry_code,
-        entry_code_args=entry_code_args,
+        args=args,
         sweep_objective=sweep_objective,
         bench_feature=bench_feature,
         mode=mode,

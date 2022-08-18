@@ -39,14 +39,15 @@ class ClassDefinition:
 
 
 class ModelDefinition:
-    def __init__(self,
-                 model_name,
-                 class_name,
-                 file_path,
-                 model_def_line_idx,
-                 function_def_line_idx,
-                 function_name
-                 ):
+    def __init__(
+        self,
+        model_name,
+        class_name,
+        file_path,
+        model_def_line_idx,
+        function_def_line_idx,
+        function_name,
+    ):
         self.model_name = model_name
         self.class_name = class_name
         self.file_path = file_path
@@ -118,6 +119,7 @@ def register_nnModule_instance_definition():
     for cl in globals.list_code_line_instance:
         if not cl.is_multi_line_comment and not cl.is_single_line_comment_or_empty:
             is_def, lhs, rhs = of_definition_format(cl.line_content)
+            stripped = cl.line_content.replace(" ", "")
             if is_def and \
                rhs in globals.list_class_name + ["Module", "Sequential"] and \
                cl.class_name not in globals.list_class_name and \
@@ -126,6 +128,9 @@ def register_nnModule_instance_definition():
             elif is_def and "__dict__[args.arch]" in rhs:
                 def_cl.append(cl)
             elif is_def and "hub.load" in rhs:
+                def_cl.append(cl)
+            elif is_def and "." in stripped and \
+                stripped[stripped.find("=") + 1: stripped.find(".")] in globals.list_class_name:
                 def_cl.append(cl)
 
     list_lhs = []

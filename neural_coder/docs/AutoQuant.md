@@ -19,17 +19,16 @@ This feature helps automatically enable quantization features on a PyTorch model
 
 ## Example
 ### PyPI distribution:
-HuggingFace [Transformers](https://github.com/huggingface/transformers) models: [text-classification/run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py)
+HuggingFace [Transformers](https://github.com/huggingface/transformers) models: [text-classification/run_glue.py](https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py)
 ```
 from neural_coder import auto_quant
 auto_quant(
-    code="neural_coder/examples/nlp/run_glue.py",
-    entry_code_args=" \
-        --model_name_or_path albert-base-v2 \
-        --task_name sst2 \
-        --do_eval \
-        --output_dir result \
-        --overwrite_output_dir",
+    code="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
+    args="--model_name_or_path albert-base-v2 \
+          --task_name sst2 \
+          --do_eval \
+          --output_dir result \
+          --overwrite_output_dir",
 )
 ```
 
@@ -37,7 +36,7 @@ auto_quant(
 ```
 from neural_coder import auto_quant
 auto_quant(
-    code="neural_coder/examples/vision/main.py",
-    entry_code_args="-a alexnet -e /path/to/imagenet/",
+    code="https://github.com/pytorch/examples/blob/main/imagenet/main.py",
+    args="-a alexnet --pretrained -e /path/to/imagenet/",
 )
 ```

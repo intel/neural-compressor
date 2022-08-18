@@ -32,6 +32,9 @@ eval_accuracy = False
 # print code line info for debug use
 print_code_line_info = False
 
+# load transformers class def by a cache file instead of on-the-fly catch
+cache_load_transformers = True
+
 def reset_globals():
     global list_code_path
 

@@ -13,6 +13,9 @@
 # limitations under the License.
 
 
+# code source
+# https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py
+
 import logging
 import os
 import random
@@ -44,7 +47,7 @@ from transformers.utils.versions import require_version
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-# check_min_version("4.22.0.dev0")
+check_min_version("4.21.0")
 
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/text-classification/requirements.txt")
 
@@ -515,7 +518,7 @@ def main():
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
-    
+
     # Training
     if training_args.do_train:
         checkpoint = None
