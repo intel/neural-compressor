@@ -2409,14 +2409,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 ipex_conf.save(self.ipex_config_path)
             if IPEX_112:
                 if self.approach == 'post_training_static_quant':
-                    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                   qscheme=torch.per_channel_symmetric))
-                    example_inputs = self.get_example_inputs(self.q_dataloader)
-                    init_model = ipex.quantization.prepare(init_model, static_qconfig, \
-                                            example_inputs=example_inputs, inplace=True)
+                    if hasattr(init_model,'save_qconf_summary'):
+                        pass
+                    else:
+                        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                       qscheme=torch.per_channel_symmetric))
+                        example_inputs = self.get_example_inputs(self.q_dataloader)
+                        init_model = ipex.quantization.prepare(init_model, static_qconfig, \
+                                                example_inputs=example_inputs, inplace=True)
                     self.model_calibration(init_model, self.q_dataloader)
                     init_model.save_qconf_summary(qconf_summary = self.ipex_config_path)
             del init_model
