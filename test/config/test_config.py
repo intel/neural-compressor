@@ -843,6 +843,29 @@ class TestConf(unittest.TestCase):
         transform_cfg = cfg['quantization']['calibration']['dataloader']['transform']['BilinearImagenet']
         self.assertTrue(isinstance(transform_cfg['mean_value'], list))
 
+    def test_yaml_detection(self):
+        try:
+            cfg = conf.Conf('not_exist.yaml').usr_cfg
+        except:
+            pass
+
+    def test_deep_set(self):
+      from neural_compressor.conf.dotdict import DotDict, deep_set
+      cfg = {'evaluation': {'accuracy': {}}}
+      dot_cfg = DotDict(cfg)
+      deep_set(dot_cfg, 'evaluation.accuracy.metric', 'iou')
+      deep_set(dot_cfg, 'evaluation.accuracy.multi_metrics.weight', [0.1, 0,9])
+      deep_set(dot_cfg, 'evaluation.accuracy.multi_metrics.mAP.anno_path', 'anno_path_test')
+      self.assertTrue(dot_cfg.evaluation == dot_cfg['evaluation'])
+      self.assertTrue(dot_cfg.evaluation.accuracy == dot_cfg['evaluation']['accuracy'])
+      self.assertTrue(dot_cfg.evaluation.accuracy.metric == dot_cfg['evaluation']['accuracy']['metric'])
+      self.assertTrue(dot_cfg.evaluation.accuracy.multi_metrics == dot_cfg['evaluation']['accuracy']['multi_metrics'])
+      self.assertTrue(dot_cfg.evaluation.accuracy.multi_metrics.weight == [0.1, 0,9])
+      self.assertTrue(dot_cfg.evaluation.accuracy.multi_metrics.mAP.anno_path == 'anno_path_test')
+      multi_metrics1 = dot_cfg.evaluation.accuracy.multi_metrics 
+      multi_metrics2 = dot_cfg['evaluation']['accuracy']['multi_metrics']
+      self.assertTrue(multi_metrics1 == multi_metrics2)
+      self.assertTrue(list(multi_metrics1.keys()) == ['weight', 'mAP'])
 
 if __name__ == "__main__":
     unittest.main()

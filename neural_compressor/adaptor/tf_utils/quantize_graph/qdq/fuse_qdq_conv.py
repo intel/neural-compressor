@@ -52,7 +52,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DEluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
+                'DequantizeConv2DBiasAddSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
+                'DequantizeConv2DSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DAddReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
@@ -94,6 +98,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv3DBiasAddAddV2QuantizeV2': self.apply_conv3d_add_addn_fusion,
                 'DequantizeConv3DAddV2AddV2QuantizeV2': self.apply_conv3d_add_addn_fusion,
                 'DequantizeConv3DAddV2AddV2ReluQuantizeV2': self.apply_conv3d_add_addn_relu_fusion,
+                'DequantizeConv3DBiasAddAddV2ReluQuantizeV2': self.apply_conv3d_add_addn_relu_fusion,
                 'DequantizeConv3DAddQuantizeV2': self.apply_conv3d_add_fusion,
                 'DequantizeConv3DAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DAddV2QuantizeV2': self.apply_conv3d_add_fusion,
@@ -202,6 +207,21 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         is_leakyrelu_add_fusion = third_node.op == 'LeakyRelu' and forth_node.op.find('Add') != -1
         is_relu_add_fusion = third_node.op == 'Relu' and forth_node.op.find('Add') != -1
 
+        relu_offset = 0
+        if is_leakyrelu_add_fusion or is_relu_add_fusion:
+            relu_offset = 1
+        if is_leakyrelu_add_fusion or is_relu_add_fusion:
+            relu_node_name = match_node_name[3]
+        else:
+            relu_node_name = match_node_name[4]
+        sum_index = 1 if match_node_name[2 + relu_offset] == self.node_name_mapping[
+            match_node_name[3 + relu_offset]].node.input[0] else 0
+
+        sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
+        deq_node = self.node_name_mapping[sum_node_name].node
+        if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+            return self.apply_conv3d_add_fusion(match_node_name[:3]+[match_node_name[-1]])
+
         add_node = self.node_name_mapping[match_node_name[2]].node
         original_add_input = self.node_name_mapping[add_node.input[1]].node
         if original_add_input.op == 'Const':
@@ -236,24 +256,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
                 bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
-                relu_offset = 0
-                if is_leakyrelu_add_fusion or is_relu_add_fusion:
-                    relu_offset = 1
-                if is_leakyrelu_add_fusion or is_relu_add_fusion:
-                    relu_node_name = match_node_name[3]
-                else:
-                    relu_node_name = match_node_name[4]
+
                 is_relu6 = self.node_name_mapping[relu_node_name].node.op == "Relu6"
-
-                sum_index = 1 if match_node_name[2 + relu_offset] == self.node_name_mapping[
-                    match_node_name[3 + relu_offset]].node.input[0] else 0
-
-                sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
-                ] + [
+                ] + all_input_names[2:] + [
                     sum_node_name
-                ] + all_input_names[2:] + control_inputs
+                ] + control_inputs
 
                 if sum_node_name.find('mul') != -1:
                     quantized_node_input_names = all_input_names[:2] + [
@@ -290,7 +299,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 elif is_relu_add_fusion:
                     helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Sum'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# both cpu and gpu use float32 in New API
@@ -300,7 +309,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -328,14 +337,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
 
-    def apply_conv3d_add_addn_fusion(self, match_node_name): # pragma: no cover
+    def apply_conv3d_add_addn_fusion(self, match_node_name):
         # Dequantize + Conv3D + BiasAdd + Add + QuantizeV2
         # Dequantize + Conv3D + BiasAdd + AddV2 + QuantizeV2
         # Dequantize + Conv3D + AddV2 + AddV2 + QuantizeV2
-
-        #Remove this WA once TF bug is fixed
-        return self.apply_conv3d_add_fusion(match_node_name[:3]+[match_node_name[-1]])
-
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -368,6 +373,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         sumadd_b_node_name = helper.node_name_from_input(third_node.input[1])
         sumadd_b_node = self.node_name_mapping[sumadd_b_node_name].node
         if sumadd_a_node.op != 'Const' and sumadd_b_node.op == 'Const':
+            return self.apply_conv3d_add_fusion(match_node_name[:3]+[match_node_name[-1]])
+
+        sum_index = 1 if match_node_name[2] == self.node_name_mapping[
+            match_node_name[3]].node.input[0] else 0
+        sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
+        deq_node = self.node_name_mapping[sum_node_name].node
+        if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
             return self.apply_conv3d_add_fusion(match_node_name[:3]+[match_node_name[-1]])
 
         add_node = self.node_name_mapping[match_node_name[2]].node
@@ -405,15 +417,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_name = node.name + "_eightbit_quantized_conv"
                 bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
 
-                sum_index = 1 if match_node_name[2] == self.node_name_mapping[
-                    match_node_name[3]].node.input[0] else 0
 
-                sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
-                ] + [
+                ] + all_input_names[2:] + [
                     sum_node_name
-                ] + all_input_names[2:] + control_inputs
+                ]  + control_inputs
                 node_op = "_QuantizedConv3D"
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
@@ -434,7 +443,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -444,7 +453,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -494,9 +503,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         weights_min_name = weights_name[1]
         weights_max_name = weights_name[2]
 
-        third_node = self.node_name_mapping[match_node_name[3]].node
-        if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
-            return self.apply_conv3d_add_fusion(match_node_name[:3])
+        # third_node = self.node_name_mapping[match_node_name[3]].node
+        # if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
+        #     return self.apply_conv3d_add_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         add_node = self.node_name_mapping[match_node_name[2]].node
         original_add_input = self.node_name_mapping[add_node.input[1]].node
@@ -567,7 +576,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu'])
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -576,7 +585,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -693,7 +702,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                       dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum, # if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -702,7 +711,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -777,7 +786,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 # helper.set_attr_string(quantized_conv_node, '_kernel', b'QuantizedMklOp')
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     #dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -786,7 +795,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,])
@@ -813,6 +822,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         # Dequantize + Conv2D + Elu + QuantizeV2
         # Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2
         # Dequantize + Conv2D + LeakyRelu + QuantizeV2
+        # Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2
+        # Dequantize + Conv2D + Sigmoid + QuantizeV2
         # Dequantize + Conv2D + Add + Relu6 + QuantizeV2
         # Dequantize + Conv2D + Add + Relu + QuantizeV2
         # Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2
@@ -826,7 +837,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         matched_node = self.node_name_mapping[match_node_name[1]]
 
         second_node = self.node_name_mapping[match_node_name[2]].node
-        if second_node.op in ('Relu', 'Relu6', 'LeakyRelu', 'Elu'):
+        if second_node.op in ('Relu', 'Relu6', 'LeakyRelu', 'Elu', 'Sigmoid'):
              new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
              return self.apply_newly_conv_biasadd_relu_fusion(new_match_node_name)
 
@@ -882,6 +893,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     [bias_node_name] + all_input_names[2:] + control_inputs
                 is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
                 is_elu = self.node_name_mapping[relu_node_name].node.op == "Elu"
+                is_sigmoid = self.node_name_mapping[relu_node_name].node.op == "Sigmoid"
 
                 node_op = '_QuantizedDepthwiseConv2D'
                 if node.op == 'Conv2D':
@@ -911,9 +923,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if is_leakyrelu:
                     fused_ops = [b'BiasAdd', b'LeakyRelu']
                 if is_elu:
-                    fused_ops = [b'BiasAdd', b'Elu'] 
+                    fused_ops = [b'BiasAdd', b'Elu']
+                if is_sigmoid:
+                    fused_ops = [b'BiasAdd', b'Sigmoid']
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -922,7 +936,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1028,7 +1042,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 #if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1037,7 +1051,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1114,7 +1128,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 # 
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     #dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1123,7 +1137,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1183,15 +1197,27 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             sumadd_b_node_name = helper.node_name_from_input(third_node.input[1])
             sumadd_b_node = self.node_name_mapping[sumadd_b_node_name].node
             if sumadd_a_node.op != 'Const' and sumadd_b_node.op == 'Const':
-                return self.apply_newly_conv_biasadd_fusion(match_node_name[:3])
+                return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         forth_node = self.node_name_mapping[match_node_name[4]].node
-        if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
-            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3])
+        if forth_node.op != 'LeakyRelu':
+            if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
+                return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         is_leakyrelu_add_fusion = third_node.op == 'LeakyRelu' and forth_node.op.find('Add') != -1
         is_relu_add_fusion = third_node.op == 'Relu' and forth_node.op.find('Add') != -1
 
+        relu_offset = 0
+        if is_leakyrelu_add_fusion or is_relu_add_fusion:
+            relu_offset = 1
+        sum_index = 1 if match_node_name[2 + relu_offset] == self.node_name_mapping[
+            match_node_name[3 + relu_offset]].node.input[0] else 0
+
+        sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
+        deq_node = self.node_name_mapping[sum_node_name].node
+        if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
+    
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel)
@@ -1216,19 +1242,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantized_node_name = node.name + "_eightbit_quantized_conv"
 
                 bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
-                relu_offset = 0
-                if is_leakyrelu_add_fusion or is_relu_add_fusion:
-                    relu_offset = 1
+
                 if is_leakyrelu_add_fusion or is_relu_add_fusion:
                     relu_node_name = match_node_name[3]
                 else:
                     relu_node_name = match_node_name[4]
                 is_relu6 = self.node_name_mapping[relu_node_name].node.op == "Relu6"
+                is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
 
-                sum_index = 1 if match_node_name[2 + relu_offset] == self.node_name_mapping[
-                    match_node_name[3 + relu_offset]].node.input[0] else 0
-
-                sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
                 ] + all_input_names[2:] + [
@@ -1262,7 +1283,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
                     helper.copy_attr(quantized_conv_node, "alpha",
                     self.node_name_mapping[relu_node_name].node.attr["alpha"])
-                helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'Relu'])
+                if is_leakyrelu:
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'LeakyRelu'])
+                else:
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Sum', b'Relu'])
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
@@ -1271,7 +1295,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 elif is_relu_add_fusion:
                     helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Sum'])
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1281,14 +1305,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
 
                 self.add_output_graph_node(quantized_conv_node)
 
-                if is_leakyrelu_add_fusion:
+                if is_leakyrelu_add_fusion or is_leakyrelu:
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
@@ -1408,7 +1432,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'_FusedHardSwish'])
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1417,7 +1441,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1525,7 +1549,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 if self.device == 'gpu' else dtypes.qint32)
                 fused_ops = [b'BiasAdd', b'_FusedSwish']
                 helper.set_attr_string_list(quantized_conv_node, 'fused_ops', fused_ops)
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1534,7 +1558,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])
@@ -1550,10 +1574,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
 
-    def apply_newly_conv_biasadd_addn_fusion(self, match_node_name): # pragma: no cover
-        #Remove this WA once TF bug is fixed
-        return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
-
+    def apply_newly_conv_biasadd_addn_fusion(self, match_node_name):
+        # Dequantize + Conv2D + Add + Add + QuantizeV2
+        # Dequantize + Conv2D + AddV2 + Add + QuantizeV2
+        # Dequantize + Conv2D + BiasAdd + Add + QuantizeV2
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -1571,26 +1595,44 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
              #after insert dummy biasadd, that is Conv+dummybiasadd+add*+add*
              return self.apply_newly_conv_biasadd_addn_fusion(new_match_node_name[:4] + [new_match_node_name[-1]])
 
-        control_inputs, normal_inputs = self._get_node_input(
-            matched_node.node.name)
-        weight_name = normal_inputs[1]
-        third_node = self.node_name_mapping[match_node_name[2]].node
+        third_node = self.node_name_mapping[match_node_name[3]].node
         sumadd_a_node_name = helper.node_name_from_input(third_node.input[0])
         sumadd_a_node = self.node_name_mapping[sumadd_a_node_name].node
         sumadd_b_node_name = helper.node_name_from_input(third_node.input[1])
         sumadd_b_node = self.node_name_mapping[sumadd_b_node_name].node
         if sumadd_a_node.op != 'Const' and sumadd_b_node.op == 'Const':
-            return self.apply_newly_conv_biasadd_fusion(match_node_name[:2])
+            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [new_match_node_name[-1]])
+
+        sum_index = 1 if match_node_name[2] == self.node_name_mapping[
+            match_node_name[3]].node.input[0] else 0
+        sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
+        deq_node = self.node_name_mapping[sum_node_name].node
+        if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
+
+        control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
+        _, q_inputs = self._get_node_input(normal_inputs[0])
+        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
+        quantizev2_weights_name = q_weights_inputs[0]
+
+        _, weights_name = self._get_node_input(quantizev2_weights_name)
+        weights_min_name = weights_name[1]
+        weights_max_name = weights_name[2]
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
-                matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
+                matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel)
 
-        all_input_names = self._add_eightbit_prologue_nodes(matched_node.node.name)
-        all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
+        all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
         all_input_names.append(q_weights_min_name)
         all_input_names.append(q_weights_max_name)
-        skip_node_name.append(weight_name)
+        skip_node_name.append(normal_inputs[0])
+        skip_node_name.append(normal_inputs[1])
+        skip_node_name.append(weights_name[0])
+        skip_node_name.append(weights_min_name)
+        skip_node_name.append(weights_max_name)
+        skip_node_name.append(quantizev2_weights_name)
+
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
                 self.logger.debug("skip node {}".format(node.name))
@@ -1601,16 +1643,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantized_node_name = node.name + "_eightbit_quantized_conv"
                 bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
 
-                sum_index = 1 if match_node_name[2] == self.node_name_mapping[
-                    match_node_name[3]].node.input[0] else 0
-
-                sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
                 quantized_node_input_names = all_input_names[:2] + [
                     bias_node_name
-                ] + [
+                ] + all_input_names[2:] + [
                     sum_node_name
-                ] + all_input_names[2:] + control_inputs
-
+                ] + control_inputs
                 node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
                         else '_QuantizedDepthwiseConv2D' 
 
@@ -1632,7 +1669,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                                 # if self.device == 'gpu' else dtypes.qint32)
                 helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
 
-                helper.set_attr_type_list(quantized_conv_node, 'input_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,# if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
@@ -1642,7 +1679,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     dtypes.float32.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
                  ])
-                helper.set_attr_type_list(quantized_conv_node, 'out_types', [
+                helper.set_attr_type_list(quantized_conv_node, 'Thost_outputs', [
                                           dtypes.qint32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum, ])

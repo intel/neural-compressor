@@ -9,7 +9,7 @@ Get Started
 * `Transform <transform.md>`__ introduces how to utilize Neural Compressor's built-in data processing and how to develop a custom data processing method. 
 * `Dataset <dataset.md>`__ introduces how to utilize Neural Compressor's built-in dataset and how to develop a custom dataset.
 * `Metrics <metric.md>`__ introduces how to utilize Neural Compressor's built-in metrics and how to develop a custom metric.
-* `UX <ux.md>`__ is a web-based system used to simplify Neural Compressor usage.
+* `UX <bench.md>`__ is a web-based system used to simplify Neural Compressor usage.
 * `Intel oneAPI AI Analytics Toolkit Get Started Guide <https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html>`__ explains the AI Kit components, installation and configuration guides, and instructions for building and running sample apps.
 * `AI and Analytics Samples <https://github.com/oneapi-src/oneAPI-samples/tree/master/AI-and-Analytics>`__ includes code samples for Intel oneAPI libraries.
 

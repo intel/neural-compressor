@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from typing import List
 from ..utils.line_operation import get_line_indent_level
 from .. import globals
@@ -24,20 +23,22 @@ logging.basicConfig(level=globals.logging_level,
 logger = logging.getLogger(__name__)
 
 
-# register all relationships of ( [function name] : [return_item] ) pair of the list of code path provided
-# but only for "return xxx()" (return a function w/o class prefix) or "return xxx" (return an instance)
-# e.g.
-# def a1():
-#     return b1()
-# def b1():
-#     return x
-# def c():
-#     return T.q()
-# INPUT: ["example.py"] (above code snippet)
-# OUTPUT:
-# globals.list_all_function_return_item = ["b1", "x"]
-# globals.list_all_function_name = ["a1", "b1"]
 def register_func_wrap_pair():
+    """ register all relationships of ( [function name] : [return_item] ) pair of the list of code path provided
+    but only for "return xxx()" (return a function w/o class prefix) or "return xxx" (return an instance)
+    e.g.
+    def a1():
+        return b1()
+    def b1():
+        return x
+    def c():
+        return T.q()
+    INPUT: 
+        ["example.py"] (above code snippet)
+    OUTPUT:
+        globals.list_all_function_return_item = ["b1", "x"]
+        globals.list_all_function_name = ["a1", "b1"]
+    """
     logger.info(
         f"Analyzing function wrapping relationship for call graph analysis...")
     for path in globals.list_code_path:
@@ -73,8 +74,7 @@ def register_func_wrap_pair():
                     except:  # end of file
                         func_end_line_idx = search_idx
                         break
-                    following_indent_level = get_line_indent_level(
-                        following_line)
+                    following_indent_level = get_line_indent_level(following_line)
 
                     # judge_1: indent is equal to def indent
                     judge_1 = following_indent_level <= def_indent_level
@@ -140,32 +140,32 @@ def register_func_wrap_pair():
     logger.debug(
         f"globals.list_all_function_return_item: {globals.list_all_function_return_item}")
 
-# get all wrapper children names of the base function name
-# e.g.
-# class Net(nn.Module):
-#    xxx
-#
-# def _resnet():
-#     model = Net()
-#     return model
-#
-# def resnet34():
-#     xxx
-#     return _resnet()
-#
-# def resnet18():
-#     xxx
-#     return _resnet()
-#
-# def resnet18_large():
-#     xxx
-#     return resnet18()
-#
-# INPUT: "_resnet"
-# OUTPUT: ["resnet18", "resnet34", "resnet18_large"]
-
 
 def get_all_wrap_children(base_function_name: str) -> List:
+    """get all wrapper children names of the base function name
+    e.g.
+    class Net(nn.Module):
+    xxx
+    #
+    def _resnet():
+        model = Net()
+        return model
+    #
+    def resnet34():
+        xxx
+        return _resnet()
+    #
+    def resnet18():
+        xxx
+        return _resnet()
+    #
+    def resnet18_large():
+        xxx
+        return resnet18()
+    #
+    INPUT: "_resnet"
+    OUTPUT: ["resnet18", "resnet34", "resnet18_large"]
+    """
     length = range(len(globals.list_all_function_return_item))
     base_function_name = [base_function_name]
     do_search = True

@@ -1,0 +1,39 @@
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+transformation:
+  location:
+    - ["insert_below_model_definition_line", "insert_below_input_definition_line"]
+  content:
+    - |-
+      [+] if "quantize" not in str(type(MODEL_NAME)) and "jit" not in str(type(MODEL_NAME)):
+      [+]     import torch
+      [+]     import intel_extension_for_pytorch as ipex
+      [+]     qconfig = ipex.quantization.default_static_qconfig
+      [+]     MODEL_NAME = ipex.quantization.prepare(MODEL_NAME, qconfig, example_inputs=INPUT_NAME, inplace=False)
+      [+]     with torch.no_grad():
+      [+]         for i in range(10):
+      [+]             INFERENCE_LINE
+      [+]     MODEL_NAME = ipex.quantization.convert(MODEL_NAME)
+      [+]     with torch.no_grad():
+      [+]         INFERENCE_LINE
+      [+]     MODEL_NAME.eval()
+  order:
+    - below:
+        - pytorch_channels_last
+      above:
+        - pytorch_jit_script
+        - pytorch_jit_script_ofi
+        - pytorch_jit_trace
+        - pytorch_jit_trace_ofi

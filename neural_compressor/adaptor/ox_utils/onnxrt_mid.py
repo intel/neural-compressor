@@ -131,6 +131,9 @@ class ONNXRTAugment:
                     elif not onnx_version < ONNX18_VERSION:
                         tensors_to_dump.update(node.input)
                     tensors_to_dump.update(node.output)
+                    if node.op_type == 'EmbedLayerNormalization' and len(node.output) > 1 and \
+                        node.output[1] in tensors_to_dump:
+                        tensors_to_dump.remove(node.output[1])
                 elif weight_only:
                     for input in node.input:
                         if self.already_quantized and \

@@ -174,17 +174,17 @@ export class DatasetFormComponent implements OnInit {
 
 
   setDefaultTransformationParam(event, index: number) {
-    if (!event.value.hasOwnProperty("params")) {
+    if (!event.value.hasOwnProperty('params')) {
       // Case when event source is MatSelect
       this.transformationParams[index]['params'] = this.transformations.find(x => x.name === event.value).params;
-      return
+      return;
     }
 
-    let tranformParameters: { name: string, value: any }[] = this.transformations.find(x => x.name === event.value.name).params
+    let transformParameters: { name: string, value: any }[] = this.transformations.find(x => x.name === event.value.name).params;
     event.value.params.forEach(item => {
-      tranformParameters.find(x => x.name === item.name).value = item.value;
-    })
-    this.transformationParams[index]['params'] = tranformParameters;
+      transformParameters.find(x => x.name === item.name).value = item.value;
+    });
+    this.transformationParams[index]['params'] = transformParameters;
   }
 
   addNewTransformation(name?: string) {

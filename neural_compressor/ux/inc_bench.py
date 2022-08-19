@@ -58,6 +58,7 @@ def main() -> None:
         )
 
     log.info(f"Open address {configuration.get_url()}")
+    configuration.dump_token_to_file()
 
     run_server(configuration)
 

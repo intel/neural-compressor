@@ -56,6 +56,11 @@ export class OptimizationsComponent implements OnInit {
   showPerformanceDropdown = {};
   labels = ['Input', 'Optimized'];
 
+  hiddenFields = {
+    tensorflow: ['id', 'supports'],
+    pytorch: ['id', 'supports', 'nodes', 'domain']
+  };
+
   xAxis: boolean = true;
   yAxis: boolean = true;
   showYAxisLabel: boolean = true;
@@ -348,6 +353,18 @@ export class OptimizationsComponent implements OnInit {
 
   getFileName(path: string): string {
     return path.replace(/^.*[\\\/]/, '');
+  }
+
+  isParameterVisible(parameter: string): boolean {
+    let isVisible = true;
+    this.hiddenFields[this.framework.toLowerCase()]
+      .forEach(field => {
+        if (parameter.includes(field)) {
+          isVisible = false;
+          return;
+        }
+      });
+    return isVisible;
   }
 
   typeOf(object) {

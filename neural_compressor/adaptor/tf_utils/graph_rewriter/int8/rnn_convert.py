@@ -30,10 +30,11 @@ import tensorflow as tf
 
 
 class QuantizedRNNConverter(GraphRewriterBase):
-    def __init__(self, model, calibration_data, rnn_details):
+    def __init__(self, model, calibration_data, rnn_details, new_api=False):
         super().__init__(model)
         self.calibration_data = calibration_data
         self.rnn_details = rnn_details
+        self.new_api = new_api
 
     @dump_elapsed_time("Pass QuantizedRNNConverter")
     def do_transformation(self):
@@ -207,22 +208,51 @@ class QuantizedRNNConverter(GraphRewriterBase):
 
             quantized_matmul_input.append(enter_min_node.name)
             quantized_matmul_input.append(enter_max_node.name)
-            quantized_matmul_with_bias_node = Helper.create_node(
-                'QuantizedMatMulWithBias', i[0] + '_quantized_mat_mul', quantized_matmul_input)
+            if self.new_api:
+                quantized_matmul_with_bias_node = Helper.create_node(
+                    '_QuantizedMatMul', i[0] + '_quantized_mat_mul', quantized_matmul_input)
+            else:
+                quantized_matmul_with_bias_node = Helper.create_node(
+                    'QuantizedMatMulWithBias', i[0] + '_quantized_mat_mul', quantized_matmul_input)
             Helper.set_attr_dtype(
                 quantized_matmul_with_bias_node, 'T1', dtypes.quint8)
             Helper.set_attr_dtype(
                 quantized_matmul_with_bias_node, 'T2', dtypes.qint8)
             Helper.set_attr_dtype(
                 quantized_matmul_with_bias_node, 'Tbias', dtypes.float32)
-            Helper.set_attr_dtype(
-                quantized_matmul_with_bias_node, 'Toutput', dtypes.qint32)
+            if self.new_api: 
+                Helper.set_attr_dtype(
+                    quantized_matmul_with_bias_node, 'Tout', dtypes.qint32)
+            else:
+                Helper.set_attr_dtype(
+                    quantized_matmul_with_bias_node, 'Toutput', dtypes.qint32)
             Helper.set_attr_bool(
                 quantized_matmul_with_bias_node, 'transpose_a', False)
             Helper.set_attr_bool(
                 quantized_matmul_with_bias_node, 'transpose_b', False)
-            Helper.set_attr_string(
-                quantized_matmul_with_bias_node, 'input_quant_mode', b"MIN_FIRST")
+            if self.new_api:
+                Helper.set_attr_string(
+                    quantized_matmul_with_bias_node, 'input_quant_mode', b"SCALED")
+                Helper.set_attr_string(
+                    quantized_matmul_with_bias_node, 'output_quant_mode', b"SCALED")
+                Helper.set_attr_string_list(quantized_matmul_with_bias_node, 'fused_ops', [b'BiasAdd'])
+                Helper.set_attr_type_list(quantized_matmul_with_bias_node, 'Thost_inputs', [
+                        dtypes.quint8.as_datatype_enum,
+                        dtypes.qint8.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum
+                     ])
+                Helper.set_attr_type_list(quantized_matmul_with_bias_node, 'Thost_outputs', [
+                                          dtypes.qint32.as_datatype_enum,
+                                          dtypes.float32.as_datatype_enum,
+                                          dtypes.float32.as_datatype_enum])
+            else:
+                Helper.set_attr_string(
+                    quantized_matmul_with_bias_node, 'input_quant_mode', b"MIN_FIRST")
+
             g.add_node(quantized_matmul_with_bias_node,
                        quantize_node.name, [bias_node.name])
 

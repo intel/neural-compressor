@@ -47,6 +47,10 @@ export class BenchmarksComponent implements OnInit {
   benchmarkDetails: any;
   comparison = {};
   showComparison = false;
+  hiddenFields = {
+    tensorflow: ['id', 'supports'],
+    pytorch: ['id', 'supports', 'nodes', 'domain']
+  };
 
   accuracyData;
   throughputData;
@@ -139,7 +143,6 @@ export class BenchmarksComponent implements OnInit {
         projectId: this.activatedRoute.snapshot.params.id,
         index: this.benchmarks.length,
         framework: this.framework.toLowerCase()
-
       }
     });
 
@@ -257,6 +260,18 @@ export class BenchmarksComponent implements OnInit {
             );
         }
       });
+  }
+
+  isParameterVisible(parameter: string): boolean {
+    let isVisible = true;
+    this.hiddenFields[this.framework.toLowerCase()]
+      .forEach(field => {
+        if (parameter.includes(field)) {
+          isVisible = false;
+          return;
+        }
+      });
+    return isVisible;
   }
 
   typeOf(object) {

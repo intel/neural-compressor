@@ -261,8 +261,8 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
         return self.graph_analyzer.dump_graph()
 
-class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
-    """Fuse _QuantizedFusedMatMul + Requantize + Dequantize into _QuantizedFusedMatMulAndDequantize.
+class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
+    """Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
     """
     def __init__(self, model, device='cpu'):
         super().__init__(model)
@@ -275,14 +275,14 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
         self.eps = 1e-5
 
     def do_transformation(self):
-        fuse_pattern = [["_QuantizedFusedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
+        fuse_pattern = [["_QuantizedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
 
+        uint8_type = dtypes.quint8.as_datatype_enum
+        int8_type = dtypes.qint8.as_datatype_enum
+        float32_type = dtypes.float32.as_datatype_enum
+        qint32_type = dtypes.qint32.as_datatype_enum
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(fuse_pattern)
         for i in target_nodes:
-            # TODO Remove below checker once the TF's limitation removed.
-            if len(i) == 5:
-                continue
-
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
             requantize_node_name = i[1]
@@ -294,31 +294,120 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
             quantized_node_op = i[-1][0]
             
             if "BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
-               and "Relu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8'):
+               and ("Relu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') and \
+                    "LeakyRelu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') and \
+                    "Relu6" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')):
                 continue
 
             new_node = node_def_pb2.NodeDef()
 
-            new_node.op = quantized_node_op + "AndDequantize"
+            new_node.op = quantized_node_op
             new_node.name = requantize_node_name
             for _, value in enumerate(quantized_node.input):
                 new_node.input.append(value)
 
-            #new_node.input.append(requested_output_min_name)
-            #new_node.input.append(requested_output_max_name)
+            new_node.input.append(requested_output_min_name)
+            new_node.input.append(requested_output_max_name)
             if 'T1' in quantized_node.attr:
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
                 new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
-            if 'num_args' in quantized_node.attr:
-                new_node.attr["num_args"].CopyFrom(quantized_node.attr['num_args'])
-            if 'fused_ops' in quantized_node.attr:
-                new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
+            if 'U' in quantized_node.attr:
+                new_node.attr["U"].CopyFrom(quantized_node.attr["U"])
+            if 'transpose_b' in quantized_node.attr:
+                new_node.attr["transpose_b"].CopyFrom(quantized_node.attr['transpose_b'])
+            if 'transpose_a' in quantized_node.attr:
+                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])
+            if 'input_quant_mode' in quantized_node.attr:
+                new_node.attr["input_quant_mode"].CopyFrom(quantized_node.attr["input_quant_mode"])
+            if 'output_quant_mode' in quantized_node.attr:
+                new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
 
             top_node_name = Helper.node_name_from_input(quantized_node.input[0])
-            float32_type = dtypes.float32.as_datatype_enum
-            new_node.attr["Targs"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
-            new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
+            attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
+                               .decode('UTF-8', 'ignore').strip() if x.isprintable())
+            if "BiasAddAdd" in attr_fused_ops:
+                max_filter_node = self.graph_info[new_node.input[7]].node
+                min_filter_node = self.graph_info[new_node.input[6]].node
+            else:
+                max_filter_node = self.graph_info[new_node.input[6]].node
+                min_filter_node = self.graph_info[new_node.input[5]].node
+            last_node = self.graph_info[new_node.input[0]].node
+            bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
+            max_input_node = self.graph_info[last_node.input[-1]].node
+            min_input_node = self.graph_info[last_node.input[-2]].node
+            
+            type_bias = float32_type
+            if max_filter_node.op == 'Const':
+                min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
+                max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
+                max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
+                min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
+
+                weights_tensor = tensor_util.MakeNdarray(
+                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(
+                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
+                input_range = max_input_value - min_input_value if is_min_first else max(
+                        abs(max_input_value), abs(min_input_value))
+
+                if  -self.eps <= input_range <= self.eps:
+                    input_range += self.eps
+
+                if -self.eps <= max_input_value - min_input_value <= self.eps:
+                    max_input_value += self.eps
+                int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                        input_range, max_input_value,
+                                                        min_input_value,
+                                                        max_filter_value, min_filter_value)
+
+                bias_node.attr['dtype'].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        type=float32_type if self.device == 'gpu' else qint32_type))
+                bias_node.attr['value'].CopyFrom(
+                    attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+                        bias_tensor if self.device == 'gpu' else int32_bias, dtypes.
+                        float32 if self.device == 'gpu' else dtypes.int32, bias_tensor.shape)))
+
+                bias_node.attr['value'].tensor.dtype = float32_type \
+                                        if self.device == 'gpu' else qint32_type
+                type_bias = float32_type if self.device == 'gpu' else qint32_type
+            else:
+                type_bias = float32_type
+
+            new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=type_bias))
+
+            if "BiasAddAdd" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Add', b'Dequantize'])
+                Helper.set_attr_type_list(new_node, 'Thost_inputs', [
+                    uint8_type, int8_type, type_bias, float32_type, float32_type, float32_type, 
+                    float32_type, float32_type, float32_type, float32_type
+                    ])
+            else:
+                if "GeluApproximate" in  attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', \
+                                [b'BiasAdd', b'GeluApproximate', b'Dequantize'])
+                elif "GeluExact" in attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'GeluExact', b'Dequantize'])
+                elif "Elu" in attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Elu', b'Dequantize'])
+                elif "Tanh" in attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Tanh', b'Dequantize'])
+                elif "LeakyRelu" in attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu', b'Dequantize'])
+                elif "Relu6" in attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu6', b'Dequantize'])
+                elif "Sigmoid" in attr_fused_ops:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Sigmoid', b'Dequantize'])
+                else:
+                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Dequantize'])
+                Helper.set_attr_type_list(new_node, 'Thost_inputs', [
+                    uint8_type, int8_type, type_bias, float32_type, float32_type,
+                    float32_type, float32_type, float32_type, float32_type
+                    ])
+            Helper.set_attr_type_list(new_node, 'Thost_outputs', [float32_type])
+            new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
             self.graph_analyzer.remove_node(requantize_node_name)
 
@@ -338,7 +427,7 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
 
         return self.graph_analyzer.dump_graph()
 
-class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
+class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
     """Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
     """
     def __init__(self, model, device='cpu'):
@@ -355,13 +444,15 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cov
             [graphdef]: the optimized graphdef object
         """
         uint8_type = dtypes.quint8.as_datatype_enum
+        int8_type = dtypes.qint8.as_datatype_enum
+        float32_type = dtypes.float32.as_datatype_enum
+        qint32_type = dtypes.qint32.as_datatype_enum
 
         while True:
             target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-                [["_QuantizedFusedMatMul"], ['Requantize']])
+                [["_QuantizedMatMul"], ['Requantize']])
             if len(target_nodes) == 0:
                 break
-
             i = target_nodes[0]
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
@@ -371,31 +462,105 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cov
             requested_output_max_name = requantize_node.input[4]
 
             quantized_node_op = i[-1][0]
-            if "BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
-               and "Relu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8'):
+            if ("BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
+               and "Relu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')) or \
+               ("Relu6" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')) or \
+               ("LeakyRelu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')):
                 break
 
             new_node = node_def_pb2.NodeDef()
 
-            new_node.op = quantized_node_op + "AndRequantize"
+            new_node.op = quantized_node_op
             new_node.name = requantize_node_name
             for _, value in enumerate(quantized_node.input):
                 new_node.input.append(value)
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
+
+            if 'transpose_b' in quantized_node.attr:
+                new_node.attr["transpose_b"].CopyFrom(quantized_node.attr['transpose_b'])
+            if 'transpose_a' in quantized_node.attr:
+                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])  
             if 'T1' in quantized_node.attr:
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
                 new_node.attr["T2"].CopyFrom(quantized_node.attr['T2'])
-            if 'num_args' in quantized_node.attr:
-                new_node.attr["num_args"].CopyFrom(quantized_node.attr["num_args"])
-            if 'Targs' in quantized_node.attr:
-                new_node.attr["Targs"].CopyFrom(quantized_node.attr["Targs"])
-            if 'fused_ops' in quantized_node.attr:
-                new_node.attr["fused_ops"].CopyFrom(quantized_node.attr["fused_ops"])
-            new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+            if 'U' in quantized_node.attr:
+                new_node.attr["U"].CopyFrom(quantized_node.attr["U"])
+            if 'input_quant_mode' in quantized_node.attr:
+                new_node.attr["input_quant_mode"].CopyFrom(quantized_node.attr["input_quant_mode"])
+            if 'output_quant_mode' in quantized_node.attr:
+                new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
+            max_filter_node = self.graph_info[new_node.input[6]].node
+            min_filter_node = self.graph_info[new_node.input[5]].node
+            last_node = self.graph_info[new_node.input[0]].node
+            is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
+            bias_node = self.graph_info[new_node.input[2]].node
+            max_input_node = self.graph_info[last_node.input[-1]].node
+            min_input_node = self.graph_info[last_node.input[-2]].node
+            if last_node.op.find('_QuantizedMatMul') != -1 or last_node.op.find('QuantizeV2') != -1:
+                min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
+                max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
+                max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
+                min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
+
+                weights_tensor = tensor_util.MakeNdarray(
+                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(
+                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+
+                input_range = max_input_value - min_input_value if is_min_first else max(
+                        abs(max_input_value), abs(min_input_value))
+                if -self.eps <= input_range <= self.eps:
+                    input_range += self.eps
+
+                if -self.eps <= max_input_value - min_input_value <= self.eps:
+                    max_input_value += self.eps
+                int32_bias = Helper.generate_int32_bias_for_matmul(bias_tensor, weights_tensor,
+                                                                   input_range,
+                                                                   max_input_value,
+                                                                   min_input_value,
+                                                                   max_filter_value,
+                                                                   min_filter_value)
+                bias_node.attr['dtype'].CopyFrom(
+                    attr_value_pb2.AttrValue(
+                        type=float32_type if self.device == 'gpu' else qint32_type))
+                bias_node.attr['value'].CopyFrom(
+                    attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(
+                        bias_tensor if self.device == 'gpu' else int32_bias, dtypes.
+                        float32 if self.device == 'gpu' else dtypes.int32, bias_tensor.shape)))
+
+                bias_node.attr['value'].tensor.dtype = float32_type \
+                                        if self.device == 'gpu' else qint32_type
+                new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
+
+                #TODO enabled below commit once the graph refactor pre_optimize commmitted.
+                if "Relu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8'):
+                    deq_node_name = self.graph_info[requantize_node_name].outputs[0]
+                    deq_node = self.graph_info[deq_node_name].node
+                    deq_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+
+                Helper.set_attr_type_list(new_node, "Thost_inputs", [
+                                        uint8_type, int8_type,
+                                        float32_type if self.device == 'gpu' else qint32_type,
+                                        float32_type, float32_type, float32_type,
+                                        float32_type, float32_type, float32_type])
+            else:
+                new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
+                Helper.set_attr_type_list(new_node, "Thost_inputs", [
+                                        uint8_type, int8_type, float32_type,
+                                        float32_type, float32_type, float32_type,
+                                        float32_type, float32_type, float32_type])
+
+            Helper.set_attr_type_list(new_node, 'Thost_outputs', [
+                                      uint8_type, float32_type, float32_type])
+
+            Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Requantize'])
+            new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+
             self.graph_analyzer.replace_single_node(
                 new_node, [parent_node_name], quantized_node_name,
                 [self.graph_info[requantize_node_name].outputs[0]], requantize_node_name)

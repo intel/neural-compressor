@@ -47,7 +47,7 @@ def deep_set(dictionary, keys, value):
     """
     keys = keys.split('.')
     for key in keys[:-1]:
-        dictionary = dictionary.setdefault(key, {})
+        dictionary = dictionary.setdefault(key, DotDict())
     dictionary[keys[-1]] = value
 
 class DotDict(dict):

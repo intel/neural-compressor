@@ -15,3 +15,5 @@
 from .interface import enable
 from .interface import bench
 from .interface import superbench
+# from .interface import superreport
+from .interface import auto_quant

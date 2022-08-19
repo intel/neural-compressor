@@ -97,6 +97,38 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])
 
             self.assertEqual(find_single_qconv, [True, False])
+    @disable_random()
+    def test_spacetobatchnd_conv2d_batchtospacend_fusion(self):
+        i = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        x = tf.space_to_batch_nd(i, block_shape=[2,2], paddings=[[0, 0], [0, 0]])
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        y = tf.compat.v1.batch_to_space_nd(conv, block_shape=[2,2], crops=[[0, 0], [0, 0]])
+        out = tf.identity(y, name="op_to_store")
+        out_name = out.name.split(':')[0]
+
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            found_op = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'SpaceToBatchND' or i.op=='BatchToSpaceND':
+                    found_op = True
+                    break
+
+            self.assertEqual(found_op, False)
 
     @disable_random()
     def test_conv_relu_fusion(self):
@@ -540,6 +572,45 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_conv_sumadd_fusion, False)
             self.assertEqual(found_conv_biasadd_fusion, True)
 
+    # conv2d + dummybiasadd + addv2 fusion
+    @disable_random()
+    def test_conv_add_addn_non_const_fusion(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(x, paddings, "CONSTANT")
+        top_relu = tf.nn.relu(x_pad)
+        conv2d_1_weights = tf.compat.v1.get_variable("weight1", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv2d_1 = tf.nn.conv2d(top_relu, conv2d_1_weights, strides=[1, 2, 2, 1], padding="SAME")
+        conv2d_2_weights = tf.compat.v1.get_variable("weight2", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv2d_2 = tf.nn.conv2d(top_relu, conv2d_2_weights, strides=[1, 2, 2, 1], padding="SAME")
+        add_1 = tf.raw_ops.AddV2(x=conv2d_1, y=conv2d_2, name='addv2_1')
+        conv2d_3_weights = tf.compat.v1.get_variable("weight3", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv2d_3 = tf.nn.conv2d(top_relu, conv2d_3_weights, strides=[1, 2, 2, 1], padding="SAME")
+        add = tf.raw_ops.AddV2(x=add_1, y=conv2d_3, name='addv2_2')
+        out_name = add.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+
+            found_conv_fusion = False
+            for i in output_graph.graph_def.node:
+                if i.op == '_QuantizedConv2D' and \
+                   i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sum', b'Requantize']:
+                    found_conv_fusion = True
+            self.assertEqual(found_conv_fusion, True)
 
 if __name__ == '__main__':
     unittest.main()

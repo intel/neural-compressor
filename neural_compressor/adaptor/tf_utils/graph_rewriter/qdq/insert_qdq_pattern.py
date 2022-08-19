@@ -157,9 +157,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if each_input_name[0] == '^':
                 continue
 
-            if self.node_name_mapping[original_node.name].op == "MatMul" or \
-               self.node_name_mapping[original_node.name].op == "BatchMatMulV2":
+            if self.node_name_mapping[original_node.name].op == "MatMul":
                 dtype = dtypes.quint8
+            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2":
+                dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
                 if input_node_name in self.graph_info:
@@ -406,7 +407,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             else:
                 Helper.set_attr_int(quant_node, 'axis', -1)
                 Helper.set_attr_int(dequant_node, 'axis', -1)
-
+        if host_op_type == 'DepthwiseConv2dNative':
+            Helper.set_attr_int(quant_node, 'axis', 2)
+            Helper.set_attr_int(dequant_node, 'axis', 2)
+        
         self.g_weight.add_node(quant_node, weight_node.name, [])
         self.g_weight.add_node(min_node, None, [quant_node.name])
         self.g_weight.add_node(max_node, None, [quant_node.name])
@@ -422,10 +426,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             return True
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
-        # transpose_a/transpose_a could be set to True.
+        # transpose_a could be set to True.
         if self.graph_info[matched_node_name].node.op == "MatMul":
-            if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True or \
-               self.graph_info[matched_node_name].node.attr["transpose_b"].b == True:
+            if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
 
         return False

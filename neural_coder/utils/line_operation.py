@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # get line's indent level
 def get_line_indent_level(line: str) -> int:
     if list(set(line)) == [" "]:
@@ -20,9 +19,8 @@ def get_line_indent_level(line: str) -> int:
     else:
         return len(line) - len(line.lstrip())
 
+
 # determine if line is multi-line comment
-
-
 def multi_line_comment_detection(line: str, previous_line_is_multi_line_comment: bool, end_ml_comment_flag: bool):
     this_line_is_multi_line_comment = previous_line_is_multi_line_comment
 
@@ -54,9 +52,8 @@ def multi_line_comment_detection(line: str, previous_line_is_multi_line_comment:
 
     return this_line_is_multi_line_comment, end_ml_comment_flag
 
+
 # determine if line is single-line comment or empty
-
-
 def single_line_comment_or_empty_line_detection(line: str) -> bool:
     this_line_is_single_line_comment_or_empty_line = False
 
@@ -70,31 +67,59 @@ def single_line_comment_or_empty_line_detection(line: str) -> bool:
 
     return this_line_is_single_line_comment_or_empty_line
 
-# determine if line is a eval func of model_name, like "xxx = model_name(yyy)" or "model_name(yyy)"
 
-
+# determine if line is a eval func of model_name, 
+# like "xxx = model_name(yyy)" or "model_name(yyy)" or "model_name.some_func(yyy)"
 def is_eval_func_model_name(model_name: str, line: str) -> str:
     line_ = line.replace(' ', '')
+    # model(input)
     judge_1 = line_.find(model_name + "(") > -1
     judge_2 = (line_.find("=") > 0 and
                line_.find("=") < line_.find(model_name) and
                line_[line_.find("=")+1:line_.find("(")] == model_name) or line_.find(model_name) == 0
+    # model.some_func(input)
+    judge_3 = line_.find(model_name + ".") > -1
+    judge_4 = line_.find("(") > -1
+    judge_5 = (line_.find("=") > 0 and
+               line_.find("=") < line_.find(model_name) and
+               line_[line_.find("=")+1:line_.find(".")] == model_name) or line_.find(model_name) == 0
+    exclude_function_list = [
+        "__init__",
+        "to",
+        "eval",
+        "train",
+        "optimize",
+        "model",
+        "framework",
+        "config",
+        "load_state_dict",
+        "cpu",
+        "cuda",
+        "contiguous",
+        "features",
+    ]
+    judge_6 = line_[line_.find(".")+1:line_.find("(")] not in exclude_function_list
+    judge_7 = "model.config" not in line and "model.features" not in line
+    judge_8 = "trainer.evaluate(" in line
+
     if judge_1 and judge_2:
-        return True
+        return True, "forward"
+    elif judge_3 and judge_4 and judge_5 and judge_6 and judge_7:
+        return True, "non-forward"
+    elif judge_8:
+        return True, "non-forward"
     else:
-        return False
+        return False, "not an eval func"
+
 
 # get lhs of line of format "xxx = yyy"
-
-
-def get_line_lhs(line: str) -> str:
+def get_line_left_hand_side(line: str) -> str:
     line_ = line.replace(' ', '')
     lhs = line_[:line_.find("=")]
     return lhs
 
+
 # determine if line is for format "xxx = yyy(zzz)" and get lhs and rhs of "="
-
-
 def of_definition_format(line: str):
     line_ = line.replace(' ', '')
     is_def = False
@@ -109,3 +134,9 @@ def of_definition_format(line: str):
         else:
             rhs = rhs[rhs.find(".")+1:]
     return is_def, lhs, rhs
+
+
+# get the line without comment
+def get_line_wo_comment(line: str):
+    line = line[:line.find("#")].rstrip()
+    return line

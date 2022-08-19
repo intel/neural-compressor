@@ -5,7 +5,9 @@ import shutil
 import subprocess
 import unittest
 import re
-
+import hashlib
+import time
+from neural_compressor.utils import logger
 
 def build_fake_ut():
     fake_ut = '''
@@ -22,6 +24,7 @@ import numpy as np
 import os
 import shutil
 import unittest
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 def lr_schedule(epoch):
     """Learning Rate Schedule
@@ -315,8 +318,6 @@ if __name__ == '__main__':
     with open('fake_ut.py', 'w', encoding="utf-8") as f:
         f.write(fake_ut)
         build_fake_yaml()
-        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
-        os.popen(cmd).readlines()
 
 
 def build_fake_yaml():
@@ -355,21 +356,49 @@ def build_fake_yaml():
     with open('fake_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def dir_md5_check(dir):
+    files_list = []
+    md5_list = []
+    def get_files_list(path, list_name):
+        for file in sorted(os.listdir(path)):
+            file_path = os.path.join(path, file)
+            if os.path.isdir(file_path):
+                get_files_list(file_path, list_name)
+            else:
+                list_name.append(file_path)
+    get_files_list(dir, files_list)
+    for file_path in files_list:
+        with open(file_path, 'rb') as fp:
+            data = fp.read()
+        file_md5 = hashlib.md5(data).hexdigest()
+        md5_list.append(file_md5)
+    return md5_list
 
 class TestDistributed(unittest.TestCase):
+    dst_path = './baseline_model'
     @classmethod
     def setUpClass(cls):
         build_fake_ut()
         build_fake_yaml()
-        cmd = 'cp -r /home/tensorflow/inc_ut/resnet_v2/baseline_model ./'
+        cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
+        if not os.path.exists(cls.dst_path):
+            logger.warning("resnet_v2 baseline_model doesn't exist.")
+            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestDistributed)
+        elif dir_md5_check(cls.dst_path) != \
+            ['65625fef42f44e6853d4d6d5e4188a49', 'a783396652bf62db3db4c9f647953175',
+            'c7259753419d9fc053df5b2059aef8c0', '77f2a1045cffee9f6a43f2594a5627ba']:
+            logger.warning("resnet_v2 baseline_model md5 verification failed.")
+            return unittest.skip("resnet_v2 baseline_model md5 verification failed.")(TestDistributed)
+        else:
+            logger.info("resnet_v2 baseline_model md5 verification succeeded.")
 
     @classmethod
     def tearDownClass(cls):
         os.remove('fake_ut.py')
         os.remove('fake_yaml.yaml')
-        shutil.rmtree('baseline_model', ignore_errors=True)
         shutil.rmtree('nc_workspace', ignore_errors=True)
+        shutil.rmtree('baseline_model', ignore_errors=True)
 
     def test_tf_distributed_pruning(self):
         distributed_cmd = 'horovodrun -np 2 python fake_ut.py'

@@ -78,6 +78,20 @@ inc_bench
   <img src="./docs/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
+* Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
+
+```python
+from neural_coder import auto_quant
+auto_quant(
+    code="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
+    args="--model_name_or_path albert-base-v2 \
+          --task_name sst2 \
+          --do_eval \
+          --output_dir result \
+          --overwrite_output_dir",
+)
+```
+
 ## System Requirements
 
 Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
@@ -135,7 +149,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 More details for validated models are available [here](docs/validated_model_list.md).   
 
 <a target="_blank" href="./docs/imgs/release_data.png">
-  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=500>
+  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=600>
 </a>
 
 ## Documentation
@@ -205,6 +219,9 @@ More details for validated models are available [here](docs/validated_model_list
 </table>
 
 ## Selected Publications
+
+* [地址标准化服务AI深度学习模型推理优化实践](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
+* [Dynamic Quantization with Intel Neural Compressor and Transformers](https://www.youtube.com/watch?v=-_2ha2CNWXA) (Mar 2022)
 * [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
 * [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
 * [Intel® Deep Learning Boost - Boost Network Security AI Inference Performance in Google Cloud Platform (GCP)](https://networkbuilders.intel.com/solutionslibrary/intel-deep-learning-boost-boost-network-security-ai-inference-performance-in-google-cloud-platform-gcp-technology-guide) (Apr 2022)

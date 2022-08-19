@@ -35,7 +35,7 @@
     </div>
   </mat-step>
 
-<mat-step [completed]="false" *ngIf="data.framework === 'pytorch'">
+  <mat-step [completed]="false" *ngIf="data.framework === 'pytorch'">
     <ng-template matStepLabel>Precision</ng-template>
     <h2 matTooltip="Check framework user guide for precision support.">Precision</h2>
     <p>Choose precision of the optimization. Precision determines available optimization types.</p>
@@ -53,7 +53,7 @@
         <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
         Finish
       </button>
-    </div>  
+    </div>
   </mat-step>
   <mat-step [completed]="false" *ngIf="data.framework !== 'pytorch'">
     <ng-template matStepLabel>Dataset</ng-template>

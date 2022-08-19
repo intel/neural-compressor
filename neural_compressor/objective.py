@@ -133,7 +133,7 @@ class Performance(Objective):
         self.start_time = time.time()
     def end(self):
         self.duration = time.time() - self.start_time
-        assert self.duration > 0, 'please use start() before end()'
+        assert self.duration >= 0, 'please use start() before end()'
         self._result_list.append(self.duration)
 
 @objective_registry

@@ -63,7 +63,7 @@ function run_benchmark {
     fi
 
     python run_glue_tune.py \
-        --model_name_or_path ${input_model} \
+        --model_name_or_path ${tuned_checkpoint} \
         --task_name ${task_name} \
         --do_train \
         --do_eval \
@@ -73,7 +73,7 @@ function run_benchmark {
         --learning_rate 2e-5 \
         --num_train_epochs 3 \
         --metric_for_best_model f1 \
-        --output_dir ${tuned_checkpoint} --overwrite_output_dir \
+        --output_dir ./output_log --overwrite_output_dir \
         ${mode_cmd}
 }
 

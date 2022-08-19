@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 from typing import List
 from .. import globals
@@ -45,15 +44,19 @@ def get_user_code_path(user_input: str) -> List:
     global user_input_type
     if type(user_input) == list:
         user_input_type = "a list of files"
+    elif "github.com" in user_input and ".py" in user_input:
+        user_input_type = "url_py"
     elif ".py" in user_input:
         user_input_type = "file"
     elif "github.com" in user_input:
-        user_input_type = "url"
+        user_input_type = "url_repo"
     else:
         user_input_type = "folder"
+
     logger.debug(f"user input code type: {user_input_type}")
+
     # get list of file path
-    if user_input_type == "url":
+    if user_input_type == "url_repo":
         from git import Repo
         Repo.clone_from(user_input,  "./cloned_github_repo")
         dir_input = "./cloned_github_repo"
@@ -62,6 +65,14 @@ def get_user_code_path(user_input: str) -> List:
 
     if user_input_type == "file":
         list_path.append(os.path.abspath(user_input))
+    elif user_input_type == "url_py":
+        import requests
+        user_input = user_input.replace("github.com", "raw.githubusercontent.com").replace("/blob","")
+        r = requests.get(user_input)
+        save_py_path = "./neural_coder_workspace/model.py"
+        f = open(save_py_path, "wb")
+        f.write(r.content)
+        list_path.append(os.path.abspath(save_py_path))
     elif user_input_type == "a list of files":
         list_path += [os.path.abspath(i) for i in user_input]
     else:
@@ -76,10 +87,56 @@ def get_user_code_path(user_input: str) -> List:
 
 def get_imports_path(user_code_path: List) -> List:
 
-    pip_name_exceptions = ["torch", "numpy", "os", "time", "logging", "inspect", "random", "math",
-                           "sys", "timeit", "tqdm", "importlib", "json", "warnings", "argparse",
-                           "collections", "threading", "subprocess", "shutil", "h5py", "PIL", "ast",
-                           "imageio", "glob", "traceback", "requests", "pandas", "unittest", "tempfile", "linecache"]
+    pip_name_exceptions = [
+        "argparse",
+        "ast",
+        "collections",
+        "contextlib",
+        "datasets",
+        "dataclasses",
+        "einops",
+        "enum",
+        "fx",
+        "glob",
+        "h5py",
+        "imageio",
+        "importlib",
+        "inspect",
+        "intel_extension_for_pytorch",
+        "jax",
+        "json",
+        "keras",
+        "libcst",
+        "linecache",
+        "logging",
+        "math",
+        "neural_coder",
+        "neural_compressor",
+        "numpy",
+        "os",
+        "pandas",
+        "PIL",
+        "random",
+        "requests",
+        "shutil",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "typing",
+        "tensorflow",
+        "threading",
+        "time",
+        "timeit",
+        "torch",
+        "torchdynamo",
+        "tqdm",
+        "traceback",
+        "unittest",
+        "warnings",
+    ]
+
+    if globals.cache_load_transformers:
+        pip_name_exceptions.append("transformers")
 
     list_pip_path = []
     list_pip_name = []
@@ -89,7 +146,7 @@ def get_imports_path(user_code_path: List) -> List:
         lines = open(path, 'r').read().split('\n')
         for line in lines:
             is_import_line = False
-            if line[0:6] == "import" and line[0:8] != "import .":
+            if line[0:6] == "import" and line[0:8] != "import ." and "," not in line:  # to-do: handle "," case
                 is_import_line = True
                 start = 7
             elif line[0:4] == "from" and line[0:6] != "from .":
@@ -107,8 +164,11 @@ def get_imports_path(user_code_path: List) -> List:
                 elif space_idx > 0 and dot_idx > 0:
                     pip_name = line[start: start + min(space_idx, dot_idx)]
                 list_pip_name.append(pip_name)
-    list_pip_name = list(
-        set(list_pip_name).difference(set(pip_name_exceptions)))
+    list_pip_name = list(set(list_pip_name).difference(set(pip_name_exceptions)))
+    for item in list_pip_name:
+        if "_nc" in item:
+            list_pip_name.remove(item)
+
     logger.debug(f"list pip name: {list_pip_name}")
 
     # get list of pip path
@@ -117,8 +177,9 @@ def get_imports_path(user_code_path: List) -> List:
         exec(cmd_import)
     except ModuleNotFoundError as mnfe:
         logger.error(
-            f"Please install all required pip modules defined in your Python scripts \
-                before running Neural Coder: {mnfe}")
+            f"Please install all required pip modules defined in your Python scripts "
+            f"before running Neural Coder: {mnfe}"
+        )
         quit()
 
     import inspect
@@ -129,12 +190,12 @@ def get_imports_path(user_code_path: List) -> List:
             for path, dir_list, file_list in os.walk(pip_dir_path):
                 for file_name in file_list:
                     file_path = os.path.join(path, file_name)
-                    if file_path[-3:] == ".py" and file_path[-11:] != "__init__.py" \
-                            and file_path[-8:] != "setup.py":
+                    if file_path[-3:] == ".py" and file_path[-11:] != "__init__.py" and file_path[-8:] != "setup.py":
                         list_pip_path.append(os.path.abspath(file_path))
         except TypeError as te:
             logger.error(
-                f"Please reinstall certain pip modules as its detected \
-                    as a built-in module and the installation path cannot be retrieved: {te}")
+                f"Please reinstall certain pip modules as its detected as a built-in module "
+                f"and the installation path cannot be retrieved: {te}"
+            )
 
     return list_pip_path

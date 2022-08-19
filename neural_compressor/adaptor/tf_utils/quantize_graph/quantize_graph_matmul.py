@@ -150,10 +150,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = self.input_graph
             return []
 
-        #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
-        # transpose_a/transpose_a could be set to True.
+        #TODO Remove below two lines once the TF enabled the old QuantizedMatMul while
+        # transpose_a/transpose_b could be set to True.
         if matched_node.node.attr["transpose_a"].b == True or \
-            matched_node.node.attr["transpose_b"].b == True:
+                matched_node.node.attr["transpose_b"].b == True:
             self.output_graph = self.input_graph
             return []
 

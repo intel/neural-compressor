@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from ...utils.line_operation import get_line_lhs
-
+from ...utils.line_operation import get_line_left_hand_side
 
 class TensorFlowKerasAMP(object):
     def __init__(self, file) -> None:
@@ -28,16 +26,16 @@ class TensorFlowKerasAMP(object):
         lines = self.file.split('\n')
         for line in lines:
             if self.is_modify(line):
-                if '.ConfigProto()' in line:  # TF AMP
-                    config_name = get_line_lhs(line)
+                if '.ConfigProto()'in line: # TF AMP
+                    config_name = get_line_left_hand_side(line)
                     new_line_1 = "from tensorflow.core.protobuf import rewriter_config_pb2"
                     new_line_2 = config_name + \
-                        ".graph_options.rewrite_options.auto_mixed_precision_mkl = \
-                            rewriter_config_pb2.RewriterConfig.ON"
+                        ".graph_options.rewrite_options.auto_mixed_precision_mkl = " + \
+                        "rewriter_config_pb2.RewriterConfig.ON"
                     self.result.append(line)
                     self.result.append(new_line_1)
                     self.result.append(new_line_2)
-                elif 'keras' in line and 'import' in line:  # Keras AMP
+                elif 'keras' in line and 'import' in line: # Keras AMP
                     if not self.keras_edited_flag:
                         new_line_1 = "from tensorflow.keras.mixed_precision import experimental as mixed_precision"
                         new_line_2 = "policy = mixed_precision.Policy('mixed_bfloat16')"
@@ -50,7 +48,6 @@ class TensorFlowKerasAMP(object):
                     else:
                         self.result.append(line)
             else:
-
                 self.result.append(line)
         for index, line in enumerate(self.result):
             if index != len(self.result)-1:

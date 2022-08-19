@@ -169,6 +169,11 @@ class Quantizer:
                             self.replace_input.append([self.model.get_children(child)[0],
                                                 child.output[0], node.input[0]])
                     self.remove_nodes.append(node)
+            self.model.remove_nodes(self.remove_nodes)
+            self.model.graph().node.extend(self.new_nodes)
+            for node, old_input_name, new_input_name in self.replace_input:
+                self.model.replace_node_input(node, old_input_name, new_input_name)
+            self.model.update()
         elif self.mode != 'qdq' or not self.dedicated_qdq_pair:
             target_type = ['QuantizeLinear', 'DequantizeLinear']
             for op_type in target_type:
@@ -190,11 +195,11 @@ class Quantizer:
                             self.replace_input.append([self.model.get_children(dq_nodes[i])[0],
                                                        dq_nodes[i].output[0], 
                                                        dq_nodes[idx].output[0]])
-        self.model.remove_nodes(self.remove_nodes)
-        self.model.graph().node.extend(self.new_nodes)
-        for node, old_input_name, new_input_name in self.replace_input:
-            self.model.replace_node_input(node, old_input_name, new_input_name)
-        self.model.update()
+                self.model.remove_nodes(self.remove_nodes)
+                self.model.graph().node.extend(self.new_nodes)
+                for node, old_input_name, new_input_name in self.replace_input:
+                    self.model.replace_node_input(node, old_input_name, new_input_name)
+                self.model.update()
 
     def should_cast(self, node):
         if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
@@ -269,7 +274,8 @@ class Quantizer:
  
                         self.remove_nodes.append(match_nodes[1])
                         if all([i.op_type in ['QuantizeLinear', 'DequantizeLinear'] \
-                            for i in self.model.get_children(match_nodes[0])]):
+                            for i in self.model.get_children(match_nodes[0])]) and \
+                            match_nodes[0].output[0] not in self.model.output():
                             self.remove_nodes.append(match_nodes[0])
                 else: # pragma: no cover
                     parent = self.model.get_parents(match_nodes[0])[0]

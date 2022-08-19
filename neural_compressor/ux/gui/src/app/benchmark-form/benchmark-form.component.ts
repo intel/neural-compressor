@@ -9,8 +9,7 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specifU77777777777
-// ic language governing permissions and
+// See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder } from '@angular/forms';
@@ -42,9 +41,9 @@ export class BenchmarkFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.name = 'Benchmark' + String(this.data.index + 1);
-    if (this.data.framework === "pytorch"){
-      this.modes = ['performance']
-          }
+    if (this.data.framework === "pytorch") {
+      this.modes = ['performance'];
+    }
     this.getDatasetList()
     this.modelService.getModelList(this.data.projectId)
       .subscribe(
@@ -64,7 +63,7 @@ export class BenchmarkFormComponent implements OnInit {
       iterations: [10],
       numOfInstance: [this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'] / 4],
       coresPerInstance: [4],
-      commandLine:['']
+      commandLine: ['']
     });
 
     this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
@@ -104,7 +103,7 @@ export class BenchmarkFormComponent implements OnInit {
       number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
       cores_per_instance: this.benchmarkFormGroup.get('coresPerInstance').value,
       warmup_iterations: this.benchmarkFormGroup.get('warmup').value,
-      command_line:this.benchmarkFormGroup.get('commandLine').value
+      command_line: this.benchmarkFormGroup.get('commandLine').value
     })
       .subscribe(
         response => {

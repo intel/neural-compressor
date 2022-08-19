@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 class Lightning(object):
     def __init__(self, file) -> None:
         self.file = file
@@ -25,10 +24,10 @@ class Lightning(object):
                 new_line = self.add(line)
                 if self.not_modify(new_line):
                     new_line = self.modify(new_line)
-                self.result.append(new_line)
+                self.result.append(new_line)     
             elif self.not_modify(line):
                 new_line = self.modify(line)
-                self.result.append(new_line)
+                self.result.append(new_line) 
             if not self.not_add_accelerator(line) and not self.not_add_precision(line) and not self.not_modify(line):
                 if line == '' and self.result[-1] == '':
                     continue
@@ -39,7 +38,7 @@ class Lightning(object):
                 self.result[index] += '\n'
         return ''.join(self.result)
 
-    def not_add_precision(self, s):
+    def not_add_precision(self,s):
         if 'Trainer' in s:
             if 'precision' not in s:
                 return True
@@ -47,7 +46,7 @@ class Lightning(object):
                 return False
         return False
 
-    def not_add_accelerator(self, s):
+    def not_add_accelerator(self,s):
         if 'Trainer' in s:
             if 'accelerator' not in s:
                 return True
@@ -55,7 +54,7 @@ class Lightning(object):
                 return False
         return False
 
-    def add(self, s):
+    def add(self,s):
         if 'Trainer' in s:
             if 'precision' not in s:
                 s_index = s.find(')')
@@ -71,16 +70,16 @@ class Lightning(object):
         return True
 
     def modify(self, s):
-        if '16' in s:
+        if '16' in s: 
             old = '16'
-            s = s.replace(old, '\"bf16\"')
+            s = s.replace(old,'\"bf16\"')
         if '32' in s:
             old = '32'
-            s = s.replace(old, '\"bf16\"')
+            s = s.replace(old,'\"bf16\"')
         if '\"gpu\"' in s:
             old = '\"gpu\"'
-            s = s.replace(old, '\"cpu\"')
+            s = s.replace(old,'\"cpu\"')
         if '\"tpu\"' in s:
             old = '\"tpu\"'
-            s = s.replace(old, '\"cpu\"')
+            s = s.replace(old,'\"cpu\"')
         return s

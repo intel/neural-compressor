@@ -40,6 +40,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
     fuse_sum_op_types = (
         [b'BiasAdd', b'Sum'],
         [b'BiasAdd', b'Sum', b'Relu'],
+        [b'BiasAdd', b'Sum', b'LeakyRelu'],
         [b'BiasAdd', b'Relu', b'Sum'],
         [b'BiasAdd', b'LeakyRelu', b'Sum']
         )
@@ -218,7 +219,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             
             if self.new_api and new_node.op in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D'):
                 input_data_type = dtypes.qint8 if new_node.attr["Tinput"].type == dtypes.qint8 else dtypes.quint8
-                Helper.set_attr_type_list(new_node, 'input_types', [
+                Helper.set_attr_type_list(new_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum if new_node.attr["Tbias"].type == dtypes.float32 \
@@ -232,12 +233,12 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 ])
 
                 if quantized_node_op not in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D'): 
-                    Helper.set_attr_type_list(new_node, 'out_types', self.output_types)
+                    Helper.set_attr_type_list(new_node, 'Thost_outputs', self.output_types)
                     new_node.attr["Tsummand"].CopyFrom(attr_value_pb2.AttrValue(type=self.output_types[0]))
                 else:
                     if str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"_FusedHardSwish"]):
                         self.fused_ops= [b"BiasAdd", b"_FusedHardSwish", b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -247,7 +248,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtype_map_dict[requantize_node.attr['out_type'].type])
                     elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"_FusedSwish"]):
                         self.fused_ops= [b"BiasAdd", b"_FusedSwish", b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -257,7 +258,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtype_map_dict[requantize_node.attr['out_type'].type])
                     elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"Relu"]):
                         self.fused_ops= [b"BiasAdd", b"Relu", b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -267,7 +268,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtype_map_dict[requantize_node.attr['out_type'].type])
                     elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"LeakyRelu"]):
                         self.fused_ops= [b"BiasAdd", b"LeakyRelu", b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -277,7 +278,17 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtype_map_dict[requantize_node.attr['out_type'].type])
                     elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"Elu"]):
                         self.fused_ops= [b"BiasAdd", b"Elu", b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
+                                              requantize_node.attr['out_type'].type,
+                                              dtypes.float32.as_datatype_enum,
+                                              dtypes.float32.as_datatype_enum ])
+                        Helper.set_attr_dtype(new_node, "out_type", \
+                            dtype_map_dict[requantize_node.attr['out_type'].type])
+                        Helper.set_attr_dtype(new_node, "Tsummand", \
+                            dtype_map_dict[requantize_node.attr['out_type'].type])
+                    elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"Sigmoid"]):
+                        self.fused_ops= [b"BiasAdd", b"Sigmoid", b"Requantize"]
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -287,7 +298,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtype_map_dict[requantize_node.attr['out_type'].type])
                     elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd"]):
                         self.fused_ops= [b"BiasAdd", b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -296,7 +307,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         Helper.set_attr_dtype(new_node, "Tsummand", \
                             dtype_map_dict[requantize_node.attr['out_type'].type])
                     elif len(quantized_node.attr['fused_ops'].list.s) == 0:
-                        Helper.set_attr_type_list(new_node, 'input_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_inputs', [
                             input_data_type.as_datatype_enum,
                             dtypes.qint8.as_datatype_enum,
                             #dtypes.float32.as_datatype_enum if new_node.attr["Tbias"].type == dtypes.float32 \
@@ -309,7 +320,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                             dtypes.float32.as_datatype_enum,
                         ])
                         self.fused_ops= [b"Requantize"]
-                        Helper.set_attr_type_list(new_node, 'out_types', [
+                        Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                               requantize_node.attr['out_type'].type,
                                               dtypes.float32.as_datatype_enum,
                                               dtypes.float32.as_datatype_enum ])
@@ -326,7 +337,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 input_data_type = dtypes.qint8 if new_node.attr["Tinput"].type == dtypes.qint8 else dtypes.quint8
                 if len(quantized_node.attr['fused_ops'].list.s) == 0:
                     Helper.set_attr_string_list(new_node, 'fused_ops', [ b'Requantize'])
-                    Helper.set_attr_type_list(new_node, 'input_types', [
+                    Helper.set_attr_type_list(new_node, 'Thost_inputs', [
                         input_data_type.as_datatype_enum,
                         dtypes.qint8.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,
@@ -336,17 +347,9 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         dtypes.float32.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,
                     ])
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
-                    Helper.set_attr_dtype(new_node, "Tsummand", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
                 elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd"]):
                     Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Requantize'])
-                    Helper.set_attr_type_list(new_node, 'input_types', [
+                    Helper.set_attr_type_list(new_node, 'Thost_inputs', [
                         input_data_type.as_datatype_enum,
                         dtypes.qint8.as_datatype_enum,
                         dtypes.float32.as_datatype_enum if new_node.attr["Tbias"].type == dtypes.float32 else \
@@ -358,17 +361,9 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         dtypes.float32.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,
                     ])
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
-                    Helper.set_attr_dtype(new_node, "Tsummand", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
                 elif str(quantized_node.attr['fused_ops'].list.s) == str([b"BiasAdd", b"Relu"]):
                     Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Requantize'])
-                    Helper.set_attr_type_list(new_node, 'input_types', [
+                    Helper.set_attr_type_list(new_node, 'Thost_inputs', [
                         input_data_type.as_datatype_enum,
                         dtypes.qint8.as_datatype_enum,
                         dtypes.float32.as_datatype_enum if new_node.attr["Tbias"].type == dtypes.float32 else \
@@ -380,14 +375,15 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                         dtypes.float32.as_datatype_enum,
                         dtypes.float32.as_datatype_enum,
                     ])
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
-                    Helper.set_attr_dtype(new_node, "Tsummand", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
+
+                Helper.set_attr_type_list(new_node, 'Thost_outputs', [
+                                      requantize_node.attr['out_type'].type,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum ])
+                Helper.set_attr_dtype(new_node, "out_type", \
+                    dtype_map_dict[requantize_node.attr['out_type'].type])
+                Helper.set_attr_dtype(new_node, "Tsummand", \
+                    dtype_map_dict[requantize_node.attr['out_type'].type])
                  
             if quantized_node.op == "QuantizedConv2D" or \
                     quantized_node.op == "QuantizedConv2DWithBias" or \
@@ -485,7 +481,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
             new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             new_node.attr["Tsummand"].CopyFrom(attr_value_pb2.AttrValue(type=summand_op_type))
- 
+
             if new_node.op in ('_QuantizedConv2D', '_QuantizedDepthwiseConv2D', '_QuantizedConv3D'):
                 original_input = list(new_node.input)
                 new_input = []
@@ -497,7 +493,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.ClearField('input')
                 new_node.input.extend(new_input)
                 input_data_type = dtypes.qint8 if new_node.attr["Tinput"].type == dtypes.qint8 else dtypes.quint8
-                Helper.set_attr_type_list(new_node, 'input_types', [
+                Helper.set_attr_type_list(new_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
                     dtypes.float32.as_datatype_enum,
@@ -515,43 +511,28 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                    else dtypes.qint8)
                 if str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
                     self.fused_ops = [b'BiasAdd', b'Sum', b'Relu', b'Requantize']
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
-                elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Relu', b'Sum']):
-                    self.fused_ops = [b'BiasAdd', b'Relu', b'Sum', b'Requantize']
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
+                elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'LeakyRelu']):
+                    self.fused_ops = [b'BiasAdd', b'Sum', b'LeakyRelu', b'Requantize']
                 elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'LeakyRelu', b'Sum']):
                     self.fused_ops = [b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize']
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
+                elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Relu', b'Sum']):
+                    self.fused_ops = [b'BiasAdd', b'Relu', b'Sum', b'Requantize']
+                elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'LeakyRelu', b'Sum']):
+                    self.fused_ops = [b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize']
                     #Current fusion requires summand has same dtype as output if output is qint8
                     Helper.set_attr_dtype(new_node, "Tsummand", \
                         dtype_map_dict[requantize_node.attr['out_type'].type])
-
                 elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum']):
                     self.fused_ops = [b'BiasAdd', b'Sum', b'Requantize']
-                    Helper.set_attr_type_list(new_node, 'out_types', [
-                                          requantize_node.attr['out_type'].type,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum ])
-                    Helper.set_attr_dtype(new_node, "out_type", \
-                        dtype_map_dict[requantize_node.attr['out_type'].type])
                     #Current fusion requires summand has same dtype as output if output is qint8
                     Helper.set_attr_dtype(new_node, "Tsummand", \
                         dtype_map_dict[requantize_node.attr['out_type'].type])
+                Helper.set_attr_type_list(new_node, 'Thost_outputs', [
+                                      requantize_node.attr['out_type'].type,
+                                      dtypes.float32.as_datatype_enum,
+                                      dtypes.float32.as_datatype_enum ])
+                Helper.set_attr_dtype(new_node, "out_type", \
+                    dtype_map_dict[requantize_node.attr['out_type'].type])
                 Helper.set_attr_string_list(new_node, 'fused_ops', self.fused_ops)
 
             if not self.new_api:

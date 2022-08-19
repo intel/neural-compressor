@@ -76,10 +76,10 @@ Where (Default values are shown in the square brackets):
    * $CONFIG_FILE ["./transformer_lt_mlperf.yaml"]-- The path to quantization configuration .yaml file to load for tuning
    * $BATCH_SIZE [64]-- The batch size for model inference
    * $ITERATIONS [-1]-- The user-defined total inference iterations in benchmark mode. If it is -1, it means to run the entire dataset
-   * $WARMUPS [5]-- The number of warmup steps before benchmarking the model
+   * $WARMUPS [10]-- The number of warmup steps before benchmarking the model
    * $VARIANT ["uncased"]-- The case sensitive type to compute BLEU score, which is one of two options: 'uncased'/'cased'
    * $INTER_THREADS [2]-- The number of inter op parallelism thread to use, which can be set to the number of sockets
-   * $INTRA_THREADS [56]-- The number of intra op parallelism thread to use, which can be set to the number of cores
+   * $INTRA_THREADS [28]-- The number of intra op parallelism thread to use, which can be set to the number of physical core per socket
 
 
 Details of enabling Intel® Neural Compressor on Transformer_LT_mlperf for Tensorflow.

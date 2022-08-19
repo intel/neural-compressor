@@ -8,14 +8,9 @@ import numpy as np
 import tensorflow as tf
 import logging
 
-from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import function
-from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
-from pkg_resources import parse_version
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -326,7 +321,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
-
+   
     @disable_random()
     def test_conv_fusion_with_last_conv(self):
         logging.getLogger().info("test_conv_fusion_with_last_conv")
@@ -853,6 +848,38 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     break
             self.assertEqual(found_conv_fusion, True)
 
+    # fuse conv + biasadd + sigmoid
+    @disable_random()
+    def test_conv_biasadd_sigmoid_fusion(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        normed = tf.compat.v1.layers.batch_normalization(conv)
+
+        sigmoid = tf.math.sigmoid(normed, name='op_to_store')
+
+        out_name = sigmoid.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            found_conv_fusion = True
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Sigmoid':
+                    found_conv_fusion = False
+                    break
+            self.assertEqual(found_conv_fusion, True)
 
 if __name__ == '__main__':
     unittest.main()

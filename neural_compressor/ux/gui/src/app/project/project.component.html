@@ -60,25 +60,23 @@
       </mat-tab>
     </ng-container>
 
-    <mat-tab  [disabled]="is_pytorch">
+    <mat-tab [disabled]="is_pytorch">
       <ng-template mat-tab-label>
-        <img *ngIf="project['input_model']['framework']['name'] !== 'PyTorch'" class="tab-icon"
-        src="./../../assets/234a-database-solid.svg">
-        <img *ngIf="project['input_model']['framework']['name'] === 'PyTorch'" class="tab-icon"
-        src="./../../assets/234a-database-solid-disable.svg">
+        <img *ngIf="!is_pytorch" class="tab-icon" src="./../../assets/234a-database-solid.svg">
+        <img *ngIf="is_pytorch" class="tab-icon" src="./../../assets/234a-database-solid-disable.svg">
         <div joyrideStep="datasetTour" [stepContent]="datasetTour"
           [matTooltip]="!is_pytorch ? null :'Datasets is not available for PyTorch Script-based Model.'">
           Datasets
         </div>
       </ng-template>
-      <ng-template #datasetsTour *ngIf="project['input_model']['framework']['name'] !== 'PyTorch'">
+      <ng-template #datasetsTour *ngIf="!is_pytorch">
         Add new datasets to experiment with the model.
       </ng-template>
-      <app-datasets *ngIf="project['input_model']['framework']['name'] !== 'PyTorch'" [framework]="project['input_model']['framework']['name']"
+      <app-datasets *ngIf="!is_pytorch" [framework]="project['input_model']['framework']['name']"
         [domain]="project['input_model']['domain']['name']"
         [domainFlavour]="project['input_model']['domain_flavour']['name']">
       </app-datasets>
-      <p *ngIf="project['input_model']['framework']['name'] === 'PyTorch'">Datasets is not available for PyTorch Script-based Model.</p>
+      <p *ngIf="is_pytorch">Datasets is not available for PyTorch Script-based Model.</p>
     </mat-tab>
 
     <ng-container *ngIf="project['input_model']">

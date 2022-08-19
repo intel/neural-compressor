@@ -6,6 +6,7 @@ import os
 import yaml
 import numpy as np
 import tensorflow as tf
+import logging
 
 from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
@@ -90,6 +91,7 @@ class TestConvRequantizedFusionOldAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv_biasadd_relu6_fusion(self):
+        logging.getLogger().info("test_conv_biasadd_relu6_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -122,7 +124,6 @@ class TestConvRequantizedFusionOldAPI(unittest.TestCase):
                     break
             self.assertEqual(found_conv_fusion, True)
 
-
 class TestConvRequantizedFusionNewAPI(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -134,6 +135,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv_biasadd_relu6_fusion(self):
+        logging.getLogger().info("test_conv_biasadd_relu6_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -168,6 +170,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_single_conv3d_fusion(self):
+        logging.getLogger().info("test_single_conv3d_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1,64,64,64,1], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -200,6 +203,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
     
     @disable_random()
     def test_conv3d_biasadd_fusion(self):
+        logging.getLogger().info("test_conv3d_biasadd_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1,64,64,64,1], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -228,7 +232,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
-
+ 
     """
     @disable_random()
     def test_conv3d_biasadd_add_fusion(self):
@@ -237,7 +241,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
         x_pad = tf.pad(x, paddings, "CONSTANT")
         conv_weights = tf.compat.v1.get_variable("weight3", [4, 4, 4, 1, 64],
                                                  initializer=tf.compat.v1.random_normal_initializer())
-        conv = tf.nn.conv3d(x_pad, conv_weights, strides=[1,2,2,2,1], padding="VALID")
+        conv = tf.nn.conv3d(x_pad, conv_weights, strides=[1,2,2,2,1], padding="SAME")
         add = tf.raw_ops.AddV2(x=conv, y=tf.constant([3.0]), name="normed_addv2")
         out_name = add.name.split(':')[0]
         with tf.compat.v1.Session() as sess:
@@ -264,6 +268,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1,64,64,64,1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight6", [4, 4, 4, 1, 64],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -291,13 +296,47 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_QuantizedConv3D' and \
+                   i.attr['fused_ops'].list.s == [b'BiasAdd', b'Requantize']:
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
 
     @disable_random()
+    def test_conv2d_biasadd_elu_fusion(self):
+        input = tf.compat.v1.placeholder(tf.float32, shape=(1,3,3,1), name='input')
+        weight = tf.compat.v1.constant(np.random.random((2,2,1,1)).astype(np.float32), name='weight')
+        bias = tf.constant(np.random.random((1)), name='bias', dtype = tf.float32)
+        conv = tf.nn.conv2d(input=input, filters=weight, strides=[1,1,1,1], padding='VALID', name='conv')
+        bias_add = tf.nn.bias_add(conv, bias, name = 'bias_add')
+        res = tf.nn.elu(bias_add, name = 'res')
+        output = tf.nn.softmax(res, name = 'op_to_store')
+
+        out_name = output.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            self.assertNotEqual(output_graph, None)
+            elu_fused = False
+            for node in output_graph.graph_def.node:
+                if node.name == 'conv_eightbit_requantize':
+                    if b'Elu' in node.attr['fused_ops'].list.s:
+                        elu_fused = True
+            self.assertEqual(elu_fused, True)
+
+    @disable_random()
     def test_conv3d_add_const_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1,64,64,64,1], name="input")
         conv_weights = tf.compat.v1.get_variable("weight11", [4, 4, 4, 1, 64],
                                                  initializer=tf.compat.v1.random_normal_initializer())
@@ -345,6 +384,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv_add_add_fusion(self):
+        logging.getLogger().info("test_conv_add_add_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -379,6 +419,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_single_conv2d_fusion(self):
+        logging.getLogger().info("test_single_conv2d_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -409,6 +450,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_addn_const_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_addn_const_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         top_relu = tf.nn.relu(x)
         conv3d_1_weights = tf.compat.v1.get_variable("weight14", [3, 3, 3, 16, 32],
@@ -447,6 +489,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_const_addn_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_addn_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -488,6 +531,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_addn_fusion(self):
+        logging.getLogger().info("test_conv3d_add_addn_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -523,6 +567,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_addn_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_addn_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -562,6 +607,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1,64,64,64,1], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -594,6 +640,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_fusion(self):
+        logging.getLogger().info("test_conv3d_add_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -628,6 +675,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_const_addn_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_addn_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -663,13 +711,14 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 if i.op == '_QuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
-                    if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
+                    if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
                         found_conv_biasadd_fusion = True
             self.assertEqual(found_conv_sumadd_fusion, True)
             self.assertEqual(found_conv_biasadd_fusion, True)
 
     @disable_random()
     def test_conv3d_add_const_addn_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_addn_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -706,6 +755,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_no_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_no_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -739,6 +789,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_const_relu_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_relu_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -772,6 +823,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
     
     @disable_random()
     def test_conv2d_add_const_leakyrelu_add_fusion(self):
+        logging.getLogger().info("test_conv2d_add_const_leakyrelu_add_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -808,6 +860,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_const_leakyrelu_add_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_leakyrelu_add_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")
@@ -844,6 +897,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
     @disable_random()
     def test_conv3d_add_addn_non_const_fusion(self):
+        logging.getLogger().info("test_conv3d_add_addn_non_const_fusion")
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
         x_pad = tf.pad(x, paddings, "CONSTANT")

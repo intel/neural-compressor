@@ -108,6 +108,11 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, **kwargs):
         version = get_torch_version()
         if version < PyTorchVersionMode.PT111.value:
             quantized_ops["default_qconfig"] = None
+        else:
+            from torch.ao.quantization import default_embedding_qat_qconfig
+            for op in tune_cfg['quantizable_ops']:
+                if op[1] in ['Embedding', 'EmbeddingBag']:
+                    quantized_ops[op[0]] = default_embedding_qat_qconfig
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         model.train()
         if tune_cfg['sub_module_list'] is None:
@@ -155,9 +160,19 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             weights_file = checkpoint_dir
             stat_dict = torch.load(weights_file)
         elif os.path.isdir(checkpoint_dir):
-            weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
-                                        'best_model.pt')
-            stat_dict = torch.load(weights_file)
+            try:
+                weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                            'best_model.pt')
+                stat_dict = torch.load(weights_file)
+            except:
+                tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                            'best_configure.yaml')
+                weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)),
+                                            'best_model_weights.pt')
+                stat_dict = torch.load(weights_file)
+                with open(tune_cfg_file, 'r') as f:
+                    tune_cfg = yaml.safe_load(f)
+                stat_dict['best_configure'] = tune_cfg
         else:
             logger.error("Unexpected checkpoint type:{}. \
               Only file dir/path or state_dict is acceptable")

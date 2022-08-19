@@ -32,6 +32,7 @@ from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from ..generic.graph_cse_optimizer import GraphCseOptimizer
+from ..generic.dequantize_cast_optimizer import DequantizeCastOptimizer
 
 DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -129,11 +130,10 @@ class BF16Convert(GraphRewriterBase):
             return
         else:
             self.converted_ops.append(bf16_node.name)
-
+        
         inputs_dt, outputs_dt = self._dtype(bf16_node)
         inputs_dt_val, outputs_dt_val = self._dtype_val(bf16_node)
         allowed_dt_val = self._allowed_dtype_val(bf16_node)
-
         for index, input_name in enumerate(bf16_node.input):
             if input_name.startswith('^'):
                 continue
@@ -142,14 +142,12 @@ class BF16Convert(GraphRewriterBase):
                 input_name)]
             input_node = input_detail.node
             input_node_outputs = input_detail.outputs
-
             if inputs_dt[index] in allowed_dt_val and \
                                         dtypes.bfloat16.as_datatype_enum not in allowed_dt_val[inputs_dt[index]]:
                 continue
 
             if inputs_dt_val[index] != DT_FLOAT32:
                 continue
-
             if input_node.op == 'Cast' and \
                  input_node.attr["SrcT"] == DT_BFLOAT16 and \
                  input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
@@ -167,7 +165,9 @@ class BF16Convert(GraphRewriterBase):
                 input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
                     tensor=tensor_util.make_tensor_proto(
                         fp32_value, dtypes.bfloat16, fp32_value.shape)))
-            elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1:
+            elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1 \
+                                                        and input_node.attr['mode'].s != b'MIN_FIRST':
+                # Dequantize with mode MIN_FIRST does not support bf16 in both eigen and mkl
                 _, outputs_dt_input_node = self._dtype(input_node)
                 allowed_input_node_dt_val = self._allowed_dtype_val(input_node)
                 if outputs_dt_input_node[0] in allowed_input_node_dt_val and \
@@ -239,6 +239,10 @@ class BF16Convert(GraphRewriterBase):
             if bf16_node_name not in self.cur_graph.node_name_details:
                 self.bf16_ops.remove(bf16_node_name)
                 continue
+            else:
+                if "fused_ops" in self.cur_graph.node_name_details[bf16_node_name].node.attr:
+                    self.bf16_ops.remove(bf16_node_name)
+                    continue
         for bf16_node_name in set(self.bf16_ops):
             self._bf16_convert(bf16_node_name)
         return self.cur_graph.dump_graph()
@@ -251,5 +255,7 @@ class BF16Convert(GraphRewriterBase):
         converted_graph_def = self._model_bf16_convert()
         # remove those ops which could be shared by Graph Cse optimizer
         converted_graph_def = GraphCseOptimizer(converted_graph_def).do_transformation()
+        # remove cast and set dequantize dtype bf16 when all outputs of dequantize are bf16
+        converted_graph_def = DequantizeCastOptimizer(converted_graph_def).do_transformation()
         converted_graph_def.library.CopyFrom(self.model.library)
         return converted_graph_def

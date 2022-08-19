@@ -63,7 +63,7 @@ class TestResponseGenerator(unittest.TestCase):
             "foo.txt",
             mimetype="mimetype",
             as_attachment=False,
-            cache_timeout=0,
+            max_age=0,
         )
 
     def test_add_refresh(self) -> None:

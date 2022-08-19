@@ -97,79 +97,75 @@ def get_torch_white_list(approach):
 
 
 def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
-    if device == "ipex" and IPEX_110: # pragma: no cover 
-        if isinstance(input, torch.Tensor):
-            if running_mode == "calibration":
-                with ipex.quantization.calibrate(conf, default_recipe=True):
-                    input = input.contiguous(memory_format=torch.channels_last)
-                    output = model(input)
-            else:
-                input = input.contiguous(memory_format=torch.channels_last)
-                output = model(input)
-        elif isinstance(input, list) or isinstance(input, tuple):
-            if running_mode == "calibration":
-                with ipex.quantization.calibrate(conf, default_recipe=True):
-                    output = model(*input)
-            else:
-                output = model(*input)
-        elif isinstance(input, dict):
-            if running_mode == "calibration":
-                with ipex.quantization.calibrate(conf, default_recipe=True):
-                    output = model(**input)
-            else:
-                output = model(**input)
-    elif device == "ipex" and IPEX_112: # pragma: no cover 
-        if isinstance(input, torch.Tensor):
-            input = input.contiguous(memory_format=torch.channels_last)
-            output = model(input)
-        elif isinstance(input, list) or isinstance(input, tuple):
-            output = model(*input)
-        elif isinstance(input, dict):
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        if device=='cpu':
             output = model(**input)
-    else:
-        if isinstance(input, dict) or isinstance(input, UserDict):
-            if device=='cpu':
+        elif device=='ipex': # pragma: no cover
+            # have to split the case to avoid exposing ipex.DEVICE outside
+            # which require intel extension installed
+            if IPEX_110:
+                if running_mode == "calibration":
+                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                        output = model(**input)
+                else:
+                    output = model(**input)
+            elif IPEX_112:
                 output = model(**input)
-            elif device=='ipex': # pragma: no cover
-                # have to split the case to avoid exposing ipex.DEVICE outside
-                # which require intel extension installed
+            else:
                 for inp in input.keys():
                     input[inp] = input[inp].to(ipex.DEVICE) \
                         if isinstance(input[inp], torch.Tensor) else input[inp]
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(**input)
-            else:   # pragma: no cover
-                for inp in input.keys():
-                    input[inp] = input[inp].to("dpcpp" if device=="gpu" else device) \
-                        if isinstance(input[inp], torch.Tensor) else input[inp]
-                output = model(**input)
-        elif isinstance(input, list) or isinstance(input, tuple):
-            if device=='cpu':
+        else:   # pragma: no cover
+            for inp in input.keys():
+                input[inp] = input[inp].to("dpcpp" if device=="gpu" else device) \
+                    if isinstance(input[inp], torch.Tensor) else input[inp]
+            output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if device=='cpu':
+            output = model(*input)
+        elif device=='ipex': # pragma: no cover
+            if IPEX_110:
+                if running_mode == "calibration":
+                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                        output = model(*input)
+                else:
+                    output = model(*input)
+            elif IPEX_112:
                 output = model(*input)
-            elif device=='ipex': # pragma: no cover
+            else:
                 input = [inp.to(ipex.DEVICE) \
                          if isinstance(inp, torch.Tensor) else inp
                          for inp in input]
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(*input)
-            else:   # pragma: no cover
-                tmp_device = "dpcpp" if device=="gpu" else device
-                input = [inp.to(tmp_device) \
-                        if isinstance(inp, torch.Tensor) else inp
-                        for inp in input] # pylint: disable=E1133
-                output = model(*input)
-        else:
-            if device=='cpu' or not isinstance(input, torch.Tensor):
+        else:   # pragma: no cover
+            tmp_device = "dpcpp" if device=="gpu" else device
+            input = [inp.to(tmp_device) \
+                    if isinstance(inp, torch.Tensor) else inp
+                    for inp in input] # pylint: disable=E1133
+            output = model(*input)
+    else:
+        if device=='cpu' or not isinstance(input, torch.Tensor):
+            output = model(input)
+        elif device=='ipex': # pragma: no cover
+            if IPEX_110:
+                if running_mode == "calibration":
+                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                        output = model(input)
+                else:
+                    output = model(input)
+            elif IPEX_112:
                 output = model(input)
-            elif device=='ipex': # pragma: no cover
+            else:
                 input = input.to(ipex.DEVICE)
                 with ipex.AutoMixPrecision(conf, running_mode=running_mode):
                     output = model(input)
-            else:   # pragma: no cover
-                input = input.to("dpcpp" if device=="gpu" else device) # pylint: disable=no-member
-                output = model(input)
+        else: # pragma: no cover
+            input = input.to("dpcpp" if device=="gpu" else device) # pylint: disable=no-member
+            output = model(input)
     return output
-
 
 def get_ops_recursively(model, prefix, ops={}):
     """This is a helper function for `graph_info`,
@@ -735,16 +731,6 @@ class TemplateAdaptor(Adaptor):
         self.sub_module_list = None
         self.default_qconfig = framework_specific_info['default_qconfig'] \
             if 'default_qconfig' in framework_specific_info else None
-        self.fused_op = ['nni.ConvReLU1d',
-                         'nni.ConvReLU2d',
-                         'nni.ConvReLU3d',
-                         'nni.LinearReLU',
-                         'nni.BNReLU2d',
-                         'nni.BNReLU3d',
-                         'nniqat.ConvReLU2d',
-                         'nniqat.ConvBn2d',
-                         'nniqat.ConvBnReLU2d',
-                         'nni.LinearReLU']
 
         if 'approach' in framework_specific_info:   # pragma: no cover
             self.approach = framework_specific_info['approach']
@@ -1020,9 +1006,7 @@ class TemplateAdaptor(Adaptor):
             (bool): is fused or not
         """
         op_type = str(type(module))
-        op_type = op_type[op_type.rfind('.')+1:].strip('>').strip('\'')
-        op_type = 'nni.' + op_type
-        if op_type in self.fused_op:
+        if 'fused' in op_type:
             return True
         else:
             return False
@@ -1389,8 +1373,18 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
 
-        for name, child in model.named_children():
-            op_name = prefix + '.' + name if prefix != '' else name
+        module_dict = dict(model.named_modules())
+        for op_name, child in model.named_modules():
+            if self.is_fused_module(child):
+                for name, _ in child.named_children():
+                    module_prefix = op_name + '.' + name
+                    if module_prefix in module_dict:
+                        module_dict.pop(module_prefix) # remove sub-modules of fused modules
+                    if op_name in self.fused_dict:
+                        self.fused_dict[op_name] = [self.fused_dict[op_name], module_prefix]
+                    else:
+                        self.fused_dict[op_name] = module_prefix
+        for op_name, child in module_dict.items():
             # there is accuracy issue in quantized LayerNorm op in pytorch <1.8.1,
             # so remove it here
             if op_name in self.non_quant_dict['skipped_module_names'] or \
@@ -1403,15 +1397,6 @@ class PyTorchAdaptor(TemplateAdaptor):
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
                     str(child.__class__.__name__)))
-                if self.is_fused_module(child):
-                    for name, _ in child.named_children():
-                        module_prefix = op_name + '.' + name
-                        if op_name in self.fused_dict:
-                            self.fused_dict[op_name] = [self.fused_dict[op_name], module_prefix]
-                        else:
-                            self.fused_dict[op_name] = module_prefix
-            else:
-                self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
     def _get_scale_zeropoint(self, model, tune_cfg):
         """get activation scale and zero_point for converted model.
@@ -1426,9 +1411,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         modules = dict(model.named_modules())
-        for key in tune_cfg['op']:
-            value = tune_cfg['op'][key]
-            assert isinstance(value, dict)
+        for key, value in tune_cfg['op'].items():
             if hasattr(modules[key[0]], 'scale'):
                 value['activation']['scale'] = float(modules[key[0]].scale)
             if hasattr(modules[key[0]], 'zero_point'):
@@ -2133,6 +2116,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 self.model_calibration(q_model, dataloader, iterations,
                                        ipex_conf, tune_cfg.get('calib_sampling_size', 1))
                 ipex_conf.save(self.ipex_config_path)
+                example_inputs = self.get_example_inputs(dataloader)
+                ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)
+                q_model = ipex.quantization.convert(q_model, ipex_conf, example_inputs)
             if IPEX_112:
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 static_qconfig = QConfig(activation=MinMaxObserver.with_args(
@@ -2399,6 +2385,12 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
             if not IPEX_110 and not IPEX_112: 
                 ipex_conf = ipex.AmpConf(torch.int8)
+                self.model_calibration(
+                                init_model,
+                                self.q_dataloader,
+                                conf=ipex_conf,
+                                )
+                ipex_conf.save(self.ipex_config_path)
             if IPEX_110:
                 ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
                 try:
@@ -2417,14 +2409,17 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 ipex_conf.save(self.ipex_config_path)
             if IPEX_112:
                 if self.approach == 'post_training_static_quant':
-                    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                   qscheme=torch.per_channel_symmetric))
-                    example_inputs = self.get_example_inputs(self.q_dataloader)
-                    init_model = ipex.quantization.prepare(init_model, static_qconfig, \
-                                            example_inputs=example_inputs, inplace=True)
+                    if hasattr(init_model,'save_qconf_summary'):
+                        pass
+                    else:
+                        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                       qscheme=torch.per_channel_symmetric))
+                        example_inputs = self.get_example_inputs(self.q_dataloader)
+                        init_model = ipex.quantization.prepare(init_model, static_qconfig, \
+                                                example_inputs=example_inputs, inplace=True)
                     self.model_calibration(init_model, self.q_dataloader)
                     init_model.save_qconf_summary(qconf_summary = self.ipex_config_path)
             del init_model
@@ -2717,13 +2712,25 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                     qscheme=torch.per_tensor_affine,
                                     reduce_range=REDUCE_RANGE,
                                     observer=torch.quantization.MovingAverageMinMaxObserver),
-                            weight=torch.quantization.default_weight_fake_quant)
+                            weight=torch.quantization.default_weight_fake_quant) \
+                        if self.version < PyTorchVersionMode.PT110.value else \
+                          torch.quantization.QConfig(
+                            activation=torch.quantization.FusedMovingAvgObsFakeQuantize.with_args(
+                                       dtype=torch.quint8,
+                                       qscheme=torch.per_tensor_affine,
+                                       reduce_range=REDUCE_RANGE),
+                            weight=torch.quantization.default_fused_per_channel_wt_fake_quant)
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         quantized_ops = {op[0]:q_cfgs for op in quantizable_ops}
         if self.version < PyTorchVersionMode.PT111.value:
             quantized_ops["default_qconfig"] = None
+        else:
+            from torch.ao.quantization import default_embedding_qat_qconfig
+            for op in quantizable_ops:
+                if op[1] in ['Embedding', 'EmbeddingBag']:
+                    quantized_ops[op[0]] = default_embedding_qat_qconfig
         from torch.quantization.quantize_fx import prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         self.model._model.train()
@@ -2957,8 +2964,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             None
         """
 
-        for name, child in model.named_children():
-            op_name = prefix + '.' + name if prefix != '' else name
+        for op_name, child in model.named_modules():
             if type(child) in self.white_list \
                and type(child) != torch.nn.Sequential \
                and type(child) != torch.quantization.stubs.DeQuantStub:
@@ -2966,8 +2972,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                     if str(child.__class__.__name__) in unify_op_type_mapping else
                     str(child.__class__.__name__)))
-            else:
-                self._get_quantizable_ops_recursively(child, op_name, quantizable_ops)
 
     def _get_module_scale_zeropoint(self, model, tune_cfg, prefix=''):
         """get activation scale and zero_point for converted module.
@@ -3136,35 +3140,35 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         try:
             tmp_model = copy.deepcopy(model._model)
-        except Exception as e:   # pragma: no cover
-            tmp_model = model._model
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
-        tmp_model.train() if is_qat else tmp_model.eval()
-        from torch.fx import GraphModule
-        from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
-        if model.kwargs is not None:
-            prepare_custom_config_dict = model.kwargs.get(
-                                            'prepare_custom_config_dict', {})
-        else:
-            prepare_custom_config_dict = {}
-        skipped_module_names = prepare_custom_config_dict.get(\
-                                            'non_traceable_module_name', [])
-        skipped_module_classes = prepare_custom_config_dict.get(\
-                                            'non_traceable_module_class', [])
-        try:
-            tracer = QuantizationTracer(
-                skipped_module_names, skipped_module_classes)
-            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version >= PyTorchVersionMode.PT111.value:   # pragma: no cover
-                # pylint: disable=E1124
-                fused_model = _fuse_fx(graph_module, is_qat,
-                                       fuse_custom_config_dict=prepare_custom_config_dict)
+            tmp_model.train() if is_qat else tmp_model.eval()
+            from torch.fx import GraphModule
+            from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
+            if model.kwargs is not None:
+                prepare_custom_config_dict = model.kwargs.get(
+                                                'prepare_custom_config_dict', {})
             else:
-                fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
-        except:
-            self.sub_module_list = []
-            self._fuse_sub_graph(tmp_model, prefix='', is_qat=is_qat)
-            fused_model = tmp_model
+                prepare_custom_config_dict = {}
+            skipped_module_names = prepare_custom_config_dict.get(\
+                                                'non_traceable_module_name', [])
+            skipped_module_classes = prepare_custom_config_dict.get(\
+                                                'non_traceable_module_class', [])
+            try:
+                tracer = QuantizationTracer(
+                    skipped_module_names, skipped_module_classes)
+                graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
+                if self.version >= PyTorchVersionMode.PT111.value:   # pragma: no cover
+                    # pylint: disable=E1124
+                    fused_model = _fuse_fx(graph_module, is_qat,
+                                        fuse_custom_config_dict=prepare_custom_config_dict)
+                else:
+                    fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
+            except:
+                self.sub_module_list = []
+                self._fuse_sub_graph(tmp_model, prefix='', is_qat=is_qat)
+                fused_model = tmp_model
+        except Exception as e:   # pragma: no cover
+            fused_model = model._model
+            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
         return fused_model
 
     def _fuse_sub_graph(self, model, prefix, is_qat):

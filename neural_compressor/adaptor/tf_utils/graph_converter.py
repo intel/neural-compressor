@@ -56,6 +56,8 @@ from .graph_rewriter.int8.freeze_fake_quant import FreezeFakeQuantOpOptimizer
 from .graph_rewriter.int8.fuse_conv_requantize import FuseConvRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
+from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeNewAPITransformer
+from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeNewAPITransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
@@ -547,14 +549,14 @@ class GraphConverter:
         self.scale_info.update(requant_min_max)
 
         self._tmp_graph_def = QuantizedRNNConverter(
-            self._tmp_graph_def, self._calibration_data, self._rnn_details).do_transformation()
+            self._tmp_graph_def, self._calibration_data, self._rnn_details, self.new_api).do_transformation()
 
         if 'scale_propagation_max_pooling' in self.recipes and \
                 self.recipes['scale_propagation_max_pooling']:
             self._tmp_graph_def = ScaleProPagationTransformer(
                 self._tmp_graph_def).do_transformation()
 
-        if debug:
+        if debug and not self.new_api:
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_frozen_range_model_path)
@@ -570,18 +572,18 @@ class GraphConverter:
 
         if not self.fake_quant:
             # TODO Use MatMul and BatchMatMul new API
-            #if self.qdq_enabled:
-            #    self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
-            #        self._tmp_graph_def).do_transformation()
-            #
-            #    self._tmp_graph_def = FuseMatMulRequantizeDequantizeNewAPITransformer(
-            #        self._tmp_graph_def).do_transformation()
-            #else:
-            self._tmp_graph_def = FuseMatMulRequantizeTransformer(
-                self._tmp_graph_def).do_transformation()
+            if self.qdq_enabled:
+                self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
+                    self._tmp_graph_def).do_transformation()
+            
+                self._tmp_graph_def = FuseMatMulRequantizeDequantizeNewAPITransformer(
+                    self._tmp_graph_def).do_transformation()
+            else:
+                self._tmp_graph_def = FuseMatMulRequantizeTransformer(
+                            self._tmp_graph_def).do_transformation()
 
-            self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
-                self._tmp_graph_def).do_transformation()
+                self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
+                            self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,

@@ -1,6 +1,8 @@
 Full Publications 
 ==========
 
+* [地址标准化服务AI深度学习模型推理优化实践](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
+* [Dynamic Quantization with Intel Neural Compressor and Transformers](https://www.youtube.com/watch?v=-_2ha2CNWXA) (Mar 2022)
 * [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
 * [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
 * [Intel® Neural Compressor oneAPI](https://www.intel.com/content/www/us/en/developer/tools/oneapi/neural-compressor.html) (Jun 2022)

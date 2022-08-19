@@ -82,7 +82,7 @@ function run_tuning {
         --do_eval \
         --do_train \
         --max_seq_length ${MAX_SEQ_LENGTH} \
-        --per_gpu_eval_batch_size ${batch_size} \
+        --per_device_eval_batch_size ${batch_size} \
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
         --tune \

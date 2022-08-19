@@ -51,7 +51,7 @@ class QSplit(QuantOperatorBase):
         quantized_input_names = []
         quantized_input_names.append(parent.input[0])
         if len(node.input) > 1:
-            quantized_input_names = quantized_input_names.extend(node.input[1:])
+            quantized_input_names.extend(node.input[1:])
         outputs = []
         for output in node.output:
             if output in self.quantizer.model.input_name_to_nodes:

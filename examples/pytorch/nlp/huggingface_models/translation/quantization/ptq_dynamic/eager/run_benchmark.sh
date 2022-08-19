@@ -52,8 +52,7 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    extra_cmd=''
-
+    extra_cmd='None'
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
     elif [[ ${mode} == "benchmark" ]]; then
@@ -65,10 +64,9 @@ function run_benchmark {
 
     if [ "${topology}" = "t5_WMT_en_ro" ];then
         model_name_or_path='t5-small'
-        extra_cmd="--source_lang en --target_lang ro --dataset_name wmt16 --dataset_config_name ro-en"
+        extra_cmd='translate English to Romanian: '
     elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
         model_name_or_path='Helsinki-NLP/opus-mt-en-ro'
-        extra_cmd="--source_lang en --target_lang ro --dataset_name wmt16 --dataset_config_name ro-en"
     fi
 
     if [[ ${int8} == "true" ]]; then
@@ -82,9 +80,12 @@ function run_benchmark {
         --predict_with_generate \
         --per_device_eval_batch_size ${batch_size} \
         --output_dir ${tuned_checkpoint} \
-        --source_prefix "translate English to Romanian: " \
+        --source_lang en \
+        --target_lang ro \
+        --dataset_name wmt16 \
+        --dataset_config_name ro-en\
         ${mode_cmd} \
-        ${extra_cmd}
+        --source_prefix "$extra_cmd"
 }
 
 main "$@"

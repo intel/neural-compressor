@@ -79,6 +79,15 @@ class Component(object):
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
             set_backend(self.framework)
+            if self.framework == 'tensorflow' or self.framework == 'inteltensorflow':
+                try:
+                    import tensorflow as tf
+                except Exception as e:
+                    logger.error("{}.".format(e))
+                    raise RuntimeError(
+                        "The TensorFlow framework is not correctly installed. Please check your environment"
+                    )
+
 
     def pre_process(self):
         """ Initialize the dataloader and train/eval functions from yaml config.

@@ -198,8 +198,8 @@ class TestDistillation(unittest.TestCase):
             IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][-1] = \
                 lambda x: x[:, :2,...]
         distiller = Distillation(conf)
-        distiller.student_model = self.student_model
-        distiller.teacher_model = self.teacher_model
+        distiller.student_model = common.Model(self.student_model)
+        distiller.teacher_model = common.Model(self.teacher_model)
         print('student model: {}'.format(distiller.student_model))
         _ = distiller.fit()
 

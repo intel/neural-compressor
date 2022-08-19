@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 
 # whethre to consider all import modules and perform transformation based on all codes plus all import modules
-import logging
 consider_imports = True
 
 # target batch size for feature of changing PyTorch batch size
@@ -26,6 +26,14 @@ num_benchmark_iteration = 30
 # print info for debugging purpose
 logging_level = logging.INFO
 
+# benchmark accuracy mode
+eval_accuracy = False
+
+# print code line info for debug use
+print_code_line_info = False
+
+# load transformers class def by a cache file instead of on-the-fly catch
+cache_load_transformers = True
 
 def reset_globals():
     global list_code_path
@@ -44,9 +52,9 @@ def reset_globals():
     global list_trans_insert_number_insert_lines
     global list_trans_insert_lines_to_insert
 
-    global list_trans_indenting_modified_file
-    global list_trans_indenting_location_idxs
-    global list_trans_indenting_level
+    global list_trans_indent_modified_file
+    global list_trans_indent_location_idxs
+    global list_trans_indent_level
 
     global list_all_function_name
     global list_all_function_return_item
@@ -54,6 +62,9 @@ def reset_globals():
     global list_wrapper_base_function_name
     global list_wrapper_children_function_name
     global list_wrapper_all_function_name
+
+    global list_calib_dataloader_name
+    global list_eval_func_lines
 
     list_code_path = []
     list_code_line_instance = []  # list of CodeLine instances
@@ -71,9 +82,9 @@ def reset_globals():
     list_trans_insert_number_insert_lines = []
     list_trans_insert_lines_to_insert = []
 
-    list_trans_indenting_modified_file = []
-    list_trans_indenting_location_idxs = []
-    list_trans_indenting_level = []
+    list_trans_indent_modified_file = []
+    list_trans_indent_location_idxs = []
+    list_trans_indent_level = []
 
     list_all_function_name = []
     list_all_function_return_item = []
@@ -81,3 +92,6 @@ def reset_globals():
     list_wrapper_base_function_name = []
     list_wrapper_children_function_name = []
     list_wrapper_all_function_name = []
+
+    list_calib_dataloader_name = []
+    list_eval_func_lines = []

@@ -13,24 +13,24 @@
 # limitations under the License.
 
 
+from ...utils.line_operation import get_line_indent_level
+
 class CudaToCpu(object):
     def __init__(self, file) -> None:
         self.file = file
         self.result = []
 
     def transform(self):
-        # import pdb
-        # pdb.set_trace()
         lines = self.file.split('\n')
         for line in lines:
             if self.is_delete(line):
-                pass
+                indent_level = get_line_indent_level(line)
+                new_line = " " * indent_level + "pass"
+                self.result.append(new_line)
             elif self.is_modify(line):
-                new_line = self.modify(line)
+                new_line = self.change_to_cpu(line)
                 self.result.append(new_line)
             else:
-                if line == '' and self.result[-1] == '':
-                    continue
                 self.result.append(line)
         for index, line in enumerate(self.result):
             if index != len(self.result)-1:
@@ -38,21 +38,28 @@ class CudaToCpu(object):
         return ''.join(self.result)
 
     def is_delete(self, s):
-        if 'cuda.' in s and '=' not in s:
+        if 'cuda.' in s and '=' not in s and "if" not in s:
             return True
         else:
             return False
 
     def is_modify(self, s):
-        if '\'cuda\'' in s or '\'cuda:0\'' in s or 'cuda()' in s:
+        if '\'cuda\'' in s \
+            or '"cuda"' in s \
+            or '\'cuda:0\'' in s \
+            or '"cuda:0"' in s \
+            or 'cuda()' in s:
             return True
         else:
             return False
 
-    def modify(self, s):
+    def change_to_cpu(self, s):
         if '\'cuda\'' in s or '\'cuda:0\'' in s:
             old = '\'cuda\'' if '\'cuda\'' in s else '\'cuda:0\''
             s = s.replace(old, '\'cpu\'')
+        elif '"cuda"' in s or '"cuda:0"' in s:
+            old = '"cuda"' if '"cuda"' in s else '"cuda:0"'
+            s = s.replace(old, '"cpu"')
         elif 'cuda()' in s:
             old = 'cuda'
             s = s.replace(old, 'cpu')

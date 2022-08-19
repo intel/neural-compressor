@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from typing import List
 from .. import globals
 from ..utils.line_operation import get_line_indent_level
@@ -49,27 +48,27 @@ class CodeLine:
 
 
 def register_code_line():
-    print_class_related_info = False
-    print_func_related_info = False
-    print("{:<100} {:<10} {:<20} {:<20} {:<20} {:<40} {:<20} {:<20}".format('line',
-                                                                            'line_idx',
-                                                                            'is_class_def_line',
-                                                                            'is_in_class',
-                                                                            'class_name',
-                                                                            'parent_class_name',
-                                                                            'class_def_line_idx',
-                                                                            'class_end_line_idx')) \
-        if print_class_related_info else 0
-    print("{:<100} {:<10} {:<20} {:<20} {:<20} {:<20} {:<20} {:<20} {:<20}".format('line',
-                                                                                   'line_idx',
-                                                                                   'is_func_def_line',
-                                                                                   'is_in_func',
-                                                                                   'func_name',
-                                                                                   'func_return_idx',
-                                                                                   'return_item',
-                                                                                   'func_def_line_idx',
-                                                                                   'func_end_line_idx')) \
-        if print_func_related_info else 0
+    if globals.print_code_line_info:
+        print("{:<100} {:<10} {:<20} {:<20} {:<20} {:<40} {:<20} \
+            {:<20} {:<20} {:<20} {:<20} {:<20} {:<20} {:<20} {:<20}".format(
+            'line',
+            'line_idx',
+            'is_class_def_line',
+            'is_in_class',
+            'class_name',
+            'parent_class_name',
+            'class_def_line_idx',
+            'class_end_line_idx',
+            'is_func_def_line',
+            'is_in_func',
+            'func_name',
+            'func_return_idx',
+            'return_item',
+            'func_def_line_idx',
+            'func_end_line_idx',)
+        )
+
+
     for path in globals.list_code_path:
         code = open(path, 'r').read()
         lines = code.split('\n')
@@ -235,15 +234,6 @@ def register_code_line():
             CL.parent_class_name = parent_class_name
             CL.class_def_line_idx = class_def_line_idx
             CL.class_end_line_idx = class_end_line_idx
-            print("{:<100} {:<10} {:<20} {:<20} {:<20} {:<40} {:<20} {:<20}".format(line[0:100],
-                                                                                    line_idx,
-                                                                                    is_class_def_line,
-                                                                                    is_in_class,
-                                                                                    class_name,
-                                                                                    str(
-                parent_class_name),
-                class_def_line_idx,
-                class_end_line_idx)) if print_class_related_info else 0
 
             CL.is_func_def_line = is_func_def_line
             CL.is_in_func = is_in_func
@@ -252,17 +242,29 @@ def register_code_line():
             CL.return_item = return_item
             CL.func_def_line_idx = func_def_line_idx
             CL.func_end_line_idx = func_end_line_idx
-            print("{:<100} {:<10} {:<20} {:<20} \
-                {:<20} {:<20} {:<20} {:<20} {:<20}".format(line[0:100],
-                                                           line_idx,
-                                                           is_func_def_line,
-                                                           is_in_func,
-                                                           func_name,
-                                                           func_return_idx,
-                                                           return_item[0:20],
-                                                           func_def_line_idx,
-                                                           func_end_line_idx)) \
-                if print_func_related_info else 0
+
+            if globals.print_code_line_info:
+                print("{:<100} {:<10} {:<20} {:<20} {:<20} {:<40} {:<20} \
+                    {:<20} {:<20} {:<20} {:<20} {:<20} {:<20} {:<20} {:<20}".format(
+                    line[0:100],
+                    line_idx,
+                    is_class_def_line,
+                    is_in_class,
+                    class_name,
+                    str(
+                        parent_class_name),
+                    class_def_line_idx,
+                    class_end_line_idx,
+                    is_func_def_line,
+                    is_in_func,
+                    func_name,
+                    func_return_idx,
+                    return_item[0:20],
+                    func_def_line_idx,
+                    func_end_line_idx)
+                )
+
+
 
             globals.list_code_line_instance.append(CL)
             line_idx += 1

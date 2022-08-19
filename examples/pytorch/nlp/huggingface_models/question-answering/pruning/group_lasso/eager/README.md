@@ -3,9 +3,6 @@ Step-by-Step
 
 This document describes the steps of training with sparsity for BERT model on PyTorch.
 
-> **Note:**
-> CPU training is now enabled.
-
 # Prerequisite
 
 ### 1. Installation

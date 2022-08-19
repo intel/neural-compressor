@@ -54,14 +54,14 @@ class Distillation(Component):
 
     def _on_train_begin(self):
         """ called before training """
-        assert self.teacher_model, 'teacher_model must be set.'
         assert self._model, 'student_model must be set.'
         if self._eval_func is not None:
-            score = self._eval_func(
-                self.teacher_model if getattr(self._eval_func, 'builtin', None)
-                else self.teacher_model.model
-            )
-            logger.info("teacher model score is {}.".format(str(score)))
+            if self.teacher_model:
+                score = self._eval_func(
+                    self.teacher_model if getattr(self._eval_func, 'builtin', None)
+                    else self.teacher_model.model
+                )
+                logger.info("teacher model score is {}.".format(str(score)))
 
             score = self._eval_func(
                 self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
@@ -86,12 +86,13 @@ class Distillation(Component):
         assert self.criterion, \
             'criterion must be set in yaml config file.'
         if teacher_output is None:
+            assert self.teacher_model, 'teacher_model must be set.'
             teacher_output = self.criterion.teacher_model_forward(
                 input, teacher_model=self.teacher_model._model
             )
         return self.criterion.loss_cal_sloss(student_output, teacher_output, student_loss)
 
-    def on_post_forward(self, input, teacher_output=None):
+    def on_post_forward(self, input, teacher_output=None):  # pragma: no cover
         assert False, "This method is deprecated. please use `on_after_compute_loss` instead." \
                       "on_after_compute_loss(input, student_output, student_loss, teacher_output=None)"
 
@@ -132,16 +133,15 @@ class Distillation(Component):
             loss_cfg = criterion_cfg[loss]
             criterion_builder = Criterions(self.framework)[loss](loss_cfg)
             criterion_tuple = criterion_builder()
-            assert self.teacher_model and self.student_model, \
-                "teacher_model and student_model must be set."
-            if self.framework == 'tensorflow':  # new, for tf
-                teacher_model = self.teacher_model._model
-                student_model = self.student_model._model
-            else:  # for pytorch and other frameworks
-                teacher_model = self.teacher_model.model
-                student_model = self.student_model.model
-            criterion_tuple[1]["student_model"] = student_model
-            criterion_tuple[1]["teacher_model"] = teacher_model
+            if self.teacher_model and self.student_model:
+                if self.framework == 'tensorflow':  # new, for tf
+                    teacher_model = self.teacher_model._model
+                    student_model = self.student_model._model
+                else:  # for pytorch and other frameworks
+                    teacher_model = self.teacher_model.model
+                    student_model = self.student_model.model
+                criterion_tuple[1]["student_model"] = student_model
+                criterion_tuple[1]["teacher_model"] = teacher_model
             self.criterion = criterion_tuple[0](**criterion_tuple[1])
         else:
             logger.warning("Use user defined criterion, "

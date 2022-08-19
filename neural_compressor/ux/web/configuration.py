@@ -25,8 +25,9 @@ from typing import Dict
 from numpy.random import randint
 
 from neural_compressor.utils.utility import singleton
-from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION
+from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, WORKSPACE_LOCATION
 from neural_compressor.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import determine_ip
 
 
@@ -196,6 +197,15 @@ class Configuration:
     def get_url(self) -> str:
         """Return URL to access application."""
         return f"{self.scheme}://{self.server_address}:{self.gui_port}/?token={self.token}"
+
+    def dump_token_to_file(self) -> None:
+        """Dump token to file."""
+        token_filepath = os.path.join(WORKDIR_LOCATION, "token")
+        with open(token_filepath, "w") as token_file:
+            token_file.write(self.token)
+        os.chown(token_filepath, uid=os.geteuid(), gid=os.getgid())
+        os.chmod(token_filepath, 0o600)
+        log.debug(f"Token has been dumped to {token_filepath}.")
 
     def _ensure_valid_port(self, port: int) -> None:
         """Validate if proposed port number is allowed by TCP/IP."""

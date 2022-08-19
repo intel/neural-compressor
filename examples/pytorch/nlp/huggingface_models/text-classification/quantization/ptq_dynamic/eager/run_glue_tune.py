@@ -294,14 +294,25 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
+    if model_args.int8:
+        from neural_compressor.utils.load_huggingface import OptimizedModel
+        model = OptimizedModel.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
 
     # Preprocessing the datasets
     if data_args.task_name is not None:
@@ -426,18 +437,13 @@ def main():
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func_for_nc
         q_model = quantizer.fit()
-        q_model.save(training_args.output_dir)
+        from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+        save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
         exit(0)
 
     if model_args.accuracy_only:
-        if model_args.int8:
-            from neural_compressor.utils.pytorch import load
-            new_model = load(
-                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
-        else:
-            new_model = model
         trainer = Trainer(
-            model=new_model,
+            model=model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
@@ -454,18 +460,12 @@ def main():
         print("Accuracy: %.5f" % acc)
         print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
         print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
-        print('Batch size = %d' % training_args.per_gpu_eval_batch_size)
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
         exit(0)
 
     if model_args.benchmark:
-        if model_args.int8:
-            from neural_compressor.utils.pytorch import load
-            new_model = load(
-                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
-        else:
-            new_model = model
         trainer = Trainer(
-            model=new_model,
+            model=model,
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
@@ -482,7 +482,7 @@ def main():
         print("Accuracy: %.5f" % acc)
         print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
         print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
-        print('Batch size = %d' % training_args.per_gpu_eval_batch_size)
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
         exit(0)
 
     # Initialize our Trainer
