@@ -214,7 +214,7 @@ def pytorch_script_bench_optimizations(
     # TODO: enabling specification of log dir path in Neural Coder in future releases
     neural_coder_performance, mode, ws_path = bench(
         code=copy_model_path,
-        entry_code_args=command_line_of_script,
+        args=command_line_of_script,
         mode="self_defined",
         ninstances=benchmark.num_of_instance,
         ncore_per_instance=benchmark.cores_per_instance,
@@ -246,7 +246,7 @@ def pytorch_script_bench_original_model(
     # TODO: enabling specification of log dir path in Neural Coder in future releases
     neural_coder_performance, mode, ws_path = bench(
         code=copy_original_model_path,
-        entry_code_args=command_line_of_script,
+        args=command_line_of_script,
         mode="self_defined",
         ninstances=benchmark.num_of_instance,
         ncore_per_instance=benchmark.cores_per_instance,
