@@ -32,6 +32,7 @@ from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from ..generic.graph_cse_optimizer import GraphCseOptimizer
+from ..generic.dequantize_cast_optimizer import DequantizeCastOptimizer
 
 DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -147,7 +148,6 @@ class BF16Convert(GraphRewriterBase):
 
             if inputs_dt_val[index] != DT_FLOAT32:
                 continue
-
             if input_node.op == 'Cast' and \
                  input_node.attr["SrcT"] == DT_BFLOAT16 and \
                  input_node.attr["DstT"] == DT_FLOAT32 and len(input_node_outputs) == 1:
@@ -165,7 +165,9 @@ class BF16Convert(GraphRewriterBase):
                 input_node.attr['value'].CopyFrom(attr_value_pb2.AttrValue(
                     tensor=tensor_util.make_tensor_proto(
                         fp32_value, dtypes.bfloat16, fp32_value.shape)))
-            elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1:
+            elif 'Dequantize' == input_node.op and len(input_node_outputs) == 1 \
+                                                        and input_node.attr['mode'].s != b'MIN_FIRST':
+                # Dequantize with mode MIN_FIRST does not support bf16 in both eigen and mkl
                 _, outputs_dt_input_node = self._dtype(input_node)
                 allowed_input_node_dt_val = self._allowed_dtype_val(input_node)
                 if outputs_dt_input_node[0] in allowed_input_node_dt_val and \
@@ -253,5 +255,7 @@ class BF16Convert(GraphRewriterBase):
         converted_graph_def = self._model_bf16_convert()
         # remove those ops which could be shared by Graph Cse optimizer
         converted_graph_def = GraphCseOptimizer(converted_graph_def).do_transformation()
+        # remove cast and set dequantize dtype bf16 when all outputs of dequantize are bf16
+        converted_graph_def = DequantizeCastOptimizer(converted_graph_def).do_transformation()
         converted_graph_def.library.CopyFrom(self.model.library)
         return converted_graph_def
