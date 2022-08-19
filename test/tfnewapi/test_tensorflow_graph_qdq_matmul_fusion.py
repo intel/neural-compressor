@@ -1106,7 +1106,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                 for i in output_graph.graph_def.node:
                     if i.op == '_QuantizedMatMul' and \
-                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Add', b'Dequantize']:
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)
@@ -1139,7 +1139,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                 for i in output_graph.graph_def.node:
                     if i.op == '_QuantizedMatMul' and \
-                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Add', b'Dequantize']:
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)
@@ -1172,7 +1172,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                 for i in output_graph.graph_def.node:
                     if i.op == '_QuantizedMatMul' and \
-                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Add', b'Dequantize']:
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)

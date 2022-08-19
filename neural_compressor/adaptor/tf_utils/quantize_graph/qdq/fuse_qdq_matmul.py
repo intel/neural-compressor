@@ -280,9 +280,28 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             add_b_node = self.node_name_mapping[add_b_node_name].node
             if add_a_node.op != 'Const' and add_b_node.op == 'Const':
                  need_insert_dummy_biasadd = 0
-            # if need_insert_dummy_biasadd:
-            #      self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
-            #      return match_node_name[1:2]
+
+        sum_node_name = ""
+        if len(match_node_name) == 4:
+            if self.node_name_mapping[match_node_name[2]].node.op == "Add" or \
+                self.node_name_mapping[match_node_name[2]].node.op == "AddV2":
+                sum_index = 1 \
+                if match_node_name[1] == self.node_name_mapping[match_node_name[2]].node.input[0] \
+                else 0
+                sum_node_name = self.node_name_mapping[match_node_name[2]].node.input[sum_index]
+                deq_node = self.node_name_mapping[sum_node_name].node
+                if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+                    return self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
+        if len(match_node_name) == 5:
+            if self.node_name_mapping[match_node_name[3]].node.op == "Add" or \
+                self.node_name_mapping[match_node_name[3]].node.op == "AddV2":
+                sum_index = 1 \
+                if match_node_name[2] == self.node_name_mapping[match_node_name[3]].node.input[0] \
+                else 0
+                sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
+                deq_node = self.node_name_mapping[sum_node_name].node
+                if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+                    return self.apply_matmul_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
@@ -313,22 +332,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
-
-                sum_node_name = ""
-                if len(match_node_name) == 4:
-                    if self.node_name_mapping[match_node_name[2]].node.op == "Add" or \
-                       self.node_name_mapping[match_node_name[2]].node.op == "AddV2":
-                        sum_index = 1 \
-                        if match_node_name[1] == self.node_name_mapping[match_node_name[2]].node.input[0] \
-                        else 0
-                        sum_node_name = self.node_name_mapping[match_node_name[2]].node.input[sum_index]
-                if len(match_node_name) == 5:
-                    if self.node_name_mapping[match_node_name[3]].node.op == "Add" or \
-                       self.node_name_mapping[match_node_name[3]].node.op == "AddV2":
-                        sum_index = 1 \
-                        if match_node_name[2] == self.node_name_mapping[match_node_name[3]].node.input[0] \
-                        else 0
-                        sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
 
                 all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
                 all_input_names.append(q_weights_min_name)
