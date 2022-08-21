@@ -1,12 +1,13 @@
 #!/bin/bash
 set -x
 
-echo $tensorflow_version
-echo $pytorch_version
-echo $torchvision_version
-echo $onnx_version
-echo $onnxruntime_version
-echo $mxnet_version
+echo "tensorflow version is $tensorflow_version"
+echo "pytorch version is $pytorch_version"
+echo "torchvision version is $torchvision_version"
+echo "ipex version is $ipex_version"
+echo "onnx version is $onnx_version"
+echo "onnxruntime version is $onnxruntime_version"
+echo "mxnet version is $mxnet_version"
 
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
@@ -25,6 +26,11 @@ fi
 
 if [[ "${torchvision_version}" != "" ]]; then
     pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
+fi
+
+if [[ "${ipex_version}" != "" ]]; then
+    ipex_whl="http://intel-optimized-pytorch.s3.cn-north-1.amazonaws.com.cn/wheels/v1.12.0/intel_extension_for_pytorch-1.12.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
+    pip install $ipex_whl
 fi
 
 if [[ "${onnx_version}" != "" ]]; then
@@ -50,7 +56,7 @@ if [ -f "requirements.txt" ]; then
     sed -i '/^neural-compressor/d' requirements.txt
     sed -i '/^intel-tensorflow/d' requirements.txt
     sed -i '/find-links https:\/\/download.pytorch.org\/whl\/torch_stable.html/d' requirements.txt
-    sed -i '/^torch/d;/^torchvision/d' requirements.txt
+    sed -i '/^torch/d;/^torchvision/d;/^intel-extension-for-pytorch/d' requirements.txt
     sed -i '/^mxnet-mkl/d' requirements.txt
     sed -i '/^onnx/d;/^onnxruntime/d;/^onnxruntime-extensions/d' requirements.txt
     n=0

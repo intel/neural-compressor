@@ -8,7 +8,7 @@ pr:
     include:
     - neural_coder
 
-pool: suyue-test
+pool: ICX-16C
 
 variables:
   IMAGE_NAME: 'neural-compressor'

@@ -5,14 +5,17 @@ echo "run basic"
 
 echo "specify fwk version..."
 export tensorflow_version='2.9.1'
-export pytorch_version='1.11.0+cpu'
-export torchvision_version='0.12.0'
-export onnx_version='1.9.0'
-export onnxruntime_version='1.10.0'
+export pytorch_version='1.12.0+cpu'
+export torchvision_version='0.13.0+cpu'
+export onnx_version='1.11.0'
+export onnxruntime_version='1.11.0'
 export mxnet_version='1.7.0'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
+echo "copy pre-train model..."
+mkdir -p /tmp/.neural_compressor/inc_ut || true
+cp -r /tf_dataset/ut-localfile/resnet_v2 /tmp/.neural_compressor/inc_ut || true
 
 cd /neural-compressor/test || exit 1
 find . -name "test*.py" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
@@ -20,6 +23,7 @@ sed -i '/ adaptor\//d' run.sh
 sed -i '/ tfnewapi\//d' run.sh
 sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
+sed -i '/ ipex\//d' run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

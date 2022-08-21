@@ -5,6 +5,7 @@ echo "run basic adaptor tfnewapi"
 
 echo "specify fwk version..."
 export tensorflow_version='spr-base'
+# export FORCE_BF16=1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
