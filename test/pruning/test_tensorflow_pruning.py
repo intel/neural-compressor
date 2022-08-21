@@ -351,12 +351,12 @@ class TestTensorflowPruning(unittest.TestCase):
         os.popen(cmd).readlines()
         if not os.path.exists(cls.dst_path):
             logger.warning("resnet_v2 baseline_model doesn't exist.")
-            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestDistributed)
+            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestTensorflowPruning)
         elif dir_md5_check(cls.dst_path) != \
             ['65625fef42f44e6853d4d6d5e4188a49', 'a783396652bf62db3db4c9f647953175',
             'c7259753419d9fc053df5b2059aef8c0', '77f2a1045cffee9f6a43f2594a5627ba']:
             logger.warning("resnet_v2 baseline_model md5 verification failed.")
-            return unittest.skip("resnet_v2 baseline_model md5 verification failed.")(TestDistributed)
+            return unittest.skip("resnet_v2 baseline_model md5 verification failed.")(TestTensorflowPruning)
         else:
             logger.info("resnet_v2 baseline_model md5 verification succeeded.")
 
