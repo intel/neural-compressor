@@ -35,7 +35,8 @@ class Coco(dataset.Dataset):
         self.use_label_map=use_label_map
         if not cache_dir:
             cache_dir = os.getcwd()
-        self.cache_dir = os.path.join(cache_dir, "preprocessed", name, image_format)
+        self.cache_dir = os.path.join(os.path.abspath(os.path.expanduser(cache_dir)),
+                                      "preprocessed", name, image_format)
         # input images are in HWC
         self.need_transpose = True if image_format == "NCHW" else False
         not_found = 0 

@@ -15,6 +15,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend.
   ```shell
   cd examples/pytorch/object_detection/ssd_resnet34/quantization/qat/fx
   pip install -r requirements.txt
+  pip install "git+https://github.com/mlperf/logging.git"
   ```
 
 ### 2. Download Dataset
