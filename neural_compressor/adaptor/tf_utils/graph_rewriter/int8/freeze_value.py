@@ -31,7 +31,6 @@ import re
 class FreezeValueTransformer(GraphRewriterBase):
     def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device='gpu'):
         """Free Max/Min value into QuantizeV2 op.
-
         Args:
             model (graphdef): input model
             max_min_data (string list): the string context contains max/min values.

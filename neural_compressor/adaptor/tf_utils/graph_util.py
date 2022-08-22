@@ -581,6 +581,41 @@ class GraphAnalyzer():
 
         return output_graph_def
 
+    def get_frame_info(self):
+        from collections import OrderedDict
+        self.parent_frame_details = OrderedDict()
+        input_node_names, _ = self.get_graph_input_output()
+
+        traverse_list = copy.deepcopy(input_node_names)
+        visited = []
+
+        while traverse_list:
+            node_name = traverse_list.pop(0)
+            node_details = self.node_name_details[node_name]
+
+            if node_details.node.name in visited:
+                continue
+
+            for output in node_details.outputs:
+                traverse_list.append(output)
+
+                inputs = node_details.node.input
+                if not inputs:
+                    self.parent_frame_details[node_details.node.name] = None
+                if self.node_name_details[output].node.op == 'Enter':
+                    self.parent_frame_details[output] = self.node_name_details[output].node
+                elif self.node_name_details[output].node.op == 'Exit':
+                    self.parent_frame_details[output] = None
+                else:
+                    if output in self.parent_frame_details and self.parent_frame_details[output]:
+                        assert self.parent_frame_details[output].attr['frame_name'] == \
+                          self.parent_frame_details[node_details.node.name].attr['frame_name']
+                    else:
+                        self.parent_frame_details[output] = self.parent_frame_details[node_details.node.name]
+
+            visited.append(node_details.node.name)
+        return self.parent_frame_details
+
     def parse_graph(self, input_graph_def=None):
         """Analyze the input graphdef and return the list contains each node's input/output
             node names

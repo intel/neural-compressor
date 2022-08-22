@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -33,7 +34,6 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
         self.pre_node_name = pre_node_name
         self.post_node_name = post_node_name
         self.signature = pre_node_name + post_node_name
-        self.frame_name = frame_name
 
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
@@ -45,6 +45,10 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
         if top_node.op == 'ConcatV2':
             for i in range(top_node.attr['N'].i):
                 insert_node_pairs.append([top_node.input[i], self.post_node_name])
+        elif top_node.op == 'BatchMatMulV2':
+            insert_node_pairs.append([top_node.input[0], self.post_node_name])
+            if graph_info[top_node.input[1]].node.op != 'Const':
+                insert_node_pairs.append([top_node.input[1], self.post_node_name])  
         else:
             refresh_pre_node_name = graph_info[self.pre_node_name].node.input[0]
             # Check the Conv2D could be fused with previous Pad or not.
@@ -74,49 +78,22 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                 reduction_dims_node = Helper.create_constant_node(
                     reduction_dims_name, 0, dtypes.int32, [1])
 
-                if self.frame_name:         # pragma: no cover
-                    reduction_dims_enter_node = Helper.create_node(
-                        'Enter', reduction_dims_name+'_enter', [reduction_dims_name])
-                    reshape_dims_enter_node = Helper.create_node(
-                        'Enter', reshape_dims_name+'_enter', [reshape_dims_name])
-                    Helper.set_attr_string(reduction_dims_enter_node,
-                                           'frame_name', self.frame_name.encode())
-                    Helper.set_attr_dtype(reduction_dims_enter_node, 'T', dtypes.int32)
-                    # Helper.set_attr_bool(reduction_dims_enter_node, 'is_constant', True)
-                    Helper.set_attr_int(reduction_dims_enter_node, 'parallel_iterations', 32)
-                    Helper.set_attr_string(reshape_dims_enter_node,
-                                           'frame_name', self.frame_name.encode())
-                    Helper.set_attr_dtype(reshape_dims_enter_node, 'T', dtypes.int32)
-                    # Helper.set_attr_bool(reshape_dims_enter_node, 'is_constant', False)
-                    Helper.set_attr_int(reshape_dims_enter_node, 'parallel_iterations', 32)
+                reshape_dims_node.input.append("^" + Helper.node_name_from_input(each_node_name))
+                reduction_dims_node.input.append("^" + Helper.node_name_from_input(each_node_name))
 
                 reshape_input_name = node_name_prefix + "_reshape_"
 
-                if self.frame_name:
-                    reshape_input_node = Helper.create_node("Reshape", reshape_input_name, [
-                        each_node_name, reshape_dims_enter_node.name])
-                else:
-                    reshape_input_node = Helper.create_node("Reshape", reshape_input_name, [
-                                                            each_node_name, reshape_dims_name])
+                reshape_input_node = Helper.create_node("Reshape", reshape_input_name,
+                                                        [each_node_name, reshape_dims_name])
 
                 min_input_name = node_name_prefix + "_min"
-                if self.frame_name:
-                    min_input_node = Helper.create_node(
-                        "Min", min_input_name,
-                        [reshape_input_name, reduction_dims_enter_node.name])
-                else:
-                    min_input_node = Helper.create_node(
+                min_input_node = Helper.create_node(
                         "Min", min_input_name, [reshape_input_name, reduction_dims_name])
                 Helper.set_attr_dtype(min_input_node, "Tidx", dtypes.int32)
                 Helper.set_attr_bool(min_input_node, "keep_dims", False)
 
                 max_input_name = node_name_prefix + "_max"
-                if self.frame_name:
-                    max_input_node = Helper.create_node(
-                        "Max", max_input_name,
-                        [reshape_input_name, reduction_dims_enter_node.name])
-                else:
-                    max_input_node = Helper.create_node(
+                max_input_node = Helper.create_node(
                         "Max", max_input_name, [reshape_input_name, reduction_dims_name])
                 Helper.set_attr_dtype(max_input_node, "Tidx", dtypes.int32)
                 Helper.set_attr_bool(max_input_node, "keep_dims", False)
@@ -164,23 +141,43 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                     attr_value_pb2.AttrValue.ListValue(type=attr_u))
                 max_print_node.attr["U"].list.CopyFrom(
                     attr_value_pb2.AttrValue.ListValue(type=attr_u))
-                if self.frame_name:
-                    cur_graph.add_node(reshape_dims_node, None, [reshape_dims_enter_node.name])
-                    cur_graph.add_node(reduction_dims_node, None, [reduction_dims_enter_node.name])
-                    cur_graph.add_node(reshape_dims_enter_node, None, [reshape_input_name])
-                    cur_graph.add_node(reduction_dims_enter_node, None,
-                                       [max_input_name, min_input_name])
-                else:
+                post_node_names = graph_info[Helper.node_name_from_input(each_node_name)].outputs
+                if post_node_names:
+                    for post_node_name in post_node_names:
+                        post_node = graph_info[post_node_name].node
+                        post_node.input.append("^" + min_print_node.name)
+                        post_node.input.append("^" + max_print_node.name)
+                    
                     cur_graph.add_node(reshape_dims_node, None, [reshape_input_name])
                     cur_graph.add_node(reduction_dims_node, None, [max_input_name, min_input_name])
-                cur_graph.add_node(max_input_node, None, [max_print_node.name])
-                cur_graph.add_node(min_input_node, None, [min_print_node.name])
-                cur_graph.add_node(min_print_node, min_input_name, [])
-                cur_graph.add_node(max_print_node, max_input_name, [])
+                    cur_graph.add_node(reshape_input_node, each_node_name,
+                                    [max_input_name, min_input_name])
+                    cur_graph.add_node(max_input_node, reshape_input_name, [max_print_node.name])
+                    cur_graph.add_node(min_input_node, reshape_input_name, [min_print_node.name])
 
-                cur_graph.add_node(reshape_input_node, each_node_name,
-                                   [max_input_name, min_input_name])
-                output_names.append(max_print_node.name)
-                output_names.append(min_print_node.name)
+                    cur_graph.add_node(min_print_node, min_input_name, [])
+                    cur_graph.add_node(max_print_node, max_input_name, [])
+                else:
+                    identity_node0 = Helper.create_node(
+                        "Identity", min_print_node.name+'_identity', [min_print_node.name])
+                    identity_node0.attr["T"].CopyFrom(src_dt)
+                    identity_node1 = Helper.create_node(
+                        "Identity", max_print_node.name+'_identity', [max_print_node.name])
+                    identity_node1.attr["T"].CopyFrom(src_dt)
+
+                    cur_graph.add_node(reshape_dims_node, None, [reshape_input_name])
+                    cur_graph.add_node(reduction_dims_node, None, [max_input_name, min_input_name])
+                    cur_graph.add_node(reshape_input_node, each_node_name,
+                                    [max_input_name, min_input_name])
+                    cur_graph.add_node(max_input_node, reshape_input_name, [max_print_node.name])
+                    cur_graph.add_node(min_input_node, reshape_input_name, [min_print_node.name])
+                    cur_graph.add_node(min_print_node, min_input_name, [identity_node0.name])
+                    cur_graph.add_node(max_print_node, max_input_name, [identity_node1.name])
+                    cur_graph.add_node(identity_node0, min_print_node.name, [])
+                    cur_graph.add_node(identity_node1, max_print_node.name, [])
+                    #identity_node0.input.append("^" + min_print_node.name)
+                    #identity_node1.input.append("^" + max_print_node.name)
+                    output_names.append(identity_node0.name)
+                    output_names.append(identity_node1.name)
 
         return cur_graph.dump_graph(), output_names

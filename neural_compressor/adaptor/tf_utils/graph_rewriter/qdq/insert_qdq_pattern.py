@@ -106,6 +106,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             computational_node = self.graph_info[computational_node_name].node
             weight_name = computational_node.input[1]
             weight_node = self.graph_info[weight_name].node
+            if weight_node.op == 'Enter':
+                continue
+
             if computational_node_name in self.op_wise_config.keys():
                 op_wise_cfg = self.op_wise_config[computational_node_name]
                 per_channel = op_wise_cfg[0]
@@ -206,8 +209,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         max_input_name = namespace_prefix + "_max_" + unique_input_name
         quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
 
-        reshape_dims_name = namespace_prefix + "_reshape_dims"
-        reduction_dims_name = namespace_prefix + "_reduction_dims"
+        reshape_dims_name = namespace_prefix + "_reshape_dims" + unique_input_name
+        reduction_dims_name = namespace_prefix + "_reduction_dims" + unique_input_name
 
         if self.fake_quant: # pragma: no cover
             min_node = Helper.create_constant_node(

@@ -81,31 +81,59 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
 
+        # QDQ inserted for input0 in phase 1
         _, q_inputs = self._get_node_input(normal_inputs[0])
-        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
-        quantizev2_weights_name = q_weights_inputs[0]
 
-        _, weights_name = self._get_node_input(quantizev2_weights_name)
-        weights_min_name = weights_name[1]
-        weights_max_name = weights_name[2]
-        weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
-
-        # FIXME We only quantize the MatMul op which second input node type is const. This is a
-        # workaround for RNN model like LTSM.
-        if weight_node.op != 'Const':
-            self.output_graph = self.input_graph
-            return []
-
-        weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
-
-        if np.any(np.isnan(weights_content)):
-            self.output_graph = self.input_graph
-            return []
-
-        for i in self.node_name_mapping:
-            if weight_node.name in self.node_name_mapping[i].output:
+        # Three scenarios to quantize input1:
+        #   a. weight node is const, insert QDQ directly in phase 1
+        #   b. weight node is non-const, insert QDQ directly in phase 1
+        #   c. weight node is 'Enter' and its parent node is const, not insert QDQ in phase 1 for easy handling
+        weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
+        enter_node = None
+        quantizev2_weights_name = None
+        weights_min_name = None
+        weights_max_name = None
+        # no QDQ inserted for 'Enter' node in phase 1
+        if weight_node.op == 'Enter':
+            parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
+            # FIXME We only quantize the MatMul op which second input node type is const. This is a
+            # workaround for RNN model like LTSM.
+            if not parent_node.op == 'Const':
                 self.output_graph = self.input_graph
                 return []
+            else:
+                enter_node = weight_node
+                weight_node = parent_node
+                weight_name = weight_node.name
+        # QDQ inserted for other weight nodes in phase 1
+        else:
+            _, q_weights_inputs = self._get_node_input(weight_name)
+            quantizev2_weights_name = q_weights_inputs[0]
+
+            _, weights_name = self._get_node_input(quantizev2_weights_name)
+            weights_min_name = weights_name[1]
+            weights_max_name = weights_name[2]
+            weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
+            weight_name = weight_node.name
+
+        if weight_node.op == 'Const':
+            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+
+            if np.any(np.isnan(weights_content)):
+                self.output_graph = self.input_graph
+                return []
+
+            # for i in self.node_name_mapping:
+            #     if weight_node.name in self.node_name_mapping[i].output:
+            #         self.output_graph = self.input_graph
+            #         return []
+
+        # If weight node non const, can't insert dummy biasadd to do matmul fusion.
+        if weight_node.op != 'Const' and len(match_node_name) == 3:
+            self.output_graph = self.input_graph
+            return []
+
         second_node = self.node_name_mapping[match_node_name[2]].node
         skip_node_name = match_node_name[2:]
 
@@ -123,16 +151,27 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                  self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
                  return match_node_name[1:2]
 
-        q_weights_name, q_weights_min_name, q_weights_max_name = \
-            self._intel_cpu_quantize_weight_eightbit(
-                matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel)
+        if weight_node.op == 'Const':
+            q_weights_name, q_weights_min_name, q_weights_max_name = \
+                self._intel_cpu_quantize_weight_eightbit(
+                    matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
+            if weights_min_name:
+                skip_node_name.append(weights_min_name)
+            if weights_max_name:
+                skip_node_name.append(weights_max_name)
+            if quantizev2_weights_name:
+                skip_node_name.append(quantizev2_weights_name)
+            skip_node_name.append(weight_name)
+        else:
+            q_weights_name = q_weights_inputs[0]
+            q_weights_min_name = q_weights_inputs[1]
+            q_weights_max_name = q_weights_inputs[2]
 
         skip_node_name.append(normal_inputs[0])
-        skip_node_name.append(normal_inputs[1])
-        skip_node_name.append(weights_name[0])
-        skip_node_name.append(weights_min_name)
-        skip_node_name.append(weights_max_name)
-        skip_node_name.append(quantizev2_weights_name)
+        if enter_node:
+            skip_node_name.append(enter_node.name)
+        else:
+            skip_node_name.append(normal_inputs[1])
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
@@ -141,17 +180,20 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
-                if need_insert_dummy_biasadd:
+                if need_insert_dummy_biasadd and weight_node.op == 'Const':
                     t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
+                    weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
                     bias_size = weights_content.shape[t_b_index]
                     bias_node_name = node.name + "_fake_bias"
                     bias_node = helper.create_constant_node(
                         bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
                     )
+
                     self.add_output_graph_node(bias_node)
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
                 relu_node_name = match_node_name[3-offset]
+
                 all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
                 all_input_names.append(q_weights_min_name)
                 all_input_names.append(q_weights_max_name)
@@ -230,20 +272,38 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
 
+        # QDQ inserted for input0 in phase 1
         _, q_inputs = self._get_node_input(normal_inputs[0])
-        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
-        quantizev2_weights_name = q_weights_inputs[0]
 
-        _, weights_name = self._get_node_input(quantizev2_weights_name)
-        weights_min_name = weights_name[1]
-        weights_max_name = weights_name[2]
+        weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
+        enter_node = None
+        weights_min_name = None
+        weights_max_name = None
+        quantizev2_weights_name = None
 
-        weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
-        # FIXME We only quantize the MatMul op which second input node type is const. This is a
-        # workaround for RNN model like LTSM.
-        if weight_node.op != 'Const':
-            self.output_graph = self.input_graph
-            return []
+        # no QDQ inserted for 'Enter' node in phase 1
+        if weight_node.op == 'Enter':
+            parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
+            # FIXME We only quantize the MatMul op which second input node type is const. This is a
+            # workaround for RNN model like LTSM.
+            if not parent_node.op == 'Const':
+                self.output_graph = self.input_graph
+                return []
+            else:
+                enter_node = weight_node
+                weight_node = parent_node
+                weight_name = weight_node.name
+        # QDQ inserted for other weight nodes in phase 1
+        else:
+            _, q_weights_inputs = self._get_node_input(weight_name)
+            quantizev2_weights_name = q_weights_inputs[0]
+
+            _, weights_name = self._get_node_input(quantizev2_weights_name)
+            weights_min_name = weights_name[1]
+            weights_max_name = weights_name[2]
+            weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
+            weight_name = weight_node.name
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
         # transpose_a could be set to True.
@@ -251,21 +311,34 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = self.input_graph
             return []
 
-        weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+        if weight_node.op == 'Const':
+            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-        if np.any(np.isnan(weights_content)):
-            self.output_graph = self.input_graph
-            return []
-
-        for i in self.node_name_mapping:
-            if weight_node.input and not weight_node.input[0].startswith('^') \
-                    and weight_node.name in self.node_name_mapping[i].output:
+            if np.any(np.isnan(weights_content)):
                 self.output_graph = self.input_graph
                 return []
 
-        is_shared_output = True if len(
-              matched_node.output
-        ) > 1 else False
+            # for i in self.node_name_mapping:
+            #     if weight_node.input and not weight_node.input[0].startswith('^') \
+            #             and weight_node.name in self.node_name_mapping[i].output:
+            #         self.output_graph = self.input_graph
+            #         return []
+
+        # If weight node non const, can't insert dummy biasadd to do matmul fusion.
+        if weight_node.op != 'Const' and len(match_node_name) == 3:
+            self.output_graph = self.input_graph
+            return []
+
+        len_output = len(matched_node.output)
+        is_shared_output = False
+        if len_output == 2:
+            if self.node_name_mapping[matched_node.output[0]].node.op == 'QuantizeV2' and \
+                self.node_name_mapping[matched_node.output[1]].node.op == 'Reshape':
+                is_shared_output = False
+            else:
+                is_shared_output = True
+        elif len_output > 1:
+            is_shared_output = True
 
         need_insert_dummy_biasadd = 1
         if len(match_node_name) == 3:
@@ -303,16 +376,27 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
                     return self.apply_matmul_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
 
-        q_weights_name, q_weights_min_name, q_weights_max_name = \
-            self._intel_cpu_quantize_weight_eightbit(
-                matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel)
+        if weight_node.op == 'Const':
+            q_weights_name, q_weights_min_name, q_weights_max_name = \
+                self._intel_cpu_quantize_weight_eightbit(
+                    matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
+            if weights_min_name:
+                skip_node_name.append(weights_min_name)
+            if weights_max_name:
+                skip_node_name.append(weights_max_name)
+            if quantizev2_weights_name:
+                skip_node_name.append(quantizev2_weights_name)
+            skip_node_name.append(weight_name)
+        else:
+            q_weights_name = q_weights_inputs[0]
+            q_weights_min_name = q_weights_inputs[1]
+            q_weights_max_name = q_weights_inputs[2]
 
         skip_node_name.append(normal_inputs[0])
-        skip_node_name.append(normal_inputs[1])
-        skip_node_name.append(weights_name[0])
-        skip_node_name.append(weights_min_name)
-        skip_node_name.append(weights_max_name)
-        skip_node_name.append(quantizev2_weights_name)
+        if enter_node:
+            skip_node_name.append(enter_node.name)
+        else:
+            skip_node_name.append(normal_inputs[1])
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
@@ -321,15 +405,16 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_mat_mul"
-                if need_insert_dummy_biasadd:
+                if need_insert_dummy_biasadd and weight_node.op == 'Const':
                     t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
+                    weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
                     bias_size = weights_content.shape[t_b_index]
                     bias_node_name = node.name + "_fake_bias"
                     bias_node = helper.create_constant_node(
                         bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
                     )
-                    self.add_output_graph_node(bias_node)
 
+                    self.add_output_graph_node(bias_node)
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
 
@@ -416,39 +501,72 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
 
-        _, q_inputs = self._get_node_input(normal_inputs[0])
-        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
+        _, q_x_inputs = self._get_node_input(normal_inputs[0])
+        quantizev2_input_name = q_x_inputs[0]
+        weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
+        enter_node = None
+        weights_min_name = None
+        weights_max_name = None
+        quantizev2_y_name = None
+        if weight_node.op == 'Enter':
+            parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
+            # FIXME We only quantize the MatMul op which second input node type is const. This is a
+            # workaround for RNN model like LTSM.
+            if not parent_node.op == 'Const':
+                self.logger.debug('The weight node of matched_node {} is not Const or Const + Enter, skipped')
+                self.output_graph = self.input_graph
+                return []
+            else:
+                enter_node = weight_node
+                weight_node = parent_node
+                weight_name = weight_node.name
+        else:
+            _, q_y_inputs = self._get_node_input(normal_inputs[1])
+            quantizev2_y_name = q_y_inputs[0]
+            _, weights_name = self._get_node_input(quantizev2_y_name)
+            weights_min_name = weights_name[1]
+            weights_max_name = weights_name[2]
+            weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
+            weight_name = weight_node.name
 
-        quantizev2_input_name = q_inputs[0]
+        if weight_node.op == 'Const':
+            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-        quantizev2_weights_name = q_weights_inputs[0]
-        _, weights_name = self._get_node_input(quantizev2_weights_name)
-
-        weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
-
-        # FIXME We only quantize the MatMul op which second input node type is const. This is a
-        # workaround for RNN model like LTSM.
-        if weight_node.op != 'Const':
-            self.output_graph = self.input_graph
-            return []
-
-        weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
-
-        if np.any(np.isnan(weights_content)):
-            self.output_graph = self.input_graph
-            return []
-
-        for i in self.node_name_mapping:
-            if weight_node.input and not weight_node.input[0].startswith('^') \
-                    and weight_node.name in self.node_name_mapping[i].output:
+            if np.any(np.isnan(weights_content)):
                 self.output_graph = self.input_graph
                 return []
 
-        skip_node_name.append(normal_inputs[0])
-        skip_node_name.append(normal_inputs[1])
+            for i in self.node_name_mapping:
+                if weight_node.input and not weight_node.input[0].startswith('^') \
+                        and weight_node.name in self.node_name_mapping[i].output:
+                    self.output_graph = self.input_graph
+                    return []
 
+            q_weights_name, q_weights_min_name, q_weights_max_name = \
+                self._intel_cpu_quantize_weight_eightbit(
+                    matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel, enter_node)
+
+            if weights_min_name:
+                skip_node_name.append(weights_min_name)
+            if weights_max_name:
+                skip_node_name.append(weights_max_name)
+            if quantizev2_y_name:
+                skip_node_name.append(quantizev2_y_name)
+            skip_node_name.append(weight_name)
+        else:
+            q_weights_name = q_y_inputs[0]
+            q_weights_min_name = q_y_inputs[1]
+            q_weights_max_name = q_y_inputs[2]
+
+        skip_node_name.append(normal_inputs[0])
+        if enter_node:
+            skip_node_name.append(enter_node.name)
+        else:
+            skip_node_name.append(normal_inputs[1])
+
+        batchmatmul_next_node = {}
         for _, node in enumerate(self.input_graph.node):
-            _, node_normal_inputs = self._get_node_input(node.name)
             quantized_node_name = ""
             if node.name in skip_node_name:
                 pass
@@ -456,8 +574,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
 
                 quantized_node_name = node.name + "_eightbit_quantized_batch_matmul_v2"
-                all_input_names = [quantizev2_input_name] + [quantizev2_weights_name] + \
-                                   q_inputs[1:] + q_weights_inputs[1:]
+                all_input_names = [quantizev2_input_name] + [q_weights_name] + q_x_inputs[1:]
+                all_input_names.append(q_weights_min_name)
+                all_input_names.append(q_weights_max_name)
 
                 quantized_node_input_names = all_input_names + control_inputs
 
@@ -483,16 +602,15 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         dtypes.float32.as_datatype_enum
                      ])
                 helper.set_attr_type_list(quantized_matmul_node, 'Thost_outputs', [
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum])
 
                 self.add_output_graph_node(quantized_matmul_node)
+                for i in self.node_name_mapping[node.name].output:
+                    batchmatmul_next_node[i] = quantized_node_name
             else:
                 new_node = node_def_pb2.NodeDef()
-                if node_normal_inputs and \
-                   self.node_name_mapping[node_normal_inputs[0]].node.op == "BatchMatMulV2":
-                    node.input[0] = match_node_name[1] + "_eightbit_quantized_batch_matmul_v2"
+                if batchmatmul_next_node.get(node.name):
+                    node.input[0] = batchmatmul_next_node[node.name]
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
         return match_node_name
@@ -508,58 +626,100 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
 
-        _, q_inputs = self._get_node_input(normal_inputs[0])
-        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
-        quantizev2_weights_name = q_weights_inputs[0]
-        _, weights_name = self._get_node_input(quantizev2_weights_name)
+        weight_name = normal_inputs[1]
+        weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
+        _, q_x_inputs = self._get_node_input(normal_inputs[0])
+        enter_node = None
+        weights_min_name = None
+        weights_max_name = None
+        quantizev2_weights_name = None
+        if weight_node.op == 'Enter':
+            parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
+            # FIXME We only quantize the MatMul op which second input node type is const. This is a
+            # workaround for RNN model like LTSM.
+            if not parent_node.op == 'Const':
+                self.logger.debug('The weight node of matched_node {} is not Const or Const + Enter, skipped')
+                self.output_graph = self.input_graph
+                return []
+            else:
+                enter_node = weight_node
+                weight_node = parent_node
+                weight_name = weight_node.name
+        else:
+            _, q_weights_inputs = self._get_node_input(normal_inputs[1])
+            quantizev2_weights_name = q_weights_inputs[0]
+            _, weights_name = self._get_node_input(quantizev2_weights_name)
+            weights_min_name = weights_name[1]
+            weights_max_name = weights_name[2]
+            weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
+            weight_name = weight_node.name
 
-        weight_node = self.node_name_mapping[helper.node_name_from_input(weights_name[0])].node
+        if weight_node.op == 'Const':
+            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-        # FIXME We only quantize the MatMul op which second input node type is const. This is a
-        # workaround for RNN model like LTSM.
-        if weight_node.op != 'Const':
-            self.output_graph = self.input_graph
-            return []
-
-        weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
-
-        if np.any(np.isnan(weights_content)):
-            self.output_graph = self.input_graph
-            return []
-
-        for i in self.node_name_mapping:
-            if weight_node.input and not weight_node.input[0].startswith('^') \
-                    and weight_node.name in self.node_name_mapping[i].output:
+            if np.any(np.isnan(weights_content)):
                 self.output_graph = self.input_graph
                 return []
 
-        skip_node_name.append(normal_inputs[0])
-        skip_node_name.append(normal_inputs[1])
+            for i in self.node_name_mapping:
+                if weight_node.input and not weight_node.input[0].startswith('^') \
+                        and weight_node.name in self.node_name_mapping[i].output:
+                    self.output_graph = self.input_graph
+                    return []
 
+            q_weights_name, q_weights_min_name, q_weights_max_name = \
+                self._intel_cpu_quantize_weight_eightbit(
+                    matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel, enter_node)
+
+            if weights_min_name:
+                skip_node_name.append(weights_min_name)
+            if weights_max_name:
+                skip_node_name.append(weights_max_name)
+            if quantizev2_weights_name:
+                skip_node_name.append(quantizev2_weights_name)
+            skip_node_name.append(weight_name)
+        else:
+            q_weights_name = q_weights_inputs[0]
+            q_weights_min_name = q_weights_inputs[1]
+            q_weights_max_name = q_weights_inputs[2]
+
+        skip_node_name.append(normal_inputs[0])
+        if enter_node:
+            skip_node_name.append(enter_node.name)
+        else:
+            skip_node_name.append(normal_inputs[1])
+
+        batchmatmul_next_node = {}
         for _, node in enumerate(self.input_graph.node):
-            _, node_normal_inputs = self._get_node_input(node.name)
             if node.name in skip_node_name:
                 pass
             elif node.name == match_node_name[1]:
                 self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
                 quantized_node_name = node.name + "_eightbit_quantized_batch_matmul_v2"
+
                 if len(match_node_name) == 4:
                     if self.node_name_mapping[match_node_name[2]].node.op == "Mul":
                         mul_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
-                        all_input_names = q_inputs[:1] + [quantizev2_weights_name] + [mul_node_name] \
-                                        + q_inputs[1:] + q_weights_inputs[1:]
+                        all_input_names = q_x_inputs[:1] + [q_weights_name] + [mul_node_name] \
+                                        + q_x_inputs[1:]
+                        all_input_names.append(q_weights_min_name)
+                        all_input_names.append(q_weights_max_name)
                     else:
                         add_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
-                        all_input_names = q_inputs[:1] + [quantizev2_weights_name] + [add_node_name] \
-                                        + q_inputs[1:] + q_weights_inputs[1:]
+                        all_input_names = q_x_inputs[:1] + [q_weights_name] + [add_node_name] \
+                                        + q_x_inputs[1:]
+                        all_input_names.append(q_weights_min_name)
+                        all_input_names.append(q_weights_max_name)
                     skip_node_name.append(match_node_name[2])
                 else:
                     mul_node_name = self.node_name_mapping[match_node_name[2]].node.input[1]
                     add_node_name = self.node_name_mapping[match_node_name[3]].node.input[1]
                     skip_node_name.append(match_node_name[2])
                     skip_node_name.append(match_node_name[3])
-                    all_input_names = q_inputs[:1] + [quantizev2_weights_name] + [mul_node_name] \
-                                    + [add_node_name] + q_inputs[1:] + q_weights_inputs[1:]
+                    all_input_names = q_x_inputs[:1] + [q_weights_name] + [mul_node_name] \
+                                    + [add_node_name] + q_x_inputs[1:]
+                    all_input_names.append(q_weights_min_name)
+                    all_input_names.append(q_weights_max_name)
 
 
                 quantized_node_input_names = all_input_names + control_inputs
@@ -603,20 +763,21 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                             dtypes.float32.as_datatype_enum
                         ])
                 helper.set_attr_type_list(quantized_matmul_node, 'Thost_outputs', [
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum])
 
                 self.add_output_graph_node(quantized_matmul_node)
+                attr_fused_ops = ''.join(x for x in quantized_matmul_node.attr["fused_ops"].SerializeToString() \
+                                   .decode('UTF-8', 'ignore').strip() if x.isprintable())
+                if "MulAdd" in attr_fused_ops:
+                    for i in self.node_name_mapping[match_node_name[3]].output:
+                        batchmatmul_next_node[i] = quantized_node_name
+                else:
+                    for i in self.node_name_mapping[match_node_name[2]].output:
+                        batchmatmul_next_node[i] = quantized_node_name
             else:
                 new_node = node_def_pb2.NodeDef()
-                if node_normal_inputs:
-                    if self.node_name_mapping[match_node_name[-2]].node.op == "Mul":
-                        if self.node_name_mapping[node_normal_inputs[0]].node.op == "Mul":
-                            node.input[0] = match_node_name[1] + "_eightbit_quantized_batch_matmul_v2"
-                    else:
-                        if "Add" in self.node_name_mapping[node_normal_inputs[0]].node.op:
-                            node.input[0] = match_node_name[1] + "_eightbit_quantized_batch_matmul_v2"
+                if batchmatmul_next_node.get(node.name):
+                    node.input[0] = batchmatmul_next_node[node.name]
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
         return match_node_name
@@ -669,22 +830,31 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     continue
 
                 _, normal_inputs = self._get_node_input(cur_node.name)
+                weight_name = normal_inputs[1]
+                weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
                 if not qdq_inserted:
-                    weight_name = normal_inputs[1]
-                    weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
                     # FIXME We only quantize the MatMul op which second input node type is const. This is a
                     # workaround for RNN model like LTSM.
+                    parent_node = None
                     if weight_node.op != 'Const':
-                        continue
+                        if weight_node.input:
+                            parent_node = \
+                                self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
+                            if weight_node.op == 'Enter':
+                                if len(self.node_name_mapping[helper.node_name_from_input(weight_name)].output) > 1:
+                                    continue
+                                if parent_node.op == 'Const':
+                                    weight_node = parent_node
+                                    weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                                    if np.any(np.isnan(weights_content)):
+                                        continue
+                                else:
+                                    continue
 
                     if cur_node.op == "MatMul":
                         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
                         # transpose_a could be set to True.
                         if cur_node.attr["transpose_a"].b == True:
-                            continue
-
-                        weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
-                        if np.any(np.isnan(weights_content)):
                             continue
 
                         for i in self.node_name_mapping:
@@ -698,9 +868,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     if v != sub_rule[1]:
                         continue
 
+                    if not qdq_inserted:
+                        if weight_node.op != 'Const' and len(sub_rule) == 3:
+                            continue
+
                     if qdq_inserted:
-                        if self.node_name_mapping[normal_inputs[0]].node.op != "Dequantize" or \
-                           self.node_name_mapping[normal_inputs[1]].node.op != "Dequantize":
+                        if self.node_name_mapping[normal_inputs[0]].node.op != "Dequantize":
                             continue
 
                     sub_rule_len = len(sub_rule) - 2

@@ -83,9 +83,43 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
 
+            weight_node = self.graph_info[Helper.node_name_from_input(new_node.input[1])].node
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
+
+            if max_input_node.op == 'Enter':
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node.op == 'Enter':
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter':
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter':
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
 
             if max_filter_node.op == 'Const':
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
@@ -95,9 +129,9 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
                 weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                        weight_node.attr['value'].tensor)
                 bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                        bias_node.attr['value'].tensor)
                 is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
@@ -124,6 +158,9 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                                         if self.device == 'gpu' else qint32_type
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
                                                 if self.device == 'gpu' else qint32_type))
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
@@ -145,6 +182,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             self.graph_analyzer.remove_node(quantized_node_name)
 
         return self.graph_analyzer.dump_graph()
+
 class FuseMatMulRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized MatMul Op with the successor Requantize Op.
     """
@@ -201,9 +239,43 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
             is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
 
+            weight_node = self.graph_info[new_node.input[1]].node
             bias_node = self.graph_info[new_node.input[2]].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
+
+            if max_input_node.op == 'Enter':
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node.op == 'Enter':
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter':
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter':
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
 
             if last_node.op.find('Requantize') != -1 or last_node.op.find('QuantizeV2') != -1:
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
@@ -213,9 +285,9 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
                 weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                        weight_node.attr['value'].tensor)
                 bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                        bias_node.attr['value'].tensor)
 
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
@@ -251,6 +323,9 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                     deq_node_name = self.graph_info[requantize_node_name].outputs[0]
                     deq_node = self.graph_info[deq_node_name].node
                     deq_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
@@ -326,33 +401,77 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
             top_node_name = Helper.node_name_from_input(quantized_node.input[0])
             attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
                                .decode('UTF-8', 'ignore').strip() if x.isprintable())
+            max_filter_node = None
+            min_filter_node = None
+
+            # MatMul + BiasAdd + Add
             if "BiasAddAdd" in attr_fused_ops:
-                max_filter_node = self.graph_info[new_node.input[7]].node
-                min_filter_node = self.graph_info[new_node.input[6]].node
+                # The Min and Max of non-const weight node are from QuantizeV2's output, not valid nodes.
+                # Add check here for excluding this case.
+                if ":2" not in new_node.input[7]:
+                    max_filter_node = self.graph_info[new_node.input[7]].node
+                if ":1" not in new_node.input[6]:
+                    min_filter_node = self.graph_info[new_node.input[6]].node
+            # MatMul + BiasAdd
             else:
-                max_filter_node = self.graph_info[new_node.input[6]].node
-                min_filter_node = self.graph_info[new_node.input[5]].node
+                if ":2" not in new_node.input[6]:
+                    max_filter_node = self.graph_info[new_node.input[6]].node
+                if ":1" not in new_node.input[5]:
+                    min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
+            weight_node = self.graph_info[Helper.node_name_from_input(new_node.input[1])].node
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
             
             type_bias = float32_type
-            if max_filter_node.op == 'Const':
+
+            if max_input_node.op == 'Enter':
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter':
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter':
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter':
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
+
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Const' and weight_node.op == 'Const':
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
                 max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
-                weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
-                bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                weights_tensor = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(bias_node.attr['value'].tensor)
                 is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
 
-                if  -self.eps <= input_range <= self.eps:
+                if -self.eps <= input_range <= self.eps:
                     input_range += self.eps
 
                 if -self.eps <= max_input_value - min_input_value <= self.eps:
@@ -373,6 +492,9 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                 bias_node.attr['value'].tensor.dtype = float32_type \
                                         if self.device == 'gpu' else qint32_type
                 type_bias = float32_type if self.device == 'gpu' else qint32_type
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
             else:
                 type_bias = float32_type
 
@@ -493,23 +615,63 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                 new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
-            max_filter_node = self.graph_info[new_node.input[6]].node
-            min_filter_node = self.graph_info[new_node.input[5]].node
+            max_filter_node = None
+            min_filter_node = None
+            # The Min and Max of non-const weight node are from QuantizeV2's output, not valid nodes.
+            # Add check here for excluding this case.
+            if ":2" not in new_node.input[6]:
+                max_filter_node = self.graph_info[new_node.input[6]].node
+            if ":1" not in new_node.input[5]:
+                min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
             is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
+            weight_node = self.graph_info[new_node.input[1]].node
             bias_node = self.graph_info[new_node.input[2]].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
-            if last_node.op.find('_QuantizedMatMul') != -1 or last_node.op.find('QuantizeV2') != -1:
+
+            if max_input_node.op == 'Enter':
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter':
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter':
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter':
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
+
+            if last_node.op.find('_QuantizedMatMul') != -1 or last_node.op.find('QuantizeV2') != -1 \
+               and max_filter_node and min_filter_node:
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
                 max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
-                weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
-                bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                weights_tensor = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(bias_node.attr['value'].tensor)
 
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
@@ -534,6 +696,9 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
 
                 bias_node.attr['value'].tensor.dtype = float32_type \
                                         if self.device == 'gpu' else qint32_type
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
                                                 if self.device == 'gpu' else qint32_type))
 

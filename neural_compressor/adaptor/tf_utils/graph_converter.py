@@ -548,9 +548,6 @@ class GraphConverter:
         self.scale_info.update(quantizev2_min)
         self.scale_info.update(requant_min_max)
 
-        self._tmp_graph_def = QuantizedRNNConverter(
-            self._tmp_graph_def, self._calibration_data, self._rnn_details, self.new_api).do_transformation()
-
         if 'scale_propagation_max_pooling' in self.recipes and \
                 self.recipes['scale_propagation_max_pooling']:
             self._tmp_graph_def = ScaleProPagationTransformer(
@@ -571,7 +568,6 @@ class GraphConverter:
             self.device, self.new_api).do_transformation()
 
         if not self.fake_quant:
-            # TODO Use MatMul and BatchMatMul new API
             if self.qdq_enabled:
                 self._tmp_graph_def = FuseMatMulRequantizeNewAPITransformer(
                     self._tmp_graph_def).do_transformation()
@@ -584,7 +580,7 @@ class GraphConverter:
 
                 self._tmp_graph_def = FuseMatMulRequantizeDequantizeTransformer(
                             self._tmp_graph_def).do_transformation()
-
+        
         self._tmp_graph_def = StripUnusedNodesOptimizer(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
@@ -680,12 +676,6 @@ class GraphConverter:
                                                self.fake_quant,
                                                self.new_api).get_quantized_nodes()
 
-        self._rnn_details = Helper.analysis_rnn_model(self._tmp_graph_def,
-                                                      bf16_ops=self.bf16_ops,
-                                                      fp32_ops=self.fp32_ops)
-        self.quantized_node_info.extend(self._rnn_details.keys())
-        self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
-
         if self.itex_mode:
             self.quantized_node_info.extend(self._search_y_pattern_for_itex())
 
@@ -708,9 +698,8 @@ class GraphConverter:
                                     self.op_wise_config).do_transformation()
 
         for i in self.quantized_node_info:
-            frame_name = self._rnn_details[i] if i in self._rnn_details else None
             sampling_graph_def, output_names = InsertPrintMinMaxNode(
-                sampling_graph_def, i[0], i[-1], frame_name).do_transformation()
+                sampling_graph_def, i[0], i[-1]).do_transformation()
             output_tensor_names.extend(output_names)
 
         if self.quantized_node_info:
