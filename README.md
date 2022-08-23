@@ -221,14 +221,13 @@ More details for validated models are available [here](docs/validated_model_list
 ## Selected Publications
 
 * [地址标准化服务AI深度学习模型推理优化实践](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
-* [Dynamic Quantization with Intel Neural Compressor and Transformers](https://www.youtube.com/watch?v=-_2ha2CNWXA) (Mar 2022)
+* [Accelerate AI Inference without Sacrificing Accuracy](https://www.intel.com/content/www/us/en/developer/videos/accelerate-inference-without-sacrificing-accuracy.html#gs.9yottx)
+* [Accelerate Deep Learning with Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/videos/accelerate-deep-learning-with-intel-tensorflow.html#gs.9yrw90)
 * [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
 * [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
 * [Intel® Deep Learning Boost - Boost Network Security AI Inference Performance in Google Cloud Platform (GCP)](https://networkbuilders.intel.com/solutionslibrary/intel-deep-learning-boost-boost-network-security-ai-inference-performance-in-google-cloud-platform-gcp-technology-guide) (Apr 2022)
 * [Intel® Neural Compressor joined PyTorch ecosystem tool ](https://pytorch.org/ecosystem/) (Apr 2022)
-* [New instructions in the Intel® Xeon® Scalable processors combined with optimized software frameworks enable real-time AI within network workloads](https://builders.intel.com/docs/networkbuilders/ai-technologies-unleash-ai-innovation-in-network-applications-solution-brief-1637303210.pdf) (Feb 2022)
-* [Quantizing ONNX Models using Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Quantizing-ONNX-Models-using-Intel-Neural-Compressor/post/1355237) (Feb 2022)
-* [Quantize AI Model by Intel® oneAPI AI Analytics Toolkit on Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) (Feb 2022)
+* [Dynamic Quantization with Intel Neural Compressor and Transformers](https://www.youtube.com/watch?v=-_2ha2CNWXA) (Mar 2022)
 
 > Please check out our [full publication list](docs/publication_list.md).
 
