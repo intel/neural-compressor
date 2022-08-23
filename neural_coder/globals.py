@@ -20,6 +20,9 @@ consider_imports = True
 # target batch size for feature of changing PyTorch batch size
 target_batch_size = 1
 
+# mark for successful batch size change
+batch_size_changed = False
+
 # number of benchmark iteration for feature of PyTorch benchmark
 num_benchmark_iteration = 30
 

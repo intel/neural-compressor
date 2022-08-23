@@ -24,11 +24,7 @@ HuggingFace [Transformers](https://github.com/huggingface/transformers) models: 
 from neural_coder import auto_quant
 auto_quant(
     code="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
-    args="--model_name_or_path albert-base-v2 \
-          --task_name sst2 \
-          --do_eval \
-          --output_dir result \
-          --overwrite_output_dir",
+    args="--model_name_or_path albert-base-v2 --task_name sst2 --do_eval --output_dir result",
 )
 ```
 

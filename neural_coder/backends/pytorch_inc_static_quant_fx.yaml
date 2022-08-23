@@ -14,7 +14,7 @@
 
 transformation:
   location:
-    - ["insert_below_dataloader_definition_line", "insert_below_model_definition_line", "insert_below_input_definition_line"]
+    - ["insert_below_dataloader_definition_line", "insert_below_model_definition_line"]
   content:
     - |-
       [+] if "GraphModule" not in str(type(MODEL_NAME)):

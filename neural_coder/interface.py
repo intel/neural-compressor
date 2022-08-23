@@ -28,7 +28,7 @@ def enable(
     code,
     features,
     target_batch_size=1,  # effective for feature "pytorch_change_batch_size"
-    num_benchmark_iteration=30,  # effective for feature "pytorch_benchmark"
+    num_benchmark_iteration=10,  # effective for feature "pytorch_benchmark"
     eval_accuracy=False,
     generate_patch=True,
     overwrite=False,
@@ -178,6 +178,23 @@ def enable(
 
     transformed_list_code_path = []
 
+    ## Determine Code Domain
+    # reset globals
+    globals.reset_globals()
+
+    from .utils import handle_user_input
+    globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(code)
+
+    from .coders.autoinc import domain
+    code_domain = domain.determine_domain(globals.list_code_path[0])
+    if code_domain == "transformers_trainer":
+        if "pytorch_benchmark" in features:
+            features = ["pytorch_reclaim_inference_transformers_trainer"] + features
+            # for BS
+            args += " --per_device_eval_batch_size " + str(target_batch_size)
+            globals.batch_size_changed = True
+
+    ## Feature Transformation
     for idx_feature, feature in enumerate(features):
 
         # reset globals
@@ -223,9 +240,13 @@ def enable(
                 from .coders.pytorch.dummy_dataloader import DummyDataLoader
                 opt = DummyDataLoader(globals.list_model_def_instance)
                 opt.register_transformation()
-            elif feature == "pytorch_reclaim_inputs": # is not in harness scope, but needs call graph and type inference
+            elif feature == "pytorch_reclaim_inputs":
                 from .coders.pytorch.reclaim_inputs import ReclaimInputs
                 opt = ReclaimInputs(globals.list_model_def_instance)
+                opt.register_transformation()
+            elif feature == "pytorch_reclaim_inference_transformers_trainer":
+                from .coders.pytorch.reclaim_inference_transformers_trainer import ReclaimInferenceTransformersTrainer
+                opt = ReclaimInferenceTransformersTrainer(globals.list_model_def_instance)
                 opt.register_transformation()
             elif feature in [
                     "pytorch_inc_dynamic_quant",
@@ -257,6 +278,8 @@ def enable(
             for i in range(len(list_transformed_code)):
                 # Batch Size
                 if "pytorch_change_batch_size" in features:
+                    if "batch_size" in list_transformed_code[0]:  # entry code has "batch_size"
+                        globals.batch_size_changed = True
                     from .coders.pytorch.batch_size import BatchSizeCoder
                     globals.target_batch_size = str(target_batch_size)
                     list_transformed_code[i] = BatchSizeCoder(list_transformed_code[i]).transform()
@@ -321,9 +344,6 @@ def enable(
     ### Output of Enabling
     globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(code)
 
-    if save_patch_path == "":
-        save_patch_path = ws_path
-
     if generate_patch:
         whole_patch_user_code = ""
         for path in globals.list_code_path[0:num_user_code_path]:
@@ -335,10 +355,12 @@ def enable(
             this_patch, _ = sp_gen_patch.communicate()
             this_patch = str(this_patch)[2:-1]
             whole_patch_user_code += this_patch
-        open(save_patch_path + "neural_coder_patch" + patch_suffix, "w").write(
+        if save_patch_path == "":
+            save_patch_path = ws_path + "neural_coder_patch"
+        open(save_patch_path + patch_suffix, "w").write(
             whole_patch_user_code.replace(r'\n', '\n').replace(r'\t', '\t').replace(r"\'", "\'"))
         abs_patch_path = os.path.abspath(
-            save_patch_path + "neural_coder_patch" + patch_suffix)
+            save_patch_path + patch_suffix)
         logger.info(f"The patch is saved to: [{abs_patch_path}]")
 
         if overwrite:
@@ -358,10 +380,12 @@ def enable(
                 this_patch, _ = sp_gen_patch.communicate()
                 this_patch = str(this_patch)[2:-1]
                 whole_patch_import_modules += this_patch
-            open(save_patch_path + "neural_coder_patch_import_modules" + patch_suffix, "w").write(
+            if save_patch_path == "":
+                save_patch_path = ws_path + "neural_coder_patch_import_modules"
+            open(save_patch_path + patch_suffix, "w").write(
                 whole_patch_import_modules.replace(r'\n', '\n').replace(r'\t', '\t').replace(r"\'", "\'"))
             abs_patch_path = os.path.abspath(
-                save_patch_path + "neural_coder_patch_import_modules" + patch_suffix)
+                save_patch_path + patch_suffix)
             logger.info(
                 f"The patch for imported modules is saved to: [{abs_patch_path}]")
 
@@ -580,7 +604,10 @@ def bench(
         IPS[-1] = IPS[-2]
 
     try:
-        FPS = round(sum(IPS) / len(IPS) * ninstances * bench_batch_size, 3)
+        if globals.batch_size_changed: # only times BS if BS has been modified, otherwise times 1
+            FPS = round(sum(IPS) / len(IPS) * ninstances * bench_batch_size, 3)
+        else:
+            FPS = round(sum(IPS) / len(IPS) * ninstances * 1, 3)
     except:
         FPS = 0
     try:
@@ -824,20 +851,43 @@ def superbench(
                     return list
 
                 features = remove_if_have(features, "pytorch_benchmark")
-                features = remove_if_have(
-                    features, "pytorch_change_batch_size")
+                features = remove_if_have(features, "pytorch_change_batch_size")
                 features = remove_if_have(features, "pytorch_cuda_to_cpu")
 
-                if not eval_accuracy:
-                    logger.info(
-                        f"Benchmark result (performance) of optimization set [{features}]"
-                        f" is [{bench_performance[0]}] (FPS)")
+                if auto_quant:
+                    # convert feature name to display name for better user experience
+                    if features == ['pytorch_inc_dynamic_quant']:
+                        features_display = "Intel INT8 (Dynamic)"
+                    elif features == ['pytorch_inc_static_quant_fx']:
+                        features_display = "Intel INT8 (Static)"
+                    elif features == ['pytorch_inc_static_quant_ipex']:
+                        features_display = "Intel INT8 (IPEX)"
+                    elif features == ['pytorch_inc_bf16']:
+                        features_display = "Intel BF16"
+                    elif features == []:
+                        features_display = "The Original Model"
+
+                    if not eval_accuracy:
+                        logger.info(
+                            f"Benchmark result (performance) of {features_display}"
+                            f" is {bench_performance[0]} (FPS)")
+                    else:
+                        logger.info(
+                            f"Benchmark result (performance) of {features_display}"
+                            f" is {bench_performance[0]} (FPS)")
+                        logger.info(
+                            f"Benchmark result (accuracy) of {features_display} is {bench_acc[5]}")
                 else:
-                    logger.info(
-                        f"Benchmark result (performance) of optimization set [{features}]"
-                        f" is [{bench_performance[0]}] (FPS)")
-                    logger.info(
-                        f"Benchmark result (accuracy) of optimization set [{features}] is [{bench_acc[5]}]")
+                    if not eval_accuracy:
+                        logger.info(
+                            f"Benchmark result (performance) of optimization set [{features}]"
+                            f" is [{bench_performance[0]}] (FPS)")
+                    else:
+                        logger.info(
+                            f"Benchmark result (performance) of optimization set [{features}]"
+                            f" is [{bench_performance[0]}] (FPS)")
+                        logger.info(
+                            f"Benchmark result (accuracy) of optimization set [{features}] is [{bench_acc[5]}]")
 
                 d = {}  # initialize dict
                 d["features"] = features
@@ -857,8 +907,7 @@ def superbench(
 
         # print result
         if not eval_accuracy:
-            logger.info(
-                f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
+            print(f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
             print("{:<20} {:<20} {:<120}".format(
                 'Numactl Mode', 'Performance (FPS)', 'Features Applied'))
 
@@ -878,8 +927,7 @@ def superbench(
                         )
                     )
         else:
-            logger.info(
-                f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
+            print(f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
             print("{:<20} {:<20} {:<20} {:<120}".format(
                 'Numactl Mode', 'Performance (FPS)', 'Accuracy', 'Features Applied'))
 
@@ -921,12 +969,42 @@ def superbench(
                     original_model_performance = list_FPS[i]
                     break
         
-        logger.info(f"The best optimization set for your model is: {list_optimization_set_top3[0]}")
-        logger.info(
-            f"You can get up to: "
-            f"{round(list_performance_top3[0] / original_model_performance, 1)}"
-            f" X performance boost with the suggested optimization set."
+        if auto_quant:
+            # convert feature name to display name for better user experience
+            if list_optimization_set_top3[0] == ['pytorch_inc_dynamic_quant']:
+                best_optimization_display = "Intel INT8 (Dynamic)"
+            elif list_optimization_set_top3[0] == ['pytorch_inc_static_quant_fx']:
+                best_optimization_display = "Intel INT8 (Static)"
+            elif list_optimization_set_top3[0] == ['pytorch_inc_static_quant_ipex']:
+                best_optimization_display = "Intel INT8 (IPEX)"
+            elif list_optimization_set_top3[0] == ['pytorch_inc_bf16']:
+                best_optimization_display = "Intel BF16"
+            elif list_optimization_set_top3[0] == []:
+                best_optimization_display = "The Original Model"
+
+            logger.info(f"The best optimization set for your model is {best_optimization_display}")
+            logger.info(
+                f"You can get up to "
+                f"{round(list_performance_top3[0] / original_model_performance, 1)}"
+                f" X performance boost."
+            )
+        else:
+            logger.info(f"The best optimization set for your model is: {list_optimization_set_top3[0]}")
+            logger.info(
+                f"You can get up to "
+                f"{round(list_performance_top3[0] / original_model_performance, 1)}"
+                f" X performance boost."
+            )
+
+        # generate patch for the best optimization
+        features_to_generate = list_optimization_set_top3[0]
+        features_to_generate.append("pytorch_cuda_to_cpu")
+        enable(
+            code=code,
+            features=features_to_generate,
+            save_patch_path="intel_optimization",
         )
+        logger.info('The optimization patch was saved to "intel_optimziation.diff"')
 
         return list_optimization_set_top3, list_performance_top3, original_model_ranking, original_model_performance
 
