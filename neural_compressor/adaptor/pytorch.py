@@ -2362,8 +2362,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             assert isinstance(model, torch.nn.Module), \
                     "The model passed in is not the instance of torch.nn.Module"
 
-            model_ = copy.deepcopy(model)
             if not IPEX_110 and not IPEX_112:
+                model_ = copy.deepcopy(model)
                 model_.eval().to(ipex.DEVICE)
                 try:
                     init_model = torch.jit.script(model_)
@@ -2377,10 +2377,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                             "Fail to convert this model to PyTorch Script model"
                         )
                         init_model = model_
+            elif IPEX_110:
+                init_model = copy.deepcopy(model)
+                init_model.eval()
             else:
-                model_.eval()
-                init_model = model_
-
+                if hasattr(model,'save_qconf_summary'):
+                    init_model = ipex.quantization._quantize_utils.copy_prepared_model(model)
+                else:
+                    init_model = copy.deepcopy(model)
+                    init_model.eval()
             # create a quantization config file for intel pytorch extension model
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
             if not IPEX_110 and not IPEX_112: 

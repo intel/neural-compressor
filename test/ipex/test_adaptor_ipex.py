@@ -1,14 +1,9 @@
 import torch
 import unittest
 import os
-from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.model import MODELS
 from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental import Quantization, common
-from neural_compressor.conf.config import QuantConf
-from neural_compressor.utils.pytorch import load
-from neural_compressor.utils.utility import recover
 import shutil
 import copy
 import numpy as np
@@ -20,6 +15,7 @@ try:
 except:
     TEST_IPEX = False
 
+torch.manual_seed(9527)
 assert TEST_IPEX, "Please install intel extension for pytorch"
 # get torch and IPEX version
 PT_VERSION = nc_torch.get_torch_version()
@@ -89,7 +85,7 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
         ipex_conf = ipex.quantization.QuantConf(
                     configure_file="./saved/best_configure.json",
                 )
-        q_model = ipex.quantization.convert(model, ipex_conf, torch.randn(1, 3, 224, 224))
+        q_model = ipex.quantization.convert(model, ipex_conf, torch.ones(1, 3, 224, 224))
         from neural_compressor.experimental import Benchmark
         evaluator = Benchmark('ipex_yaml.yaml')
         evaluator.model = q_model
@@ -121,7 +117,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         nc_model = quantizer.fit()
         nc_model.save('./saved')
         qconfig = ipex.quantization.default_static_qconfig
-        prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.randn(1, 3, 224, 224), inplace=False)
+        prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         prepared_model.load_qconf_summary(qconf_summary = "./saved/best_configure.json")
         convert_model = ipex.quantization.convert(prepared_model)
         from neural_compressor.experimental import Benchmark
@@ -130,5 +126,27 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         evaluator.b_dataloader = common.DataLoader(dataset)
         evaluator.fit('accuracy')
 
+    def test_tuning_ipex_for_ipex_autotune_func(self):
+        from neural_compressor.experimental import Quantization
+        model = M()
+        qconfig = ipex.quantization.default_static_qconfig
+        prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
+        quantizer = Quantization('ipex_yaml.yaml')
+        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        quantizer.model = prepared_model
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        nc_model = quantizer.fit()
+        nc_model.save('./saved')
+        qconfig = ipex.quantization.default_static_qconfig
+        prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
+        prepared_model.load_qconf_summary(qconf_summary = "./saved/best_configure.json")
+        convert_model = ipex.quantization.convert(prepared_model)
+        from neural_compressor.experimental import Benchmark
+        evaluator = Benchmark('ipex_yaml.yaml')
+        evaluator.model = convert_model
+        evaluator.b_dataloader = common.DataLoader(dataset)
+        evaluator.fit('accuracy')
 if __name__ == "__main__":
     unittest.main()
