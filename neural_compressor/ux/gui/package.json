@@ -23,7 +23,7 @@
     "@angular/platform-browser-dynamic": "^13.1.2",
     "@angular/router": "^13.1.2",
     "@swimlane/ngx-charts": "^18.0.1",
-    "@swimlane/ngx-graph": "^8.0.0",
+    "@swimlane/ngx-graph": "^8.0.2",
     "angular-plotly.js": "^4.0.4",
     "file-saver": "^2.0.5",
     "glob-parent": "^6.0.1",
