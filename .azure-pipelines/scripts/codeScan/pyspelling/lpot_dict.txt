@@ -95,6 +95,7 @@ autgrad
 autogenerate
 autograd
 AutoMixPrecision
+AutoQuant
 autopep
 Autoregressive
 ava
