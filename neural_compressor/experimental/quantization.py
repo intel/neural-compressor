@@ -69,6 +69,9 @@ class Quantization(Component):
             if self._eval_dataloader is None:
                 eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
                 if eval_dataloader_cfg is None:
+                    logger.info("Because both eval_dataloader_cfg and user-defined eval_func are None," \
+                        " force setting 'tuning.exit_policy.performance_only = True'.")
+                    deep_set(cfg, 'tuning.exit_policy.performance_only', True)
                     logger.info("Generate a fake evaluation function.")
                     self._eval_func = self._fake_eval_func
                 else:

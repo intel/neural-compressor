@@ -421,12 +421,12 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
             last_node = self.graph_info[new_node.input[0]].node
             weight_node = self.graph_info[Helper.node_name_from_input(new_node.input[1])].node
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
-            max_input_node = self.graph_info[last_node.input[-1]].node
-            min_input_node = self.graph_info[last_node.input[-2]].node
+            if not last_node.op == 'QuantizedConcatV2':
+                max_input_node = self.graph_info[last_node.input[-1]].node
+                min_input_node = self.graph_info[last_node.input[-2]].node
             
             type_bias = float32_type
-
-            if max_input_node.op == 'Enter':
+            if not last_node.op == 'QuantizedConcatV2' and max_input_node.op == 'Enter':
                 min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
                 max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
                 min_input_parent_node = self.graph_info[min_input_parent_name].node
@@ -459,7 +459,8 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                     continue
                 bias_node = bias_parent_node
 
-            if max_filter_node and min_filter_node and max_filter_node.op == 'Const' and weight_node.op == 'Const':
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Const' \
+              and weight_node.op == 'Const' and not last_node.op == 'QuantizedConcatV2':
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
                 max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]

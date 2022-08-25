@@ -55,6 +55,7 @@ class TensorFlowAdaptor(Adaptor):
         self.device = self.framework_specific_info['device']
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
+        self.performance_only = deep_get(self.framework_specific_info, 'performance_only', False)
         os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
@@ -66,7 +67,7 @@ class TensorFlowAdaptor(Adaptor):
 
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), cfg_yaml_name))
+            os.path.dirname(__file__), cfg_yaml_name), performance_only=self.performance_only)
         self.itex_mode = cfg_yaml_name == 'tensorflow_itex.yaml'
         self.qdq_enabled = cfg_yaml_name == 'inteltensorflow.yaml' or \
                                    cfg_yaml_name == 'tensorflow_itex.yaml'
@@ -543,7 +544,8 @@ class TensorFlowAdaptor(Adaptor):
                                         bf16_ops=self.bf16_ops,
                                         data_loader=data_loader,
                                         qdq_enabled=self.qdq_enabled,
-                                        new_api=self.new_api).convert()
+                                        new_api=self.new_api,
+                                        performance_only = self.performance_only).convert()
             except Exception: # pragma: no cover
                 from .tf_utils.util import get_model_input_shape
                 batch_size = get_model_input_shape(model)
@@ -560,7 +562,8 @@ class TensorFlowAdaptor(Adaptor):
                                         bf16_ops=self.bf16_ops,
                                         data_loader=data_loader,
                                         qdq_enabled=self.qdq_enabled,
-                                        new_api=self.new_api).convert()
+                                        new_api=self.new_api,
+                                        performance_only = self.performance_only).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -579,7 +582,8 @@ class TensorFlowAdaptor(Adaptor):
                                 bf16_ops=self.bf16_ops,
                                 data_loader=data_loader,
                                 qdq_enabled=self.qdq_enabled,
-                                new_api=self.new_api).convert()
+                                new_api=self.new_api,
+                                performance_only = self.performance_only).convert()
         #just save framework_specific_info feature for recover
         converted_model.q_config.update({'framework_specific_info': \
                                             self.framework_specific_info})
@@ -796,6 +800,7 @@ class TensorFlowAdaptor(Adaptor):
                 if input_pattern == [i for i in i.replace('+', ' ').strip().split(' ') if i]:
                     return True
             return False
+
 
         self.filter_unquantizable_concat(matched_nodes)
 
@@ -1353,7 +1358,8 @@ class TensorFlowAdaptor(Adaptor):
         converter = GraphConverter(model,
                                    qt_config=quantize_config,
                                    int8_sequences=self.op_wise_sequences,
-                                   fake_quant=True, new_api=self.new_api)
+                                   fake_quant=True, new_api=self.new_api,
+                                   performance_only = self.performance_only)
 
         return converter.convert()
 
@@ -1438,7 +1444,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                     data_loader=data_loader,
                                     itex_mode=self.itex_mode,
                                     qdq_enabled=self.qdq_enabled,
-                                    new_api=self.new_api).convert()
+                                    new_api=self.new_api,
+                                    performance_only = self.performance_only).convert()
             except Exception: # pragma: no cover
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
@@ -1454,7 +1461,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                 data_loader=data_loader,
                                 itex_mode=self.itex_mode,
                                 qdq_enabled=self.qdq_enabled,
-                                new_api=self.new_api).convert()
+                                new_api=self.new_api,
+                                performance_only = self.performance_only).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -1474,7 +1482,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                    data_loader=data_loader,
                                    itex_mode=self.itex_mode,
                                    qdq_enabled=self.qdq_enabled,
-                                   new_api=self.new_api).convert()
+                                   new_api=self.new_api,
+                                   performance_only = self.performance_only).convert()
 
         self._dump_model_op_stats(converted_model.graph_def)
 
@@ -1482,13 +1491,14 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
 
 class TensorflowQuery(QueryBackendCapability):
 
-    def __init__(self, local_config_file=None):
+    def __init__(self, local_config_file=None, performance_only=False):
         import tensorflow as tf
 
         super().__init__()
         self.version = tf.version.VERSION
         self.cfg = local_config_file
         self.cur_config = None
+        self.performance_only = performance_only
         self._one_shot_query()
 
     def _get_specified_version_cfg(self, data):
@@ -1553,6 +1563,7 @@ class TensorflowQuery(QueryBackendCapability):
             content = yaml.safe_load(f)
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
+
             except Exception as e:
                 logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))
                 self.cur_config = None

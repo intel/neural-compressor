@@ -29,20 +29,56 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
+        self.dtype = dtypes.quint8
+
+    def _get_node_from_name(self, name):
+        if name[-2] == ':':
+            node = self.node_name_mapping[name[0:-2]].node
+        else:
+            node = self.node_name_mapping[name].node
+        return node
+
+    def _get_firt_input_from_name(self, name):
+        node = self._get_node_from_name(name)
+        if len(node.input) == 0:
+            return ''
+        return node.input[0]
 
     def _quantizable_concat(self, node):
         deq_type = []
-        for input_node_name in node.input[:node.attr['N'].i]:
-            node_name = helper.node_name_from_input(input_node_name)
-            if self.node_name_mapping[node_name].node.op != "Dequantize":
-                return False
+        is_quantizable = True
+        if self.performance_only:
+            _, normal_inputs = self._get_node_input(node.name)
+            original_inputs = normal_inputs[:node.attr['N'].i]
 
-            deq_type.append(self.node_name_mapping[node_name].node.attr['T'].type)
+            for each_input in original_inputs:
+                dq_input = self._get_firt_input_from_name(each_input)
+                q_input = self._get_firt_input_from_name(dq_input)
+                pre_input = self._get_firt_input_from_name(q_input)
+                if pre_input == '':
+                    continue
+                req_input = self._get_node_from_name(pre_input)
+                if req_input.op == 'Requantize' or req_input.op == 'RequantizePerChannel':
+                    is_quantizable = True
+                    if str(self.node_name_mapping[pre_input].node.attr['out_type']) != '':
+                        deq_type.append(self.node_name_mapping[pre_input].node.attr['out_type'].type)
+                    else:
+                        deq_type.append(self.node_name_mapping[pre_input].node.attr['T'].type)
+        else:
+            for input_node_name in node.input[:node.attr['N'].i]:
+                node_name = helper.node_name_from_input(input_node_name)
+                if self.node_name_mapping[node_name].node.op != "Dequantize":
+                    return False
+
+                deq_type.append(self.node_name_mapping[node_name].node.attr['T'].type)
 
         if len(set(deq_type)) != 1:
-            return False
+            is_quantizable = False
+        else:
+            if self.performance_only and dtypes.DType(deq_type[0]) == dtypes.qint8:
+                is_quantizable = False
 
-        return True
+        return is_quantizable
 
     def _apply_concatv2_quantization(self, match_node_name):
         # Dequantize + ConcatV2 + QuantizeV2
@@ -78,7 +114,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 quantized_concat_node = helper.create_node(quantized_op_type, quantized_op_name, all_input_names)
 
                 helper.set_attr_int(quantized_concat_node, "N", len(original_inputs))
-                helper.set_attr_dtype(quantized_concat_node, "T", dtypes.quint8)
+                helper.set_attr_dtype(quantized_concat_node, "T", self.dtype)
                 self.add_output_graph_node(quantized_concat_node)
                 self._intel_cpu_add_dequantize_result_node(quantized_op_name, node.name)
             else:
@@ -86,7 +122,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
 
-    def get_longest_fuse(self):
+    def get_longest_fuse(self, do_transform=False):
         self._get_op_list()
         matched_node_name = []
         
@@ -103,21 +139,45 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                         continue
                     if v != sub_rule[1]:
                         continue
-
-                if self._quantizable_concat(cur_node) and \
-                    dtypes.as_dtype(cur_node.attr["T"].type) == dtypes.float32 and \
-                    not re.search(r'map(_\d+)?/while', cur_node.name):
+                
+                if self.performance_only and not do_transform:
                     matched_node_name.clear()
-                    matched_node_name.append(sub_rule[0])
                     matched_node_name.append(cur_node.name)
-                    matched_node_name.append(sub_rule[-1])
                     return sub_rule, matched_node_name
+                
+                if self._quantizable_concat(cur_node):
+                    if dtypes.as_dtype(cur_node.attr["T"].type) == dtypes.float32 and \
+                    not re.search(r'map(_\d+)?/while', cur_node.name):
+                        matched_node_name.clear()
+                        matched_node_name.append(sub_rule[0])
+                        matched_node_name.append(cur_node.name)
+                        matched_node_name.append(sub_rule[-1])
+                        return sub_rule, matched_node_name
+                else:
+                    if self.performance_only:
+                        new_inputs = []
+                        _, normal_inputs = self._get_node_input(cur_node.name)
+                        original_inputs = normal_inputs[:cur_node.attr['N'].i]
+                        for each_input in original_inputs:
+                            each_node = self._get_node_from_name(each_input)
+                            if each_node.op == 'Dequantize':
+                                q_input = self._get_firt_input_from_name(each_input)
+                                if q_input == '':
+                                    continue
+                                if self._get_node_from_name(q_input).op == 'QuantizeV2':
+                                    pre_input = self._get_firt_input_from_name(q_input)
+                                    new_inputs.append(pre_input)
+                        new_inputs.append(cur_node.input[-1])
+                        for i in range(0, cur_node.attr['N'].i+1):
+                            cur_node.input.pop()
+                        for input in new_inputs:
+                            cur_node.input.extend([input])
 
         return None, None
 
     def apply_the_transform(self):
         self._get_op_list()
-        matched_rule, matched_node_name = self.get_longest_fuse()
+        matched_rule, matched_node_name = self.get_longest_fuse(do_transform=True)
         if matched_node_name:
             fusion_name = ''.join(matched_rule)
             if fusion_name == "DequantizeConcatV2QuantizeV2":

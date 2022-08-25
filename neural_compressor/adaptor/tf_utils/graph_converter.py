@@ -87,7 +87,8 @@ class GraphConverter:
                  fake_quant=False,
                  itex_mode=False,
                  qdq_enabled=False,
-                 new_api=False):
+                 new_api=False,
+                 performance_only=False):
         """Convert graph.
 
         :param model: input tensorflow model.
@@ -148,6 +149,7 @@ class GraphConverter:
         self._itex_model.input_tensor_names = self.input_tensor_names
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
         self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
+        self.performance_only = performance_only
 
     # pylint: disable=no-member
     def _inference(self, model):
@@ -679,7 +681,8 @@ class GraphConverter:
                                                self.int8_sequences,
                                                self.device,
                                                self.fake_quant,
-                                               self.new_api).get_quantized_nodes()
+                                               self.new_api,
+                                               self.performance_only).get_quantized_nodes()
 
         if self.itex_mode:
             self.quantized_node_info.extend(self._search_y_pattern_for_itex())
@@ -763,7 +766,8 @@ class GraphConverter:
                                                    self.int8_sequences,
                                                    self.device,
                                                    self.fake_quant,
-                                                   self.new_api).do_transform()
+                                                   self.new_api,
+                                                   self.performance_only).do_transform()
 
             if len(self._calibration_data) > 0:
                 self._freeze_requantization_ranges(self._kl_op_dict)

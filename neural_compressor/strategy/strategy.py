@@ -150,7 +150,8 @@ class TuneStrategy(object):
                 {"inputs": self.cfg.model.inputs,
                  "outputs": self.cfg.model.outputs,
                  'workspace_path': self.cfg.tuning.workspace.path,
-                 'recipes': self.cfg.quantization.recipes})
+                 'recipes': self.cfg.quantization.recipes,
+                 'performance_only': self.cfg.tuning.exit_policy.performance_only})
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnxrt' in framework.lower():
@@ -344,6 +345,7 @@ class TuneStrategy(object):
             logger.info("Neither evaluation function nor metric is defined." \
                         " Generate a quantized model with default quantization configuration.")
             self.cfg.tuning.exit_policy.performance_only = True
+            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
             logger.info("Generate a fake evaluation function.")
             self.eval_func = self._fake_eval_func
 
