@@ -457,7 +457,7 @@ class QuantizeNodeBase():
         reshape_dims_node = helper.create_constant_node(
             reshape_dims_name, -1, dtypes.int32, [1])
 
-        if enter_node:
+        if enter_node: # pragma: no cover
             reshape_dims_enter_node = helper.create_node(
                 'Enter', reshape_dims_name+'_enter', [reshape_dims_name])
             helper.set_attr_string(reshape_dims_enter_node,
@@ -472,7 +472,7 @@ class QuantizeNodeBase():
         reduction_dims_node = helper.create_constant_node(
             reduction_dims_name, 0, dtypes.int32, [1])
 
-        if enter_node:
+        if enter_node: # pragma: no cover
             reduction_dims_enter_node = helper.create_node(
                 'Enter', reduction_dims_name+'_enter', [reduction_dims_name])
             helper.set_attr_string(reduction_dims_enter_node,
@@ -747,7 +747,7 @@ class QuantizeNodeBase():
         qint8_const_node, min_node, max_node, qint8_const_enter_node, min_enter_node, max_enter_node = \
             helper.generate_quantized_weight_node(parent, input_node, per_channel,
                                                   self.weight_bit, self.device, enter_node)
-        if enter_node:
+        if enter_node: # pragma: no cover
             self.add_output_graph_node(qint8_const_node)
             self.add_output_graph_node(qint8_const_enter_node)
             self.add_output_graph_node(min_node)

@@ -142,8 +142,6 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             for _, value in enumerate(quantized_node.input):
                 new_node.input.append(value)
 
-            new_node.input.append(requested_output_min_name)
-            new_node.input.append(requested_output_max_name)
             if 'Tinput' in quantized_node.attr:
                 new_node.attr["Tinput"].CopyFrom(quantized_node.attr['Tinput'])
             if 'Tfilter' in quantized_node.attr:
@@ -158,10 +156,12 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["Tsummand"].CopyFrom(quantized_node.attr['Tsummand'])
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
-            max_filter_node = self.graph_info[new_node.input[6]].node
-            min_filter_node = self.graph_info[new_node.input[5]].node
+            max_filter_node = self.graph_info[new_node.input[-1]].node
+            min_filter_node = self.graph_info[new_node.input[-2]].node
             last_node = self.graph_info[new_node.input[0]].node
-            
+            new_node.input.append(requested_output_min_name)
+            new_node.input.append(requested_output_max_name)           
+ 
             if last_node.op.find('Requantize') != -1 or ((last_node.op.find('QuantizeV2') != -1 or \
                                                             last_node.op.find('QuantizedConv2D') != -1) \
                                                                 and len(quantized_node.attr['fused_ops'].list.s) > 0):          

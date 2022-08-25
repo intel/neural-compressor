@@ -55,6 +55,7 @@ class FreezeValueTransformer(GraphRewriterBase):
         self.cur_graph.graph = self.model
 
         self.graph_info = self.cur_graph.parse_graph()
+        self.cur_graph.get_frame_info()
 
         self.quantizeV2_min_max = {}
         self.requant_min_max = {}
@@ -186,10 +187,30 @@ class FreezeValueTransformer(GraphRewriterBase):
                     tensor=tensor_util.make_tensor_proto(float(value),
                     dtypes.float32, [])))
             output_node_name = self.graph_info[node_name].outputs[0]
-            self.cur_graph.replace_const_node(new_node,
-                                              [Helper.node_name_from_input(output_node_name)],
-                                              node_name)
-            self.cur_graph.remove_node(node_name)
+
+            if node_name in self.cur_graph.parent_frame_details and \
+               self.cur_graph.parent_frame_details[node_name]:   # pragma: no cover      
+                new_node_enter_node = Helper.create_node(
+                    'Enter', new_node.name+'_enter', [new_node.name])
+                Helper.set_attr_string(new_node_enter_node,
+                       'frame_name', self.cur_graph.parent_frame_details[node_name].attr['frame_name'].s)
+                Helper.set_attr_dtype(new_node_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(new_node_enter_node, 'is_constant', True)
+                Helper.set_attr_int(new_node_enter_node, 'parallel_iterations', 
+                       self.cur_graph.parent_frame_details[node_name].attr['parallel_iterations'].i)
+
+                self.cur_graph.add_node(new_node, None, [new_node_enter_node.name])
+                #self.cur_graph.add_node(new_node_enter_node, new_node.name, 
+                #        [Helper.node_name_from_input(output_node_name)])
+                self.cur_graph.replace_const_node(new_node_enter_node,
+                                                  [Helper.node_name_from_input(output_node_name)],
+                                                  node_name)
+                self.cur_graph.remove_node(node_name)
+            else:
+                self.cur_graph.replace_const_node(new_node,
+                                                  [Helper.node_name_from_input(output_node_name)],
+                                                  node_name)
+                self.cur_graph.remove_node(node_name)
 
             self.quantizeV2_min_max[node_name] = tensor_util.MakeNdarray(
                                                     new_node.attr["value"].tensor
@@ -237,6 +258,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                     tensor=tensor_util.make_tensor_proto(float(value[1]),
                     dtypes.float32, [])))
 
+            output_node_name = self.graph_info[node_name].outputs[0]
             if bn_node_name:
                 self.cur_graph.replace_const_node(
                     min_node,
@@ -248,8 +270,42 @@ class FreezeValueTransformer(GraphRewriterBase):
                     [Helper.node_name_from_input(bn_node_name)],
                     bn_node_name + '_input8_output_max'
                 )
+            elif node_name in self.cur_graph.parent_frame_details and \
+                 self.cur_graph.parent_frame_details[node_name]:         # pragma: no cover
+                min_node_enter_node = Helper.create_node(
+                    'Enter', min_node.name+'_enter', [min_node.name])
+                Helper.set_attr_string(min_node_enter_node,
+                       'frame_name', self.cur_graph.parent_frame_details[node_name].attr['frame_name'].s)
+                Helper.set_attr_dtype(min_node_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(min_node_enter_node, 'is_constant', True)
+                Helper.set_attr_int(min_node_enter_node, 'parallel_iterations',
+                       self.cur_graph.parent_frame_details[node_name].attr['parallel_iterations'].i)
+
+                self.cur_graph.add_node(min_node, None, [min_node_enter_node.name])
+                #self.cur_graph.add_node(min_node_enter_node, min_node.name, 
+                #            [Helper.node_name_from_input(output_node_name)])
+                self.cur_graph.replace_const_node(min_node_enter_node,
+                                                  [Helper.node_name_from_input(output_node_name)],
+                                                  node_name + ':0')
+
+                max_node_enter_node = Helper.create_node(
+                    'Enter', max_node.name+'_enter', [max_node.name])
+                Helper.set_attr_string(max_node_enter_node,
+                       'frame_name', self.cur_graph.parent_frame_details[node_name].attr['frame_name'].s)
+                Helper.set_attr_dtype(max_node_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(max_node_enter_node, 'is_constant', True)
+                Helper.set_attr_int(max_node_enter_node, 'parallel_iterations',
+                       self.cur_graph.parent_frame_details[node_name].attr['parallel_iterations'].i)
+
+                self.cur_graph.add_node(max_node, None, [max_node_enter_node.name])
+                #self.cur_graph.add_node(max_node_enter_node, max_node.name, 
+                #              [Helper.node_name_from_input(output_node_name)])
+                self.cur_graph.replace_const_node(max_node_enter_node,
+                                                  [Helper.node_name_from_input(output_node_name)],
+                                                  node_name + ':1')
+
+                self.cur_graph.remove_node(node_name)
             else:
-                output_node_name = self.graph_info[node_name].outputs[0]
                 self.cur_graph.replace_const_node(
                     min_node,
                     [Helper.node_name_from_input(output_node_name)],

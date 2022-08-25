@@ -1807,22 +1807,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                 add_op_quantizable = False
                         next_node_op = self.node_name_mapping[
                             next_node_name].node.op
-
-                        if next_node_op in ("Add", "AddV2", "AddN"):
-                            next_node = self.node_name_mapping[
-                                next_node_name].node
-                            next_node_inputs = list(next_node.input)
-                            cur_node_index = next_node_inputs.index(
-                                cur_node_name)
-
-                            for index, input_name in enumerate(
-                                    next_node_inputs):
-                                node_type = self.node_name_mapping[helper.node_name_from_input(
-                                    input_name)].node.op
-                                if input_name != cur_node_name and index < cur_node_index and \
-                                        node_type != 'Dequantize':
-                                    add_op_quantizable = False
-                                    break
                         if add_op_quantizable and next_node_op == sub_rule[-sub_rule_len]:
                             if not is_shared_output:
                                 matched_node_name.append(next_node_name)

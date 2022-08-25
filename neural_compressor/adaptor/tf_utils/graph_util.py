@@ -608,8 +608,10 @@ class GraphAnalyzer():
                     self.parent_frame_details[output] = None
                 else:
                     if output in self.parent_frame_details and self.parent_frame_details[output]:
-                        assert self.parent_frame_details[output].attr['frame_name'] == \
-                          self.parent_frame_details[node_details.node.name].attr['frame_name']
+                        if node_details.node.name in self.parent_frame_details and \
+                           self.parent_frame_details[node_details.node.name]:
+                            assert self.parent_frame_details[output].attr['frame_name'] == \
+                            self.parent_frame_details[node_details.node.name].attr['frame_name']
                     else:
                         self.parent_frame_details[output] = self.parent_frame_details[node_details.node.name]
 

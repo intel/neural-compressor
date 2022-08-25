@@ -570,12 +570,9 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
         float32_type = dtypes.float32.as_datatype_enum
         qint32_type = dtypes.qint32.as_datatype_enum
 
-        while True:
-            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-                [["_QuantizedMatMul"], ['Requantize']])
-            if len(target_nodes) == 0:
-                break
-            i = target_nodes[0]
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
+            [["_QuantizedMatMul"], ['Requantize']])
+        for i in target_nodes:
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
             requantize_node_name = i[1]
@@ -588,7 +585,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                and "Relu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')) or \
                ("Relu6" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')) or \
                ("LeakyRelu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')):
-                break
+                continue
 
             new_node = node_def_pb2.NodeDef()
 
