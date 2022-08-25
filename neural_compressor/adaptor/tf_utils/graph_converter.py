@@ -61,6 +61,7 @@ from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequ
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
+from .graph_rewriter.int8.post_hostconst_converter import PostHostConstConverter
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
@@ -284,13 +285,17 @@ class GraphConverter:
                 model = self.quantize()
 
         if self.itex_mode:
+            self._itex_model.graph_def = \
+                PostHostConstConverter(self._itex_model.graph_def).do_transformation()
+            self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
             return self._itex_model
         
         if len(self.bf16_ops) > 0:
             model = self.bf16_convert()
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
-        post_cse_graph_def.library.CopyFrom(self.model.graph_def.library)
-        model.graph_def = post_cse_graph_def
+        post_hostconst_graph_def = PostHostConstConverter(post_cse_graph_def).do_transformation()
+        post_hostconst_graph_def.library.CopyFrom(self.model.graph_def.library)
+        model.graph_def = post_hostconst_graph_def
 
         if debug:
             model.save(self.output_graph)
@@ -531,11 +536,11 @@ class GraphConverter:
         self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,
-            '__max:').do_transformation()
+            '__max:', device=self.device).do_transformation()
         self._tmp_graph_def, quantizev2_min = FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,
-            '__min:').do_transformation()
+            '__min:', device=self.device).do_transformation()
         self._tmp_graph_def, requant_min_max= FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,

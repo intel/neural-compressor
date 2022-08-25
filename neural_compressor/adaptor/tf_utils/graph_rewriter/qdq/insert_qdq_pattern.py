@@ -182,7 +182,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                     namespace_prefix,
                                                     each_input_name,
                                                     is_asymmetric,
-                                                    dtype)
+                                                    dtype,
+                                                    device=self.device)
 
 
     def _insert_qdq_pattern_for_concatv2(self, original_node, is_asymmetric):
@@ -196,13 +197,15 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                     original_input_name,
                                                     is_asymmetric,
                                                     dtypes.quint8,
-                                                    input_idx)
+                                                    input_idx,
+                                                    device=self.device)
             input_idx += 1
 
 
     def _insert_qdq_pattern_for_each_input(self, op_name, namespace_prefix,
                                            input_name, is_asymmetric,
-                                           dtype=dtypes.quint8, input_index=0):
+                                           dtype=dtypes.quint8, input_index=0,
+                                           device='cpu'):
         """Takes one float input to an op, and converts it to quantized form."""
         unique_input_name = input_name.replace(":", "__port__").replace("^", "__hat__")
         min_input_name = namespace_prefix + "_min_" + unique_input_name
@@ -214,9 +217,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
         if self.fake_quant: # pragma: no cover
             min_node = Helper.create_constant_node(
-                min_input_name, -1., dtypes.float32)
+                min_input_name, -1., dtypes.float32, device="cpu")
             max_node = Helper.create_constant_node(
-                max_input_name, 1., dtypes.float32)
+                max_input_name, 1., dtypes.float32, device="cpu")
             quant_v2_node = Helper.create_node(
                 "QuantizeV2", quantize_input_name,
                 [input_name, min_input_name, max_input_name])
@@ -383,9 +386,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             max_value = np.max(min_max_values[computational_node.name+'__max'])
 
         min_node = Helper.create_constant_node(min_name, min_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
         max_node = Helper.create_constant_node(max_name, max_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
         quant_node = Helper.create_node(
                 "QuantizeV2", qint8_const_name + '_quant',
                 [weight_node.name, min_name, max_name])

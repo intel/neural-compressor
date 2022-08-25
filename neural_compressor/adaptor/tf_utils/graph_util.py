@@ -106,7 +106,7 @@ class GraphAnalyzer():
         """
         input_node_names = []
         output_node_names = []
-        unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
+        unlikely_output_types = ['Const', 'HostConst', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
                                  'global_step', 'read', 'switch', 'cond', 'train',
                                  'init_ops', '[A-Za-z]+Dataset']
         unlikely_input_types = ['FIFOQueueV2', 'QueueDequeueV2', 'QueueDequeueUpToV2',
@@ -121,7 +121,7 @@ class GraphAnalyzer():
                         exclude_input_names += i.outputs
                     else:
                         extra_input_names.append(i.node.name)
-            if i.node.op == 'Const':
+            if i.node.op in ['Const', 'HostConst']:
                 continue
             if not i.node.input and not i.outputs:
                 logger.debug("Skip isolated node {}.".format(i.node.name))

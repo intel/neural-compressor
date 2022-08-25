@@ -409,10 +409,10 @@ class QuantizeGraphHelper():
                                                                     shape=shape)
 
         min_node = QuantizeGraphHelper.create_constant_node(min_name, min_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
 
         max_node = QuantizeGraphHelper.create_constant_node(max_name, max_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
 
         qint8_const_enter_node = None
         min_enter_node = None

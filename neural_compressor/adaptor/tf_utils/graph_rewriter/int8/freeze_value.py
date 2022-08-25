@@ -214,7 +214,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                 continue
 
             min_node = node_def_pb2.NodeDef()
-            min_node.op = "HostConst" if self.device == "gpu" else "Const"
+            min_node.op = "Const"
             min_node_postfix = "/frozen_min"
             min_node.name = bn_node_name + "/frozen_bn_output_min" if bn_node_name \
                 else node_name + min_node_postfix
@@ -226,7 +226,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                     dtypes.float32, [])))
 
             max_node = node_def_pb2.NodeDef()
-            max_node.op = "HostConst" if self.device == "gpu" else "Const"
+            max_node.op = "Const"
             max_node_postfix = "/frozen_max"
             max_node.name = bn_node_name + "/frozen_bn_output_max" if bn_node_name \
                 else node_name + max_node_postfix
