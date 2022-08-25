@@ -911,15 +911,36 @@ class ONNXRTQuery(QueryBackendCapability):
         Returns:
             [dictionary]: the content for specific version.
         """
-        default_config = None
+        config = None
+
+        def _compare(version1, version2):
+            if StrictVersion(version1) == StrictVersion(version2):
+                return 0
+            elif StrictVersion(version1) < StrictVersion(version2):
+                return -1
+            else:
+                return 1
+
+        extended_cfgs = {}
         for sub_data in data:
-            if self.version in sub_data['version']['name']:
-                return sub_data
-
             if 'default' in sub_data['version']['name']:
-                default_config = sub_data
+                assert config == None, "Only one default config " \
+                    "is allowed in framework yaml file."
+                config = sub_data
+            versions = sub_data['version']['name'] if \
+                isinstance(sub_data['version']['name'], list) else \
+                [sub_data['version']['name']]
+            for version in versions:
+                if version != 'default':
+                    extended_cfgs[version] = sub_data
+                
+        extended_cfgs = sorted(extended_cfgs.items(), key=lambda x:x[0], reverse=True)
+        for k, v in extended_cfgs:
+            if StrictVersion(self.version) >= StrictVersion(k):
+                config = v
+                break
 
-        return default_config
+        return config
 
     def get_version(self): # pragma: no cover
         """Get the current backend version infomation.
