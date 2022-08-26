@@ -53,9 +53,7 @@ export class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
             }
             const optimize_type = formatter !== undefined ? formatter : 'pytorch_mixed_precision_cpu';
             const currentTexts = selectedCells.map(cell => cell.model.value.text);
-            console.log("arrive here 1");
             const optimizedTexts = await this.optimizeCode(currentTexts, optimize_type, undefined, true);
-            console.log("arrive here 2");
             for (let i = 0; i < selectedCells.length; ++i) {
                 const cell = selectedCells[i];
                 const currentText = currentTexts[i];
@@ -68,7 +66,7 @@ export class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
                     }
                     else {
                         cell.model.value.text = optimizedText;
-                        cell.outputArea.node.innerText = "tothelighthouse";
+                         ;
                     }
                 }
                 else {

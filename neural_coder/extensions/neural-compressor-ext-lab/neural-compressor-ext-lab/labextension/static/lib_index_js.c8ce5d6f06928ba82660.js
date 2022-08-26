@@ -154,7 +154,7 @@ class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
                     }
                     else {
                         cell.model.value.text = optimizedText;
-                        cell.outputArea.node.innerText = "tothelighthouse";
+                         ;
                     }
                 }
                 else {
