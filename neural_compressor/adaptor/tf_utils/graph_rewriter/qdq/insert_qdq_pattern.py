@@ -146,11 +146,21 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
         elif self._check_op_list(node.op):
-            if "split:" in node.input[0]:
-                input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
+            if node.op == 'ConcatV2':
+                find_relu = False
+                for i in range(0,node.attr['N'].i):
+                    if "split:" in node.input[i]:
+                        input_node = self.node_name_mapping[node.input[i].rsplit(':', 1)[0]]
+                    else:
+                        input_node = self.node_name_mapping[node.input[i]]
+                    find_relu |= self._find_relu_node(input_node)
+                return find_relu
             else:
-                input_node = self.node_name_mapping[node.input[0]]
-            return self._find_relu_node(input_node)
+                if "split:" in node.input[0]:
+                    input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
+                else:
+                    input_node = self.node_name_mapping[node.input[0]]
+                return self._find_relu_node(input_node)
         else:
             return False
 
