@@ -272,9 +272,10 @@ class QuantizeNodeBase():
     def _find_relu_node(self, node):
         #if node.op.find("HardSwish") != -1:
         #    return False
-        if node.op in ("Relu", "Relu6") or \
+        if (node.op in ("Relu", "Relu6") or \
             (node.op.find("AndRelu") != -1 and \
-            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0))):
+            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
+                and self.node_name_mapping[node.input[0]].node.op.find("FusedBatchNorm") == -1:
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True

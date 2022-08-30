@@ -133,9 +133,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
-        if node.op in ("Relu", "Relu6", "Elu") or \
+        if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
-            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0))):
+            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
+                and self.node_name_mapping[node.input[0]].op.find("FusedBatchNorm") == -1:
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
@@ -446,7 +447,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         if self.graph_info[matched_node_name].node.op == "MatMul":
             if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
-
+        if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op:
+            return True
         return False
 
 

@@ -258,7 +258,6 @@ class FreezeValueTransformer(GraphRewriterBase):
                     tensor=tensor_util.make_tensor_proto(float(value[1]),
                     dtypes.float32, [])))
 
-            output_node_name = self.graph_info[node_name].outputs[0]
             if bn_node_name:
                 self.cur_graph.replace_const_node(
                     min_node,
@@ -272,6 +271,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                 )
             elif node_name in self.cur_graph.parent_frame_details and \
                  self.cur_graph.parent_frame_details[node_name]:         # pragma: no cover
+                output_node_name = self.graph_info[node_name].outputs[0]
                 min_node_enter_node = Helper.create_node(
                     'Enter', min_node.name+'_enter', [min_node.name])
                 Helper.set_attr_string(min_node_enter_node,
@@ -306,6 +306,7 @@ class FreezeValueTransformer(GraphRewriterBase):
 
                 self.cur_graph.remove_node(node_name)
             else:
+                output_node_name = self.graph_info[node_name].outputs[0]
                 self.cur_graph.replace_const_node(
                     min_node,
                     [Helper.node_name_from_input(output_node_name)],

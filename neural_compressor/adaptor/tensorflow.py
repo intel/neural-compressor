@@ -1559,10 +1559,22 @@ class TensorflowQuery(QueryBackendCapability):
         return config
 
     def _one_shot_query(self):
+        # pylint: disable=E1136
         with open(self.cfg) as f:
             content = yaml.safe_load(f)
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
+                if not self.performance_only:
+                    remove_int8_ops = ['FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3']
+                    for op in remove_int8_ops:
+                        while op in self.cur_config['ops']['int8']:
+                            self.cur_config['ops']['int8'].remove(op)
+                        if self.cur_config.get('capabilities'):
+                            self.cur_config['capabilities']['int8'].pop(op, None)
+                        pattern = f'Dequantize + {op} + Relu + QuantizeV2'
+                        if self.cur_config.get('patterns'):
+                            while pattern in self.cur_config['patterns']['int8']:
+                                self.cur_config['patterns']['int8'].remove(pattern)
 
             except Exception as e:
                 logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))

@@ -22,6 +22,7 @@ from neural_compressor.utils.utility import dump_elapsed_time
 from ..quantize_graph_base import QuantizeGraphBase
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from .fuse_qdq_conv import FuseNodeStartWithConv2d
+from .fuse_qdq_bn import FuseNodeStartWithFusedBatchNormV3
 from .fuse_qdq_concatv2 import FuseNodeStartWithConcatV2
 from .fuse_qdq_matmul import FuseNodeStartWithMatmul
 from .fuse_qdq_pooling import FuseNodeStartWithPooling
@@ -70,6 +71,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
         self.register_transformer("Conv3D", FuseNodeStartWithConv2d)
         self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
+        self.register_transformer("FusedBatchNormV3", FuseNodeStartWithFusedBatchNormV3)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
@@ -85,7 +87,6 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                 count += 1
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
-
                 _, quantizable_nodes = self.transformers[node.op](
                      input_graph=self.input_graph,
                      patterns=self.op_wise_seq[node.op],
