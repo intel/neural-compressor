@@ -56,7 +56,7 @@
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
+                        'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }

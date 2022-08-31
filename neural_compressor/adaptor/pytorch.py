@@ -2014,7 +2014,9 @@ unify_op_type_mapping_ipex = {
     "Convolution_Relu": "conv2d",
     "Convolution_Sum_Relu": "conv2d",
     "Convolution_BatchNorm": "conv2d",
+    "<class 'torch.nn.modules.conv.Conv1d'>": "conv1d",
     "<class 'torch.nn.modules.conv.Conv2d'>": "conv2d",
+    "<class 'torch.nn.modules.conv.Conv3d'>": "conv3d",
     "<class 'torch.nn.modules.activation.ReLU'>": "relu",
     "<method 'add' of 'torch._C._TensorBase' objects>": "add",
     "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "adaptiveavgpool2d",
@@ -2045,7 +2047,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
         self.query_handler = PyTorchQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), query_config_file))
         self.cfgs = None
-
+        self.fuse_ops = None
+        self.op_infos_from_cfgs = None
+        self.output_tensor_id_op_name = None
         self.ipex_config_path = \
             os.path.join(self.workspace_path, 'ipex_config_tmp.json')
 
@@ -2125,7 +2129,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                     qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                     weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                    qscheme=torch.per_channel_symmetric))
-
                 example_inputs = self.get_example_inputs(dataloader)
                 q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                         example_inputs=example_inputs, inplace=True)
@@ -2215,7 +2218,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 break
             for key in tune_cfg['op']:
                 value = tune_cfg['op'][key]
-                pattern = self.get_pattern(key, self.fuse_patterns)
+                pattern = self.get_pattern(key, self.fuse_ops)
                 assert isinstance(value, dict)
                 assert 'activation' in value
                 if value['activation']['dtype'] == 'fp32':
@@ -2258,15 +2261,16 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                 return torch.per_tensor_symmetric
         if IPEX_112:
             from .torch_utils.util import check_cfg_and_qconfig
-            for op_name in tune_cfg['op']:
-                op_info = check_cfg_and_qconfig(op_name, tune_cfg['op'], self.cfgs[op_name[0][0]]["q_op_infos"])
-                self.cfgs[op_name[0][0]]['q_op_infos'][op_name[0][1]] = op_info
+            self.cfgs = check_cfg_and_qconfig(tune_cfg['op'],
+                                              self.cfgs,
+                                              self.op_infos_from_cfgs,
+                                              self.output_tensor_id_op_name)
             with open(self.ipex_config_path, "w") as write_f:
                 json.dump(self.cfgs, write_f, indent = 4)
             return None
 
-    def get_pattern(self, fallback_op, fuse_patterns):
-        for fuse_pattern in fuse_patterns:
+    def get_pattern(self, fallback_op, fuse_ops):
+        for fuse_pattern in fuse_ops:
             if fuse_pattern[0] == fallback_op:
                 if fuse_pattern[1] in ['relu_', 'add_']:
                     return None
@@ -2433,7 +2437,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
             self.cfgs = json.load(f)
             if IPEX_110:
                 self.default_cfgs = copy.deepcopy(self.cfgs)
-                self.fuse_patterns = self.get_fuse_pattern(self.cfgs)
+                self.fuse_ops = self.get_fuse_ops(self.cfgs)
             if not IPEX_112 or IPEX_110:
                 for op_cfg in self.cfgs:
                     quantizable_ops.append((op_cfg["id"],
@@ -2441,17 +2445,33 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):   # pragma: no cover
                                            if op_cfg["name"] in unify_op_type_mapping_ipex else
                                            op_cfg["name"]))
             if IPEX_112:
-                for module_key in self.cfgs.keys():
-                    for op_cfg_id in self.cfgs[module_key]['q_op_infos']:
-                        quantizable_ops.append(((module_key, op_cfg_id), unify_op_type_mapping_ipex \
+                from .torch_utils.util import paser_cfgs, get_quantizable_ops_from_cfgs
+                ops_name, op_infos_from_cfgs, input_tensor_id_op_name, output_tensor_id_op_name = paser_cfgs(self.cfgs)
+                quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name,
+                                                                     op_infos_from_cfgs, 
+                                                                     input_tensor_id_op_name)
+                for name in quantizable_op_names:
+                    # name : list
+                    if len(name) == 1:
+                        module_key = name[0][0]
+                        op_cfg_id = name[0][2]
+                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex \
                                                [self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']] \
                                                if self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type'] \
                                                in unify_op_type_mapping_ipex else \
                                                self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']))
-
+                    else:
+                        op_type = ""
+                        for op_name in name:
+                            module_key = op_name[0]
+                            op_cfg_id = op_name[2]
+                            op_type += self.cfgs[module_key]['q_op_infos'][op_cfg_id]['op_type']
+                        quantizable_ops.append((tuple(name), op_type))
+                self.op_infos_from_cfgs = op_infos_from_cfgs
+                self.output_tensor_id_op_name = output_tensor_id_op_name
         os.remove(self.ipex_config_path)
 
-    def get_fuse_pattern(self, default_cfgs):
+    def get_fuse_ops(self, default_cfgs):
         elt_wise = ['relu', 'sigmoid', 'gelu']
         inplace_ops = ['relu_', 'add_']
         op_patterns = []

@@ -38,7 +38,7 @@ def build_ipex_yaml():
           accuracy_criterion:
             relative:  0.01
           exit_policy:
-            timeout: 0
+            timeout: 300
           random_seed: 9527
           workspace:
             path: saved
@@ -132,7 +132,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         qconfig = ipex.quantization.default_static_qconfig
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         quantizer = Quantization('ipex_yaml.yaml')
-        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
+        quantizer.conf.usr_cfg.tuning.exit_policy['max_trials'] = 20
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         quantizer.model = prepared_model
         quantizer.calib_dataloader = common.DataLoader(dataset)

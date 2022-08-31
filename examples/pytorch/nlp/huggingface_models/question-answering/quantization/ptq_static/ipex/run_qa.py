@@ -640,9 +640,6 @@ def main():
         return
 
     if model_args.benchmark or model_args.accuracy_only:
-        import torch
-        dumpy_tensor = torch.ones((batch_size, 384), dtype=torch.long)
-        jit_inputs = (dumpy_tensor, dumpy_tensor, dumpy_tensor)
         if model_args.int8:
             if IPEX_112:
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
@@ -669,9 +666,6 @@ def main():
                 trainer.model = model
             else:
                 assert "this script request IPEX version higher or equal to 1.12, please see README.md for details"
-            with torch.no_grad():
-                y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
-                y = model(dumpy_tensor, dumpy_tensor, dumpy_tensor)
         start_time = timeit.default_timer()
         results = trainer.evaluate()
         evalTime = timeit.default_timer() - start_time
