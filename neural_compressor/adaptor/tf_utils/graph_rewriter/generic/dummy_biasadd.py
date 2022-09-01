@@ -83,7 +83,7 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
             bias_const_node = Helper.create_constant_node(
                 bias_const_node_name, bias_add_content, dtypes.float32, shape=[bias_add_length])
 
-            if g.parent_frame_details[i[0]]:         # pragma: no cover
+            if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]:         # pragma: no cover
                 bias_const_enter_node = Helper.create_node(
                     'Enter', bias_const_node_name+'_enter', [bias_const_node_name])
                 Helper.set_attr_string(bias_const_enter_node,
@@ -94,10 +94,11 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
                                     g.parent_frame_details[i[0]].attr['parallel_iterations'].i)
 
             bias_node = Helper.create_node('BiasAdd', bias_node_name, \
-                        [i[0], bias_const_enter_node.name if g.parent_frame_details[i[0]] else bias_const_node_name])
+                        [i[0], bias_const_enter_node.name if i[0] in g.parent_frame_details \
+                        and g.parent_frame_details[i[0]] else bias_const_node_name])
             Helper.set_attr_dtype(bias_node, "T", dtypes.float32)
             g.add_node(bias_node, i[0], next_node_names)
-            if g.parent_frame_details[i[0]]:
+            if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]:
                 g.add_node(bias_const_node, None, [bias_const_enter_node.name])
                 g.add_node(bias_const_enter_node, bias_const_node_name, [bias_node_name])
             else:
