@@ -207,7 +207,8 @@ class Graph_Optimization():
                                "doesn't support bf16 instruction.")
                 sys.exit(0)
 
-        self.conf.usr_cfg.graph_optimization.precisions = self._precisions
+        self.conf.usr_cfg.graph_optimization.precisions = self._precisions if \
+            isinstance(self._precisions, list) else [self._precisions]
         self.conf.usr_cfg.model.inputs = self._input
         if isinstance(self._output, str) and ',' in self._output:
             self.conf.usr_cfg.model.outputs = [s.strip() for s in self._output.split(',')]

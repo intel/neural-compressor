@@ -144,7 +144,15 @@ class TuneStrategy(object):
 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)
-
+        if self.mixed_precision_mode:
+            self.dtype = copy.deepcopy(self.cfg.graph_optimization.precisions) if \
+                self.cfg.graph_optimization else \
+                copy.deepcopy(self.cfg.mixed_precision.precisions)
+            if 'fp32' in self.dtype and len(self.dtype) > 1:
+                self.dtype.remove('fp32')
+        else:
+            self.dtype = ['int8']
+ 
         if 'tensorflow' in framework:
             framework_specific_info.update(
                 {"inputs": self.cfg.model.inputs,
@@ -633,13 +641,12 @@ class TuneStrategy(object):
 
                 last_tune = [weighted_acc]
 
-            last_tune_msg = '[Accuracy (int8|fp32):' + \
+            last_tune_msg = '[Accuracy ({}|fp32):'.format(' '.join(self.dtype)) + \
                 ''.join([' {:.4f}|{:.4f}'.format(last, base) for last, base in \
                 zip(last_tune, self.tune_data['baseline'])]) + \
-                ''.join([', {} (int8|fp32): {:.4f}|{:.4f}'.format( \
-                x, y, z) for x, y, z in zip( \
-                self.objectives.representation, self.last_tune_result[1], self.baseline[1]) \
-                if x != 'Accuracy']) + ']'
+                ''.join([', {} ({}|fp32): {:.4f}|{:.4f}'.format(w, x, y, z) for \
+                w, x, y, z in zip(self.objectives.representation, self.dtype, \
+                self.last_tune_result[1], self.baseline[1]) if x != 'Accuracy']) + ']'
         else: # pragma: no cover
             last_tune_msg = 'n/a'
             for name in self.tune_data.keys() - {'baseline'}:
