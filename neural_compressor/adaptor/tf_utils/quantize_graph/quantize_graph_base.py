@@ -275,7 +275,9 @@ class QuantizeNodeBase():
         if (node.op in ("Relu", "Relu6") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
-                and self.node_name_mapping[node.input[0]].node.op.find("FusedBatchNorm") == -1:
+                and (node.op != "Relu" or \
+                    self.node_name_mapping \
+                        [helper.node_name_from_input(node.input[0])].node.op.find("FusedBatchNorm") == -1):
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True

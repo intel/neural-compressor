@@ -150,11 +150,17 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
         if matched_node_name:
             self.output_graph = graph_pb2.GraphDef()
             fusion_name = ''.join(matched_rule)
-            if fusion_name in self.fusion_mapping:
+            bn_node = self.node_name_mapping[matched_node_name[0]].node
+            is_training = bn_node.attr['is_training'].b
+            if fusion_name in self.fusion_mapping and is_training == False:
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
-                if self.new_api:
-                    self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
+                if is_training == True:
+                    self.logger.info \
+                        ("Skip quantizing the BN node '{}' due to the attr 'is_training == true'." \
+                            .format(bn_node.name))
+                elif self.new_api:
+                    self.logger.info("Unknown fusion pattern {} .".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
                 return self.input_graph
