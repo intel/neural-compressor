@@ -291,8 +291,9 @@ class GraphConverter:
                 PostHostConstConverter(self._itex_model.graph_def).do_transformation()
             self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
             return self._itex_model
-        
-        if len(self.bf16_ops) > 0:
+       
+        if (len(self.bf16_ops) > 0 and self.performance_only) or \
+           (os.getenv('MIX_PRECISION_TEST') == '1'):
             model = self.bf16_convert()
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
         post_hostconst_graph_def = PostHostConstConverter(post_cse_graph_def).do_transformation()
