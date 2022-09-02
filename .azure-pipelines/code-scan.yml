@@ -2,7 +2,7 @@ trigger: none
 pr: 
   - master
 
-pool: suyue-test
+pool: ICX-16C
 
 variables:
   IMAGE_NAME: "code-scan"
