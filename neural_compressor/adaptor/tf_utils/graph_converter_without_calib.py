@@ -57,7 +57,8 @@ class GraphConverterWithoutCalib:
                  model,
                  data_loader=None,
                  recover_config=None,
-                 new_api=False):
+                 new_api=False,
+                 performance_only=False):
         """Convert graph without calibration.
 
         :param model: input tensorflow model.
@@ -88,7 +89,8 @@ class GraphConverterWithoutCalib:
         self._check_tf_version()
         self._check_args()
         self._gen_tmp_filenames()
-        self.new_api = new_api          
+        self.new_api = new_api
+        self.performance_only = performance_only
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
     def _check_tf_version(self):
@@ -257,7 +259,8 @@ class GraphConverterWithoutCalib:
             self.int8_sequences,
             self.device,
             False,
-            self.new_api).do_transform()
+            self.new_api,
+            self.performance_only).do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if debug:

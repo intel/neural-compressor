@@ -70,7 +70,7 @@ class Quantization(Component):
                 eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
                 if eval_dataloader_cfg is None:
                     logger.info("Because both eval_dataloader_cfg and user-defined eval_func are None," \
-                        " force setting 'tuning.exit_policy.performance_only = True'.")
+                        " automatically setting 'tuning.exit_policy.performance_only = True'.")
                     deep_set(cfg, 'tuning.exit_policy.performance_only', True)
                     logger.info("Generate a fake evaluation function.")
                     self._eval_func = self._fake_eval_func
@@ -81,6 +81,11 @@ class Quantization(Component):
 
                     self._eval_dataloader = create_dataloader(self.framework, \
                                                               eval_dataloader_cfg)
+        if os.environ.get("PERFORMANCE_ONLY") in ['0', '1']:
+            performance_only = bool(int(os.environ.get("PERFORMANCE_ONLY")))
+            deep_set(cfg, 'tuning.exit_policy.performance_only', performance_only)
+            logger.info("Get environ 'PERFORMANCE_ONLY={}'," \
+                " force setting 'tuning.exit_policy.performance_only = True'.".format(performance_only))
 
     def _create_calib_dataloader(self, cfg):
         approach_cfg = deep_get(cfg, 'quantization.approach')

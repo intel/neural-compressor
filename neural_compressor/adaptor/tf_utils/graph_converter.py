@@ -502,7 +502,8 @@ class GraphConverter:
             self.int8_sequences,
             self.device,
             self.fake_quant,
-            self.new_api).do_transform()
+            self.new_api,
+            self.performance_only).do_transform()
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if debug:
@@ -727,7 +728,7 @@ class GraphConverter:
         self._tmp_graph_def = GenerateGraphWithQDQPattern(
               self._tmp_model, self._calibration_data,
               self.op_wise_config, self.fake_quant, self.fp32_ops, self.bf16_ops, \
-              self.quantized_node_info, self.device).do_transformation()
+              self.quantized_node_info, self.device, self.performance_only).do_transformation()
 
     def _convert_qdq(self):
         if self.itex_mode:

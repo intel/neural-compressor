@@ -33,7 +33,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     """
 
     def __init__(self, input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, \
-                 fake_quant=False, new_api=False):
+                 fake_quant=False, new_api=False, performance_only=False):
         """Quantize Graph For Intel Cpu
 
         Arguments:
@@ -63,6 +63,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.device = device
         self.fake_quant = fake_quant
         self.new_api = new_api
+        self.performance_only = performance_only
 
         self.all_quantizable_node = []
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
@@ -94,7 +95,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     op_wise_cfg=self.op_wise_config[node.name],
                     op_wise_config_name_list=op_wise_config_name_list,
                     start_node_name=node.name, device=self.device, \
-                    fake_quant=self.fake_quant, new_api=self.new_api).apply_the_transform()
+                    fake_quant=self.fake_quant, new_api=self.new_api,
+                    performance_only=self.performance_only).apply_the_transform()
                 if quantizable_node_names:
                     if node.op in ('ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool'):
                         self.all_quantizable_node.extend([[i] for i in quantizable_node_names])

@@ -36,7 +36,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     """
 
     def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
-                 bf16_ops, quantized_nodes, device):
+                 bf16_ops, quantized_nodes, device, performance_only):
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
@@ -45,6 +45,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.bf16_ops = bf16_ops
         self.quantized_nodes = quantized_nodes
         self.device = device
+        self.performance_only = performance_only
 
         self.node_name_mapping = {}
         for node in self.model.graph_def.node:
@@ -136,8 +137,12 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
-                and (node.op != "Relu" or \
-                    self.node_name_mapping[Helper.node_name_from_input(node.input[0])].op.find("FusedBatchNorm") == -1):
+                and (node.op != "Relu"
+                     or not self.performance_only
+                     or self.node_name_mapping \
+                        [Helper.node_name_from_input(node.input[0])].op.find("FusedBatchNorm") == -1
+                     or self.node_name_mapping \
+                        [Helper.node_name_from_input(node.input[0])].attr['is_training'].b):
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
