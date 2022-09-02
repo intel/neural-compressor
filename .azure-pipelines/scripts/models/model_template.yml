@@ -1,0 +1,45 @@
+
+parameters:
+- name: modelName
+  type: string
+  default: 'resnet50v1.5'
+- name: framework
+  type: string
+  default: 'tensorflow'
+
+
+steps:
+- script: |
+    echo ${BUILD_SOURCESDIRECTORY}
+    sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+    echo y | docker system prune
+  displayName: 'Clean workspace'
+- checkout: self
+  clean: true
+  displayName: 'Checkout out Repo'
+- script: |
+    if [[ ! $(docker images | grep -i neural-compressor:py38) ]]; then
+      docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t neural-compressor:py38 .
+    fi
+    docker images | grep -i neural-compressor
+    if [[ $? -ne 0 ]]; then
+      echo "NO Such Image neural-compressor"
+      exit 1
+    fi
+  displayName: "Build Devel Images"
+- script: |
+    docker stop $(docker ps -aq)
+    docker rm -vf $(docker ps -aq) || true
+  displayName: 'Clean Docker'
+- script: |
+    echo "------ Run ${{ parameters.modelName }} Model Test ------"
+    docker run --disable-content-trust --privileged --name=${{ parameters.modelName }} --shm-size="2g" \
+    -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset -v /tf_dataset2:/tf_dataset2 neural-compressor:py38 \
+    /bin/bash +x -c "cd /neural-compressor/.azure-pipelines/scripts/models \
+    && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --tune_acc=true --build_id=$(Build.BuildId)"
+  displayName: Tune&Benchmark ${{ parameters.modelName }}
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}/
+    artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
+    publishLocation: 'pipeline'
