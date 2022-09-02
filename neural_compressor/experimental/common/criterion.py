@@ -251,8 +251,10 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         if self.student_targets_loss is None:
             if self.loss_types[0] == 'CE':
                 self.student_targets_loss = torch.nn.CrossEntropyLoss()
+            elif self.loss_types[0] == 'MSE':
+                self.student_targets_loss = torch.nn.MSELoss()
             else:
-                raise NotImplementedError('Now we only support CrossEntropyLoss '
+                raise NotImplementedError('Now we only support CrossEntropyLoss and MSELoss '
                  'for loss of student model output with respect to targets.')
             logger.info('student_targets_loss: {}, {}'.format(self.loss_types[0], \
                                                         self.loss_weights[0]))
@@ -261,9 +263,11 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                 self.teacher_student_loss = self.SoftCrossEntropy
             elif self.loss_types[1] == 'KL':
                 self.teacher_student_loss = self.KullbackLeiblerDivergence
+            elif self.loss_types[1] == 'MSE':
+                self.teacher_student_loss = torch.nn.MSELoss()
             else:
-                raise NotImplementedError('Now we only support CrossEntropyLoss'
-                ' for loss of student model output with respect to teacher model ouput.')
+                raise NotImplementedError('Now we only support CrossEntropyLoss KL Divergence'
+                ' and MSELoss for loss of student model output with respect to teacher model ouput.')
             logger.info('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
                                                         self.loss_weights[1]))
 
@@ -551,6 +555,35 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
     def __call__(self, student_outputs, targets):
         return 0
 
+STUDENT_FEATURES = {}
+TEACHER_FEATURES = {}
+# for adapting fx model
+@torch.fx.wrap
+def record_output(output, name, output_process, student=False):
+    recorded_output = output
+    if output_process != '':
+        if isinstance(output, dict) and output_process in output:
+            recorded_output = output[output_process]
+        elif isinstance(output, (tuple, list)) and str.isnumeric(output_process):
+            recorded_output = output[int(output_process)]
+        elif callable(output_process):
+            recorded_output = output_process(output)
+        else:
+            raise NotImplementedError('Current only support get the data with ' + \
+                'integer index in case the output is tuple or list and only ' + \
+                'need one item or with key in case the output is dict,  ' + \
+                'or output_process is a function.')
+    if student:
+        STUDENT_FEATURES[name].append(recorded_output)
+    else:
+        TEACHER_FEATURES[name].append(recorded_output)
+    return output
+
+def get_activation(name, output_process='', student=False):
+    def hook(model, input, output):
+        return record_output(output, name, output_process, student=student)
+    return hook
+
 
 class PyTorchIntermediateLayersKnowledgeDistillationLoss(
                 IntermediateLayersKnowledgeDistillationLoss
@@ -567,36 +600,16 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         self.register_hooks_for_models()
 
     def register_hooks_for_models(self):
-        def get_activation(name, model_activation, output_process=''):
-            def hook(model, input, output):
-                if output_process != '':
-                    if isinstance(output, dict) and output_process in output:
-                        output = output[output_process]
-                    elif isinstance(output, (tuple, list)) and str.isnumeric(output_process):
-                        output = output[int(output_process)]
-                    elif callable(output_process):
-                        output = output_process(output)
-                    else:
-                        raise NotImplementedError('Current only support get the data with ' + \
-                            'integer index in case the output is tuple or list and only ' + \
-                            'need one item or with key in case the output is dict,  ' + \
-                            'or output_process is a function.')
-                model_activation[name].append(output)
-            return hook
-
-        def register_model_forward_hook(model, path, model_activation, output_process=''):
+        def register_model_forward_hook(model, path, output_process='', student=False):
             nodes = path.split('.')
             module = model
             for node in nodes:
                 try:
-                    if str.isnumeric(node):
-                        module = module[int(node)]
-                    else:
-                        module = module.__getattr__(node)
+                    module = module.__getattr__(node)
                 except:
                     raise AttributeError('There is no path {} in the model.'.format(path))
             return module.register_forward_hook(
-                get_activation(path, model_activation, output_process)
+                get_activation(path, output_process, student)
                 )
 
         assert isinstance(self.student_model, torch.nn.Module) and \
@@ -609,10 +622,13 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         for idx in range(len(self.layer_mappings)):
             student_layer, teacher_layer = self.layer_mappings[idx]
             student_output_process, teacher_output_process = self.layer_output_process[idx]
-            st_handle = register_model_forward_hook(self.student_model, student_layer, 
-                                        self.student_features, student_output_process)
-            te_handle = register_model_forward_hook(self.teacher_model, teacher_layer, 
-                                        self.teacher_features, teacher_output_process)
+            st_handle = register_model_forward_hook(self.student_model, student_layer,
+                                                    student_output_process, True)
+            te_handle = register_model_forward_hook(self.teacher_model, teacher_layer,
+                                                    teacher_output_process)
+            global STUDENT_FEATURES, TEACHER_FEATURES
+            STUDENT_FEATURES = self.student_features
+            TEACHER_FEATURES = self.teacher_features
             self.hook_handles.extend([st_handle, te_handle])
 
     def remove_all_hooks(self):
@@ -682,6 +698,12 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         with torch.no_grad():
             return pytorch_forward_wrapper(model, input, device=device)
 
+    def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        loss = self.loss_cal()
+        if self.add_origin_loss:
+            loss += student_loss
+        return loss
+
     def loss_cal(self):
         self.loss = 0
         init_feature_matchers = False
@@ -734,8 +756,7 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
                         tefeat = torch.softmax(tefeat, dim=-1)
                 tmp_loss += self.loss_funcs[idx](stfeat, tefeat) * self.loss_weights[idx]
             self.loss += tmp_loss
-            self.student_features[student_layer] = []
-            self.teacher_features[teacher_layer] = []
+        self.clear_features()
         return self.loss
 
 @criterion_registry('IntermediateLayersKnowledgeDistillationLoss', 'pytorch')
@@ -780,9 +801,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         assert all(any(isinstance(e, t) for t in [str, torch.nn.Module]) \
             for e in param_dict['loss_types']), \
             'Type of loss_types element must be str or torch Module.'
-        assert all(0. <= e <= 1. for e in param_dict['loss_weights']) and \
-            abs(sum(param_dict['loss_weights']) - 1.0) < 1e-9, \
-            'Element of loss_weights must be in interval [0, 1] and summed to 1.0.'
+        assert all(0. <= e <= 1. for e in param_dict['loss_weights']), \
+            'Element of loss_weights must be in interval [0, 1].'
         new_dict = {}
         for k in _params:
             new_dict[k] = param_dict[k]
