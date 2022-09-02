@@ -42,6 +42,7 @@ class Configuration:
         """Set the variables."""
         self.server_address = ""
         self.server_port = 0
+        self.url_prefix: str = ""
         self.gui_port = 0
         self.log_level = 0
         self.token = ""
@@ -61,6 +62,7 @@ class Configuration:
         args = self.get_command_line_args()
         self.server_address = determine_ip()
         self.server_port = self.determine_server_port(args)
+        self.url_prefix = self.determine_url_prefix(args)
         self.gui_port = self.determine_gui_port(args)
         self.log_level = self.determine_log_level(args)
         self.token = secrets.token_hex(16)
@@ -94,6 +96,13 @@ class Configuration:
             "--gui-port",
             type=int,
             help="port number for GUI",
+        )
+        parser.add_argument(
+            "-U",
+            "--url-prefix",
+            type=str,
+            default="",
+            help="URL prefix for INC Bench instance.",
         )
         parser.add_argument(
             "--allow-insecure-connections",
@@ -194,9 +203,20 @@ class Configuration:
         except IndexError:
             return logging.DEBUG
 
+    @staticmethod
+    def determine_url_prefix(args: dict) -> str:
+        """Determine url prefix based on parameters given."""
+        url_prefix = args.get("url_prefix", "")
+        if isinstance(url_prefix, str) and not url_prefix.startswith("/"):
+            url_prefix = f"/{url_prefix}"
+        return url_prefix
+
     def get_url(self) -> str:
         """Return URL to access application."""
-        return f"{self.scheme}://{self.server_address}:{self.gui_port}/?token={self.token}"
+        base_url = f"{self.scheme}://{self.server_address}:{self.gui_port}"
+        if self.url_prefix != "/":
+            base_url = f"{base_url}{self.url_prefix}"
+        return f"{base_url}/?token={self.token}"
 
     def dump_token_to_file(self) -> None:
         """Dump token to file."""

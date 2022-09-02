@@ -442,37 +442,24 @@ class TestUtils(unittest.TestCase):
         with self.assertRaisesRegexp(ValueError, "Unable to parse version foo.bar.ba"):
             release_tag()
 
-    @patch("neural_compressor.ux.utils.utils.load_help_nc_params")
     @patch(
         "neural_compressor.ux.utils.utils.registry_metrics",
         {"tensorflow": fake_metrics},
     )
     @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
-    def test_get_tensorflow_metrics_dict(
-        self,
-        mocked_load_help_nc_params: MagicMock,
-    ) -> None:
+    def test_get_tensorflow_metrics_dict(self) -> None:
         """Test getting metrics dict."""
         self.maxDiff = None
-        mocked_load_help_nc_params.return_value = {
-            "__help__topk": "help for topk",
-            "topk": {
-                "__help__k": "help for k in topk",
-                "__help__missing_param": "help for missing_param in topk",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
-        }
 
         expected = {
             "tensorflow": [
                 {
                     "name": "topk",
-                    "help": "help for topk",
+                    "help": "",
                     "params": [
                         {
                             "name": "k",
-                            "help": "help for k in topk",
+                            "help": "Number of top elements to look at for computing accuracy",
                             "value": [1, 5],
                         },
                     ],
@@ -480,205 +467,6 @@ class TestUtils(unittest.TestCase):
                 {
                     "name": "COCOmAP",
                     "help": "",
-                    "params": [
-                        {
-                            "name": "anno_path",
-                            "help": "",
-                            "value": "/foo/bar/workdir/label_map.yaml",
-                        },
-                    ],
-                },
-                {
-                    "name": "MSE",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "compare_label",
-                            "help": "",
-                            "value": True,
-                        },
-                    ],
-                },
-                {
-                    "name": "RMSE",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "compare_label",
-                            "help": "",
-                            "value": True,
-                        },
-                    ],
-                },
-                {
-                    "name": "MAE",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "compare_label",
-                            "help": "",
-                            "value": True,
-                        },
-                    ],
-                },
-                {
-                    "name": "metric1",
-                    "help": "help for metric1",
-                    "value": None,
-                },
-                {
-                    "name": "custom",
-                    "help": "",
-                    "value": None,
-                },
-            ],
-        }
-
-        actual = get_metrics_dict()
-
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
-        self.assertEqual(expected, actual)
-
-    @patch("neural_compressor.ux.utils.utils.load_help_nc_params")
-    @patch(
-        "neural_compressor.ux.utils.utils.registry_metrics",
-        {"onnxrt_qlinearops": fake_metrics},
-    )
-    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
-    def test_get_onnx_metrics_dict(
-        self,
-        mocked_load_help_nc_params: MagicMock,
-    ) -> None:
-        """Test getting metrics dict."""
-        mocked_load_help_nc_params.return_value = {
-            "__help__topk": "help for topk",
-            "topk": {
-                "__help__k": "help for k in topk",
-                "__help__missing_param": "help for missing_param in topk",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
-        }
-
-        expected = {
-            "onnxrt": [
-                {
-                    "name": "topk",
-                    "help": "help for topk",
-                    "params": [
-                        {
-                            "name": "k",
-                            "help": "help for k in topk",
-                            "value": [1, 5],
-                        },
-                    ],
-                },
-                {
-                    "name": "COCOmAP",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "anno_path",
-                            "help": "",
-                            "value": "/foo/bar/workdir/label_map.yaml",
-                        },
-                    ],
-                },
-                {
-                    "name": "MSE",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "compare_label",
-                            "help": "",
-                            "value": True,
-                        },
-                    ],
-                },
-                {
-                    "name": "RMSE",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "compare_label",
-                            "help": "",
-                            "value": True,
-                        },
-                    ],
-                },
-                {
-                    "name": "MAE",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "compare_label",
-                            "help": "",
-                            "value": True,
-                        },
-                    ],
-                },
-                {
-                    "name": "metric1",
-                    "help": "help for metric1",
-                    "value": None,
-                },
-                {
-                    "name": "custom",
-                    "help": "",
-                    "value": None,
-                },
-            ],
-        }
-
-        actual = get_metrics_dict()
-
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
-        self.assertEqual(expected, actual)
-
-    @patch("neural_compressor.ux.utils.utils.load_help_nc_params")
-    @patch(
-        "neural_compressor.ux.utils.utils.registry_metrics",
-        {
-            "tensorflow": {"topk": None, "COCOmAP": None},
-        },
-    )
-    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
-    def test_get_metrics_with_label(
-        self,
-        mocked_load_help_nc_params: MagicMock,
-    ) -> None:
-        """Test that get_metrics can correctly set label map file location."""
-        mocked_load_help_nc_params.return_value = {
-            "__help__topk": "help for topk",
-            "topk": {
-                "__help__k": "help for k in topk",
-                "__help__missing_param": "help for missing_param in topk",
-            },
-            "__help__COCOmAP": None,
-            "COCOmAP": {
-                "__help__anno_path": "annotation path",
-                "__label__anno_path": "annotation path",
-            },
-            "__help__metric1": "help for metric1",
-            "__help__metric3": "help for metric3",
-        }
-
-        expected = {
-            "tensorflow": [
-                {
-                    "name": "topk",
-                    "help": "help for topk",
-                    "params": [
-                        {
-                            "name": "k",
-                            "help": "help for k in topk",
-                            "value": [1, 5],
-                        },
-                    ],
-                },
-                {
-                    "name": "COCOmAP",
-                    "help": None,
                     "params": [
                         {
                             "name": "anno_path",
@@ -688,13 +476,186 @@ class TestUtils(unittest.TestCase):
                         },
                     ],
                 },
-                {"name": "custom", "help": "", "value": None},
+                {
+                    "name": "MSE",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "compare_label",
+                            "help": "",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "name": "RMSE",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "compare_label",
+                            "help": "",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "name": "MAE",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "compare_label",
+                            "help": "",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "name": "metric1",
+                    "help": "",
+                    "value": None,
+                },
+                {
+                    "name": "custom",
+                    "help": "Create your own metric. After you choose this option code "
+                    "template will be generated on the server",
+                    "value": None,
+                },
             ],
         }
 
         actual = get_metrics_dict()
 
-        mocked_load_help_nc_params.assert_called_once_with("metrics")
+        self.assertEqual(expected, actual)
+
+    @patch(
+        "neural_compressor.ux.utils.utils.registry_metrics",
+        {"onnxrt_qlinearops": fake_metrics},
+    )
+    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
+    def test_get_onnx_metrics_dict(self) -> None:
+        """Test getting metrics dict."""
+        expected = {
+            "onnxrt": [
+                {
+                    "name": "topk",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "k",
+                            "help": "Number of top elements to look at for computing accuracy",
+                            "value": [1, 5],
+                        },
+                    ],
+                },
+                {
+                    "name": "COCOmAP",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "anno_path",
+                            "help": "annotation path",
+                            "value": "/foo/bar/workdir/label_map.yaml",
+                            "label": "annotation path",
+                        },
+                    ],
+                },
+                {
+                    "name": "MSE",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "compare_label",
+                            "help": "",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "name": "RMSE",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "compare_label",
+                            "help": "",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "name": "MAE",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "compare_label",
+                            "help": "",
+                            "value": True,
+                        },
+                    ],
+                },
+                {
+                    "name": "metric1",
+                    "help": "",
+                    "value": None,
+                },
+                {
+                    "name": "custom",
+                    "help": "Create your own metric. After you choose this option code "
+                    "template will be generated on the server",
+                    "value": None,
+                },
+            ],
+        }
+
+        actual = get_metrics_dict()
+
+        self.assertEqual(expected, actual)
+
+    @patch(
+        "neural_compressor.ux.utils.utils.registry_metrics",
+        {
+            "tensorflow": {"topk": None, "COCOmAP": None},
+        },
+    )
+    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
+    def test_get_metrics_with_label(self) -> None:
+        """Test that get_metrics can correctly set label map file location."""
+        expected = {
+            "tensorflow": [
+                {
+                    "name": "topk",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "k",
+                            "help": "Number of top elements to look at for computing accuracy",
+                            "value": [1, 5],
+                        },
+                    ],
+                },
+                {
+                    "name": "COCOmAP",
+                    "help": "",
+                    "params": [
+                        {
+                            "name": "anno_path",
+                            "help": "annotation path",
+                            "value": "/foo/bar/workdir/label_map.yaml",
+                            "label": "annotation path",
+                        },
+                    ],
+                },
+                {
+                    "name": "custom",
+                    "help": "Create your own metric. After you choose this option code "
+                    "template will be generated on the server",
+                    "value": None,
+                },
+            ],
+        }
+
+        actual = get_metrics_dict()
+        print(actual)
+
         self.assertEqual(expected, actual)
 
     def test_parse_none_nodes(self) -> None:

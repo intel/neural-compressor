@@ -77,7 +77,7 @@ def execute_optimization_pytorch_script(
             "from neural_coder import enable; enable(code="
             + optimization.workdir
             + "/copy_model.py"
-            + ", features=['pytorch_inc_static_quant'], "
+            + ", features=['pytorch_inc_static_quant_fx'], "
             + "overwrite=False, save_patch_path="
             + optimization.workdir
             + "/"

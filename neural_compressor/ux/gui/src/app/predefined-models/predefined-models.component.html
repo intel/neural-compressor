@@ -10,7 +10,7 @@
       <ng-container *ngFor="let availableDomain of domains; let index = index">
         <button [attr.id]="'domain' + index"
           [ngClass]="{'chip domain-btn': true, 'active': model.domain === availableDomain}" mat-flat-button
-          (click)="onModelDomainChange(availableDomain)">{{ availableDomain | modelList | titlecase }}</button>
+          (click)="onModelDomainChange(availableDomain)">{{ availableDomain | underscoreToSpace | titlecase }}</button>
       </ng-container>
     </mat-step>
 
@@ -19,7 +19,7 @@
       <ng-container *ngFor="let availableModel of models; let index = index">
         <button *ngIf="configExists(model.framework, model.domain, availableModel)" [attr.id]="'model' + index"
           [ngClass]="{'chip model-btn': true, 'active': model.model === availableModel}" mat-flat-button
-          (click)="model.model = availableModel"> {{ availableModel | modelList }} </button>
+          (click)="model.model = availableModel"> {{ availableModel | underscoreToSpace }} </button>
       </ng-container>
     </mat-step>
 

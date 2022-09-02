@@ -208,6 +208,91 @@ class Benchmark(Base):
         }
 
     @staticmethod
+    def update_dataset(
+        db_session: session.Session,
+        benchmark_id: int,
+        dataset_id: int,
+    ) -> dict:
+        """Update benchmark dataset."""
+        benchmark = db_session.query(Benchmark).filter(Benchmark.id == benchmark_id).one()
+        benchmark.dataset_id = dataset_id
+        db_session.add(benchmark)
+        db_session.flush()
+
+        return {
+            "id": benchmark.id,
+            "dataset_id": benchmark.dataset_id,
+        }
+
+    @staticmethod
+    def update_batch_size(
+        db_session: session.Session,
+        benchmark_id: int,
+        batch_size: int,
+    ) -> dict:
+        """Update benchmark batch size."""
+        benchmark = db_session.query(Benchmark).filter(Benchmark.id == benchmark_id).one()
+        benchmark.batch_size = batch_size
+        db_session.add(benchmark)
+        db_session.flush()
+
+        return {
+            "id": benchmark.id,
+            "batch_size": benchmark.batch_size,
+        }
+
+    @staticmethod
+    def update_mode(
+        db_session: session.Session,
+        benchmark_id: int,
+        mode: str,
+    ) -> dict:
+        """Update benchmark mode."""
+        benchmark = db_session.query(Benchmark).filter(Benchmark.id == benchmark_id).one()
+        benchmark.mode = mode
+        db_session.add(benchmark)
+        db_session.flush()
+
+        return {
+            "id": benchmark.id,
+            "mode": benchmark.mode,
+        }
+
+    @staticmethod
+    def update_cores_per_instance(
+        db_session: session.Session,
+        benchmark_id: int,
+        cores_per_instance: int,
+    ) -> dict:
+        """Update benchmark cores per instance."""
+        benchmark = db_session.query(Benchmark).filter(Benchmark.id == benchmark_id).one()
+        benchmark.cores_per_instance = cores_per_instance
+        db_session.add(benchmark)
+        db_session.flush()
+
+        return {
+            "id": benchmark.id,
+            "cores_per_instance": benchmark.cores_per_instance,
+        }
+
+    @staticmethod
+    def update_number_of_instance(
+        db_session: session.Session,
+        benchmark_id: int,
+        number_of_instance: int,
+    ) -> dict:
+        """Update benchmark dataset."""
+        benchmark = db_session.query(Benchmark).filter(Benchmark.id == benchmark_id).one()
+        benchmark.number_of_instance = number_of_instance
+        db_session.add(benchmark)
+        db_session.flush()
+
+        return {
+            "id": benchmark.id,
+            "number_of_instance": benchmark.number_of_instance,
+        }
+
+    @staticmethod
     def clean_status(
         db_session: session.Session,
         status_to_clean: ExecutionStatus,

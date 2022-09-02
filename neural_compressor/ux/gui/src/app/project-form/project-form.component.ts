@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
@@ -71,7 +71,6 @@ export class ProjectFormComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
-    private _formBuilder: FormBuilder,
     public modelService: ModelService,
     public socketService: SocketService,
     private router: Router
@@ -189,17 +188,17 @@ export class ProjectFormComponent implements OnInit {
   }
 
   setFormValues() {
-    this.projectFormGroup = this._formBuilder.group({
-      name: ['Project' + String(this.modelService.projectCount + 1), Validators.required],
-      framework: ['', Validators.required],
-      modelLocation: ['', Validators.required],
-      modelDomain: [''],
-      domainFlavour: [''],
-      input: [''],
-      inputOther: [''],
-      output: [''],
-      outputOther: [''],
-      shape: ['']
+    this.projectFormGroup = new FormGroup({
+      name: new FormControl('Project' + String(this.modelService.projectCount + 1), Validators.required),
+      framework: new FormControl('', Validators.required),
+      modelLocation: new FormControl('', Validators.required),
+      modelDomain: new FormControl(''),
+      domainFlavour: new FormControl(''),
+      input: new FormControl(''),
+      inputOther: new FormControl(''),
+      output: new FormControl(''),
+      outputOther: new FormControl(''),
+      shape: new FormControl('')
     });
   }
 

@@ -82,3 +82,20 @@ mat-button-toggle-group {
   padding: 10px;
   margin-bottom: 10px;
 }
+
+::ng-deep .mat-sort-header-arrow {
+  color: #fff;
+}
+
+::ng-deep .mat-sort-header-container {
+  display: flex;
+  justify-content: center;
+}
+
+.header {
+  padding: 5px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

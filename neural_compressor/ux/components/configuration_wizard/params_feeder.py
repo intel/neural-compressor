@@ -15,16 +15,18 @@
 """Parameters feeder module."""
 from typing import Any, Dict, List, Optional
 
+from neural_compressor.experimental.metric.metric import registry_metrics
 from neural_compressor.objective import OBJECTIVES
 from neural_compressor.strategy import STRATEGIES
 from neural_compressor.ux.components.model.repository import ModelRepository
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.utils import (
+    _update_metric_parameters,
     check_module,
     filter_transforms,
-    get_metrics_dict,
     load_dataloader_config,
     load_help_nc_params,
+    load_metrics_config,
     load_model_config,
     load_precisions_config,
     load_transforms_config,
@@ -205,8 +207,30 @@ class Feeder:
         else:
             check_module(framework)
 
-        metrics = get_metrics_dict()
-        return metrics.get(framework, [])
+        inc_framework_name = "onnxrt" if framework == "onnxrt_qlinearops" else framework
+
+        fw_metrics = registry_metrics.get(inc_framework_name, None)
+
+        raw_metric_list = list(fw_metrics.keys()) if fw_metrics else []
+        raw_metric_list += ["custom"]
+
+        metrics = []
+
+        loaded_metrics = load_metrics_config()
+
+        for metric_name in raw_metric_list:
+            if metric_name in [metric_item.get("name", None) for metric_item in loaded_metrics]:
+                metric_config = None
+                for metric_item in loaded_metrics:
+                    if metric_item.get("name") == metric_name:
+                        metric_config = metric_item
+                if metric_config is not None:
+                    metric = _update_metric_parameters(metric_config)
+                    metrics.append(metric)
+            else:
+                metrics.append({"name": metric_name, "help": "", "value": None})
+
+        return metrics
 
 
 def get_possible_values(data: dict) -> Dict[str, List[Any]]:

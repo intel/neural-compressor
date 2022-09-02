@@ -144,7 +144,7 @@
                     <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
                       [matTooltip]="domain.help">
                       <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
-                      <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}
+                      <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | underscoreToSpace | titlecase }}
                       </ng-container>
                     </mat-option>
                   </mat-select>

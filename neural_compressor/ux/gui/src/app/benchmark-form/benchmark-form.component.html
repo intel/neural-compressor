@@ -1,5 +1,5 @@
 <mat-horizontal-stepper #stepper>
-  <mat-step [completed]="false">
+  <mat-step *ngIf="!data.editing" [completed]="false">
     <ng-template matStepLabel>Name</ng-template>
     <h2>Name</h2>
     <p>Set the name of the benchmark.</p>
@@ -24,7 +24,8 @@
         <mat-radio-button [value]="mode">{{ mode }}</mat-radio-button><br><br>
       </ng-container>
     </mat-radio-group>
-    <p *ngIf="data.framework === 'pytorch'" style="font-size: 70%;">* PyTorch script-based Model only supports the Performance mode. Accuracy mode will be supported in future.</p>
+    <p *ngIf="data.framework === 'pytorch'" style="font-size: 70%;">* PyTorch script-based Model only supports the
+      Performance mode. Accuracy mode will be supported in future.</p>
     <br>
     <div class="float-right">
       <button mat-raised-button matStepperNext>
@@ -33,7 +34,7 @@
       </button>
     </div>
   </mat-step>
-  <mat-step [completed]="false">
+  <mat-step *ngIf="!data.editing" [completed]="false">
     <ng-template matStepLabel>Model</ng-template>
     <h2>Model</h2>
     <p>Choose if you want to benchmark input model or one of the optimized models.</p>

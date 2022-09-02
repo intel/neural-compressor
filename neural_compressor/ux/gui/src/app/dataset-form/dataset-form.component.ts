@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { combineLatest, Subject } from 'rxjs';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
@@ -28,7 +28,7 @@ export class DatasetFormComponent implements OnInit {
   datasetFormGroup: FormGroup;
 
   metrics = [];
-  metricParam: string | boolean;
+  metricParam: string;
   metricParams = [];
 
   dataLoaders = [];
@@ -50,7 +50,6 @@ export class DatasetFormComponent implements OnInit {
   metricValue$: Subject<boolean> = new Subject<boolean>();
 
   constructor(
-    private _formBuilder: FormBuilder,
     public dialog: MatDialog,
     public modelService: ModelService,
     @Inject(MAT_DIALOG_DATA) public data
@@ -128,16 +127,16 @@ export class DatasetFormComponent implements OnInit {
   }
 
   setFormValues() {
-    this.datasetFormGroup = this._formBuilder.group({
-      name: ['Dataset' + String(this.data.index + 1), Validators.required],
-      dataLoader: ['', Validators.required],
-      datasetLocation: [''],
-      datasetParams0: [''],
-      datasetParams1: [''],
-      transform: [''],
-      transformParams: [''],
-      metric: ['', Validators.required],
-      metricParam: [''],
+    this.datasetFormGroup = new FormGroup({
+      name: new FormControl('Dataset' + String(this.data.index + 1), Validators.required),
+      dataLoader: new FormControl('', Validators.required),
+      datasetLocation: new FormControl(''),
+      datasetParams0: new FormControl(''),
+      datasetParams1: new FormControl(''),
+      transform: new FormControl(''),
+      transformParams: new FormControl(''),
+      metric: new FormControl('', Validators.required),
+      metricParam: new FormControl(''),
     });
   }
 
@@ -198,14 +197,6 @@ export class DatasetFormComponent implements OnInit {
   setDefaultMetricParam(event) {
     if (this.metrics.length) {
       this.metricParams = this.metrics.find(x => x.name === event.value)?.params;
-      if (this.metricParams) {
-        this.metricParam = this.metricParams[0].value;
-        if (Array.isArray(this.metricParams[0].value)) {
-          this.metricParam = this.metricParams[0].value[0];
-        }
-      } else {
-        this.metricParam = null;
-      }
     }
   }
 
@@ -220,15 +211,14 @@ export class DatasetFormComponent implements OnInit {
         "params": this.dataLoaderParams ? this.getParams(this.dataLoaderParams) : null,
       },
       "metric": this.datasetFormGroup.get('metric').value,
-      "metric_param": this.metricParam
+      "metric_param": this.metricParam ? this.metricParam : this.metricParams,
     }
 
     this.modelService.addDataset(readyDataset)
       .subscribe(
         response => { this.modelService.datasetCreated$.next(true) },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
+        error => { this.modelService.openErrorDialog(error); }
+      );
   }
 
   getParams(obj: any[]): {} {
@@ -244,6 +234,9 @@ export class DatasetFormComponent implements OnInit {
   }
 
   getTransformParams(obj: any[]): { name: string; params: {}; }[] {
+    if (this.datasetFormGroup.get('dataLoader').value === 'custom') {
+      return [];
+    }
     let newObj = [];
     obj.forEach(item => {
       newObj.push({

@@ -16,10 +16,6 @@
 
 from typing import Any, List
 
-import tensorflow.compat.v1 as tf_v1
-from tensorflow.python.profiler import model_analyzer, option_builder
-from tensorflow.python.tools import optimize_for_inference_lib
-
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.experimental.data.dataloaders.tensorflow_dataloader import (
     TensorflowDataLoader,
@@ -39,6 +35,8 @@ class Profiler(Parent):
 
     def __init__(self, profiling_data: dict) -> None:
         """Initialize profiler for specified model."""
+        import tensorflow.compat.v1 as tf_v1
+
         self.model_path: str = profiling_data["model_path"]
         self.batch_size: int = profiling_data["batch_size"]
         self.dataloader_data: dict = {
@@ -55,12 +53,14 @@ class Profiler(Parent):
         self.dataloader = self.build_dataloader()
         self.input_datatype = tf_v1.dtypes.float32.as_datatype_enum
 
-    def initialize_graph(self) -> Any:
+    def initialize_graph(self, tf_module: Any) -> Any:
         """Initialize tensorflow model graph."""
-        graph = tf_v1.Graph()
+        from tensorflow.python.tools import optimize_for_inference_lib
+
+        graph = tf_module.Graph()
         with graph.as_default():
-            od_graph_def = tf_v1.GraphDef()
-            with tf_v1.gfile.GFile(self.model_path, "rb") as fid:
+            od_graph_def = tf_module.GraphDef()
+            with tf_module.gfile.GFile(self.model_path, "rb") as fid:
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
                 od_graph_def = utils.delete_assign(od_graph_def)
@@ -77,13 +77,13 @@ class Profiler(Parent):
                 self.input_datatype,
             )
 
-            tf_v1.import_graph_def(od_graph_def, name="")
+            tf_module.import_graph_def(od_graph_def, name="")
 
         return graph
 
-    def create_tf_config(self) -> Any:
+    def create_tf_config(self, tf_module: Any) -> Any:
         """Create tensorflow config."""
-        config = tf_v1.ConfigProto()
+        config = tf_module.ConfigProto()
         config.allow_soft_placement = True
         config.intra_op_parallelism_threads = self.num_threads
         config.inter_op_parallelism_threads = 1
@@ -91,12 +91,15 @@ class Profiler(Parent):
 
     def profile_model(self, num_warmup: int = 10, batch_size: int = 1) -> None:
         """Execute model profiling."""
-        tf_config = self.create_tf_config()
-        graph = self.initialize_graph()
-        run_options = tf_v1.RunOptions(trace_level=tf_v1.RunOptions.FULL_TRACE)
-        run_metadata = tf_v1.RunMetadata()
+        import tensorflow.compat.v1 as tf_module
+        from tensorflow.python.profiler import model_analyzer, option_builder
 
-        with tf_v1.Session(config=tf_config, graph=graph) as sess:
+        tf_config = self.create_tf_config(tf_module)
+        graph = self.initialize_graph(tf_module)
+        run_options = tf_module.RunOptions(trace_level=tf_module.RunOptions.FULL_TRACE)
+        run_metadata = tf_module.RunMetadata()
+
+        with tf_module.Session(config=tf_config, graph=graph) as sess:
             output_dict = {
                 out_name: graph.get_tensor_by_name(out_name + ":0")
                 for out_name in self.output_nodes
@@ -139,7 +142,7 @@ class Profiler(Parent):
             profiler.profile_operations(profile_op_opt_builder.build())
 
     @staticmethod
-    def get_node_by_name(graph_def: tf_v1.GraphDef, node_name: str) -> tf_v1.NodeDef:
+    def get_node_by_name(graph_def: Any, node_name: str) -> Any:
         """Get NodeDef from GraphDef by name."""
         for node in graph_def.node:
             if node.name == node_name:

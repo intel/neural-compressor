@@ -19,6 +19,7 @@ import { ModelWiseComponent } from '../model-wise/model-wise.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigPreviewComponent } from '../config-preview/config-preview.component';
 import { GenerateConfigDialogComponent } from '../generate-config-dialog/generate-config-dialog.component';
+import { Sort } from '@angular/material/sort';
 
 @Component({
   selector: 'app-diagnosis',
@@ -32,7 +33,8 @@ export class DiagnosisComponent implements OnInit {
   models = [];
   modelId: number;
   optimizationId?: number;
-  opList = {};
+  opList;
+  sortedOpList: any[];
   opDetails = {};
   activeOp = '';
   activeType: 'weights' | 'activation';
@@ -58,19 +60,17 @@ export class DiagnosisComponent implements OnInit {
     this.getOpList(this.inputModelId);
     this.modelService.getNodeDetails$
       .subscribe(
-        response => this.getOpDetails(this.modelId, response)
+        response => this.getOpDetails(this.modelId, response),
+        error => this.modelService.openErrorDialog(error)
       )
   }
 
   getModels(id?: number) {
     this.modelService.getModelList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.models = response['models'];
-        },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
+        response => this.models = response['models'],
+        error => this.modelService.openErrorDialog(error)
+      );
   }
 
   getOpList(modelId: number) {
@@ -95,6 +95,7 @@ export class DiagnosisComponent implements OnInit {
         response => {
           this.showSpinner = false;
           this.opList = response;
+          this.sortedOpList = this.opList.slice();
           this.showOps = true;
         },
         error => {
@@ -104,14 +105,13 @@ export class DiagnosisComponent implements OnInit {
           } else if (error.error.match("No such file or directory: '.*/dequan_min_max.pkl'")) {
             this.modelService.openWarningDialog(
               "Diagnosis is supported only for real data quantization."
-            )
+            );
             this.showOps = false;
           } else {
             this.modelService.openErrorDialog(error);
           }
         });
   }
-  
 
   getOpDetails(modelId: number, opName: string) {
     this.activeOp = opName;
@@ -183,6 +183,22 @@ export class DiagnosisComponent implements OnInit {
             });
       }
     });
+  }
+
+  sortData(sort: Sort) {
+    const data = this.opList.slice();
+    if (!sort.active || sort.direction === '') {
+      this.sortedOpList = data;
+      return;
+    }
+
+    this.sortedOpList = data.sort((a, b) => {
+      return compare(a[sort.active], b[sort.active], sort.direction === 'asc');
+    });
+
+    function compare(a: number | string, b: number | string, isAsc: boolean) {
+      return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+    }
   }
 
   viewConfiguration() {

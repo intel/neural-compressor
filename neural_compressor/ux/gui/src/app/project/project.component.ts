@@ -28,7 +28,7 @@ export class ProjectComponent implements OnInit {
   projectId;
   selectedTab = 0;
   datasetTour;
-  tabs = ['optimizations', 'benchmarks', 'profiling', 'datasets', 'graph', 'info'];
+  tabs = ['optimizations', 'benchmarks', 'profiling', 'datasets', 'diagnosis', 'info'];
 
   constructor(
     private modelService: ModelService,

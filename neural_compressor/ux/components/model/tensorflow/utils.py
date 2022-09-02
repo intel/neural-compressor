@@ -14,46 +14,53 @@
 # limitations under the License.
 """TensorFlow model utils."""
 
-try:
-    import tensorflow.compat.v1 as tf_v1
-except ImportError:
-    import tensorflow as tf_v1
-
 from typing import Any, List
 
 
 def get_input_shape(graph_def: Any, fix_dynamic_shape: int) -> List[int]:
     """Get input shape of passed graph."""
+    try:
+        import tensorflow.compat.v1 as tf_v1
+    except ImportError:
+        import tensorflow as tf_v1
+
     graph = tf_v1.Graph()
     with graph.as_default():  # pylint: disable=not-context-manager
         tf_v1.import_graph_def(graph_def, name="")
+
+    node_dict = {}
     for node in graph.as_graph_def().node:  # pylint: disable=no-member
         if node.op == "Placeholder":
-            node_dict = {}
-            node_dict["type"] = tf_v1.DType(node.attr["dtype"].type).name
+            node_dict = {"type": tf_v1.DType(node.attr["dtype"].type).name}
 
             if node_dict["type"] != "bool":
                 # convert shape to list
-                try:
-                    _shape = list(tf_v1.TensorShape(node.attr["shape"].shape))
-                    if tf_v1.__version__ >= "2.0.0":
-                        node_dict["shape"] = [
-                            item if item is not None else fix_dynamic_shape for item in _shape
-                        ]
-                    else:
-                        node_dict["shape"] = [
-                            item.value if item.value is not None else fix_dynamic_shape
-                            for item in _shape
-                        ]
-                    # if shape dimension > 1, suppose first dimension is batch-size
-                    if len(node_dict["shape"]) > 1:
-                        node_dict["shape"] = node_dict["shape"][1:]
-                except ValueError:
-                    _shape = [fix_dynamic_shape, fix_dynamic_shape, 3]
-                    node_dict["shape"] = _shape
-
+                node["shape"] = _convert_shape_to_list(node, fix_dynamic_shape, tf_v1)
             else:  # deal with bool dtype inputs, now assign bool dtype input False value
                 node_dict["shape"] = None
                 node_dict["value"] = False
 
     return node_dict["shape"]
+
+
+def _convert_shape_to_list(
+    node: Any,
+    fix_dynamic_shape: int,
+    tf_module: Any,
+) -> list:
+    """Convert tensorflow shape to list."""
+    try:
+        _shape = list(tf_module.TensorShape(node.attr["shape"].shape))
+        if tf_module.__version__ >= "2.0.0":
+            shape = [item if item is not None else fix_dynamic_shape for item in _shape]
+        else:
+            shape = [
+                item.value if item.value is not None else fix_dynamic_shape for item in _shape
+            ]
+        # if shape dimension > 1, suppose first dimension is batch-size
+        if isinstance(shape, list) and len(shape) > 1:
+            return shape[1:]
+        return shape
+    except ValueError:
+        _shape = [fix_dynamic_shape, fix_dynamic_shape, 3]
+        return _shape

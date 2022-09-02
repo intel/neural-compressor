@@ -202,6 +202,13 @@ export class ModelService {
     );
   }
 
+  editOptimization(details: any) {
+    return this.http.post(
+      this.baseUrl + 'api/optimization/edit',
+      details
+    );
+  }
+
   pinBenchmark(optimizationId: number, benchmarkId: number, mode: string) {
     if (mode === 'accuracy') {
       return this.http.post(this.baseUrl + 'api/optimization/pin_accuracy_benchmark',
@@ -251,6 +258,13 @@ export class ModelService {
     );
   }
 
+  editBenchmark(details: any) {
+    return this.http.post(
+      this.baseUrl + 'api/benchmark/edit',
+      details
+    );
+  }
+
   addProfiling(profiling) {
     return this.http.post(this.baseUrl + 'api/profiling/add', profiling);
   }
@@ -270,6 +284,13 @@ export class ModelService {
         profiling_id: profilingId,
         request_id: requestId,
       }
+    );
+  }
+
+  editProfiling(details: any) {
+    return this.http.post(
+      this.baseUrl + 'api/profiling/edit',
+      details
     );
   }
 

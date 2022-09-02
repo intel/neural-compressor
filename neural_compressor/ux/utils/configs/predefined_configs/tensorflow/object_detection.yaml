@@ -36,7 +36,12 @@ quantization:                                        # optional. tuning constrai
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
-      COCOmAP:
+      COCOmAPv2:
+        output_index_mapping:
+          num_detections: 0
+          boxes: 1
+          scores: 2
+          classes: 3
     configs:                                         # optional. if not specified, use all cores in 1 socket.
       cores_per_instance: 28
       num_of_instance: 1

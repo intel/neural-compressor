@@ -214,6 +214,35 @@ export class ProfilingComponent implements OnInit {
       });
   }
 
+  editProfiling(id: number) {
+    const dialogRef = this.dialog.open(ProfilingFormComponent, {
+      width: '60%',
+      data: {
+        projectId: this.activatedRoute.snapshot.params.id,
+        profilingId: id,
+        editing: true,
+        index: this.profilingList.length,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(
+      response => {
+        this.getProfilingList();
+      });
+  }
+
+  openLogs(id: number) {
+    let autoRefreshTime = this.getAutoRefreshTime(id);
+    window.open(`${this.apiBaseUrl}api/profiling/output.log?id=${id}&autorefresh=${autoRefreshTime}&token=${this.token}`, '_blank');
+  }
+
+  getAutoRefreshTime(id: number): number {
+    if (this.profilingList.find(profiling => profiling.id === id).status === 'wip') {
+      return 3;
+    }
+    return 0;
+  }
+
   typeOf(obj): string {
     return typeof obj;
   }

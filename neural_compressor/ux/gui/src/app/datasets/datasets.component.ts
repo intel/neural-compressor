@@ -103,8 +103,16 @@ export class DatasetsComponent implements OnInit {
       });
   }
 
+  typeOf(object) {
+    return typeof object;
+  }
+
   objectKeys(obj: any): string[] {
     return Object.keys(obj);
+  }
+
+  isArray(obj: any): boolean {
+    return Array.isArray(obj);
   }
 
   copyToClipboard(text: string) {

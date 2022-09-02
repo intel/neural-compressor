@@ -173,6 +173,40 @@ class Profiling(Base):
         }
 
     @staticmethod
+    def update_dataset(
+        db_session: session.Session,
+        profiling_id: int,
+        dataset_id: int,
+    ) -> dict:
+        """Update profiling dataset."""
+        profiling = db_session.query(Profiling).filter(Profiling.id == profiling_id).one()
+        profiling.dataset_id = dataset_id
+        db_session.add(profiling)
+        db_session.flush()
+
+        return {
+            "id": profiling.id,
+            "dataset_id": profiling.dataset_id,
+        }
+
+    @staticmethod
+    def update_num_threads(
+        db_session: session.Session,
+        profiling_id: int,
+        num_threads: int,
+    ) -> dict:
+        """Update profiling num_threads."""
+        profiling = db_session.query(Profiling).filter(Profiling.id == profiling_id).one()
+        profiling.num_threads = num_threads
+        db_session.add(profiling)
+        db_session.flush()
+
+        return {
+            "id": profiling.id,
+            "num_threads": profiling.num_threads,
+        }
+
+    @staticmethod
     def clean_status(
         db_session: session.Session,
         status_to_clean: ExecutionStatus,

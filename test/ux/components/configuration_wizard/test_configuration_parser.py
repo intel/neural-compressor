@@ -576,6 +576,27 @@ class TestEvaluationParser(TestParser):
                 },
             )
 
+    def test_parsing_metric(self) -> None:
+        """Test parsing metric parameters."""
+        data = {
+            "output_index_mapping": {
+                "num_detections": "0",
+                "boxes": "1",
+                "scores": "2",
+                "classes": "3",
+            },
+        }
+
+        expected = {
+            "output_index_mapping": {"num_detections": 0, "boxes": 1, "scores": 2, "classes": 3},
+        }
+
+        actual = self.parser.parse_metric(data)
+
+        self.maxDiff = None
+
+        self.assertEqual(actual, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

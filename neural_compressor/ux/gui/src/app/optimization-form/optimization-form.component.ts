@@ -26,6 +26,7 @@ export class OptimizationFormComponent implements OnInit {
   precisionsPyTorch = []
   precisionsOther = []
   precisionId: number;
+
   optimizationTypes = [];
   optimizationTypeId: number;
 
@@ -77,12 +78,12 @@ export class OptimizationFormComponent implements OnInit {
       .subscribe(
         response => {
           this.optimizationTypes = response['optimization_types'];
-          for (let type of this.optimizationTypes) {
-            if (type.is_supported) {
-              this.optimizationTypeId = type.id;
-              break;
-            }
-          };
+          let supportedTypes = this.optimizationTypes.filter(x => x.is_supported === true);
+          if (supportedTypes.length > 1) {
+            this.optimizationTypeId = this.optimizationTypes.find(x => x.name === 'Mixed precision').id;
+          } else {
+            this.optimizationTypeId = supportedTypes[0].id;
+          }
         },
         error => {
           this.modelService.openErrorDialog(error);
@@ -108,18 +109,31 @@ export class OptimizationFormComponent implements OnInit {
   }
 
   addOptimization() {
-    this.modelService.addOptimization({
-      project_id: this.data.projectId,
-      name: this.name,
-      precision_id: this.precisionId,
-      optimization_type_id: this.optimizationTypeId,
-      dataset_id: this.datasetId
-    })
-      .subscribe(
-        response => { this.modelService.optimizationCreated$.next(true) },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
+    if (!this.data.editing) {
+      this.modelService.addOptimization({
+        project_id: this.data.projectId,
+        name: this.name,
+        precision_id: this.precisionId,
+        optimization_type_id: this.optimizationTypeId,
+        dataset_id: this.datasetId
+      })
+        .subscribe(
+          response => { this.modelService.optimizationCreated$.next(true) },
+          error => {
+            this.modelService.openErrorDialog(error);
+          });
+    } else {
+      this.modelService.editOptimization({
+        id: this.data.optimizationId,
+        precision_id: this.precisionId,
+        dataset_id: this.datasetId
+      })
+        .subscribe(
+          response => { this.modelService.optimizationCreated$.next(true) },
+          error => {
+            this.modelService.openErrorDialog(error);
+          });
+    }
   }
 
 }

@@ -60,6 +60,7 @@ class WorkloadService:
         if not log_path:
             raise NotFoundException("Unable to find output log")
 
+        refresh_time = int(data.get("autorefresh", [0])[0])
         try:
             response = ResponseGenerator.serve_from_filesystem(
                 path=log_path,
@@ -68,10 +69,12 @@ class WorkloadService:
         except Exception as e:
             response = ResponseGenerator.from_exception(e)
 
-        return ResponseGenerator.add_refresh(
-            response=response,
-            refresh_time=3,
-        )
+        if refresh_time > 0:
+            response = ResponseGenerator.add_refresh(
+                response=response,
+                refresh_time=refresh_time,
+            )
+        return response
 
     @staticmethod
     def _get_workload_data(data: dict) -> dict:

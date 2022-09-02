@@ -25,7 +25,7 @@ import { ModelService } from '../services/model.service';
 export class GraphComponent implements OnChanges, OnInit {
 
   @Input() modelPath: string;
-  @Input() diagnosisTab?: boolean;
+  @Input() showOps?: boolean;
   @Input() diagnosisTabParams?: {};
 
   edges: Edge[] = [];
@@ -141,7 +141,7 @@ export class GraphComponent implements OnChanges, OnInit {
   }
 
   getDetails(node: Node) {
-    if (this.diagnosisTab) {
+    if (this.showOps) {
       this.modelService.getNodeDetails$.next(node.id);
     } else {
       this.nodeDetails = node;

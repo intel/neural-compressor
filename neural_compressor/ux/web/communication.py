@@ -77,10 +77,6 @@ class MessageQueue:
 
     _queue: Queue = Queue()
 
-    def __init__(self) -> None:
-        """Initialize queue."""
-        pass
-
     def post_failure(self, subject: str, data: Any) -> None:
         """Post failure message."""
         self._queue.put(Message("failure", subject, data))

@@ -1,6 +1,6 @@
 <mat-horizontal-stepper #stepper>
   <form [formGroup]="profilingFormGroup">
-    <mat-step [completed]="false">
+    <mat-step *ngIf="!data.editing" [completed]="false">
       <ng-template matStepLabel>Name</ng-template>
       <h2>Name</h2>
       <p>Set the profiling name.</p>
@@ -16,7 +16,7 @@
         </button>
       </div>
     </mat-step>
-    <mat-step [completed]="false">
+    <mat-step *ngIf="!data.editing" [completed]="false">
       <ng-template matStepLabel>Model</ng-template>
       <h2>Model</h2>
       <p>Choose if you want to profile input model or one of the optimized models.</p>

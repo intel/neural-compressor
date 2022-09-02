@@ -17,8 +17,6 @@ import os
 import re
 from typing import Any, List, Optional
 
-from google.protobuf.json_format import MessageToDict
-
 from neural_compressor.experimental.common.model import Model as NCModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils.logger import Logger
@@ -143,6 +141,8 @@ class OnnxrtModel(Model):
     @property
     def input_shape(self) -> Shape:
         """Try to detect data shape."""
+        from google.protobuf.json_format import MessageToDict
+
         shape = None
         trusted = False
 

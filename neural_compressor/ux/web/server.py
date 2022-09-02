@@ -19,19 +19,20 @@ from functools import wraps
 from threading import Thread
 from typing import Any, Callable
 
-from flask import Flask
+from flask import Blueprint, Flask
 from flask import Request as WebRequest
-from flask import jsonify, request
+from flask import jsonify, render_template, request
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from werkzeug.serving import make_ssl_devcert
 from werkzeug.wrappers import Response as WebResponse
 
 from neural_compressor.ux.components.db_manager.db_manager import DBManager
-from neural_compressor.ux.components.db_manager.db_operations import (
+from neural_compressor.ux.components.db_manager.db_operations.db_operations import (
     initialize_associations,
     set_database_version,
 )
+from neural_compressor.ux.components.jobs_management import jobs_manager
 from neural_compressor.ux.utils.exceptions import InternalException
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.web.communication import MessageQueue, Request
@@ -39,7 +40,14 @@ from neural_compressor.ux.web.configuration import Configuration
 from neural_compressor.ux.web.router import Router
 from neural_compressor.ux.web.service.response_generator import ResponseGenerator
 
-app = Flask(__name__, static_url_path="")
+templates_dir = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "static",
+    ),
+)
+app = Flask(__name__, static_url_path="", template_folder=templates_dir)
+app_blueprint = Blueprint("INC Bench", __name__)
 socketio = SocketIO()
 
 router = Router()
@@ -49,6 +57,8 @@ METHODS = ["GET", "POST"]
 # Suppress TensorFlow messages
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+url_prefix: str = ""
+
 
 def run_server(configuration: Configuration) -> None:
     """Run webserver on specified scheme, address and port."""
@@ -57,9 +67,13 @@ def run_server(configuration: Configuration) -> None:
     gui_port = configuration.gui_port
     token = configuration.token
 
+    global url_prefix
+    url_prefix = configuration.url_prefix
+
     cors_allowed_origins = f"{configuration.scheme}://{addr}:{gui_port}"
 
     app.config["JSON_SORT_KEYS"] = False
+    app.register_blueprint(app_blueprint, url_prefix=url_prefix)
     app.secret_key = token
     CORS(app, origins=cors_allowed_origins)
     socketio.init_app(
@@ -99,7 +113,7 @@ def get_tls_args(configuration: Configuration) -> dict:
     }
 
 
-@app.after_request
+@app_blueprint.after_request
 def block_iframe(response: WebResponse) -> WebResponse:
     """Block iframe and set others CSP."""
     response.headers["X-Frame-Options"] = "DENY"
@@ -110,7 +124,7 @@ def block_iframe(response: WebResponse) -> WebResponse:
     return response
 
 
-@app.after_request
+@app_blueprint.after_request
 def block_sniffing(response: WebResponse) -> WebResponse:
     """Block MIME sniffing."""
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -139,13 +153,16 @@ def require_api_token(func: Callable) -> Any:
     return check_token
 
 
-@app.route("/", methods=METHODS)
+@app_blueprint.route("/", methods=METHODS)
 def root() -> Any:
     """Serve JS application index."""
-    return app.send_static_file("index.html")
+    return render_template(
+        "index.html",
+        url_prefix=url_prefix,
+    )
 
 
-@app.route("/api/<path:subpath>", methods=METHODS)
+@app_blueprint.route("/api/<path:subpath>", methods=METHODS)
 @require_api_token
 def handle_api_call(subpath: str) -> Any:
     """Handle API access."""
@@ -161,7 +178,7 @@ def handle_api_call(subpath: str) -> Any:
         return ResponseGenerator.from_exception(err)
 
 
-@app.route("/api/<path:subpath>", methods=["OPTIONS"])
+@app_blueprint.route("/api/<path:subpath>", methods=["OPTIONS"])
 def allow_api_call(subpath: str) -> Any:
     """Allow for API access."""
     return "OK"
@@ -170,10 +187,13 @@ def allow_api_call(subpath: str) -> Any:
 @app.errorhandler(404)
 def page_not_found(e: Any) -> Any:
     """Serve JS application index when no static file found."""
-    return app.send_static_file("index.html")
+    return render_template(
+        "index.html",
+        url_prefix=url_prefix,
+    )
 
 
-@app.after_request
+@app_blueprint.after_request
 def disable_cache(response: WebResponse) -> WebResponse:
     """Disable cache on all requests."""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -208,3 +228,5 @@ publisher = Thread(
 )
 publisher.daemon = True
 publisher.start()
+
+jobs_manager.start()

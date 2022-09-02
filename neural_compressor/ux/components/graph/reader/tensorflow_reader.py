@@ -14,11 +14,7 @@
 # limitations under the License.
 """Tensorflow Graph reader."""
 
-from typing import Dict, List, Optional
-
-from tensorflow.core.framework.attr_value_pb2 import AttrValue
-from tensorflow.core.framework.node_def_pb2 import NodeDef
-from tensorflow.python.framework.dtypes import _TYPE_TO_STRING
+from typing import Any, Dict, List, Optional
 
 from neural_compressor.ux.components.graph.attribute import Attribute
 from neural_compressor.ux.components.graph.graph import Graph
@@ -89,7 +85,7 @@ class TensorflowReader:
             names.append("/".join(elements[0:idx]))
         return names
 
-    def _should_hide_node(self, node_def: NodeDef) -> bool:
+    def _should_hide_node(self, node_def: Any) -> bool:
         """Check if given node should be hidden."""
         if node_def.op not in ["Const", "Identity"]:
             return False
@@ -99,7 +95,7 @@ class TensorflowReader:
 
         return True
 
-    def _node_def_has_not_hidden_inputs(self, node_def: NodeDef) -> bool:
+    def _node_def_has_not_hidden_inputs(self, node_def: Any) -> bool:
         """Check if node has any visible input."""
         not_hidden_input_ids = list(
             filter(
@@ -109,7 +105,7 @@ class TensorflowReader:
         )
         return len(not_hidden_input_ids) > 0
 
-    def _hide_node(self, node: NodeDef) -> None:
+    def _hide_node(self, node: Any) -> None:
         """Mark node as hidden."""
         self._hidden_node_ids[node.name] = True
 
@@ -117,7 +113,7 @@ class TensorflowReader:
         """Check if provided node_id is hidden."""
         return node_id in self._hidden_node_ids
 
-    def _convert_attributes(self, node_def: NodeDef) -> List[Attribute]:
+    def _convert_attributes(self, node_def: Any) -> List[Attribute]:
         """Convert NodeDef attributes to our format."""
         attributes = []
 
@@ -131,8 +127,10 @@ class TensorflowReader:
 
         return attributes
 
-    def _convert_attribute(self, name: str, value: AttrValue) -> Optional[Attribute]:
+    def _convert_attribute(self, name: str, value: Any) -> Optional[Attribute]:
         """Convert NodeDef attribute to our format."""
+        from tensorflow.python.framework.dtypes import _TYPE_TO_STRING
+
         if 0 != len(value.s):
             return Attribute(name, "string", str(value.s.decode("utf-8")))
         if 0 != value.type:

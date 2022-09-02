@@ -72,6 +72,17 @@ class OptimizationAddParamsInterface:
     diagnosis_config: dict
 
 
+class OptimizationEditParamsInterface:
+    """Interface for parameters to edit optimization."""
+
+    id: int
+    precision_id: int
+    dataset_id: int
+    batch_size: int
+    sampling_size: int
+    tuning_details: TuningDetailsInterface
+
+
 class BenchmarkAddParamsInterface:
     """Interface for parameters to add benchmark."""
 
@@ -88,6 +99,17 @@ class BenchmarkAddParamsInterface:
     command_line: str
 
 
+class BenchmarkEditParamsInterface:
+    """Interface for parameters to edit benchmark."""
+
+    id: int
+    dataset_id: Optional[int] = None
+    mode: Optional[str] = None
+    batch_size: Optional[int] = None
+    number_of_instance: Optional[int] = None
+    cores_per_instance: Optional[int] = None
+
+
 class ProfilingAddParamsInterface:
     """Interface for parameters to add profiling."""
 
@@ -96,6 +118,14 @@ class ProfilingAddParamsInterface:
     model_id: int
     dataset_id: int
     num_threads: int
+
+
+class ProfilingEditParamsInterface:
+    """Interface for parameters to edit profiling."""
+
+    id: int
+    dataset_id: Optional[int] = None
+    num_threads: Optional[int] = None
 
 
 class ProfilingResultAddParamsInterface:

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as saveAs from 'file-saver';
@@ -47,6 +48,7 @@ export class OptimizationsComponent implements OnInit {
   activeOptimizationId = 0;
   requestId = '';
   optimizationDetails: any;
+  parsedOptimizationDetails = {};
   pinnedAccuracyBenchmarks = {};
   pinnedPerformanceBenchmarks = {};
   allBenchmarks = [];
@@ -55,6 +57,9 @@ export class OptimizationsComponent implements OnInit {
   showAccuracyDropdown = {};
   showPerformanceDropdown = {};
   labels = ['Input', 'Optimized'];
+  tuningDetailsEditable = false;
+
+  detailsFormGroup: FormGroup;
 
   hiddenFields = {
     tensorflow: ['id', 'supports'],
@@ -205,8 +210,10 @@ export class OptimizationsComponent implements OnInit {
     this.modelService.getOptimizationDetails(id)
       .subscribe(
         response => {
+          this.tuningDetailsEditable = false;
           this.optimizationDetails = response;
-          if (response['tuning_details']['tuning_history']) {
+          this.parseOptimizationDetails(response);
+          if (response['tuning_details'] && response['tuning_details']['tuning_history']) {
             this.getHistoryData(response['tuning_details']['tuning_history']);
           } else {
             this.historyData = {};
@@ -216,6 +223,29 @@ export class OptimizationsComponent implements OnInit {
         error => {
           this.modelService.openErrorDialog(error);
         });
+  }
+
+  parseOptimizationDetails(response) {
+    this.parsedOptimizationDetails['batch_size'] = response['batch_size'];
+    this.parsedOptimizationDetails['sampling_size'] = response['sampling_size'];
+    if (response['tuning_details']) {
+      Object.keys(response['tuning_details']).forEach(key => {
+        if (!['id', 'tuning_history'].includes(key)) {
+          if (typeof response['tuning_details'][key] === 'string' || typeof response['tuning_details'][key] === 'number') {
+            this.parsedOptimizationDetails[key] = response['tuning_details'][key];
+          } else if (typeof response['tuning_details'][key] === 'object' && response['tuning_details'][key]) {
+            Object.keys(response['tuning_details'][key]).forEach(objectKey => {
+              this.parsedOptimizationDetails[objectKey] = response['tuning_details'][key][objectKey];
+            });
+          }
+        }
+      });
+    }
+    let formGroupDetails = {};
+    Object.keys(this.parsedOptimizationDetails).forEach(key => {
+      formGroupDetails[key] = new FormControl(this.parsedOptimizationDetails[key]);
+    })
+    this.detailsFormGroup = new FormGroup(formGroupDetails);
   }
 
   addOptimization() {
@@ -260,6 +290,26 @@ export class OptimizationsComponent implements OnInit {
         error => {
           this.modelService.openErrorDialog(error);
         }
+      );
+  }
+
+  saveTuningDetails() {
+    let parsedTuningDetails = this.detailsFormGroup.value;
+    parsedTuningDetails['exit_policy'] = {};
+    parsedTuningDetails['exit_policy']['timeout'] = this.detailsFormGroup.value['timeout'];
+    parsedTuningDetails['exit_policy']['max_trials'] = this.detailsFormGroup.value['max_trials'];
+    delete parsedTuningDetails['timeout'];
+    delete parsedTuningDetails['max_trials'];
+    this.modelService.editOptimization({
+      id: this.activeOptimizationId,
+      tuning_details: parsedTuningDetails
+    })
+      .subscribe(
+        response => {
+          this.tuningDetailsEditable = false;
+          this.getOptimizationDetails(this.activeOptimizationId);
+        },
+        error => this.modelService.openErrorDialog(error)
       );
   }
 
@@ -315,6 +365,20 @@ export class OptimizationsComponent implements OnInit {
       );
   }
 
+  editOptimization(id: number) {
+    const dialogRef = this.dialog.open(OptimizationFormComponent, {
+      width: '60%',
+      data:
+      {
+        projectId: this.activatedRoute.snapshot.params.id,
+        optimizationId: id,
+        editing: true,
+        index: this.optimizations.length,
+        framework: this.framework.toLowerCase()
+      }
+    });
+  }
+
   deleteOptimization(id: number, name: string) {
     let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
@@ -355,6 +419,18 @@ export class OptimizationsComponent implements OnInit {
     return path.replace(/^.*[\\\/]/, '');
   }
 
+  openLogs(id: number) {
+    let autoRefreshTime = this.getAutoRefreshTime(id);
+    window.open(`${this.apiBaseUrl}api/optimization/output.log?id=${id}&autorefresh=${autoRefreshTime}&token=${this.token}`, '_blank');
+  }
+
+  getAutoRefreshTime(id: number): number {
+    if (this.optimizations.find(optimization => optimization.id === id).status === 'wip') {
+      return 3;
+    }
+    return 0;
+  }
+
   isParameterVisible(parameter: string): boolean {
     let isVisible = true;
     this.hiddenFields[this.framework.toLowerCase()]
@@ -369,6 +445,11 @@ export class OptimizationsComponent implements OnInit {
 
   typeOf(object) {
     return typeof object;
+  }
+
+  getType(value) {
+    if (typeof value === 'number') return 'number';
+    return 'text';
   }
 
   copyToClipboard(text: string) {

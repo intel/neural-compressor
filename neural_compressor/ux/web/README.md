@@ -15,6 +15,7 @@
   - [Optimization](#optimization)
     - [Add optimization to project](#add-optimization-to-project)
     - [Get optimization details](#get-optimization-details)
+    - [Edit optimization](#edit-optimization)
     - [List optimizations](#list-optimizations)
     - [Execute optimization](#execute-optimization)
     - [Pin accuracy benchmark to optimization](#pin-accuracy-benchmark-to-optimization)
@@ -22,11 +23,14 @@
   - [Benchmark](#benchmark)
     - [Add benchmark to project](#add-benchmark-to-project)
     - [Get benchmark details](#get-benchmark-details)
+    - [Edit benchmark](#edit-benchmark)
     - [List benchmarks](#list-benchmarks)
     - [Execute benchmark](#execute-benchmark)
   - [Profiling](#profiling)
     - [Add profiling to project](#add-profiling-to-project)
     - [Get profiling details](#get-profiling-details)
+    - [Edit profiling](#edit-profiling)
+    - [Get profiling result as csv](#get-profiling-result-as-csv)
     - [List profilings](#list-profilings)
     - [Execute profiling](#execute-profiling)
   - [Examples](#examples)
@@ -715,6 +719,128 @@
 }
         "modified_at": null
     }
+}
+```
+
+#### Edit optimization
+**Path**: `api/optimization/edit`<br>
+**Method**: `POST`
+
+**Parameters description:**
+<table border>
+    <thead>
+        <tr>
+            <th colspan=3>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan=3><b>id</b></td>
+            <td>Optimization id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td colspan=3><b>precision_id</b></td>
+            <td>Precision id</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=3><b>dataset_id</b></td>
+            <td>Dataset id</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td rowspan=9><b>tuning_details</b></td>
+            <td colspan=2><b>batch_size</b></td>
+            <td>Optimization batch size</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=2><b>sampling_size</b></td>
+            <td>Optimization sampling size</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=2><b>multi_objectives</b></td>
+            <td>Optimization objective</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=2><b>strategy</b></td>
+            <td>Optimization strategy</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=2><b>accuracy_criterion_type</b></td>
+            <td>Optimization accuracy criterion type</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=2><b>accuracy_criterion_threshold</b></td>
+            <td>Optimization accuracy criterion threshold</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td colspan=2><b>random_seed</b></td>
+            <td>Optimization random seed</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td rowspan=2><b>exit_policy</b></td>
+            <td><b>timeout</b></td>
+            <td>Optimization timeout</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td><b>max_trails</b></td>
+            <td>Optimization max trials</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "id": 1,
+    "tuning_details": {
+        "batch_size": 123,
+        "sampling_size": 456,
+        "strategy": "mse",
+        "accuracy_criterion_type": "absolute",
+        "accuracy_criterion_threshold": 0.23,
+        "multi_objectives": "performance",
+        "exit_policy": {
+            "timeout": 60,
+            "max_trials": 125
+        },
+        "random_seed": 95270,
+    }
+}
+```
+
+**Example response**:
+```json
+{
+    "id": 1,
+    "tuning_details": {
+        "id": 1,
+        "strategy": "mse",
+        "accuracy_criterion_type": "absolute",
+        "accuracy_criterion_threshold": 0.23,
+        "multi_objectives": "performance",
+        "exit_policy": {
+            "timeout": "60",
+            "max_trials": 125
+        },
+        "random_seed": 95270,
+        "created_at": "2022-08-09 15:54:44",
+        "modified_at": "2022-08-09 16:43:06"
+    },
+    "batch_size": 123,
+    "sampling_size": 456
 }
 ```
 
@@ -1647,6 +1773,77 @@
 }
 ```
 
+#### Edit benchmark
+**Path**: `api/benchmark/edit`<br>
+**Method**: `POST`
+
+**Parameters description:**
+<table border>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>id</b></td>
+            <td>Benchmark id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>dataset_id</b></td>
+            <td>Dataset id</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td><b>mode</b></td>
+            <td>Benchmark mode</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td><b>batch_size</b></td>
+            <td>Benchmark batch size</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td><b>number_of_instance</b></td>
+            <td>Optimization number of instance</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+        <tr>
+            <td><b>cores_per_instance</b></td>
+            <td>Optimization cores per instance</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "id": 1,
+    "dataset_id": 4,
+    "mode": "accuracy",
+    "batch_size": 64,
+    "cores_per_instance": 7,
+    "number_of_instance": 4
+}
+```
+
+**Example response**:
+```json
+{
+    "id": 1,
+    "dataset_id": 4,
+    "batch_size": 64,
+    "mode": "accuracy",
+    "cores_per_instance": 7,
+    "number_of_instance": 4
+}
+```
+
 #### List benchmarks
 **Path**: `api/benchmark/list`<br>
 **Method**: `GET`
@@ -1980,6 +2177,52 @@
     "created_at": "2022-02-07 14:24:23",
     "last_run_at": "None",
     "duration": null
+}
+```
+
+#### Edit profiling
+**Path**: `api/profiling/edit`<br>
+**Method**: `POST`
+
+**Parameters description:**
+<table border>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><b>id</b></td>
+            <td>Benchmark id</td>
+            <td align="center">&#x2611;</td>
+        </tr>
+        <tr>
+            <td><b>dataset_id</b></td>
+            <td>Dataset id</td>
+            <td align="center">&#x2610;</td>
+        </tr>
+ 
+    </tbody>
+</table>
+
+**Example body**:
+```json
+{
+    "id": 1,
+    "dataset_id": 4,
+    "num_threads": 14
+}
+```
+
+**Example response**:
+```json
+{
+    "id": 1,
+    "dataset_id": 4,
+    "num_threads": 14
 }
 ```
 

@@ -75,6 +75,13 @@ class ConfigurationParser:
             "list<list<int>>": ["shape", "input_shape", "label_shape"],
             "bool": ["train", "label", "do_lower_case", "dynamic_length"],
         }
+
+        self.metric_types: Dict[str, List[str]] = {
+            "str": ["anno_path"],
+            "int": ["num_detections", "boxes", "scores", "classes", "k"],
+            "bool": ["compare_label"],
+        }
+
         self.types_definitions: Dict[str, Union[Type, List[Any]]] = {
             "str": str,
             "int": int,
@@ -99,14 +106,36 @@ class ConfigurationParser:
                 {"dataloader": self.parse_dataloader(quantization_dataloader)},
             )
 
-        evaluation_dataloader = data.get("evaluation", {}).get("dataloader", None)
+        evaluation_data = data.get("evaluation", None)
+        if evaluation_data and isinstance(evaluation_data, dict):
+            self.parse_evaluation_data(evaluation_data)
+
+        data["tuning"] = parse_bool_value(data["tuning"])
+
+        return data
+
+    def parse_evaluation_data(self, evaluation_data: dict) -> None:
+        """Parse input evaluation data."""
+        evaluation_dataloader = evaluation_data.get("dataloader", None)
         if evaluation_dataloader and isinstance(evaluation_dataloader, dict):
-            data["evaluation"].update(
+            evaluation_data.update(
                 {"dataloader": self.parse_dataloader(evaluation_dataloader)},
+            )
+        metric_data = evaluation_data.get("metric_param", None)
+
+        if metric_data and isinstance(metric_data, dict):
+            parsed_metric_data = self.parse_metric(metric_data)
+            evaluation_data.update(
+                {"metric_param": parsed_metric_data},
             )
 
         num_cores = HWInfo().cores
-        cores_per_instance = int(data.get("evaluation", {}).get("cores_per_instance", 4))
+        cores_per_instance = int(
+            evaluation_data.get(
+                "cores_per_instance",
+                4,
+            ),
+        )
 
         if cores_per_instance < 1:
             raise ClientErrorException(
@@ -119,7 +148,12 @@ class ConfigurationParser:
             )
 
         max_number_of_instances = num_cores // cores_per_instance
-        instances = int(data.get("evaluation", {}).get("instances", max_number_of_instances))
+        instances = int(
+            evaluation_data.get(
+                "instances",
+                max_number_of_instances,
+            ),
+        )
 
         if instances < 1:
             raise ClientErrorException("At least one instance must be used.")
@@ -130,18 +164,13 @@ class ConfigurationParser:
                 f"while only {max_number_of_instances} allowed.",
             )
 
-        if "evaluation" in data:
-            data["evaluation"].update(
-                {
-                    "cores_per_instance": cores_per_instance,
-                    "num_of_instance": instances,
-                    "batch_size": int(data.get("evaluation", {}).get("batch_size", 1)),
-                },
-            )
-
-        data["tuning"] = parse_bool_value(data["tuning"])
-
-        return data
+        evaluation_data.update(
+            {
+                "cores_per_instance": cores_per_instance,
+                "num_of_instance": instances,
+                "batch_size": int(evaluation_data.get("batch_size", 1)),
+            },
+        )
 
     def parse_transforms(self, transforms_data: List[dict]) -> List[dict]:
         """Parse transforms list."""
@@ -189,6 +218,19 @@ class ConfigurationParser:
                 )
         return parsed_dataloader_data
 
+    def parse_metric(self, metric_data: dict) -> dict:
+        """Parse metric data."""
+        parsed_data = {}
+        for param_name, param_value in metric_data.items():
+            if isinstance(param_value, dict):
+                parsed_data.update({param_name: self.parse_metric(param_value)})
+            elif isinstance(param_value, str):
+                param_type = self.get_param_type("metric", param_name)
+                if param_type is None:
+                    continue
+                parsed_data.update({param_name: self.parse_value(param_value, param_type)})
+        return parsed_data
+
     def get_param_type(
         self,
         param_group: str,
@@ -200,6 +242,8 @@ class ConfigurationParser:
             params_definitions = self.transform_types
         elif param_group == "dataloader":
             params_definitions = self.dataloader_types
+        elif param_group == "metric":
+            params_definitions = self.metric_types
         for param_type, param_names in params_definitions.items():
             if param_name in param_names:
                 found_type = self.types_definitions.get(param_type, None)

@@ -1,40 +1,142 @@
-{
-    "__help__F1": null,
-    "__help__Accuracy": null,
-    "__help__Loss": null,
-    "__help__MAE": null,
-    "MAE": {
-        "__help__compare_label": null
-    },
-    "__help__RMSE": null,
-    "RMSE": {
-        "__help__compare_label": null
-    },
-    "__help__MSE": null,
-    "MSE": {
-        "__help__compare_label": null
-    },
-    "__help__topk": null,
-    "topk": {
-        "__help__k": "Number of top elements to look at for computing accuracy"
-    },
-    "__help__COCOmAP": null,
-    "COCOmAP": {
-        "__help__anno_path": "annotation path",
-        "__label__anno_path": "annotation path"
-    },
-    "__help__COCOmAPv2": null,
-    "COCOmAPv2": {
-        "__help__anno_path": "Annotation path. The annotation file should be a yaml file, please refer to label_map for its format.",
-        "__label__anno_path": "Annotation path"
-    },
-    "__help__BLEU": null,
-    "__help__custom": "Create your own metric. After you choose this option code template will be generated on the server",
-    "custom": "",
-    "__help__SquadF1": null,
-    "SquadF1": "",
-    "__help__GLUE": null,
-    "GLUE": {
-        "__help__task": "The name of the task. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli."
-    }
-}
+[
+  {
+    "name": "F1",
+    "help": "",
+    "value": null
+  },
+  {
+    "name": "Accuracy",
+    "help": "",
+    "value": null
+  },
+  {
+    "name": "Loss",
+    "help": "",
+    "value": null
+  },
+  {
+    "name": "MAE",
+    "help": "",
+    "params": [
+      {
+        "name": "compare_label",
+        "help": "",
+        "value": true
+      }
+    ]
+  },
+  {
+    "name": "RMSE",
+    "help": "",
+    "params": [
+      {
+        "name": "compare_label",
+        "help": "",
+        "value": true
+      }
+    ]
+  },
+  {
+    "name": "MSE",
+    "help": "",
+    "params": [
+      {
+        "name": "compare_label",
+        "help": "",
+        "value": true
+      }
+    ]
+  },
+  {
+    "name": "topk",
+    "help": "",
+    "params": [
+      {
+        "name": "k",
+        "help": "Number of top elements to look at for computing accuracy",
+        "value": [
+          1,
+          5
+        ]
+      }
+    ]
+  },
+  {
+    "name": "COCOmAP",
+    "help": "",
+    "params": [
+      {
+        "name": "anno_path",
+        "help": "annotation path",
+        "value": null,
+        "label": "annotation path"
+      }
+    ]
+  },
+  {
+    "name": "COCOmAPv2",
+    "help": "",
+    "params": [
+      {
+        "name": "anno_path",
+        "help": "annotation path",
+        "value": null,
+        "label": "annotation path"
+      },
+      {
+        "name": "output_index_mapping",
+        "help": "Output index mapping",
+        "value": null,
+        "params": [
+          {
+            "name": "num_detections",
+            "help": "",
+            "value": -1
+          },
+          {
+            "name": "boxes",
+            "help": "",
+            "value": 0
+          },
+          {
+            "name": "scores",
+            "help": "",
+            "value": 1
+          },
+          {
+            "name": "classes",
+            "help": "",
+            "value": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "SquadF1",
+    "help": "",
+    "value": null
+  },
+  {
+    "name": "BLEU",
+    "help": "",
+    "value": null
+  },
+  {
+    "name": "GLUE",
+    "help": "",
+    "params": [
+      {
+        "name": "task",
+        "help": "The name of the task. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli.",
+        "value": "mrpc",
+        "label": "task"
+      }
+    ]
+  },
+  {
+    "name": "custom",
+    "help": "Create your own metric. After you choose this option code template will be generated on the server",
+    "value": null
+  }
+]

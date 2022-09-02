@@ -24,6 +24,7 @@ import { NewModel } from './model.service';
 export class SocketService {
 
   baseUrl = environment.baseUrl;
+  webSocketNamespace = environment.webSocketNamespace;
   socket;
   public optimizationStart$ = new Subject();
   public optimizationFinish$ = new Subject();
@@ -44,7 +45,7 @@ export class SocketService {
   constructor(
     private http: HttpClient
   ) {
-    this.socket = io(this.baseUrl);
+    this.socket = io(this.webSocketNamespace);
     this.setupOptimizationConnection();
     this.setupBoundaryNodesConnection();
     this.setupModelDownload();

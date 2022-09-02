@@ -192,6 +192,20 @@ export class BenchmarksComponent implements OnInit {
         });
   }
 
+  editBenchmark(id: number) {
+    const dialogRef = this.dialog.open(BenchmarkFormComponent, {
+      width: '60%',
+      data:
+      {
+        projectId: this.activatedRoute.snapshot.params.id,
+        benchmarkId: id,
+        editing: true,
+        index: this.benchmarks.length,
+        framework: this.framework.toLowerCase()
+      }
+    });
+  }
+
   compare() {
     let accuracySeries = [];
     let throughputSeries = [];
@@ -272,6 +286,18 @@ export class BenchmarksComponent implements OnInit {
         }
       });
     return isVisible;
+  }
+
+  openLogs(id: number) {
+    let autoRefreshTime = this.getAutoRefreshTime(id);
+    window.open(`${this.apiBaseUrl}api/benchmark/output.log?id=${id}&autorefresh=${autoRefreshTime}&token=${this.token}`, '_blank');
+  }
+
+  getAutoRefreshTime(id: number): number {
+    if (this.benchmarks.find(benchmark => benchmark.id === id).status === 'wip') {
+      return 3;
+    }
+    return 0;
   }
 
   typeOf(object) {

@@ -144,7 +144,7 @@ class Executor:
         universal_newlines: bool = False,
         startupinfo: Optional[Any] = None,
         creationflags: int = 0,
-        env_args: Optional[list] = None,
+        env_args: Optional[dict] = None,
         ignore_exit_codes: Union[list, Any] = None,
         pid: Optional[str] = None,
     ) -> NCProcesses:
@@ -169,38 +169,50 @@ class Executor:
         threads = []
         processes = NCProcesses()
 
-        if not self.is_multi_commands(args):
-            args = [args]
-
-        for arg in args:
-            threads.append(
-                Thread(
-                    target=self.call_one,
-                    args=(
-                        arg,
-                        logger,
-                        executable,
-                        shell,
-                        cwd,
-                        env_args,
-                        universal_newlines,
-                        startupinfo,
-                        creationflags,
-                        processes,
-                        ignore_exit_codes,
-                        pid,
+        if self.is_multi_commands(args):
+            for arg in args:
+                threads.append(
+                    Thread(
+                        target=self.call_one,
+                        args=(
+                            arg,
+                            logger,
+                            executable,
+                            shell,
+                            cwd,
+                            env_args,
+                            universal_newlines,
+                            startupinfo,
+                            creationflags,
+                            processes,
+                            ignore_exit_codes,
+                            pid,
+                        ),
+                        daemon=True,
                     ),
-                    daemon=True,
-                ),
+                )
+            # Start all threads
+            for command_thread in threads:
+                command_thread.start()
+
+            # Wait for all of them to finish
+            for command_thread in threads:
+                command_thread.join()
+        else:
+            self.call_one(
+                args,
+                logger,
+                executable,
+                shell,
+                cwd,
+                env_args,
+                universal_newlines,
+                startupinfo,
+                creationflags,
+                processes,
+                ignore_exit_codes,
+                pid,
             )
-
-        # Start all threads
-        for command_thread in threads:
-            command_thread.start()
-
-        # Wait for all of them to finish
-        for command_thread in threads:
-            command_thread.join()
 
         return processes
 

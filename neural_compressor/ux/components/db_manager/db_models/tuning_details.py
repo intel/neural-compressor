@@ -14,12 +14,16 @@
 # limitations under the License.
 """The TuningDetails class."""
 import json
+from typing import Optional
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, session
 from sqlalchemy.sql import func
 
 from neural_compressor.ux.components.db_manager.db_manager import Base
+from neural_compressor.ux.components.optimization.tune.tuning import (
+    TuningDetails as TuningDetailsInterface,
+)
 
 
 class TuningDetails(Base):
@@ -71,6 +75,58 @@ class TuningDetails(Base):
         db_session.flush()
 
         return int(new_tuning_details.id)
+
+    @staticmethod
+    def update(
+        db_session: session.Session,
+        tuning_details_id: int,
+        tuning_details_data: TuningDetailsInterface,
+    ) -> dict:
+        """Update tuning details."""
+        tuning_details = (
+            db_session.query(TuningDetails).filter(TuningDetails.id == tuning_details_id).one()
+        )
+        tuning_details.strategy = tuning_details_data.strategy
+        tuning_details.accuracy_criterion_type = tuning_details_data.accuracy_criterion.type
+        tuning_details.accuracy_criterion_threshold = (
+            tuning_details_data.accuracy_criterion.threshold
+        )
+        tuning_details.objective = tuning_details_data.objective
+        tuning_details.exit_policy = json.dumps(tuning_details_data.exit_policy)
+        tuning_details.random_seed = tuning_details_data.random_seed
+
+        db_session.add(tuning_details)
+        db_session.flush()
+
+        return {
+            "id": tuning_details.id,
+            "strategy": tuning_details.strategy,
+            "accuracy_criterion_type": tuning_details.accuracy_criterion_type,
+            "accuracy_criterion_threshold": tuning_details.accuracy_criterion_threshold,
+            "multi_objectives": tuning_details.objective,
+            "exit_policy": json.loads(tuning_details.exit_policy),
+            "random_seed": tuning_details.random_seed,
+            "created_at": str(tuning_details.created_at),
+            "modified_at": str(tuning_details.modified_at),
+        }
+
+    @staticmethod
+    def delete_tuning_details(
+        db_session: session.Session,
+        tuning_details_id: int,
+    ) -> Optional[int]:
+        """Remove tuning_details from database."""
+        tuning_details = (
+            db_session.query(TuningDetails)
+            .filter(TuningDetails.id == tuning_details_id)
+            .one_or_none()
+        )
+        if tuning_details is None:
+            return None
+        db_session.delete(tuning_details)
+        db_session.flush()
+
+        return int(tuning_details.id)
 
     @staticmethod
     def update_tuning_history(
