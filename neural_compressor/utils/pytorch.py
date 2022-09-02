@@ -19,7 +19,7 @@ from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
 from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
 from ..adaptor.pytorch import PyTorchVersionMode
 from ..adaptor.pytorch import PyTorch_FXAdaptor
-from ..adaptor.torch_utils.util import get_embedding_contiguous
+from ..adaptor.torch_utils import util
 from . import logger
 import torch
 from torch.quantization import add_observer_, convert
@@ -232,6 +232,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
         if not tune_cfg['fx_sub_module_list']:
+            tmp_model = q_model
             if tune_cfg['approach'] == "quant_aware_training":
                 q_model.train()
                 q_model = prepare_qat_fx(q_model, fx_op_cfgs,
@@ -239,8 +240,11 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
             else:
                 q_model = prepare_fx(q_model, fx_op_cfgs,
                   prepare_custom_config_dict=prepare_custom_config_dict)
+            util.append_attr(q_model, tmp_model)
+            tmp_model = q_model
             q_model = convert_fx(q_model,
               convert_custom_config_dict=convert_custom_config_dict)
+            util.append_attr(q_model, tmp_model)
         else:
             sub_module_list = tune_cfg['fx_sub_module_list']
             if tune_cfg['approach'] == "quant_aware_training":
@@ -269,6 +273,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         if tune_cfg['approach'] != "post_training_dynamic_quant":
             add_observer_(q_model)
         q_model = convert(q_model, mapping=q_mapping, inplace=True)
+        util.method_2_attribute(q_model)
 
     bf16_ops_list = tune_cfg['bf16_ops_list'] if 'bf16_ops_list' in tune_cfg.keys() else []
     if len(bf16_ops_list) > 0 and (version >= PyTorchVersionMode.PT111.value):
@@ -278,5 +283,5 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         _set_activation_scale_zeropoint(q_model, history_cfg)
     else:
         q_model.load_state_dict(stat_dict)
-    get_embedding_contiguous(q_model)
+    util.get_embedding_contiguous(q_model)
     return q_model

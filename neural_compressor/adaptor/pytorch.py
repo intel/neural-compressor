@@ -1155,6 +1155,7 @@ class PyTorchAdaptor(TemplateAdaptor):
             from .torch_utils.bf16_convert import Convert
             q_model._model = Convert(q_model._model, self.tune_cfg)
 
+        torch_utils.util.method_2_attribute(q_model._model)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
@@ -2648,8 +2649,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if self.approach == 'quant_aware_training':
             q_model._model.train()
             if self.sub_module_list is None:
-                q_model._model = prepare_qat_fx(q_model._model, self.fx_op_cfgs,
+                tmp_model = q_model._model
+                q_model._model = prepare_qat_fx(tmp_model, self.fx_op_cfgs,
                   prepare_custom_config_dict=self.prepare_custom_config_dict)
+                append_attr(q_model._model, tmp_model)
             else:
                 logger.info('Fx trace of the entire model failed. ' + \
                             'We will conduct auto quantization')
@@ -2663,8 +2666,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             q_model._model.eval()
         else:
             if self.sub_module_list is None:
-                q_model._model = prepare_fx(q_model._model, self.fx_op_cfgs,
+                tmp_model = q_model._model
+                q_model._model = prepare_fx(tmp_model, self.fx_op_cfgs,
                   prepare_custom_config_dict=self.prepare_custom_config_dict)
+                append_attr(q_model._model, tmp_model)
             else:
                 logger.info('Fx trace of the entire model failed, ' + \
                             'We will conduct auto quantization')
@@ -2675,8 +2680,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 self.model_calibration(q_model._model, dataloader, iterations,
                   calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
         if self.sub_module_list is None:
-            q_model._model = convert_fx(q_model._model,
+            tmp_model = q_model._model
+            q_model._model = convert_fx(tmp_model,
               convert_custom_config_dict=self.convert_custom_config_dict)
+            append_attr(q_model._model, tmp_model)
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
                                                 q_model._model, prefix='')
@@ -3100,14 +3107,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         sub_name = k.replace(op_name + '.', '', 1)
                         fx_sub_op_cfgs['module_name'].append((sub_name, v))
 
-                if type(module) in fx_white_list:
+                if type(module) in fx_white_list and type(module) != torch.nn.Sequential:
                     # Don't really need a quant/dequant, just move nn.Embedding \
                     # to lower level for fx detection.
-                    module = torch.quantization.QuantWrapper(module)
-                if is_qat:
-                    module_pre = prepare_qat_fx(module, fx_sub_op_cfgs)
+                    tmp_module = torch.quantization.QuantWrapper(module)
                 else:
-                    module_pre = prepare_fx(module, fx_sub_op_cfgs)
+                    tmp_module = module
+                if is_qat:
+                    module_pre = prepare_qat_fx(tmp_module, fx_sub_op_cfgs)
+                else:
+                    module_pre = prepare_fx(tmp_module, fx_sub_op_cfgs)
                 append_attr(module_pre, module)
                 setattr(model, name, module_pre)
             else:

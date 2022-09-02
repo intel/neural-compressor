@@ -217,7 +217,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             if fake_yaml == 'qat_yaml.yaml':
                 model = onnx.load('int8-model.onnx')
                 tensor_list = {tensor.name:tensor for tensor in model.graph.initializer}
-                torch_data = q_model.model.conv.weight().dequantize().detach().cpu().numpy()
+                torch_data = q_model.model.conv.weight.dequantize().detach().cpu().numpy()
                 from onnx.numpy_helper import to_array
                 onnx_data = to_array(tensor_list['conv.weight_quantized'])
                 onnx_scale = to_array(tensor_list['conv.weight_scale'])

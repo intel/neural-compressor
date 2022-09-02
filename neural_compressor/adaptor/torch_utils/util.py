@@ -73,20 +73,47 @@ def input2tuple(input):
     return output
 
 
+def method_2_attribute(int8_model):
+    """a helper method to change methods into attributes for the quantized model.
+
+    Args:
+        int8_model(torch.nn.Module): The quantized model with weight and bias methods.
+
+    Returns:
+        int8_model (torch.nn.Module): The quantized model with weight and bias attributes.
+    """
+    attr_names = ['weight', 'bias']
+    for module in int8_model.modules():
+        for name in attr_names:
+            # to skip the entire model
+            if hasattr(module, name):
+                attr = getattr(module, name)
+                # to skip fp32 module
+                if callable(attr):
+                    tmp = attr()
+                    # to drop gradient
+                    if hasattr(tmp, 'data'):
+                        try:
+                            setattr(module, name, tmp.data)
+                        except:
+                            pass
+    return int8_model
+
+
 def append_attr(fx_model, model):
-    """a helper method to append attribution for the symbolic traced model.
+    """a helper method to append attributes for the symbolic traced model.
 
     Args:
         fx_model(torch.fx.GraphModule): The symbolic traced model.
         model(torch.nn.Module): The original model.
 
     Returns:
-        fx_model (dir): The symbolic traced model with additional attribution.
+        fx_model (dir): The symbolic traced model with additional attributes.
     """
     fx_attr = dir(fx_model)
     org_attr = dir(model)
-    ignore_match_patterns = [r"_", r"quant", r"dequant", 
-                            r'activation_post_process']
+    ignore_match_patterns = [r"_", r"quant", r"dequant", r"weight", 
+                            r"bias", r'activation_post_process']
     ignore_search_patterns = [r"_scale_", r"_zero_point_", 
                             r'_activation_post_process_']
     attr_names = []
