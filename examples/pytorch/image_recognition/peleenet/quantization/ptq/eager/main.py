@@ -63,7 +63,7 @@ parser.add_argument('--dist-backend', default='gloo', type=str,
                     help='distributed backend')
 parser.add_argument('--tune', action='store_true',
                     help='int8 quantization tune with Neural Compressor')
-parser.add_argument('--weights', type=str, metavar='PATH', 
+parser.add_argument('--weights', type=str, metavar='PATH',
                     default='weights/peleenet_acc7208.pth.tar',
                     help='path to init checkpoint (default: none)')
 parser.add_argument('-i', "--iter", default=0, type=int,
@@ -116,7 +116,7 @@ def main():
     # create model
     print("=> creating model '{}'".format(args.arch))
     if args.arch == 'peleenet':
-        model = PeleeNet(num_classes=num_classes)          
+        model = PeleeNet(num_classes=num_classes)
     else:
         print("=> unsupported model '{}'. creating PeleeNet by default.".format(args.arch))
         model = PeleeNet(num_classes=num_classes)
@@ -241,7 +241,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # Adjust learning rate
         lr = adjust_learning_rate(optimizer, epoch,  args.epochs, args.lr, iteration=i,
                                   iterations_per_epoch=len(train_loader),
-                                  method=args.lr_policy) 
+                                  method=args.lr_policy)
 
         # measure data loading time
         data_time.update(time.time() - end)

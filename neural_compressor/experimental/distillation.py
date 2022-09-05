@@ -52,7 +52,7 @@ class Distillation(Component):
         self.best_model = None
         self._train_cfg = None
 
-    def _on_train_begin(self):
+    def _on_train_begin(self, dataloader=None):
         """ called before training """
         assert self._model, 'student_model must be set.'
         if self._eval_func is not None:

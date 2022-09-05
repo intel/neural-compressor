@@ -12,13 +12,13 @@ from neural_compressor.conf.config import DistillationConf, PruningConf
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 from neural_compressor.training import fit, prepare
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils import logger
+from packaging.version import Version
 
 PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= PyTorchVersionMode.PT18.value:
+if PT_VERSION >= Version("1.8.0-rc1"):
     FX_MODE = True
 else:
     FX_MODE = False
@@ -442,7 +442,7 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.on_train_begin()
+            combination.on_train_begin(dummy_dataloader)
             model = combination.model.model
             for nepoch in range(epochs):
                 model.train()
@@ -477,11 +477,11 @@ class TestPruning(unittest.TestCase):
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
         # reloading int8 model
-        reloaded_model = load('./saved', self.model)
+        reloaded_model = load('./saved', self.model, dataloader=dummy_dataloader)
         reloaded_conv_weight = reloaded_model.state_dict()['layer1.0.conv1.weight']
         self.assertTrue(torch.equal(reloaded_conv_weight, conv_weight))
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
       "requires higher version of torch than 1.9.0")
     def test_distillation_qat_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Quantization
@@ -501,7 +501,7 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.on_train_begin()
+            combination.on_train_begin(dummy_dataloader)
             model = combination.model.model
             for nepoch in range(epochs):
                 model.train()
@@ -535,7 +535,7 @@ class TestPruning(unittest.TestCase):
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
         # reloading int8 model
         model = DynamicControlModel()
-        reloaded_model = load('./saved', model)
+        reloaded_model = load('./saved', model, dataloader=dummy_dataloader)
 
     def test_distillation_prune_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Pruning
@@ -555,7 +555,7 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.on_train_begin()
+            combination.on_train_begin(dummy_dataloader)
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -593,7 +593,7 @@ class TestPruning(unittest.TestCase):
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
       "requires higher version of torch than 1.9.0")
     def test_prune_qat_distillation_oneshot_fx(self):
         from neural_compressor.experimental import Pruning, Quantization, Distillation
@@ -614,7 +614,7 @@ class TestPruning(unittest.TestCase):
             iters = 3
             criterion = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            combination.on_train_begin()
+            combination.on_train_begin(dummy_dataloader)
             model = combination.model.model
             for nepoch in range(epochs):
                 model.train()

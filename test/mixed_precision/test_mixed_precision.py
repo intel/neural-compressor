@@ -4,7 +4,9 @@
 import unittest
 import os
 import yaml
+import neural_compressor.adaptor.pytorch as nc_torch
 import numpy as np
+import shutil
 import tensorflow as tf
 from onnx import helper, TensorProto, numpy_helper
 from tensorflow.core.framework import attr_value_pb2
@@ -13,10 +15,9 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 from neural_compressor.utils.utility import LazyImport, CpuInfo
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
-import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
-import shutil
+from packaging.version import Version
+
 
 PT_VERSION = nc_torch.get_torch_version()
 def build_matmul_model():
@@ -392,7 +393,7 @@ class TestMixedPrecision(unittest.TestCase):
         output_model = converter.fit()
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
  
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
+    @unittest.skipIf(PT_VERSION < Version("1.11.0-rc1"),
       "Please use PyTroch 1.11 or higher version for mixed precision.")
     def test_mixed_precision_with_eval_func_pt(self):
         def eval(model):

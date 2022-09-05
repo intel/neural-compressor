@@ -17,12 +17,13 @@
 
 import torch
 from neural_compressor.adaptor.pytorch import (
-    PyTorch_FXAdaptor, 
-    get_torch_version, 
-    PyTorchVersionMode
-    )
+    PyTorch_FXAdaptor,
+    get_torch_version,
+)
+from packaging.version import Version
 
 version = get_torch_version()
+
 
 def trace_and_fuse_sub_graph(model, prefix, is_qat):
     from torch.quantization.quantize_fx import _fuse_fx
@@ -40,7 +41,7 @@ def trace_and_fuse_sub_graph(model, prefix, is_qat):
         else:
             try:
                 graph_module = torch.fx.symbolic_trace(module)
-                if version >= PyTorchVersionMode.PT111.value:  # pragma: no cover
+                if version >= Version("1.11.0-rc1"):  # pragma: no cover
                     fused_model = _fuse_fx(graph_module, is_qat)
                 else:
                     fused_model = _fuse_fx(graph_module)  # pylint: disable=E1120
@@ -48,6 +49,7 @@ def trace_and_fuse_sub_graph(model, prefix, is_qat):
             except:
                 trace_and_fuse_sub_graph(module, op_name, is_qat)
     return model
+
 
 def symbolic_trace(model, is_qat=False):
     try:

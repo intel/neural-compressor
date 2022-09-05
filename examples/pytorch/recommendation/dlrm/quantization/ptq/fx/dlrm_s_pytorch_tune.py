@@ -893,9 +893,9 @@ if __name__ == "__main__":
         print('Accuracy: {roc_auc:.5f}'.format(roc_auc=roc_auc))
         return roc_auc
 
+    eval_dataloader = DLRM_DataLoader(test_ld)
     if args.tune:
         print('tune')
-        eval_dataloader = DLRM_DataLoader(test_ld)
         dlrm.eval()
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
@@ -911,8 +911,9 @@ if __name__ == "__main__":
         if args.int8:
             from neural_compressor.utils.pytorch import load
             import os
-            dlrm = load(
-                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), dlrm)
+            dlrm = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
+                        dlrm,
+                        dataloader=eval_dataloader)
         eval_func(dlrm)
         exit(0)
 
@@ -946,24 +947,24 @@ if __name__ == "__main__":
         dlrm = convert(dlrm, inplace=True)
         print("convert done")
         if not (args.save_int8 == ""):
-             print("Saving model to {}".format(args.save_int8))
-             torch.save(
-                      {
-                          "epoch": ld_k,
-                          "nepochs": ld_nepochs,
-                          "nbatches": ld_nbatches,
-                          "nbatches_test": ld_nbatches_test,
-                          "iter": ld_j,
-                          "state_dict": dlrm.state_dict(),
-                          "train_acc": ld_gA,
-                          "train_loss": ld_gL,
-                          "test_acc": ld_gA_test,
-                          "test_loss": ld_gL_test,
-                          "total_loss": ld_total_loss,
-                          "total_accu": ld_total_accu,
-                      },
-                      args.save_int8,
-                  )
+            print("Saving model to {}".format(args.save_int8))
+            torch.save(
+                     {
+                         "epoch": ld_k,
+                         "nepochs": ld_nepochs,
+                         "nbatches": ld_nbatches,
+                         "nbatches_test": ld_nbatches_test,
+                         "iter": ld_j,
+                         "state_dict": dlrm.state_dict(),
+                         "train_acc": ld_gA,
+                         "train_loss": ld_gL,
+                         "test_acc": ld_gA_test,
+                         "test_loss": ld_gL_test,
+                         "total_loss": ld_total_loss,
+                         "total_accu": ld_total_accu,
+                     },
+                     args.save_int8,
+                 )
 
     print("time/loss/accuracy (if enabled):")
     with torch.autograd.profiler.profile(args.enable_profiling, use_gpu) as prof:

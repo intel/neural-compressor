@@ -174,22 +174,22 @@ class Component(object):
     def post_process(self):
         pass
 
-    def on_train_begin(self):
+    def on_train_begin(self, dataloader=None):
         """ called before the beginning of epochs"""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
-            on_train_begin_hook()
+            on_train_begin_hook(dataloader)
 
     def on_train_end(self):
         """ called after the end of epochs"""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
 
-    def pre_epoch_begin(self):
+    def pre_epoch_begin(self, dataloader=None):
         """ called before the beginning of epochs"""
         warn('This method is deprecated. please use `on_train_begin` instead.',
              DeprecationWarning, stacklevel=2)
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
-            on_train_begin_hook()
+            on_train_begin_hook(dataloader)
 
     def post_epoch_end(self):
         """ called after the end of epochs"""

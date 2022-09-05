@@ -5,6 +5,8 @@ mlperf inference benchmarking tool
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
+from neural_compressor.experimental import Quantization, common
+from queue import Queue
 
 import argparse
 import array
@@ -15,7 +17,6 @@ import os
 import sys
 import threading
 import time
-from queue import Queue
 
 import mlperf_loadgen as lg
 import numpy as np
@@ -49,7 +50,7 @@ SUPPORTED_DATASETS = {
          {"image_size": [300, 300, 3]}),
     "coco-300-pt":
         (coco.Coco, dataset.pre_process_coco_pt_mobilenet, coco.PostProcessCocoPt(False,0.3),
-         {"image_size": [300, 300, 3]}),         
+         {"image_size": [300, 300, 3]}),
     "coco-1200":
         (coco.Coco, dataset.pre_process_coco_resnet34, coco.PostProcessCoco(),
          {"image_size": [1200, 1200, 3]}),
@@ -176,7 +177,7 @@ last_timeing = []
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tune', dest='tune', action='store_true', 
+    parser.add_argument('--tune', dest='tune', action='store_true',
                         help='tune best int8 model on calibration dataset')
     parser.add_argument("--dataset", choices=SUPPORTED_DATASETS.keys(), help="dataset")
     parser.add_argument("--dataset-path", required=True, help="path to the dataset")
@@ -256,7 +257,7 @@ def get_backend(backend):
         backend = BackendPytorch()
     elif backend == "pytorch-native":
         from backend_pytorch_native import BackendPytorchNative
-        backend = BackendPytorchNative()      
+        backend = BackendPytorchNative()
     elif backend == "tflite":
         from backend_tflite import BackendTflite
         backend = BackendTflite()
@@ -585,7 +586,6 @@ def main():
     os.chdir(os.path.join(sys.path[0], ".."))
     if args.tune:
         # Quantization with Neural Compressor
-        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(raw_model)
         quantizer.eval_func = eval_func
@@ -594,7 +594,17 @@ def main():
 
     elif args.int8:
         from neural_compressor.utils.pytorch import load
-        int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), raw_model)
+        import torchvision.datasets as dset
+        import torchvision.transforms as transforms
+        import torch
+        dataset = dset.CocoDetection(root=args.dataset_path + "/val2017",
+                                     annFile=args.dataset_path +
+                                     "/annotations/instances_val2017.json",
+                                     transform=transforms.ToTensor())
+        dataloader = torch.utils.data.DataLoader(dataset)
+        int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
+                          raw_model,
+                          dataloader=dataloader)
         if args.accuracy:
             eval_func(int8_model)
         elif args.benchmark:

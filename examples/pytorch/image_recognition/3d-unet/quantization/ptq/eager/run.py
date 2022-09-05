@@ -129,7 +129,7 @@ def eval_func(model):
     if args.accuracy:
         print("Running accuracy script...")
         process = subprocess.Popen(['python3', 'accuracy-brats.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = process.communicate() 
+        out, err = process.communicate()
 
         print(out)
         print("Done!", float(err))
@@ -157,11 +157,11 @@ def main():
         def __init__(self):
             path = os.path.abspath(os.path.expanduser('./brats_cal_images_list.txt'))
             with open(path, 'r') as f:
-              self.preprocess_files = [line.rstrip() for line in f]
-    
+                self.preprocess_files = [line.rstrip() for line in f]
+
             self.loaded_files = {}
             self.batch_size = 1
-    
+
         def __getitem__(self, sample_id):
             file_name = self.preprocess_files[sample_id]
             print("Loading file {:}".format(file_name))
@@ -169,7 +169,7 @@ def main():
                 self.loaded_files[sample_id] = pickle.load(f)[0]
             # note that calibration phase does not care label, here we return 0 for label free case.
             return self.loaded_files[sample_id], 0
-    
+
         def __len__(self):
             self.count = len(self.preprocess_files)
             return self.count
@@ -200,6 +200,7 @@ def main():
         else:
             new_model = model
         eval_func(new_model)
+
 
 if __name__ == "__main__":
     main()

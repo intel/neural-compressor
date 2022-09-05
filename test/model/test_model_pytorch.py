@@ -1,21 +1,9 @@
 import torch
-import torch.nn as nn
-import torch.nn.quantized as nnq
-from torch.quantization import QuantStub, DeQuantStub
 import torchvision
 import unittest
-import os
-from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.model import MODELS
-from neural_compressor.adaptor.pytorch import  PyTorchVersionMode
 import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.experimental import Quantization, common
-from neural_compressor.utils.pytorch import load
-from neural_compressor.utils.utility import recover
-import shutil
-import copy
-import numpy as np
-import yaml
+from neural_compressor.model import MODELS
+from packaging.version import Version
 
 try:
     import intel_pytorch_extension as ipex
@@ -24,7 +12,7 @@ except:
     TEST_IPEX = False
 
 PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >=  PyTorchVersionMode.PT18.value:
+if PT_VERSION >=  Version("1.8.0-rc1"):
     FX_MODE = True
 else:
     FX_MODE = False

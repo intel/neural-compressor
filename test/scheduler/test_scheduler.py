@@ -5,12 +5,12 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
+import neural_compressor.adaptor.pytorch as nc_torch
 
 from neural_compressor.data import DATASETS
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
-import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
+from packaging.version import Version
 
 PT_VERSION = nc_torch.get_torch_version()
 
@@ -438,7 +438,7 @@ class TestPruning(unittest.TestCase):
                                delta=0.01)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
       "Please use PyTroch 1.9 or higher version for Quantization & Pruning with pytorch_fx backend")
     def test_combine_fx(self):
         from neural_compressor.experimental import Pruning, common, Quantization

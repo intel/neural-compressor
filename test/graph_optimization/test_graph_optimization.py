@@ -12,6 +12,8 @@ from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+from packaging.version import Version
+
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -258,10 +260,9 @@ class TestGraphOptimization(unittest.TestCase):
 
     def test_not_supported_model(self):
         import neural_compressor.adaptor.pytorch as nc_torch
-        from neural_compressor.adaptor.pytorch import PyTorchVersionMode
         PT_VERSION = nc_torch.get_torch_version()
-        if PT_VERSION > PyTorchVersionMode.PT18.value \
-           and PT_VERSION < PyTorchVersionMode.PT19.value:
+        if PT_VERSION > Version("1.8.0-rc1") \
+           and PT_VERSION < Version("1.9.0-rc1"):
             pass
         else:
             import torchvision
@@ -278,10 +279,9 @@ class TestGraphOptimization(unittest.TestCase):
 
     def test_not_supported_model_without_yaml(self):
         import neural_compressor.adaptor.pytorch as nc_torch
-        from neural_compressor.adaptor.pytorch import PyTorchVersionMode
         PT_VERSION = nc_torch.get_torch_version()
-        if PT_VERSION > PyTorchVersionMode.PT18.value \
-           and PT_VERSION < PyTorchVersionMode.PT19.value:
+        if PT_VERSION > Version("1.8.0-rc1") \
+           and PT_VERSION < Version("1.9.0-rc1"):
             pass
         else:
             import torchvision
@@ -297,10 +297,9 @@ class TestGraphOptimization(unittest.TestCase):
 
     def test_not_supported_model_with_conf(self):
         import neural_compressor.adaptor.pytorch as nc_torch
-        from neural_compressor.adaptor.pytorch import PyTorchVersionMode
         PT_VERSION = nc_torch.get_torch_version()
-        if PT_VERSION > PyTorchVersionMode.PT18.value \
-           and PT_VERSION < PyTorchVersionMode.PT19.value:
+        if PT_VERSION > Version("1.8.0-rc1") \
+           and PT_VERSION < Version("1.9.0-rc1"):
             pass
         else:
             from neural_compressor.experimental import Graph_Optimization

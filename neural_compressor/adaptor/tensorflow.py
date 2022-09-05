@@ -108,7 +108,7 @@ class TensorFlowAdaptor(Adaptor):
         writer.add_summary(summary, step)
         writer.flush()
 
-    def _pre_hook_for_hvd(self):
+    def _pre_hook_for_hvd(self, dataloader=None):
         import horovod.tensorflow as hvd
         self.hvd = hvd
         self.hvd.init()

@@ -641,7 +641,7 @@ def main():
 
     if model_args.int8:
         from neural_compressor.utils.pytorch import load
-        model = load(training_args.output_dir, model)
+        model = load(training_args.output_dir, model, dataloader=eval_dataloader)
     if model_args.benchmark or model_args.accuracy_only:
         eval_func(model)
         return

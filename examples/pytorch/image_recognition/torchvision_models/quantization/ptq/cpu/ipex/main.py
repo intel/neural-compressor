@@ -22,7 +22,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models.quantization as quantize_models
 import torchvision.models as models
-from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
+from neural_compressor.adaptor.pytorch import get_torch_version
+from packaging.version import Version
 
 try:
     try:
@@ -211,7 +212,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # create model
         if args.pretrained:
             print("=> using pre-trained model '{}'".format(args.arch))
-            if args.ipex or pytorch_version >= PyTorchVersionMode.PT17.value:
+            if args.ipex or pytorch_version >= Version("1.7.0-rc1"):
                 model = models.__dict__[args.arch](pretrained=True)
             else:
                 model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
@@ -326,7 +327,7 @@ def main_worker(gpu, ngpus_per_node, args):
             quantizer = Quantization("./conf_ipex.yaml")
         else:
             model.eval()
-            if pytorch_version < PyTorchVersionMode.PT17.value:
+            if pytorch_version < Version("1.7.0-rc1"):
                 model.fuse_model()
             quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
@@ -351,7 +352,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
                                                 "best_configure.json")
             else:
-                if pytorch_version < PyTorchVersionMode.PT17.value:
+                if pytorch_version < Version("1.7.0-rc1"):
                     model.fuse_model()
                 from neural_compressor.utils.pytorch import load
                 new_model = load(

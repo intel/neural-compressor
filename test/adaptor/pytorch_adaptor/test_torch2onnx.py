@@ -1,27 +1,26 @@
+import numpy as np
+import onnx
+import os
+import shutil
 import torch
 import torch.nn as nn
 import torch.nn.quantized as nnq
-from torch.quantization import QuantStub, DeQuantStub
 import unittest
-import os
-import onnx
-import numpy as np
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental import Quantization, common
-import shutil
-from distutils.version import StrictVersion
+from packaging.version import Version
+from torch.quantization import QuantStub, DeQuantStub
 
 
 PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= PyTorchVersionMode.PT18.value:
+if PT_VERSION >= Version("1.8.0-rc1"):
     FX_MODE = True
 else:
     FX_MODE = False
 
-ONNX111_VERSION = StrictVersion("1.11.0")
-ONNX_VERSION = StrictVersion(onnx.__version__)
-if ONNX_VERSION >= ONNX111_VERSION and PT_VERSION >= PyTorchVersionMode.PT110.value:
+ONNX111_VERSION = Version("1.11.0")
+ONNX_VERSION = Version(onnx.__version__)
+if ONNX_VERSION >= ONNX111_VERSION and PT_VERSION >= Version("1.10.0-rc1"):
     BF16_MODE = True
 else:
     BF16_MODE = False

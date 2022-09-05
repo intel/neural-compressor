@@ -51,10 +51,10 @@ class Pruning(Component):
         self.pruners = []
         self.callbacks = dict(tf_pruning=TfPruningCallback)
 
-    def _on_train_begin(self):
+    def _on_train_begin(self, dataloader=None):
         """ called before training """
         for pruner in self.pruners:
-            pruner.on_train_begin()
+            pruner.on_train_begin(dataloader)
 
     def _on_epoch_begin(self, epoch):
         """ called on the beginning of epochs"""
@@ -309,16 +309,16 @@ class TfPruningCallback(object):
                 res[index] = layer.get_weights()[0]
         self.nc_model.weights = res
 
-    def on_train_begin(self, logs=None):
-        self.hooks['on_train_begin']()
+    def on_train_begin(self, logs=None, dataloader=None):
+        self.hooks['on_train_begin'](dataloader)
 
     def on_train_end(self, logs=None):
         self.hooks['on_train_end']()
 
-    def pre_epoch_begin(self, logs=None):  # pragma: no cover
+    def pre_epoch_begin(self, logs=None, dataloader=None):  # pragma: no cover
         warn('This method is deprecated. please use `on_train_begin` instead.',
              DeprecationWarning, stacklevel=2)
-        self.on_train_begin(logs)
+        self.on_train_begin(logs, dataloader)
 
     def post_epoch_end(self, logs=None):  # pragma: no cover
         warn('This method is deprecated. please use `on_train_end` instead.',
