@@ -746,7 +746,7 @@ class TuneStrategy(object):
             # some fields in tuning section of yaml, such as tensorboard, snapshot, resume.
             if self._same_yaml(tuning_history['cfg'], self.cfg):
                 for history in tuning_history['history']:
-                    if history and history['tune_cfg'] == tune_cfg:
+                    if history and history['tune_cfg']['op'] == tune_cfg['op']:
                         return tuning_history
 
         return None

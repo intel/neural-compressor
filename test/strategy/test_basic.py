@@ -183,6 +183,9 @@ class TestQuantization(unittest.TestCase):
         quantizer.model = self.constant_graph
         quantizer.fit()
 
+        # resume tuning history
+        quantizer.conf.usr_cfg.tuning.workspace.resume = 'saved/history.snapshot'
+        quantizer.fit()
 
     def test_run_basic_max_trials(self):
         from neural_compressor.experimental import Quantization, common
