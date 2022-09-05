@@ -1,5 +1,0 @@
---find-links https://download.pytorch.org/whl/torch_stable.html
-transformers
-torch
-datasets
-accelerate

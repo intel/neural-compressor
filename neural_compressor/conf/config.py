@@ -629,7 +629,7 @@ criterion_schema = Schema({
     },
     Optional('KnowledgeDistillationLoss'): {
         Optional('temperature'): And(float, lambda s: s > 0),
-        Optional('loss_types'): And(list, lambda s: all(i in ['CE', 'KL', 'MSE'] for i in s)),
+        Optional('loss_types'): And(list, lambda s: all(i in ['CE', 'KL'] for i in s)),
         Optional('loss_weights'): And(list, lambda s: all(i >= 0 for i in s) and sum(s) == 1.0),
     },
     Optional('IntermediateLayersKnowledgeDistillationLoss'): {
@@ -638,7 +638,7 @@ criterion_schema = Schema({
         Optional('loss_types'):
             And(Or(tuple, list), lambda s: all(i in ['MSE', 'KL', 'L1'] for i in s)),
         Optional('loss_weights'):
-            And(Or(tuple, list), lambda s: all(i >= 0 for i in s)),
+            And(Or(tuple, list), lambda s: all(i >= 0 for i in s) and sum(s) == 1.0),
         Optional('add_origin_loss'): bool,
     }
 })
