@@ -33,7 +33,8 @@ class GatherConverter(QuantOperatorBase):
         node = self.node
         assert node.op_type in ["Gather"]
 
-        if len(self.quantizer.model.get_children(node)) == 0:
+        if len(self.quantizer.model.get_children(node)) == 0 or \
+            not node.name.endswith('_quant'):
             return
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)

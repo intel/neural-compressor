@@ -55,7 +55,8 @@ class QPad(QuantOperatorBase):
         if self.quantizer.opset_version < 11:
             return
 
-        if len(self.quantizer.model.get_children(node)) == 0:
+        if len(self.quantizer.model.get_children(node)) == 0 or \
+            not node.name.endswith('_quant'):
             return
         parent = self.quantizer.model.get_parents(node)[0]
         child = self.quantizer.model.get_children(node)[0]

@@ -38,6 +38,8 @@ class AttentionQuant(QuantOperatorBase):
         '''
         node = self.node
         assert (node.op_type == "Attention")
+        if not node.name.endswith('_quant'):
+            return
 
         parents = self.quantizer.model.get_parents(node)
         quantized_name = []

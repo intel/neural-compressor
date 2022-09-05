@@ -134,6 +134,10 @@ class ONNXRTAugment:
                     if node.op_type == 'EmbedLayerNormalization' and len(node.output) > 1 and \
                         node.output[1] in tensors_to_dump:
                         tensors_to_dump.remove(node.output[1])
+                    elif node.op_type == 'Resize':
+                        tensors_to_dump.remove(node.input[1])
+                        if len(node.input) == 4:
+                            tensors_to_dump.remove(node.input[2])
                 elif weight_only:
                     for input in node.input:
                         if self.already_quantized and \

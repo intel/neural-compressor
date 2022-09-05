@@ -42,7 +42,8 @@ class QSplit(QuantOperatorBase):
         node = self.node
         parent = self.quantizer.model.get_parents(node)[0]
         children = self.quantizer.model.get_children(node)
-        if parent.op_type != 'DequantizeLinear' or len(children) == 0:
+        if parent.op_type != 'DequantizeLinear' or len(children) == 0 or \
+            not node.name.endswith('_quant'):
             return
         kwargs = {}
         for attribute in node.attribute:

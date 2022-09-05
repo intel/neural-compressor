@@ -34,7 +34,8 @@ class QLinearActivation(QuantOperatorBase):
         if node.op_type in ['Relu', 'Clip']:
             return
             
-        if len(self.quantizer.model.get_children(node)) == 0:
+        if len(self.quantizer.model.get_children(node)) == 0 or \
+            not node.name.endswith('_quant'):
             return
         # No assert on op_type as it is controlled by registry
         # only try to quantize when given quantization parameters for it

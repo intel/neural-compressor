@@ -47,7 +47,7 @@ class QLinearPool(QuantOperatorBase):
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)
  
-        if len(children) == 0 or len(parents) == 0:
+        if len(children) == 0 or len(parents) == 0 or not node.name.endswith('_quant'):
             return
 
         if all([i.op_type == 'DequantizeLinear' for i in parents]) and \

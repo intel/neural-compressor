@@ -34,6 +34,9 @@ from .operators.pad import QPad, QDQPad
 from .operators.pooling import QLinearPool, QDQPool
 from .operators.direct_q8 import QDQDirect8BitOp, Direct8BitOp, DirectCast
 from .operators.base_operator_cast import CastOperatorBase
+from .operators.argmax import QArgMax
+from .operators.gemm import QLinearGemm, QDQGemm
+from .operators.resize import QResize, QDQResize
 
 CommonOpsRegistry = {"Gather": GatherConverter, \
                      "EmbedLayerNormalization": EmbedLayerNormalizationQuant}
@@ -68,6 +71,9 @@ QLinearOpsRegistry = {
     "Transpose" : Direct8BitOp,
     "Squeeze" : Direct8BitOp,
     "Unsqueeze" : Direct8BitOp,
+    "Resize": QResize,
+    "ArgMax": QArgMax,
+    "Gemm": QLinearGemm,
 }
 QLinearOpsRegistry.update(CommonOpsRegistry)
 
@@ -93,7 +99,9 @@ QDQRegistry = {
     "Unsqueeze" : QDQDirect8BitOp,
     "Concat": QDQConcat,
     "Split": QDQSplit,
-    "EmbedLayerNormalization": QDQEmbedLayerNormalization
+    "EmbedLayerNormalization": QDQEmbedLayerNormalization,
+    "Gemm": QDQGemm,
+    "Resize": QDQResize,
 }
 
 CastRegistry = {

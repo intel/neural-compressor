@@ -564,7 +564,12 @@ class Quantizer:
             self._dynamic_quantize_bias(input_name, weight_name + '_scale', bias_name,
                 bias_name + "_quantized")
         else:
-            _, quant_value = self.quantize_bias(bias_name, input_name, weight_name)
+            beta = 1.0
+            if node.op_type in ['Gemm']:
+                beta_attribute = [attr for attr in node.attribute if attr.name == "beta"]
+                if len(beta_attribute):
+                    beta = onnx.helper.get_attribute_value(beta_attribute[0])
+            _, quant_value = self.quantize_bias(bias_name, input_name, weight_name, beta)
             self.model.remove_initializer(find_by_name(bias_name, self.model.initializer()))
             inputs = [quant_value.q_name, quant_value.scale_name, quant_value.zp_name]
             dequant_node = onnx.helper.make_node("DequantizeLinear", inputs, 
@@ -573,7 +578,7 @@ class Quantizer:
             self.replace_input.append([find_by_name(node.name, self.model.nodes()), 
                 bias_name, bias_name + '_dequantized'])
 
-    def quantize_bias(self, bias_name, input_name, weight_name, new_node_list=[]):
+    def quantize_bias(self, bias_name, input_name, weight_name, beta=1.0):
         '''
         Quantized the bias. Zero Point == 0 and Scale == Input_Scale * Weight_Scale
         '''
@@ -598,7 +603,7 @@ class Quantizer:
 
         # calcuate scale for bias
 
-        bias_scale = input_scale * weight_scale
+        bias_scale = input_scale * weight_scale * beta
 
         # quantize bias
         quantized_data = (np.asarray(bias_data) / bias_scale).round().astype(np.int32)

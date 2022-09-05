@@ -47,7 +47,7 @@ class QGlobalAveragePool(QuantOperatorBase):
             "QLinear" + node.op_type,
             inputs,
             child.output,
-            node.name, **kwargs)
+            node.name + '_quant', **kwargs)
         self.quantizer.new_nodes += [qnode]
         self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(parent)

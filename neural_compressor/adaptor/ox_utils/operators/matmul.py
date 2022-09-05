@@ -103,7 +103,8 @@ class QLinearMatMul(QuantOperatorBase):
         assert (node.op_type == "MatMul")
 
         parents = self.quantizer.model.get_parents(node)
-        if len(self.quantizer.model.get_children(node)) == 0:
+        if len(self.quantizer.model.get_children(node)) == 0 or \
+            not node.name.endswith('_quant'):
             return
         child = self.quantizer.model.get_children(node)[0]
 

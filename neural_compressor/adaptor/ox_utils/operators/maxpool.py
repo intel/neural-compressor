@@ -35,7 +35,8 @@ class QMaxPool(QuantOperatorBase):
         if self.quantizer.opset_version < 12: # pragma: no cover
             return
 
-        if len(self.quantizer.model.get_children(node)) == 0:
+        if len(self.quantizer.model.get_children(node)) == 0 or \
+            not node.name.endswith('_quant'):
             return
         parent = self.quantizer.model.get_parents(node)[0]
         children = self.quantizer.model.get_children(node)

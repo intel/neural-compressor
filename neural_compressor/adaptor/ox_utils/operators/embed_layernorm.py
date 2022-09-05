@@ -34,6 +34,8 @@ class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
     def convert(self):
         node = self.node
         assert (node.op_type == "EmbedLayerNormalization")
+        if not node.name.endswith('_quant'):
+            return
 
         '''
         Pre-quantization EmbedLayerNorm inputs:

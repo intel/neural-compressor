@@ -29,11 +29,10 @@ class QLinearBinaryOp(QuantOperatorBase):
 
     def convert(self):
         node = self.node
-        if len(self.quantizer.model.get_children(node)) == 0:
+        if len(self.quantizer.model.get_children(node)) == 0 or \
+            not node.name.endswith('_quant'):
             return
         parents = self.quantizer.model.get_parents(node)
-        if all([i.op_type != 'DequantizeLinear' for i in parents]):
-            return
         child = self.quantizer.model.get_children(node)[0]
 
         qlinear_binary_math_output = child.output[0]
@@ -67,6 +66,9 @@ class QDQBinaryOp(QuantOperatorBase):
         node = self.node
         data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
         if not data_found:
+            return
+
+        if not all([self.quantizer.is_valid_quantize_weight(i) for i in node.input]):
             return
  
         self.quantizer.quantize_inputs(node, initializer_use_weight_qType=False)
