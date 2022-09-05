@@ -29,7 +29,7 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
     """InsertPrintMinMaxNode Pass for tensorflow sampling.
     """
 
-    def __init__(self, model, pre_node_name, post_node_name, frame_name=None):
+    def __init__(self, model, pre_node_name, post_node_name):
         super().__init__(model)
         self.pre_node_name = pre_node_name
         self.post_node_name = post_node_name
@@ -143,17 +143,20 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                     attr_value_pb2.AttrValue.ListValue(type=attr_u))
                 post_node_names = graph_info[Helper.node_name_from_input(each_node_name)].outputs
                 if post_node_names:
-                    identity_node0 = None
-                    identity_node1 = None
                     for post_node_name in post_node_names:
                         post_node = graph_info[post_node_name].node
                         if post_node.op == 'FusedBatchNormV3':
-                            identity_node0 = Helper.create_node(
-                                "Identity", min_print_node.name+'_identity', [min_print_node.name])
-                            identity_node0.attr["T"].CopyFrom(src_dt)
-                            identity_node1 = Helper.create_node(
-                                "Identity", max_print_node.name+'_identity', [max_print_node.name])
-                            identity_node1.attr["T"].CopyFrom(src_dt)
+                            if "_print_identity" in \
+                               graph_info[Helper.node_name_from_input(post_node.name)].node.input[0]:
+                                continue
+                            identity_node = Helper.create_node("Identity", post_node.name+'_print_identity',
+                                [graph_info[Helper.node_name_from_input(post_node.name)].node.input[0]])
+                            identity_node.attr["T"].CopyFrom(src_dt)
+                            cur_graph.add_node(identity_node,
+                                            graph_info[Helper.node_name_from_input(post_node.name)].node.input[0],
+                                            [post_node.name])
+                            identity_node.input.append("^" + min_print_node.name)
+                            identity_node.input.append("^" + max_print_node.name)
                         else:
                             post_node.input.append("^" + min_print_node.name)
                             post_node.input.append("^" + max_print_node.name)
@@ -165,16 +168,8 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                     cur_graph.add_node(max_input_node, reshape_input_name, [max_print_node.name])
                     cur_graph.add_node(min_input_node, reshape_input_name, [min_print_node.name])
 
-                    if identity_node0 and identity_node1:
-                        cur_graph.add_node(min_print_node, min_input_name, [identity_node0.name])
-                        cur_graph.add_node(max_print_node, max_input_name, [identity_node1.name])
-                        cur_graph.add_node(identity_node0, min_print_node.name, [])
-                        cur_graph.add_node(identity_node1, max_print_node.name, [])
-                        output_names.append(identity_node0.name)
-                        output_names.append(identity_node1.name)
-                    else:
-                        cur_graph.add_node(min_print_node, min_input_name, [])
-                        cur_graph.add_node(max_print_node, max_input_name, [])
+                    cur_graph.add_node(min_print_node, min_input_name, [])
+                    cur_graph.add_node(max_print_node, max_input_name, [])
                 else:
                     identity_node0 = Helper.create_node(
                         "Identity", min_print_node.name+'_identity', [min_print_node.name])

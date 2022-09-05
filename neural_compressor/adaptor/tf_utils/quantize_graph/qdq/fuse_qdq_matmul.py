@@ -54,11 +54,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             'DequantizeMatMulEluQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
             'DequantizeMatMulTanhQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
             'DequantizeMatMulSigmoidQuantizeV2': self.apply_matmul_biasadd_relu_fusion,
+            'DequantizeBatchMatMulQuantizeV2': self.apply_batchmatmulv2_fusion,
             'DequantizeBatchMatMulV2QuantizeV2': self.apply_batchmatmulv2_fusion,
+            'DequantizeBatchMatMulMulQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
             'DequantizeBatchMatMulV2MulQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
+            'DequantizeBatchMatMulAddQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
             'DequantizeBatchMatMulV2AddQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
+            'DequantizeBatchMatMulAddV2QuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
             'DequantizeBatchMatMulV2AddV2QuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
+            'DequantizeBatchMatMulMulAddV2QuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
             'DequantizeBatchMatMulV2MulAddV2QuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
+            'DequantizeBatchMatMulMulAddQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion,
             'DequantizeBatchMatMulV2MulAddQuantizeV2': self.apply_batchmatmulv2_mul_add_fusion
         }
 
@@ -883,6 +889,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     self.node_name_mapping.keys())[k]].node
                 if cur_node.name != self.start_node_name:
                     continue
+                
+                if not self.performance_only and (cur_node.op == 'BatchMatMulV2' or
+                   cur_node.op == 'BatchMatMul'):
+                    continue
 
                 _, normal_inputs = self._get_node_input(cur_node.name)
                 weight_name = normal_inputs[1]
@@ -891,22 +901,29 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     # FIXME We only quantize the MatMul op which second input node type is const. This is a
                     # workaround for RNN model like LTSM.
                     parent_node = None
-                    if weight_node.op != 'Const':
-                        if weight_node.input:
-                            parent_node = \
-                                self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
-                            if weight_node.op == 'Enter':
-                                if len(self.node_name_mapping[helper.node_name_from_input(weight_name)].output) > 1:
-                                    continue
-                                if parent_node.op == 'Const':
-                                    weight_node = parent_node
-                                    weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
-                                    if np.any(np.isnan(weights_content)):
-                                        continue
-                                else:
-                                    continue
-
                     if cur_node.op == "MatMul":
+                        if weight_node.op != 'Const':
+                            if not self.performance_only:
+                                continue
+
+                            if weight_node.input:
+                                parent_node = \
+                                    self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
+                                if weight_node.op == 'Enter':
+                                    if len(self.node_name_mapping[helper.node_name_from_input(weight_name)].output)>1:
+                                        continue
+                                    if parent_node.op == 'Const':
+                                        weight_node = parent_node
+                                        weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                                        if np.any(np.isnan(weights_content)):
+                                            continue
+                                    else:
+                                        continue
+                        else:
+                            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                            if np.any(np.isnan(weights_content)):
+                                continue
+
                         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
                         # transpose_a could be set to True.
                         if cur_node.attr["transpose_a"].b == True:

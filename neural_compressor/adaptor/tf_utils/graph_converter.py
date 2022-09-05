@@ -63,7 +63,6 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.post_hostconst_converter import PostHostConstConverter
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
-from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
 from .graph_util import GraphRewriterHelper as Helper
@@ -423,11 +422,6 @@ class GraphConverter:
         """
         try:
             self._quantize_graph()
-
-            self._rnn_details = Helper.analysis_rnn_model(self._tmp_graph_def,
-                                                            bf16_ops=self.bf16_ops,
-                                                            fp32_ops=self.fp32_ops)
-            self.quantized_node_info.extend(self._rnn_details.keys())
             self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
 
             if self.fake_quant:
@@ -452,9 +446,8 @@ class GraphConverter:
                         self.op_wise_config).do_transformation()
 
                 for i in self.quantized_node_info:
-                    frame_name = self._rnn_details[i] if i in self._rnn_details else None
                     sampling_graph_def, output_names = InsertPrintMinMaxNode(
-                        sampling_graph_def, i[0], i[-1], frame_name).do_transformation()
+                        sampling_graph_def, i[0], i[-1]).do_transformation()
                     output_tensor_names.extend(output_names)
                 if self.quantized_node_info:
                     sampling_graph_def.library.CopyFrom(self.model.graph_def.library)

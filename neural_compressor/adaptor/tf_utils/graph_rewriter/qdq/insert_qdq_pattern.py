@@ -96,7 +96,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.g_weight.graph = self.g.dump_graph()
         self.graph_info = self.g_weight.parse_graph()
         target_nodes = self.g_weight.query_fusion_pattern_nodes(
-               [["Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul", "BatchMatMulV2"]])
+               [["Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul", "BatchMatMul", "BatchMatMulV2"]])
         for i in target_nodes:
             if i[0] not in quantizable_op_names:
                 continue
@@ -130,7 +130,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     def _check_op_list(self, node_type):
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
-                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMulV2", "FakeQuantWithMinMaxVars")
+                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul",
+                   "BatchMatMulV2", "FakeQuantWithMinMaxVars")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
@@ -290,6 +291,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             Helper.set_attr_dtype(max_input_node, "T", dtypes.float32)
             Helper.set_attr_dtype(max_input_node, "Tidx", dtypes.int32)
             Helper.set_attr_bool(max_input_node, "keep_dims", False)
+            
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                min_input_node.input.append("^" + input_name)
+                max_input_node.input.append("^" + input_name)
 
             quant_v2_node = Helper.create_node("QuantizeV2", quantize_input_name,
                 [input_name, min_input_name, max_input_name])
@@ -342,7 +347,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
        
         # The weight node of BatchMatMul may have no value
         if 'value' in weight_node.attr and \
-           host_op_type in ("Conv2D", "MatMul", "BatchMatMulV2", "Conv3D"):
+           host_op_type in ("Conv2D", "MatMul", "BatchMatMul", "BatchMatMulV2", "Conv3D"):
             float_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
             if per_channel:
                 if host_op_type == 'Conv3D':
@@ -406,6 +411,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                             dtypes.float32, device="cpu")
         max_node = Helper.create_constant_node(max_name, max_value,
                                                             dtypes.float32, device="cpu")
+        if "BatchMatMul" in host_op_type and "BatchMatMul" not in weight_node.op:
+            min_node.input.append("^" + weight_node.name)
+            max_node.input.append("^" + weight_node.name)
+
         quant_node = Helper.create_node(
                 "QuantizeV2", qint8_const_name + '_quant',
                 [weight_node.name, min_name, max_name])

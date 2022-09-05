@@ -24,8 +24,8 @@
 
   ops: &common_ops
     int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'FusedBatchNorm', 'FusedBatchNormV2','FusedBatchNormV3',
-           'MatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
-    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+           'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
     bf16: ["Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
            "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
            "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", # allow_list
@@ -291,10 +291,15 @@
         'Dequantize + MatMul + Elu + QuantizeV2',
         'Dequantize + MatMul + Tanh + QuantizeV2',
         'Dequantize + MatMul + Sigmoid + QuantizeV2',
+        'Dequantize + BatchMatMul + Mul + QuantizeV2',
         'Dequantize + BatchMatMulV2 + Mul + QuantizeV2',
+        'Dequantize + BatchMatMul + Add + QuantizeV2',
         'Dequantize + BatchMatMulV2 + Add + QuantizeV2',
+        'Dequantize + BatchMatMul + AddV2 + QuantizeV2',
         'Dequantize + BatchMatMulV2 + AddV2 + QuantizeV2',
+        'Dequantize + BatchMatMul + Mul + Add + QuantizeV2',
         'Dequantize + BatchMatMulV2 + Mul + Add + QuantizeV2',
+        'Dequantize + BatchMatMul + Mul + AddV2 + QuantizeV2',
         'Dequantize + BatchMatMulV2 + Mul + AddV2 + QuantizeV2',
         'Dequantize + Conv3D + AddV2 + AddV2 + Relu + QuantizeV2',
         'Dequantize + Conv3D + Add + Relu + QuantizeV2',

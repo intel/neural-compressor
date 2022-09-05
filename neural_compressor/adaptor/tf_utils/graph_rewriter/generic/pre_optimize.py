@@ -140,11 +140,6 @@ class PreOptimization():
         self._tmp_graph_def = RenameBatchNormOptimizer(
             self._tmp_graph_def).do_transformation()
 
-        #TODO we should handle all control ops elegantly not bypass it.
-        if not self.new_api:
-            self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
-                 self._tmp_graph_def).do_transformation()
-
         self._tmp_graph_def = ConvertLeakyReluOptimizer(
             self._tmp_graph_def).do_transformation()
 
@@ -179,8 +174,6 @@ class PreOptimization():
         if self.new_api:
             self._tmp_graph_def = DilatedContraction(
                 self._tmp_graph_def).do_transformation()
-        if not self.new_api:
-            self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         origin_model.graph_def = self._tmp_graph_def

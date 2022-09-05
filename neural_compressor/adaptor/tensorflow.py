@@ -43,6 +43,7 @@ class TensorFlowAdaptor(Adaptor):
         "AvgPool": "pooling",
         "ConcatV2": "concat",
         "MatMul": "matmul",
+        "BatchMatMul": "matmul",
         "BatchMatMulV2": "matmul",
         "Pad": "pad"
     }

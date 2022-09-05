@@ -874,14 +874,12 @@ class GraphRewriterHelper():
                 input_range * max(abs(max_filter_value), abs(min_filter_value)))
         relative_scale = 255 * min_input / (max_input - min_input)
         int32_bias = []
-        axis_value = 0
-        if weights_tensor.ndim == 2:
-            if weights_tensor.shape[0] == bias_tensor.shape[0]:
-                axis_value = 1
         for bias_index, value in enumerate(
                 np.sum(np.array(weights_tensor, dtype=np.int32),
-                        axis=axis_value,
+                        axis=0,
                         dtype=np.int32)):
+            if bias_index >= bias_tensor.size:
+                continue
             int32_bias.append(int(np.around(bias_tensor[bias_index] *
                                     bias_scale + value * relative_scale)))
 

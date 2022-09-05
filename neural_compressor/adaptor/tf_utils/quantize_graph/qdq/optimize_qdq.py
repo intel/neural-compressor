@@ -75,6 +75,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
+        self.register_transformer("BatchMatMul", FuseNodeStartWithMatmul)
         self.register_transformer("BatchMatMulV2", FuseNodeStartWithMatmul)
 
     def get_quantized_nodes(self):
