@@ -302,6 +302,9 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
     cur_graph.graph = graph_def
     graph_info = cur_graph.parse_graph()
     type_attr = {"Sub": "T", "RealDiv": "T", "Identity": "T"}
+    # this op should not be stripped for table initialization
+    if 'init_all_tables' in graph_info.keys():
+        output_node_names.append('init_all_tables')
     not_found = {name for name in input_node_names}
     for node_name in list(graph_info.keys()):
         if node_name in not_found:

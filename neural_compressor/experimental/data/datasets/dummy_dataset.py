@@ -60,7 +60,8 @@ class DummyDataset(Dataset):
         transform=None, filter=None):
 
         dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool}
+                     'int8': np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool,\
+                     'string': np.str}
 
         np.random.seed(9527)
         self.transform = transform

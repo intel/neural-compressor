@@ -160,6 +160,11 @@ class GraphConverter:
         """
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
+        # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
+        node_names = [node.name for node in model.sess.graph.as_graph_def().node]
+        if 'init_all_tables' in node_names:
+            init_table_op = model.sess.graph.get_operation_by_name('init_all_tables')
+            model.sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
         for idx, (inputs, labels) in enumerate(self.data_loader):
@@ -190,7 +195,30 @@ class GraphConverter:
                                 feed_dict[tensor] = inputs[name]
                                 break
                 else:
-                    feed_dict = dict(zip(input_tensor, inputs))
+                    # sometimes the input_tensor is not the same order with inputs
+                    # we should check and pair them
+                    def check_shape(tensor, data):
+                        tensor_shape = tuple(tensor.shape)
+                        data_shape = tuple(data.shape)
+                        for tensor_dim, data_dim in zip(tensor_shape, data_shape):
+                            if tensor_dim is not None and tensor_dim != data_dim:
+                                return False
+                        return True
+
+                    disorder_tensors = []
+                    disorder_inputs = [] 
+                    for idx, sort_tensor in enumerate(input_tensor):
+                        sort_input = inputs[idx] 
+                        if check_shape(sort_tensor, sort_input):
+                            feed_dict.update({sort_tensor: sort_input}) 
+                        else:
+                            disorder_tensors.append(sort_tensor)
+                            disorder_inputs.append(sort_input)
+                    for i, dis_tensor in enumerate(disorder_tensors):
+                       for j, dis_input in enumerate(disorder_inputs):  
+                           if check_shape(dis_tensor, dis_input):
+                               feed_dict.update({dis_tensor: dis_input})    
+                               break
             _ = model.sess.run(output_tensor, feed_dict) if model.iter_op==[] \
                 else iterator_sess_run(model.sess, model.iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)

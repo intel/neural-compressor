@@ -49,8 +49,12 @@ class PreOptimization():
     def __init__(self, model, optimization, new_api):
         self.model = model
         self.optimization = optimization
+        # Table initialization should disable grappler dependency and pruning pass
+        node_names = [node.name for node in model.graph_def.node]
+        if 'init_all_tables' in node_names:
+            self.optimization['dependency'] = False
+            self.optimization['pruning'] = False
         self.new_api = new_api
-
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = model.graph_def
         self.analyzer.parse_graph()
