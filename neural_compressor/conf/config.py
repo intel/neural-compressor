@@ -50,16 +50,27 @@ def constructor_register(cls):
 @constructor_register
 class Pruner():
     def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None,
-                 target_sparsity=None, update_frequency=1, prune_type='basic_magnitude',
-                 method='per_tensor', names=[], parameters=None):
+                 target_sparsity=None, update_frequency=1,
+                 method='per_tensor',
+                 prune_type='basic_magnitude',##for pytorch pruning, these values should be None
+                 start_step=None, end_step=None, update_frequency_on_step=None, prune_domain=None,
+                 sparsity_decay_type=None, pattern="tile_pattern_1x1", names=None, exclude_names=None, parameters=None):
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
         self.update_frequency = update_frequency
         self.target_sparsity = target_sparsity
         self.initial_sparsity = initial_sparsity
         self.update_frequency = update_frequency
-        assert prune_type.replace('_', '') in [i.lower() for i in PRUNERS], \
-                                         'now only support {}'.format(PRUNERS.keys())
+        self.start_step = start_step
+        self.end_step = end_step
+        self.update_frequency_on_step = update_frequency_on_step
+        self.prune_domain = prune_domain
+        self.sparsity_decay_type = sparsity_decay_type
+        self.exclude_names = exclude_names
+        self.pattern = pattern
+        ## move this to experimental/pruning to support dynamic pruning
+        # assert prune_type.replace('_', '') in [i.lower() for i in PRUNERS], \
+        #                                  'now only support {}'.format(PRUNERS.keys())
         self.prune_type = prune_type
         self.method = method
         self.names= names
@@ -663,15 +674,33 @@ train_schema = Schema({
 weight_compression_schema = Schema({
     Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
     Optional('target_sparsity', default=0.97): float,
+    Optional('max_sparsity_ratio_per_layer', default=0.98):float,
+    Optional('prune_type', default="basic_magnitude"): str,
     Optional('start_epoch', default=0): int,
     Optional('end_epoch', default=4): int,
+    Optional('start_step', default=0): int,
+    Optional('end_step', default=0): int,
+    Optional('update_frequency', default=1.0): float,
+    Optional('update_frequency_on_step', default=1):int,
+    Optional('not_to_prune_names', default=[]):list,
+    Optional('prune_domain', default="global"): str,
+    Optional('names', default=[]): list,
+    Optional('exclude_names', default=None): list,
+    Optional('prune_layer_type', default=None): list,
+    Optional('sparsity_decay_type', default="exp"): str,
+    Optional('pattern', default="tile_pattern_1x1"): str,
+
     Optional('pruners'): And(list, \
                                lambda s: all(isinstance(i, Pruner) for i in s))
 })
 
+# weight_compression_pytorch_schema = Schema({},ignore_extra_keys=True)
+
 approach_schema = Schema({
     Hook('weight_compression', handler=_valid_prune_sparsity): object,
+    Hook('weight_compression_pytorch', handler=_valid_prune_sparsity): object,
     Optional('weight_compression'): weight_compression_schema,
+    Optional('weight_compression_pytorch'): weight_compression_schema,
 })
 
 default_workspace = './nc_workspace/{}/'.format(
@@ -1498,6 +1527,7 @@ class Pruning_Conf(Conf):
 
     def __init__(self, cfg=None):
         if isinstance(cfg, str):
+            self._read_cfg(cfg)
             self.usr_cfg = DotDict(self._read_cfg(cfg))
         elif isinstance(cfg, DotDict):
             self.usr_cfg = DotDict(schema.validate(self._convert_cfg(

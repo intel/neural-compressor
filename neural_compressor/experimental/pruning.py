@@ -23,6 +23,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_train_func,
 from ..model import BaseModel
 from ..adaptor import FRAMEWORKS
 from ..conf.config import PruningConf
+
 from warnings import warn
 
 class Pruning(Component):
@@ -86,15 +87,21 @@ class Pruning(Component):
         res = []
         for pruner in self.pruners:
             res.append(pruner.on_epoch_end())
-        stats, sparsity = self._model.report_sparsity()
-        logger.info(stats)
-        logger.info(sparsity)
+        if hasattr(self, "_model"):
+            stats, sparsity = self._model.report_sparsity()
+            logger.info(stats)
+            logger.info(sparsity)
         return res
 
     def _on_train_end(self):
         """ called after training """
         for pruner in self.pruners:
             pruner.on_train_end()
+
+    def _on_after_optimizer_step(self):
+        """ called after optimzier step """
+        for pruner in self.pruners:
+            pruner.on_after_optimizer_step()
 
     def pre_process(self):
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
@@ -181,28 +188,40 @@ class Pruning(Component):
 
     def generate_pruners(self):
         for name in self.cfg.pruning.approach:
-            assert name == 'weight_compression', 'now we only support weight_compression'
-            for pruner in self.cfg.pruning.approach.weight_compression.pruners:
-                if pruner.prune_type == 'basic_magnitude':
-                    self.pruners.append(PRUNERS['BasicMagnitude'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
-                if pruner.prune_type == 'pattern_lock':
-                    self.pruners.append(PRUNERS['PatternLock'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
-                elif pruner.prune_type == 'gradient_sensitivity':
-                    self.pruners.append(PRUNERS['GradientSensitivity'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
-                elif pruner.prune_type == 'group_lasso':
-                    self.pruners.append(PRUNERS['GroupLasso'](\
-                                            self._model, \
-                                            pruner,
-                                            self.cfg.pruning.approach.weight_compression))
+            assert name == 'weight_compression' or name == "weight_compression_pytorch", \
+                'now we only support weight_compression and weight_compression_pytorch'
+
+            if self.cfg.pruning.approach.weight_compression_pytorch != None:
+                from .pytorch_pruner.pruning import Pruning as PytorchPruning
+                self.pytorch_pruner = PytorchPruning(self.cfg)
+                self.pruners.append(self.pytorch_pruner)
+
+
+            if self.cfg.pruning.approach.weight_compression != None:
+                for pruner in self.cfg.pruning.approach.weight_compression.pruners:
+                    if pruner.prune_type == 'basic_magnitude':
+                        self.pruners.append(PRUNERS['BasicMagnitude'](\
+                                                self._model, \
+                                                pruner,
+                                                self.cfg.pruning.approach.weight_compression))
+                    elif pruner.prune_type == 'pattern_lock':
+                        self.pruners.append(PRUNERS['PatternLock'](\
+                                                self._model, \
+                                                pruner,
+                                                self.cfg.pruning.approach.weight_compression))
+                    elif pruner.prune_type == 'gradient_sensitivity':
+                        self.pruners.append(PRUNERS['GradientSensitivity'](\
+                                                self._model, \
+                                                pruner,
+                                                self.cfg.pruning.approach.weight_compression))
+                    elif pruner.prune_type == 'group_lasso':
+                        self.pruners.append(PRUNERS['GroupLasso'](\
+                                                self._model, \
+                                                pruner,
+                                                self.cfg.pruning.approach.weight_compression))
+                    else:
+                        ##print(pruner.prune_type)
+                        assert False, 'now only support {}'.format(PRUNERS.keys())
 
     def __call__(self):
         """The main entry point of pruning.
