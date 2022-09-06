@@ -16,13 +16,14 @@
 # limitations under the License.
 from ..conf.config import Conf
 from ..utils import logger
-from ..utils.utility import set_backend
+from ..utils.utility import set_backend, required_libs
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 from ..model.model import get_model_fwk_name
 from warnings import warn
+import importlib
 
 
 class Component(object):
@@ -79,15 +80,14 @@ class Component(object):
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
             set_backend(self.framework)
-            if self.framework == 'tensorflow' or self.framework == 'inteltensorflow':
-                try:
-                    import tensorflow as tf
-                except Exception as e:
-                    logger.error("{}.".format(e))
-                    raise RuntimeError(
-                        "The TensorFlow framework is not correctly installed. Please check your environment"
-                    )
-
+            if self.framework in required_libs:
+                for lib in required_libs[self.framework]:
+                    try:
+                        importlib.import_module(lib)
+                    except Exception as e:
+                        logger.error("{}.".format(e))
+                        raise RuntimeError("{} is not correctly installed. " \
+                            "Please check your environment".format(lib))
 
     def pre_process(self):
         """ Initialize the dataloader and train/eval functions from yaml config.

@@ -43,6 +43,18 @@ import subprocess
 from enum import Enum
 from pkg_resources import parse_version
 
+required_libs = {
+    'tensorflow': ['tensorflow'],
+    'inteltensorflow': ['tensorflow'],
+    'pytorch': ['torch'],
+    'pytorch_fx': ['torch'],
+    'pytorch_ipex': ['torch', 'intel_extension_for_pytorch'],
+    'onnxrt_qlinearops': ['onnx', 'onnxruntime', 'onnxruntime_extensions'],
+    'onnxrt_integerops': ['onnx', 'onnxruntime', 'onnxruntime_extensions'],
+    'onnxrt_qoperator': ['onnx', 'onnxruntime', 'onnxruntime_extensions'],
+    'mxnet': ['mxnet'],
+}
+
 def version1_lt_version2(version1, version2):
     return parse_version(version1) < parse_version(version2)
     
