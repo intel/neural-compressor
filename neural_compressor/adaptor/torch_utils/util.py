@@ -124,6 +124,9 @@ def append_attr(fx_model, model):
             attr_names.append(i)
     for name in attr_names:
         attr = getattr(model, name)
+        if isinstance(attr, torch.nn.Module) or \
+          isinstance(attr, torch.quantization.qconfig.QConfig):
+            continue
         setattr(fx_model, name, attr)
     return fx_model
 
