@@ -60,7 +60,7 @@ class Pruner:
         self.end_step = self.config['end_step']
         self.update_frequency_on_step = self.config['update_frequency_on_step']
         ##this is different with original code
-        self.total_prune_cnt = (self.end_step - self.start_step + self.update_frequency_on_step) \
+        self.total_prune_cnt = (self.end_step - self.start_step + 1) \
                                // self.update_frequency_on_step
         self.completed_pruned_cnt = 0
         self.masks = {}
