@@ -44,9 +44,9 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
+from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2
 
-
-TF_SUPPORTED_MAX_VERSION = '2.9.1'
+TF_SUPPORTED_MAX_VERSION = '2.10.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger()
@@ -107,16 +107,19 @@ class GraphConverterWithoutCalib:
             if IsMklEnabled() and (TF_SUPPORTED_MIN_VERSION <= tf.version.VERSION):
                 is_supported_version = True
                 
-            if tf.version.VERSION >= '2.6.0' and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
+            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') == '1':
                 is_supported_version = True
 
-            if tf.version.VERSION >= '2.9.0':
+            if version1_gte_version2(tf.version.VERSION, '2.9.0'):
+                is_supported_version = True
+
+            if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
                 is_supported_version = True
 
         except Exception as e:
             raise ValueError(e)
         finally:# pragma: no cover
-            if tf.version.VERSION > TF_SUPPORTED_MAX_VERSION:
+            if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION):
                 logger.warning(
                     str('Please note the {} version of Intel® Optimizations for '
                         'TensorFlow is not fully verified! '
@@ -124,12 +127,11 @@ class GraphConverterWithoutCalib:
                         'between {} and {} if meet problem.').format(tf.version.VERSION,
                                                                      TF_SUPPORTED_MIN_VERSION,
                                                                      TF_SUPPORTED_MAX_VERSION))
-            if tf.version.VERSION == '2.5.0' and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
+            if version1_eq_version2(tf.version.VERSION, '2.5.0') and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
                 logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
                              "when TensorFlow 2.5.0 installed.")
 
-            if tf.version.VERSION >= '2.6.0' and tf.version.VERSION < '2.9.0' \
-                    and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
                              "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 

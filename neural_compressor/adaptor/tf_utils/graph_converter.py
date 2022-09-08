@@ -68,7 +68,7 @@ from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node
 from .graph_util import GraphRewriterHelper as Helper
 
 
-TF_SUPPORTED_MAX_VERSION = '2.9.1'
+TF_SUPPORTED_MAX_VERSION = '2.10.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger()
@@ -247,7 +247,7 @@ class GraphConverter:
             if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
                  
-            if tf.version.VERSION == '1.15.0-up3':
+            if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
                 is_supported_version = True
                 
         except Exception as e:

@@ -627,7 +627,7 @@ class QuantizeNodeBase():
             # Add a RequantizationRange node for finding the min and max values.
             requant_range_node = helper.create_node(
                 "RequantizationRangePerChannel"
-                if self.per_channel else "RequantizationRange",
+                if self.per_channel or original_node.op == 'DepthwiseConv2dNative' else "RequantizationRange",
                 original_node.name + "_eightbit_requant_range", quantized_outputs)
 
             if self.per_channel:
@@ -661,7 +661,8 @@ class QuantizeNodeBase():
             ]
 
         requantize_node = helper.create_node(
-            "RequantizePerChannel" if self.per_channel else "Requantize",
+            "RequantizePerChannel" if self.per_channel or original_node.op == 'DepthwiseConv2dNative' \
+            else "Requantize",
             original_node.name + "_eightbit_requantize",
             quantized_outputs + min_max_inputs)
         if self.per_channel:
