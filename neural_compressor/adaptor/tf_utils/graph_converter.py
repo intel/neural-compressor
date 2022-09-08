@@ -197,6 +197,9 @@ class GraphConverter:
                     # sometimes the input_tensor is not the same order with inputs
                     # we should check and pair them
                     def check_shape(tensor, data):
+                        # scalar default True
+                        if tensor.shape == None:
+                            return True
                         tensor_shape = tuple(tensor.shape)
                         data_shape = tuple(data.shape)
                         for tensor_dim, data_dim in zip(tensor_shape, data_shape):
