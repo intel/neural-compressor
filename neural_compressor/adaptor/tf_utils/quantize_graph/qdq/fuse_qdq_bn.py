@@ -78,6 +78,14 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                     quantized_node_input_names)
                 if relu_node_name is not None:
                     helper.set_attr_string(quantized_bn_node, "activation_mode", b'Relu')
+                if self.node_name_mapping[offset_name].node.op == "Const":
+                    helper.set_attr_bool(quantized_bn_node, "is_offset_const", True)
+                else:
+                    helper.set_attr_bool(quantized_bn_node, "is_offset_const", False)
+                if self.node_name_mapping[mean_name].node.op == "Const":
+                    helper.set_attr_bool(quantized_bn_node, "is_mean_const", True)
+                else:
+                    helper.set_attr_bool(quantized_bn_node, "is_mean_const", False)
                 helper.set_attr_dtype(quantized_bn_node, "T", dtypes.qint8)
                 helper.set_attr_dtype(quantized_bn_node, "U", dtypes.float32)
                 helper.set_attr_dtype(quantized_bn_node, "Tout", dtypes.qint8)
@@ -108,8 +116,8 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
 
                 """
                 # 0. output
-                # 5. output_min
-                # 6. output_max
+                # 1. output_min
+                # 2. output_max
                 """
                 helper.set_attr_type_list(quantized_bn_node, 'out_types', [
                                           dtypes.qint8.as_datatype_enum,
@@ -127,7 +135,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                     quantized_output_name = quantized_node_name,
                     original_node_name = match_node_name[-1],
                     dtype = dtypes.qint8,
-                    min_tensor_index = 5
+                    min_tensor_index = 1
                     )
 
             else:

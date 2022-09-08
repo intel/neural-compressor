@@ -163,6 +163,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         found_fusion = True
         qbn_num = 0
         dq_num = 0
+        qbn_output_max_name = 'batch_normalization/FusedBatchNormV3_eightbit_quantized_bn/frozen_bn_output_max'
         for i in output_graph.graph_def.node:
             if i.op == '_QuantizedConv2D' \
                 and i.attr['Thost_inputs'].list.type != [11, 11, 1, 1, 1, 1, 1, 1, 1]:
@@ -172,13 +173,22 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                 found_fusion = False
                 break
             if i.op == '_QuantizedFusedBatchNorm':
+                is_offset_const = i.attr["is_offset_const"].b
+                is_mean_const = i.attr["is_mean_const"].b
+                frozen_qbn_output_max = i.input[8]
                 qbn_num += 1
+            if i.name == qbn_output_max_name:
+                frozen_qbn_output_max_value = i.attr["value"].tensor.float_val[0]
             if i.op == 'Dequantize':
                 dq_num += 1
         self.assertEqual(conv_input_type, True)
         self.assertEqual(found_fusion, True)
         self.assertEqual(qbn_num, 1)
         self.assertEqual(dq_num, 1)
+        self.assertEqual(is_offset_const, True)
+        self.assertEqual(is_mean_const, True)
+        self.assertEqual(frozen_qbn_output_max, qbn_output_max_name)
+        self.assertGreater(frozen_qbn_output_max_value, 126)
 
     @disable_random()
     def test_bn_performance_only_false(self):
