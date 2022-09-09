@@ -123,10 +123,6 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                                           dtypes.qint8.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,   
-                                          dtypes.float32.as_datatype_enum,   
                                           ])
                 self.add_output_graph_node(output_min_node)
                 self.add_output_graph_node(output_max_node)
