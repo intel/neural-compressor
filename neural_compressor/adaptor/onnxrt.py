@@ -136,7 +136,11 @@ class ONNXRTAdaptor(Adaptor):
                     data_loader.batch(calib_batch_size)
                     quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
                                                                 quantize_config, tmp_iterations)
-                except Exception:  # pragma: no cover
+                except Exception as e:  # pragma: no cover
+                    if 'Got invalid dimensions for input' in str(e):
+                        logger.warning("Please set sampling_size to a multiple of {}".format(
+                            str(e).partition('Expected: ')[2].partition('\n')[0]))
+                        exit(0)
                     logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
                         format(batch_size, 1))

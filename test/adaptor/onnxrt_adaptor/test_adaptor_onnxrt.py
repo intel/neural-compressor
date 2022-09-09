@@ -311,8 +311,8 @@ def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     return init  
 
 def build_ir3_model():
-    input0 = helper.make_tensor_value_info('input0', TensorProto.FLOAT, [1, 2048])
-    output = helper.make_tensor_value_info('output', TensorProto.FLOAT, [1, 1000])
+    input0 = helper.make_tensor_value_info('input0', TensorProto.FLOAT, [2, 2048])
+    output = helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 1000])
     weight = helper.make_tensor_value_info('X1_weight', TensorProto.FLOAT, [1000, 2048])
 
     X1_weight = generate_input_initializer([1000, 2048], np.float32, 'X1_weight')
@@ -512,7 +512,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
     
     ir3_dataset = datasets['dummy'](shape=(10, 2048), low=0., high=1., label=True)
-    ir3_dataloader = DATALOADERS['onnxrt_qlinearops'](ir3_dataset)
+    ir3_dataloader = DATALOADERS['onnxrt_qlinearops'](ir3_dataset, batch_size=2)
 
     gather_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 100, 4), label=True)
     gather_dataloader = DATALOADERS['onnxrt_qlinearops'](gather_dataset)
@@ -832,6 +832,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
             from neural_compressor.utils.utility import recover
             model = recover(self.ir3_model, './nc_workspace/recover/history.snapshot', 0)
             self.assertTrue(model.model == q_model.model)
+        quantizer.calib_dataloader = DATALOADERS['onnxrt_qlinearops'](self.ir3_dataset, batch_size=5)
+        quantizer.eval_dataloader = DATALOADERS['onnxrt_qlinearops'](self.ir3_dataset, batch_size=2)
+        q_model = quantizer.fit()
+        self.assertEqual(q_model, None)
 
         quantizer = Quantization("qdq.yaml")
         quantizer.calib_dataloader = self.matmul_dataloader
