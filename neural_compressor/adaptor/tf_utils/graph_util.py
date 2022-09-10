@@ -613,7 +613,8 @@ class GraphAnalyzer():
                             assert self.parent_frame_details[output].attr['frame_name'] == \
                             self.parent_frame_details[node_details.node.name].attr['frame_name']
                     else:
-                        self.parent_frame_details[output] = self.parent_frame_details[node_details.node.name]
+                        if node_details.node.name in self.parent_frame_details:
+                            self.parent_frame_details[output] = self.parent_frame_details[node_details.node.name]
 
             visited.append(node_details.node.name)
         return self.parent_frame_details
