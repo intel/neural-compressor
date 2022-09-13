@@ -220,7 +220,7 @@ More details for validated models are available [here](docs/validated_model_list
 
 ## Selected Publications
 
-* [地址标准化服务AI深度学习模型推理优化实践](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
+* [Deep learning inference optimization for Address Purification](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
 * [Accelerate AI Inference without Sacrificing Accuracy](https://www.intel.com/content/www/us/en/developer/videos/accelerate-inference-without-sacrificing-accuracy.html#gs.9yottx)
 * [Accelerate Deep Learning with Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/videos/accelerate-deep-learning-with-intel-tensorflow.html#gs.9yrw90)
 * [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
