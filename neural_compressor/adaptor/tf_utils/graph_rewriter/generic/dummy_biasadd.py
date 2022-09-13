@@ -54,9 +54,9 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
             matmul_b_node_name = Helper.node_name_from_input(graph_info[i[0]].node.input[1])
             matmul_b_node = graph_info[matmul_b_node_name].node
 
-            if matmul_a_node.op == 'Const':
+            if matmul_a_node.op == 'Const' or matmul_b_node.op not in ['Const', 'Enter']:
                 continue
-            if matmul_b_node.op != 'Const':
+            if matmul_b_node.op == 'Enter':
                 parent_node = graph_info[Helper.node_name_from_input(matmul_b_node.input[0])].node
                 if parent_node.op != 'Const':
                     continue
