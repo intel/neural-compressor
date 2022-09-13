@@ -106,7 +106,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
             computational_node = self.graph_info[computational_node_name].node
             weight_name = computational_node.input[1]
-            weight_node = self.graph_info[weight_name].node
+            if re.search("\w+:\d+", weight_name):
+                weight_node = self.graph_info[weight_name.rsplit(':', 1)[0]].node
+            else:
+                weight_node = self.graph_info[weight_name].node
             if weight_node.op == 'Enter':
                 continue
 
@@ -157,14 +160,14 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if node.op == 'ConcatV2':
                 find_relu = False
                 for i in range(0,node.attr['N'].i):
-                    if "split:" in node.input[i]:
+                    if re.search("\w+:\d+", node.input[i]):
                         input_node = self.node_name_mapping[node.input[i].rsplit(':', 1)[0]]
                     else:
                         input_node = self.node_name_mapping[node.input[i]]
                     find_relu |= self._find_relu_node(input_node)
                 return find_relu
             else:
-                if "split:" in node.input[0]:
+                if re.search("\w+:\d+", node.input[0]):
                     input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
                 else:
                     input_node = self.node_name_mapping[node.input[0]]

@@ -77,9 +77,13 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
 
                 reduction_dims_node = Helper.create_constant_node(
                     reduction_dims_name, 0, dtypes.int32, [1])
-
-                reshape_dims_node.input.append("^" + Helper.node_name_from_input(each_node_name))
-                reduction_dims_node.input.append("^" + Helper.node_name_from_input(each_node_name))
+                
+                # the training input QueueDequeueManyV2 has issue with implicit dependency
+                # skip the input node of show_and_tell model
+                if not (Helper.node_name_from_input(each_node_name) == 'batch_and_pad' and \
+                  graph_info[Helper.node_name_from_input(each_node_name)].node.op == 'QueueDequeueManyV2'):
+                    reshape_dims_node.input.append("^" + Helper.node_name_from_input(each_node_name))
+                    reduction_dims_node.input.append("^" + Helper.node_name_from_input(each_node_name))
 
                 reshape_input_name = node_name_prefix + "_reshape_"
 
