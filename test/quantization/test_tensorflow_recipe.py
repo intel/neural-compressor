@@ -222,7 +222,7 @@ def build_fake_yaml_disable_scale_unification():
             accuracy_criterion:
               relative: 0.1
             exit_policy:
-              performance_only: True
+              performance_only: False
             workspace:
               path: saved
         '''

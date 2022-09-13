@@ -72,13 +72,14 @@ class RerangeQuantizedConcat(GraphTransformBase):
     }
    
 
-    def __init__(self, input_pb, device):
+    def __init__(self, input_pb, device, performance_only=False):
         super().__init__(input_pb)
 
         self.parse_input_pb()
         self.concat_node_input_mapping = {}
         self.rerange_concat_node = []
         self.device = device
+        self.performance_only = performance_only
 
     def _analyze_concat_node_recursively(self, quantized_conv_nodes,
                                          input_node):
@@ -101,15 +102,23 @@ class RerangeQuantizedConcat(GraphTransformBase):
                     another_concat_node = self.node_mapping[
                         self.get_node_name_from_input(
                             concat_input_node.input[0])]
-                    if not self._analyze_concat_node_recursively(
+                    if self.performance_only:
+                        if another_concat_node.op == "_QuantizedConv2D" and \
+                        'fused_ops' in another_concat_node.attr and \
+                        str(another_concat_node.attr['fused_ops'].list.s) in self.offset_map_new_api:
+                            quantized_conv_nodes.append(another_concat_node)
+                    else:
+                        if not self._analyze_concat_node_recursively(
                             quantized_conv_nodes, another_concat_node):
-                        can_rerange = False
-                        break
+                            can_rerange = False
+                            break
                 elif concat_input_node_op_type == "QuantizedConcatV2":
                     if not self._analyze_concat_node_recursively(
                             quantized_conv_nodes, concat_input_node):
                         can_rerange = False
                         break
+                elif self.performance_only and concat_input_node_op_type == "QuantizeV2":
+                    quantized_conv_nodes.append(concat_input_node)
                 else:
                     can_rerange = False
                     break
@@ -146,6 +155,8 @@ class RerangeQuantizedConcat(GraphTransformBase):
                       'fused_ops' in node.attr and \
                       str(node.attr['fused_ops'].list.s) in self.offset_map_new_api:
                     offset_value = self.offset_map_new_api[str(node.attr['fused_ops'].list.s)]
+                elif self.performance_only and node.op == "QuantizeV2":
+                    offset_value = 1
                 else:
                     offset_value = self.offset_map[node.op]
                 min_value_node = self.node_mapping[node.input[offset_value]]
@@ -158,12 +169,19 @@ class RerangeQuantizedConcat(GraphTransformBase):
                 if max_value > combined_max:
                     combined_max = max_value
 
+            if self.performance_only:
+                combined_value = max(abs(combined_min), abs(combined_max))
+                combined_min = -combined_value
+                combined_max = combined_value
+
             for node in quantized_conv_nodes:
                 offset_value = 6
                 if node.op == "_QuantizedConv2D" and \
                    'fused_ops' in node.attr and \
                    str(node.attr['fused_ops'].list.s) in self.offset_map_new_api:
                     offset_value = self.offset_map_new_api[str(node.attr['fused_ops'].list.s)]
+                elif self.performance_only and node.op == "QuantizeV2":
+                    offset_value = 1
                 else:
                     offset_value = self.offset_map[node.op]
 

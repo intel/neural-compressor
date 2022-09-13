@@ -627,9 +627,10 @@ class GraphConverter:
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(
             self._tmp_graph_def).do_transformation()
 
-        if 'scale_propagation_concat' in self.recipes and self.recipes['scale_propagation_concat']:
+        if self.performance_only or ('scale_propagation_concat' in self.recipes \
+             and self.recipes['scale_propagation_concat']):
             self._tmp_graph_def = RerangeQuantizedConcat(self._tmp_graph_def,
-                                                     self.device).do_transformation()
+                self.device, performance_only=self.performance_only).do_transformation()
 
         self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(
             self._tmp_graph_def).do_transformation()
