@@ -70,3 +70,6 @@ if [ -f "requirements.txt" ]; then
 else
     echo "Not found requirements.txt file."
 fi
+
+pip install coverage
+pip install pytest
