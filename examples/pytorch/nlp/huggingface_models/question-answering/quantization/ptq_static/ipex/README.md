@@ -1,4 +1,5 @@
-# Bert_Large Inference
+# Step by step
+This document describes the step-by-step instructions for reproducing bert-large and distilbert-base models with IPEX backend tuning results with Intel® Neural Compressor.
 > Note: IPEX version >= 1.10
 
 ## Prepare
@@ -25,7 +26,10 @@ Follow [link](https://github.com/intel-innersource/frameworks.ai.models.intel-mo
 
 
 ## Run
-If IPEX version higher than 1.12, please install transformers 4.19.0. We can use the model from huggingface model hub and squad dataset from datasets package, run script `run_qa.py` with command as following.
+
+### Bert-Large Inference
+
+If IPEX version is equal or higher than 1.12, please install transformers 4.19.0. We can use the model from huggingface model hub and squad dataset from datasets package, run script `run_qa.py` with command as following.
 
 - Install transformers
 ```
@@ -54,6 +58,7 @@ If IPEX version higher than 1.12, please install transformers 4.19.0. We can use
 ```
 
 If IPEX verison is 1.10 or 1.11, please install transformers 3.0.2, prepare model, dataset and run script `run_qa_1_10.py` command as following.
+
 - install transformers
 ```
 pip install transformers == 3.0.2
@@ -93,5 +98,33 @@ pip install transformers == 3.0.2
 ```
   bash run_benchmark.sh --topology="bert_large_1_10_ipex" --dataset_location=/path/to/dataset --input_model=/path/to/model --mode=benchmark
 ```
+### Distilbert-base Inference
+
+For distilbert-base, the IPEX version requests equal or higher than 1.12. 
+
+- install transformers
+```
+  pip install transformers == 4.19.0
+```
+
+- Command
+```
+  python run_qa.py 
+    --model_name_or_path distilbert-base-uncased-distilled-squad \
+    --dataset_name squad \
+    --do_eval \
+    --max_seq_length 384 \
+    --doc_stride 128 \
+    --no_cuda \
+    --tune \
+    --output_dir ./savedresult 
+
+```
 
 
+```
+  bash run_tuning.sh --topology="distilbert_base_ipex"
+```
+```
+  bash run_benchmark.sh --topology="distilbert_base_ipex" --mode=benchmark
+```
