@@ -14,7 +14,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: tensorflow
+          framework: inteltensorflow
           inputs: input
           outputs: final
         device: cpu
@@ -293,6 +293,7 @@ class TestBF16Convert(unittest.TestCase):
         
     def test_bf16_transpose_b_matmul(self):
         from tensorflow.core.framework import attr_value_pb2
+        os.environ['FORCE_BF16'] = '1'
         os.environ['MIX_PRECISION_TEST'] = '1'
         DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
         g = tf.Graph()
@@ -344,11 +345,11 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_conv2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_conv3.attr["T"].type, dtypes.float32)
-        
-    @unittest.skipIf(tf.version.VERSION != "2.10.0", "Only supports newAPI feature")  
+ 
+    @unittest.skipIf("2.10.020" not in tf.version.VERSION, "Only supports newAPI feature")  
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
-
+        os.environ['MIX_PRECISION_TEST'] = '1'
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
@@ -362,11 +363,12 @@ class TestBF16Convert(unittest.TestCase):
                 cast_op_count += 1
             if node.op == 'Log':
                 self.assertEqual(node.attr["T"].type, dtypes.bfloat16.as_datatype_enum)
-        self.assertTrue(cast_op_count >= 1)
+        self.assertTrue(cast_op_count == 0)
 
     @unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.x")
     def test_bf16_rnn(self):
         os.environ['FORCE_BF16'] = '1'
+        os.environ['MIX_PRECISION_TEST'] = '1'
         try:
             inp = tf.keras.layers.Input(shape=(None, 4))
             lstm_1 = tf.keras.layers.LSTM(units=10,
@@ -421,7 +423,6 @@ class TestBF16Convert(unittest.TestCase):
         except (NotImplementedError):
             # Kernel bug, happens when the version of python is 3.7 and the version of numpy is >= 1.20.0
             pass
-
 
 if __name__ == "__main__":
     unittest.main()
