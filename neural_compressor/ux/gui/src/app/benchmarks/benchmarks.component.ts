@@ -22,8 +22,8 @@ import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 
-declare var require: any;
-var shajs = require('sha.js');
+declare let require: any;
+const shajs = require('sha.js');
 
 @Component({
   selector: 'app-benchmarks',
@@ -62,15 +62,15 @@ export class BenchmarksComponent implements OnInit {
   throughputLegend = [];
   accuracyLegend = [];
 
-  showLabels: boolean = true;
-  animations: boolean = true;
-  xAxis: boolean = true;
-  yAxis: boolean = true;
+  showLabels = true;
+  animations = true;
+  xAxis = true;
+  yAxis = true;
   yScaleMin: number;
   yScaleMax: number;
-  showYAxisLabel: boolean = true;
-  showXAxisLabel: boolean = true;
-  timeline: boolean = true;
+  showYAxisLabel = true;
+  showXAxisLabel = true;
+  timeline = true;
 
   customColor = {
     domain: [
@@ -103,8 +103,8 @@ export class BenchmarksComponent implements OnInit {
     this.modelService.benchmarkCreated$
       .subscribe(response => this.getBenchmarksList());
     this.socketService.benchmarkFinish$
-      .subscribe(response => {
-        if (String(this.activatedRoute.snapshot.params.id) === String(response['data']['project_id'])) {
+      .subscribe((response: { data: any }) => {
+        if (String(this.activatedRoute.snapshot.params.id) === String(response.data.project_id)) {
           this.getBenchmarksList();
           if (this.activeBenchmarkId > 0) {
             this.getBenchmarkDetails(this.activeBenchmarkId);
@@ -112,8 +112,8 @@ export class BenchmarksComponent implements OnInit {
         }
       });
     this.modelService.projectChanged$
-      .subscribe(response => {
-        this.getBenchmarksList(response['id']);
+      .subscribe((response: { id: number }) => {
+        this.getBenchmarksList(response.id);
         this.comparison = {};
         this.showComparison = false;
         this.activeBenchmarkId = -1;
@@ -124,8 +124,8 @@ export class BenchmarksComponent implements OnInit {
   getBenchmarksList(id?: number) {
     this.modelService.getBenchmarksList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.benchmarks = response['benchmarks'];
+        (response: { benchmarks: [] }) => {
+          this.benchmarks = response.benchmarks;
           if (this.activeBenchmarkId > 0) {
             this.getBenchmarkDetails(this.activeBenchmarkId);
           }
@@ -148,7 +148,7 @@ export class BenchmarksComponent implements OnInit {
 
     this.modelService.openDatasetDialog$.subscribe(
       response => this.addDataset()
-    )
+    );
   }
 
   addDataset() {
@@ -167,10 +167,10 @@ export class BenchmarksComponent implements OnInit {
 
   executeBenchmark(benchmarkId: number) {
     const dateTime = Date.now();
-    let requestId = shajs('sha384').update(String(dateTime)).digest('hex');
+    const requestId = shajs('sha384').update(String(dateTime)).digest('hex');
 
-    this.benchmarks.find(benchmark => benchmark.id === benchmarkId)['status'] = 'wip';
-    this.benchmarks.find(benchmark => benchmark.id === benchmarkId)['requestId'] = requestId;
+    this.benchmarks.find(benchmark => benchmark.id === benchmarkId).status = 'wip';
+    this.benchmarks.find(benchmark => benchmark.id === benchmarkId).requestId = requestId;
     this.modelService.executeBenchmark(benchmarkId, requestId)
       .subscribe(
         response => { },
@@ -207,8 +207,8 @@ export class BenchmarksComponent implements OnInit {
   }
 
   compare() {
-    let accuracySeries = [];
-    let throughputSeries = [];
+    const accuracySeries = [];
+    const throughputSeries = [];
     this.throughputLegend = [];
     this.accuracyLegend = [];
     let record: any;
@@ -238,15 +238,15 @@ export class BenchmarksComponent implements OnInit {
 
     if (accuracySeries.length) {
       this.accuracyData = [{
-        "name": "Accuracy [%]",
-        "series": accuracySeries
+        name: 'Accuracy [%]',
+        series: accuracySeries
       }];
     }
 
     if (throughputSeries.length) {
       this.throughputData = [{
-        "name": "Throughput [FPS]",
-        "series": throughputSeries
+        name: 'Throughput [FPS]',
+        series: throughputSeries
       }];
     }
 
@@ -254,11 +254,11 @@ export class BenchmarksComponent implements OnInit {
   }
 
   deleteBenchmark(id: number, name: string) {
-    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
         what: 'benchmark',
-        id: id,
-        name: name
+        id,
+        name
       }
     });
 
@@ -267,7 +267,7 @@ export class BenchmarksComponent implements OnInit {
         if (response.confirm) {
           this.modelService.delete('benchmark', id, name)
             .subscribe(
-              response =>
+              deleted =>
                 this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'benchmarks' }),
               error =>
                 this.modelService.openErrorDialog(error)
@@ -289,7 +289,7 @@ export class BenchmarksComponent implements OnInit {
   }
 
   openLogs(id: number) {
-    let autoRefreshTime = this.getAutoRefreshTime(id);
+    const autoRefreshTime = this.getAutoRefreshTime(id);
     window.open(`${this.apiBaseUrl}api/benchmark/output.log?id=${id}&autorefresh=${autoRefreshTime}&token=${this.token}`, '_blank');
   }
 

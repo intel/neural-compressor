@@ -792,7 +792,7 @@ class TestParamsFeeder(unittest.TestCase):
 
     @patch(
         "neural_compressor.ux.components.configuration_wizard.params_feeder.registry_metrics",
-        {"onnxrt": fake_metrics},
+        {"onnxrt_qlinearops": fake_metrics},
     )
     @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")

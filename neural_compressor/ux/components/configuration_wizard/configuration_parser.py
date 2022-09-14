@@ -94,8 +94,6 @@ class ConfigurationParser:
 
     def parse(self, data: dict) -> dict:
         """Parse configuration."""
-        data = set_defaults(data)
-
         transforms_data = data.get("transform", None)
         if transforms_data is not None:
             data.update({"transform": self.parse_transforms(transforms_data)})
@@ -110,7 +108,12 @@ class ConfigurationParser:
         if evaluation_data and isinstance(evaluation_data, dict):
             self.parse_evaluation_data(evaluation_data)
 
-        data["tuning"] = parse_bool_value(data["tuning"])
+        metric_params = data.get("metric_param", None)
+        if metric_params and isinstance(metric_params, dict):
+            data["metric_param"] = self.parse_metric(metric_params)
+
+        if "tuning" in data.keys():
+            data["tuning"] = parse_bool_value(data["tuning"])
 
         return data
 
@@ -225,6 +228,8 @@ class ConfigurationParser:
             if isinstance(param_value, dict):
                 parsed_data.update({param_name: self.parse_metric(param_value)})
             elif isinstance(param_value, str):
+                if param_value == "":
+                    continue
                 param_type = self.get_param_type("metric", param_name)
                 if param_type is None:
                     continue
@@ -318,19 +323,3 @@ def normalize_string_list(string_list: str, required_type: Union[Type, List[Type
     if not string_list.endswith("]"):
         string_list += "]"
     return string_list
-
-
-def set_defaults(data: dict) -> dict:
-    """Set default values for data if missing."""
-    # Set tuning as default
-    if "tuning" not in data:
-        data.update({"tuning": True})
-
-    # Set int8 as default requested precision
-    if "precision" not in data:
-        data.update({"precision": "int8"})
-
-    if not data["tuning"]:
-        data["dataset_path"] = "no_dataset_location"
-
-    return data

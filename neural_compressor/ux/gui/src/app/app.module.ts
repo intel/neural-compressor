@@ -85,7 +85,8 @@ import { PrintJsonPipe } from './pipes/print-json.pipe';
 import { GenerateConfigDialogComponent } from './generate-config-dialog/generate-config-dialog.component';
 import { WarningComponent } from './warning/warning.component';
 
-let PREFIX = document.getElementById('url_prefix').innerText === '{{ url_prefix }}' ? '' : document.getElementById('url_prefix').innerText;
+const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefix }}'
+  ? '' : document.getElementById('url_prefix').innerText;
 
 @NgModule({
   declarations: [
@@ -172,7 +173,7 @@ let PREFIX = document.getElementById('url_prefix').innerText === '{{ url_prefix 
     },
     {
       provide: APP_BASE_HREF,
-      useValue: PREFIX.slice(-1) === '/' ? PREFIX : PREFIX + '/'
+      useValue: prefix.slice(-1) === '/' ? prefix : prefix + '/'
     }
   ],
   entryComponents: [

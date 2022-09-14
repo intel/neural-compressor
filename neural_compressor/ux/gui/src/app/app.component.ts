@@ -33,7 +33,7 @@ export class AppComponent implements OnInit {
     private modelService: ModelService,
     private socketService: SocketService,
     public dialog: MatDialog,
-    private _snackBar: MatSnackBar
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit() {
@@ -43,16 +43,16 @@ export class AppComponent implements OnInit {
     this.modelService.getSystemInfo();
     this.socketService.showSnackBar$
       .subscribe(response => {
-        this.openSnackBar(response['tab'], response['id']);
+        this.openSnackBar(response.tab, response.id);
       });
   }
 
   getWorkspace() {
     this.modelService.getDefaultPath('workspace')
       .subscribe(
-        repoPath => {
-          this.workspacePath = repoPath['path'];
-          this.modelService.workspacePath = repoPath['path'];
+        (repoPath: { path: string }) => {
+          this.workspacePath = repoPath.path;
+          this.modelService.workspacePath = repoPath.path;
         },
         error => {
           this.modelService.openErrorDialog(error);
@@ -67,10 +67,10 @@ export class AppComponent implements OnInit {
   }
 
   openSnackBar(tab: string, id: number) {
-    this._snackBar.openFromComponent(NotificationComponent, {
+    this.snackBar.openFromComponent(NotificationComponent, {
       duration: 5 * 1000,
       data: {
-        tab: tab,
+        tab,
         projectId: id
       }
     });

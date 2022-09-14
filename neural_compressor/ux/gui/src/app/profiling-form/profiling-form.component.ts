@@ -6,7 +6,8 @@ import { ModelService } from '../services/model.service';
 @Component({
   selector: 'app-profiling-form',
   templateUrl: './profiling-form.component.html',
-  styleUrls: ['./profiling-form.component.scss', './../error/error.component.scss', './../home/home.component.scss', './../datasets/datasets.component.scss']
+  styleUrls: ['./profiling-form.component.scss', './../error/error.component.scss', './../home/home.component.scss',
+    './../datasets/datasets.component.scss']
 })
 export class ProfilingFormComponent implements OnInit {
 
@@ -22,10 +23,10 @@ export class ProfilingFormComponent implements OnInit {
   ngOnInit(): void {
     this.modelService.getModelList(this.data.projectId)
       .subscribe(
-        response => {
-          this.models = response['models'];
+        (response: { models: any }) => {
+          this.models = response.models;
           if (this.models.length > 0) {
-            this.profilingFormGroup.get('model_id').setValue(this.models[0]['id']);
+            this.profilingFormGroup.get('model_id').setValue(this.models[0].id);
           }
         },
         error => {
@@ -34,8 +35,8 @@ export class ProfilingFormComponent implements OnInit {
 
     this.modelService.getDatasetList(this.data.projectId)
       .subscribe(
-        response => {
-          this.datasets = response['datasets'];
+        (response: { datasets: any }) => {
+          this.datasets = response.datasets;
           if (this.datasets.length > 0) {
             this.profilingFormGroup.get('dataset_id').setValue(this.datasets[0].id);
           }

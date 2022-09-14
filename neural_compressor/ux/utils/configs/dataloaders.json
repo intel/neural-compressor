@@ -17,6 +17,11 @@
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
                         "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
+                        "value": "False"
                     }
 
                 ]
@@ -34,6 +39,11 @@
                     {
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
+                        "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
                         "value": "False"
                     }
 
@@ -141,6 +151,11 @@
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
                         "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
+                        "value": "False"
                     }
 
                 ]
@@ -187,6 +202,11 @@
                     {
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
+                        "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
                         "value": "False"
                     }
 
@@ -259,6 +279,11 @@
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
                         "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
+                        "value": "False"
                     }
 
                 ]
@@ -276,6 +301,11 @@
                     {
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
+                        "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
                         "value": "False"
                     }
 
@@ -317,7 +347,41 @@
                     }
                 ]
             },
-             {
+            {
+                "name": "COCONpy",
+                "help": "COCO dataset in numpy format",
+                "show_dataset_location": true,
+                "params": [
+                    {
+                        "name": "root",
+                        "help": null,
+                        "value": ""
+                    },
+                    {
+                        "name": "npy_dir",
+                        "help": "Npy file directory",
+                        "value": "val2017"
+                    },
+                    {
+                        "name": "anno_dir",
+                        "help": "Annotation file directory",
+                        "value": "annotations/instances_val2017.json"
+                    }
+                ]
+            },
+            {
+                "name": "VOCRecord",
+                "help": "VOC dataset in TFRecord format",
+                "show_dataset_location": true,
+                "params": [
+                    {
+                        "name": "root",
+                        "help": null,
+                        "value": ""
+                    }
+                ]
+            },
+            {
                 "name": "dummy_v2",
                 "help": "Dataset used for dummy data generation",
                 "show_dataset_location": false,
@@ -362,6 +426,11 @@
                     {
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
+                        "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
                         "value": "False"
                     }
 
@@ -422,6 +491,11 @@
                         "name": "train",
                         "help": "If True, creates dataset from train subset, otherwise from validation subset",
                         "value": "False"
+                    },
+                    {
+                        "name": "download",
+                        "help": "If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.",
+                        "value": "False"
                     }
 
                 ]
@@ -436,22 +510,22 @@
                         "help": null,
                         "value": ""
                     },
-                    {
+                     {
                         "name": "style_path",
                         "help": null,
                         "value": ""
                     },
-                    {
+                     {
                         "name": "crop_ratio",
                         "help": "Cropped ratio to each side",
                         "value": 0.1
                     },
-                    {
+                     {
                         "name": "resize_shape",
                         "help": "Target size of image",
                         "value": "256, 256"
                     },
-                    {
+                     {
                         "name": "image_format",
                         "help": "Target image format",
                         "value": "jpg"
@@ -466,11 +540,6 @@
                     {
                         "name": "root",
                         "help": null,
-                        "value": ""
-                    },
-                    {
-                        "name": "compression_type",
-                        "help": "Compression type, one of: empty string, ZLIB, GZIP.",
                         "value": ""
                     }
                 ]
@@ -490,6 +559,16 @@
                         "name": "label_file",
                         "help": "Label file path.",
                         "value": "/path/to/dev-v1.1.json"
+                    },
+                    {
+                        "name": "task",
+                        "help": "Task type of model",
+                        "value": "squad"
+                    },
+                    {
+                        "name": "model_type",
+                        "help": "Model type",
+                        "value": "bert"
                     }
                 ]
             },

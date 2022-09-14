@@ -44,14 +44,14 @@ export class FileBrowserComponent implements OnInit {
   getFileSystem(path: string) {
     this.showSpinner = true;
     if (path[0] !== '/') {
-      path = '/' + path
+      path = '/' + path;
     }
     this.modelService.getFileSystem(path, this.filter)
       .subscribe(
-        resp => {
+        (resp: { contents: any; path: string }) => {
           this.showSpinner = false;
-          this.contents = resp['contents'];
-          this.currentPath = resp['path'];
+          this.contents = resp.contents;
+          this.currentPath = resp.path;
         },
         error => {
           this.showSpinner = false;
@@ -70,9 +70,9 @@ export class FileBrowserComponent implements OnInit {
   checkForFiles() {
     this.modelService.getFileSystem(this.currentPath, 'all')
       .subscribe(
-        resp => {
-          this.contents = resp['contents'];
-          this.currentPath = resp['path'];
+        (resp: { contents: any; path: string }) => {
+          this.contents = resp.contents;
+          this.currentPath = resp.path;
           if (this.data.filesToFind) {
             this.data.filesToFind.forEach(file => {
               if (this.contents.find(x => x.name.includes(file))) {
@@ -96,7 +96,7 @@ export class FileBrowserComponent implements OnInit {
   }
 
   goToParentDirectory() {
-    var pathArray = this.currentPath.split('/');
+    const pathArray = this.currentPath.split('/');
     pathArray.pop();
     this.getFileSystem(pathArray.join('/'));
   }

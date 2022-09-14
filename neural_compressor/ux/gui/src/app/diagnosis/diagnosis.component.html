@@ -4,10 +4,9 @@
   </mat-spinner>
   <div class="item-no-background width-200">
     <h3 class="center width-200">Models</h3>
-    <mat-button-toggle-group class="toggle-group width-200" [(ngModel)]="modelId" (change)="getOpList(modelId)"
-      vertical="true">
-      <mat-button-toggle *ngFor="let model of models" [value]="model.id">
-        {{ model.name }}
+    <mat-button-toggle-group class="width-200" [(ngModel)]="modelId" (change)="getOpList(modelId)" vertical="true">
+      <mat-button-toggle *ngFor="let model of models" [value]="model.id" [matTooltip]="model.name">
+        {{ model.name | longName:20 }}
       </mat-button-toggle>
     </mat-button-toggle-group>
 
@@ -69,7 +68,7 @@
     </mat-card>
     <br>
 
-    <mat-card *ngIf="opDetails['OP name']">
+    <mat-card *ngIf="opDetails && opDetails['OP name']">
       <table class="rounded">
         <tr>
           <td class="header">{{ opDetails['OP name'] }}

@@ -23,7 +23,10 @@ import { JoyrideService } from 'ngx-joyride';
 })
 export class ProjectComponent implements OnInit {
 
-  project = {};
+  project = {
+    notes: '',
+    name: ''
+  };
   is_pytorch = false;
   projectId;
   selectedTab = 0;
@@ -41,32 +44,35 @@ export class ProjectComponent implements OnInit {
     this.projectId = this.activatedRoute.snapshot.params.id;
     this.getProject(this.projectId);
     this.modelService.projectChanged$
-      .subscribe(response => {
-        this.getProject(response['id'], response['tab']);
-      })
+      .subscribe((response: { id: number; tab: string }) => {
+        this.getProject(response.id, response.tab);
+      });
   }
 
   getProject(id: number, tab?: string) {
     this.selectedTab = this.tabs.indexOf(tab ?? this.activatedRoute.snapshot.params.tab);
     this.modelService.getProjectDetails(id)
       .subscribe(
-        response => {
+        (response: { input_model: any; notes: string; name: string }) => {
           this.project = response;
-          this.is_pytorch = response['input_model']['framework']['name'] === 'PyTorch';
+          this.is_pytorch = response.input_model.framework.name === 'PyTorch';
         },
         error => {
           if (error.error === 'list index out of range') {
-            this.router.navigate(['home'], { queryParamsHandling: "merge" });
+            this.router.navigate(['home'], { queryParamsHandling: 'merge' });
           } else {
             this.modelService.openErrorDialog(error);
           }
         }
-      )
+      );
   }
 
   onTabChanged(event) {
     this.selectedTab = event.index;
-    this.router.navigate(['project', this.activatedRoute.snapshot.params.id, this.tabs[this.selectedTab]], { queryParamsHandling: "merge" });
+    this.router.navigate(
+      ['project', this.activatedRoute.snapshot.params.id, this.tabs[this.selectedTab]],
+      { queryParamsHandling: 'merge' }
+    );
   }
 
   onClick() {
@@ -79,7 +85,7 @@ export class ProjectComponent implements OnInit {
   }
 
   addNotes() {
-    this.modelService.addNotes(this.activatedRoute.snapshot.params.id, this.project['notes'])
+    this.modelService.addNotes(this.activatedRoute.snapshot.params.id, this.project.notes)
       .subscribe(
         response => { },
         error => {

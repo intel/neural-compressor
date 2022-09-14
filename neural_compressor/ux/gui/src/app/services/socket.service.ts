@@ -40,7 +40,7 @@ export class SocketService {
   public exampleStart$ = new Subject();
   public exampleProgress$ = new Subject();
   public exampleFinish$ = new Subject();
-  public showSnackBar$ = new Subject();
+  public showSnackBar$ = new Subject<{ tab: string; id: number }>();
 
   constructor(
     private http: HttpClient

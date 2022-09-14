@@ -4,9 +4,12 @@
     Model wise parameters
   </h1>
 
+  <div *ngIf="error">
+    <p>{{ error.error }}</p>
+    <p>{{ error.message }}</p>
+  </div>
+
   <div *ngIf="modelWiseParams" mat-dialog-content>
-
-
     <ng-container *ngFor="let type of ['weight','activation']">
       <h2>{{ type | titlecase }}
       </h2>

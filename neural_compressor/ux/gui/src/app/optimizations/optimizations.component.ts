@@ -23,32 +23,37 @@ import { OptimizationFormComponent } from '../optimization-form/optimization-for
 import { PinBenchmarkComponent } from '../pin-benchmark/pin-benchmark.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
-declare var require: any;
-var shajs = require('sha.js');
+declare let require: any;
+const shajs = require('sha.js');
 
 @Component({
   selector: 'app-optimizations',
   templateUrl: './optimizations.component.html',
-  styleUrls: ['./optimizations.component.scss', './../error/error.component.scss', './../home/home.component.scss', './../datasets/datasets.component.scss']
+  styleUrls: ['./optimizations.component.scss', './../error/error.component.scss', './../home/home.component.scss',
+    './../datasets/datasets.component.scss']
 })
 export class OptimizationsComponent implements OnInit {
 
-  apiBaseUrl = environment.baseUrl;
-  token = '';
-
-  @ViewChild("accChart", { read: ElementRef, static: false }) accChartRef: ElementRef;
-  @ViewChild("perfChart", { read: ElementRef, static: false }) perfChartRef: ElementRef;
+  @ViewChild('accChart', { read: ElementRef, static: false }) accChartRef: ElementRef;
+  @ViewChild('perfChart', { read: ElementRef, static: false }) perfChartRef: ElementRef;
 
   @Input() framework: string;
   @Input() domain;
   @Input() domainFlavour;
+
+  apiBaseUrl = environment.baseUrl;
+  token = '';
+
   model = {};
-  historyData = {};
+  historyData: {
+    accuracy: any;
+    performance: any;
+  };
   optimizations = [];
   activeOptimizationId = 0;
   requestId = '';
   optimizationDetails: any;
-  parsedOptimizationDetails = {};
+  parsedOptimizationDetails: { batch_size: number; sampling_size: number };
   pinnedAccuracyBenchmarks = {};
   pinnedPerformanceBenchmarks = {};
   allBenchmarks = [];
@@ -66,10 +71,10 @@ export class OptimizationsComponent implements OnInit {
     pytorch: ['id', 'supports', 'nodes', 'domain']
   };
 
-  xAxis: boolean = true;
-  yAxis: boolean = true;
-  showYAxisLabel: boolean = true;
-  showXAxisLabel: boolean = true;
+  xAxis = true;
+  yAxis = true;
+  showYAxisLabel = true;
+  showXAxisLabel = true;
   viewLine: any[] = [600, 300];
   referenceLines = {
     accuracy: {},
@@ -107,8 +112,8 @@ export class OptimizationsComponent implements OnInit {
     this.initializeOptimizations();
     this.token = this.modelService.getToken();
     this.modelService.projectChanged$
-      .subscribe(response => {
-        this.getOptimizations(response['id']);
+      .subscribe((response: { id: number }) => {
+        this.getOptimizations(response.id);
         this.optimizationDetails = null;
         this.activeOptimizationId = -1;
       });
@@ -121,8 +126,8 @@ export class OptimizationsComponent implements OnInit {
     this.socketService.benchmarkFinish$
       .subscribe(response => this.getOptimizations());
     this.socketService.optimizationFinish$
-      .subscribe(response => {
-        if (String(this.activatedRoute.snapshot.params.id) === String(response['data']['project_id'])) {
+      .subscribe((response: { data: any }) => {
+        if (String(this.activatedRoute.snapshot.params.id) === String(response.data.project_id)) {
           this.getOptimizations();
           if (this.activeOptimizationId > 0) {
             this.getOptimizationDetails(this.activeOptimizationId);
@@ -130,9 +135,9 @@ export class OptimizationsComponent implements OnInit {
         }
       });
     this.socketService.tuningHistory$
-      .subscribe(response => {
-        if (response['status'] === 'success' && this.activeOptimizationId === response['data']['optimization_id']) {
-          this.getHistoryData(response['data']);
+      .subscribe((response: { data: any; status: string }) => {
+        if (response.status === 'success' && this.activeOptimizationId === response.data.optimization_id) {
+          this.getHistoryData(response.data);
         }
       });
   }
@@ -140,8 +145,8 @@ export class OptimizationsComponent implements OnInit {
   getOptimizations(id?: number) {
     this.modelService.getOptimizationList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.optimizations = response['optimizations'];
+        (response: { optimizations: any }) => {
+          this.optimizations = response.optimizations;
           this.getBenchmarksList();
         },
         error => {
@@ -152,8 +157,8 @@ export class OptimizationsComponent implements OnInit {
   getBenchmarksList(id?: number) {
     this.modelService.getBenchmarksList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.allBenchmarks = response['benchmarks'];
+        (response: { benchmarks: any }) => {
+          this.allBenchmarks = response.benchmarks;
 
           this.optimizations.forEach(optimization => {
             this.availableAccuracyBenchmarks[optimization.id] = this.allBenchmarks.filter(x =>
@@ -164,8 +169,10 @@ export class OptimizationsComponent implements OnInit {
               x.model.name.toLowerCase().replace(' ', '_') === optimization.name.toLowerCase().replace(' ', '_')
               && x.mode === 'performance');
 
-            this.pinnedAccuracyBenchmarks[optimization.id] = this.allBenchmarks.find(x => x.id === optimization.accuracy_benchmark_id);
-            this.pinnedPerformanceBenchmarks[optimization.id] = this.allBenchmarks.find(x => x.id === optimization.performance_benchmark_id);
+            this.pinnedAccuracyBenchmarks[optimization.id] = this.allBenchmarks
+              .find(x => x.id === optimization.accuracy_benchmark_id);
+            this.pinnedPerformanceBenchmarks[optimization.id] = this.allBenchmarks
+              .find(x => x.id === optimization.performance_benchmark_id);
           });
         },
         error => {
@@ -176,18 +183,18 @@ export class OptimizationsComponent implements OnInit {
   openPinDialog(mode: string, optimizationId: number) {
     let benchmarks = [];
     if (mode === 'accuracy' && this.availableAccuracyBenchmarks[optimizationId]) {
-      benchmarks = this.availableAccuracyBenchmarks[optimizationId]
+      benchmarks = this.availableAccuracyBenchmarks[optimizationId];
     } else if (mode === 'performance' && this.availablePerformanceBenchmarks[optimizationId]) {
-      benchmarks = this.availablePerformanceBenchmarks[optimizationId]
+      benchmarks = this.availablePerformanceBenchmarks[optimizationId];
     }
 
     if ((mode === 'accuracy' && this.availableAccuracyBenchmarks[optimizationId].length)
       || (mode === 'performance' && this.availablePerformanceBenchmarks[optimizationId].length)) {
       const dialogRef = this.dialog.open(PinBenchmarkComponent, {
         data: {
-          mode: mode,
-          optimizationId: optimizationId,
-          benchmarks: benchmarks
+          mode,
+          optimizationId,
+          benchmarks
         }
       });
 
@@ -209,14 +216,17 @@ export class OptimizationsComponent implements OnInit {
     this.activeOptimizationId = id;
     this.modelService.getOptimizationDetails(id)
       .subscribe(
-        response => {
+        (response: { tuning_details: any }) => {
           this.tuningDetailsEditable = false;
           this.optimizationDetails = response;
           this.parseOptimizationDetails(response);
-          if (response['tuning_details'] && response['tuning_details']['tuning_history']) {
-            this.getHistoryData(response['tuning_details']['tuning_history']);
+          if (response.tuning_details && response.tuning_details.tuning_history) {
+            this.getHistoryData(response.tuning_details.tuning_history);
           } else {
-            this.historyData = {};
+            this.historyData = {
+              accuracy: null,
+              performance: null
+            };;
             this.chartsReady = false;
           }
         },
@@ -226,25 +236,27 @@ export class OptimizationsComponent implements OnInit {
   }
 
   parseOptimizationDetails(response) {
-    this.parsedOptimizationDetails['batch_size'] = response['batch_size'];
-    this.parsedOptimizationDetails['sampling_size'] = response['sampling_size'];
-    if (response['tuning_details']) {
-      Object.keys(response['tuning_details']).forEach(key => {
+    this.parsedOptimizationDetails = {
+      batch_size: response.batch_size,
+      sampling_size: response.sampling_size
+    };
+    if (response.tuning_details) {
+      Object.keys(response.tuning_details).forEach(key => {
         if (!['id', 'tuning_history'].includes(key)) {
-          if (typeof response['tuning_details'][key] === 'string' || typeof response['tuning_details'][key] === 'number') {
-            this.parsedOptimizationDetails[key] = response['tuning_details'][key];
-          } else if (typeof response['tuning_details'][key] === 'object' && response['tuning_details'][key]) {
-            Object.keys(response['tuning_details'][key]).forEach(objectKey => {
-              this.parsedOptimizationDetails[objectKey] = response['tuning_details'][key][objectKey];
+          if (typeof response.tuning_details[key] === 'string' || typeof response.tuning_details[key] === 'number') {
+            this.parsedOptimizationDetails[key] = response.tuning_details[key];
+          } else if (typeof response.tuning_details[key] === 'object' && response.tuning_details[key]) {
+            Object.keys(response.tuning_details[key]).forEach(objectKey => {
+              this.parsedOptimizationDetails[objectKey] = response.tuning_details[key][objectKey];
             });
           }
         }
       });
     }
-    let formGroupDetails = {};
+    const formGroupDetails = {};
     Object.keys(this.parsedOptimizationDetails).forEach(key => {
       formGroupDetails[key] = new FormControl(this.parsedOptimizationDetails[key]);
-    })
+    });
     this.detailsFormGroup = new FormGroup(formGroupDetails);
   }
 
@@ -261,7 +273,7 @@ export class OptimizationsComponent implements OnInit {
 
     this.modelService.openDatasetDialog$.subscribe(
       response => this.addDataset()
-    )
+    );
   }
 
   addDataset() {
@@ -282,8 +294,8 @@ export class OptimizationsComponent implements OnInit {
     const dateTime = Date.now();
     this.requestId = shajs('sha384').update(String(dateTime)).digest('hex');
 
-    this.optimizations.find(optimization => optimization.id === optimizationId)['status'] = 'wip';
-    this.optimizations.find(optimization => optimization.id === optimizationId)['requestId'] = this.requestId;
+    this.optimizations.find(optimization => optimization.id === optimizationId).status = 'wip';
+    this.optimizations.find(optimization => optimization.id === optimizationId).requestId = this.requestId;
     this.modelService.executeOptimization(optimizationId, this.requestId)
       .subscribe(
         response => { },
@@ -294,12 +306,12 @@ export class OptimizationsComponent implements OnInit {
   }
 
   saveTuningDetails() {
-    let parsedTuningDetails = this.detailsFormGroup.value;
-    parsedTuningDetails['exit_policy'] = {};
-    parsedTuningDetails['exit_policy']['timeout'] = this.detailsFormGroup.value['timeout'];
-    parsedTuningDetails['exit_policy']['max_trials'] = this.detailsFormGroup.value['max_trials'];
-    delete parsedTuningDetails['timeout'];
-    delete parsedTuningDetails['max_trials'];
+    const parsedTuningDetails = this.detailsFormGroup.value;
+    parsedTuningDetails.exit_policy = {};
+    parsedTuningDetails.exit_policy.timeout = this.detailsFormGroup.value.timeout;
+    parsedTuningDetails.exit_policy.max_trials = this.detailsFormGroup.value.max_trials;
+    delete parsedTuningDetails.timeout;
+    delete parsedTuningDetails.max_trials;
     this.modelService.editOptimization({
       id: this.activeOptimizationId,
       tuning_details: parsedTuningDetails
@@ -316,13 +328,13 @@ export class OptimizationsComponent implements OnInit {
   getHistoryData(result) {
     ['accuracy', 'performance'].forEach(type => {
       this.historyData[type] = [{
-        "name": type,
-        "series": []
+        name: type,
+        series: []
       }];
 
-      result['history'].forEach((record, index) => {
+      result.history.forEach((record, index) => {
         if (result['baseline_' + type]) {
-          this.historyData[type][0]['series'].push({
+          this.historyData[type][0].series.push({
             name: index + 1,
             value: record[type][0]
           });
@@ -335,22 +347,22 @@ export class OptimizationsComponent implements OnInit {
       }];
     });
 
-    if (this.historyData['accuracy'][0]['series'].length || this.historyData['performance'][0]['series']) {
+    if (this.historyData.accuracy[0].series.length || this.historyData.performance[0].series) {
       this.chartsReady = true;
     }
 
-    setTimeout(() => { this.fixChart() }, 1000);
+    setTimeout(() => { this.fixChart(); }, 1000);
   }
 
   fixChart() {
     if (this.accChartRef) {
-      this.accChartRef.nativeElement.querySelectorAll("g.line-series path").forEach((el) => {
-        el.setAttribute("stroke-width", "10");
-        el.setAttribute("stroke-linecap", "round");
+      this.accChartRef.nativeElement.querySelectorAll('g.line-series path').forEach((el) => {
+        el.setAttribute('stroke-width', '10');
+        el.setAttribute('stroke-linecap', 'round');
       });
-      this.perfChartRef.nativeElement.querySelectorAll("g.line-series path").forEach((el) => {
-        el.setAttribute("stroke-width", "10");
-        el.setAttribute("stroke-linecap", "round");
+      this.perfChartRef.nativeElement.querySelectorAll('g.line-series path').forEach((el) => {
+        el.setAttribute('stroke-width', '10');
+        el.setAttribute('stroke-linecap', 'round');
       });
     }
   }
@@ -380,11 +392,11 @@ export class OptimizationsComponent implements OnInit {
   }
 
   deleteOptimization(id: number, name: string) {
-    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
         what: 'optimization',
-        id: id,
-        name: name
+        id,
+        name
       }
     });
 
@@ -393,7 +405,7 @@ export class OptimizationsComponent implements OnInit {
         if (response.confirm) {
           this.modelService.delete('optimization', id, name)
             .subscribe(
-              response =>
+              deleted =>
                 this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'optimizations' }),
               error =>
                 this.modelService.openErrorDialog(error)
@@ -411,7 +423,7 @@ export class OptimizationsComponent implements OnInit {
   }
 
   goToBenchmarks() {
-    this.router.navigate(['project', this.activatedRoute.snapshot.params.id, 'benchmarks'], { queryParamsHandling: "merge" });
+    this.router.navigate(['project', this.activatedRoute.snapshot.params.id, 'benchmarks'], { queryParamsHandling: 'merge' });
     this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'benchmarks' });
   }
 
@@ -420,7 +432,7 @@ export class OptimizationsComponent implements OnInit {
   }
 
   openLogs(id: number) {
-    let autoRefreshTime = this.getAutoRefreshTime(id);
+    const autoRefreshTime = this.getAutoRefreshTime(id);
     window.open(`${this.apiBaseUrl}api/optimization/output.log?id=${id}&autorefresh=${autoRefreshTime}&token=${this.token}`, '_blank');
   }
 
@@ -448,7 +460,7 @@ export class OptimizationsComponent implements OnInit {
   }
 
   getType(value) {
-    if (typeof value === 'number') return 'number';
+    if (typeof value === 'number') { return 'number'; }
     return 'text';
   }
 

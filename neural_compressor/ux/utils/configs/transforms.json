@@ -1,6 +1,6 @@
 [
     {
-        "name": "tensorflow",
+        "name": "TensorFlow",
         "help": null,
         "params": [
             {
@@ -123,6 +123,31 @@
                 ]
             },
             {
+                "name": "ResizeWithRatio",
+                "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
+                "params": [
+                    {
+                        "name": "min_dim",
+                        "help": "Resizes the image such that its smaller dimension == min_dim.",
+                        "value": 800
+                    },
+                    {
+                        "name": "max_dim",
+                        "help": "Ensures that the image longest side does not exceed this value.",
+                        "value": 1365
+                    },
+                    {
+                        "name": "padding",
+                        "help": "If true, pads image with zeros so its size is max_dim x max_dim.",
+                        "value": false
+                    }
+                ]
+            },
+            {
                 "name": "CropToBoundingBox",
                 "help": null,
                 "domains": [
@@ -224,6 +249,15 @@
                         "value": ""
                     }
                 ]
+            },
+            {
+                "name": "ParseDecodeImagenet",
+                "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
+                "value": null
             },
             {
                 "name": "RandomCrop",
@@ -407,7 +441,7 @@
         ]
     },
     {
-        "name": "onnxrt",
+        "name": "ONNXRT",
         "help": null,
         "params": [
             {
@@ -422,6 +456,20 @@
                         "name": "dim",
                         "help": "The channel number of result image",
                         "value": ""
+                    }
+                ]
+            },
+            {
+                "name": "Cast",
+                "help": null,
+                "domains": [
+                    "Image Recognition"
+                ],
+                "params": [
+                    {
+                        "name": "dtype",
+                        "help": "Target data type.",
+                        "value": "float32"
                     }
                 ]
             },
@@ -476,6 +524,36 @@
                         "name": "interpolation",
                         "help": "Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'",
                         "value": "bilinear"
+                    }
+                ]
+            },
+            {
+                "name": "CropToBoundingBox",
+                "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
+                "params": [
+                    {
+                        "name": "offset_height",
+                        "help": "Vertical coordinate of the top-left corner of the result in the input",
+                        "value": 0
+                    },
+                    {
+                        "name": "offset_width",
+                        "help": "Horizontal coordinate of the top-left corner of the result in the input",
+                        "value": 0
+                    },
+                    {
+                        "name": "target_height",
+                        "help": "Height of the result",
+                        "value": 0
+                    },
+                    {
+                        "name": "target_width",
+                        "help": "Width of the result",
+                        "value": 0
                     }
                 ]
             },
@@ -629,6 +707,31 @@
                         "name": "std_value",
                         "help": "Stds for each channel",
                         "value": "[0.229, 0.224, 0.225]"
+                    }
+                ]
+            },
+            {
+                "name": "ResizeWithRatio",
+                "help": null,
+                "domains": [
+                    "Image Recognition",
+                    "Object Detection"
+                ],
+                "params": [
+                    {
+                        "name": "min_dim",
+                        "help": "Resizes the image such that its smaller dimension == min_dim.",
+                        "value": 800
+                    },
+                    {
+                        "name": "max_dim",
+                        "help": "Ensures that the image longest side does not exceed this value.",
+                        "value": 1365
+                    },
+                    {
+                        "name": "padding",
+                        "help": "If true, pads image with zeros so its size is max_dim x max_dim.",
+                        "value": false
                     }
                 ]
             },

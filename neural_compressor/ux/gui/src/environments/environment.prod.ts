@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-let PREFIX = document.getElementById('url_prefix').innerText;
+const prefix = document.getElementById('url_prefix').innerText;
 
 export const environment = {
   production: true,
-  baseUrl: PREFIX.slice(-1) === '/' ? PREFIX : PREFIX + '/',
+  baseUrl: prefix.slice(-1) === '/' ? prefix : prefix + '/',
   webSocketNamespace: '/'
 };

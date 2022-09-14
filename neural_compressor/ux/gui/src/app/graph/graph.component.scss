@@ -84,6 +84,12 @@
   top: -8px;
 }
 
+@media all {
+  .wrapper {
+    height: 1400px;
+  }
+}
+
 @media all and (max-height:1500px) {
   .wrapper {
     height: 1200px;

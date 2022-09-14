@@ -15,8 +15,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
-declare var require: any;
-var shajs = require('sha.js')
+declare let require: any;
+const shajs = require('sha.js');
 
 @Component({
   selector: 'app-predefined-models',
@@ -57,41 +57,41 @@ export class PredefinedModelsComponent implements OnInit {
     this.getExamplesList();
 
     this.socketService.modelDownloadFinish$
-      .subscribe(response => {
-        if (response['status'] && response['status'] !== 'success') {
+      .subscribe((response: { status: string; data: any }) => {
+        if (response.status && response.status !== 'success') {
           this.modelService.openErrorDialog({
-            error: response['data']['message'],
+            error: response.data.message,
           });
         }
       });
 
     this.socketService.modelDownloadProgress$
-      .subscribe(response => {
-        if (response['status']) {
-          this.progressBarValue = response['data']['progress'];
+      .subscribe((response: { status: string; data: any }) => {
+        if (response.status) {
+          this.progressBarValue = response.data.progress;
         }
       });
 
     this.socketService.exampleFinish$
-      .subscribe(response => {
-        if (response['status']) {
-          if (response['status'] === 'success') {
-            if (response['data']['project_id']) {
-              this.router.navigate(['project', response['data']['project_id'], 'optimizations'], { queryParamsHandling: "merge" });
+      .subscribe((response: { status: string; data: any }) => {
+        if (response.status) {
+          if (response.status === 'success') {
+            if (response.data.project_id) {
+              this.router.navigate(['project', response.data.project_id, 'optimizations'], { queryParamsHandling: 'merge' });
               this.modelService.projectCreated$.next(true);
-              this.modelService.projectChanged$.next({ id: response['data']['project_id'], tab: 'optimization' });
+              this.modelService.projectChanged$.next({ id: response.data.project_id, tab: 'optimization' });
             }
           } else {
             this.modelService.openErrorDialog({
-              error: response['data']['message'],
+              error: response.data.message,
             });
           }
         }
       });
 
     this.socketService.exampleProgress$
-      .subscribe(response => {
-        this.downloadMessage = response['data']['message'];
+      .subscribe((response: { data: any }) => {
+        this.downloadMessage = response.data.message;
       });
   }
 
@@ -126,15 +126,15 @@ export class PredefinedModelsComponent implements OnInit {
 
   onModelDomainChange(availableDomain) {
     this.model.domain = availableDomain;
-    this.model.model = this.modelList.find(x => x['domain'] === availableDomain).model;
+    this.model.model = this.modelList.find(x => x.domain === availableDomain).model;
   }
 
   configExists(framework: string, domain: string, model?: string) {
     let found;
     if (model) {
-      found = this.modelList.filter(x => x['domain'] === domain && x['framework'] === framework && x['model'] === model);
+      found = this.modelList.filter(x => x.domain === domain && x.framework === framework && x.model === model);
     } else {
-      found = this.modelList.filter(x => x['domain'] === domain && x['framework'] === framework);
+      found = this.modelList.filter(x => x.domain === domain && x.framework === framework);
     }
     return found.length;
   }

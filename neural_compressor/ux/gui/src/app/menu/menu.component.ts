@@ -40,7 +40,7 @@ export class MenuComponent implements OnInit {
 
   ngOnInit() {
     this.router.events.subscribe(val => {
-      if (val instanceof RoutesRecognized) {
+      if (val instanceof RoutesRecognized && typeof val.state.root.firstChild.params.tab !== 'undefined') {
         this.activeTab = val.state.root.firstChild.params.tab;
       }
     });
@@ -51,15 +51,15 @@ export class MenuComponent implements OnInit {
   }
 
   projectChange(id) {
-    this.modelService.projectChanged$.next({ id: id, tab: this.activeTab });
+    this.modelService.projectChanged$.next({ id, tab: this.activeTab });
   }
 
   getAllProjects() {
     this.modelService.getProjectList()
       .subscribe(
-        response => {
+        (response: { projects: any }) => {
           this.showSpinner = false;
-          this.projectList = response['projects'];
+          this.projectList = response.projects;
           this.modelService.projectCount = this.projectList.length;
         },
         error => {
@@ -72,8 +72,8 @@ export class MenuComponent implements OnInit {
     const dialogRef = this.dialog.open(ProjectRemoveComponent, {
       width: '60%',
       data: {
-        projectId: projectId,
-        projectName: projectName,
+        projectId,
+        projectName,
       }
     });
   }

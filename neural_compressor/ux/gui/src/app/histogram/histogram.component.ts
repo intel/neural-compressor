@@ -30,23 +30,23 @@ export class HistogramComponent implements OnChanges {
     this.modelService.getHistogram(this.activatedRoute.snapshot.params.id, this.modelId, this.opName, this.type)
       .subscribe(
         response => {
-          response[0]['histograms'].forEach((series, index) => {
+          response[0].histograms.forEach((series, index) => {
             this.data.push(
               {
-                x: series['data'],
-                type: "histogram",
+                x: series.data,
+                type: 'histogram',
                 opacity: 0.6,
                 name: 'channel ' + index
               }
-            )
-          })
+            );
+          });
 
           this.layout = {
             bargap: 0.05,
             bargroupgap: 0.2,
-            barmode: "overlay",
-            xaxis: { title: "Value" },
-            yaxis: { title: "Count" }
+            barmode: 'overlay',
+            xaxis: { title: 'Value' },
+            yaxis: { title: 'Count' }
           };
 
           document.getElementById('histograms').scrollIntoView({ behavior: 'smooth' });

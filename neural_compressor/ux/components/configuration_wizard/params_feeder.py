@@ -207,7 +207,7 @@ class Feeder:
         else:
             check_module(framework)
 
-        inc_framework_name = "onnxrt" if framework == "onnxrt_qlinearops" else framework
+        inc_framework_name = "onnxrt_qlinearops" if framework == "onnxrt" else framework
 
         fw_metrics = registry_metrics.get(inc_framework_name, None)
 

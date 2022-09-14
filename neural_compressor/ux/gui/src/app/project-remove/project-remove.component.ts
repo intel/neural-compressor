@@ -35,7 +35,7 @@ export class ProjectRemoveComponent {
       .subscribe(response => {
         this.modelService.projectCreated$.next(true);
         if (this.router.url.includes(this.data.projectId)) {
-          this.router.navigate(['home'], { queryParamsHandling: "merge" });
+          this.router.navigate(['home'], { queryParamsHandling: 'merge' });
         }
       },
         error => this.modelService.openErrorDialog(error)

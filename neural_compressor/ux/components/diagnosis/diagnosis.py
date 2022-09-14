@@ -75,8 +75,12 @@ class Diagnosis:
             min_max_data: dict = pickle.load(min_max_file)
 
         op_list: List[dict] = []
+        input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
+        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
+            "activation"
+        ][0]
         for op_name, min_max in min_max_data.items():
-            mse = self.calculate_mse(op_name)
+            mse = self.calculate_mse(op_name, input_model_tensors, optimized_model_tensors)
             if mse is None:
                 continue
             min = float(min_max.get("min", None))
@@ -85,13 +89,13 @@ class Diagnosis:
             op_list.append(op_entry.serialize())
         return op_list
 
-    def calculate_mse(self, op_name: str) -> Optional[float]:
+    def calculate_mse(
+        self,
+        op_name: str,
+        input_model_tensors: dict,
+        optimized_model_tensors: dict,
+    ) -> Optional[float]:
         """Calculate MSE for specified OP."""
-        input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
-        optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
-            "activation"
-        ][0]
-
         input_model_op_data = input_model_tensors.get(op_name, None)
         optimized_model_op_data = optimized_model_tensors.get(op_name, None)
 
@@ -99,8 +103,8 @@ class Diagnosis:
             return None
 
         mse: float = self.mse_metric_gap(
-            list(input_model_op_data.values())[0],
-            list(optimized_model_op_data.values())[0],
+            next(iter(input_model_op_data.values()))[0],
+            next(iter(optimized_model_op_data.values()))[0],
         )
 
         return mse

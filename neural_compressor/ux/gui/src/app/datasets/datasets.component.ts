@@ -41,8 +41,8 @@ export class DatasetsComponent implements OnInit {
     this.getDatasetList();
     this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
     this.modelService.projectChanged$
-      .subscribe(response => {
-        this.getDatasetList(response['id']);
+      .subscribe((response: { id: number }) => {
+        this.getDatasetList(response.id);
         this.activeDatasetId = -1;
         this.datasetDetails = {};
       });
@@ -51,7 +51,7 @@ export class DatasetsComponent implements OnInit {
   getDatasetList(id?: number) {
     this.modelService.getDatasetList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => { this.datasets = response['datasets'] },
+        (response: { datasets: any }) => { this.datasets = response.datasets; },
         error => {
           this.modelService.openErrorDialog(error);
         });
@@ -74,18 +74,18 @@ export class DatasetsComponent implements OnInit {
     this.activeDatasetId = id;
     this.modelService.getDatasetDetails(id)
       .subscribe(
-        response => { this.datasetDetails = response },
+        response => { this.datasetDetails = response; },
         error => {
           this.modelService.openErrorDialog(error);
         });
   }
 
   deleteDataset(id: number, name: string) {
-    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
         what: 'dataset',
-        id: id,
-        name: name
+        id,
+        name
       }
     });
 
@@ -94,7 +94,7 @@ export class DatasetsComponent implements OnInit {
         if (response.confirm) {
           this.modelService.delete('dataset', id, name)
             .subscribe(
-              response =>
+              deleted =>
                 this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'datasets' }),
               error =>
                 this.modelService.openErrorDialog(error)
@@ -109,10 +109,6 @@ export class DatasetsComponent implements OnInit {
 
   objectKeys(obj: any): string[] {
     return Object.keys(obj);
-  }
-
-  isArray(obj: any): boolean {
-    return Array.isArray(obj);
   }
 
   copyToClipboard(text: string) {
