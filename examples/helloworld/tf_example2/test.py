@@ -56,6 +56,6 @@ q_model = quantizer.fit()
 import tensorflow as tf
 with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
      tf.compat.v1.import_graph_def(q_model.graph_def, name='')
-     styled_image = sess.run(['output:0'], feed_dict={'input:0':dataset.test_images})
+     styled_image = sess.run(['Identity:0'], feed_dict={'input:0':dataset.test_images})
      print("Inference is done.")
 
