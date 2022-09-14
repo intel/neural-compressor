@@ -32,7 +32,7 @@ class TestTensorflowGpu(unittest.TestCase):
 
         converter = QuantizeGraphForIntel(
             input_graph_def, input_node_names, output_node_names, op_wise_config, self.op_wise_sequences,  'gpu')
-        converted_pb, _ = converter.do_transform()
+        converted_pb, _, _ = converter.do_transform()
         hostconst_pb = PostHostConstConverter(converted_pb).do_transformation()
         target_node_name = 'MobilenetV1/MobilenetV1/Conv2d_1_pointwise/Conv2D_eightbit_quantized_conv'
 

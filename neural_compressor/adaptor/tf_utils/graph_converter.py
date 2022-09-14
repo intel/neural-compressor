@@ -149,7 +149,7 @@ class GraphConverter:
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
         self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
         self.performance_only = performance_only
-
+        self.exclude_node_names = []
     # pylint: disable=no-member
     def _inference(self, model):
         """Run the calibration on the input graph
@@ -321,6 +321,9 @@ class GraphConverter:
                 PostHostConstConverter(self._itex_model.graph_def).do_transformation()
             self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
             return self._itex_model
+
+        if self.exclude_node_names:
+            self.bf16_ops.extend(self.exclude_node_names)
        
         if (len(self.bf16_ops) > 0 and self.performance_only) or \
            (os.getenv('MIX_PRECISION_TEST') == '1'):
@@ -518,7 +521,7 @@ class GraphConverter:
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names)
 
-        self._tmp_graph_def, self.quantized_node_info = QuantizeGraphForIntel(
+        self._tmp_graph_def, self.quantized_node_info, exclude_node_names = QuantizeGraphForIntel(
             self._tmp_graph_def,
             self._tmp_model.input_node_names,
             self._tmp_model.output_node_names,
@@ -528,7 +531,7 @@ class GraphConverter:
             self.fake_quant,
             self.new_api,
             self.performance_only).do_transform()
-
+        self.exclude_node_names = exclude_node_names
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if debug:
             self._tmp_model.graph_def = self._tmp_graph_def
@@ -786,7 +789,7 @@ class GraphConverter:
             self._itex_model.graph_def = self._tmp_graph_def
             self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
         else:
-            self._tmp_graph_def = OptimizeQDQGraph(self._tmp_graph_def,
+            self._tmp_graph_def, exclude_node_names = OptimizeQDQGraph(self._tmp_graph_def,
                                                    self._tmp_model.input_node_names,
                                                    self._tmp_model.output_node_names,
                                                    self.op_wise_config,
@@ -795,7 +798,7 @@ class GraphConverter:
                                                    self.fake_quant,
                                                    self.new_api,
                                                    self.performance_only).do_transform()
-
+            self.exclude_node_names=exclude_node_names
             if len(self._calibration_data) > 0:
                 self._freeze_requantization_ranges(self._kl_op_dict)
                 self._fuse_requantize_with_fused_quantized_node()

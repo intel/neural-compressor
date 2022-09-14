@@ -186,14 +186,14 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph
+                return self.input_graph, []
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
-            return self.output_graph
+            return self.output_graph, []
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph
+        return self.input_graph, []

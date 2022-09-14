@@ -290,6 +290,38 @@ class TestBF16Convert(unittest.TestCase):
         os.remove('fake_yaml.yaml')
         os.remove('fake_bf16_rnn.yaml')
         shutil.rmtree("saved", ignore_errors=True)
+        
+    def test_bf16_transpose_b_matmul(self):
+        from tensorflow.core.framework import attr_value_pb2
+        os.environ['MIX_PRECISION_TEST'] = '1'
+        DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            x = tf.compat.v1.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)
+            z = tf.nn.relu6(z, name='op_to_store')
+            is_bf16 = False
+            with tf.compat.v1.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()        
+                for i in output_graph.graph_def.node:
+                    if i.op == 'MatMul' and i.attr["T"] == DT_BFLOAT16:
+                        is_bf16 = True
+                        break
+            self.assertEqual(is_bf16, True)
+
     @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 convert does not support 1.15up3")
     def test_rn50_convert(self):
         bf16_nodes = [node.name for node in self.input_graph.node if node.op in ["Conv2D", "AvgPool", "MatMul"]]

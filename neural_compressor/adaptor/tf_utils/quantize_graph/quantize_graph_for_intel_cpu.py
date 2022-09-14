@@ -66,6 +66,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.performance_only = performance_only
 
         self.all_quantizable_node = []
+        self.exclude_node_names = []
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
         self.register_transformer("MaxPool3D", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
@@ -88,7 +89,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                 count += 1
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
-                self.input_graph, quantizable_node_names = self.transformers[node.op](
+                self.input_graph, quantizable_node_names, exclude_node_names= self.transformers[node.op](
                     input_graph=self.input_graph,
                     patterns=self.op_wise_seq[node.op],
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
@@ -102,6 +103,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                         self.all_quantizable_node.extend([[i] for i in quantizable_node_names])
                     else:
                         self.all_quantizable_node.append(quantizable_node_names)
+                if exclude_node_names:
+                    self.exclude_node_names.extend(exclude_node_names)
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names), \
-            self.all_quantizable_node
+            self.all_quantizable_node, self.exclude_node_names

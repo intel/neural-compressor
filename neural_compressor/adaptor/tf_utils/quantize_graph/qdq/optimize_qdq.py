@@ -122,7 +122,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
 
-                self.input_graph = self.transformers[node.op](
+                self.input_graph, exclude_nodes = self.transformers[node.op](
                     input_graph=self.input_graph,
                     patterns=self.op_wise_seq[node.op],
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
@@ -133,4 +133,4 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                     new_api=self.new_api,
                     performance_only=self.performance_only).apply_the_transform()
 
-        return self.remove_dead_nodes(self.input_graph, self.output_node_names)
+        return self.remove_dead_nodes(self.input_graph, self.output_node_names), exclude_nodes

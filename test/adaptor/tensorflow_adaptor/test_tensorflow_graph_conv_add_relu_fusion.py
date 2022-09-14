@@ -43,7 +43,7 @@ class TestConvAddRelu(unittest.TestCase):
                 "Conv2D": (False, 'minmax', False, 7.0),
             }
 
-            fold_graph_def, _ = QuantizeGraphForIntel(output_graph_def, inputs, outputs,
+            fold_graph_def, _, _ = QuantizeGraphForIntel(output_graph_def, inputs, outputs,
                                                    op_wise_config, op_wise_sequences,
                                                    'cpu').do_transform()
             found_QuantizedConv2DWithBiasAndRelu = False
