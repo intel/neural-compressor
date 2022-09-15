@@ -73,33 +73,6 @@ def input2tuple(input):
     return output
 
 
-def method_2_attribute(int8_model):
-    """a helper method to change methods into attributes for the quantized model.
-
-    Args:
-        int8_model(torch.nn.Module): The quantized model with weight and bias methods.
-
-    Returns:
-        int8_model (torch.nn.Module): The quantized model with weight and bias attributes.
-    """
-    attr_names = ['weight', 'bias']
-    for module in int8_model.modules():
-        for name in attr_names:
-            # to skip the entire model
-            if hasattr(module, name):
-                attr = getattr(module, name)
-                # to skip fp32 module
-                if callable(attr):
-                    tmp = attr()
-                    # to drop gradient
-                    if hasattr(tmp, 'data'):
-                        try:
-                            setattr(module, name, tmp.data)
-                        except:
-                            pass
-    return int8_model
-
-
 def append_attr(fx_model, model):
     """a helper method to append attributes for the symbolic traced model.
 

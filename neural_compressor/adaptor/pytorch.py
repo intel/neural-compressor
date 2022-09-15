@@ -1200,7 +1200,6 @@ class PyTorchAdaptor(TemplateAdaptor):
             from .torch_utils.bf16_convert import Convert
             q_model._model = Convert(q_model._model, self.tune_cfg)
 
-        torch_utils.util.method_2_attribute(q_model._model)
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
