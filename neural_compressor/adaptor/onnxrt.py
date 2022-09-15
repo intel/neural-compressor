@@ -23,7 +23,7 @@ from collections import OrderedDict
 from collections.abc import KeysView
 import yaml
 import numpy as np
-from distutils.version import StrictVersion
+from packaging.version import Version
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
@@ -36,8 +36,9 @@ import math
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
 ort_ext = LazyImport("onnxruntime_extensions")
-ONNXRT152_VERSION = StrictVersion("1.5.2")
-ONNXRT170_VERSION = StrictVersion("1.7.0")
+ONNXRT152_VERSION = Version("1.5.2")
+ONNXRT170_VERSION = Version("1.7.0")
+ONNXRT112_VERSION = Version("1.12.0")
 
 logger = logging.getLogger()
 
@@ -94,7 +95,7 @@ class ONNXRTAdaptor(Adaptor):
         """
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
         model = self.pre_optimized_model if self.pre_optimized_model else model
-        ort_version = StrictVersion(ort.__version__)
+        ort_version = Version(ort.__version__)
         if ort_version < ONNXRT152_VERSION: # pragma: no cover
             logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")
             return model
@@ -215,7 +216,7 @@ class ONNXRTAdaptor(Adaptor):
         """
         self._pre_optimize(model)
         model = self.pre_optimized_model
-        ort_version = StrictVersion(ort.__version__)
+        ort_version = Version(ort.__version__)
         if ort_version < ONNXRT152_VERSION: # pragma: no cover
             logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")
             return model
@@ -287,8 +288,8 @@ class ONNXRTAdaptor(Adaptor):
                 else:
                     origin_op_type = node.op_type.split('Integer')[0]
 
-                if origin_op_type == "QAttention":
-                    origin_op_type = "Attention"
+                if origin_op_type in ["QAttention", "QGemm"]:
+                    origin_op_type = origin_op_type[1:]
                 elif origin_op_type == "DynamicQuantizeLSTM":
                     origin_op_type = "LSTM"
                 elif origin_op_type == "QEmbedLayerNormalization":
@@ -393,6 +394,13 @@ class ONNXRTAdaptor(Adaptor):
                     self.quantize_config[node_name]['weight']['scheme'],
                     scale_value,
                     zo_value)
+            elif (Version(ort.__version__) >= ONNXRT112_VERSION and \
+                model.model.opset_import[0].version < 13) and \
+                len(scale_tensor.dims) in [1, 2]:
+                logger.warning("Skip setting per-channel quantized tensor {}, please " \
+                    "use onnxruntime < 1.12.0 or upgrade model opset version to 13 or " \
+                    "higher".format(tensor_name))
+                return model
             else:
                 new_tensor_value = quantize_data_per_channel(
                     tensor_value,
@@ -915,17 +923,18 @@ class ONNXRTQuery(QueryBackendCapability):
         Returns:
             [dictionary]: the content for specific version.
         """
+        from functools import cmp_to_key
         config = None
 
         def _compare(version1, version2):
-            if StrictVersion(version1) == StrictVersion(version2):
+            if Version(version1[0]) == Version(version2[0]):
                 return 0
-            elif StrictVersion(version1) < StrictVersion(version2):
+            elif Version(version1[0]) < Version(version2[0]):
                 return -1
             else:
                 return 1
 
-        extended_cfgs = {}
+        extended_cfgs = []
         for sub_data in data:
             if 'default' in sub_data['version']['name']:
                 assert config == None, "Only one default config " \
@@ -936,11 +945,11 @@ class ONNXRTQuery(QueryBackendCapability):
                 [sub_data['version']['name']]
             for version in versions:
                 if version != 'default':
-                    extended_cfgs[version] = sub_data
-                
-        extended_cfgs = sorted(extended_cfgs.items(), key=lambda x:x[0], reverse=True)
+                    extended_cfgs.append((version, sub_data))
+
+        extended_cfgs = sorted(extended_cfgs, key=cmp_to_key(_compare), reverse=True)
         for k, v in extended_cfgs:
-            if StrictVersion(self.version) >= StrictVersion(k):
+            if Version(self.version) >= Version(k):
                 config = v
                 break
 

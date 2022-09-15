@@ -30,11 +30,13 @@ import onnx
 import onnxruntime
 import onnx.numpy_helper as numpy_helper
 from onnx import helper, TensorProto, shape_inference
-from distutils.version import StrictVersion
+from packaging.version import Version
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed
 
 logger = logging.getLogger()
-ONNX18_VERSION = StrictVersion("1.8.0")
+ONNX18_VERSION = Version("1.8.0")
+ORT112_VERSION = Version("1.12.0")
 
 class ONNXRTAugment:
     '''augment input model to dump tensor or for calibration'''
@@ -57,6 +59,9 @@ class ONNXRTAugment:
         '''
         self.model_wrapper = model_wrapper
         self.model = model_wrapper.model
+        ai_onnx_domain = [opset for opset in self.model.opset_import \
+            if not opset.domain or opset.domain == "ai.onnx"]
+        self.opset_version = ai_onnx_domain[0].version
         self.dataloader = dataloader
         self.dump_op_types = dump_op_types
         self.black_nodes = black_nodes
@@ -69,6 +74,7 @@ class ONNXRTAugment:
         self.already_quantized = 'DequantizeLinear' in \
                                  [node.op_type for node in self.model.graph.node]
         self.dynamically_quantized = False
+        self.ort_version = Version(onnxruntime.__version__)
 
     def augment_graph(self, activation_only=False, weight_only=False):
         '''
@@ -79,10 +85,16 @@ class ONNXRTAugment:
         :return: augmented ONNX model
         '''
         self.dequantized_output.clear()
-        onnx_version = StrictVersion(onnx.__version__)
+        onnx_version = Version(onnx.__version__)
         if onnx_version < ONNX18_VERSION:
             logger.warning("Static quantization for NLP model is supported " \
                            "at onnx 1.8.0 and newer.")  
+        if self.already_quantized and any([i.dims in [1, 2] for i in \
+            self.model_wrapper.initializer() if i.name.endswith('_scale')]):
+            if self.opset_version < 13 and self.ort_version >= ORT112_VERSION:
+                logger.warning("Please use onnxruntime < 1.12.0 or upgrade model opset " \
+                    "version to 13 or higher to inspect per-channel quantized weight") 
+ 
         model = copy.deepcopy(self.model)
         model_nodes_names = [node.name for node in model.graph.node]
 
@@ -183,6 +195,7 @@ class ONNXRTAugment:
                             tensor.endswith('_QuantizeLinear') or \
                             tensor.endswith('_QuantizeInput_quantized'):
                             continue 
+
                         if not self.dynamically_quantized:
                             tensor = tensor.replace('_QuantizeInput', '_quantized') if \
                                 tensor.endswith('_QuantizeInput') else tensor
@@ -195,10 +208,11 @@ class ONNXRTAugment:
                         if scale:
                             # the tensor is in INT8 dtype
                             nodes, output = self._dequantize(tensor, scale, zero_point)
-                            added_nodes.extend(nodes)
-                            added_outputs.append(helper.make_tensor_value_info(
-                                               output, # pylint: disable=no-member
-                                               TensorProto.FLOAT, ())) # pylint: disable=no-member
+                            if output:
+                                added_nodes.extend(nodes)
+                                added_outputs.append(helper.make_tensor_value_info(
+                                                   output, # pylint: disable=no-member
+                                                   TensorProto.FLOAT, ())) # pylint: disable=no-member
                         else:
                             # the tensor is in FP32 dtype
                             if tensor not in [t.name for t in model.graph.output]:
@@ -290,9 +304,23 @@ class ONNXRTAugment:
         if len(scale_tensor.dims) in [1, 2] and weight_tensor.dims[0] == max(scale_tensor.dims):
             logger.debug("weight {} is quantized with per channel granularity."
                          .format(weight_tensor_name))
-            added_nodes, added_output = self._add_dequantize_transpose_node(
-                                                                     weight_tensor_name, \
-                                                                     scale_tensor, zo_tensor)
+            if self.opset_version < 13 and self.ort_version >= ORT112_VERSION:
+                logger.warning("Skip dequantizing weight {}, please use onnxruntime < 1.12.0 " \
+                    "or upgrade model opset version to 13 or higher".format(weight_tensor_name))
+                return [], None
+            node = self.model_wrapper.input_name_to_nodes[weight_tensor_name][0]
+            if 'Conv' in node.op_type or \
+                ('Gemm' in node.op_type and is_B_transposed(node)):
+                added_nodes, added_output = self._add_dequantize_transpose_node(
+                                                                 weight_tensor_name,
+                                                                 scale_tensor, zo_tensor,
+                                                                 len(weight_tensor.dims))
+            else:
+                added_nodes, added_output = self._add_dequantize_node(
+                    weight_tensor_name, 
+                    scale_tensor,
+                    zo_tensor,
+                    axis=1 if self.opset_version > 12 else None)
         else:
             added_nodes, added_output = self._add_dequantize_node(weight_tensor_name, 
                                                                  scale_tensor,\
@@ -300,37 +328,35 @@ class ONNXRTAugment:
         self.dequantized_output[added_output] = weight_tensor_name
         return added_nodes, added_output
 
-    def _add_dequantize_node(self, tensor_name, scale_tensor, zo_tensor):
+    def _add_dequantize_node(self, tensor_name, scale_tensor, zo_tensor, axis=None):
         '''helper function to generate dequantize node'''
-        dequantize_node = onnx.helper.make_node(
-                                 'DequantizeLinear',
-                                 [tensor_name,
-                                  scale_tensor.name,
-                                  zo_tensor.name],
-                                 [tensor_name + '_output'],
-                                 name=tensor_name + '_DequantizeLinear')
+        dequantize_node = make_dquant_node(tensor_name + '_DequantizeLinear',
+                                           [tensor_name,
+                                           scale_tensor.name,
+                                           zo_tensor.name],
+                                           [tensor_name + '_output'],
+                                           axis)
         return [dequantize_node], tensor_name + '_output'
 
-    def _add_dequantize_transpose_node(self, tensor_name, scale_tensor, zo_tensor):
-        ''' conv weight is in OcIcHW, while dequantizelinear need IcOcHW '''
+    def _add_dequantize_transpose_node(self, tensor_name, scale_tensor, zo_tensor, dim):
         pre_transpose_node = onnx.helper.make_node(
                                  'Transpose',
                                  inputs=[tensor_name],
                                  outputs=[tensor_name + '_transposed'],
-                                 perm=(1,0,2,3),
+                                 perm=(1,0,2,3) if dim == 4 else (1,0),
                                  name=tensor_name + '_pre_transpose')
-        dequantize_node = onnx.helper.make_node(
-                                 'DequantizeLinear', 
+        dequantize_node = make_dquant_node(
+                                 tensor_name + '_DequantizeLinear',
                                  [tensor_name + '_transposed', 
                                   scale_tensor.name, 
                                   zo_tensor.name], 
                                  [tensor_name + '_DequantizeLinear'], 
-                                 name=tensor_name + '_DequantizeLinear')
+                                 axis=1 if self.opset_version > 12 else None)
         post_transpose_node = onnx.helper.make_node(
                                  'Transpose',
                                  inputs=[tensor_name + '_DequantizeLinear'],
                                  outputs=[tensor_name + '_output'],
-                                 perm=(1,0,2,3),
+                                 perm=(1,0,2,3) if dim == 4 else (1,0),
                                  name=tensor_name + '_post_transpose')
         added_nodes = [pre_transpose_node, dequantize_node, post_transpose_node]
         return added_nodes, tensor_name + '_output'

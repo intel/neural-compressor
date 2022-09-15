@@ -43,7 +43,6 @@ from neural_compressor.model.onnx_model import ONNXModel
 
 logger = logging.getLogger()
 
-
 class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,
                  op_types_to_quantize, fallback_list=['fp32']):
@@ -108,7 +107,7 @@ class Quantizer:
             opset_version = 11
 
         if opset_version < 13 and self.mode == 'qdq':
-            logger.warning("Per-Channel support with QDQ format requires onnx opset >= 13," \
+            logger.warning("Per-channel support with QDQ format requires opset version >= 13," \
                 " use per-tensor granularity instead")
         return opset_version
 
@@ -572,8 +571,14 @@ class Quantizer:
             _, quant_value = self.quantize_bias(bias_name, input_name, weight_name, beta)
             self.model.remove_initializer(find_by_name(bias_name, self.model.initializer()))
             inputs = [quant_value.q_name, quant_value.scale_name, quant_value.zp_name]
-            dequant_node = onnx.helper.make_node("DequantizeLinear", inputs, 
-                [bias_name + '_dequantized'], bias_name + '_DequantizeLinear')
+            axis = None
+            if find_by_name(weight_name + '_DequantizeLinear', self.new_nodes):
+                dq_node = find_by_name(weight_name + '_DequantizeLinear', self.new_nodes)
+                if dq_node.op_type == 'DequantizeLinear' and \
+                    find_by_name('axis', dq_node.attribute):
+                    axis = find_by_name('axis', dq_node.attribute).i
+            dequant_node = make_dquant_node(bias_name + '_DequantizeLinear', inputs, 
+                [bias_name + '_dequantized'], axis)
             self.new_nodes.append(dequant_node)
             self.replace_input.append([find_by_name(node.name, self.model.nodes()), 
                 bias_name, bias_name + '_dequantized'])
@@ -696,7 +701,7 @@ class Quantizer:
                         [weight_name, scale_name, zp_name], [weight_name + "_quantized"])
                 dequant_node = make_dquant_node(weight_name + "_DequantizeLinear",
                             [weight_name + "_quantized", scale_name, zp_name], 
-                            [weight_name + "_dequantized"])
+                            [weight_name + "_dequantized"], axis)
                 self.replace_input.append([node, weight_name, dequant_node.output[0]])
                 self.new_nodes.extend([qlinear_node, dequant_node])
             else:
@@ -706,7 +711,7 @@ class Quantizer:
                                                                                axis)
                 inputs = [q_name, scale_name, zp_name]
                 dequant_node = make_dquant_node(weight_name + '_DequantizeLinear',
-                    [q_name, scale_name, zp_name], [weight_name + "_dequantized"])
+                    [q_name, scale_name, zp_name], [weight_name + "_dequantized"], axis)
                 self.new_nodes.append(dequant_node)
 
                 # Replace weight_name with output of DequantizeLinear

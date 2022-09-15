@@ -246,7 +246,8 @@ class ONNXModel(BaseModel):
 
         #TODO check if scale_tensor and zero_point is needed
         # for bias of qlinearconv, scale and zero_point is not needed
-        if node.op_type == 'QLinearConv' and tensor == node.input[-1]:
+        if (node.op_type == 'QLinearConv' and tensor == node.input[-1]) or \
+            (node.op_type == 'QGemm' and tensor == node.input[-3]):
             pass
         else:
             assert scale_tensor, 'missing scale for tensor {}'.format(tensor)

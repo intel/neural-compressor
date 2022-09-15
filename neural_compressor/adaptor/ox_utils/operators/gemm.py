@@ -19,14 +19,9 @@
 import onnx
 from .base_operator import QuantOperatorBase
 from .qdq_base_operator import QDQOperatorBase
-from neural_compressor.adaptor.ox_utils.util import find_by_name, ms_domain, attribute_to_kwarg
+from neural_compressor.adaptor.ox_utils.util import find_by_name, ms_domain, \
+    attribute_to_kwarg, is_B_transposed
 
-
-def is_B_transposed(node):
-    transB = [attr for attr in node.attribute if attr.name == "transB"]
-    if len(transB):
-        return 0 < onnx.helper.get_attribute_value(transB[0])
-    return False
 
 '''
     Used when quantize mode is QuantizationMode.QLinearOps
@@ -48,8 +43,9 @@ class QLinearGemm(QuantOperatorBase):
         child = self.quantizer.model.get_children(node)[0]
         qgemm_output = child.output[0]
         qgemm_inputs = []
-        for parent in parents:
+        for parent in parents[:-1]:
             qgemm_inputs.extend(parent.input)
+        qgemm_inputs.append(parents[-1].input[0])
         qgemm_inputs.extend(child.input[1:])
 
         kwargs = {}

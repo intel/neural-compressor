@@ -68,8 +68,17 @@ class QuantType(Enum): # pragma: no cover
 def make_quant_node(name, inputs, outputs):
     return helper.make_node("QuantizeLinear", inputs, outputs, name)
 
-def make_dquant_node(name, inputs, outputs):
-    return helper.make_node("DequantizeLinear", inputs, outputs, name)
+def make_dquant_node(name, inputs, outputs, axis=None):
+    if axis is not None:
+        return helper.make_node("DequantizeLinear", inputs, outputs, name, axis=axis)
+    else:
+        return helper.make_node("DequantizeLinear", inputs, outputs, name)
+
+def is_B_transposed(node):
+    transB = [attr for attr in node.attribute if attr.name == "transB"]
+    if len(transB):
+        return 0 < helper.get_attribute_value(transB[0])
+    return False
 
 def _get_qrange_for_qType(qType, reduce_range=False):
     '''
