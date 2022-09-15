@@ -1,5 +1,0 @@
-{
-  "packageManager": "python",
-  "packageName": "neural-compressor-ext-lab",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package Neural_Coder"
-}

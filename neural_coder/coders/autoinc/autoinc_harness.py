@@ -199,6 +199,7 @@ class AutoInc_Harness(object):
                                     trans_insert_location = i + i_search
                         trans_insert_location = min(max(trans_insert_location, put_below_idx), put_above_idx)
                     elif file_path_idx == 0 and domain_ == 'torchvision':
+                        trans_insert_location = 1
                         for i in range(len(lines)):
                             line = lines[i]
                             if "val_loader" in line and "aux_val_loader" not in line \

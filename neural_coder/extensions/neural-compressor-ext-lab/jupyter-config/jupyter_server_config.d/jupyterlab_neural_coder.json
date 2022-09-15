@@ -1,7 +1,0 @@
-{
-  "ServerApp": {
-    "jpserver_extensions": {
-      "neural-compressor-ext-lab": true
-    }
-  }
-}
