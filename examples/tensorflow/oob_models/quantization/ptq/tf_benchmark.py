@@ -103,15 +103,26 @@ def run_benchmark(model_details, args, find_graph_def):
         total_time = 0.0
         reps_done = 0
         for rep in range(args.num_iter):
+            feed_dict = {graph.get_tensor_by_name("g/" + in_name + ":0"): model_details['input'][in_name]
+                            for in_name in model_details['input']}
             if rep < args.num_warmup:
-                _ = sess.run(output_dict)
+                if 'wavenet' in args.model_path:
+                    _ = sess.run(output_dict, feed_dict=feed_dict)
+                else:
+                    _ = sess.run(output_dict)
                 continue
             start = time.time()
 
             if args.profile:
-                _ = sess.run(output_dict, options=run_options, run_metadata=run_metadata)
+                if 'wavenet' in args.model_path:
+                    _ = sess.run(output_dict, feed_dict=feed_dict, options=run_options, run_metadata=run_metadata)
+                else:
+                    _ = sess.run(output_dict, options=run_options, run_metadata=run_metadata)
             else:
-                _ = sess.run(output_dict)
+                if 'wavenet' in args.model_path:
+                    _ = sess.run(output_dict, feed_dict=feed_dict)
+                else:
+                    _ = sess.run(output_dict)
 
             end = time.time()
             delta = end - start

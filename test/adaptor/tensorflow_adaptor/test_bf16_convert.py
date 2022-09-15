@@ -14,7 +14,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
           outputs: final
         device: cpu
@@ -33,6 +33,32 @@ def build_fake_yaml():
               path: saved
         '''
     with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
+        f.write(fake_yaml)
+    f.close()
+
+def build_newapi_fake_yaml():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: inteltensorflow
+          inputs: input
+          outputs: final
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+            strategy:
+              name: basic
+            exit_policy:
+              max_trials: 2
+            accuracy_criterion:
+              relative: 0.01
+            workspace:
+              path: saved
+        '''
+    with open('newapi_fake_yaml.yaml',"w",encoding="utf-8") as f:
         f.write(fake_yaml)
     f.close()
 
@@ -283,14 +309,17 @@ class TestBF16Convert(unittest.TestCase):
         self.test_graph = create_test_graph()
         self.test_fp32_graph = create_test_graph(False)
         build_fake_yaml()
+        build_newapi_fake_yaml()
         build_fake_bf16_rnn_yaml()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+        os.remove('newapi_fake_yaml.yaml')
         os.remove('fake_bf16_rnn.yaml')
         shutil.rmtree("saved", ignore_errors=True)
-        
+    
+    @unittest.skipIf("2.10.020" in tf.version.VERSION, "Not supports newAPI feature")
     def test_bf16_transpose_b_matmul(self):
         from tensorflow.core.framework import attr_value_pb2
         os.environ['FORCE_BF16'] = '1'
@@ -316,7 +345,7 @@ class TestBF16Convert(unittest.TestCase):
                 quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
                 quantizer.model = float_graph_def
-                output_graph = quantizer.fit()        
+                output_graph = quantizer.fit()
                 for i in output_graph.graph_def.node:
                     if i.op == 'MatMul' and i.attr["T"] == DT_BFLOAT16:
                         is_bf16 = True
@@ -351,7 +380,7 @@ class TestBF16Convert(unittest.TestCase):
         os.environ['FORCE_BF16'] = '1'
         os.environ['MIX_PRECISION_TEST'] = '1'
         from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('fake_yaml.yaml')
+        quantizer = Quantization('newapi_fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
