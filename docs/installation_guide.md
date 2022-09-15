@@ -19,12 +19,18 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install neural-compressor
   # install stable full version from pip (including GUI)
   pip install neural-compressor-full
-
+  ```
+  ```Shell
+  # install nightly version
+  git clone https://github.com/intel/neural-compressor.git
+  cd neural-compressor
+  pip install -r requirements.txt
   # install nightly basic version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
   # install nightly full version from pip (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
-
+  ```
+  ```Shell
   # install stable basic version from from conda
   conda install neural-compressor -c conda-forge -c intel
   # install stable full version from from conda (including GUI)

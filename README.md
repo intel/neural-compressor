@@ -28,21 +28,22 @@ Intel® Neural Compressor has been one of the critical AI software components in
 - Python version: 3.7 or 3.8 or 3.9 or 3.10
 
 **Install on Linux**
+- Release binary install 
   ```Shell
   # install stable basic version from pip
   pip install neural-compressor
-  # install stable full version from pip (including GUI)
+  # Or install stable full version from pip (including GUI)
   pip install neural-compressor-full
-
+  ```
+- Nightly binary install
+  ```Shell
+  git clone https://github.com/intel/neural-compressor.git
+  cd neural-compressor
+  pip install -r requirements.txt
   # install nightly basic version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # install nightly full version from pip (including GUI)
+  # Or install nightly full version from pip (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
-
-  # install stable basic version from from conda
-  conda install neural-compressor -c conda-forge -c intel
-  # install stable full version from from conda (including GUI)
-  conda install neural-compressor-full -c conda-forge -c intel  
   ```
 More installation methods can be found at [Installation Guide](./docs/installation_guide.md). Please check out our [FAQ](./docs/faq.md) for more details.
 
@@ -194,8 +195,9 @@ More details for validated models are available [here](docs/validated_model_list
     <tr>
         <td colspan="2" align="center"><a href="docs/Quantization.md">Quantization</a></td>
         <td colspan="1" align="center"><a href="docs/pruning.md">Pruning</a> <a href="docs/sparsity.md">(Sparsity)</a> </td> 
-        <td colspan="3" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
-        <td colspan="3" align="center"><a href="docs/mixed_precision.md">Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
+        <td colspan="2" align="center"><a href="docs/mixed_precision.md">Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="docs/orchestration.md">Orchestration</a></td>
     </tr>
     <tr>
         <td colspan="2" align="center"><a href="docs/benchmark.md">Benchmarking</a></td>
