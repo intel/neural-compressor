@@ -89,9 +89,10 @@
 
 .hw-info-button {
   float: right;
-  color: $light-gray;
-  background-color: $dark-gray;
-  margin-right: 10px;
+  color: $darker-gray;
+  background-color: $light-gray;
+  margin-top: 15px;
+  margin-right: 5px;
 }
 
 .hw-info-img {
@@ -120,7 +121,4 @@
     width: 300px;
   }
 
-  .hw-info-button {
-    margin-right: 0px;
-  }
 }

@@ -30,7 +30,6 @@ export class ProjectComponent implements OnInit {
   is_pytorch = false;
   projectId;
   selectedTab = 0;
-  datasetTour;
   tabs = ['optimizations', 'benchmarks', 'profiling', 'datasets', 'diagnosis', 'info'];
 
   constructor(

@@ -65,7 +65,9 @@
         src="./../../assets/016-edit.svg">
     </td>
     <td class="center">
-      <mat-checkbox [(ngModel)]="comparison[benchmark.id]" (click)="$event.stopPropagation();"></mat-checkbox>
+      <mat-checkbox [disabled]="!benchmark.result" [(ngModel)]="comparison[benchmark.id]"
+        (click)="$event.stopPropagation();">
+      </mat-checkbox>
     </td>
   </tr>
 </table>
@@ -91,7 +93,7 @@
     <p>
       <ngx-charts-bar-vertical-2d *ngIf="throughputData" [view]="view" [scheme]="customColor"
         [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
-        [results]="throughputData">
+        [yAxisLabel]="'FPS'" [results]="throughputData">
       </ngx-charts-bar-vertical-2d>
     </p>
     <ngx-charts-legend class="chart-legend" [data]="throughputLegend" [title]="'Legend'" [colors]="throughputColors">
@@ -104,7 +106,7 @@
     <p>
       <ngx-charts-bar-vertical-2d *ngIf="accuracyData" [view]="view" [scheme]="customColor"
         [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
-        [results]="accuracyData">
+        [yAxisLabel]="'%'" [results]="accuracyData">
       </ngx-charts-bar-vertical-2d>
     </p>
     <ngx-charts-legend class="chart-legend" [data]="accuracyLegend" [title]="'Legend'" [colors]="accuracyColors">

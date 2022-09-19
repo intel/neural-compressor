@@ -34,7 +34,8 @@ export class ProjectFormComponent implements OnInit {
   showSpinner = false;
   showGraphButton = false;
   showDomain = false;
-  showExamples = true;
+  showExamples = false;
+  predefined = true;
   showShapeWarning: boolean;
 
   projectFormGroup: FormGroup;
@@ -184,6 +185,12 @@ export class ProjectFormComponent implements OnInit {
       .subscribe(
         (resp: { domains: any }) => this.domains = resp.domains,
         error => this.modelService.openErrorDialog(error));
+  }
+
+  getExamples(event?) {
+    if (!event || event.selectedIndex === 2) {
+      this.showExamples = this.predefined;
+    }
   }
 
   setFormValues() {

@@ -264,12 +264,14 @@ def get_module_version(module_name: str) -> str:
         f"import {module_name} as module; print(module.__version__)",
     ]
     proc = Proc()
-    proc.run(args=command)
+    proc.run(args=command, ignore_exit_codes=[0, 1])
     if proc.is_ok:
         for line in proc.output:
             version = line.strip()
     proc.remove_logs()
-    if version is None:
+    try:
+        version = str(parse_version(version))
+    except Exception:
         raise ClientErrorException(f"Could not found version of {module_name} module.")
     return version
 
@@ -633,3 +635,25 @@ def export_to_csv(data: List[dict], file: str) -> None:
         writer.writeheader()
         for entry in data:
             writer.writerow(entry)
+
+
+def parse_version(string_version: Optional[str]) -> str:
+    """Parse module version."""
+    if string_version is None:
+        raise InternalException("Missing version to parse.")
+    regex = r"^(?P<major>\d+)\.?(?P<minor>\d+)?\.?(?P<patch>\d+)?\.?(?P<postfix>.*)$"
+    match = re.match(regex, string_version)
+    if match is None:
+        raise InternalException("Could not parse version.")
+    search_result = match.groupdict()
+    version_order = ["major", "minor", "patch"]
+    version_list = []
+    for version_component in version_order:
+        ver = search_result.get(version_component, None)
+        if ver is not None:
+            version_list.append(ver)
+    version = ".".join(version_list)
+
+    if version == "":
+        raise InternalException("Could not parse version.")
+    return version

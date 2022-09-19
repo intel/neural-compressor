@@ -238,14 +238,14 @@ export class BenchmarksComponent implements OnInit {
 
     if (accuracySeries.length) {
       this.accuracyData = [{
-        name: 'Accuracy [%]',
+        name: 'Accuracy',
         series: accuracySeries
       }];
     }
 
     if (throughputSeries.length) {
       this.throughputData = [{
-        name: 'Throughput [FPS]',
+        name: 'Throughput',
         series: throughputSeries
       }];
     }

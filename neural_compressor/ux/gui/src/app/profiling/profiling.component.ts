@@ -52,7 +52,7 @@ export class ProfilingComponent implements OnInit {
   profilingData = [];
   profilingDataHeaders = [];
   profilingChartData = [{
-    name: 'Profiling',
+    name: 'node',
     series: []
   }];
   showChart = false;

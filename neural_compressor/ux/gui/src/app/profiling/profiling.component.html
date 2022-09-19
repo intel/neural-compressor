@@ -73,8 +73,9 @@
   <div class="item chart-div">
     <h2>Total execution time comparison</h2>
     <ngx-charts-bar-vertical-2d class="inline" [view]="viewLine" [scheme]="customColor"
-      [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
-      [results]="profilingChartData" [showDataLabel]=true [legend]="true">
+      [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [showYAxisLabel]="showYAxisLabel"
+      yAxisLabel="μs" [xAxis]="xAxis" [yAxis]="yAxis" [results]="profilingChartData" [showDataLabel]=true
+      [legend]="true">
     </ngx-charts-bar-vertical-2d>
   </div>
   <br>

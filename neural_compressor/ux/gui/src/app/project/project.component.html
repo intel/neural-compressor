@@ -69,7 +69,7 @@
           Datasets
         </div>
       </ng-template>
-      <ng-template #datasetsTour *ngIf="!is_pytorch">
+      <ng-template #datasetTour>
         Add new datasets to experiment with the model.
       </ng-template>
       <app-datasets *ngIf="!is_pytorch" [framework]="project['input_model']['framework']['name']"

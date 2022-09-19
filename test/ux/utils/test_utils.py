@@ -25,6 +25,7 @@ from neural_compressor.ux.utils.consts import DomainFlavours, Domains, Framework
 from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
+    InternalException,
     NotFoundException,
 )
 from neural_compressor.ux.utils.utils import (
@@ -44,6 +45,7 @@ from neural_compressor.ux.utils.utils import (
     load_transforms_config,
     normalize_string,
     parse_to_string_list,
+    parse_version,
     release_tag,
     verify_file_path,
 )
@@ -687,6 +689,36 @@ class TestUtils(unittest.TestCase):
         string = "/Some string with extra / characters: éèà'çëöāãñę"
         result = normalize_string(string)
         self.assertEqual(result, "some_string_with_extra_characters_eeaceoaane")
+
+    def test_parse_version(self) -> None:
+        """Test parsing version from string."""
+        string_version = "1.2.3+cpu"
+        result = parse_version(string_version)
+        self.assertEqual(result, "1.2.3")
+
+    def test_parse_version_exception(self) -> None:
+        """Test parsing version from string."""
+        string_version = "ModuleNotFoundError: No module named 'module'"
+        with self.assertRaisesRegex(InternalException, "Could not parse version."):
+            parse_version(string_version)
+
+    def test_parse_version_none(self) -> None:
+        """Test parsing version from None."""
+        string_version = None
+        with self.assertRaisesRegex(InternalException, "Missing version to parse."):
+            parse_version(string_version)
+
+    def test_parse_version_without_patch(self) -> None:
+        """Test parsing version from string."""
+        string_version = "4.5"
+        result = parse_version(string_version)
+        self.assertEqual(result, "4.5")
+
+    def test_parse_version_without_minor(self) -> None:
+        """Test parsing version from string."""
+        string_version = "6"
+        result = parse_version(string_version)
+        self.assertEqual(result, "6")
 
 
 if __name__ == "__main__":
