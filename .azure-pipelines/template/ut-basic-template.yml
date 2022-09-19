@@ -1,0 +1,56 @@
+parameters:
+- name: UPLOAD_PATH
+  type: string 
+- name: dockerTemplate
+  type: string
+  default: 'commonDockerTemplate'
+- name: dockerTemplateRepoName
+  type: string
+  default: 'neural-compressor'
+- name: dockerTemplateRepoTag
+  type: string
+  default: 'py38' 
+- name: dockerTemplateFileName
+  type: string
+  default: 'Dockerfile'     
+- name: dockerTemplateContainerConfigName
+  type: string
+  default: 'commonContainer'   
+- name: dockerTemplateContainerName
+  type: string 
+- name: utScriptFileName
+  type: string      
+- name: utArtifact
+  type: string 
+ 
+
+steps:
+  - ${{ if eq(parameters.dockerTemplate, 'commonDockerTemplate') }}:
+    - template: docker-template.yml
+      parameters:
+        repoName: ${{ parameters.dockerTemplateRepoName }}
+        repoTag: ${{ parameters.dockerTemplateRepoTag }}
+        dockerFileName: ${{ parameters.dockerTemplateFileName }}
+        containerConfigName: ${{ parameters.dockerTemplateContainerConfigName }}
+        containerName: ${{ parameters.dockerTemplateContainerName }}
+
+  - ${{ if eq(parameters.dockerTemplate, 'baseDockerTemplate') }}:
+    - template: base-docker-template.yml
+      parameters:
+        repoName: ${{ parameters.dockerTemplateRepoName }}
+        repoTag: ${{ parameters.dockerTemplateRepoTag }}
+        dockerFileName: ${{ parameters.dockerTemplateFileName }}
+        containerConfigName: ${{ parameters.dockerTemplateContainerConfigName }}
+        containerName: ${{ parameters.dockerTemplateContainerName }}
+
+  - script: |
+      docker exec ${{ parameters.dockerTemplateContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+      && bash install_nc.sh \
+      && bash ut/${{ parameters.utScriptFileName }}.sh"
+    displayName: 'Install Neural Compressor and run UT'            
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: ${{ parameters.UPLOAD_PATH }}
+      artifact: ${{ parameters.utArtifact }}
+      publishLocation: 'pipeline'      

@@ -19,6 +19,7 @@ variables:
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: 'UT_coverage_report'
 
+
 stages:
 - stage: Adaptor
   displayName: Unit Test FWKs adaptor
@@ -26,42 +27,17 @@ stages:
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-      displayName: 'Clean workspace'
-
-    - checkout: self
-      displayName: "Checkout out Repo"
-
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
-
-    - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
-        && bash ut/run_basic_adaptor.sh"
-      displayName: 'Install Neural Compressor and run UT'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(UPLOAD_PATH)
-        artifact: 'ut-coverage-adaptor'
-        publishLocation: 'pipeline'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'commonDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'commonContainer'
+          dockerTemplateContainerName: 'adaptorContainer'
+          utScriptFileName: 'run_basic_adaptor'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-adaptor'
 
 - stage: TFNewAPI
   displayName: Unit Test tf newAPI
@@ -69,42 +45,17 @@ stages:
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-      displayName: 'Clean workspace'
-
-    - checkout: self
-      displayName: "Checkout out Repo"
-
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
-
-    - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
-        && bash ut/run_basic_adaptor_tfnewapi.sh"
-      displayName: 'Install Neural Compressor and run UT'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(UPLOAD_PATH)
-        artifact: 'ut-coverage-tfnewapi'
-        publishLocation: 'pipeline'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'commonDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'tfDatasetContainer'
+          dockerTemplateContainerName: 'TFNewAPIContainer'
+          utScriptFileName: 'run_basic_adaptor_tfnewapi'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-tfnewapi'
 
 - stage: IPEX
   displayName: Unit Test IPEX
@@ -112,39 +63,17 @@ stages:
   jobs:
   - job:
     steps:
-      - script: |
-          echo ${BUILD_SOURCESDIRECTORY}
-          sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-        displayName: 'Clean workspace'
-      - checkout: self
-        displayName: "Checkout out Repo"
-      - script: |
-          if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-              docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-          fi
-          docker images | grep -i ${IMAGE_NAME}
-          if [[ $? -ne 0 ]]; then
-            echo "NO Such Image ${IMAGE_NAME}"
-            exit 1
-          fi
-        displayName: "Build develop docker image"
-      - script: |
-          docker stop $(docker ps -aq)
-          docker rm -vf $(docker ps -aq) || true
-          env | sort
-        displayName: 'Clean docker'
-      - script: |
-          docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
-          bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-          && bash install_nc.sh \
-          && bash ut/run_basic_ipex.sh"
-        displayName: 'Install Neural Compressor and run UT'
-        
-      - task: PublishPipelineArtifact@1
-        inputs:
-          targetPath: $(UPLOAD_PATH)
-          artifact: 'ut-coverage-ipex'
-          publishLocation: 'pipeline'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'commonDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'tfDatasetContainer'
+          dockerTemplateContainerName: 'IPEXContainer'
+          utScriptFileName: 'run_basic_ipex'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-ipex'
 
 - stage: Others
   displayName: Unit Test other basic case
@@ -152,42 +81,17 @@ stages:
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-      displayName: 'Clean workspace'
-
-    - checkout: self
-      displayName: "Checkout out Repo"
-
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
-
-    - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
-        && bash ut/run_basic_others.sh"
-      displayName: 'Install Neural Compressor and run UT'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(UPLOAD_PATH)
-        artifact: 'ut-coverage-others'
-        publishLocation: 'pipeline'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'commonDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'tfDatasetContainer'
+          dockerTemplateContainerName: 'othersContainer'
+          utScriptFileName: 'run_basic_others'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-others'
 
 - stage: Adaptor_base
   displayName: Unit Test FWKs adaptor baseline
@@ -195,101 +99,35 @@ stages:
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-        sudo mkdir ${BUILD_SOURCESDIRECTORY}
-        sudo chmod 777 ${BUILD_SOURCESDIRECTORY}
-      displayName: 'Clean workspace'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'baseDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'commonContainer'
+          dockerTemplateContainerName: 'adaptorBaseContainer'
+          utScriptFileName: 'run_basic_adaptor'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-adaptor-base'          
 
-    - checkout: none
-      
-    - script: |
-        git clone https://github.com/VincyZhang/neural-compressor ${BUILD_SOURCESDIRECTORY}
-        git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
-        cd ${BUILD_SOURCESDIRECTORY}
-        git checkout master
-        #git fetch --tags --force --progress -- https://github.com/VincyZhang/neural-compressor +refs/heads/*:refs/remotes/origin/*
-      displayName: "Checkout out master"
-    
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
-
-    - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
-        && bash ut/run_basic_adaptor.sh"
-      displayName: 'Install Neural Compressor and run UT'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(UPLOAD_PATH)
-        artifact: 'ut-coverage-adaptor-base'
-        publishLocation: 'pipeline'
 - stage: TFNewAPI_base
   displayName: Unit Test tf newAPI baseline
   dependsOn: []
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-        sudo mkdir ${BUILD_SOURCESDIRECTORY}
-        sudo chmod 777 ${BUILD_SOURCESDIRECTORY}
-      displayName: 'Clean workspace'
-
-    - checkout: none
-    - script: |
-        git clone https://github.com/VincyZhang/neural-compressor ${BUILD_SOURCESDIRECTORY}
-        git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
-        cd ${BUILD_SOURCESDIRECTORY}
-        git checkout master
-        #git fetch --tags --force --progress -- https://github.com/VincyZhang/neural-compressor +refs/heads/*:refs/remotes/origin/*
-      displayName: "Checkout out master"
-
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
-
-    - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
-        && bash ut/run_basic_adaptor_tfnewapi.sh"
-      displayName: 'Install Neural Compressor and run UT'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(UPLOAD_PATH)
-        artifact: 'ut-coverage-tfnewapi-base'
-        publishLocation: 'pipeline'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'baseDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'tfDatasetContainer'
+          dockerTemplateContainerName: 'TFNewAPIBaseContainer'
+          utScriptFileName: 'run_basic_adaptor_tfnewapi'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-tfnewapi-base'        
 
 - stage: IPEX_base
   displayName: Unit Test IPEX baseline
@@ -297,145 +135,69 @@ stages:
   jobs:
   - job:
     steps:
-      - script: |
-          echo ${BUILD_SOURCESDIRECTORY}
-          sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-          sudo mkdir ${BUILD_SOURCESDIRECTORY}
-          sudo chmod 777 ${BUILD_SOURCESDIRECTORY}
-        displayName: 'Clean workspace'
-      - checkout: none
-      - script: |
-          git clone https://github.com/VincyZhang/neural-compressor ${BUILD_SOURCESDIRECTORY}
-          git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
-          cd ${BUILD_SOURCESDIRECTORY}
-          git checkout master
-          #git fetch --tags --force --progress -- https://github.com/VincyZhang/neural-compressor +refs/heads/*:refs/remotes/origin/*
-        displayName: "Checkout out master"
-      - script: |
-          if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-              docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-          fi
-          docker images | grep -i ${IMAGE_NAME}
-          if [[ $? -ne 0 ]]; then
-            echo "NO Such Image ${IMAGE_NAME}"
-            exit 1
-          fi
-        displayName: "Build develop docker image"
-      - script: |
-          docker stop $(docker ps -aq)
-          docker rm -vf $(docker ps -aq) || true
-          env | sort
-        displayName: 'Clean docker'
-      - script: |
-          docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
-          bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-          && bash install_nc.sh \
-          && bash ut/run_basic_ipex.sh"
-        displayName: 'Install Neural Compressor and run UT'
-        
-      - task: PublishPipelineArtifact@1
-        inputs:
-          targetPath: $(UPLOAD_PATH)
-          artifact: 'ut-coverage-ipex-base'
-          publishLocation: 'pipeline'
-
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'baseDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'tfDatasetContainer'
+          dockerTemplateContainerName: 'IPEXBaseContainer'
+          utScriptFileName: 'run_basic_ipex'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-ipex-base' 
+  
 - stage: Others_base
   displayName: Unit Test other cases baseline
   dependsOn: []
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-        sudo mkdir ${BUILD_SOURCESDIRECTORY}
-        sudo chmod 777 ${BUILD_SOURCESDIRECTORY}
-      displayName: 'Clean workspace'
-
-    - checkout: none
-    - script: |
-        git clone https://github.com/VincyZhang/neural-compressor ${BUILD_SOURCESDIRECTORY}
-        git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
-        cd ${BUILD_SOURCESDIRECTORY}
-        git checkout master
-        #git fetch --tags --force --progress -- https://github.com/VincyZhang/neural-compressor +refs/heads/*:refs/remotes/origin/*
-      displayName: "Checkout out master"
-
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
-
-    - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc.sh \
-        && bash ut/run_basic_others.sh"
-      displayName: 'Install Neural Compressor and run UT'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: $(UPLOAD_PATH)
-        artifact: 'ut-coverage-others-base'
-        publishLocation: 'pipeline'
+      - template: template/ut-basic-template.yml
+        parameters:
+          dockerTemplate: 'baseDockerTemplate'
+          dockerTemplateRepoName: 'neural-compressor'
+          dockerTemplateRepoTag: 'py38'
+          dockerTemplateFileName: 'Dockerfile'
+          dockerTemplateContainerConfigName: 'tfDatasetContainer'
+          dockerTemplateContainerName: 'othersBaseContainer'
+          utScriptFileName: 'run_basic_others'
+          UPLOAD_PATH: $(UPLOAD_PATH)
+          utArtifact: 'ut-coverage-others-base' 
 
 - stage: Coverage
   displayName: "Coverage Combine"
   dependsOn: [Adaptor, TFNewAPI, Others, IPEX, Adaptor_base, TFNewAPI_base, Others_base, IPEX_base]
   jobs:
-    - job: CollectDatafiles
-      displayName: collect coverage files
-      steps:
-        - script: |
-            echo ${BUILD_SOURCESDIRECTORY}
-            sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-            echo y | docker system prune
-          displayName: 'Clean  workspace'
-        - checkout: self
-          clean: true
-          displayName: 'Checkout out Repo'
-        - script: |
-            if [[ ! $(docker images | grep -i ${IMAGE_NAME}:${IMAGE_TAG}) ]]; then
-              docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-            fi
-            docker images | grep -i ${IMAGE_NAME}
-            if [[ $? -ne 0 ]]; then
-              echo "NO Such Image ${IMAGE_NAME}"
-              exit 1
-            fi
-          displayName: "Build Devel Images"
-        - script: |
-            docker stop $(docker ps -aq)
-            docker rm -vf $(docker ps -aq) || true
-          displayName: 'Clean Docker'
-        - task: DownloadPipelineArtifact@2
-          inputs:
-            artifact:
-            path: $(DOWNLOAD_PATH)
-        - script: |
-            echo "------ Collecting logs ------"
-            echo "--- create container ---"
-            docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
-            echo "--- docker ps ---"
-            docker ps
-            echo "--- collect logs ---"
-            docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
-            && bash install_nc.sh \
-            && bash ut/collect_log.sh"
-          displayName: 'collect logs'
-        - task: PublishPipelineArtifact@1
-          inputs:
-            targetPath: $(UPLOAD_PATH)
-            artifact: $(ARTIFACT_NAME)
-            publishLocation: 'pipeline'
+  - job: CollectDatafiles
+    steps:
+      - template: template/docker-template.yml
+        parameters:
+          repoName: 'neural-compressor'
+          repoTag: 'py38'
+          dockerFileName: 'Dockerfile'    
+          containerConfigName: ''
+          containerName: ''
+
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          artifact:
+          path: $(DOWNLOAD_PATH)
+
+      - script: |
+          echo "------ Collecting logs ------"
+          echo "--- create container ---"
+          docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
+          echo "--- docker ps ---"
+          docker ps
+          echo "--- collect logs ---"
+          docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
+          && bash install_nc.sh \
+          && bash ut/collect_log.sh"
+        displayName: 'collect logs'
+
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: $(UPLOAD_PATH)
+          artifact: $(ARTIFACT_NAME)
+          publishLocation: 'pipeline'

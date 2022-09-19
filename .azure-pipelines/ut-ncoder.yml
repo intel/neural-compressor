@@ -10,9 +10,10 @@ pr:
 
 pool: ICX-16C
 
-variables:
-  IMAGE_NAME: 'neural-compressor'
-  IMAGE_TAG: 'py38'
+parameters:
+- name: nCoderContainerName
+  type: string
+  default: 'nCoderContainer'
 
 stages:
 - stage:
@@ -20,34 +21,16 @@ stages:
   jobs:
   - job:
     steps:
-    - script: |
-        echo ${BUILD_SOURCESDIRECTORY}
-        sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-      displayName: 'Clean workspace'
-
-    - checkout: self
-      displayName: "Checkout out Repo"
-
-    - script: |
-        if [[ ! $(docker images | grep -i '${IMAGE_NAME}:${IMAGE_TAG}' ) ]]; then
-            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        fi
-        docker images | grep -i ${IMAGE_NAME}
-        if [[ $? -ne 0 ]]; then
-          echo "NO Such Image ${IMAGE_NAME}"
-          exit 1
-        fi
-      displayName: "Build develop docker image"
+      - template: template/docker-template.yml
+        parameters:
+          repoName: 'neural-compressor'
+          repoTag: 'py38'
+          dockerFileName: 'Dockerfile'
+          containerConfigName: 'commonContainer'
+          containerName: ${{ parameters.nCoderContainerName }}
 
     - script: |
-        docker stop $(docker ps -aq)
-        docker rm -vf $(docker ps -aq) || true
-        env | sort
-      displayName: 'Clean docker'
-
-    - script: |
-        docker run --disable-content-trust --privileged --name="pr" --hostname="pr-host" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${IMAGE_NAME}:${IMAGE_TAG} \
-        bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+        docker exec ${{ parameters.nCoderContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
         && bash install_nc_full.sh \
         && bash ut/run_ncoder.sh"
       displayName: 'Install Neural Compressor and run UT'

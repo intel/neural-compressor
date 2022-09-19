@@ -1,0 +1,67 @@
+
+parameters:
+- name: repoName
+  type: string
+  default: 'neural-compressor'
+- name: repoTag
+  type: string
+  default: 'py38'
+- name: dockerFileName
+  type: string
+  default: 'Dockerfile'
+- name: containerConfigName
+  type: string
+- name: containerName
+  type: string
+
+steps:
+- script: |
+    sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+    echo y | docker system prune
+  displayName: 'Clean workspace'
+
+- checkout: self
+  clean: true
+  displayName: 'Checkout out Repo'
+
+- script: |
+    if [[ ! $(docker images | grep -i ${{ parameters.repoName }}:${{ parameters.repoTag }}) ]]; then
+      docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t ${{ parameters.repoName }}:${{ parameters.repoTag }} .
+    fi
+    docker images | grep -i ${{ parameters.repoName }}
+    if [[ $? -ne 0 ]]; then
+      echo "NO Such Repo"
+      exit 1
+    fi
+  displayName: "Build develop docker image"
+  
+- script: |
+    docker stop $(docker ps -aq)
+    docker rm -vf $(docker ps -aq) || true
+  displayName: 'Clean Docker'
+ 
+- ${{ if eq(parameters.containerConfigName, 'commonContainer') }}:
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor ${{ parameters.repoName }}:${{ parameters.repoTag }}
+    displayName: "Docker run - commonContainer"
+
+- ${{ if eq(parameters.containerConfigName, 'modelContainer') }}:
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} --shm-size="2g" \
+        -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset -v /tf_dataset2:/tf_dataset2 ${{ parameters.repoName }}:${{ parameters.repoTag }}
+    displayName: "Docker run - modelContainer"
+
+- ${{ if eq(parameters.containerConfigName, 'tfDatasetContainer') }}:
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} \
+        -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset ${{ parameters.repoName }}:${{ parameters.repoTag }}
+    displayName: "Docker run - tfModelContainer"
