@@ -32,8 +32,6 @@ def update_dataloaders_params(
     """Update dataloaders' params."""
     framework_dataloaders = Dataloader.list_by_framework(db_session, framework_id)["dataloaders"]
 
-    print(f"{framework_dataloaders_config=}")
-
     for dataloader_to_update in dataloaders_to_update:
         dataloader_id: int = list(
             filter(
