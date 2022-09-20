@@ -584,7 +584,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         shutil.rmtree("./nc_workspace", ignore_errors=True)
 
     def test_ext_model(self):
-        os.system("python benchmark.py" )
+        import sys
+        if sys.version_info < (3,10):
+          os.system("python benchmark.py" )
 
     def test_adaptor_register(self):
         from neural_compressor.adaptor.adaptor import adaptor_registry
@@ -721,7 +723,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
                 adaptor.set_tensor(onnx.load("best_model.onnx"), 
                     {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
                 adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random(1)})
- 
+
+    def test_quantize_data_per_channel(self):
+        from neural_compressor.adaptor.ox_utils.util import quantize_data_per_channel
+        tensor_value = np.ones([2, 1])
+        qType = onnx_proto.TensorProto.INT8
+        scale_value = np.array([1, 1])
+        zo_value = np.array([0, 0])
+        new_tensor_value = quantize_data_per_channel(tensor_value, qType, 'sym', scale_value, zo_value)
+        self.assertEqual(tensor_value.all(), new_tensor_value.all())
+
+
     def test_adaptor(self):
         from neural_compressor.utils.constant import FP32, INT8_SYM_MINMAX_PERTENSOR, UINT8_ASYM_MINMAX_PERTENSOR
         conf.model.framework = 'onnxrt_qlinearops'

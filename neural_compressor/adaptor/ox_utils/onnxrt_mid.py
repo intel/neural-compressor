@@ -24,6 +24,7 @@
 
 import copy
 import logging
+import sys
 
 import numpy as np
 import onnx
@@ -239,9 +240,10 @@ class ONNXRTAugment:
         '''
 
         # conduct inference session and get intermediate outputs
-        from onnxruntime_extensions import get_library_path
         so = onnxruntime.SessionOptions()
-        so.register_custom_ops_library(get_library_path())
+        if sys.version_info < (3,10): # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            so.register_custom_ops_library(get_library_path())
 
         session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so)
 

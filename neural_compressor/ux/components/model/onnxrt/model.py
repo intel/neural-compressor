@@ -15,6 +15,7 @@
 """Onnxrt model class."""
 import os
 import re
+import sys
 from typing import Any, List, Optional
 
 from neural_compressor.experimental.common.model import Model as NCModel
@@ -216,7 +217,8 @@ class OnnxrtModel(Model):
         """Ensure all requirements are installed."""
         check_module("onnx")
         check_module("onnxruntime")
-        check_module("onnxruntime_extensions")
+        if sys.version_info < (3,10): # pragma: no cover
+            check_module("onnxruntime_extensions")
 
     @property
     def filtered_input_nodes(self) -> List[Any]:

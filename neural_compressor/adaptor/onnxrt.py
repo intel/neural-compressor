@@ -32,10 +32,12 @@ from neural_compressor.utils.utility import Statistics
 from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.conf.dotdict import deep_get
 import math
+import sys
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
-ort_ext = LazyImport("onnxruntime_extensions")
+if sys.version_info < (3,10): # pragma: no cover
+    ort_ext = LazyImport("onnxruntime_extensions")
 ONNXRT152_VERSION = Version("1.5.2")
 ONNXRT170_VERSION = Version("1.7.0")
 ONNXRT112_VERSION = Version("1.12.0")
@@ -444,7 +446,8 @@ class ONNXRTAdaptor(Adaptor):
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        sess_options.register_custom_ops_library(ort_ext.get_library_path())
+        if sys.version_info < (3,10): # pragma: no cover 
+            sess_options.register_custom_ops_library(ort_ext.get_library_path())
         _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
@@ -713,7 +716,8 @@ class ONNXRTAdaptor(Adaptor):
         try:
             session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         except:
-            sess_options.register_custom_ops_library(ort_ext.get_library_path())
+            if sys.version_info < (3,10): # pragma: no cover 
+                sess_options.register_custom_ops_library(ort_ext.get_library_path())
             session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         results = []
         if metrics:

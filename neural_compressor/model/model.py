@@ -22,6 +22,7 @@ import importlib
 from collections import OrderedDict
 from abc import abstractmethod
 import tempfile
+import sys
 from neural_compressor.utils.utility import LazyImport, compute_sparsity, get_backend
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
@@ -127,9 +128,10 @@ def get_model_fwk_name(model):
     """
     def _is_onnxruntime(model):
         try:
-            from onnxruntime_extensions import get_library_path
             so = ort.SessionOptions()
-            so.register_custom_ops_library(get_library_path())
+            if sys.version_info < (3,10): # pragma: no cover
+                from onnxruntime_extensions import get_library_path
+                so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
                 ort.InferenceSession(model, so)
             else:
