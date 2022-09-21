@@ -1012,13 +1012,23 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertEqual(q_model, None)
 
+        import time
+        result = [[0., 0.], [0., 0.], [0., 122.]]
+        def sub_eval(model, result):
+            time.sleep(0.001 * len(result))
+            del result[0]
+            return result[0]
+
+        def eval(model):
+            return sub_eval(model, result)
+
         conf.evaluation.accuracy.multi_metrics = {
             'Accuracy': {}, 'MSE': {'compare_label': False}, 'higher_is_better': [False, False]}
         conf.tuning.exit_policy.max_trials = 1
         conf.tuning.accuracy_criterion = {'absolute': 0.01, 'higher_is_better': False}
         from neural_compressor.experimental import Quantization
         quantizer = Quantization(conf)
-        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.eval_func = eval
         quantizer.calib_dataloader = self.cv_dataloader
         quantizer.model = self.rn50_model
         q_model = quantizer.fit()
