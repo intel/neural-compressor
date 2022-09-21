@@ -3135,7 +3135,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # get scale and zero_point of modules.
         modules = dict(model.named_modules())
         for key in tune_cfg['op']:
-            sub_name = key[0].replace(prefix + '.', '', 1)
+            if prefix:
+                sub_name = key[0].replace(prefix + '.', '', 1)
+            else:
+                sub_name = key[0]
             if sub_name in modules:
                 value = tune_cfg['op'][key]
                 assert isinstance(value, dict)
@@ -3146,7 +3149,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # get scale and zero_point of getattr ops (like quantize ops).
         for node in model.graph.nodes:
             if node.op == 'get_attr':
-                sub_name = prefix + '--' + node.target
+                if prefix:
+                    sub_name = prefix + '--' + node.target
+                else:
+                    sub_name = node.target
                 if 'scale' in node.target:
                     tune_cfg['get_attr'][sub_name] = float(getattr(model, node.target))
                 elif 'zero_point' in node.target:
