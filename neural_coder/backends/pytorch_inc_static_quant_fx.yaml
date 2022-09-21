@@ -20,6 +20,7 @@ transformation:
       [+] if "GraphModule" not in str(type(MODEL_NAME)):
       [+]     def eval_func(model):
       [+]         EVAL_FUNC_LINES
+      [+]     torch.backends.quantized.engine = 'onednn'
       [+]     from neural_compressor.conf.config import QuantConf
       [+]     from neural_compressor.experimental import Quantization, common
       [+]     quant_config = QuantConf()
@@ -31,6 +32,13 @@ transformation:
       [+]     MODEL_NAME = quantizer()
       [+]     MODEL_NAME = MODEL_NAME.model
       [+]     MODEL_NAME.eval()
+      [+]     try:
+      [+]         with torch.no_grad():
+      [+]             MODEL_NAME = torch.jit.script(MODEL_NAME)
+      [+]         MODEL_NAME = torch.jit.freeze(MODEL_NAME)
+      [+]     except:
+      [+]         pass
+      
   order:
     - below:
       above:

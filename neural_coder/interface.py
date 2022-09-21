@@ -146,7 +146,7 @@ def enable(
 
     #### Feature Enabling
 
-    globals.num_benchmark_iteration = str(num_benchmark_iteration + 5) # 5: warmup iteration number
+    globals.num_benchmark_iteration = str(num_benchmark_iteration + 10) # 10: warmup iteration number
 
     globals.eval_accuracy = eval_accuracy
 
@@ -1223,7 +1223,7 @@ def auto_quant(
     sweep_objective="feature",
     bench_feature=[],
     mode="throughput",
-    num_benchmark_iteration=5,
+    num_benchmark_iteration=30,
     iteration_dynamic_adjust=False,
     logging_level="info",
     cpu_conversion=True,
