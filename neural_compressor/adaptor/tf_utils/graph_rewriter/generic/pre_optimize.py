@@ -43,6 +43,7 @@ from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
+from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 
 class PreOptimization():
@@ -170,6 +171,9 @@ class PreOptimization():
 
         self._tmp_graph_def = ConvertNanToRandom(
             self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = StripEquivalentNodesOptimizer(
+            self._tmp_graph_def, output_node_names).do_transformation()
 
         if self.new_api:
             self._tmp_graph_def = DilatedContraction(

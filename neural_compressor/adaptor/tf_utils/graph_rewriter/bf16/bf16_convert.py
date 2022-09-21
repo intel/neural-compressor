@@ -222,7 +222,8 @@ class BF16Convert(GraphRewriterBase):
                          inputs_dt_input_node[i] in allowed_output_node_dt_val and \
                          dtypes.bfloat16.as_datatype_enum not in allowed_output_node_dt_val[inputs_dt_input_node[i]]:
                     cast_node_name = bf16_node_name + "/" + output_node.name + "_BF16toFP32"
-                    assert cast_node_name not in list(self.cur_graph.node_name_details.keys())
+                    if cast_node_name in self.cur_graph.node_name_details.keys():
+                        continue
                     output_cast_node = Helper.create_node(
                         "Cast", cast_node_name, [input_name])
                     Helper.set_attr_dtype(output_cast_node, "DstT", dtypes.float32)
@@ -243,7 +244,7 @@ class BF16Convert(GraphRewriterBase):
                 if "fused_ops" in self.cur_graph.node_name_details[bf16_node_name].node.attr:
                     self.bf16_ops.remove(bf16_node_name)
                     continue
-        for bf16_node_name in set(self.bf16_ops):
+        for bf16_node_name in sorted(list(set(self.bf16_ops))):
             self._bf16_convert(bf16_node_name)
         return self.cur_graph.dump_graph()
 

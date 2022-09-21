@@ -49,6 +49,7 @@ from .graph_rewriter.generic.remove_training_nodes import RemoveTrainingNodesOpt
 from .graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from .graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from .graph_rewriter.generic.fuse_pad_with_conv import FusePadWithConv2DOptimizer
+from .graph_rewriter.generic.strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .graph_rewriter.generic.fuse_pad_with_fp32_conv import FusePadWithFP32Conv2DOptimizer
 
 from .graph_rewriter.int8.freeze_value import FreezeValueTransformer
@@ -639,6 +640,9 @@ class GraphConverter:
 
         self._tmp_graph_def = MetaInfoChangingMemOpOptimizer(
             self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = StripEquivalentNodesOptimizer(
+            self._tmp_graph_def, self._tmp_model.output_node_names).do_transformation()
 
         if self.advance_config is not None and \
            deep_get(self.advance_config, 'bias_correction') is not None:

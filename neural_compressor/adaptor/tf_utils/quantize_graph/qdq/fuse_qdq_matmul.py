@@ -281,6 +281,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
+                matmul_node = self.node_name_mapping[match_node_name[1]].node
+                matmul_node_output = self.node_name_mapping[match_node_name[1]].output
+                if new_node.name in matmul_node_output:
+                    for idx, node_input in enumerate(new_node.input):
+                        if helper.node_name_from_input(node_input) == matmul_node.name:
+                            new_node.input[idx] = node_input.replace(matmul_node.name, quantized_node_name)
                 self.add_output_graph_node(new_node)
         return match_node_name
 
