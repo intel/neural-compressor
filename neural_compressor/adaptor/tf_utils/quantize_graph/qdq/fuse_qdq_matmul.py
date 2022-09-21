@@ -32,6 +32,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
+        # TODO Remove this when TFDO supports output_quantization_mode 'MIN_FIRST'
+        # Root cause of the transformer_lt_mlperf model accuracy drop:
+        # MatMul + Relu fusion ==> the output quantization mode only can be set to 'SCALED', 
+        # if the input_quantization_mode of the next _QuantizedMatMul is set to 'MIN_FIRST'.
+        # the mismatch will cause the accrucy drop.
+        if not self.performance_only:
+            if ['Dequantize', 'MatMul', 'Relu', 'QuantizeV2'] in self.sorted_patterns:
+                self.sorted_patterns.remove(['Dequantize', 'MatMul', 'Relu', 'QuantizeV2'])
+            if ['Dequantize', 'MatMul', 'BiasAdd', 'Relu', 'QuantizeV2'] in self.sorted_patterns:
+                self.sorted_patterns.remove(['Dequantize', 'MatMul', 'BiasAdd', 'Relu', 'QuantizeV2'])
+        
         self.exclude_matmul_nodes = []
         self.fusion_op_type = set(fusion[1] for fusion in self.patterns)
         self.fusion_mapping = {
