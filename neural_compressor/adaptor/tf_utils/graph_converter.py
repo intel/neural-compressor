@@ -65,6 +65,8 @@ from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.post_hostconst_converter import PostHostConstConverter
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.qdq.insert_qdq_pattern import GenerateGraphWithQDQPattern
+from .graph_rewriter.qdq.share_qdq_y_pattern import ShareQDQForItexYPatternOptimizer
+from .graph_rewriter.qdq.merge_duplicated_qdq import MergeDuplicatedQDQOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
 from .graph_util import GraphRewriterHelper as Helper
 
@@ -410,7 +412,7 @@ class GraphConverter:
         g = GraphAnalyzer()
         g.graph = self._fp32_model.graph_def
         g.parse_graph()
-        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add'], ('Relu',)]
+        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2'], ('Relu',)]
         target_nodes = g.query_fusion_pattern_nodes(y_pattern)
 
         res = {}
@@ -452,7 +454,8 @@ class GraphConverter:
                         sampling_graph_def,
                         non_pad_ops,
                         self._tmp_model.input_node_names,
-                        self.op_wise_config).do_transformation()
+                        self.op_wise_config,
+                        self.new_api).do_transformation()
 
                 for i in self.quantized_node_info:
                     sampling_graph_def, output_names = InsertPrintMinMaxNode(
@@ -533,7 +536,8 @@ class GraphConverter:
             self.device,
             self.fake_quant,
             self.new_api,
-            self.performance_only).do_transform()
+            self.performance_only,
+            self.itex_mode).do_transform()
         self.exclude_node_names = exclude_node_names
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
         if debug:
@@ -718,7 +722,8 @@ class GraphConverter:
                                                self.device,
                                                self.fake_quant,
                                                self.new_api,
-                                               self.performance_only).get_quantized_nodes()
+                                               self.performance_only,
+                                               self.itex_mode).get_quantized_nodes()
 
         if self.itex_mode:
             self.quantized_node_info.extend(self._search_y_pattern_for_itex())
@@ -739,12 +744,15 @@ class GraphConverter:
                                     sampling_graph_def,
                                     non_pad_ops,
                                     self._tmp_model.input_node_names,
-                                    self.op_wise_config).do_transformation()
+                                    self.op_wise_config,
+                                    self.new_api,
+                                    True).do_transformation()
 
         for i in self.quantized_node_info:
             sampling_graph_def, output_names = InsertPrintMinMaxNode(
                 sampling_graph_def, i[0], i[-1]).do_transformation()
             output_tensor_names.extend(output_names)
+
 
         if self.quantized_node_info:
             sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
@@ -760,27 +768,29 @@ class GraphConverter:
 
         # Insert QDQ pattern
         self._tmp_graph_def = GenerateGraphWithQDQPattern(
-              self._tmp_model, self._calibration_data,
-              self.op_wise_config, self.fake_quant, self.fp32_ops, self.bf16_ops, \
-              self.quantized_node_info, self.device, self.performance_only).do_transformation()
+              self._tmp_model, self._calibration_data, self.op_wise_config,
+              self.fake_quant, self.fp32_ops, self.bf16_ops, self.quantized_node_info, 
+              self.device, self.performance_only, self.itex_mode).do_transformation()
 
     def _convert_qdq(self):
         if self.itex_mode:
             self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
                 self._tmp_graph_def,
                 self._calibration_data,
-                '__max:').do_transformation()
+                '__max:',
+                self.itex_mode).do_transformation()
             self._tmp_graph_def, quantizev2_min = FreezeValueTransformer(
                 self._tmp_graph_def,
                 self._calibration_data,
-                '__min:').do_transformation()
+                '__min:',
+                self.itex_mode).do_transformation()
             self._tmp_graph_def, requant_min_max= FreezeValueTransformer(
                 self._tmp_graph_def,
                 self._calibration_data,
                 '__requant_min_max',
                 tensor_data= self._kl_op_dict,
                 device=self.device,
-                ).do_transformation()
+                itex_mode=self.itex_mode).do_transformation()
 
             self.scale_info.update(quantizev2_max)
             self.scale_info.update(quantizev2_min)
@@ -790,6 +800,9 @@ class GraphConverter:
                 self._tmp_graph_def,
                 self._tmp_model.input_node_names,
                 self._tmp_model.output_node_names).do_transformation()
+
+            self._tmp_graph_def = ShareQDQForItexYPatternOptimizer(self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
 
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._itex_model.graph_def = self._tmp_graph_def
@@ -803,9 +816,9 @@ class GraphConverter:
                                                    self.device,
                                                    self.fake_quant,
                                                    self.new_api,
-                                                   self.performance_only).do_transform()
+                                                   self.performance_only,
+                                                   self.itex_mode).do_transform()
             self.exclude_node_names=exclude_node_names
             if len(self._calibration_data) > 0:
                 self._freeze_requantization_ranges(self._kl_op_dict)
                 self._fuse_requantize_with_fused_quantized_node()
-

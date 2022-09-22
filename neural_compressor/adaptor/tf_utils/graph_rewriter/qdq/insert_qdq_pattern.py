@@ -36,7 +36,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     """
 
     def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
-                 bf16_ops, quantized_nodes, device, performance_only):
+                 bf16_ops, quantized_nodes, device, performance_only, itex_mode):
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
@@ -46,6 +46,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.quantized_nodes = quantized_nodes
         self.device = device
         self.performance_only = performance_only
+        self.itex_mode = itex_mode
 
         self.node_name_mapping = {}
         for node in self.model.graph_def.node:
@@ -106,12 +107,22 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
             computational_node = self.graph_info[computational_node_name].node
             weight_name = computational_node.input[1]
+            weight_node = self.graph_info[weight_name].node
             if re.search(r"\w+:\d+", weight_name):
                 weight_node = self.graph_info[weight_name.rsplit(':', 1)[0]].node
             else:
                 weight_node = self.graph_info[weight_name].node
+            enter_node = None
             if weight_node.op == 'Enter':
-                continue
+                if self.itex_mode:
+                    parent_node = self.graph_info[Helper.node_name_from_input(weight_node.input[0])].node
+                    if not parent_node.op == 'Const':
+                        continue
+                    else:
+                        enter_node = weight_node
+                        weight_node = parent_node
+                else:
+                    continue
 
             if computational_node_name in self.op_wise_config.keys():
                 op_wise_cfg = self.op_wise_config[computational_node_name]
@@ -123,6 +134,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             
             self._insert_qdq_pattern_for_weight_node(computational_node,
                                                      weight_node,
+                                                     enter_node,
                                                      min_max_values,
                                                      per_channel,
                                                      weight_bit,
@@ -183,7 +195,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
             if self.node_name_mapping[original_node.name].op == "MatMul":
                 dtype = dtypes.quint8
-            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2":
+            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2" \
+                 or self.node_name_mapping[original_node.name].op == "BatchMatMul":
                 dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
@@ -248,8 +261,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if not is_asymmetric:
                 Helper.set_attr_string(quant_v2_node, "round_mode", b"HALF_TO_EVEN")
             #Helper.set_attr_bool(quant_v2_node, "narrow_range", False if is_asymmetric else True)
-            Helper.set_attr_string(
-                quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+
             if "Concat" in self.graph_info[op_name].node.op:
                 dequantize_node = Helper.create_node(
                     "Dequantize", op_name + '_dequantize_' + str(input_index),
@@ -259,8 +277,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     "Dequantize", op_name + '_dequantize',
                     [quant_v2_node.name, quant_v2_node.name + ':1', quant_v2_node.name + ':2'])
             Helper.set_attr_dtype(dequantize_node, "T", dtype)
-            Helper.set_attr_string(
-                dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+
             self.g.add_node(quant_v2_node,
                             self.graph_info[op_name].node.input[0],
                             [dequantize_node.name])
@@ -299,14 +322,21 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 min_input_node.input.append("^" + input_name)
                 max_input_node.input.append("^" + input_name)
 
+            if self.itex_mode:
+                min_input_node.input.append("^" + input_name)
+                max_input_node.input.append("^" + input_name)
             quant_v2_node = Helper.create_node("QuantizeV2", quantize_input_name,
                 [input_name, min_input_name, max_input_name])
             Helper.set_attr_dtype(quant_v2_node, "T", dtype)
             if not is_asymmetric:
                 Helper.set_attr_string(quant_v2_node, "round_mode", b"HALF_TO_EVEN")
             #Helper.set_attr_bool(quant_v2_node, "narrow_range", False if is_asymmetric else True)
-            Helper.set_attr_string(
-                quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
 
             if "Concat" in self.graph_info[op_name].node.op:
                 dequantize_node = Helper.create_node(
@@ -317,8 +347,12 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     "Dequantize", op_name + '_dequantize',
                     [quant_v2_node.name, quant_v2_node.name + ':1', quant_v2_node.name + ':2'])
             Helper.set_attr_dtype(dequantize_node, "T", dtype)
-            Helper.set_attr_string(
-                dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
 
             self.g.add_node(quant_v2_node,
                             self.graph_info[op_name].node.input[0],
@@ -334,6 +368,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     def _insert_qdq_pattern_for_weight_node(self,
                                             computational_node,
                                             weight_node,
+                                            enter_node,
                                             min_max_values,
                                             per_channel,
                                             weight_bit=7.0,
@@ -418,9 +453,25 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             min_node.input.append("^" + weight_node.name)
             max_node.input.append("^" + weight_node.name)
 
-        quant_node = Helper.create_node(
-                "QuantizeV2", qint8_const_name + '_quant',
-                [weight_node.name, min_name, max_name])
+        quant_const_enter_node = None
+        min_enter_node = None
+        max_enter_node = None
+        if enter_node:
+            quant_const_enter_node = Helper.create_node('Enter', \
+                                           qint8_const_name + '_enter', [weight_node.name])
+            Helper.set_attr_string(quant_const_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            Helper.set_attr_dtype(quant_const_enter_node, 'T', dtypes.float32)
+            Helper.set_attr_bool(quant_const_enter_node, 'is_constant', True)
+            Helper.set_attr_int(quant_const_enter_node, \
+                                         'parallel_iterations', enter_node.attr['parallel_iterations'].i)
+            quant_node = Helper.create_node(
+                    "QuantizeV2", qint8_const_name + '_quant',
+                    [quant_const_enter_node.name, min_name, max_name])
+        else:
+            quant_node = Helper.create_node(
+                    "QuantizeV2", qint8_const_name + '_quant',
+                    [weight_node.name, min_name, max_name])
         dequant_node = Helper.create_node(
             "Dequantize", base_name + '_dequant',
             [quant_node.name, quant_node.name + ':1', quant_node.name + ':2'])
@@ -445,12 +496,38 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         if host_op_type == 'DepthwiseConv2dNative':
             Helper.set_attr_int(quant_node, 'axis', 2)
             Helper.set_attr_int(dequant_node, 'axis', 2)
-        
-        self.g_weight.add_node(quant_node, weight_node.name, [])
-        self.g_weight.add_node(min_node, None, [quant_node.name])
-        self.g_weight.add_node(max_node, None, [quant_node.name])
-        self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
-        computational_node.input[1] = dequant_node.name
+
+        if enter_node:
+            min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
+            Helper.set_attr_string(min_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            Helper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
+            Helper.set_attr_bool(min_enter_node, 'is_constant', True)
+            Helper.set_attr_int(min_enter_node, 'parallel_iterations', \
+                                             enter_node.attr['parallel_iterations'].i)
+
+            max_enter_node = Helper.create_node('Enter', max_name + '_enter', [max_name])
+            Helper.set_attr_string(max_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            Helper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
+            Helper.set_attr_bool(max_enter_node, 'is_constant', True)
+            Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
+                                             enter_node.attr['parallel_iterations'].i)
+
+            self.g_weight.add_node(quant_const_enter_node, weight_node.name, [quant_node.name])
+            self.g_weight.add_node(quant_node, quant_const_enter_node.name, [])
+            self.g_weight.add_node(min_node, None, [min_enter_node.name])
+            self.g_weight.add_node(max_node, None, [max_enter_node.name])
+            self.g_weight.add_node(min_enter_node, min_node.name, [quant_node.name])
+            self.g_weight.add_node(max_enter_node, max_node.name, [quant_node.name])
+            self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
+            computational_node.input[1] = dequant_node.name
+        else:
+            self.g_weight.add_node(quant_node, weight_node.name, [])
+            self.g_weight.add_node(min_node, None, [quant_node.name])
+            self.g_weight.add_node(max_node, None, [quant_node.name])
+            self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
+            computational_node.input[1] = dequant_node.name
 
     def _ignore_insert_qdq_pattern(self, matched_node_name):
         if matched_node_name in self.fp32_ops or \
@@ -462,7 +539,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
         # transpose_a could be set to True.
-        if self.graph_info[matched_node_name].node.op == "MatMul":
+        if not self.itex_mode and self.graph_info[matched_node_name].node.op == "MatMul":
             if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
         if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op:

@@ -29,7 +29,7 @@ import numpy as np
 import re
 
 class FreezeValueTransformer(GraphRewriterBase):
-    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device='gpu'):
+    def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device='gpu', itex_mode=False):
         """Free Max/Min value into QuantizeV2 op.
         Args:
             model (graphdef): input model
@@ -50,6 +50,7 @@ class FreezeValueTransformer(GraphRewriterBase):
             self.threshold = 0.95
         self.postfix = postfix
         self.device = device
+        self.itex_mode = itex_mode
         self.tensor_data = tensor_data
         self.cur_graph = GraphAnalyzer()
         self.cur_graph.graph = self.model
@@ -188,7 +189,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                     dtypes.float32, [])))
             output_node_name = self.graph_info[node_name].outputs[0]
 
-            if node_name in self.cur_graph.parent_frame_details and \
+            if not self.itex_mode and node_name in self.cur_graph.parent_frame_details and \
                self.cur_graph.parent_frame_details[node_name]:   # pragma: no cover      
                 new_node_enter_node = Helper.create_node(
                     'Enter', new_node.name+'_enter', [new_node.name])
@@ -269,7 +270,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                     [Helper.node_name_from_input(bn_node_name)],
                     bn_node_name + '_input8_output_max'
                 )
-            elif node_name in self.cur_graph.parent_frame_details and \
+            elif not self.itex_mode and node_name in self.cur_graph.parent_frame_details and \
                  self.cur_graph.parent_frame_details[node_name]:         # pragma: no cover
                 output_node_name = self.graph_info[node_name].outputs[0]
                 min_node_enter_node = Helper.create_node(

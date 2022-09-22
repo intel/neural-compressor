@@ -160,10 +160,12 @@ class TestItexEnabling(unittest.TestCase):
             bf16_enabled = False
             if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
                 bf16_enabled = True
+
+            # MergeDuplicatedQDQOptimizer will merge the duplicated QDQ pattern
             if bf16_enabled:
-                self.assertEqual(dequant_count, 4)
+                self.assertEqual(dequant_count, 3)
             else:
-                self.assertEqual(dequant_count, 5)
+                self.assertEqual(dequant_count, 4)
 
     @disable_random()
     def test_itex_qdq_basic_gpu(self):
@@ -209,9 +211,9 @@ class TestItexEnabling(unittest.TestCase):
             if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
                 bf16_enabled = True
             if bf16_enabled:
-                self.assertEqual(dequant_count, 4)
+                self.assertEqual(dequant_count, 3)
             else:
-                self.assertEqual(dequant_count, 5)
+                self.assertEqual(dequant_count, 4)
 
     @disable_random()
     def test_itex_qdq_basic_default_device(self):
@@ -257,9 +259,9 @@ class TestItexEnabling(unittest.TestCase):
             if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
                 bf16_enabled = True
             if bf16_enabled:
-                self.assertEqual(dequant_count, 4)
+                self.assertEqual(dequant_count, 3)
             else:
-                self.assertEqual(dequant_count, 5)
+                self.assertEqual(dequant_count, 4)
 
 
 if __name__ == '__main__':

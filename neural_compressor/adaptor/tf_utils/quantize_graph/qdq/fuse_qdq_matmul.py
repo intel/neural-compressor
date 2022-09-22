@@ -923,7 +923,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     continue
                 
                 if not self.performance_only and (cur_node.op == 'BatchMatMulV2' or
-                   cur_node.op == 'BatchMatMul'):
+                   cur_node.op == 'BatchMatMul') and not self.itex_mode:
                     continue
 
                 _, normal_inputs = self._get_node_input(cur_node.name)
@@ -933,7 +933,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     # FIXME We only quantize the MatMul op which second input node type is const. This is a
                     # workaround for RNN model like LTSM.
                     parent_node = None
-                    if cur_node.op == "MatMul":
+                    if cur_node.op == "MatMul" and not self.itex_mode:
                         if weight_node.op != 'Const':
                             if not self.performance_only:
                                 continue
@@ -973,7 +973,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         continue
 
                     if not qdq_inserted:
-                        if cur_node.op == "MatMul" and weight_node.op != 'Const' and len(sub_rule) == 3:
+                        if cur_node.op == "MatMul" and weight_node.op != 'Const' and len(sub_rule) == 3 \
+                           and not self.itex_mode:
                             continue
 
                     if qdq_inserted:

@@ -97,6 +97,20 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'BatchMatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'BatchMatMulV2': {
             'weight': {
                         'dtype': ['int8', 'fp32'],
@@ -106,7 +120,7 @@
                         },
             'activation': {
                         'dtype': ['int8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
+                        'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
@@ -164,6 +178,20 @@
                         'algorithm': ['minmax']
                         }
                     },
+          'BatchMatMul': {
+            'weight': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
           'BatchMatMulV2': {
             'weight': {
                         'dtype': ['int8', 'fp32'],
@@ -173,7 +201,7 @@
                         },
             'activation': {
                         'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
+                        'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }

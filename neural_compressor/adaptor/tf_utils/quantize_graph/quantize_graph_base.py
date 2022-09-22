@@ -87,6 +87,7 @@ class QuantizeNodeBase():
         self.device = kwargs['device']
         self.new_api = kwargs['new_api']
         self.performance_only = kwargs['performance_only']
+        self.itex_mode = kwargs['itex_mode']
         self.enable_s8 = bool(version1_gt_version2(tf.version.VERSION, '2.1.0') or \
                     version1_eq_version2(tf.version.VERSION, '2.1.0') or \
             tf.version.VERSION.find('1.15.0-up') != -1)
