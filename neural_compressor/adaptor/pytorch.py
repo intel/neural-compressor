@@ -81,10 +81,10 @@ def get_example_inputs(dataloader):  # pragma: no cover
         return input_tensor
     if isinstance(example_inputs, list) or isinstance(example_inputs, tuple):
         if len(example_inputs) > 1:
-            return example_inputs[:-1]
+            return example_inputs[0]
         return example_inputs
     if isinstance(example_inputs, torch.Tensor):
-        return [example_inputs]
+        return example_inputs
 
 
 def get_torch_white_list(approach):
@@ -2200,7 +2200,14 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     except:
                         q_model = torch.jit.trace(q_model, example_inputs, strict=False)
                         q_model = torch.jit.freeze(q_model)
-
+                if isinstance(example_inputs, list) or isinstance(example_inputs, tuple):
+                    q_model(*example_inputs)
+                    q_model(*example_inputs)
+                elif isinstance(example_inputs, torch.Tensor):
+                    q_model(example_inputs)
+                    q_model(example_inputs)
+                else:
+                     logger.warning("please check example_inputs from calib_dataloader")
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
         model_._model = q_model
