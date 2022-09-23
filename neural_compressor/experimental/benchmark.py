@@ -82,6 +82,7 @@ class Benchmark(object):
         self._model = None
         self._b_dataloader = None
         self._b_func = None
+        self._custom_b_func = False
         self._metric = None
         self._results = {}
         if isinstance(conf_fname_or_obj, BenchmarkConf):
@@ -200,7 +201,7 @@ class Benchmark(object):
                     deep_get(cfg, 'evaluation.{}.metric'.format(mode))
         b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
 
-        if self._b_dataloader is None:
+        if self._b_func is None and self._b_dataloader is None:
             assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
                 'dataloader field of yaml file is missing'
 
@@ -214,6 +215,8 @@ class Benchmark(object):
                                     metric, \
                                     b_postprocess_cfg,
                                     iteration=iteration)
+        else:
+            self._custom_b_func = True
 
         objectives = [i.lower() for i in cfg.tuning.multi_objectives.objective] if \
             deep_get(cfg, 'tuning.multi_objectives') else [cfg.tuning.objective]
@@ -222,7 +225,10 @@ class Benchmark(object):
                               cfg.tuning.accuracy_criterion,
                               is_measure=True)
 
-        val = self.objectives.evaluate(self._b_func, self._model)
+        if self._custom_b_func:
+            val = self.objectives.evaluate(self._b_func, self._model.model)
+        else:
+            val = self.objectives.evaluate(self._b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val

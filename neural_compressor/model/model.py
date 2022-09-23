@@ -957,6 +957,23 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
     def get_weight(self, tensor_name):
         return self.weights[tensor_name]
 
+    @property
+    def model(self):
+        import time
+        import shutil
+        root = os.path.abspath(os.path.expanduser(cfg.default_workspace)) 
+        root += str(time.time())
+        if os.path.exists(root):
+            shutil.rmtree(root)
+        os.makedirs(root, exist_ok=True)
+        if not self._sess:
+            self._load_sess(self._model, **self.kwargs)
+        _, builder = self.build_saved_model(root)
+        builder.save()
+        model = tf.saved_model.load(root)
+        shutil.rmtree(root)
+        return model
+
     def report_sparsity(self):
         """ Get sparsity of the model
 
@@ -1011,7 +1028,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
 
         return df, total_sparsity
 
-    def save(self, root=None):
+    def build_saved_model(self, root=None):
         if not root:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
@@ -1039,6 +1056,10 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
             builder.add_meta_graph_and_variables(sess,
                                                  [tag_constants.SERVING],
                                                  signature_def_map=sigs)
+        return root, builder                                         
+
+    def save(self, root=None):
+        root, builder = self.build_saved_model(root)
         builder.save()
         logger.info("Save quantized model to {}.".format(root))
 
