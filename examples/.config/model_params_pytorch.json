@@ -69,7 +69,7 @@
       "input_model": "",
       "yaml": "conf.yaml",
       "strategy": "basic",
-      "batchsize": 8,
+      "batch_size": 8,
       "new_benchmark": false
     },
     "bert_large_ipex":{
@@ -78,7 +78,7 @@
       "input_model": "",
       "yaml": "conf.yaml",
       "strategy": "basic",
-      "batchsize": 8,
+      "batch_size": 8,
       "new_benchmark": false
     },
     "bert_large_1_10_ipex":{
@@ -87,7 +87,7 @@
       "input_model": "/tf_dataset/pytorch/bert_large_ipex",
       "yaml": "conf.yaml",
       "strategy": "basic",
-      "batchsize": 8,
+      "batch_size": 8,
       "new_benchmark": false
     },
     "resnet50_gpu": {

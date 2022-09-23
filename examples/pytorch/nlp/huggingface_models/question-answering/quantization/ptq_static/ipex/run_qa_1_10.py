@@ -369,8 +369,8 @@ def benchmark_evaluate(args, model, eval_dataloader):
             for it, batch in enumerate(eval_dataloader):
                 if epoch * steps_per_epoch + it >= total_steps:
                     throughput = args.eval_batch_size * args.perf_run_iters / total_time
-                    print('Batch size = %d' % 1)
-                    print('Latency: %.3f ms' % (throughput / 10**6))
+                    print('Batch size = %d' % args.eval_batch_size)
+                    print('Latency: %.3f ms' % (10**3 / throughput))
                     print("Throughput: {:.3f} sentence/s".format(throughput))     
                     break
                 with torch.no_grad():
