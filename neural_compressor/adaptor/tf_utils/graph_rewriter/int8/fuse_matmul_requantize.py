@@ -88,7 +88,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
 
-            if max_input_node.op == 'Enter':
+            if max_input_node.op == 'Enter': # pragma: no cover
                 min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
                 max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
                 min_input_parent_node = self.graph_info[min_input_parent_name].node
@@ -97,7 +97,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                     continue
                 min_input_node = min_input_parent_node
                 max_input_node = max_input_parent_node
-            if max_filter_node.op == 'Enter':
+            if max_filter_node.op == 'Enter': # pragma: no cover
                 min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
                 max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
                 min_filter_parent_node = self.graph_info[min_filter_parent_name].node
@@ -106,14 +106,14 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                     continue
                 min_filter_node = min_filter_parent_node
                 max_filter_node = max_filter_parent_node
-            if weight_node.op == 'Enter':
+            if weight_node.op == 'Enter': # pragma: no cover
                 weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
                 weight_parent_node = self.graph_info[weight_parent_name].node
                 if weight_parent_node.op != 'Const':
                     continue
                 weight_node = weight_parent_node
             bias_enter_node = None
-            if bias_node.op == 'Enter':
+            if bias_node.op == 'Enter': # pragma: no cover
                 bias_enter_node = bias_node
                 bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
                 bias_parent_node = self.graph_info[bias_parent_name].node
@@ -244,7 +244,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
 
-            if max_input_node.op == 'Enter':
+            if max_input_node.op == 'Enter': # pragma: no cover
                 min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
                 max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
                 min_input_parent_node = self.graph_info[min_input_parent_name].node
@@ -253,7 +253,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                     continue
                 min_input_node = min_input_parent_node
                 max_input_node = max_input_parent_node
-            if max_filter_node.op == 'Enter':
+            if max_filter_node.op == 'Enter': # pragma: no cover
                 min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
                 max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
                 min_filter_parent_node = self.graph_info[min_filter_parent_name].node
@@ -262,14 +262,14 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                     continue
                 min_filter_node = min_filter_parent_node
                 max_filter_node = max_filter_parent_node
-            if weight_node.op == 'Enter':
+            if weight_node.op == 'Enter': # pragma: no cover
                 weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
                 weight_parent_node = self.graph_info[weight_parent_name].node
                 if weight_parent_node.op != 'Const':
                     continue
                 weight_node = weight_parent_node
             bias_enter_node = None
-            if bias_node.op == 'Enter':
+            if bias_node.op == 'Enter': # pragma: no cover
                 bias_enter_node = bias_node
                 bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
                 bias_parent_node = self.graph_info[bias_parent_name].node
@@ -426,7 +426,7 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                 min_input_node = self.graph_info[last_node.input[-2]].node
             
             type_bias = float32_type
-            if not last_node.op == 'QuantizedConcatV2' and max_input_node.op == 'Enter':
+            if not last_node.op == 'QuantizedConcatV2' and max_input_node.op == 'Enter': # pragma: no cover
                 min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
                 max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
                 min_input_parent_node = self.graph_info[min_input_parent_name].node
@@ -435,7 +435,7 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                     continue
                 min_input_node = min_input_parent_node
                 max_input_node = max_input_parent_node
-            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter':
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter': # pragma: no cover
                 min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
                 max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
                 min_filter_parent_node = self.graph_info[min_filter_parent_name].node
@@ -444,14 +444,14 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                     continue
                 min_filter_node = min_filter_parent_node
                 max_filter_node = max_filter_parent_node
-            if weight_node.op == 'Enter':
+            if weight_node.op == 'Enter': # pragma: no cover
                 weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
                 weight_parent_node = self.graph_info[weight_parent_name].node
                 if weight_parent_node.op != 'Const':
                     continue
                 weight_node = weight_parent_node
             bias_enter_node = None
-            if bias_node.op == 'Enter':
+            if bias_node.op == 'Enter': # pragma: no cover
                 bias_enter_node = bias_node
                 bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
                 bias_parent_node = self.graph_info[bias_parent_name].node
@@ -628,7 +628,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
 
-            if max_input_node.op == 'Enter':
+            if max_input_node.op == 'Enter': # pragma: no cover
                 min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
                 max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
                 min_input_parent_node = self.graph_info[min_input_parent_name].node
@@ -637,7 +637,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                     continue
                 min_input_node = min_input_parent_node
                 max_input_node = max_input_parent_node
-            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter':
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter': # pragma: no cover
                 min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
                 max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
                 min_filter_parent_node = self.graph_info[min_filter_parent_name].node
@@ -646,14 +646,14 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                     continue
                 min_filter_node = min_filter_parent_node
                 max_filter_node = max_filter_parent_node
-            if weight_node.op == 'Enter':
+            if weight_node.op == 'Enter': # pragma: no cover
                 weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
                 weight_parent_node = self.graph_info[weight_parent_name].node
                 if weight_parent_node.op != 'Const':
                     continue
                 weight_node = weight_parent_node
             bias_enter_node = None
-            if bias_node.op == 'Enter':
+            if bias_node.op == 'Enter': # pragma: no cover
                 bias_enter_node = bias_node
                 bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
                 bias_parent_node = self.graph_info[bias_parent_name].node

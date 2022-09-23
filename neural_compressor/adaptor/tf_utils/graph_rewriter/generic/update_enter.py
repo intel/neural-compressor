@@ -22,7 +22,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 
 
-class UpdateEnterOptimizer(GraphRewriterBase):
+class UpdateEnterOptimizer(GraphRewriterBase): # pragma: no cover
     """ This is a workaround of control ops
         exclude all nodes following Enters
     """

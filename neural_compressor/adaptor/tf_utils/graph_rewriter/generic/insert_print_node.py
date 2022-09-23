@@ -23,17 +23,18 @@ from tensorflow.python.framework import tensor_util as tu
 from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
-
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 class InsertPrintMinMaxNode(GraphRewriterBase):
     """InsertPrintMinMaxNode Pass for tensorflow sampling.
     """
 
-    def __init__(self, model, pre_node_name, post_node_name):
+    def __init__(self, model, pre_node_name, post_node_name, new_api):
         super().__init__(model)
         self.pre_node_name = pre_node_name
         self.post_node_name = post_node_name
         self.signature = pre_node_name + post_node_name
+        self.new_api = new_api
 
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
@@ -59,7 +60,8 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                 pad_const_node = graph_info[pad_const_node_name].node
                 padding_tensor = tu.MakeNdarray(pad_const_node.attr["value"].tensor).flatten()
                 if not any(padding_tensor) or \
-                    (any(padding_tensor) and tf.version.VERSION in ( '1.15.0-up3', '2.8.0202151')):
+                    (any(padding_tensor) and (tf.version.VERSION == '1.15.0-up3' or self.new_api)):
+                    insert_node_pairs.append([refresh_pre_node_name, self.post_node_name])
                     refresh_pre_node_name = refresh_pre_node.input[0]
 
             insert_node_pairs.append([refresh_pre_node_name, self.post_node_name])

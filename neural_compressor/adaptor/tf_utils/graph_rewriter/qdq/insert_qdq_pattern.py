@@ -49,7 +49,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.itex_mode = itex_mode
 
         self.node_name_mapping = {}
-        for node in self.model.graph_def.node:
+        for node in self.model.node:
             if node.name not in self.node_name_mapping:
                 self.node_name_mapping[node.name] = node
             else:
@@ -72,7 +72,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 quantizable_op_names.append(i.split('__')[0])
 
         self.g = GraphAnalyzer()
-        self.g.graph = copy.deepcopy(self.model.graph_def)
+        self.g.graph = copy.deepcopy(self.model)
         self.graph_info = self.g.parse_graph()
         
         # insert QDQ pattern for op's input
@@ -139,8 +139,37 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                      per_channel,
                                                      weight_bit,
                                                      self.device)
+        # Adaption for strip equivalent nodes feature
+        # Replicate shared Dequantize for next step fusion
+        self.g_qdq = GraphAnalyzer()
+        self.g_qdq.graph = self.g_weight.dump_graph()
+        self.graph_info = self.g_qdq.parse_graph()
+        patterns = [['QuantizeV2'], ['Dequantize']]
+        matched_nodes = self.g_qdq.query_fusion_pattern_nodes(patterns)
+        for i in matched_nodes:
+            quantize_node_name = self.graph_info[i[0]].node.name
+            deq_node_name = self.graph_info[i[1]].node.name
+            deq_node = self.graph_info[i[1]].node
+            len_deq_outputs = len(self.g_qdq.node_name_details[deq_node_name].outputs)
+            if len_deq_outputs == 1:
+                continue
 
-        return self.g_weight.dump_graph()
+            for index in range(len_deq_outputs - 1):
+                rep_dequantize_node = Helper.create_node(
+                    "Dequantize", deq_node_name + '_' + str(index + 1),
+                    [quantize_node_name, quantize_node_name + ':1', quantize_node_name + ':2'])
+                rep_dequantize_node.attr["T"].CopyFrom(deq_node.attr['T'])
+                rep_dequantize_node.attr["mode"].CopyFrom(deq_node.attr['mode'])
+                if 'axis' in deq_node.attr:
+                    rep_dequantize_node.attr["axis"].CopyFrom(deq_node.attr['axis'])
+                next_node_name = self.g_qdq.node_name_details[deq_node_name].outputs[index+1]
+                self.g_qdq.add_node(rep_dequantize_node, quantize_node_name, [next_node_name])
+                for input_index, each_input in enumerate(self.g_qdq.node_name_details[next_node_name].node.input):
+                    if each_input == deq_node_name:
+                        self.g_qdq.node_name_details[next_node_name].node.input[input_index] = \
+                            rep_dequantize_node.name
+
+        return self.g_qdq.dump_graph()
 
     def _check_op_list(self, node_type):
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",

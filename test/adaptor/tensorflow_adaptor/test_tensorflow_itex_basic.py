@@ -16,6 +16,7 @@ from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.utils.utility import CpuInfo
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2, version1_gte_version2
 
 def build_fake_yaml(fake_yaml, save_path, **kwargs):
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
@@ -88,10 +89,12 @@ class TestItexEnabling(unittest.TestCase):
     def tearDownClass(self):
         os.remove('fake_yaml_1.yaml')
         os.remove('fake_yaml_2.yaml')
-        shutil.rmtree('workspace_1')
-        shutil.rmtree('workspace_2')
+        if version1_gte_version2(tf.version.VERSION, '2.8.0'):
+            shutil.rmtree('workspace_1')
+            shutil.rmtree('workspace_2')
 
     @disable_random()
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
     def test_itex_convert_basic_cpu(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
@@ -141,6 +144,7 @@ class TestItexEnabling(unittest.TestCase):
                 self.assertEqual(dequant_count, 4)
 
     @disable_random()
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
     def test_itex_convert_basic_gpu(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)

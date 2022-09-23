@@ -28,12 +28,12 @@
     uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
     bf16: ["Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
            "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
-           "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", # allow_list
+           "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", "Einsum", # allow_list
            "Add", "AddN", "AddV2", "AvgPool", "AvgPool3D", "AvgPool3DGrad", "AvgPoolGrad", "BiasAdd", "BiasAddGrad", "BiasAddV1",
            "Erf", "FusedBatchNormV2", "FusedBatchNormGradV2", "FusedBatchNormV3", "FusedBatchNormGradV3", "LeakyRelu", "LeakyReluGrad",
-           "Mul", "Sub", "Elu", "EluGrad", "FloorDiv", "_FusedBatchNormEx", "Log", "Log1p", "LogSoftmax", "Prod", "RealDiv", "Reciprocal",
-           "Selu", "SeluGrad", "Sigmoid", "SigmoidGrad", "Softmax", "Softplus", "SoftplusGrad", "Softsign", "SoftsignGrad", "Sqrt",
-           "Tanh", "TanhGrad", #infer_list
+           "Mean", "Mul", "Sub", "Elu", "EluGrad", "FloorDiv", "_FusedBatchNormEx", "Log", "Log1p", "LogSoftmax", "Prod", "RealDiv",
+           "Reciprocal", "Rsqrt", "Selu", "SeluGrad", "Sigmoid", "SigmoidGrad", "Softmax", "Softplus", "SoftplusGrad", "Softsign",
+           "SoftsignGrad", "Sqrt", "SquaredDifference", "Tanh", "TanhGrad", #infer_list
            "Abs", "ArgMax","ArgMin","BatchToSpace","BatchToSpaceND","BroadcastTo","Ceil","CheckNumerics","ClipByValue","Concat","ConcatV2",
            "DepthToSpace","DynamicPartition","DynamicStitch","EnsureShape","Enter","Equal","Exit","ExpandDims","Fill","Floor","Gather",
            "GatherNd","GatherV2","Greater","GreaterEqual","Identity","IsFinite","IsInf","IsNan","Less","LessEqual","Max","Maximum","MaxPool",
@@ -337,7 +337,15 @@
         'Dequantize + Conv3D + Add + Relu6 + QuantizeV2',
         'Dequantize + Conv3D + AddV2 + Relu6 + QuantizeV2',
         'Dequantize + Conv3D + Eelu + QuantizeV2',
-        'Dequantize + Conv3D + LeakyRelu + QuantizeV2'
+        'Dequantize + Conv3D + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + Relu6 + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + Eelu + QuantizeV2',
+        'Dequantize + Conv3D + BiasAdd + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv3D + Add + Relu + QuantizeV2',
+        'Dequantize + Conv3D + Add + Relu6 + QuantizeV2',
+        'Dequantize + Conv3D + Add + Eelu + QuantizeV2',
+        'Dequantize + Conv3D + Add + LeakyRelu + QuantizeV2'
 
   ]
 

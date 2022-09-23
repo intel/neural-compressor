@@ -59,6 +59,8 @@ from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeTran
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeTransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeNewAPITransformer
 from .graph_rewriter.int8.fuse_matmul_requantize import FuseMatMulRequantizeDequantizeNewAPITransformer
+from .graph_rewriter.int8.fuse_conv_redundant_dequantize import FuseConvRedundantDequantizeTransformer
+from .graph_rewriter.int8.fuse_matmul_redundant_dequantize import FuseMatMulRedundantDequantizeTransformer
 from .graph_rewriter.int8.scale_propagation import ScaleProPagationTransformer
 from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
@@ -333,6 +335,11 @@ class GraphConverter:
         if (len(self.bf16_ops) > 0 and self.performance_only) or \
            (os.getenv('MIX_PRECISION_TEST') == '1'):
             model = self.bf16_convert()
+
+        if self.new_api:
+            model.graph_def = FuseConvRedundantDequantizeTransformer(model.graph_def).do_transformation()
+            model.graph_def = FuseMatMulRedundantDequantizeTransformer(model.graph_def).do_transformation()
+
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
         post_hostconst_graph_def = PostHostConstConverter(post_cse_graph_def).do_transformation()
         post_hostconst_graph_def.library.CopyFrom(self.model.graph_def.library)
@@ -448,18 +455,18 @@ class GraphConverter:
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
                 # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
                 # after enabling pad+conv2d in new API.
-                if self.new_api:
-                    non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
-                    sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
-                        sampling_graph_def,
-                        non_pad_ops,
-                        self._tmp_model.input_node_names,
-                        self.op_wise_config,
-                        self.new_api).do_transformation()
+                
+                non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+                sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
+                    sampling_graph_def,
+                    non_pad_ops,
+                    self._tmp_model.input_node_names,
+                    self.op_wise_config,
+                    self.new_api).do_transformation()
 
                 for i in self.quantized_node_info:
                     sampling_graph_def, output_names = InsertPrintMinMaxNode(
-                        sampling_graph_def, i[0], i[-1]).do_transformation()
+                        sampling_graph_def, i[0], i[-1], self.new_api).do_transformation()
                     output_tensor_names.extend(output_names)
                 if self.quantized_node_info:
                     sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
@@ -750,7 +757,7 @@ class GraphConverter:
 
         for i in self.quantized_node_info:
             sampling_graph_def, output_names = InsertPrintMinMaxNode(
-                sampling_graph_def, i[0], i[-1]).do_transformation()
+                sampling_graph_def, i[0], i[-1], self.new_api).do_transformation()
             output_tensor_names.extend(output_names)
 
 
@@ -763,12 +770,9 @@ class GraphConverter:
                 self._inference(self._sampling_model)
             self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
 
-        self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        self._tmp_model.graph_def = self._tmp_graph_def
-
         # Insert QDQ pattern
         self._tmp_graph_def = GenerateGraphWithQDQPattern(
-              self._tmp_model, self._calibration_data, self.op_wise_config,
+              self._tmp_graph_def, self._calibration_data, self.op_wise_config,
               self.fake_quant, self.fp32_ops, self.bf16_ops, self.quantized_node_info, 
               self.device, self.performance_only, self.itex_mode).do_transformation()
 
@@ -819,6 +823,7 @@ class GraphConverter:
                                                    self.performance_only,
                                                    self.itex_mode).do_transform()
             self.exclude_node_names=exclude_node_names
+
             if len(self._calibration_data) > 0:
                 self._freeze_requantization_ranges(self._kl_op_dict)
                 self._fuse_requantize_with_fused_quantized_node()

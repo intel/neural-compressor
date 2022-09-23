@@ -159,6 +159,39 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
         os.remove('fake_yaml.yaml')
 
     @disable_random()
+    def test_single_depthwiseconv2d_fusion(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.depthwise_conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
+        out_name = conv.name.split(':')[0]
+
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            found_conv_fusion = False
+            found_dequantize_fusion = False
+
+            for i in output_graph.graph_def.node:
+                if i.op == '_QuantizedDepthwiseConv2D':
+                    found_conv_fusion = True
+                if str(i.attr['fused_ops'].list.s) == str([b'Dequantize']):
+                    found_dequantize_fusion = True
+            self.assertEqual(found_conv_fusion, True)
+            self.assertEqual(found_dequantize_fusion, True)
+
+    @disable_random()
     def test_depthwiseconv2d_biasadd_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
@@ -183,13 +216,15 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
             quantizer.model = output_graph_def
             output_graph = quantizer.fit()
             found_conv_fusion = False
+            found_dequantize_fusion = False
 
             for i in output_graph.graph_def.node:
                 if i.op == '_QuantizedDepthwiseConv2D':
                     found_conv_fusion = True
-                    break
-
+                if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Dequantize']):
+                    found_dequantize_fusion = True
             self.assertEqual(found_conv_fusion, True)
+            self.assertEqual(found_dequantize_fusion, True)
 
     @disable_random()
     def test_depthwiseconv2dnative_biasadd_add_relu6_mul_mul_fusion(self):
@@ -209,9 +244,8 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
             if i.op == '_QuantizedConv2D':
                 found_conv_fusion = True
                 break
-
         self.assertEqual(found_conv_fusion, True)
-                        
+
     @disable_random()
     def test_depthwiseconv2d_biasadd_leakyrelu_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")

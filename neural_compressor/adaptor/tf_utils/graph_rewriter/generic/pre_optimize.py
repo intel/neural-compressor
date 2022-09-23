@@ -27,7 +27,6 @@ from .graph_cse_optimizer import GraphCseOptimizer
 from .fold_constant import GraphFoldConstantOptimizer
 from .fold_batch_norm import FoldBatchNormNodesOptimizer
 from .rename_batch_norm import RenameBatchNormOptimizer
-from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
 from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
@@ -43,6 +42,7 @@ from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
+from .fuse_decomposed_in import FuseDecomposedINOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 
@@ -118,6 +118,7 @@ class PreOptimization():
         # Then the FuseDecomposedBNOptimizer can't fuse the small decomposed ops to BN.
         if self.new_api:
             self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = FuseDecomposedINOptimizer(self._tmp_graph_def).do_transformation()
 
         # disable fold constant for itex qdq mode
         if not itex_mode:

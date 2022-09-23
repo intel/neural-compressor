@@ -104,9 +104,17 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv3DAddV2QuantizeV2': self.apply_conv3d_add_fusion,
                 'DequantizeConv3DAddV2ReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DEluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddEluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddEluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeDepthwiseConv2dNativeQuantizeV2': self.apply_newly_conv_single_fusion
             }
 
@@ -559,9 +567,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
-                if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
-                    helper.copy_attr(quantized_conv_node, "alpha",
-                    self.node_name_mapping[relu_node_name].node.attr["alpha"])
+                #if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
+                #    helper.copy_attr(quantized_conv_node, "alpha",
+                #    self.node_name_mapping[relu_node_name].node.attr["alpha"])
                 if node.op != 'DepthwiseConv3dNative' and "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -575,7 +583,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 # helper.set_attr_dtype(quantized_conv_node, "alpha", dtypes.quint8)
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
-                helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu'])
+                if self.node_name_mapping[relu_node_name].node.op == "LeakyRelu":
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Elu":
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Elu'])
+                else:
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu'])
                 helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,

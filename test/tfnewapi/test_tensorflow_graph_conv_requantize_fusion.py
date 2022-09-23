@@ -12,40 +12,6 @@ from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
-
-def build_tensorflow_yaml():
-    fake_yaml = '''
-        model:
-          name: tensorflow_yaml
-          framework: tensorflow
-          inputs: input
-        device: cpu
-        quantization:
-          model_wise:
-            weight:
-                granularity: per_tensor
-                scheme: sym
-                dtype: int8
-                algorithm: minmax
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: basic
-            accuracy_criterion:
-              relative: 0.1
-            exit_policy:
-              performance_only: True
-            workspace:
-              path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('tensorflow_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
 def build_inteltensorflow_yaml():
     fake_yaml = '''
         model:
@@ -78,51 +44,6 @@ def build_inteltensorflow_yaml():
     with open('inteltensorflow_yaml.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
-
-
-class TestConvRequantizedFusionOldAPI(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        build_tensorflow_yaml()
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove('tensorflow_yaml.yaml')
-
-    @disable_random()
-    def test_conv_biasadd_relu6_fusion(self):
-        logging.getLogger().info("test_conv_biasadd_relu6_fusion")
-        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
-        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
-        x_pad = tf.pad(x, paddings, "CONSTANT")
-        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
-                                                 initializer=tf.compat.v1.random_normal_initializer())
-        conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
-
-        relu6 = tf.nn.relu6(normed, name='op_to_store')
-
-        out_name = relu6.name.split(':')[0]
-        with tf.compat.v1.Session() as sess:
-            sess.run(tf.compat.v1.global_variables_initializer())
-            output_graph_def = graph_util.convert_variables_to_constants(
-                sess=sess,
-                input_graph_def=sess.graph_def,
-                output_node_names=[out_name])
-            from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('tensorflow_yaml.yaml')
-            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.model = output_graph_def
-            output_graph = quantizer.fit()
-            found_conv_fusion = True
-
-            for i in output_graph.graph_def.node:
-                if i.op == 'Relu6':
-                    found_conv_fusion = False
-                    break
-            self.assertEqual(found_conv_fusion, True)
 
 class TestConvRequantizedFusionNewAPI(unittest.TestCase):
     @classmethod
@@ -232,39 +153,6 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
- 
-    """
-    @disable_random()
-    def test_conv3d_biasadd_add_fusion(self):
-        x = tf.compat.v1.placeholder(tf.float32, [1,64,64,64,1], name="input")
-        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
-        x_pad = tf.pad(x, paddings, "CONSTANT")
-        conv_weights = tf.compat.v1.get_variable("weight3", [4, 4, 4, 1, 64],
-                                                 initializer=tf.compat.v1.random_normal_initializer())
-        conv = tf.nn.conv3d(x_pad, conv_weights, strides=[1,2,2,2,1], padding="SAME")
-        add = tf.raw_ops.AddV2(x=conv, y=tf.constant([3.0]), name="normed_addv2")
-        out_name = add.name.split(':')[0]
-        with tf.compat.v1.Session() as sess:
-            sess.run(tf.compat.v1.global_variables_initializer())
-            output_graph_def = graph_util.convert_variables_to_constants(
-                sess=sess,
-                input_graph_def=sess.graph_def,
-                output_node_names=[out_name])
-            from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
-            dataset = quantizer.dataset('dummy', shape=(100,64,64,64,1), label=True)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.model = output_graph_def
-            output_graph = quantizer.fit()
-            found_conv_fusion = False
-
-            for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
-                    found_conv_fusion = True
-                    break
-            self.assertEqual(found_conv_fusion, True)
-    """
 
     @disable_random()
     def test_conv3d_add_relu_fusion(self):
@@ -297,7 +185,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
             for i in output_graph.graph_def.node:
                 if i.op == '_QuantizedConv3D' and \
-                   i.attr['fused_ops'].list.s == [b'BiasAdd', b'Requantize']:
+                   i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -932,6 +820,40 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             for i in output_graph.graph_def.node:
                 if i.op == '_QuantizedConv3D':
                     found_conv_fusion = True
+            self.assertEqual(found_conv_fusion, True)
+
+    @disable_random()
+    def test_conv3d_add_const_elu_add_fusion(self):
+        logging.getLogger().info("test_conv3d_add_const_elufusion")
+        x = tf.compat.v1.placeholder(tf.float32, [1, 128, 64, 64, 16], name="input")
+        paddings = tf.constant([[0, 0], [1, 1], [1, 1], [1, 1], [0, 0]])
+        x_pad = tf.pad(x, paddings, "CONSTANT")
+        top_relu = tf.nn.relu(x_pad)
+        conv3d_weights = tf.compat.v1.get_variable("weight", [3, 3, 3, 16, 32],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv3d = tf.nn.conv3d(top_relu, conv3d_weights, strides=[1, 2, 2, 2, 1], padding="SAME")
+        y_const = tf.constant(np.random.randn(1,1,1,1,32), dtype=tf.float32)
+        add = tf.raw_ops.AddV2(x=conv3d, y=y_const, name='addv2')
+        elu = tf.nn.elu(add)
+        output = tf.nn.softmax(elu, name = 'op_to_store')
+        out_name = output.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            found_conv_fusion = False
+            for i in output_graph.graph_def.node:
+                if i.op == '_QuantizedConv3D':
+                   found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
 if __name__ == '__main__':
