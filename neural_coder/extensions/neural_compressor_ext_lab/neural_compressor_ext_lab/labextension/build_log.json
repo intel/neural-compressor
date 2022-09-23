@@ -83,28 +83,13 @@
       ]
     },
     "resolve": {
-      "alias": {
-        "@phosphor/algorithm$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/algorithm/dist/index.js",
-        "@phosphor/application$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/application/dist/index.js",
-        "@phosphor/commands$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/commands/dist/index.js",
-        "@phosphor/coreutils$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/coreutils/dist/index.node.js",
-        "@phosphor/disposable$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/disposable/dist/index.js",
-        "@phosphor/domutils$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/domutils/dist/index.js",
-        "@phosphor/dragdrop$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/dragdrop/dist/index.js",
-        "@phosphor/dragdrop/style": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/widgets/style",
-        "@phosphor/messaging$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/messaging/dist/index.js",
-        "@phosphor/properties$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/properties/dist/index.js",
-        "@phosphor/signaling": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/signaling/dist/index.js",
-        "@phosphor/widgets/style": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/widgets/style",
-        "@phosphor/virtualdom$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/virtualdom/dist/index.js",
-        "@phosphor/widgets$": "/home2/longxin/neural_compressor_ext_lab/node_modules/@lumino/widgets/dist/index.js"
-      },
+      "alias": {},
       "fallback": {
         "url": false,
         "buffer": false,
         "crypto": false,
-        "path": "/home2/longxin/neural_compressor_ext_lab/node_modules/path-browserify/index.js",
-        "process": "/home2/longxin/neural_compressor_ext_lab/node_modules/process/browser.js"
+        "path": "/home/demo/longxin/neural_compressor_ext_lab/node_modules/path-browserify/index.js",
+        "process": "/home/demo/longxin/neural_compressor_ext_lab/node_modules/process/browser.js"
       }
     },
     "watchOptions": {
@@ -114,7 +99,7 @@
     "output": {
       "hashFunction": "sha256",
       "filename": "[name].[contenthash].js",
-      "path": "/home2/longxin/neural_compressor_ext_lab/neural_compressor_ext_lab/labextension/static",
+      "path": "/home/demo/longxin/neural_compressor_ext_lab/neural_compressor_ext_lab/labextension/static",
       "publicPath": "auto"
     },
     "plugins": [
@@ -135,416 +120,416 @@
           },
           "filename": "remoteEntry.[contenthash].js",
           "exposes": {
-            "./index": "/home2/longxin/neural_compressor_ext_lab/lib/index.js",
-            "./extension": "/home2/longxin/neural_compressor_ext_lab/lib/index.js",
-            "./style": "/home2/longxin/neural_compressor_ext_lab/style/index.js"
+            "./index": "/home/demo/longxin/neural_compressor_ext_lab/lib/index.js",
+            "./extension": "/home/demo/longxin/neural_compressor_ext_lab/lib/index.js",
+            "./style": "/home/demo/longxin/neural_compressor_ext_lab/style/index.js"
           },
           "shared": {
             "@jupyterlab/application": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/application-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/apputils-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/cell-toolbar-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/celltags-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/codemirror-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/completer-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/console-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/coreutils": {
-              "requiredVersion": "^5.4.5",
+              "requiredVersion": "^5.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/csvviewer-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/debugger-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/docmanager-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/docprovider-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/documentsearch-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/extensionmanager-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/filebrowser-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/fileeditor-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/help-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/htmlviewer-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/hub-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/imageviewer-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/inspector-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/javascript-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/json-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/launcher-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/logconsole-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/mainmenu-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/markdownviewer-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/mathjax2-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/notebook-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/pdf-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/rendermime-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/running-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/settingeditor-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/shortcuts-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/statusbar-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/terminal-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/theme-dark-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/theme-light-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/toc-extension": {
-              "requiredVersion": "^5.4.5",
+              "requiredVersion": "^5.4.7",
               "import": false
             },
             "@jupyterlab/tooltip-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/translation-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/ui-components-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/vdom-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/vega5-extension": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/apputils": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/attachments": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/cell-toolbar": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/cells": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/celltags": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/codeeditor": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/codemirror": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/completer": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/console": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/csvviewer": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/debugger": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/docmanager": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/docprovider": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/docregistry": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/documentsearch": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/extensionmanager": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/filebrowser": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/fileeditor": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/htmlviewer": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/imageviewer": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/inspector": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/launcher": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/logconsole": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/mainmenu": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/markdownviewer": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/mathjax2": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/metapackage": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/nbconvert-css": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/nbformat": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/notebook": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/observables": {
-              "requiredVersion": "^4.4.5",
+              "requiredVersion": "^4.4.7",
               "import": false
             },
             "@jupyterlab/outputarea": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/property-inspector": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/rendermime": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/rendermime-interfaces": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/running": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@jupyterlab/services": {
-              "requiredVersion": "^6.4.5",
+              "requiredVersion": "^6.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/settingeditor": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/settingregistry": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/shared-models": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/statedb": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/statusbar": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/terminal": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/toc": {
-              "requiredVersion": "^5.4.5",
+              "requiredVersion": "^5.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/tooltip": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/translation": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/ui-components": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false,
               "singleton": true
             },
             "@jupyterlab/vdom": {
-              "requiredVersion": "^3.4.5",
+              "requiredVersion": "^3.4.7",
               "import": false
             },
             "@lumino/algorithm": {
@@ -625,21 +610,34 @@
             "@phosphor/commands": {},
             "@types/lerna__child-process": {},
             "@types/shelljs": {},
+            "ajv": {},
+            "ajv-keywords": {},
             "assert": {},
             "browserify-fs": {},
             "brython": {},
             "buffer": {},
+            "cacheable-request": {},
             "child_process": {},
+            "clone-response": {},
             "constants": {},
+            "css-loader": {},
+            "duplicate-package-checker-webpack-plugin": {},
+            "enhanced-resolve": {},
+            "es-abstract": {},
+            "es-to-primitive": {},
             "fs": {},
+            "got": {},
+            "has": {},
+            "icss-utils": {},
             "react-sanitized-html": {},
+            "sanitize-html": {},
             "shelljs": {},
             "stream": {},
             "util": {},
             "neural_compressor_ext_lab": {
               "version": "0.1.0",
               "singleton": true,
-              "import": "/home2/longxin/neural_compressor_ext_lab/lib/index.js"
+              "import": "/home/demo/longxin/neural_compressor_ext_lab/lib/index.js"
             }
           }
         }

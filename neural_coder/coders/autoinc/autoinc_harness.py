@@ -82,9 +82,10 @@ class AutoInc_Harness(object):
                         if model_name + "(" in line or \
                             (model_name + "." in line and line.find(model_name) < line.find(".") and "(" in line):
                             to_transform = True
-                    if not to_transform:
+                    if not to_transform and domain_ == 'onnx':
+                        pass
+                    elif not to_transform:
                         continue
-
                     ### information
 
                     # search DataLoader definition in this file
@@ -142,7 +143,7 @@ class AutoInc_Harness(object):
                     ### check
 
                     bk_trans_content_this = bk_trans_content[bk_trans_location.index(loc)]
-                    if file_path_idx == 0 and (domain_ == 'transformers_trainer' or domain_ == 'torchvision'):
+                    if file_path_idx == 0 and (domain_ in ['transformers_trainer', 'torchvision', 'onnx']):
                         pass
                     elif ("INPUT_NAME" in bk_trans_content_this and input_name == "") \
                             or ("DATALOADER_NAME" in bk_trans_content_this and dataloader_name == "") \
@@ -261,6 +262,10 @@ class AutoInc_Harness(object):
                     elif domain_ == 'torchvision':
                         lines_to_insert = lines_to_insert \
                             .replace("EVAL_FUNC_LINES", globals.list_eval_func_lines[0]) \
+                            .replace("DATALOADER_NAME", globals.list_calib_dataloader_name[0])
+                    elif domain_ =='onnx':
+                        lines_to_insert = lines_to_insert \
+                            .replace("EVAL_FUNCTION_NAME", globals.list_eval_func_name[0]) \
                             .replace("DATALOADER_NAME", globals.list_calib_dataloader_name[0])
                     else:
                         lines_to_insert = lines_to_insert \

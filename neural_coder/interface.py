@@ -116,6 +116,7 @@ def enable(
         "pytorch_aliblade",
         "tensorflow_amp",
         "keras_amp",
+        "onnx_inc_static_quant_qlinear"
     ]
     '''
 
@@ -252,6 +253,7 @@ def enable(
                     "pytorch_inc_dynamic_quant",
                     "pytorch_inc_static_quant_fx",
                     "pytorch_inc_static_quant_ipex",
+                    "onnx_inc_static_quant_qlinear"
                 ]:
                 from .coders.autoinc.autoinc_harness import AutoInc_Harness
                 from .coders.autoinc.calib_dataloader import Calib_Dataloader

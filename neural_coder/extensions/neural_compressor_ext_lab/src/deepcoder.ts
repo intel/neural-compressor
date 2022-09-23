@@ -1,7 +1,7 @@
 import { Cell, CodeCell } from '@jupyterlab/cells';
 import { ToolbarButton} from '@jupyterlab/apputils';
 import { Widget } from '@lumino/widgets';
-import { INotebookTracker,NotebookPanel, Notebook} from '@jupyterlab/notebook';
+import { INotebookTracker,NotebookPanel, Notebook, NotebookActions} from '@jupyterlab/notebook';
 import NotebookUtilities from "./utils"
 import { Constants } from './constants';
 
@@ -13,6 +13,7 @@ class JupyterlabCodeOptimizer {
     public log_path:string;
     public tmp_log_path:string;
     public rand:number
+    public markdown: Cell | undefined
 
     public cells:CodeCell[];
     constructor(panel: NotebookPanel) {
@@ -46,7 +47,7 @@ class JupyterlabCodeOptimizer {
         value = value.replace(/'\\n/g, '@@')
         value = value.replace(/\n/g, '\\n')
         value = value.replace(/"/g, '+++')
-        value = value.replace(/,/g, '$')
+        value = value.replace(/,/g, '$')        
         codes.push(value)    
       })
       
@@ -64,7 +65,6 @@ class JupyterlabCodeOptimizer {
         result2.then(value=>{
           let optimizedTexts = Object.values(value.optimizedCode.data)[0] as string 
           let optimizeCodes = optimizedTexts.split('# this is the beginning of a single code snippet\\n').slice(1,)
-          console.log("optimizedText",optimizeCodes)
           optimizeCodes[optimizeCodes.length-1] = optimizeCodes[optimizeCodes.length-1].slice(0,-3)
           for (let i = 0; i < optimizeCodes.length; ++i) {
             const cell = this.cells[i];
@@ -77,7 +77,6 @@ class JupyterlabCodeOptimizer {
             optimizedtext = optimizedtext.replace(/"\\\\n/g, "@@@")
             optimizedtext = optimizedtext.replace(/'\\\\n/g, "@@@")
             optimizedtext = optimizedtext.replace(/\\n/g,'\n')
-            console.log("text2", optimizedtext)
             optimizedtext = optimizedtext.replace(/\\'/g,"'")
             optimizedtext = optimizedtext.replace(/\^\^\^/g, "'\\n'")
             optimizedtext = optimizedtext.replace(/\+\+\+/g, "\\n\"")
@@ -93,7 +92,10 @@ class JupyterlabCodeOptimizer {
        
       }else{
         if(formatter === ''){
-            cell.outputArea.node.innerText += "[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......\n"
+          if (this.markdown){
+            this.markdown.model.value.text += "[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......  \n"
+          }
+            // cell.outputArea.node.innerText += "[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......\n"
             let runcode1 = `with open("${this.log_path}", 'a' ) as f:\n       f.write("[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......\\n")`
             let expr1 = {path: ""};
             NotebookUtilities.sendKernelRequestFromNotebook(panel, runcode1, expr1,false);
@@ -104,12 +106,18 @@ class JupyterlabCodeOptimizer {
             let fps : String ;
             result.then(  value => {
               fps =  Object.values(value.log.data)[0] as string;
-              cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\n`
+              if(this.markdown){
+                this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)  \n`
+              }
+              // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\n`
               let text = `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\\n`
               let runcode = `with open("${this.log_path}", 'a' ) as f:\n   f.write("${text}")`
               let expr = {path: ""};
               NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode, expr,false);          
-              cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`
+              if(this.markdown){
+                this.markdown.model.value.text += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......  \n`
+              }
+              // cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`
               let runcode1 = `with open("${this.log_path}", 'a' ) as f:\n       f.write("[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\\n")`
               let expr1 = {path: ""};
               NotebookUtilities.sendKernelRequestFromNotebook(panel, runcode1, expr1,false);
@@ -126,13 +134,19 @@ class JupyterlabCodeOptimizer {
           let fps:string;
           result.then( value => {
             fps = Object.values(value.log.data)[0] as string;
-            cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\n`
+            if(this.markdown){
+              this.markdown.model.value.text +=  `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)  \n`
+            }
+            // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\n`
             let text = `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\\n`
             let runcode = `with open("${this.log_path}", 'a' ) as f:\n       f.write("${text}")`
             let expr = {path: ""};
             NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode, expr,false);
             if (next !== ''){
-              cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`
+              if(this.markdown){
+                this.markdown.model.value.text +=  `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......  \n`
+              }
+              // cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`
               let runcode2 = `with open("${this.log_path}", 'a' ) as f:\n       f.write("[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\\n")`
               let expr2 = {path: ""};
               NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode2, expr2,false);
@@ -142,7 +156,7 @@ class JupyterlabCodeOptimizer {
             NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode2, expr2,false);
             
             if (formatter === 'pytorch_inc_bf16'){
-              let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:-1]:\n        pat = r\'\\d+\\.?\\d+'\n        fps = re.search(pat,log_line).group()\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`
+              let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:]:\n        pat = r\'\\d+\\.?\\d+'\n        fps = re.search(pat,log_line).group()\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`
               let read_expr = {boost:"boost",best_feature:"best_feature",best_name:"best_name",optimizeCode:"optimized_code", feature_l: "feature_l"}
               let read_result = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, read_log, read_expr,false);
               read_result.then(value =>{
@@ -150,29 +164,28 @@ class JupyterlabCodeOptimizer {
                 let best_name = Object.values(value.best_name.data)[0] as string;
                 let optimizedTexts = Object.values(value.optimizeCode.data)[0] as string
                 let optimizeCodes = optimizedTexts.split('# this is the beginning of a single code snippet\\n').slice(1,)
-                   
-                cell.outputArea.node.innerText +=`[NeuralCoder INFO] The Best Intel Optimization: ${best_name}\n`
-                cell.outputArea.node.innerText += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.\n`
-                console.log("optimizedText",optimizeCodes)
+                if(this.markdown){
+                  this.markdown.model.value.text += `[NeuralCoder INFO] The Best Intel Optimization: ${best_name}  \n`
+                  this.markdown.model.value.text += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.  \n`
+                }
+                // cell.outputArea.node.innerText +=`[NeuralCoder INFO] The Best Intel Optimization: ${best_name}\n`
+                // cell.outputArea.node.innerText += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.\n`
                 optimizeCodes[optimizeCodes.length-1] = optimizeCodes[optimizeCodes.length-1].slice(0,-3)
                 for (let i = 0; i < optimizeCodes.length; ++i) {
                   const cell = this.cells[i];
                   const currentTexts = this.cells.map(cell => cell.model.value.text);
                   const currentText = currentTexts[i];
                   let optimizedtext = optimizeCodes[i];
-                  console.log("text1", optimizedtext)
                   optimizedtext = optimizedtext.replace(/\\'\\\\n\\'/g, "^^^")
                   optimizedtext = optimizedtext.replace(/\\\\n"/g, "+++")
                   optimizedtext = optimizedtext.replace(/\\\\n'/g, "+++")
                   optimizedtext = optimizedtext.replace(/"\\\\n/g, "@@@")
                   optimizedtext = optimizedtext.replace(/'\\\\n/g, "@@@")
                   optimizedtext = optimizedtext.replace(/\\n/g,'\n')
-                  console.log("text2", optimizedtext)
                   optimizedtext = optimizedtext.replace(/\\'/g,"'")
                   optimizedtext = optimizedtext.replace(/\^\^\^/g, "'\\n'")
                   optimizedtext = optimizedtext.replace(/\+\+\+/g, "\\n\"")
-                  optimizedtext = optimizedtext.replace(/\@\@\@/g, "\"\\n")
-                  console.log("text3", optimizedtext)                 
+                  optimizedtext = optimizedtext.replace(/\@\@\@/g, "\"\\n")              
                   if (cell.model.value.text === currentText) {
                       cell.model.value.text = optimizedtext;
                     }
@@ -183,9 +196,13 @@ class JupyterlabCodeOptimizer {
                   let hard_res = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, get_hardware, expr_hardware,false);
                   hard_res.then(value =>{
                     let hard = Object.values(value.hardware.data)[0] as string;
-                    cell.outputArea.node.innerText += `[NeuralCoder INFO] HardWare: ${hard}\n`
+                    if(this.markdown){
+                      this.markdown.model.value.text += `[NeuralCoder INFO] HardWare: ${hard}  \n`
+                      this.markdown.model.value.text += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log  \n`
+                    }
+                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] HardWare: ${hard}\n`
                    })
-                   cell.outputArea.node.innerText += `[NeuralCoder INFO] The log was saved to lab_workspace\\NeuralCoder${this.rand}.log\n`
+                  //  cell.outputArea.node.innerText += `[NeuralCoder INFO] The log was saved to lab_workspace\\NeuralCoder${this.rand}.log\n`
                    const run_svg = document.createElement("svg")
                   run_svg.innerHTML = Constants.ICON_RUN
                   run?.node.firstChild?.firstChild?.firstChild?.firstChild?.replaceWith(run_svg)
@@ -225,18 +242,29 @@ class JupyterlabCodeOptimizer {
       return this.optimizeCells(false, config, formatter, notebook, run);
     }
 
-    private getCodeCells(selectedOnly = true, notebook?: Notebook): CodeCell[] {
+    private getCodeCells(ifmarkdown = true, notebook?: Notebook): CodeCell[] {
       if (!this.notebookTracker.currentWidget) {
         return [];
       }
       const codeCells: CodeCell[] = [];
       notebook = notebook || this.notebookTracker.currentWidget.content;
       this.notebookname = notebook.title.label
+      let count = 0
       notebook.widgets.forEach((cell: Cell) => {
         if (cell.model.type === 'code') {
+          count += 1
           codeCells.push(cell as CodeCell);
         }
       });
+      if(ifmarkdown){
+        NotebookActions.insertBelow(notebook);
+        this.notebookTracker.currentWidget.content.activeCellIndex = count + 1;
+        NotebookActions.changeCellType(notebook, 'markdown')
+        const activeCell = notebook.activeCell;
+        if (activeCell){
+          this.markdown = activeCell
+      }  
+      }
       this.cells = codeCells
       return codeCells;
     }
@@ -254,6 +282,10 @@ class JupyterlabCodeOptimizer {
         });
       }
         this.working = true;
+        const optimize_type = formatter !== undefined ? formatter : 'pytorch_mixed_precision_cpu';
+        if(optimize_type === 'auto-quant'){
+          selectedOnly = true
+        }else{selectedOnly = false}
         const selectedCells = this.getCodeCells(selectedOnly, notebook);
         let cell = selectedCells[selectedCells.length-1]
         if (selectedCells.length === 0) {
@@ -262,12 +294,16 @@ class JupyterlabCodeOptimizer {
             resolve("false!")
           });
         }
-        const optimize_type = formatter !== undefined ? formatter : 'pytorch_mixed_precision_cpu';
         const currentTexts = selectedCells.map(cell => cell.model.value.text);
        if (optimize_type === 'auto-quant'){
-        cell.outputArea.node.innerText = `[NeuralCoder INFO] Auto-Quant Started ......\n`
-        cell.outputArea.node.innerText += `[NeuralCoder INFO] Code: User code from Jupyter Lab notebook "${this.notebookname}"\n`
-        cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Mode: Throughput\n`
+        if (this.markdown){
+          this.markdown.model.value.text = `[NeuralCoder INFO] Auto-Quant Started ......  \n`;
+          this.markdown.model.value.text += `[NeuralCoder INFO] Code: User code from Jupyter Lab notebook "${this.notebookname}"  \n`
+          this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Mode: Throughput  \n`
+        }
+        // cell.outputArea.node.innerText = `[NeuralCoder INFO] Auto-Quant Started ......\n`
+        // cell.outputArea.node.innerText += `[NeuralCoder INFO] Code: User code from Jupyter Lab notebook "${this.notebookname}"\n`
+        // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Mode: Throughput\n`
         let runcode = `with open('${this.log_path}', 'a' ) as f:\n       f.write("[NeuralCoder INFO] Auto-Quant Started ......\\n")`
         let expr = {path: ""};
         NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode, expr,false);
@@ -277,7 +313,7 @@ class JupyterlabCodeOptimizer {
         let runcode3 = `with open('${this.log_path}', 'a' ) as f:\n       f.write("[NeuralCoder INFO] Benchmark Mode: Throughput\\n")`
         let expr3 = {path: ""};
         NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode3, expr3,false);
-        cell.outputArea.node.setAttribute("class","pad")
+        // cell.outputArea.node.setAttribute("class","pad")
         await this.optimizeCode(
               currentTexts,
               '',
@@ -335,6 +371,7 @@ class JupyterlabCodeOptimizer {
           run
           );
         }
+        this.working = false;
         return  new Promise<string>((resolve, reject) => {
           resolve("success!")
         });
@@ -343,6 +380,7 @@ class JupyterlabCodeOptimizer {
       const currentNotebookWidget = this.notebookTracker.currentWidget;
       return currentNotebookWidget && currentWidget === currentNotebookWidget;
     }
+  
   }
  
   

@@ -11,10 +11,6 @@ class neural_compressor_ext_lab {
         this.app = app;
         this.tracker = tracker;
         this.notebookpanel = notebookpanel;
-        // this.notebookCodeOptimizer = new JupyterlabNotebookCodeOptimizer(
-        //   this.tracker,
-        //   this.notebookpanel
-        // ); 
         this.setupWidgetExtension();
         this.config = '';
     }
@@ -69,6 +65,7 @@ class neural_compressor_ext_lab {
             }),
             onClick: async function () {
                 var _a, _b, _c, _d;
+                console.log("arrive here 111");
                 (_d = (_c = (_b = (_a = run_button.node.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) === null || _b === void 0 ? void 0 : _b.firstChild) === null || _c === void 0 ? void 0 : _c.firstChild) === null || _d === void 0 ? void 0 : _d.replaceWith(svg);
                 if (selector.options[selector.selectedIndex].value === 'auto-quant') {
                     await showDialog({
@@ -81,6 +78,7 @@ class neural_compressor_ext_lab {
                         }
                     });
                 }
+                console.log("arrive here 222");
                 await notebookCodeOptimizer.optimizeAllCodeCells(config, selector.options[selector.selectedIndex].value, undefined, run_button);
             }
         });

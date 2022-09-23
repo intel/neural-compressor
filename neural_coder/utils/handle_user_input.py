@@ -114,6 +114,7 @@ def get_imports_path(user_code_path: List) -> List:
         "neural_compressor",
         "numpy",
         "os",
+        "onnxruntime",
         "pandas",
         "PIL",
         "random",

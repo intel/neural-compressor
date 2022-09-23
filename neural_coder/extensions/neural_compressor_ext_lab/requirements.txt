@@ -118,7 +118,7 @@ neural-compressor==1.13
 notebook @ file:///home/conda/feedstock_root/build_artifacts/notebook_1654636967533/work
 notebook-shim @ file:///home/conda/feedstock_root/build_artifacts/notebook-shim_1646330736330/work
 numpy==1.23.2
-oauthlib==3.2.1
+oauthlib==3.2.0
 omegaconf==2.2.3
 opencv-python==4.6.0.66
 packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
