@@ -23,6 +23,7 @@ from ..utils.create_obj_from_config import create_dataloader, create_train_func,
 from ..model import BaseModel
 from ..adaptor import FRAMEWORKS
 from ..conf.config import PruningConf
+from ..conf.pythonic_config import Config
 
 from warnings import warn
 
@@ -45,6 +46,9 @@ class Pruning(Component):
         super(Pruning, self).__init__()
         if isinstance(conf_fname_or_obj, PruningConf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = PruningConf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = PruningConf(conf_fname_or_obj)
         self._init_with_conf()

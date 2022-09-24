@@ -27,6 +27,7 @@ from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
 from ..conf.config import QuantConf
+from ..conf.pythonic_config import Config
 from warnings import warn
 
 class Quantization(Component):
@@ -54,6 +55,9 @@ class Quantization(Component):
         super(Quantization, self).__init__()
         if isinstance(conf_fname_or_obj, QuantConf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = QuantConf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = QuantConf(conf_fname_or_obj)
         self._init_with_conf()

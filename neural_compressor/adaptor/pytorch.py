@@ -749,6 +749,8 @@ class TemplateAdaptor(Adaptor):
         torch.manual_seed(random_seed)
 
         self.bf16_ops = []
+        self.use_bf16 = framework_specific_info['use_bf16'] if \
+            'use_bf16' in framework_specific_info else True
         self.device = framework_specific_info['device']
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
@@ -980,7 +982,7 @@ class TemplateAdaptor(Adaptor):
                     if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
 
         # get bf16 capability
-        if (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version >= Version("1.11.0-rc1")):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -3466,6 +3468,12 @@ class PyTorchQuery(QueryBackendCapability):
                 self.cur_config = None
                 raise ValueError("Please check if the format of {} follows "
                                  "Neural Compressor yaml scheme.".format(self.cfg))
+        self._update_cfg_with_usr_definition()
+
+    def _update_cfg_with_usr_definition(self):
+        from neural_compressor.conf.pythonic_config import pytorch_config
+        if pytorch_config.precisions is not None:
+            self.cur_config['precisions']['names'] = ','.join(pytorch_config.precisions)
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.

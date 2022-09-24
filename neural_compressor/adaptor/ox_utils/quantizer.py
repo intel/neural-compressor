@@ -45,11 +45,12 @@ logger = logging.getLogger()
 
 class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,
-                 op_types_to_quantize, fallback_list=['fp32']):
+                 op_types_to_quantize, fallback_list=['fp32'], reduce_range=None):
         model = onnx.shape_inference.infer_shapes(model)
         self.model = ONNXModel(model)
         self.config = q_config
-        self.reduce_range = False if CpuInfo().vnni else True
+        self.reduce_range = reduce_range if reduce_range is not None \
+            else False if CpuInfo().vnni else True
         self.mode = mode # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
         self.fuse_dynamic_quant = False

@@ -38,6 +38,7 @@ from .common import Metric as NCMetric
 from .common import Postprocess as NCPostprocess
 from .common import _generate_common_dataloader
 from ..model.model import get_model_fwk_name
+from ..conf.pythonic_config import Config
 
 def set_env_var(env_var, value, overwrite_existing=False):
     """Sets the specified environment variable. Only set new env in two cases:
@@ -87,6 +88,9 @@ class Benchmark(object):
         self._results = {}
         if isinstance(conf_fname_or_obj, BenchmarkConf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = BenchmarkConf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':

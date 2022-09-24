@@ -61,6 +61,8 @@ class ONNXRTAdaptor(Adaptor):
         self.work_space = framework_specific_info["workspace_path"]
         self.graph_optimization = framework_specific_info["graph_optimization"]
         self.recipes = deep_get(framework_specific_info, 'recipes', {})
+        self.reduce_range = framework_specific_info["reduce_range"] if \
+            "reduce_range" in framework_specific_info else None
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
@@ -171,7 +173,8 @@ class ONNXRTAdaptor(Adaptor):
             self.static,
             quantize_params,
             self.quantizable_op_types,
-            self.query_handler.get_fallback_list())
+            self.query_handler.get_fallback_list(),
+            self.reduce_range)
         quantizer.quantize_model()
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
@@ -243,7 +246,8 @@ class ONNXRTAdaptor(Adaptor):
             self.static,
             quantize_params,
             self.quantizable_op_types,
-            self.query_handler.get_fallback_list())
+            self.query_handler.get_fallback_list(),
+            self.reduce_range)
  
         quantizer.quantize_model()
         model.model = quantizer.model.model
@@ -913,6 +917,14 @@ class ONNXRTQuery(QueryBackendCapability):
                 self.cur_config = None
                 raise ValueError("Please check if the format of {} follows Neural Compressor yaml schema.".
                                  format(self.cfg))
+        self._update_cfg_with_usr_definition()
+
+    def _update_cfg_with_usr_definition(self):
+        from neural_compressor.conf.pythonic_config import onnx_config
+        if onnx_config.graph_optimization_level is not None:
+            self.cur_config['graph_optimization']['level'] = onnx_config.graph_optimization_level
+        if onnx_config.precisions is not None:
+            self.cur_config['precisions']['names'] = ','.join(onnx_config.precisions)
 
     def _get_specified_version_cfg(self, data): # pragma: no cover
         """Get the configuration for the current runtime.

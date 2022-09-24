@@ -27,7 +27,7 @@ import re
 import copy
 import itertools
 from collections import OrderedDict
-from .dotdict import DotDict
+from .dotdict import DotDict, deep_set
 import os, datetime
 
 def constructor_register(cls):
@@ -1283,6 +1283,61 @@ class Conf(object):
                 "The yaml file format is not correct. Please refer to document."
             )
 
+    def map_pyconfig_to_cfg(self, pythonic_config):
+        mapping = {
+            'device': pythonic_config.quantization.device,
+            'model.inputs': pythonic_config.quantization.inputs,
+            'model.outputs': pythonic_config.quantization.outputs,
+            'model.framework': pythonic_config.quantization.backend,
+            'quantization.approach': pythonic_config.quantization.approach,
+            'quantization.calibration.sampling_size': 
+                pythonic_config.quantization.calibration_sampling_size,
+            'quantization.optype_wise': pythonic_config.quantization.op_type_list,
+            'quantization.op_wise': pythonic_config.quantization.op_type_list,
+            'distillation.train.criterion': pythonic_config.distillation.criterion,
+            'distillation.train.optimizer': pythonic_config.distillation.optimizer,
+            'pruning.approach.weight_compression': pythonic_config.pruning.weight_compression,
+            'nas.approach': pythonic_config.nas.approach,
+            'nas.search': pythonic_config.nas.search,
+            'nas.dynas': pythonic_config.nas.dynas,
+            'tuning.strategy.name': pythonic_config.quantization.strategy,
+            'tuning.accuracy_criterion.relative': 
+                pythonic_config.quantization.accuracy_criterion.relative,
+            'tuning.accuracy_criterion.absolute':
+                pythonic_config.quantization.accuracy_criterion.absolute,
+            'tuning.accuracy_criterion.higher_is_better':
+                pythonic_config.quantization.accuracy_criterion.higher_is_better,
+            'tuning.objective': pythonic_config.quantization.objective,
+            'tuning.exit_policy.timeout': pythonic_config.quantization.timeout,
+            'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
+            'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
+            'tuning.random_seed': pythonic_config.options.random_seed,
+            'tuning.workspace.path': pythonic_config.options.workspace,
+            'tuning.workspace.resume': pythonic_config.options.resume_from,
+            'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
+            'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
+            'evaluation.performance.pythonic_config.cores_per_instance': 
+                pythonic_config.benchmark.cores_per_instance,
+            'evaluation.performance.pythonic_config.num_of_instance': 
+                pythonic_config.benchmark.num_of_instance,
+            'evaluation.performance.pythonic_config.inter_num_of_threads': 
+                pythonic_config.benchmark.inter_num_of_threads,
+            'evaluation.performance.pythonic_config.intra_num_of_threads': 
+                pythonic_config.benchmark.intra_num_of_threads,
+            'use_bf16': pythonic_config.quantization.use_bf16,
+            'reduce_range': pythonic_config.quantization.reduce_range
+        }
+        for k, v in mapping.items():
+            if k in ['tuning.accuracy_criterion.relative', 'tuning.accuracy_criterion.absolute']:
+                target_key = str(pythonic_config.quantization.accuracy_criterion)
+                if target_key not in k and 'accuracy_criterion' in self.usr_cfg.tuning:
+                    if target_key in self.usr_cfg.tuning.accuracy_criterion and \
+                                    k.split('.')[-1] in self.usr_cfg.tuning.accuracy_criterion:
+                        self.usr_cfg.tuning.accuracy_criterion.pop(k.split('.')[-1])
+                    continue
+            if v is not None:
+                deep_set(self.usr_cfg, k, v)
+
     def _convert_cfg(self, src, dst):
         """Helper function to merge user defined dict into default dict.
 
@@ -1645,7 +1700,6 @@ class DefaultConf(DotDict):
     __getattr__ = __getitem__
 
 conf = DefaultConf({})
-
 QuantConf = Quantization_Conf
 PruningConf = Pruning_Conf
 GraphOptConf = Graph_Optimization_Conf
