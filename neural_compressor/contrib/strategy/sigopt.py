@@ -19,7 +19,9 @@ import copy
 from neural_compressor.utils import logger
 from neural_compressor.strategy.strategy import strategy_registry, TuneStrategy
 from sigopt import Connection
-
+from collections import OrderedDict
+from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler
+from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
 
 @strategy_registry
 class SigOptTuneStrategy(TuneStrategy):
@@ -109,26 +111,16 @@ class SigOptTuneStrategy(TuneStrategy):
         self.experiment = None
 
     def params_to_tune_configs(self, params):
-        op_cfgs = {}
-        op_cfgs['op'] = {}
-        for op, configs in self.opwise_quant_cfgs.items():
-            if len(configs) > 1:
-                value = int(params[op[0]])
-                if value == len(configs):
-                    value = len(configs) - 1
-                op_cfgs['op'][op] = copy.deepcopy(configs[value])
-            elif len(configs) == 1:
-                op_cfgs['op'][op] = copy.deepcopy(configs[0])
+        op_tuning_cfg = {}
+        calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        for op_name_type, configs in self.op_configs.items():
+            if len(configs) == 1:
+                op_tuning_cfg[op_name_type] = configs[0]
             else:
-                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
-        if len(self.calib_iter) > 1:
-            value = int(params['calib_iteration'])
-            if value == len(self.calib_iter):
-                value = len(configs) - 1
-            op_cfgs['calib_iteration'] = int(self.calib_iter[value])
-        else:
-            op_cfgs['calib_iteration'] = int(self.calib_iter[0])
-        return op_cfgs
+                op_tuning_cfg[op_name_type] = configs[min(len(configs) - 1, int(params[op_name_type[0]]))]
+        calib_sampling_size = calib_sampling_size_lst[min(len(configs) - 1, int(params['calib_sampling_size']))]
+        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        return op_tuning_cfg
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
@@ -203,13 +195,41 @@ class SigOptTuneStrategy(TuneStrategy):
 
     def create_exp(self, acc_target):
         params = []
-        for op, configs in self.opwise_quant_cfgs.items():
+        from copy import deepcopy
+        tuning_space = self.tuning_space
+        initial_op_tuning_cfg = {}
+        for item in tuning_space.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        # step1. collect the ops that support static and dynamic
+        quant_mode_wise_items = OrderedDict()
+        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        pre_items = set()
+        for quant_mode in query_order:
+            items = tuning_space.query_items_by_quant_mode(quant_mode)
+            filtered_items = [item for item in items if item not in pre_items]
+            pre_items = pre_items.union(set(items))
+            quant_mode_wise_items[quant_mode] = filtered_items
+
+        def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+            for item in items_lst:
+                op_item_dtype_dict[item.name] = target_quant_mode
+
+        op_item_dtype_dict = OrderedDict()
+        for quant_mode, quant_mode_items in quant_mode_wise_items.items():
+            initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
+
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+                                           op_item_dtype_dict, initial_op_tuning_cfg)
+        self.op_configs = op_wise_pool.get_opwise_candidate()
+        for op, configs in self.op_configs.items():
             if len(configs) > 1:
-                params.append(dict(name=op[0], type='int',\
-                              bounds=dict(min=0, max=len(configs) - 1)))
-        if len(self.calib_iter) > 1:
-            params.append(dict(name='calib_iteration', type='int',\
-                          bounds=dict(min=0, max=len(self.calib_iter) - 1)))
+                params.append(dict(name=op[0], type='int',
+                    bounds=dict(min=0, max=len(configs) - 1)))
+        params.append(dict(name='calib_sampling_size', type='int',
+                      bounds=dict(min=0, max=len(calib_sampling_size_lst) - 1)))
         experiment = self.conn.experiments().create(
             name=self.experiment_name,
             parameters=params,

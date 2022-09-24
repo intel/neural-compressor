@@ -31,13 +31,13 @@
     int8: &ref_1_6 {
           'FusedConv': &key_1_6_0 {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -45,13 +45,13 @@
                     },
           'Conv': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -59,13 +59,13 @@
                     },
           'Gather': {
             'weight':   {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_channel', 'per_tensor'],
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor'],
@@ -73,13 +73,13 @@
                     },
           'MatMul': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -87,13 +87,13 @@
                     },
           'default': {
              'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
              'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
@@ -141,13 +141,13 @@
     int8: {
           'FusedConv': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -155,13 +155,13 @@
                     },
           'Conv': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -169,13 +169,13 @@
                     },
           'Gather': {
             'weight':   {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_channel', 'per_tensor'],
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor'],
@@ -183,13 +183,13 @@
                     },
           'MatMul': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -197,13 +197,13 @@
                     },
           'default': {
              'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
              'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
@@ -228,13 +228,13 @@
     int8: {
           'FusedConv': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -242,13 +242,13 @@
                     },
           'Conv': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -256,13 +256,13 @@
                     },
           'Gather': {
             'weight':   {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_channel', 'per_tensor'],
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor'],
@@ -270,13 +270,13 @@
                     },
           'MatMul': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -284,13 +284,13 @@
                     },
           'EmbedLayerNormalization': {
              'weight': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
              'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
@@ -298,13 +298,13 @@
                     },
           'default': {
              'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
              'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
@@ -335,13 +335,13 @@
     int8: {
           'FusedConv': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -349,13 +349,13 @@
                     },
           'Conv': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -363,13 +363,13 @@
                     },
           'Gather': {
             'weight':   {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_channel', 'per_tensor'],
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor'],
@@ -377,13 +377,13 @@
                     },
           'MatMul': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -391,13 +391,13 @@
                     },
           'Gemm': {
             'weight':   {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -405,13 +405,13 @@
                     },
           'EmbedLayerNormalization': {
              'weight': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
              'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
@@ -419,13 +419,13 @@
                     },
           'default': {
              'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']
                     },
              'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor']

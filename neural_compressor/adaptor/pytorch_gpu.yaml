@@ -32,13 +32,13 @@
     int8: &cap_s8_default {
           'Conv1d': &cap_s8_default_Conv1d {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32', 'int8'],
+                        'dtype': ['uint8', 'int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -49,7 +49,7 @@
           'Conv3d': *cap_s8_default_Conv1d,
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']

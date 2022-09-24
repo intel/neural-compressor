@@ -38,79 +38,193 @@
 
   capabilities: &common_capabilities
     int8: {
-        'default': &capability_default {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
+        'default': &capability_default [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']},
             'weight': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax']}
-        },
-        'quantize_output': &capability_quantize {
-            'activation': {
                 'dtype': ['int8'],
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']},
-        }, 
-        'Flatten': &capability_flatten {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']}
-        },
-        'Pooling': &capability_pooling {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
-                'scheme': ['sym'],
-                'granularity': ['per_tensor'],
-                'algorithm': ['minmax', 'kl']}
-        },
-        'Convolution': &capability_conv {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
+                'algorithm': ['minmax']}
+            },
+            {'activation': {
+                'dtype': 'fp32'},
+            'weight': {
+                'dtype': 'fp32'}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']},
             'weight': {
-                'dtype': ['int8', 'fp32'],
+                'dtype': ['int8'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax']}
+            }
+        ],
+        'quantize_output': &capability_quantize [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            }
+        ], 
+        'Flatten': &capability_flatten [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': 'fp32'}
+            }
+        ],
+        'Pooling': &capability_pooling [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': 'fp32'}
+            }
+        ],
+        'Convolution': &capability_conv [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8'],
                 'scheme': ['sym'],
                 'granularity': ['per_channel'],
                 'algorithm': ['minmax']}
-        },
-        'FullyConnected': &capability_fc {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
+            },
+            {'activation': {
+                'dtype': 'fp32'},
+            'weight': {
+                'dtype': 'fp32'}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']},
             'weight': {
-                'dtype': ['int8', 'fp32'],
+                'dtype': ['int8'],
                 'scheme': ['sym'],
-                'granularity': ['per_tensor'],
+                'granularity': ['per_channel'],
                 'algorithm': ['minmax']}
-        },
-        '_sg_mkldnn_conv': *capability_conv,
-        '_sg_mkldnn_fully_connected': *capability_fc,
-        '_sg_mkldnn_selfatt_qk': &capability_mkldnn_qk {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
+            }
+        ],
+        'FullyConnected': &capability_fc [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']},
-        },
-        '_sg_mkldnn_selfatt_valatt': &capability_mkldnn_valatt {
-            'activation': {
-                'dtype': ['int8', 'fp32'],
+            'weight': {
+                'dtype': ['int8'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax']}
+            },
+            {'activation': {
+                'dtype': 'fp32'},
+            'weight': {
+                'dtype': 'fp32'}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']},
+            'weight': {
+                'dtype': ['int8'],
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax']}
+            }
+        ],
+        '_sg_mkldnn_conv': *capability_conv,
+        '_sg_mkldnn_fully_connected': *capability_fc,
+        '_sg_mkldnn_selfatt_qk': &capability_mkldnn_qk [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
                 'scheme': ['sym'],
                 'granularity': ['per_tensor'],
                 'algorithm': ['minmax', 'kl']}
-        },
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': 'fp32'}
+            }
+        ],
+        '_sg_mkldnn_selfatt_valatt': &capability_mkldnn_valatt [
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'static',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': ['int8'],
+                'quant_mode': 'dynamic',
+                'scheme': ['sym'],
+                'granularity': ['per_tensor'],
+                'algorithm': ['minmax', 'kl']}
+            },
+            {'activation': {
+                'dtype': 'fp32'}
+            }
+        ],
         '_sg_onednn_conv': *capability_conv,
         '_sg_onednn_fully_connected': *capability_fc,
         '_sg_onednn_selfatt_qk': *capability_mkldnn_qk,

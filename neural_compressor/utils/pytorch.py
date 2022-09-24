@@ -217,6 +217,17 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     q_model.eval()
     version = get_torch_version()
+
+    approach_quant_mode = None
+    if tune_cfg['approach'] == "post_training_dynamic_quant":
+        approach_quant_mode = 'dynamic'
+    elif tune_cfg['approach'] == "post_training_static_quant":
+        approach_quant_mode = 'static'
+
+    for _, op_cfg in tune_cfg['op'].items():
+        if 'quant_mode' not in op_cfg['activation']:
+            op_cfg['activation']['quant_mode'] = approach_quant_mode
+
     if tune_cfg['approach'] != "post_training_dynamic_quant":
         if version < Version("1.7.0-rc1"):   # pragma: no cover
             q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING

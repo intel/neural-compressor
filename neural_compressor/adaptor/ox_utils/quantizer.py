@@ -129,8 +129,7 @@ class Quantizer:
         self.remove_redundant_pairs()
  
         # step 3: convert q-node-dq to qlinear op if needed
-        if self.mode != 'qdq':
-            self.convert_qdq_to_operator_oriented()
+        self.convert_qdq_to_operator_oriented()
  
         self.merge_dedicated_qdq_pair() 
  
@@ -224,7 +223,8 @@ class Quantizer:
  
     def should_convert(self, node):
         name = node.name.split('_quant')[0]
-        if name in self.config and self.config[name] not in self.fallback_list:
+        if name in self.config and self.config[name] not in self.fallback_list and \
+            (self.config[name]['activation']['quant_mode'] == 'dynamic' or self.mode != 'qdq'):
             return True
         else:
             return False
@@ -236,7 +236,8 @@ class Quantizer:
         for node in self.model.nodes():
             if node.op_type not in ['QuantizeLinear', 'DequantizeLinear'] and \
                 self.should_convert(node):
-                op_converter = CreateOpConverter(self, node)
+                op_converter = CreateOpConverter(self, node,
+                    self.config[node.name.split('_quant')[0]]['activation']['quant_mode'])
                 op_converter.convert()
         self.model.graph().node.extend(self.new_nodes)
         self.model.remove_nodes(self.remove_nodes)
@@ -365,7 +366,7 @@ class Quantizer:
                                                          dtype_mapping[cfg], TensorProto.FLOAT)
 
     def quantize_outputs(self, node, initializer_use_weight_qType=True, direct_int8=False):
-        if not self.static:
+        if self.config[node.name]['activation']['quant_mode'] == 'dynamic':
             return
         for idx, tensor_name in enumerate(node.output):
             if tensor_name in self.value_infos and \
@@ -490,7 +491,8 @@ class Quantizer:
                     data_found, scale_name, zp_name, _, _ = \
                         self._get_quantization_params(tensor_name)
  
-                if self.static:
+                if self.config[node.name.split('_quant')[0]]['activation']['quant_mode'] != \
+                    'dynamic':
                     if data_found == False:
                         raise ValueError(
                             "Quantization parameters are not specified for param {}."
@@ -526,41 +528,47 @@ class Quantizer:
                                                                 self.new_nodes,
                                                                 self.model.graph())
                     if qlinear_node is None:
-                        if data_found == True:
-                            qlinear_node = make_quant_node(tensor_name + "_QuantizeLinear",
-                                [tensor_name, scale_name, zp_name], [tensor_name + "_quantized"])
+                        if self.fuse_dynamic_quant and \
+                            self.config[node.name]['activation']['dtype'] == \
+                                onnx_proto.TensorProto.UINT8 and \
+                            self.config[node.name]['activation']['scheme'] == 'asym':
+                            scale_name = tensor_name + "_scale"
+                            zeropoint_name = tensor_name + "_zero_point"
+                            if find_by_name(scale_name, self.model.initializer()):
+                                self.model.remove_initializer(
+                                    find_by_name(scale_name, self.model.initializer()))
+                            if find_by_name(zeropoint_name, self.model.initializer()):
+                                self.model.remove_initializer(
+                                    find_by_name(zeropoint_name, self.model.initializer()))
+                            qlinear_node = onnx.helper.make_node("DynamicQuantizeLinear", 
+                                [tensor_name],
+                                [tensor_name + "_quantized", scale_name, zeropoint_name],
+                                tensor_name + "_QuantizeLinear")
                         else:
-                            if self.fuse_dynamic_quant and \
-                                self.config[node.name]['activation']['dtype'] == \
-                                    onnx_proto.TensorProto.UINT8 and \
-                                self.config[node.name]['activation']['scheme'] == 'asym':
-                                scale_name = tensor_name + "_scale"
-                                zeropoint_name = tensor_name + "_zero_point"
-                                qlinear_node = onnx.helper.make_node("DynamicQuantizeLinear", 
-                                    [tensor_name],
-                                    [tensor_name + "_quantized", scale_name, zeropoint_name],
-                                    tensor_name + "_QuantizeLinear")
-                            else:
-                                scale_name, zp_name, _, _ = \
-                                    self._get_dynamic_input_quantization_params(
-                                    tensor_name, self.config[node.name]['activation']['dtype'])
-                                qlinear_node = make_quant_node(tensor_name + "_QuantizeLinear",
-                                                            [tensor_name, scale_name, zp_name], 
-                                                            [tensor_name + "_quantized"])
+                            scale_name, zp_name, _, _ = \
+                                self._get_dynamic_input_quantization_params(
+                                tensor_name, self.config[node.name]['activation']['dtype'])
+                            qlinear_node = make_quant_node(tensor_name + "_QuantizeLinear",
+                                                        [tensor_name, scale_name, zp_name], 
+                                                        [tensor_name + "_quantized"])
                         if qlinear_node not in self.new_nodes:
                             self.new_nodes.append(qlinear_node)
                         self.quantized_value_map[tensor_name] = QuantizedValue(
                             tensor_name, 
-                            tensor_name + "_quantized", 
+                            qlinear_node.output[0],
                             scale_name, 
                             zp_name, 
                             self.config[node.name]['activation']['dtype'])                        
-                    self.replace_input.append([node, tensor_name, tensor_name + "_quantized"])
+                    self.replace_input.append([node, tensor_name, qlinear_node.output[0]])
  
     def quantize_bias_tensor(self, node):
         input_name, weight_name, bias_name = node.input
-        if self.quantization_params is None or input_name not in self.quantization_params and \
-            input_name not in self.quantized_value_map:
+        if self.quantization_params is None or \
+            input_name not in self.quantization_params or \
+            input_name not in self.quantized_value_map or \
+            (input_name in self.quantized_value_map and \
+            find_by_name(self.quantized_value_map[input_name].scale_name, 
+            self.model.initializer()) is None):
             self._dynamic_quantize_bias(input_name, weight_name + '_scale', bias_name,
                 bias_name + "_quantized")
         else:

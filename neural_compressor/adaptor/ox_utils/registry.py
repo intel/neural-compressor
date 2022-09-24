@@ -119,9 +119,8 @@ CastRegistry = {
 }
 
 
-def CreateOpConverter(onnx_quantizer, node):
-    registry = IntegerOpsRegistry if onnx_quantizer.mode == QuantizationMode.IntegerOps \
-                                  else QLinearOpsRegistry
+def CreateOpConverter(onnx_quantizer, node, quant_mode):
+    registry = IntegerOpsRegistry if quant_mode == 'dynamic' else QLinearOpsRegistry
     if node.op_type in registry.keys():
         return registry[node.op_type](onnx_quantizer, node)
     return QuantOperatorBase(onnx_quantizer, node)

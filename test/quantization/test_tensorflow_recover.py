@@ -161,6 +161,10 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
         relu6 = tf.nn.relu6(conv_bias, name='op_to_store')
 
         out_name = relu6.name.split(':')[0]
+
+        def eval(model):
+            return 0.5
+        
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             constant_graph = graph_util.convert_variables_to_constants(
@@ -170,19 +174,18 @@ class TestTensorflowRecoverForceBF16(unittest.TestCase):
             with gfile.GFile('./test.pb', "wb") as f:
                 f.write(constant_graph.SerializeToString())
 
-            from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization("./fake_yaml_2.yaml")
-            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.model = constant_graph
-            q_model = quantizer.fit()
+            from neural_compressor.experimental import MixedPrecision
+            convert = MixedPrecision('./fake_yaml_2.yaml')
+            convert.model = constant_graph
+            convert.eval_func = eval
+            output_model = convert.fit()
             found_cast_op = False
 
             from neural_compressor.utils.utility import recover
             recover_model = recover('./test.pb', './saved/history.snapshot', 0)
 
             q_model_const_value = {}
-            for node in q_model.graph_def.node:
+            for node in output_model.graph_def.node:
                 if node.op == "Const":
                     tensor_value = tensor_util.MakeNdarray(node.attr["value"].tensor)
                     if not tensor_value.shape:

@@ -456,7 +456,6 @@ class TensorFlowAdaptor(Adaptor):
         self.quantize_config['advance'] = deep_get(tuning_cfg, 'advance')
         fp32_ops = []
         bf16_ops = []
-        int8_ops = []
         dispatched_op_names = [j[0] for j in tuning_cfg['op']]
 
         invalid_op_names = [i for i in self.quantize_config['op_wise_config']
@@ -482,7 +481,7 @@ class TensorFlowAdaptor(Adaptor):
             if 'weight' in tuning_cfg['op'][each_op_info]:
                 is_perchannel = tuning_cfg['op'][each_op_info]['weight'][
                     'granularity'] == 'per_channel'
-                bit = tuning_cfg['op'][each_op_info]['weight']['bit']
+                #bit = tuning_cfg['op'][each_op_info]['weight']['bit']
             weight_bit = bit if bit else 7.0
 
             algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
@@ -490,7 +489,6 @@ class TensorFlowAdaptor(Adaptor):
             is_asymmetric = False
             if 'activation' in tuning_cfg['op'][each_op_info]:
                 is_asymmetric = tuning_cfg['op'][each_op_info]['activation']['scheme'] == 'asym'
-            int8_ops.append(op_name)
             self.quantize_config['op_wise_config'][op_name] = (is_perchannel,
                                                                algorithm,
                                                                is_asymmetric,
@@ -665,8 +663,10 @@ class TensorFlowAdaptor(Adaptor):
                 node_op = details[-1][0]
                 node_name = details[0]
 
-                self.bf16_op_details[(node_name, node_op)] = {'weight': {'dtype': ['bf16']}, \
-                                                              'activation': {'dtype': ['bf16']}}
+                self.bf16_op_details[(node_name, node_op)] = [{'weight': {'dtype': ['bf16']}, \
+                                                              'activation': {'dtype': ['bf16']}},\
+                                                              {'weight': {'dtype': 'fp32'}, \
+                                                               'activation': {'dtype': 'fp32'}}]
 
     def _query_quantizable_ops(self, matched_nodes):
         """Collect the op-wise configuration for quantization.
@@ -674,6 +674,8 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             OrderDict: op-wise configuration.
         """
+        bf16_common_config = {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
+        fp32_common_config = {'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}
         uint8_type = self.query_handler.get_op_types_by_precision(precision='uint8')
         int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
         tf_quantizable_op_type = list(set(uint8_type).union(set(int8_type)))
@@ -684,14 +686,7 @@ class TensorFlowAdaptor(Adaptor):
         conv3d_config = copy.deepcopy(op_capability['uint8']['Conv3D']) if 'Conv3D' in op_capability['uint8'] else None
         matmul_config = copy.deepcopy(op_capability['uint8']['MatMul'])
         other_config = copy.deepcopy(op_capability['uint8']['default'])
-        if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
-            #TODO we need to enhance below logic by introducing precision priority.
-            conv_config['weight']['dtype'].insert(-1, 'bf16')
-            matmul_config['weight']['dtype'].insert(-1, 'bf16')
-            conv_config['activation']['dtype'].insert(-1, 'bf16')
-            matmul_config['activation']['dtype'].insert(-1, 'bf16')
-            other_config['activation']['dtype'].insert(-1, 'bf16')
-
+        
         self.quantizable_op_details = OrderedDict()
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
@@ -722,15 +717,14 @@ class TensorFlowAdaptor(Adaptor):
                     conv2d_int8_config['pattern'] = pattern_info
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
-                    )] = conv2d_int8_config
+                    )] = [conv2d_int8_config, fp32_common_config]
                 elif self.unify_op_type_mapping[node_op].find("conv3d") != -1:
                     conv3d_int8_config = copy.deepcopy(conv3d_config)
                     conv3d_int8_config['pattern'] = pattern_info
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
-                    )] = conv3d_int8_config
+                    )] = [conv3d_int8_config, fp32_common_config]
                 elif self.unify_op_type_mapping[node_op].find("matmul") != -1:
-
                     matmul_int8_config = copy.deepcopy(matmul_config)
                     matmul_int8_config['pattern'] = pattern_info
                     # TODO enable the sym mode once the tf fixed the mkldequantize_op.cc bug.
@@ -740,11 +734,15 @@ class TensorFlowAdaptor(Adaptor):
                     matmul_int8_config['activation']['scheme'] = matmul_scheme
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
-                    )] = matmul_int8_config
+                    )] = [matmul_int8_config, fp32_common_config]
                 else:
                     self.quantizable_op_details[(
                         node_name, self.unify_op_type_mapping[node_op]
-                    )] = copy.deepcopy(other_config)
+                    )] = [copy.deepcopy(other_config), fp32_common_config]
+                if ('bf16' in valid_precision and CpuInfo().bf16) or os.getenv('FORCE_BF16') == '1':
+                    self.quantizable_op_details[(
+                        node_name, self.unify_op_type_mapping[node_op]
+                    )].insert(1, bf16_common_config)
 
                 self.quantize_config['op_wise_config'][node_name] = (False, "minmax", False)
         return self.quantizable_op_details
@@ -1304,9 +1302,9 @@ class TensorFlowAdaptor(Adaptor):
         res = OrderedDict()
         for op in self.quantizable_op_details:
             if op[1] not in res:
-                res[op[1]] = {'activation': self.quantizable_op_details[op]['activation']}
-                if 'weight' in self.quantizable_op_details[op]:
-                    res[op[1]]['weight'] = self.quantizable_op_details[op]['weight']
+                    res[op[1]] = {'activation': self.quantizable_op_details[op][0]['activation']}
+                    if 'weight' in self.quantizable_op_details[op][0]:
+                        res[op[1]]['weight'] = self.quantizable_op_details[op][0]['weight']
         for op in self.bf16_op_details:
             if op[1] not in res:
                 res[op[1]] = {'activation': {'dtype': ['bf16']}, 'weight': {'dtype': ['bf16']}}
@@ -1335,27 +1333,24 @@ class TensorFlowAdaptor(Adaptor):
 
         quantize_config = {'op_wise_config': {}}
         for each_op_info in capability['opwise']:
-            op_name = each_op_info[0]
-            op_type = each_op_info[1]
-
             is_perchannel = False
             weight_bit = 7.0
-            activation = capability['optypewise'][op_type]['activation']
-            if 'weight' in capability['optypewise'][op_type]:
-                weight = capability['optypewise'][op_type]['weight']
-                is_perchannel = True if weight[
-                    'granularity'][0] == 'per_channel' else False
+            for op_cap in capability['opwise'][each_op_info]:
+                if'activation'in op_cap and 'quant_mode' in op_cap['activation']:
+                    activation = op_cap['activation']
+                    if 'weight' in op_cap:
+                        weight = op_cap['weight']
+                        is_perchannel = True if weight[
+                            'granularity'][0] == 'per_channel' else False
+                    algorithm = activation['algorithm'][0]
+                    is_asymmetric = False
+                    if 'activation' in op_cap:
+                        is_asymmetric = True if activation['scheme'][0] == 'asym' else False
 
-            algorithm = activation['algorithm'][0]
-
-            is_asymmetric = False
-            if 'activation' in capability['optypewise'][op_type]:
-                is_asymmetric = True if activation['scheme'][0] == 'asym' else False
-
-            quantize_config['op_wise_config'][op_name] = (is_perchannel,
-                                                          algorithm,
-                                                          is_asymmetric,
-                                                          weight_bit)
+                    quantize_config['op_wise_config'][each_op_info[0]] = (is_perchannel,
+                                                                          algorithm,
+                                                                          is_asymmetric,
+                                                                          weight_bit)
         from .tf_utils.graph_converter import GraphConverter
         tmp_graphdef = copy.deepcopy(model.graph_def)
         for i in tmp_graphdef.node:

@@ -724,6 +724,28 @@ class TestAdaptorONNXRT(unittest.TestCase):
                     {'ConvBnFusion_W_features.0.0.weight': np.random.random([32, 3, 3, 3])})
                 adaptor.set_tensor(q_model, {'ConvBnFusion_BN_B_features.0.1.bias': np.random.random(1)})
 
+    def test_auto_quant(self):
+        conf.model.framework = 'onnxrt_qlinearops'
+        conf.quantization.approach = 'post_training_auto_quant'
+        conf.quantization.calibration.sampling_size = 1
+        conf.tuning.exit_policy.timeout = 1000000
+        conf.tuning.exit_policy.max_trials = 5
+        conf.evaluation.accuracy.metric = {'MSE': {'compare_label': False}}
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
+        conf.model.framework = 'onnxrt_qdq'
+        quantizer = Quantization(conf)
+        quantizer.calib_dataloader = self.cv_dataloader
+        quantizer.eval_dataloader = self.cv_dataloader
+        quantizer.model = self.rn50_model
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
+
     def test_quantize_data_per_channel(self):
         from neural_compressor.adaptor.ox_utils.util import quantize_data_per_channel
         tensor_value = np.ones([2, 1])
@@ -732,7 +754,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
         zo_value = np.array([0, 0])
         new_tensor_value = quantize_data_per_channel(tensor_value, qType, 'sym', scale_value, zo_value)
         self.assertEqual(tensor_value.all(), new_tensor_value.all())
-
 
     def test_adaptor(self):
         from neural_compressor.utils.constant import FP32, INT8_SYM_MINMAX_PERTENSOR, UINT8_ASYM_MINMAX_PERTENSOR
@@ -808,11 +829,11 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework = "onnxrt_qlinearops"
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         tune_cfg = {'calib_iteration': 1,
-                    'op': {('gather', 'Gather'): {'activation':  {'dtype': ['uint8']},
+                    'op': {('gather', 'Gather'): {'activation':  {'dtype': ['uint8'], 'quant_mode': 'static'},
                                                  'weight': {'dtype': ['uint8']}},
-                           ('add', 'Add'): {'activation':  {'dtype': ['uint8']},
+                           ('add', 'Add'): {'activation':  {'dtype': ['uint8'], 'quant_mode': 'static'},
                                            'weight': {'dtype': ['int8']}},
-                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': ['uint8']},
+                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': ['uint8'], 'quant_mode': 'static'},
                                                    'weight': {'dtype': ['int8']}}}}
         adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
         self.assertTrue(len(adaptor.quantizable_ops), 2)
@@ -820,21 +841,21 @@ class TestAdaptorONNXRT(unittest.TestCase):
         framework_specific_info['device'] = 'gpu'
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         tune_cfg = {'calib_iteration': 1,
-                    'op': {('gather', 'Gather'): {'activation':  {'dtype': 'fp16'},
+                    'op': {('gather', 'Gather'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
                                                  'weight': {'dtype': 'fp16'}},
-                           ('add', 'Add'): {'activation':  {'dtype': 'fp16'},
+                           ('add', 'Add'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
                                            'weight': {'dtype': 'fp16'}},
-                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': 'fp16'},
+                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
                                                    'weight': {'dtype': 'fp16'}}}}
         model = adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
         self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 0)
 
         tune_cfg = {'calib_iteration': 1,
-                    'op': {('Matmul', 'MatMul'): {'activation':  {'dtype': ['uint8']},
+                    'op': {('Matmul', 'MatMul'): {'activation':  {'dtype': ['uint8'], 'quant_mode': 'static'},
                                                  'weight': {'dtype': ['int8']}},
-                           ('add', 'Add'): {'activation':  {'dtype': 'fp16'},
+                           ('add', 'Add'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
                                            'weight': {'dtype': 'fp16'}},
-                           ('add2', 'Add'): {'activation':  {'dtype': 'fp16'},
+                           ('add2', 'Add'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
                                                    'weight': {'dtype': 'fp16'}}}}
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         model = adaptor.quantize(tune_cfg, common.Model(self.matmul_model), self.matmul_dataloader)
@@ -933,7 +954,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         conf.tuning.accuracy_criterion.higher_is_better = False
         conf.tuning.exit_policy.timeout = 100
         
-        result = [0., 0.1, 0.102, 0.1006, 0.1002, 0.12, 0.11]
+
+        result = [0., 0.1, 0.1005, 0.102, 0.1002, 0.102, 0.102]
         def sub_eval(model, result):
             time.sleep(0.001 * len(result))
             del result[0]
@@ -977,6 +999,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertEqual(q_model, None)
 
+        conf.tuning.accuracy_criterion.relative = 0.01
         conf.tuning.accuracy_criterion.higher_is_better = True
         conf.evaluation.accuracy.multi_metrics = {
             'Accuracy': {}, 'MSE': {'compare_label': False}, 'weight': [0.5, 0.5]}

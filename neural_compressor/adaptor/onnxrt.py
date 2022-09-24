@@ -57,6 +57,7 @@ class ONNXRTAdaptor(Adaptor):
         self.quantizable_ops = []
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
+        self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
         self.backend = framework_specific_info["backend"]
         self.work_space = framework_specific_info["workspace_path"]
         self.graph_optimization = framework_specific_info["graph_optimization"]
@@ -67,6 +68,7 @@ class ONNXRTAdaptor(Adaptor):
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
         self.quantizable_op_types = []
+        self.query_handler_ext = None
         for precision in self.query_handler.get_precisions():
             if precision != 'fp32':
                 if self.device == 'cpu' and precision == 'fp16':
@@ -124,7 +126,7 @@ class ONNXRTAdaptor(Adaptor):
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
-        if self.static:
+        if not self.dynamic:
             if isinstance(data_loader, BaseDataLoader):
                 batch_size = data_loader.batch_size
                 try:
@@ -289,7 +291,7 @@ class ONNXRTAdaptor(Adaptor):
 
         for node in model.model.graph.node:
             if node.name.endswith('_quant'):
-                if self.backend in ["qlinearops", "qdq", "qoperator"]:
+                if node.op_type.startswith('QLinear'):
                     origin_op_type = node.op_type.split('QLinear')[-1]
                 else:
                     origin_op_type = node.op_type.split('Integer')[0]
@@ -596,53 +598,59 @@ class ONNXRTAdaptor(Adaptor):
             self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
             else False
  
-        precisions = self.query_handler.get_precisions()
-        optype_wise = OrderedDict()
         quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
-
+        optype_wise = OrderedDict()
         op_wise = OrderedDict()
-        for precision in precisions:
-            if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
+        for query in [self.query_handler, self.query_handler_ext]:
+            if query is None:
                 continue
-            if precision in self.query_handler.get_quantization_capability():
-                special_config_types = list(self.query_handler.get_quantization_capability() \
-                    [precision].keys())
-                default_config = self.query_handler.get_quantization_capability() \
-                    [precision]['default']
-            else:
-                special_config_types = {}
-                default_config = {'weight': {'dtype': [precision]}, 
-                                  'activation': {'dtype': [precision]}}
-            optypes = self.query_handler.get_op_types_by_precision(precision) if \
-                self.query_handler.get_op_types_by_precision(precision) != ['*'] else \
-                optype_wise.keys()
-            for op in optypes:
-                if op not in quantizable_optype:
-                    continue
-                if op not in special_config_types:
-                    op_capability = default_config
-                else:
-                    op_capability = self.query_handler.get_quantization_capability() \
-                        [precision][op]
-                if op not in optype_wise.keys():
-                    optype_wise[op] = copy.deepcopy(op_capability)
-                elif precision not in optype_wise[op]['weight']['dtype']:
-                    optype_wise[op]['weight']['dtype'].append(precision)
-                    optype_wise[op]['activation']['dtype'].append(precision)
+            precisions = query.get_precisions()
 
-        for key, val in optype_wise.items():
-            optype_wise[key]['weight']['dtype'] = \
-                [i for i in precisions if i in val['weight']['dtype']]
-            optype_wise[key]['activation']['dtype'] = \
-                [i for i in precisions if i in val['activation']['dtype']]
+            for precision in precisions:
+                if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
+                    continue
+                if precision in self.query_handler.get_quantization_capability():
+                    special_config_types = list(self.query_handler.get_quantization_capability() \
+                        [precision].keys())
+                    default_config = self.query_handler.get_quantization_capability() \
+                        [precision]['default']
+                else:
+                    special_config_types = {}
+                    default_config = {'weight': {'dtype': precision}, 
+                                      'activation': {'dtype': precision}}
+                optypes = self.query_handler.get_op_types_by_precision(precision) if \
+                    self.query_handler.get_op_types_by_precision(precision) != ['*'] else \
+                    optype_wise.keys()
+                for op in optypes:
+                    if op not in quantizable_optype:
+                        continue
+                    if op not in special_config_types:
+                        op_capability = copy.deepcopy(default_config)
+                    else:
+                        op_capability = copy.deepcopy(
+                            self.query_handler.get_quantization_capability()[precision][op])
+
+                    if precision in ['int8', 'uint8']:
+                        if self.static:
+                            op_capability['activation']['quant_mode'] = 'static'
+                        elif self.dynamic:
+                            op_capability['activation']['quant_mode'] = 'dynamic'
+                        elif query == self.query_handler: # query static capability for auto
+                            op_capability['activation']['quant_mode'] = 'static'
+                        elif query == self.query_handler_ext: # query dynamic capability for auto
+                            op_capability['activation']['quant_mode'] = 'dynamic'
+
+                    if op not in optype_wise.keys():
+                        optype_wise[op] = [op_capability]
+                    elif op_capability not in optype_wise[op]:
+                        optype_wise[op].append(op_capability)
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in optype_wise:
                 if exclude_first_quantizable_op and node.op_type in ['Conv', 'MatMul']:
                     exclude_first_quantizable_op = False
                     tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
-                    for k, v in tmp_cfg.items():
-                        v['dtype'] = list(filter(lambda x: x not in ['uint8', 'int8'], v['dtype']))
+                    tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
                     op_wise.update({(node.name, node.op_type): tmp_cfg})
                     continue
                 op_wise.update(
@@ -854,6 +862,9 @@ class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
             os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
         self.backend = "qlinearops"
         super().__init__(framework_specific_info)
+        if framework_specific_info["approach"] == "post_training_auto_quant":
+            self.query_handler_ext = ONNXRTQuery(local_config_file=os.path.join(
+                os.path.dirname(__file__), "onnxrt_integer.yaml"))
 
 @adaptor_registry
 class ONNXRT_QOperatorAdaptor(ONNXRTAdaptor):
@@ -868,7 +879,6 @@ class ONNXRT_QOperatorAdaptor(ONNXRTAdaptor):
             os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
         self.backend = "qlinearops"
         super().__init__(framework_specific_info)
-
 
 @adaptor_registry
 class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
@@ -897,6 +907,9 @@ class ONNXRT_QDQAdaptor(ONNXRTAdaptor):
             os.path.dirname(__file__), "onnxrt_qdq.yaml"))
         self.backend = "qdq"
         super().__init__(framework_specific_info)
+        if framework_specific_info["approach"] == "post_training_auto_quant":
+            self.query_handler_ext = ONNXRTQuery(local_config_file=os.path.join(
+                os.path.dirname(__file__), "onnxrt_integer.yaml"))
 
 class ONNXRTQuery(QueryBackendCapability):
 

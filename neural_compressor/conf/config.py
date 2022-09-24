@@ -740,6 +740,7 @@ schema = Schema({
             # Now only onnruntime and pytorch supoort
             lambda s: s in ['post_training_static_quant',
                             'post_training_dynamic_quant',
+                            'post_training_auto_quant',
                             'quant_aware_training']),
         Optional('train', default=None): train_schema,
         Optional('advance', default=None): {
@@ -1438,139 +1439,6 @@ class Quantization_Conf(Conf):
                     model_wise_quant[optype])
 
         return self._model_wise_tune_space
-
-    def _weight_compute(self, combined_cfg):
-        temp_set = set()
-        for _, config in combined_cfg.items():
-            temp_str = ''
-            for part, params in config.items():
-                temp_str = temp_str + part
-                for _, param in params.items():
-                    temp_str += str(param)
-                temp_str += '_'
-            temp_set.add(temp_str)
-        return len(temp_set)
-
-    def _sort_cfgs(self, combined_cfgs):
-        cfgs_num = len(combined_cfgs)
-        for i in range(cfgs_num):
-            for j in range(cfgs_num-i-1):
-                weight_a = self._weight_compute(combined_cfgs[j])
-                weight_b = self._weight_compute(combined_cfgs[j+1])
-                if weight_a > weight_b:
-                    temp = combined_cfgs[j]
-                    combined_cfgs[j] = combined_cfgs[j+1]
-                    combined_cfgs[j+1] = temp
-        return combined_cfgs
-
-    def _combine_optype_quant_cfgs(self, model_wise_quant_cfgs):
-        if len(model_wise_quant_cfgs) == 0:
-            return []
-        temp_cfgs = OrderedDict()
-
-        for optype, cfgs in model_wise_quant_cfgs.items():
-            if len(cfgs) > 0:
-                temp_cfgs[optype] = copy.deepcopy(cfgs)
-
-        if not bool(temp_cfgs):
-            return []
-
-        keys, values = zip(*temp_cfgs.items())
-
-        return self._sort_cfgs([dict(zip(keys, v)) for v in itertools.product(*values)])
-
-    def opwise_tune_space(self, opwise_quant):
-        def _is_regex(pattern):
-            if re.match("^[A-Za-z0-9.][A-Za-z0-9_.\\-/]*$", pattern):
-                return False
-            return True
-
-        opwise = copy.deepcopy(opwise_quant)
-
-        cfg = self.usr_cfg
-        if cfg.quantization.op_wise:
-            for k, v in cfg.quantization.op_wise.items():
-                is_regex = _is_regex(k)
-                for k_op, _ in opwise.items():
-                    if (not is_regex and k == k_op[0]) or (is_regex and re.match(k, k_op[0])):
-                        opwise[k_op] = self._merge_dicts(v, opwise[k_op])
-
-        for k, v in opwise.items():
-            opwise[k] = self._merge_dicts(self._model_wise_tune_space[k[1]], opwise[k])
-
-        self._opwise_tune_space = opwise
-        return self._opwise_tune_space
-
-    def expand_tune_cfgs(self, tune_space, framework):
-        """generate all possible tuning combinations for each op or model wise tuning.
-
-        Args:
-            tune_space (dict): The tuning space to be expanded.
-
-        Returns:
-            dict: The expanded tuning configs
-        """
-        cfg_lists = self._expand_tune_cfgs_recursively(tune_space)
-
-        # remove unreasonable tuning combinations
-        valid_cfgs = []
-        quant_dtype = ['int8', 'uint8', 'int4', 'uint4']
-
-        for cfg in cfg_lists:
-            cfg = DotDict(cfg)
-            dtype = cfg.activation.dtype
-
-            if dtype not in quant_dtype and "pytorch" not in framework:
-                cfg.activation.clear()
-                cfg.activation.dtype = dtype
-
-            if 'weight' in cfg:
-                dtype = cfg.weight.dtype
-                if dtype not in quant_dtype:
-                    cfg.weight.clear()
-                    cfg.weight.dtype = dtype
-                if (cfg.weight.dtype != cfg.activation.dtype and
-                    cfg.weight.dtype not in quant_dtype and
-                    cfg.activation.dtype not in quant_dtype) or \
-                   (cfg.weight.dtype != cfg.activation.dtype and
-                    cfg.weight.dtype in quant_dtype and
-                    cfg.activation.dtype not in quant_dtype and
-                    ("pytorch" not in framework or
-                     len(tune_space['activation']['dtype']) > 1)) or \
-                   (cfg.weight.dtype != cfg.activation.dtype and
-                    cfg.weight.dtype not in quant_dtype and
-                    cfg.activation.dtype in quant_dtype):
-                    continue
-
-            valid_cfgs.append(cfg)
-
-        # remove duplicated configurations
-        valid_cfgs = [cfg[0] for cfg in itertools.groupby(valid_cfgs)]
-        return valid_cfgs
-
-    def _expand_tune_cfgs_recursively(self, cfg_dict):
-        """Helper function of recursively generating all combinations.
-
-        Args:
-            cfg_dict (dict): The dict of conf space.
-
-        Returns:
-            list: List containing all combinations
-        """
-        assert isinstance(cfg_dict, dict)
-        combinations = OrderedDict()
-        for key in cfg_dict:
-            if isinstance(cfg_dict[key], dict):
-                lists = self._expand_tune_cfgs_recursively(cfg_dict[key])
-                combinations[key] = lists
-
-        if len(combinations) != 0:
-            return self._expand_tune_cfgs_recursively(combinations)
-
-        keys, values = zip(*cfg_dict.items())
-        values = list(filter(None, values))
-        lists = [dict(zip(keys, v)) for v in itertools.product(*values)]
-        return lists
 
 class Pruning_Conf(Conf):
     """config parser.

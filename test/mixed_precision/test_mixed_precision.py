@@ -372,7 +372,7 @@ class TestMixedPrecision(unittest.TestCase):
         self.assertEqual(converter.input, 'input')
         self.assertEqual(converter.output, 'final')
 
-        conf.tuning.exit_policy.max_trials = 10
+        conf.tuning.exit_policy.max_trials = 4
         conf.tuning.exit_policy.timeout = 500
         conf.model.framework = 'tensorflow'
         converter = MixedPrecision(conf)

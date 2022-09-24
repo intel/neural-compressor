@@ -71,6 +71,9 @@ class QDQBinaryOp(QuantOperatorBase):
         if not all([self.quantizer.is_valid_quantize_weight(i) for i in node.input]):
             return
  
+        if not all([self.quantizer.is_valid_quantize_weight(i) for i in node.input]):
+            return
+
         self.quantizer.quantize_inputs(node, initializer_use_weight_qType=False)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)

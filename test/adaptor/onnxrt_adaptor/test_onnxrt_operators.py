@@ -46,15 +46,26 @@ class TestAdaptorONNXRT(unittest.TestCase):
     qlinear_backend = QuantizationMode.QLinearOps
     qdq_backend = 'qdqops'
     integer_backend = QuantizationMode.IntegerOps
-    q_config = {"weight":{'dtype': 3, 
+    static_q_config = {"weight":{'dtype': 3, 
                           'algorithm': 'minmax', 
                           'scheme':'sym', 
                           'granularity': 'per_tensor'},
-                'activation':{'dtype': 2, 
-                              'algorithm': 'minmax', 
-                              'scheme':'asym', 
-                              'granularity':'per_tensor'}
-                }
+                       'activation':{'dtype': 2, 
+                                     'algorithm': 'minmax', 
+                                     'scheme':'asym', 
+                                     'granularity':'per_tensor',
+                                     'quant_mode': 'static'}
+                       }
+    dynamic_q_config = {"weight":{'dtype': 3, 
+                          'algorithm': 'minmax', 
+                          'scheme':'sym', 
+                          'granularity': 'per_tensor'},
+                        'activation':{'dtype': 2, 
+                                      'algorithm': 'minmax', 
+                                      'scheme':'asym', 
+                                      'granularity':'per_tensor',
+                                      'quant_mode': 'dynamic'}
+                        }
 
     @classmethod
     def setUpClass(cls):
@@ -125,8 +136,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         model.ir_version = 7 # use stable onnx ir version
         
-        q_config = {'conv_node': self.q_config,
-                    'resize_node': self.q_config}
+        q_config = {'conv_node': self.static_q_config,
+                    'resize_node': self.static_q_config}
         quantize_params = {'input': [np.float32(10.), np.uint8(0)],
                            'conv1_weight': [np.float32(10.), np.uint8(0)],
                            'conv_output': [np.float32(10.), np.uint8(0)],
@@ -194,8 +205,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         )
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         model.ir_version = 7  # use stable onnx ir version
-        q_config = {'conv_node': self.q_config,
-                    'argmax_node': self.q_config}
+        q_config = {'conv_node': self.static_q_config,
+                    'argmax_node': self.static_q_config}
         quantize_params = {'input': [np.float32(10.), np.uint8(0)],
                            'conv_weight': [np.float32(10.), np.uint8(0)],
                            'conv_output': [np.float32(10.), np.uint8(0)],
@@ -242,7 +253,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         )
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         model.ir_version = 7  # use stable onnx ir version
-        q_config = {'gemm': self.q_config}
+        q_config = {'gemm': self.static_q_config}
         quantize_params = {'input': [np.float32(10.), np.uint8(0)],
                            'linear1.weight': [np.float32(10.), np.uint8(0)],
                            'linear1.bias': [np.float32(10.), np.uint8(0)],
@@ -336,7 +347,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             opset_imports=[helper.make_opsetid("com.microsoft", 14), helper.make_opsetid("ai.onnx", 14)])
         model.ir_version = 7 # use stable onnx ir version
         
-        q_config = {'Embed': self.q_config}
+        q_config = {'Embed': self.static_q_config}
         quantize_params = {'word_embed': [np.uint8(10.), np.float32(0)],
                            'pos_embed': [np.uint8(10.), np.float32(0)],
                            'seg_embed': [np.uint8(10.), np.float32(0)],
@@ -385,15 +396,15 @@ class TestAdaptorONNXRT(unittest.TestCase):
             opset_imports=[helper.make_opsetid("", 11)])
         model.ir_version = 7 # use stable onnx ir version
         
-        q_config = {'lstm': self.q_config}
+        q_config = {'lstm': self.dynamic_q_config}
         self.dynamic_test(model, q_config, None, ['LSTM']) 
 
     def test_concat_reshape_pooling(self):
         model = build_model()
         options.onnxrt.qdq_setting.DedicatedQDQPair = True
  
-        q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
-                    'Concat':self.q_config, 'AveragePool':self.q_config, 'add':self.q_config}
+        q_config = {'Reshape':self.static_q_config, 'conv1':self.static_q_config, 'conv2':self.static_q_config, \
+                    'Concat':self.static_q_config, 'AveragePool':self.static_q_config, 'add':self.static_q_config}
         quantize_params = {'input': [np.uint8(10.), np.float32(0)],
                            'conv1_weight': [np.uint8(10.), np.float32(0)],
                            'conv1_output': [np.uint8(10.), np.float32(0)],
@@ -410,18 +421,18 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
         options.onnxrt.qdq_setting.DedicatedQDQPair = False
 
-        q_config = {'Reshape':self.q_config, 'conv1':'fp32', 'conv2':self.q_config, \
-                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        q_config = {'Reshape':self.static_q_config, 'conv1':'fp32', 'conv2':self.static_q_config, \
+                    'Concat':self.static_q_config, 'AveragePool':self.static_q_config}
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
 
-        q_config = {'Reshape':self.q_config, 'conv1':'fp32', 'conv2':'fp32', \
-                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        q_config = {'Reshape':self.static_q_config, 'conv1':'fp32', 'conv2':'fp32', \
+                    'Concat':self.static_q_config, 'AveragePool':self.static_q_config}
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
 
-        q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
-                    'Concat':self.q_config, 'AveragePool':'fp32'}
+        q_config = {'Reshape':self.static_q_config, 'conv1':self.static_q_config, 'conv2':self.static_q_config, \
+                    'Concat':self.static_q_config, 'AveragePool':'fp32'}
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
  
@@ -436,8 +447,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            'add_out': [np.uint8(10.), np.float32(0)],
                            'add_init': [np.uint8(10.), np.float32(0)],
                            'reshape_output': [np.uint8(10.), np.float32(0)]}
-        q_config = {'Reshape':self.q_config, 'conv1':self.q_config, 'conv2':self.q_config, \
-                    'Concat':self.q_config, 'AveragePool':self.q_config}
+        q_config = {'Reshape':self.static_q_config, 'conv1':self.static_q_config, 'conv2':self.static_q_config, \
+                    'Concat':self.static_q_config, 'AveragePool':self.static_q_config}
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
  
@@ -453,7 +464,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                               pads=[1, 1, 1, 1])
             graph = helper.make_graph([conv_node], 'test_graph_1', [A, B, C], [D])
             model = helper.make_model(graph)
-            q_config = {op: self.q_config},
+            q_config = {op: self.static_q_config},
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)],
                                "C": [np.uint8(10.), np.float32(0)],
@@ -469,13 +480,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
         matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
         graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
         model = helper.make_model(graph)
-        q_config = {"Matmul": self.q_config}
+        q_config = {"Matmul": self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = ["Matmul"]
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        q_config = {"Matmul": self.dynamic_q_config}
         self.dynamic_test(model, q_config, None, quantizable_op_types)
         quantize_params = {"A": [np.float32(10.)],
                            "B": [np.float32(10.)],
@@ -492,7 +504,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      'activation':{'dtype': 2,
                                    'algorithm': 'minmax',
                                    'scheme':'asym',
-                                   'granularity':'per_tensor'}}}
+                                   'granularity':'per_tensor',
+                                   'quant_mode': 'dynamic'}}}
         quantize_params = {}
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
 
@@ -504,7 +517,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         node = onnx.helper.make_node('Attention', ['A', 'B', 'C'], ['D'], name='Attention')
         graph = helper.make_graph([node], 'test_graph_1', [A, B, C], [D])
         model = helper.make_model(graph)
-        q_config = {"Attention": self.q_config}
+        q_config = {"Attention": self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)],
@@ -512,6 +525,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizable_op_types = ["Attention"]
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        q_config = {"Attention": self.dynamic_q_config}
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
 
     def test_gather(self):
@@ -534,13 +548,24 @@ class TestAdaptorONNXRT(unittest.TestCase):
                               'activation':{'dtype': 2,
                                          'algorithm': 'minmax',
                                          'scheme':'asym',
-                                         'granularity':'per_tensor'}
+                                         'granularity':'per_tensor',
+                                         'quant_mode': 'static'}
                   }} 
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = ["Gather"]
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        q_config = {'Gather': {"weight":{'dtype': 3,
+                                         'algorithm': 'minmax',
+                                         'scheme':'sym',
+                                         'granularity': 'per_tensor'},
+                              'activation':{'dtype': 2,
+                                         'algorithm': 'minmax',
+                                         'scheme':'asym',
+                                         'granularity':'per_tensor',
+                                         'quant_mode': 'dynamic'}
+                  }} 
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
         graph = helper.make_graph([node], 'test_graph_1', [A, B], [C])
         model = helper.make_model(graph)
@@ -551,7 +576,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                               'activation':{'dtype': 2,
                                          'algorithm': 'minmax',
                                          'scheme':'asym',
-                                         'granularity':'per_tensor'}
+                                         'granularity':'per_tensor',
+                                         'quant_mode': 'dynamic'}
                   }}
         quantize_params = {}
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
@@ -574,7 +600,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                               'activation':{'dtype': 2,
                                          'algorithm': 'minmax',
                                          'scheme':'asym',
-                                         'granularity':'per_tensor'}
+                                         'granularity':'per_tensor',
+                                         'quant_mode': 'static'}
                         },
                     }
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
@@ -627,7 +654,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                          'activation':{'dtype': 2,
                                     'algorithm': 'minmax',
                                     'scheme':'asym',
-                                    'granularity':'per_tensor'}}
+                                    'granularity':'per_tensor',
+                                    'quant_mode': 'static'}}
             conv_config = {"weight":{'dtype': 3,
                                     'algorithm': 'minmax',
                                     'scheme':'sym',
@@ -635,7 +663,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                          'activation':{'dtype': 2,
                                     'algorithm': 'minmax',
                                     'scheme':'asym',
-                                    'granularity':'per_tensor'}}
+                                    'granularity':'per_tensor',
+                                    'quant_mode': 'static'}}
             q_config = {'Conv': conv_config,
                         'Pad': pad_config}
             quantize_params = {"A": [np.uint8(10.), np.float32(1)],
@@ -655,7 +684,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_config = {'Pad': {'activation':{'dtype': 2,
                                          'algorithm': 'minmax',
                                          'scheme':'asym',
-                                         'granularity':'per_tensor'}
+                                         'granularity':'per_tensor',
+                                         'quant_mode': 'static'}
                   }}
         quantize_params = {"C": [np.uint8(10.), np.float32(0)],
                            "E": [np.uint8(10.), np.float32(0)]}
@@ -671,7 +701,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             node = onnx.helper.make_node(op, ['A', 'B'], ['C'], name=op)
             graph = helper.make_graph([node], 'test_graph_1', [A, B], [C])
             model = helper.make_model(graph)
-            q_config = {op: self.q_config}
+            q_config = {op: self.static_q_config}
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)],
                                "C": [np.uint8(10.), np.float32(0)]}
@@ -702,7 +732,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         session = ort.InferenceSession(model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
  
-        q_config = {"Conv": self.q_config, "Relu": self.q_config}
+        q_config = {"Conv": self.static_q_config, "Relu": self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)],
@@ -743,7 +773,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         session = ort.InferenceSession(model.SerializeToString(), sess_options)
         model = onnx.load(sess_options.optimized_model_filepath)
 
-        q_config = {"Conv": self.q_config, "Clip": self.q_config}
+        q_config = {"Conv": self.static_q_config, "Clip": self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)],
@@ -759,7 +789,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             node = onnx.helper.make_node(op, ['A'], ['B'], name=op)
             graph = helper.make_graph([node], 'test_graph_1', [A], [B])
             model = helper.make_model(graph)
-            q_config = {op: self.q_config}
+            q_config = {op: self.static_q_config}
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)]}
             quantizable_op_types = [op]
@@ -785,7 +815,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                      kernel_shape=[3, 3],
                                      pads=[1, 1, 1, 1])
         graph = helper.make_graph([node], 'test_graph_1', [A], [B]) 
-        q_config = {op: self.q_config}
+        q_config = {op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = [op]
@@ -807,7 +837,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
         model = helper.make_model(graph)
  
-        q_config = {"Conv": self.q_config, op: self.q_config}
+        q_config = {"Conv": self.static_q_config, op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)],
@@ -824,7 +854,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                      kernel_shape=[3, 3],
                                      pads=[1, 1, 1, 1])
         graph = helper.make_graph([node], 'test_graph_1', [A], [B]) 
-        q_config = {op: self.q_config}
+        q_config = {op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = [op]
@@ -846,7 +876,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
         model = helper.make_model(graph)
  
-        q_config = {"Conv": self.q_config, op: self.q_config}
+        q_config = {"Conv": self.static_q_config, op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)],
@@ -868,7 +898,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
         model = helper.make_model(graph)
 
-        q_config = {"Conv": self.q_config, "MaxPool": "fp32"}
+        q_config = {"Conv": self.static_q_config, "MaxPool": "fp32"}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
                            "C": [np.uint8(10.), np.float32(0)],

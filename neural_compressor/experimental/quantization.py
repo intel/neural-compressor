@@ -98,11 +98,16 @@ class Quantization(Component):
                    'set for {}'.format(approach_cfg)
 
         if self._calib_dataloader is None and self._train_func is None:
-            if approach_cfg == 'post_training_static_quant':
+            if approach_cfg in ['post_training_static_quant', 'post_training_auto_quant']:
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
+
+                if approach_cfg == "post_training_auto_quant" and calib_dataloader_cfg == None:
+                    logger.error("dataloader is required for 'post_training_auto_quant'. "
+                                 "use 'post_training_dynamic_quant' instead if no dataloader provided.")
                 assert calib_dataloader_cfg is not None, \
                        'dataloader field of calibration field of quantization section ' \
                        'in yaml file should be configured as calib_dataloader property is NOT set!'
+                
                 if deep_get(calib_dataloader_cfg, 'shuffle'):
                     logger.warning("Reset `shuffle` field to False when post_training_static_quant"
                                    " is selected.")

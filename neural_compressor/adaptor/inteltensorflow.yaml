@@ -49,13 +49,14 @@
     int8: &ref_2_4_int8 {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -63,7 +64,8 @@
                     },
           'FusedBatchNormV3': {
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -71,13 +73,14 @@
                     },
           'Conv3D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -85,13 +88,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -113,21 +117,24 @@
                     },
           'BatchMatMulV2': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
+
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -138,13 +145,14 @@
     uint8: &ref_2_4_uint8 {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -152,13 +160,14 @@
                     },
           'Conv3D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -166,13 +175,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -194,21 +204,23 @@
                     },
           'BatchMatMulV2': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
+                        'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -376,13 +388,14 @@
     int8: {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -390,13 +403,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -404,7 +418,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -415,13 +430,14 @@
     uint8: {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -429,13 +445,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -443,7 +460,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -513,13 +531,14 @@
     int8: {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -527,13 +546,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -541,7 +561,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -552,13 +573,14 @@
     uint8:  {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -566,13 +588,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -580,7 +603,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -650,13 +674,14 @@
     uint8:  {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -664,13 +689,14 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -678,7 +704,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']

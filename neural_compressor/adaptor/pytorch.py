@@ -277,8 +277,8 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 algorithm = weight['algorithm']
                 dtype = weight['dtype']
                 if observer_type == 'quant_aware_training' and \
-                    key[1] not in ['Embedding', 'EmbeddingBag', 'LSTM', 'GRU',
-                                   'LSTMCell', 'GRUCell', 'RNNCell']:
+                    key[1] not in ['Embedding', 'EmbeddingBag', 'LSTM', 'GRU', 
+                                    'LSTMCell', 'GRUCell', 'RNNCell']:
                     weights_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype)
                 else:
                     weights_observer = _observer(algorithm, scheme, granularity, dtype)
@@ -298,29 +298,34 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                                 and activation['compute_dtype'] is not None \
                             else 'uint8'
 
-            # Default dynamic quantization ops below
-            if key[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
-                tmp_observer_type = 'post_training_dynamic_quant'
-                activation_observer = _observer(algorithm, scheme, granularity, dtype,
-                                                tmp_observer_type, compute_dtype)
-            elif observer_type == 'quant_aware_training' and\
-              key[1] not in ['Embedding', 'EmbeddingBag']:
-                activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype,
-                                                          compute_dtype)
-            else:
-                activation_observer = _observer(algorithm, scheme, granularity, dtype,
-                                                observer_type, compute_dtype)
+            if observer_type == 'quant_aware_training':
+                if key[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
+                    activation_observer = _observer(algorithm, scheme, granularity, 
+                        dtype, 'post_training_dynamic_quant', compute_dtype)
 
-            # Make sure modules that don't support qat/ptq-static get quantized
-            if key[1] in [
-                    'Embedding', 'EmbeddingBag', 'LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'
-            ]:
-                qconfig = torch.quantization.QConfigDynamic(activation=activation_observer,
-                                                            weight=weights_observer)
-            elif observer_type == 'quant_aware_training':
-                qconfig = torch.quantization.QConfig(activation=activation_fake_quantize,
+                elif key[1] not in ['Embedding', 'EmbeddingBag']:
+                    activation_fake_quantize = _fake_quantize(algorithm, scheme, granularity, dtype,
+                                                              compute_dtype)
+
+                else:
+                    activation_observer = \
+                        _observer(algorithm, scheme, granularity, dtype, observer_type, compute_dtype)
+            elif value['activation']['quant_mode'] == 'static':
+                activation_observer = _observer(algorithm, scheme, granularity,
+                    dtype, 'post_training_static_quant', compute_dtype)
+            elif value['activation']['quant_mode'] == 'dynamic':
+                activation_observer = _observer(algorithm, scheme, granularity,
+                    dtype, 'post_training_dynamic_quant', compute_dtype)
+
+            if observer_type == 'quant_aware_training':
+                if key[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell',
+                    'Embedding', 'EmbeddingBag']:
+                    qconfig = torch.quantization.QConfigDynamic(
+                        activation=activation_observer, weight=weights_observer)
+                else:
+                    qconfig = torch.quantization.QConfig(activation=activation_fake_quantize,
                                                      weight=weights_fake_quantize)
-            elif observer_type == 'post_training_static_quant':
+            elif value['activation']['quant_mode'] == 'static':
                 qconfig = torch.quantization.QConfig(activation=activation_observer,
                                                      weight=weights_observer)
             else:
@@ -765,7 +770,8 @@ class TemplateAdaptor(Adaptor):
 
         if 'approach' in framework_specific_info:  # pragma: no cover
             self.approach = framework_specific_info['approach']
-            if framework_specific_info['approach'] == "post_training_static_quant":
+            if framework_specific_info['approach'] in ["post_training_static_quant",
+                "post_training_auto_quant"]:
                 if self.version < Version("1.7.0-rc1"):
                     self.q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
                 elif self.version < Version("1.8.0-rc1"):
@@ -974,12 +980,45 @@ class TemplateAdaptor(Adaptor):
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
 
-        for q_op in quantizable_ops:
-            q_capability['opwise'][q_op] = copy.deepcopy(capability[q_op[1]]) \
-                if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
-            if q_op[1] not in q_capability['optypewise'].keys():
-                q_capability['optypewise'][q_op[1]] = copy.deepcopy(capability[q_op[1]]) \
-                    if q_op[1] in capability.keys() else copy.deepcopy(capability['default'])
+        if self.approach == "post_training_dynamic_quant":
+            capability_pair = [
+                (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
+        elif self.approach == "quant_aware_training":
+            capability_pair = [
+                (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
+        elif self.approach == "post_training_static_quant":
+            capability_pair = [
+                (self.query_handler.get_quantization_capability()['int8'], 'static')]
+        else:
+            capability_pair = [
+                (self.query_handler.get_quantization_capability()['int8'], 'static'),
+                (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
+        fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
+        for pair in capability_pair:
+            capability, mode = pair
+            for q_op in quantizable_ops:
+                if mode == 'static' and self.approach != "quant_aware_training" and \
+                    q_op[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
+                    continue
+                op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
+                    else copy.deepcopy(capability['default'])
+                op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
+                    ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
+
+                if q_op not in q_capability['opwise']:
+                    q_capability['opwise'][q_op] = [op_cfg]
+                elif op_cfg not in q_capability['opwise'][q_op]:
+                    q_capability['opwise'][q_op].append(op_cfg)
+
+                if q_op[1] not in q_capability['optypewise']:
+                    q_capability['optypewise'][q_op[1]] = [op_cfg]
+                elif op_cfg not in q_capability['optypewise'][q_op[1]]:
+                    q_capability['optypewise'][q_op[1]].append(op_cfg)
+
+                if fp32_config not in q_capability['opwise'][q_op]:
+                    q_capability['opwise'][q_op].append(fp32_config)
+                if fp32_config not in q_capability['optypewise'][q_op[1]]:
+                    q_capability['optypewise'][q_op[1]].append(fp32_config)
 
         # get bf16 capability
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
@@ -1019,24 +1058,16 @@ class TemplateAdaptor(Adaptor):
                 self._get_bf16_ops_recursively(child, op_name, bf16_ops)
 
     def _combine_capability(self, bf16_ops, q_capability):
+        bf16_config = {'activation': {'dtype': 'bf16'}, 'weight': {'dtype': 'bf16'}}
+        fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
         for bf16_op in bf16_ops:
-            if bf16_op in q_capability['opwise'].keys():
-                q_capability['opwise'][bf16_op]['weight']['dtype'].insert(0, 'bf16')
-                q_capability['opwise'][bf16_op]['activation']['dtype'].insert(0, 'bf16')
-                if 'bf16' not in q_capability['optypewise'][bf16_op[1]]['weight']['dtype']:
-                    q_capability['optypewise'] \
-                        [bf16_op[1]]['weight']['dtype'].insert(0, 'bf16')
-                if 'bf16' not in q_capability['optypewise'][bf16_op[1]]['activation']['dtype']:
-                    q_capability['optypewise'] \
-                        [bf16_op[1]]['activation']['dtype'].insert(0, 'bf16')
+            if bf16_op in q_capability['opwise'] and \
+                bf16_config not in q_capability['opwise'][bf16_op]:
+                q_capability['opwise'][bf16_op].append(bf16_config)
             else:
-                q_capability['opwise'][bf16_op] = \
-                    {'weight': {'dtype': ['bf16', 'fp32']}, \
-                        'activation': {'dtype': ['bf16', 'fp32']}}
-                if bf16_op[1] not in q_capability['optypewise'].keys():
-                    q_capability['optypewise'][bf16_op[1]] = \
-                        {'weight': {'dtype': ['bf16', 'fp32']}, \
-                            'activation': {'dtype': ['bf16', 'fp32']}}
+                q_capability['opwise'][bf16_op] = [bf16_config, fp32_config]
+                if bf16_op[1] not in q_capability['optypewise']:
+                    q_capability['optypewise'][bf16_op[1]] = [bf16_config, fp32_config]
         return q_capability
 
     def is_fused_module(self, module):
@@ -1163,7 +1194,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                             "passed correct configuration through `qconfig_dict` or "
                             "by assigning the `.qconfig` attribute directly on submodules.")
 
-        if self.approach == 'post_training_static_quant':
+        if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
             torch.quantization.add_observer_(q_model._model)
             iterations = tune_cfg.get('calib_iteration', 1)
             self.model_calibration(q_model._model,
