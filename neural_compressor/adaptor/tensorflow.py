@@ -774,6 +774,30 @@ class TensorFlowAdaptor(Adaptor):
             if not any(input_positive_status):
                 matched_nodes.remove(i)
 
+    def filter_unquantizable_concat_performance_only(self, matched_nodes):
+        target_concat_nodes = [i[0] for i in matched_nodes if i[-1][0] == 'ConcatV2']
+        from neural_compressor.adaptor.tf_utils.util import GraphAnalyzer
+        from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper
+
+        g = GraphAnalyzer()
+        g.graph = self.pre_optimized_model.graph_def
+        graph_info = g.parse_graph()
+        concat_nodes = g.query_fusion_pattern_nodes([['ConcatV2']])
+        for i in concat_nodes:
+            concat_node_name = i[0]
+            if concat_node_name not in target_concat_nodes:
+                continue
+            input_positive_status = []
+            control_flow = False
+            for index in range(graph_info[concat_node_name].node.attr['N'].i):
+                each_input_name = GraphRewriterHelper.node_name_from_input(
+                    graph_info[concat_node_name].node.input[index])
+                each_input_node = graph_info[each_input_name].node
+                if each_input_node.op in ('Switch'):
+                    control_flow  = True
+            if control_flow:
+                matched_nodes.remove(i)
+
     def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
@@ -806,7 +830,10 @@ class TensorFlowAdaptor(Adaptor):
             return False
 
 
-        self.filter_unquantizable_concat(matched_nodes)
+        if self.performance_only:
+            self.filter_unquantizable_concat_performance_only(matched_nodes)
+        else:
+            self.filter_unquantizable_concat(matched_nodes)
 
         copied_matched_nodes = copy.deepcopy(matched_nodes)
         for i in copied_matched_nodes:

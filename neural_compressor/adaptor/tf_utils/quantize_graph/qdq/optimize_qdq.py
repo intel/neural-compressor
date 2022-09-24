@@ -65,6 +65,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.new_api = new_api
         self.performance_only = performance_only
         self.itex_mode = itex_mode
+        self.exclude_node_list = []
 
         self.all_quantizable_node = []
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
@@ -135,5 +136,9 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                     new_api=self.new_api,
                     performance_only=self.performance_only,
                     itex_mode=self.itex_mode).apply_the_transform()
+                    
+                if exclude_nodes:
+                    self.exclude_node_list.extend(exclude_nodes)
 
-        return self.remove_dead_nodes(self.input_graph, self.output_node_names), exclude_nodes
+
+        return self.remove_dead_nodes(self.input_graph, self.output_node_names), self.exclude_node_list
