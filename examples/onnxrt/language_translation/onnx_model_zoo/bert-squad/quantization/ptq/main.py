@@ -6,6 +6,7 @@ import os
 from run_onnx_squad import *
 import json
 from run_onnx_squad import read_squad_examples, convert_examples_to_features, write_predictions
+import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import tqdm
@@ -51,9 +52,10 @@ class squadDataset(Dataset):
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.bs = bs
-    
+
     def __getitem__(self, index):
-        return list(range(index, index + self.bs)), self.input_ids[index:index + self.bs], self.input_mask[index:index + self.bs], self.segment_ids[index:index + self.bs]
+        return (list(range(index, index + self.bs)), self.input_ids[index:index + self.bs][0].astype(np.int64), 
+            self.input_mask[index:index + self.bs][0].astype(np.int64), self.segment_ids[index:index + self.bs][0].astype(np.int64)), 0
 
     def __len__(self):
         assert len(self.input_ids) == len(self.input_mask)
@@ -70,11 +72,11 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
     bs = 1
     all_results = []
     start = timer()
-    for idx, batch in tqdm.tqdm(enumerate(dataloader), desc="eval"):
+    for idx, (batch, label) in tqdm.tqdm(enumerate(dataloader), desc="eval"):
         data = {"unique_ids_raw_output___9:0": np.array(batch[0], dtype=np.int64),
-                "input_ids:0": np.array(batch[1], dtype=np.int64)[0],
-                "input_mask:0": np.array(batch[2], dtype=np.int64)[0],
-                "segment_ids:0": np.array(batch[3], dtype=np.int64)[0]}
+                "input_ids:0": np.array(batch[1], dtype=np.int64),
+                "input_mask:0": np.array(batch[2], dtype=np.int64),
+                "segment_ids:0": np.array(batch[3], dtype=np.int64)}
         result = session.run(["unique_ids:0","unstack:0", "unstack:1"], data)
         in_batch = result[0].shape[0]
         start_logits = [float(x) for x in result[1][0].flat]
@@ -143,7 +145,7 @@ def main():
 
     if args.tune:
         from neural_compressor.experimental import Quantization, common
-        quantize = Quantization('./bert.yaml')
+        quantize = Quantization(args.config)
         quantize.model = common.Model(model)
         quantize.calib_dataloader = eval_dataloader
         quantize.eval_func = eval_func

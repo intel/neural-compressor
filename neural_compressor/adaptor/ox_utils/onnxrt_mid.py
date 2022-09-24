@@ -45,7 +45,6 @@ class ONNXRTAugment:
     def __init__(self, model_wrapper,
                  dataloader,
                  dump_op_types,
-                 augmented_model_path,
                  black_nodes=[],
                  white_nodes=[],
                  iterations=[]):
@@ -55,7 +54,6 @@ class ONNXRTAugment:
         :param op_types: operator types to be calibrated and quantized, default = 'Conv,MatMul'
         :param black_nodes: operator names that should not be quantized, default = ''
         :param white_nodes: operator names that force to be quantized, default = ''
-        :param augmented_model_path: save augmented_model to this path
         :param iterations: tensor of which iteration will be collected.
         '''
         self.model_wrapper = model_wrapper
@@ -68,7 +66,6 @@ class ONNXRTAugment:
         self.black_nodes = black_nodes
         self.white_nodes = white_nodes
         self.augmented_model = None
-        self.augmented_model_path = augmented_model_path
         self.iterations = iterations
         self.augment_nodes = []
         self.dequantized_output = {}
@@ -104,8 +101,8 @@ class ONNXRTAugment:
         tensors_to_dump = set()
 
         for augment_node_type in self.augment_nodes:
-            if augment_node_type not in ['ReduceMin', 'ReduceMax', 'DequantizeLinear']:
-                raise ValueError("Unexpected augment_node {} only ReduceMin/ReduceMax are " \
+            if augment_node_type not in ['DequantizeLinear']: # pragma: no cover
+                raise ValueError("Unexpected augment_node {} only DequantizeLinear is " \
                                  "supported".format(augment_node_type))
 
         if self.already_quantized:
@@ -127,31 +124,8 @@ class ONNXRTAugment:
                                    (node.name in self.white_nodes)
             if should_be_dump:
                 if not weight_only and not activation_only:
-                    if onnx_version < ONNX18_VERSION:
-                        if node.op_type == "Attention":
-                            if len(node.input) >= 3:
-                                logger.debug("Indice input {} of attention node {} is integer."
-                                    .format(node.input[3:], node.name))
-                                tensors_to_dump.update(node.input[:2])
-                            else:
-                                tensors_to_dump.update(node.input)
-                        elif node.op_type == "Gather":
-                            logger.debug("Indice input {} of gather node {} is integer."
-                                .format(node.input[-1], node.name))
-                            tensors_to_dump.update(node.input[:-1])
-                        else:
-                            tensors_to_dump.update(node.input)
-                    elif not onnx_version < ONNX18_VERSION:
-                        tensors_to_dump.update(node.input)
+                    tensors_to_dump.update(node.input)
                     tensors_to_dump.update(node.output)
-                    if node.op_type == 'EmbedLayerNormalization' and len(node.output) > 1 and \
-                        node.output[1] in tensors_to_dump:
-                        tensors_to_dump.remove(node.output[1])
-                    elif node.op_type == 'Resize':
-                        tensors_to_dump.remove(node.input[1])
-                        if len(node.input) == 4: # pragma: no cover
-                            if node.input[2] in tensors_to_dump:
-                                tensors_to_dump.remove(node.input[2])
                 elif weight_only:
                     for input in node.input:
                         if self.already_quantized and \
@@ -162,35 +136,12 @@ class ONNXRTAugment:
                 elif activation_only:
                     tensors_to_dump.update(node.output)
 
-        value_info = shape_inference.infer_shapes(model).graph.value_info
-        value_info = {item.name: item.type.tensor_type.elem_type for item in value_info}
-        for input in model.graph.input:
-            value_info[input.name] = input.type.tensor_type.elem_type
-        for output in model.graph.output:
-            value_info[output.name] = output.type.tensor_type.elem_type
         for tensor in tensors_to_dump:
             if self.augment_nodes:
-                if tensor not in node_outputs and tensor not in initializers \
-                    and tensor not in value_info:
+                if tensor not in node_outputs and tensor not in initializers:
                     continue
                 for augment_node_type in self.augment_nodes:
-                    if augment_node_type in ['ReduceMin', 'ReduceMax']:
-                        if tensor in initializers and initializers[tensor] != 1:
-                            continue
-                        if onnx_version >= ONNX18_VERSION and tensor in value_info \
-                            and value_info[tensor] != 1:
-                            continue
-                        # dump tensor for calibration
-                        augment_node_name = tensor + "_" + augment_node_type
-                        augment_node = onnx.helper.make_node(augment_node_type, [tensor],
-                                                             [augment_node_name],
-                                                             augment_node_name,
-                                                             keepdims=0)
-                        added_nodes.append(augment_node)
-                        added_outputs.append(helper.make_tensor_value_info(
-                                               augment_node.output[0], # pylint: disable=no-member
-                                               TensorProto.FLOAT, ())) # pylint: disable=no-member
-                    else:
+                    if augment_node_type in ['DequantizeLinear']:
                         # insert DequantizeLinear node as output
                         if tensor.endswith('_scale') or tensor.endswith('_zero_point') or \
                             tensor.endswith('_QuantizeLinear') or \
@@ -221,17 +172,15 @@ class ONNXRTAugment:
                                 added_tensor.name = tensor
                                 added_outputs.append(added_tensor)
             else:
-                if tensor not in [t.name for t in model.graph.output]:
-                    added_tensor = helper.ValueInfoProto()
-                    added_tensor.name = tensor
-                    added_outputs.append(added_tensor)
+                added_tensor = helper.ValueInfoProto()
+                added_tensor.name = tensor
+                added_outputs.append(added_tensor)
 
         if self.augment_nodes:
             model.graph.node.extend(added_nodes) # pylint: disable=no-member
         model.graph.output.extend(added_outputs) # pylint: disable=no-member
 
         self.augmented_model = model
-        onnx.save(model, self.augmented_model_path)
 
     def get_intermediate_outputs(self):
         '''
@@ -271,9 +220,17 @@ class ONNXRTAugment:
                 if idx > max(self.iterations):
                     break
                 if idx in self.iterations:
-                    intermediate_outputs.append(session.run(None, ort_inputs))
+                    intermediate_output= session.run(None, ort_inputs)
+                    min_maxs = []
+                    for output in intermediate_output:
+                        min_maxs.append([output.min(), output.max()])
+                    intermediate_outputs.append(min_maxs)
             else:
-                intermediate_outputs.append(session.run(None, ort_inputs))
+                intermediate_output= session.run(None, ort_inputs)
+                min_maxs = []
+                for output in intermediate_output:
+                    min_maxs.append([output.min(), output.max()])
+                intermediate_outputs.append(min_maxs)
         node_output_names = [output.name if output.name not in self.dequantized_output \
                              else self.dequantized_output[output.name] \
                              for output in session.get_outputs()]
@@ -369,20 +326,19 @@ class ONNXRTAugment:
         merged_dict = {}
         for d in output_dicts_list:
             for k, v in d.items():
-                merged_dict.setdefault(k, []).append(v)
+                merged_dict.setdefault(k + '_Min', []).append(v[0])
+                merged_dict.setdefault(k + '_Max', []).append(v[1])
         added_node_output_names = node_output_names[num_model_outputs:]
-        node_names = [added_node_output_names[i].rpartition('_')[0]
-                      for i in range(0, len(added_node_output_names), 2)]  # output names
+        node_names = added_node_output_names  # output names
 
         # Characterizing distribution of a node's values across test data sets
-        clean_merged_dict = dict((i, merged_dict[i]) for i in merged_dict
-                                  if i != list(merged_dict.keys())[0])
+        clean_merged_dict = dict((i, merged_dict[i]) for i in merged_dict)
         if calib_mode == 'naive':
             pairs = [
                 tuple([
-                    float(min(clean_merged_dict[added_node_output_names[i]])),
-                    float(max(clean_merged_dict[added_node_output_names[i + 1]]))
-                ]) for i in range(0, len(added_node_output_names), 2)
+                    float(min(clean_merged_dict[name + '_Min'])),
+                    float(max(clean_merged_dict[name + '_Max']))
+                ]) for name in added_node_output_names
             ]
         else:
             raise ValueError('Unknown value for calib_mode. \
@@ -393,7 +349,6 @@ class ONNXRTAugment:
         return final_dict
 
     def dump_minmax(self, calib_mode='naive'):
-        self.augment_nodes = ["ReduceMin", "ReduceMax"]
         self.augment_graph()
         node_output_names, output_dicts_list = self.get_intermediate_outputs()
         return self._map_calibration(node_output_names, output_dicts_list,
@@ -402,11 +357,11 @@ class ONNXRTAugment:
     def dump_calibration(self, calib_mode='naive'):
         '''
             Gather calibration params for quantization
-            parameter calib_mode: type 'naive' gives (ReduceMin, ReduceMax) pairs
-                                for each augmented node across test data sets, where
-                                the first element is a minimum of all ReduceMin values
-                                and the second element is a maximum of all ReduceMax
-                                values;
+            parameter calib_mode: type 'naive' gives (Min, Max) pairs
+                                for each intermediate model output across 
+                                test data sets, where the first element is 
+                                a minimum of all values and the 
+                                second element is a maximum of all values;
             :return: dictionary mapping: {added node names: (ReduceMin, ReduceMax) pairs }
         '''
         return self.calculate_quantization_params(self.dump_minmax(calib_mode))

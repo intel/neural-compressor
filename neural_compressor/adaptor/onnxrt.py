@@ -326,7 +326,6 @@ class ONNXRTAdaptor(Adaptor):
         white_nodes = [node for node in quantize_config if quantize_config[node]!='fp32']
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
-                  os.path.join(self.work_space, 'augmented_model.onnx'), \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
                   iterations=list(range(0, quantize_config['calib_iteration'])))
         self.min_max = augment.dump_minmax()
@@ -350,7 +349,6 @@ class ONNXRTAdaptor(Adaptor):
         if len(op_list) > 0 and isinstance(op_list, KeysView):
             op_list = [item[0] for item in op_list]
         augment = ONNXRTAugment(model, dataloader, [], \
-                  os.path.join(self.work_space, 'augment_for_inspect.onnx'), \
                   iterations=iteration_list,
                   white_nodes=op_list)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
