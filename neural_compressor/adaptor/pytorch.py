@@ -30,7 +30,6 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-from .torch_utils.util import append_attr
 
 torch = LazyImport("torch")
 json = LazyImport("json")
@@ -928,13 +927,12 @@ class TemplateAdaptor(Adaptor):
                                          iteration, conf)
 
         if self.fp32_preds_as_label:
-            from .torch_utils.util import collate_torch_preds
             if self.is_baseline:
-                results = collate_torch_preds(self.fp32_results)
+                results = torch_utils.util.collate_torch_preds(self.fp32_results)
                 reference = results
             else:
-                reference = collate_torch_preds(self.fp32_results)
-                results = collate_torch_preds(results)
+                reference = torch_utils.util.collate_torch_preds(self.fp32_results)
+                results = torch_utils.util.collate_torch_preds(results)
             for metric in metrics:
                 if hasattr(metric, "compare_label") and not metric.compare_label:
                     metric.update(results, reference)
@@ -1230,8 +1228,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         if len(self.tune_cfg['bf16_ops_list']) > 0 and \
             (self.version >= Version("1.11.0-rc1")) and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
-            from .torch_utils.bf16_convert import Convert
-            q_model._model = Convert(q_model._model, self.tune_cfg)
+            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
@@ -2164,6 +2161,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             (dict): quantized model
         """
 
+        if hasattr(model, "save_qconf_summary"):
+            model = torch_utils.util.auto_copy(model)
         try:
             model_ = copy.deepcopy(model)
         except Exception as e:  # pragma: no cover
@@ -2233,14 +2232,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     except:
                         q_model = torch.jit.trace(q_model, example_inputs, strict=False)
                         q_model = torch.jit.freeze(q_model)
-                if isinstance(example_inputs, list) or isinstance(example_inputs, tuple):
-                    q_model(*example_inputs)
-                    q_model(*example_inputs)
-                elif isinstance(example_inputs, torch.Tensor):
-                    q_model(example_inputs)
-                    q_model(example_inputs)
-                else:
-                     logger.warning("please check example_inputs from calib_dataloader")
+                #to enable fuse ops
+                self.model_calibration(q_model, dataloader, iterations=2, conf=None,
+                           calib_sampling_size = tune_cfg.get('calib_sampling_size', 1))
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
         model_._model = q_model
@@ -2356,8 +2350,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             else:
                 return torch.per_tensor_symmetric
         if IPEX_112:
-            from .torch_utils.util import check_cfg_and_qconfig
-            self.cfgs = check_cfg_and_qconfig(tune_cfg['op'],
+            self.cfgs = torch_utils.util.check_cfg_and_qconfig(tune_cfg['op'],
                                               self.cfgs,
                                               self.op_infos_from_cfgs,
                                               self.output_tensor_id_op_name)
@@ -2444,83 +2437,82 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
-
         Args:
             model (object): input model
             prefix (string): prefix of op name
             quantizable_ops (list): list of quantizable ops from model include op name and type.
-
         Returns:
             None
         """
+
         if not os.path.exists(self.ipex_config_path):
             assert isinstance(model, torch.nn.Module), \
                     "The model passed in is not the instance of torch.nn.Module"
 
-            if not IPEX_110 and not IPEX_112:
-                model_ = copy.deepcopy(model)
-                model_.eval().to(ipex.DEVICE)
+        if hasattr(model, "save_qconf_summary"):
+            model = torch_utils.util.auto_copy(model)
+        try:
+            model_ = copy.deepcopy(model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
+            model_ = model
+
+        if not IPEX_110 and not IPEX_112:
+            model_.eval().to(ipex.DEVICE)
+            try:
+                init_model = torch.jit.script(model_)
+            except:
                 try:
-                    init_model = torch.jit.script(model_)
+                    for input, _ in self.q_dataloader:
+                        init_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
+                        break
                 except:
-                    try:
-                        for input, _ in self.q_dataloader:
-                            init_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
-                            break
-                    except:
-                        logger.info("Fail to convert this model to PyTorch Script model")
-                        init_model = model_
-            elif IPEX_110:
-                init_model = copy.deepcopy(model)
-                init_model.eval()
-            else:
-                if hasattr(model,'save_qconf_summary'):
-                    init_model = ipex.quantization._quantize_utils.copy_prepared_model(model)
-                else:
-                    init_model = copy.deepcopy(model)
-                    init_model.eval()
-            # create a quantization config file for intel pytorch extension model
-            os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
-            if not IPEX_110 and not IPEX_112:
-                ipex_conf = ipex.AmpConf(torch.int8)
-                self.model_calibration(
-                    init_model,
-                    self.q_dataloader,
-                    conf=ipex_conf,
-                )
-                ipex_conf.save(self.ipex_config_path)
-            if IPEX_110:
-                ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
-                try:
-                    init_model = optimization.fuse(init_model)
-                except:
-                    init_model = init_model
-                try:
-                    init_model.model = optimization.fuse(init_model.model)
-                except:
-                    init_model = init_model
-                self.model_calibration(
-                    init_model,
-                    self.q_dataloader,
-                    conf=ipex_conf,
-                )
-                ipex_conf.save(self.ipex_config_path)
-            if IPEX_112:
-                if self.approach == 'post_training_static_quant':
-                    if hasattr(init_model, 'save_qconf_summary'):
-                        pass
-                    else:
-                        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                        static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                            qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                            weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                       qscheme=torch.per_channel_symmetric))
-                        example_inputs = get_example_inputs(self.q_dataloader)
-                        init_model = ipex.quantization.prepare(init_model, static_qconfig, \
-                                                example_inputs=example_inputs, inplace=True)
-                    self.model_calibration(init_model, self.q_dataloader)
-                    init_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-            del init_model
+                    logger.info("Fail to convert this model to PyTorch Script model")
+                    init_model = model_
+        if IPEX_110 or IPEX_112:
+            model_.eval()
+            init_model = model_
+
+        # create a quantization config file for intel pytorch extension model
+        os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
+        if not IPEX_110 and not IPEX_112:
+            ipex_conf = ipex.AmpConf(torch.int8)
+            self.model_calibration(
+                init_model,
+                self.q_dataloader,
+                conf=ipex_conf,
+            )
+            ipex_conf.save(self.ipex_config_path)
+        if IPEX_110:
+            ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
+            try:
+                init_model = optimization.fuse(init_model)
+            except:
+                init_model = init_model
+            try:
+                init_model.model = optimization.fuse(init_model.model)
+            except:
+                init_model = init_model
+            self.model_calibration(
+                init_model,
+                self.q_dataloader,
+                conf=ipex_conf,
+            )
+            ipex_conf.save(self.ipex_config_path)
+        if IPEX_112:
+            if self.approach == 'post_training_static_quant':
+                from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                    qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                               qscheme=torch.per_channel_symmetric))
+                example_inputs = get_example_inputs(self.q_dataloader)
+                init_model = ipex.quantization.prepare(init_model, static_qconfig, \
+                                        example_inputs=example_inputs, inplace=True)
+            self.model_calibration(init_model, self.q_dataloader)
+            init_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+        del init_model
 
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
@@ -2533,9 +2525,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         (op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]
                          if op_cfg["name"] in unify_op_type_mapping_ipex else op_cfg["name"]))
             if IPEX_112:
-                from .torch_utils.util import paser_cfgs, get_quantizable_ops_from_cfgs
-                ops_name, op_infos_from_cfgs, input_tensor_id_op_name, output_tensor_id_op_name = paser_cfgs(self.cfgs)
-                quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name,
+                ops_name, op_infos_from_cfgs, input_tensor_id_op_name, \
+                                output_tensor_id_op_name = torch_utils.util.paser_cfgs(self.cfgs)
+                quantizable_op_names = torch_utils.util.get_quantizable_ops_from_cfgs(ops_name,
                                                                      op_infos_from_cfgs,
                                                                      input_tensor_id_op_name)
                 for name in quantizable_op_names:
@@ -2795,7 +2787,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             else:
                 q_model._model = convert_fx(
                     q_model._model, convert_custom_config_dict=self.convert_custom_config_dict)
-            append_attr(q_model._model, tmp_model)
+            torch_utils.util.append_attr(q_model._model, tmp_model)
             del tmp_model
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
@@ -2804,8 +2796,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if len(self.tune_cfg['bf16_ops_list']) > 0 and \
             self.version >= Version("1.11.0-rc1") and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
-            from .torch_utils.bf16_convert import Convert
-            q_model._model = Convert(q_model._model, self.tune_cfg)
+            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
@@ -3306,7 +3297,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         tmp_module,
                         fx_sub_op_cfgs) if version <= Version("1.12.1") else prepare_fx(
                             tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
-                append_attr(module_pre, module)
+                torch_utils.util.append_attr(module_pre, module)
                 setattr(model, name, module_pre)
             else:
                 PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list,
@@ -3333,7 +3324,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             op_name = prefix + '.' + name if prefix != '' else name
             if op_name in sub_module_list:
                 module_con = convert_fx(module)
-                append_attr(module_con, module)
+                torch_utils.util.append_attr(module_con, module)
                 setattr(model, name, module_con)
             else:
                 PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \

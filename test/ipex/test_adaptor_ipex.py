@@ -5,6 +5,8 @@ import torch
 import unittest
 from neural_compressor.experimental import common
 from packaging.version import Version
+from neural_compressor.utils.utility import LazyImport
+torch_utils = LazyImport("neural_compressor.adaptor.torch_utils")
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -151,6 +153,12 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         evaluator.b_dataloader = common.DataLoader(dataset)
         evaluator.fit('accuracy')
 
+    def test_copy_prepared_model(self):
+        model = M()
+        qconfig = ipex.quantization.default_static_qconfig
+        prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
+        copy_model = torch_utils.util.auto_copy(prepared_model)
+        self.assertTrue(isinstance(copy_model, torch.nn.Module))
 
 if __name__ == "__main__":
     unittest.main()
