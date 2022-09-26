@@ -830,7 +830,7 @@ class TensorFlowAdaptor(Adaptor):
             return False
 
 
-        if self.performance_only:
+        if self.new_api and self.performance_only:
             self.filter_unquantizable_concat_performance_only(matched_nodes)
         else:
             self.filter_unquantizable_concat(matched_nodes)
