@@ -1,6 +1,7 @@
 """Tests for pythonic config file"""
 import copy
 import unittest
+import os
 from neural_compressor import config
 import onnxruntime as ort
 from onnx import helper, TensorProto
@@ -22,6 +23,7 @@ from neural_compressor.data import DATASETS
 from neural_compressor.experimental import Quantization, Distillation, Pruning, NAS, common
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
 
 def build_matmul_model():
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
@@ -147,6 +149,7 @@ class TestPyhonicConf(unittest.TestCase):
         config.quantization.timeout = 100
         config.quantization.accuracy_criterion.relative = 0.5
         config.quantization.reduce_range = False
+        config.quantization.use_bf16 = False
 
         self.assertEqual(config.quantization.inputs, ['image'])
         self.assertEqual(config.quantization.outputs, ['out'])
@@ -164,11 +167,12 @@ class TestPyhonicConf(unittest.TestCase):
         self.assertEqual(config.quantization.accuracy_criterion.absolute, 0.4)
         self.assertEqual(config.quantization.accuracy_criterion.relative, None)
         
-        config.onnx.precisions = ['int8', 'uint8']
-        config.onnx.graph_optimization_level = 'DISABLE_ALL'
+        config.onnxruntime.precisions = ['int8', 'uint8']
+        config.onnxruntime.graph_optimization_level = 'DISABLE_ALL'
         q = Quantization(config)
         q.model = build_matmul_model()
         self.assertEqual(q.conf.usr_cfg.reduce_range, False)
+        self.assertEqual(q.conf.usr_cfg.use_bf16, False)
         q.pre_process()
         self.assertEqual(q.strategy.adaptor.query_handler.get_precisions(), ['int8', 'uint8'])
         self.assertEqual(q.strategy.adaptor.query_handler.get_graph_optimization(), ort.GraphOptimizationLevel.ORT_DISABLE_ALL)
@@ -181,7 +185,7 @@ class TestPyhonicConf(unittest.TestCase):
         q_model = q()
         self.assertTrue(any([i.name.endswith('_quant') for i in q_model.nodes()]))
 
-        config.onnx.precisions = ['fp32']
+        config.onnxruntime.precisions = ['fp32']
         q = Quantization(config)
         q.model = build_matmul_model()
         q_model = q()
@@ -278,23 +282,22 @@ class TestPyhonicConf(unittest.TestCase):
         self.assertTrue(torch.any(weight != origin_weight))
 
     def test_use_bf16(self):
+        config.quantization.device = 'cpu'
+        config.quantization.backend = 'pytorch'
+        config.quantization.approach = 'post_training_dynamic_quant'
+        config.quantization.use_bf16 = False
         q = Quantization(config)
-        q.use_bf16 = False
-        framework_specific_info = {"device": "cpu",
-                                   "approach": "post_training_static_quant",
-                                   "random_seed": 1234,
-                                   "q_dataloader": None,
-                                   "workspace_path": "./"}
-        framework = "pytorch"
-        framework_specific_info.update({"use_bf16": q.use_bf16})
-        adaptor = FRAMEWORKS[framework](framework_specific_info)
-        self.assertEqual(adaptor.use_bf16, False)
+        q.model = torch_model()
+        os.environ['FORCE_BF16'] = '1'
+        q_model = q()
+        del os.environ['FORCE_BF16']
+        self.assertEqual(isinstance(q_model.model.linear, BF16ModuleWrapper), False)
 
     def test_quantization_pytorch(self):
         config.quantization.device = 'cpu'
         config.quantization.backend = 'pytorch'
         config.quantization.approach = 'post_training_dynamic_quant'
-        config.quantization.q_datloader = None
+        config.quantization.use_bf16 = False
         q = Quantization(config)
         q.model = torch_model()
         q_model = q()

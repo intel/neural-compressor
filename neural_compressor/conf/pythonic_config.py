@@ -242,7 +242,7 @@ class QuantizationConfig:
     @use_bf16.setter
     def use_bf16(self, use_bf16):
         if check_value('use_bf16', use_bf16, bool):
-            self._use_bf16 = self._use_bf16
+            self._use_bf16 = use_bf16
 
     @property
     def reduce_range(self):
@@ -674,19 +674,19 @@ options = Options()
 pruning = PruningConfig()
 distillation = DistillationConfig()
 nas = NASConfig()
-onnx_config = ONNX()
+onnxruntime_config = ONNX()
 tensorflow_config = TensorFlow()
 pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
 class Config:
     def __init__(self, quantization=quantization, benchmark=benchmark, options=options,
-        pruning=pruning, distillation=distillation, nas=nas, onnx=onnx_config,
+        pruning=pruning, distillation=distillation, nas=nas, onnxruntime=onnxruntime_config,
         tensorflow=tensorflow_config, pytorch=pytorch_config, mxnet=mxnet_config):
         self._quantization = quantization
         self._benchmark = benchmark
         self._options = options
-        self._onnx = onnx
+        self._onnxruntime = onnxruntime
         self._pruning = pruning
         self._distillation = distillation
         self._nas = nas
@@ -731,7 +731,7 @@ class Config:
         return self._options
 
     @property
-    def onnx(self):
-        return self._onnx
+    def onnxruntime(self):
+        return self._onnxruntime
 
 config = Config()

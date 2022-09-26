@@ -429,10 +429,13 @@ class TuneStrategy(object):
             framework_specific_info.update({'recipes': self.cfg.quantization.recipes})
             framework_specific_info.update(
                                 {'graph_optimization': OPTIONS[framework].graph_optimization})
+            framework_specific_info.update({'reduce_range': self.cfg.reduce_range})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"q_dataloader": q_dataloader})
+            framework_specific_info.update({"use_bf16": self.cfg.use_bf16 \
+                            if self.cfg.use_bf16 is not None else True})
             framework_specific_info.update(
                 {"workspace_path": os.path.dirname(self.deploy_path)})
             if self.cfg['quantization']['op_wise'] is not None \

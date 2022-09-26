@@ -1328,6 +1328,7 @@ class Conf(object):
             'use_bf16': pythonic_config.quantization.use_bf16,
             'reduce_range': pythonic_config.quantization.reduce_range
         }
+
         for k, v in mapping.items():
             if k in ['tuning.accuracy_criterion.relative', 'tuning.accuracy_criterion.absolute']:
                 target_key = str(pythonic_config.quantization.accuracy_criterion)
