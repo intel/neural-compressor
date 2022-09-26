@@ -1,0 +1,31 @@
+parameters:
+- name: modelName
+  type: string
+  default: 'resnet50v1.5'
+- name: framework
+  type: string
+  default: 'tensorflow'
+  
+- name: modelContainerName
+  type: string
+  default: 'model'
+
+steps:
+  - template: docker-template.yml
+    parameters:
+      dockerConfigName: 'commonDockerConfig'
+      repoName: 'neural-compressor'
+      repoTag: 'py38'
+      dockerFileName: 'Dockerfile'
+      containerName: ${{ parameters.modelContainerName }}    
+
+  - script: |
+      docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
+      && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --tune_acc=true --build_id=$(Build.BuildId)"
+    displayName: Tune&Benchmark ${{ parameters.modelName }}
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}/
+      artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
+      publishLocation: 'pipeline'

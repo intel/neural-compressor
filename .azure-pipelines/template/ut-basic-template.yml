@@ -1,0 +1,39 @@
+parameters:
+- name: dockerConfigName
+  type: string   
+  default: 'commonDockerConfig'
+- name: repo
+  type: string
+  default: 'https://github.com/VincyZhang/neural-compressor'  
+- name: utScriptFileName
+  type: string    
+- name: uploadPath
+  type: string   
+- name: utArtifact
+  type: string   
+
+- name: utContainerName
+  type: string       
+  default: 'utBasic'
+
+steps:
+  - template: docker-template.yml
+    parameters:
+      dockerConfigName: ${{ parameters.dockerConfigName }}
+      repoName: 'neural-compressor'
+      repoTag: 'py38'
+      dockerFileName: 'Dockerfile'
+      containerName: ${{ parameters.utContainerName }}
+      repo: ${{ parameters.repo }}
+
+  - script: |
+      docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+      && bash install_nc.sh \
+      && bash ut/${{ parameters.utScriptFileName }}.sh"
+    displayName: 'Install Neural Compressor and run UT'            
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: ${{ parameters.uploadPath }}
+      artifact: ${{ parameters.utArtifact }}
+      publishLocation: 'pipeline'      
