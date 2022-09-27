@@ -151,6 +151,8 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                 if post_node_names:
                     for post_node_name in post_node_names:
                         post_node = graph_info[post_node_name].node
+                        if each_node_name not in post_node.input:
+                            continue
                         if post_node.op == 'FusedBatchNormV3':
                             if "_print_identity" in \
                                graph_info[Helper.node_name_from_input(post_node.name)].node.input[0]:

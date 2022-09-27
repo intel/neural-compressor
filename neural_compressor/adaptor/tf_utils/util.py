@@ -401,7 +401,7 @@ def strip_equivalent_nodes(graph_def, output_node_names):
     for node_to_remove in nodes_to_remove:
         stripped_graph.remove_node(node_to_remove)
     return tf.compat.v1.graph_util.extract_sub_graph \
-        (stripped_graph.dump_graph(), set(stripped_graph_node_names).intersection(output_node_names)), \
+        (stripped_graph.dump_graph(), list(set(stripped_graph_node_names).intersection(output_node_names))), \
             replaced_nodes_type
 
 # THIS API IS TO BE DEPRECATED!
