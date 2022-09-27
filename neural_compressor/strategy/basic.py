@@ -98,15 +98,10 @@ class BasicTuneStrategy(TuneStrategy):
         """
         from copy import deepcopy
         tuning_space = self.tuning_space
-        initial_op_tuning_cfg = {}
-        for item in tuning_space.root_item.options:
-            if item.item_type == 'op':
-                op_name, op_type = item.name
-                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for calib_sampling_size in calib_sampling_size_lst:
             # Initialize the tuning config for each op according to the quantization approach 
-            op_item_dtype_dict, quant_mode_wise_items = self.initial_tuning_cfg()
+            op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
             early_stop_tuning = False
             stage1_cnt = 0

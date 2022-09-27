@@ -67,10 +67,7 @@ fake_ptq_yaml = '''
 
     quantization:
       op_wise: {
-              'quant': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
-              },
+
               'layer1.0.conv1': {
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -143,11 +140,8 @@ fake_ptq_yaml_for_fx = '''
       framework: pytorch_fx
 
     quantization:
+      approach: post_training_auto_quant
       op_wise: {
-              'quant': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
-              },
               'layer1.0.conv1': {
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -213,10 +207,6 @@ fake_qat_yaml = '''
           CrossEntropyLoss:
             reduction: mean
       op_wise: {
-              'quant': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
-              },
               'layer1.0.conv1': {
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -976,10 +966,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             quantizer.model = common.Model(model_origin)
             q_model = quantizer.fit()
             self.assertTrue('quantize' in str(type(q_model.model.encoder)))
-            if fake_yaml == 'fx_ptq_yaml.yaml':
-                self.assertTrue('quantize' not in str(type(q_model.model.rnn)))
-            else:
-                self.assertTrue('quantize' in str(type(q_model.model.rnn)))
+            self.assertTrue('quantize' in str(type(q_model.model.rnn)))
 
     def test_fx_sub_module_quant(self):
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml', 'fx_dynamic_yaml.yaml']:

@@ -992,31 +992,43 @@ class TemplateAdaptor(Adaptor):
                 (self.query_handler.get_quantization_capability()['int8'], 'static'),
                 (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
         fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
+        # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
+        # due to huge accuracy regression in PyTorch.
+        if isinstance(self, PyTorch_IPEXAdaptor):
+            additional_skipped_module_classes = {}
+        else:
+            additional_skipped_module_classes = {'LayerNorm', 'InstanceNorm3d', 'Dropout'}
+        no_fp32_ops = {'QuantStub'}
         for pair in capability_pair:
             capability, mode = pair
             for q_op in quantizable_ops:
+                if q_op not in q_capability['opwise']:
+                    q_capability['opwise'][q_op] = []
+                if q_op[1] not in q_capability['optypewise']:
+                    q_capability['optypewise'][q_op[1]] = []
+                    
                 if mode == 'static' and self.approach != "quant_aware_training" and \
                     q_op[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
                     continue
                 op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
                     else copy.deepcopy(capability['default'])
+
                 op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
                     ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
 
-                if q_op not in q_capability['opwise']:
-                    q_capability['opwise'][q_op] = [op_cfg]
-                elif op_cfg not in q_capability['opwise'][q_op]:
-                    q_capability['opwise'][q_op].append(op_cfg)
+                # skip the op that only include fp32
+                if q_op[1] not in additional_skipped_module_classes:
+                    if op_cfg not in q_capability['opwise'][q_op]:
+                        q_capability['opwise'][q_op].append(op_cfg)
+                    if op_cfg not in q_capability['optypewise'][q_op[1]]:
+                        q_capability['optypewise'][q_op[1]].append(op_cfg)
 
-                if q_op[1] not in q_capability['optypewise']:
-                    q_capability['optypewise'][q_op[1]] = [op_cfg]
-                elif op_cfg not in q_capability['optypewise'][q_op[1]]:
-                    q_capability['optypewise'][q_op[1]].append(op_cfg)
+                if q_op[1] not in no_fp32_ops:
+                    if fp32_config not in q_capability['opwise'][q_op]:
+                        q_capability['opwise'][q_op].append(fp32_config)
+                    if fp32_config not in q_capability['optypewise'][q_op[1]]:
+                        q_capability['optypewise'][q_op[1]].append(fp32_config)
 
-                if fp32_config not in q_capability['opwise'][q_op]:
-                    q_capability['opwise'][q_op].append(fp32_config)
-                if fp32_config not in q_capability['optypewise'][q_op[1]]:
-                    q_capability['optypewise'][q_op[1]].append(fp32_config)
 
         # get bf16 capability
         if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \

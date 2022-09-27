@@ -291,7 +291,12 @@ class TuneStrategy(object):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-        return op_item_dtype_dict, quant_mode_wise_items
+
+        initial_op_tuning_cfg = {}
+        for op_name_dtype, quant_mode in op_item_dtype_dict.items():
+            initial_op_tuning_cfg[op_name_dtype] = OpTuningConfig(op_name_dtype[0], op_name_dtype[1], 
+                                                                  quant_mode, self.tuning_space)
+        return op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg
 
     def show_baseline_info(self):
         if self.baseline:
