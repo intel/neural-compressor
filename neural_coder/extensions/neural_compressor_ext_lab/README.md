@@ -3,12 +3,13 @@ Intel® Neural Compressor as JupyterLab Extension
 A JupyterLab Extension library supporting Neural Coder, a novel feature powered by Intel® Neural Compressor providing automatic quantization to further simplify computing performance optimizations of Deep Learning models.
 
 ## Installation
-**By Extension Manager in JupyterLab**
+**By Extension Manager in JupyterLab (Recommended)**
 
-Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab. Note that this works for the stable version of JupyterLab 3.
+Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab.
 
 **By Linux Terminal**
-```Shell
+```bash
+npm i jupyter-lab-neural-compressor
 jupyter labextension install jupyter-lab-neural-compressor
 ```
 
@@ -35,3 +36,10 @@ In the new cell box appeared below your Code cell boxes, you can see the executi
 When it is finished, you can also see that the code changes for the best optimization are automatically enabled into your script:
 
 <img src="../screenshots/5.png" alt="Architecture" width="55%" height="55%">
+
+## Pre-requisites
+```bash
+apt-get update && apt-get install bc numactl
+conda install mkl mkl-include jemalloc
+pip3 install neural-compressor opencv-python-headless
+```
