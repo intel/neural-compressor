@@ -1,75 +1,37 @@
-# neural_compressor_ext_lab
+Intel® Neural Compressor as JupyterLab Extension
+===========================
+A JupyterLab Extension library supporting Neural Coder, a novel feature powered by Intel® Neural Compressor providing automatic quantization to further simplify computing performance optimizations of Deep Learning models.
 
-A JupyterLab extension.
+## Installation
+**By Extension Manager in JupyterLab**
 
-## Requirements
+Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab. Note that this works for the stable version of JupyterLab 3.
 
-- JupyterLab >= 3.0
-
-## Install
-
-To install the extension, execute:
-
-```bash
-pip install neural_compressor_ext_lab
+**By Linux Terminal**
+```Shell
+jupyter labextension install jupyter-lab-neural-compressor
 ```
 
-## Uninstall
+## Getting Started!
 
-To remove the extension, execute:
+As shown in the drop-down list, the supported features include "INT8 (Static Quantization)", "INT8 (Dynamic Quantization)", "BF16", and "Auto Enable & Benchmark". Each of the first three options enables a specific quantization feature into your Deep Learning scripts. The last option automatically enables all quantization features on a Deep Learning script and automatically evaluates the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a Deep Learning model with no manual coding needed.
 
-```bash
-pip uninstall neural_compressor_ext_lab
-```
+<img src="../screenshots/1.png" alt="Architecture" width="75%" height="75%">
 
-## Contributing
+### Auto-enable a feature
+Click the run button on the left side of the drop-down list to start. After finishing, you can see the code changes for the specific optimization enabling as shown in the figure below:
 
-### Development install
+<img src="../screenshots/2.png" alt="Architecture" width="75%" height="75%">
 
-Note: You will need NodeJS to build the extension package.
+### Or let us help you auto-select the best feature
+The last option automatically enables each quantization feature on your Deep Learning script and automatically evaluates for the best performance among all features on your Deep Learning model. Since it will automatically run the Python script for benchmark, it requires you to enter additional parameters needed to run your Python script. If there is no additional parameter needed, you can just leave it blank:
+ 
+<img src="../screenshots/3.png" alt="Architecture" width="35%" height="35%">
+ 
+In the new cell box appeared below your Code cell boxes, you can see the execution progress, and at the end you can see which one turns out to be the best optimization and how much performance gain can it bring to your Deep Learning model:
 
-The `jlpm` command is JupyterLab's pinned version of
-[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
-`yarn` or `npm` in lieu of `jlpm` below.
+<img src="../screenshots/4.png" alt="Architecture" width="55%" height="55%">
+ 
+When it is finished, you can also see that the code changes for the best optimization are automatically enabled into your script:
 
-```bash
-# Clone the repo to your local environment
-# Change directory to the neural_compressor_ext_lab directory
-# Install package in development mode
-pip install -e .
-# Link your development version of the extension with JupyterLab
-jupyter labextension develop . --overwrite
-# Rebuild extension Typescript source after making changes
-jlpm build
-```
-
-You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
-
-```bash
-# Watch the source directory in one terminal, automatically rebuilding when needed
-jlpm watch
-# Run JupyterLab in another terminal
-jupyter lab
-```
-
-With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
-
-By default, the `jlpm build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
-
-```bash
-jupyter lab build --minimize=False
-```
-
-### Development uninstall
-
-```bash
-pip uninstall neural_compressor_ext_lab
-```
-
-In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
-command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `neural_compressor_ext_lab` within that folder.
-
-### Packaging the extension
-
-See [RELEASE](RELEASE.md)
+<img src="../screenshots/5.png" alt="Architecture" width="55%" height="55%">
