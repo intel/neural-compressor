@@ -2244,9 +2244,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     except:
                         q_model = torch.jit.trace(q_model, example_inputs, strict=False)
                         q_model = torch.jit.freeze(q_model)
-                #to enable fuse ops
-                self.model_calibration(q_model, dataloader, iterations=2, conf=None,
-                           calib_sampling_size = tune_cfg.get('calib_sampling_size', 1))
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
         model_._model = q_model
