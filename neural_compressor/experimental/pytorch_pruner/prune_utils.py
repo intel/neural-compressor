@@ -140,6 +140,7 @@ def process_config(config):
 
 
 def parse_to_prune(model, config):
+    """keep target pruned layers"""
     modules = {}
     if config["names"] == None or config["names"] == []:
         config["names"] = [".*"]
@@ -156,8 +157,8 @@ def parse_to_prune(model, config):
 
 def parse_not_to_prune(modules, config):
     """drop non pruned layers"""
-    not_to_prune = config["not_to_prune_names"]
-    not_to_prune.extend(config["exclude_names"])
+    not_to_prune = config["exclude_names"]
+    not_to_prune.extend(config["not_to_prune_names"])
 
     patterns = [re.compile(s) for s in not_to_prune]
     if len(patterns) <= 0:

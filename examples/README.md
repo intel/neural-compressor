@@ -565,6 +565,20 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Pattern Lock</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
   </tr>
+  <tr>
+    <td>Bert-mini</td>
+    <td>Natural Language Processing (text classification)</td>
+    <td>Structured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-mini</td>
+    <td>Natural Language Processing (question answering)</td>
+    <td>Structured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">eager</a></td>
+  </tr>
 </tbody>
 </table>
 

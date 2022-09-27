@@ -135,6 +135,10 @@ class Pruner:
 
 @register_pruners('snip')
 class SnipPruner(Pruner):
+    """
+    please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity 
+    (https://arxiv.org/abs/1810.02340)
+    """
     def __init__(self, modules, config):
         super(SnipPruner, self).__init__(modules, config)
         assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
