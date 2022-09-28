@@ -620,9 +620,9 @@ def main():
         if save_metrics:
          trainer.save_metrics("eval", metrics)
         logger.info("metrics keys: {}".format(metrics.keys()))
-        print('Batch size = %d', batch_size)
+        print('Batch size = %d' % batch_size)
         print("Finally Eval {} Accuracy: {}".format(metric_name, metrics.get(metric_name)))
-        print("Latency: %.3f ms", (evalTime / samples * 1000))
+        print("Latency: %.3f ms" % (evalTime / samples * 1000))
         print("Throughput: {} samples/sec".format(samples / evalTime))
         return metrics.get(metric_name)
 

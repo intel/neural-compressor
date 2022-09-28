@@ -58,12 +58,13 @@ function run_benchmark {
         mode_cmd="--benchmark "
     fi
 
+    extra_cmd='--model_name_or_path '${input_model}
     if [[ ${int8} == "true" ]]; then
-        mode_cmd=$mode_cmd"--int8"
+        extra_cmd='--model_name_or_path '${tuned_checkpoint}
+        extra_cmd=$extra_cmd" --int8"
     fi
 
     python run_glue_tune.py \
-        --model_name_or_path ${tuned_checkpoint} \
         --task_name ${task_name} \
         --do_train \
         --do_eval \
@@ -74,6 +75,7 @@ function run_benchmark {
         --num_train_epochs 3 \
         --metric_for_best_model f1 \
         --output_dir ./output_log --overwrite_output_dir \
+        ${extra_cmd} \
         ${mode_cmd}
 }
 

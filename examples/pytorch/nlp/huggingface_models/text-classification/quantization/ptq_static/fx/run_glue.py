@@ -486,9 +486,9 @@ def main():
         for key in bert_task_acc_keys:
             if key in metrics.keys():
                 throughput = metrics.get("eval_samples_per_second")
-                print('Batch size = %d', batch_size)
+                print('Batch size = %d' % batch_size)
                 print("Finally Eval {} Accuracy: {}".format(key, metrics[key]))
-                print("Latency: %.3f ms", (1000 / throughput))
+                print("Latency: %.3f ms" % (1000 / throughput))
                 print("Throughput: {} samples/sec".format(throughput))
                 return metrics[key]
         assert False, "No metric returned, Please check inference metric!"

@@ -78,7 +78,7 @@ or
 or
 
     python run_glue_tune.py \
-        --model_name_or_path ${tuned_checkpoint} \
+        --model_name_or_path ${input_model}/${tuned_checkpoint} \
         --task_name ${task_name} \
         --do_train \
         --do_eval \
