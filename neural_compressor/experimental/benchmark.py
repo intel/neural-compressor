@@ -100,9 +100,6 @@ class Benchmark(object):
     def __call__(self, mode='performance'):
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
-        # use first eval config in yaml if mode from __call__not same with yaml config
-        if not mode in cfg.evaluation:
-            mode = list(cfg.evaluation.keys())[0]
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
         # disable multi-instance for accuracy mode
