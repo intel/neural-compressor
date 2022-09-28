@@ -609,17 +609,17 @@ class ONNXRTAdaptor(Adaptor):
             for precision in precisions:
                 if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
                     continue
-                if precision in self.query_handler.get_quantization_capability():
-                    special_config_types = list(self.query_handler.get_quantization_capability() \
+                if precision in query.get_quantization_capability():
+                    special_config_types = list(query.get_quantization_capability() \
                         [precision].keys())
-                    default_config = self.query_handler.get_quantization_capability() \
+                    default_config = query.get_quantization_capability() \
                         [precision]['default']
                 else:
                     special_config_types = {}
                     default_config = {'weight': {'dtype': precision}, 
                                       'activation': {'dtype': precision}}
-                optypes = self.query_handler.get_op_types_by_precision(precision) if \
-                    self.query_handler.get_op_types_by_precision(precision) != ['*'] else \
+                optypes = query.get_op_types_by_precision(precision) if \
+                    query.get_op_types_by_precision(precision) != ['*'] else \
                     optype_wise.keys()
                 for op in optypes:
                     if op not in quantizable_optype:
@@ -628,7 +628,7 @@ class ONNXRTAdaptor(Adaptor):
                         op_capability = copy.deepcopy(default_config)
                     else:
                         op_capability = copy.deepcopy(
-                            self.query_handler.get_quantization_capability()[precision][op])
+                            query.get_quantization_capability()[precision][op])
 
                     if precision in ['int8', 'uint8']:
                         if self.static:
