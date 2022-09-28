@@ -190,8 +190,8 @@ class TestAugment(unittest.TestCase):
         added_outputs = ['A', 'B', 'C', 'D', 'E', 'F']
         # Original 3 nodes (exlude graph input/output)
         self.assertEqual(len(augmented_model_node_names), 3)
-        # Original 1 graph output + 6 intermediate outputs
-        self.assertEqual(len(augmented_model_outputs), 7)
+        # Original 1 graph output + 5 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 6)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -228,8 +228,8 @@ class TestAugment(unittest.TestCase):
         added_outputs = ['I', 'J', 'H', 'G', 'K']
         # Original 2 nodes
         self.assertEqual(len(augmented_model_node_names), 2)
-        # Original 1 graph output + 5 intermediate outputs
-        self.assertEqual(len(augmented_model_outputs), 6)
+        # Original 1 graph output + 4 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 5)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -270,8 +270,8 @@ class TestAugment(unittest.TestCase):
         added_outputs =  ['P', 'M', 'N', 'O', 'Q']
         # Original 4 nodes
         self.assertEqual(len(augmented_model_node_names), 4)
-        # Original 1 graph output + 5 intermediate outputs
-        self.assertEqual(len(augmented_model_outputs), 6)
+        # Original 1 graph output + 4 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 5)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -308,8 +308,8 @@ class TestAugment(unittest.TestCase):
         added_outputs = ['R', 'Attention_mask', 'S', 'T', 'Attention_bias', 'Attention_weight']
         # Original 2 nodes
         self.assertEqual(len(augmented_model_node_names), 2)
-        # Original 1 graph output + 6 intermediate outputs
-        self.assertEqual(len(augmented_model_outputs), 7)
+        # Original 1 graph output + 5 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 6)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -385,9 +385,12 @@ class TestAugment(unittest.TestCase):
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_outputs = ['attn_output']
+        added_node_names = ['attention_quant', 'attn_output_QuantizeLinear']
+        added_outputs = ['attn_output', 'output']
         self.assertEqual(len(augmented_model_node_names), 2)
         self.assertEqual(len(augmented_model_outputs), 2)
+        for name in added_node_names:
+            self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
             self.assertTrue(output in augmented_model_outputs)
 
@@ -446,8 +449,8 @@ class TestAugment(unittest.TestCase):
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['D_quantized_DequantizeLinear']
-        added_outputs = ['D_quantized_output']
+        added_node_names = ['A_QuantizeLinear', 'conv_quant', 'D_DequantizeLinear', 'D_quantized_DequantizeLinear']
+        added_outputs = ['D', 'D_quantized_output']
         self.assertEqual(len(augmented_model_node_names), 4)
         self.assertEqual(len(augmented_model_outputs), 2)
         for name in added_node_names:
@@ -503,7 +506,7 @@ class TestAugment(unittest.TestCase):
         node_output_names, output_dicts_list = augment.get_intermediate_outputs()
         dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary
-        self.assertEqual(len(quantization_params_dict), 11)
+        self.assertEqual(len(quantization_params_dict), 12)
         
         #check the computation of zp and scale
         for key, value in quantization_params_dict.items():

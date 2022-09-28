@@ -24,7 +24,7 @@ model:                                               # mandatory. used to specif
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant
   op_wise: {
-    'TFNodes/yolo_evaluation*': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+    'TFNodes/yolo_evaluation.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'conv2d_1': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'leaky_re_lu_1': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
     'conv2d_59': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},

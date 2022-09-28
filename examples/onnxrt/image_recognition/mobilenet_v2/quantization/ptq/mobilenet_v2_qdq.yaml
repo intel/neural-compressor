@@ -33,7 +33,7 @@ quantization:                                        # optional. tuning constrai
           width: 224
           mean_value: [0.485, 0.456, 0.406]
   op_wise: {
-     'Gather_*': {
+     'Gather_.*?': {
      'activation':  {'dtype': ['fp32']},
      'weight': {'dtype': ['fp32']}
      },

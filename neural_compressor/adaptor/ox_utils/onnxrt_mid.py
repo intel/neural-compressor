@@ -172,9 +172,10 @@ class ONNXRTAugment:
                                 added_tensor.name = tensor
                                 added_outputs.append(added_tensor)
             else:
-                added_tensor = helper.ValueInfoProto()
-                added_tensor.name = tensor
-                added_outputs.append(added_tensor)
+                if tensor not in [t.name for t in model.graph.output]:
+                    added_tensor = helper.ValueInfoProto()
+                    added_tensor.name = tensor
+                    added_outputs.append(added_tensor)
 
         if self.augment_nodes:
             model.graph.node.extend(added_nodes) # pylint: disable=no-member
@@ -199,6 +200,12 @@ class ONNXRTAugment:
         intermediate_outputs = []
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        output_dicts = {}
+        
+        node_output_names = [output.name if output.name not in self.dequantized_output \
+                             else self.dequantized_output[output.name] \
+                             for output in session.get_outputs()]
+
         for idx, (inputs, labels) in enumerate(self.dataloader):
             ort_inputs = {}
             if len_inputs == 1:
@@ -220,26 +227,17 @@ class ONNXRTAugment:
                 if idx > max(self.iterations):
                     break
                 if idx in self.iterations:
-                    intermediate_output= session.run(None, ort_inputs)
-                    min_maxs = []
-                    for output in intermediate_output:
-                        min_maxs.append([output.min(), output.max()])
-                    intermediate_outputs.append(min_maxs)
+                    for output_idx, output in enumerate(session.run(None, ort_inputs)): 
+                        if output.size != 0:
+                            output_dicts.setdefault(node_output_names[output_idx], \
+                                []).append([output.min(), output.max()])
             else:
-                intermediate_output= session.run(None, ort_inputs)
-                min_maxs = []
-                for output in intermediate_output:
-                    min_maxs.append([output.min(), output.max()])
-                intermediate_outputs.append(min_maxs)
-        node_output_names = [output.name if output.name not in self.dequantized_output \
-                             else self.dequantized_output[output.name] \
-                             for output in session.get_outputs()]
-        output_dicts_list = [
-            dict(zip(node_output_names, intermediate_output)) for intermediate_output in
-            intermediate_outputs
-        ]
+                for output_idx, output in enumerate(session.run(None, ort_inputs)): 
+                    if output.size != 0:
+                        output_dicts.setdefault(node_output_names[output_idx], \
+                            []).append([output.min(), output.max()])
 
-        return node_output_names, output_dicts_list
+        return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
         ''' helper function to dequantize tensor
@@ -320,16 +318,12 @@ class ONNXRTAugment:
         added_nodes = [pre_transpose_node, dequantize_node, post_transpose_node]
         return added_nodes, tensor_name + '_output'
 
-    def _map_calibration(self, node_output_names, output_dicts_list, calib_mode='naive'):
-        model = self.model
-        num_model_outputs = len(model.graph.output)
+    def _map_calibration(self, node_output_names, output_dicts, calib_mode='naive'):
         merged_dict = {}
-        for d in output_dicts_list:
-            for k, v in d.items():
-                merged_dict.setdefault(k + '_Min', []).append(v[0])
-                merged_dict.setdefault(k + '_Max', []).append(v[1])
-        added_node_output_names = node_output_names[num_model_outputs:]
-        node_names = added_node_output_names  # output names
+        for name, minmaxs in output_dicts.items():
+            for minmax in minmaxs:
+                merged_dict.setdefault(name + '_Min', []).append(minmax[0])
+                merged_dict.setdefault(name + '_Max', []).append(minmax[1])
 
         # Characterizing distribution of a node's values across test data sets
         clean_merged_dict = dict((i, merged_dict[i]) for i in merged_dict)
@@ -338,20 +332,20 @@ class ONNXRTAugment:
                 tuple([
                     float(min(clean_merged_dict[name + '_Min'])),
                     float(max(clean_merged_dict[name + '_Max']))
-                ]) for name in added_node_output_names
+                ]) for name in node_output_names
             ]
         else:
             raise ValueError('Unknown value for calib_mode. \
                              Currently only naive mode is supported.')
 
-        final_dict = dict(zip(node_names, pairs))
+        final_dict = dict(zip(node_output_names, pairs))
 
         return final_dict
 
     def dump_minmax(self, calib_mode='naive'):
         self.augment_graph()
-        node_output_names, output_dicts_list = self.get_intermediate_outputs()
-        return self._map_calibration(node_output_names, output_dicts_list,
+        node_output_names, output_dicts = self.get_intermediate_outputs()
+        return self._map_calibration(node_output_names, output_dicts,
                                      calib_mode=calib_mode)
 
     def dump_calibration(self, calib_mode='naive'):
@@ -422,14 +416,8 @@ class ONNXRTAugment:
             self.dynamically_quantized = \
                 "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]
         self.augment_graph(activation_only=not weight, weight_only=not activation)
-        _, output_dicts_list = self.get_intermediate_outputs()
-        output_dicts = {}
-        for output_dicts_iter in output_dicts_list:
-            for output_name in output_dicts_iter:
-                if output_name not in output_dicts:
-                    output_dicts[output_name] = []
-                output_dicts[output_name].append(output_dicts_iter[output_name])
-        iters = len(output_dicts_list)
+        _, output_dicts = self.get_intermediate_outputs()
+        iters = len(list(output_dicts.values())[-1])
         map_node_activation = [{} for _ in range(iters)]
         map_node_weight = {}
         self.white_nodes = [node.replace('_quant', '') for node in self.white_nodes]

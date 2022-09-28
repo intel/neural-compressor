@@ -57,7 +57,7 @@ quantization:                                        # optional. tuning constrai
      'activation':  {'dtype': ['fp32']},
      'weight': {'dtype': ['fp32']}
      },
-     'Gather__*': {
+     'Gather__.*?': {
      'activation':  {'dtype': ['fp32']},
      'weight': {'dtype': ['fp32']}
      },
