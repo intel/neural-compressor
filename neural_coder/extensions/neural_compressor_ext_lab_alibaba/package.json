@@ -58,7 +58,7 @@
     "@jupyterlab/mainmenu": "^3.4.7",
     "@jupyterlab/notebook": "^3.4.7",
     "@phosphor/commands": "^1.7.2",
-    "react": "^16.2.0",
+    "react": "^16.14.0",
     "react-sanitized-html": "^2.0.0"
   },
   "devDependencies": {
