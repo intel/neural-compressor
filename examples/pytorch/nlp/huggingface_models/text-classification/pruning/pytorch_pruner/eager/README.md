@@ -85,7 +85,7 @@ We can train a sparse model with NxM (2:4) pattern on mrpc and sst2:
 ```
 python3 ./run_glue_no_trainer.py \
             --model_name_or_path "/baseline_mrpc/" \
-            --pruning_config "./bert_mini_mrpc_2:4.yaml" \
+            --pruning_config "./bert_mini_mrpc_2in4.yaml" \
             --task_name "mrpc" \
             --max_length "128" \
             --per_device_train_batch_size "16" \
@@ -101,7 +101,7 @@ python3 ./run_glue_no_trainer.py \
 ```
 python3 ./run_glue_no_trainer.py \
             --model_name_or_path "/baseline_sst2/" \
-            --pruning_config "./bert_mini_sst2_2:4.yaml" \
+            --pruning_config "./bert_mini_sst2_2in4.yaml" \
             --task_name "sst2" \
             --max_length "128" \
             --per_device_train_batch_size "16" \

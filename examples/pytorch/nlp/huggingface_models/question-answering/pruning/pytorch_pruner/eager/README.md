@@ -87,7 +87,7 @@ We can train a sparse model with NxM (2:4) pattern:
 ```
 python3 ./run_qa_no_trainer.py \
             --model_name_or_path "/path/to/dense_finetuned_model/" \
-            --pruning_config "./bert_mini_2:4.yaml" \
+            --pruning_config "./bert_mini_2in4.yaml" \
             --dataset_name "squad" \
             --max_seq_length "384" \
             --doc_stride "128" \
