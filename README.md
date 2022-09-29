@@ -12,9 +12,10 @@ Intel® Neural Compressor
 </div>
 
 ---
+<div align="left">
 
-Intel® Neural Compressor, formerly known as Intel® Low Precision Optimization Tool, an open-source Python library running on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep learning frameworks for popular network compression technologies, such as quantization, pruning, knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help user quickly find out the best quantized model. It also implements different weight pruning algorithms to generate pruned model with predefined sparsity goal and supports knowledge distillation to distill the knowledge from the teacher model to the student model. 
-Intel® Neural Compressor has been one of the critical AI software components in [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+Intel® Neural Compressor, formerly known as Intel® Low Precision Optimization Tool, is an open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help the user quickly find out the best quantized model. It also implements different weight-pruning algorithms to generate a pruned model with predefined sparsity goal. It also supports knowledge distillation to distill the knowledge from the teacher model to the student model. 
+Intel® Neural Compressor is a critical AI software component in the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
 
 > **Note:**
 > GPU support is under development.
@@ -23,11 +24,11 @@ Intel® Neural Compressor has been one of the critical AI software components in
 
 ## Installation
 
-**Prerequisites**
+#### Prerequisites
 
-- Python version: 3.7 or 3.8 or 3.9 or 3.10
+Python version: 3.7, 3.8, 3.9, 3.10
 
-**Install on Linux**
+#### Install on Linux
 - Release binary install 
   ```Shell
   # install stable basic version from pip
@@ -48,7 +49,7 @@ Intel® Neural Compressor has been one of the critical AI software components in
 More installation methods can be found at [Installation Guide](./docs/installation_guide.md). Please check out our [FAQ](./docs/faq.md) for more details.
 
 ## Getting Started
-* Quantization with Python API  
+### Quantization with Python API    
 
 ```shell
 # A TensorFlow Example
@@ -66,7 +67,7 @@ dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
 quantizer.calib_dataloader = common.DataLoader(dataset)
 quantizer.fit()
 ```
-* Quantization with [GUI](./docs/bench.md)
+### Quantization with [GUI](./docs/bench.md)
 ```shell
 # An ONNX Example
 pip install onnx==1.12.0 onnxruntime==1.12.1 onnxruntime-extensions
@@ -79,7 +80,7 @@ inc_bench
   <img src="./docs/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
-* Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
+### Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
 
 ```python
 from neural_coder import auto_quant
@@ -95,7 +96,7 @@ auto_quant(
 
 ## System Requirements
 
-Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
+Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64) that are specifically optimized for the following CPUs:
 
 * Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
 * Future Intel Xeon Scalable processor (code name Sapphire Rapids)
@@ -143,15 +144,16 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 </table>
 
 > **Note:**
-> Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 to enable oneDNN optimizations if you are using TensorFlow from v2.6 to v2.8. oneDNN has been fully default from TensorFlow v2.9.
+> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
 
 ### Validated Models
-Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. And also provided 30+ pruning and knowledge distillation samples.  
-More details for validated models are available [here](docs/validated_model_list.md).   
+Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](docs/validated_model_list.md).   
 
-<a target="_blank" href="./docs/imgs/release_data.png">
-  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=600>
-</a>
+<div style = "width: 77%; margin-bottom: 2%;">
+  <a target="_blank" href="./docs/imgs/release_data.png">
+    <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=600>
+  </a>
+</div>
 
 ## Documentation
 
@@ -231,7 +233,7 @@ More details for validated models are available [here](docs/validated_model_list
 * [Accelerate AI Inference without Sacrificing Accuracy](https://www.intel.com/content/www/us/en/developer/videos/accelerate-inference-without-sacrificing-accuracy.html#gs.9yottx)
 * [Accelerate Deep Learning with Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/videos/accelerate-deep-learning-with-intel-tensorflow.html#gs.9yrw90)
 
-> Please check out our [full publication list](docs/publication_list.md).
+> View our [full publication list](docs/publication_list.md).
 
 ## Additional Content
 
@@ -241,6 +243,6 @@ More details for validated models are available [here](docs/validated_model_list
 * [Security Policy](docs/security_policy.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
-## Hiring :star:
+## Hiring
 
-We are actively hiring. Please send your resume to inc.maintainers@intel.com if you have interests in model compression techniques.
+We are actively hiring. Send your resume to inc.maintainers@intel.com if you are interested in model compression techniques.

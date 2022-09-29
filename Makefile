@@ -21,6 +21,8 @@ html:
 	mkdir "$(BUILDDIR)/html/docs/imgs"
 	cp docs/imgs/architecture.png "$(BUILDDIR)/html/docs/imgs/architecture.png"
 	cp docs/imgs/workflow.png "$(BUILDDIR)/html/docs/imgs/workflow.png"	
+	cp docs/imgs/INC_GUI.gif "$(BUILDDIR)/html/docs/imgs/INC_GUI.gif"	
+	cp docs/imgs/release_data.png "$(BUILDDIR)/html/docs/imgs/release_data.png"	
 
 
 # Catch-all target: route all unknown targets to Sphinx using the new
