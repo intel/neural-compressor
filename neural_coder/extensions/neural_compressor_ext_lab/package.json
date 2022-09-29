@@ -1,7 +1,7 @@
 {
-  "name": "neural_compressor_ext_lab",
-  "version": "0.1.0",
-  "description": "A JupyterLab extension.",
+  "name": "jupyter-lab-neural-compressor",
+  "version": "1.0.2",
+  "description": "Intel® Neural Compressor auto-quantization plugin.",
   "keywords": [
     "jupyter",
     "jupyterlab",

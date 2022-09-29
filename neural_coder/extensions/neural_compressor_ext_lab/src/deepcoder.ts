@@ -19,7 +19,7 @@ class JupyterlabCodeOptimizer {
     constructor(panel: NotebookPanel) {
       this.working = false;
       this.panel = panel
-      this.tmp_path = Constants.WORK_PATH+"tmp.py"
+      this.tmp_path = "tmp.py"
       this.rand = NotebookUtilities.GetRandomNum(0,200)
       this.log_path = Constants.WORK_PATH + "NeuralCoder"+this.rand+".log";
       this.tmp_log_path = Constants.WORK_PATH+ "NeuralCoder_tmp"+".log";
@@ -156,7 +156,7 @@ class JupyterlabCodeOptimizer {
             NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode2, expr2,false);
             
             if (formatter === 'pytorch_inc_bf16'){
-              let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:]:\n        pat = r\'\\d+\\.?\\d+'\n        fps = re.search(pat,log_line).group()\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`
+              let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:]:\n        pat =re.compile(r\'\\d+\\.?\\d+'\n)        fps = re.findall(pat,log_line)[-1]\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`
               let read_expr = {boost:"boost",best_feature:"best_feature",best_name:"best_name",optimizeCode:"optimized_code", feature_l: "feature_l"}
               let read_result = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, read_log, read_expr,false);
               read_result.then(value =>{

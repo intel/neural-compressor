@@ -1,20 +1,20 @@
 {
-  "name": "neural_compressor_ext_lab",
-  "version": "0.1.0",
-  "description": "A JupyterLab extension.",
+  "name": "jupyter-lab-neural-compressor",
+  "version": "1.0.2",
+  "description": "Intel® Neural Compressor auto-quantization plugin.",
   "keywords": [
     "jupyter",
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/Ymirsss/neural_compressor_ext_lab",
+  "homepage": "https://github.com/intel/neural-compressor/tree/master/neural_coder/extensions/neural_compressor_ext_lab",
   "bugs": {
-    "url": "https://github.com/Ymirsss/neural_compressor_ext_lab/issues"
+    "url": "https://github.com/intel/neural-compressor/tree/master/neural_coder/extensions/neural_compressor_ext_lab"
   },
   "license": "BSD-3-Clause",
   "author": {
-    "name": "neural_coder",
-    "email": "rya.ashs@gmail.com"
+    "name": "neural_compressor_ext_lab",
+    "email": "inc.maintainers@intel.com"
   },
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
@@ -25,7 +25,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ymirsss/neural_compressor_ext_lab.git"
+    "url": "https://github.com/intel/neural-compressor.git"
   },
   "scripts": {
     "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -126,7 +126,7 @@
     "extension": true,
     "outputDir": "neural_compressor_ext_lab/labextension",
     "_build": {
-      "load": "static/remoteEntry.0f9dc91596870246c620.js",
+      "load": "static/remoteEntry.34f9ad20791fd484f052.js",
       "extension": "./extension",
       "style": "./style"
     }

@@ -14,7 +14,7 @@ __webpack_require__.r(__webpack_exports__);
 var Constants;
 (function (Constants) {
     Constants.SHORT_PLUGIN_NAME = 'neural_compressor_ext_lab';
-    Constants.WORK_PATH = "lab_workspace/";
+    Constants.WORK_PATH = "neural_coder_workspace/";
     Constants.ICON_FORMAT_ALL_SVG = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="53px" height="53px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" r="32" stroke-width="8" stroke="#e15b64" stroke-dasharray="50.26548245743669 50.26548245743669" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" keyTimes="0;1" values="0 50 50;360 50 50"></animateTransform></circle><circle cx="50" cy="50" r="23" stroke-width="8" stroke="#f8b26a" stroke-dasharray="36.12831551628262 36.12831551628262" stroke-dashoffset="36.12831551628262" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" keyTimes="0;1" values="0 50 50;-360 50 50"></animateTransform></circle></svg>';
     Constants.ICON_RUN = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" version="1.1" width="512" height="512" x="0" y="0" viewBox="0 0 24 24" style="enable-background:new 0 0 512 512" xml:space="preserve" class=""><g><g xmlns="http://www.w3.org/2000/svg" clip-rule="evenodd" fill="rgb(0,0,0)" fill-rule="evenodd"><path d="m3.09467 3.09467c1.33447-1.33447 3.33136-1.84467 5.90533-1.84467h6c2.574 0 4.5709.5102 5.9053 1.84467 1.3345 1.33447 1.8447 3.33136 1.8447 5.90533v6c0 2.574-.5102 4.5709-1.8447 5.9053-1.3344 1.3345-3.3313 1.8447-5.9053 1.8447h-6c-2.57397 0-4.57086-.5102-5.90533-1.8447-1.33447-1.3344-1.84467-3.3313-1.84467-5.9053v-2.05c0-.4142.33579-.75.75-.75s.75.3358.75.75v2.05c0 2.426.4898 3.9291 1.40533 4.8447.91553.9155 2.41864 1.4053 4.84467 1.4053h6c2.426 0 3.9291-.4898 4.8447-1.4053.9155-.9156 1.4053-2.4187 1.4053-4.8447v-6c0-2.42603-.4898-3.92914-1.4053-4.84467-.9156-.91553-2.4187-1.40533-4.8447-1.40533h-6c-2.42603 0-3.92914.4898-4.84467 1.40533s-1.40533 2.41864-1.40533 4.84467c0 .41421-.33579.75-.75.75s-.75-.33579-.75-.75c0-2.57397.5102-4.57086 1.84467-5.90533z" fill="#505361" data-original="#000000" class=""/><path d="m10.355 9.23276c-.2302.13229-.505.4923-.505 1.28724v2.96c0 .7885.2739 1.1502.5061 1.2841.2324.1342.6841.1907 1.3697-.2041.3589-.2066.8175-.0832 1.0242.2758.2066.3589.0832.8175-.2758 1.0242-.9644.5552-2.0127.6967-2.86779.2034-.85535-.4936-1.25641-1.4719-1.25641-2.5834v-2.96c0-1.11506.40022-2.09505 1.25754-2.58776.85596-.49195 1.90416-.34642 2.86666.20779l.0012.00067 2.5588 1.47933c-.0002-.00012.0002.00013 0 0 .9642.55537 1.6133 1.39217 1.6133 2.37997 0 .9881-.6487 1.8246-1.6133 2.38-.3589.2066-.8175.0832-1.0242-.2758-.2066-.3589-.0832-.8175.2758-1.0242.6854-.3946.8617-.8131.8617-1.08s-.1763-.6854-.8617-1.08l-2.56-1.48003c.0002.0001-.0002-.00011 0 0-.6871-.39546-1.1394-.34022-1.3708-.20721z" fill="#505361" data-original="#000000" class=""/></g></g></svg>';
     Constants.SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="16" viewBox="0 0 18 18" data-icon="ui-components:caret-down-empty"><g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161" shape-rendering="geometricPrecision"><path d="M5.2,5.9L9,9.7l3.8-3.8l1.2,1.2l-4.9,5l-4.9-5L5.2,5.9z"></path></g></svg>';
@@ -37,18 +37,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "JupyterlabNotebookCodeOptimizer": () => (/* binding */ JupyterlabNotebookCodeOptimizer)
 /* harmony export */ });
+/* harmony import */ var _jupyterlab_notebook__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @jupyterlab/notebook */ "webpack/sharing/consume/default/@jupyterlab/notebook");
+/* harmony import */ var _jupyterlab_notebook__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_jupyterlab_notebook__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils */ "./lib/utils.js");
-/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./constants */ "./lib/constants.js");
+/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./constants */ "./lib/constants.js");
+
 
 
 class JupyterlabCodeOptimizer {
     constructor(panel) {
         this.working = false;
         this.panel = panel;
-        this.tmp_path = _constants__WEBPACK_IMPORTED_MODULE_0__.Constants.WORK_PATH + "tmp.py";
+        this.tmp_path = "tmp.py";
         this.rand = _utils__WEBPACK_IMPORTED_MODULE_1__["default"].GetRandomNum(0, 200);
-        this.log_path = _constants__WEBPACK_IMPORTED_MODULE_0__.Constants.WORK_PATH + "NeuralCoder" + this.rand + ".log";
-        this.tmp_log_path = _constants__WEBPACK_IMPORTED_MODULE_0__.Constants.WORK_PATH + "NeuralCoder_tmp" + ".log";
+        this.log_path = _constants__WEBPACK_IMPORTED_MODULE_2__.Constants.WORK_PATH + "NeuralCoder" + this.rand + ".log";
+        this.tmp_log_path = _constants__WEBPACK_IMPORTED_MODULE_2__.Constants.WORK_PATH + "NeuralCoder_tmp" + ".log";
         this.cells = [];
     }
     async optimizeCode(code, formatter, name, next, options, notebook, panel, cell, run) {
@@ -98,14 +101,17 @@ class JupyterlabCodeOptimizer {
                         cell.model.value.text = optimizedtext;
                     }
                     const run_svg = document.createElement("svg");
-                    run_svg.innerHTML = _constants__WEBPACK_IMPORTED_MODULE_0__.Constants.ICON_RUN;
+                    run_svg.innerHTML = _constants__WEBPACK_IMPORTED_MODULE_2__.Constants.ICON_RUN;
                     (_d = (_c = (_b = (_a = run === null || run === void 0 ? void 0 : run.node.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) === null || _b === void 0 ? void 0 : _b.firstChild) === null || _c === void 0 ? void 0 : _c.firstChild) === null || _d === void 0 ? void 0 : _d.replaceWith(run_svg);
                 }
             });
         }
         else {
             if (formatter === '') {
-                cell.outputArea.node.innerText += "[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......\n";
+                if (this.markdown) {
+                    this.markdown.model.value.text += "[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......  \n";
+                }
+                // cell.outputArea.node.innerText += "[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......\n"
                 let runcode1 = `with open("${this.log_path}", 'a' ) as f:\n       f.write("[NeuralCoder INFO] Enabling and Benchmarking for The Original Model ......\\n")`;
                 let expr1 = { path: "" };
                 _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(panel, runcode1, expr1, false);
@@ -115,12 +121,18 @@ class JupyterlabCodeOptimizer {
                 let fps;
                 result.then(value => {
                     fps = Object.values(value.log.data)[0];
-                    cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\n`;
-                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\\n`;
+                    if (this.markdown) {
+                        this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (samples/second)  \n`;
+                    }
+                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (samples/second)\n`
+                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (samples/second)\\n`;
                     let runcode = `with open("${this.log_path}", 'a' ) as f:\n   f.write("${text}")`;
                     let expr = { path: "" };
                     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode, expr, false);
-                    cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`;
+                    if (this.markdown) {
+                        this.markdown.model.value.text += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......  \n`;
+                    }
+                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`
                     let runcode1 = `with open("${this.log_path}", 'a' ) as f:\n       f.write("[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\\n")`;
                     let expr1 = { path: "" };
                     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(panel, runcode1, expr1, false);
@@ -136,66 +148,87 @@ class JupyterlabCodeOptimizer {
                 let fps;
                 result.then(value => {
                     fps = Object.values(value.log.data)[0];
-                    cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\n`;
-                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\\n`;
+                    if (this.markdown) {
+                        this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (samples/second)  \n`;
+                    }
+                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\n`
+                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (samples/second)\\n`;
                     let runcode = `with open("${this.log_path}", 'a' ) as f:\n       f.write("${text}")`;
                     let expr = { path: "" };
                     _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode, expr, false);
                     if (next !== '') {
-                        cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`;
+                        if (this.markdown) {
+                            this.markdown.model.value.text += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......  \n`;
+                        }
+                        // cell.outputArea.node.innerText += `[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\n`
                         let runcode2 = `with open("${this.log_path}", 'a' ) as f:\n       f.write("[NeuralCoder INFO] Enabling and Benchmarking for ${next} ......\\n")`;
                         let expr2 = { path: "" };
                         _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode2, expr2, false);
                     }
-                    let runcode2 = `with open("${this.tmp_log_path}", 'a' ) as f:\n       f.write("${text}")`;
-                    let expr2 = { path: "" };
-                    _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode2, expr2, false);
-                    if (formatter === 'pytorch_inc_bf16') {
-                        let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:-1]:\n        pat = r\'\\d+\\.?\\d+'\n        fps = re.search(pat,log_line).group()\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`;
-                        let read_expr = { boost: "boost", best_feature: "best_feature", best_name: "best_name", optimizeCode: "optimized_code", feature_l: "feature_l" };
-                        let read_result = _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, read_log, read_expr, false);
-                        read_result.then(value => {
-                            var _a, _b, _c, _d;
-                            let boost = Object.values(value.boost.data)[0];
-                            let best_name = Object.values(value.best_name.data)[0];
-                            let optimizedTexts = Object.values(value.optimizeCode.data)[0];
-                            let optimizeCodes = optimizedTexts.split('# this is the beginning of a single code snippet\\n').slice(1);
-                            cell.outputArea.node.innerText += `[NeuralCoder INFO] The Best Intel Optimization: ${best_name}\n`;
-                            cell.outputArea.node.innerText += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.\n`;
-                            optimizeCodes[optimizeCodes.length - 1] = optimizeCodes[optimizeCodes.length - 1].slice(0, -3);
-                            for (let i = 0; i < optimizeCodes.length; ++i) {
-                                const cell = this.cells[i];
-                                const currentTexts = this.cells.map(cell => cell.model.value.text);
-                                const currentText = currentTexts[i];
-                                let optimizedtext = optimizeCodes[i];
-                                optimizedtext = optimizedtext.replace(/\\'\\\\n\\'/g, "^^^");
-                                optimizedtext = optimizedtext.replace(/\\\\n"/g, "+++");
-                                optimizedtext = optimizedtext.replace(/\\\\n'/g, "+++");
-                                optimizedtext = optimizedtext.replace(/"\\\\n/g, "@@@");
-                                optimizedtext = optimizedtext.replace(/'\\\\n/g, "@@@");
-                                optimizedtext = optimizedtext.replace(/\\n/g, '\n');
-                                optimizedtext = optimizedtext.replace(/\\'/g, "'");
-                                optimizedtext = optimizedtext.replace(/\^\^\^/g, "'\\n'");
-                                optimizedtext = optimizedtext.replace(/\+\+\+/g, "\\n\"");
-                                optimizedtext = optimizedtext.replace(/\@\@\@/g, "\"\\n");
-                                if (cell.model.value.text === currentText) {
-                                    cell.model.value.text = optimizedtext;
+                    let runcode3 = `with open("${this.tmp_log_path}", 'a' ) as f:\n       f.write("${text}")`;
+                    let expr3 = { path: "" };
+                    let res_tmp = _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode3, expr3, false);
+                    res_tmp.then(value => {
+                        if (formatter === 'pytorch_inc_bf16') {
+                            let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:]:\n        pat = re.compile(r\'\\d+\\.?\\d+')\n        fps = re.findall(pat,log_line)[-1]\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['Original Model','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`;
+                            let read_expr = { boost: "boost", best_feature: "best_feature", best_name: "best_name", optimizeCode: "optimized_code", feature_l: "fps_list", maxi: "maxi", index: "index" };
+                            let read_result = _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, read_log, read_expr, false);
+                            read_result.then(value => {
+                                var _a, _b, _c, _d;
+                                console.log("resres", value);
+                                let boost = Object.values(value.boost.data)[0];
+                                let best_name = Object.values(value.best_name.data)[0];
+                                let optimizedTexts = Object.values(value.optimizeCode.data)[0];
+                                let optimizeCodes = optimizedTexts.split('# this is the beginning of a single code snippet\\n').slice(1);
+                                if (this.markdown) {
+                                    this.markdown.model.value.text += `[NeuralCoder INFO] The Best Intel Optimization: ${best_name}  \n`;
+                                    this.markdown.model.value.text += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.  \n`;
                                 }
-                            }
-                            let command = "lscpu | grep 'Model name'";
-                            let get_hardware = `import subprocess\nsubp = subprocess.Popen("${command}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")\nsubp.wait(2)\nhardware = subp.communicate()[0].replace("Model name:","").strip()`;
-                            let expr_hardware = { hardware: "hardware" };
-                            let hard_res = _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, get_hardware, expr_hardware, false);
-                            hard_res.then(value => {
-                                let hard = Object.values(value.hardware.data)[0];
-                                cell.outputArea.node.innerText += `[NeuralCoder INFO] HardWare: ${hard}\n`;
+                                // cell.outputArea.node.innerText +=`[NeuralCoder INFO] The Best Intel Optimization: ${best_name}\n`
+                                // cell.outputArea.node.innerText += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.\n`
+                                optimizeCodes[optimizeCodes.length - 1] = optimizeCodes[optimizeCodes.length - 1].slice(0, -3);
+                                for (let i = 0; i < optimizeCodes.length; ++i) {
+                                    const cell = this.cells[i];
+                                    const currentTexts = this.cells.map(cell => cell.model.value.text);
+                                    const currentText = currentTexts[i];
+                                    let optimizedtext = optimizeCodes[i];
+                                    optimizedtext = optimizedtext.replace(/\\'\\\\n\\'/g, "^^^");
+                                    optimizedtext = optimizedtext.replace(/\\\\n"/g, "+++");
+                                    optimizedtext = optimizedtext.replace(/\\\\n'/g, "+++");
+                                    optimizedtext = optimizedtext.replace(/"\\\\n/g, "@@@");
+                                    optimizedtext = optimizedtext.replace(/'\\\\n/g, "@@@");
+                                    optimizedtext = optimizedtext.replace(/\\n/g, '\n');
+                                    optimizedtext = optimizedtext.replace(/\\'/g, "'");
+                                    optimizedtext = optimizedtext.replace(/\^\^\^/g, "'\\n'");
+                                    optimizedtext = optimizedtext.replace(/\+\+\+/g, "\\n\"");
+                                    optimizedtext = optimizedtext.replace(/\@\@\@/g, "\"\\n");
+                                    if (cell.model.value.text === currentText) {
+                                        cell.model.value.text = optimizedtext;
+                                    }
+                                }
+                                // if(this.markdown){
+                                //       this.markdown.model.value.text += `[NeuralCoder INFO] HardWare: 4th Gen Intel Xeon Scalable processor with AMX \n`
+                                //       this.markdown.model.value.text += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log  \n`
+                                //     }
+                                let command = "lscpu | grep 'Model name'";
+                                let get_hardware = `import subprocess\nsubp = subprocess.Popen("${command}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")\nsubp.wait(2)\nhardware = subp.communicate()[0].replace("Model name:","").strip()`;
+                                let expr_hardware = { hardware: "hardware" };
+                                let hard_res = _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, get_hardware, expr_hardware, false);
+                                hard_res.then(value => {
+                                    let hard = Object.values(value.hardware.data)[0];
+                                    if (this.markdown) {
+                                        this.markdown.model.value.text += `[NeuralCoder INFO] HardWare: ${hard}  \n`;
+                                        this.markdown.model.value.text += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log  \n`;
+                                    }
+                                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] HardWare: ${hard}\n`
+                                });
+                                //  cell.outputArea.node.innerText += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log\n`
+                                const run_svg = document.createElement("svg");
+                                run_svg.innerHTML = _constants__WEBPACK_IMPORTED_MODULE_2__.Constants.ICON_RUN;
+                                (_d = (_c = (_b = (_a = run === null || run === void 0 ? void 0 : run.node.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) === null || _b === void 0 ? void 0 : _b.firstChild) === null || _c === void 0 ? void 0 : _c.firstChild) === null || _d === void 0 ? void 0 : _d.replaceWith(run_svg);
                             });
-                            cell.outputArea.node.innerText += `[NeuralCoder INFO] The log was saved to lab_workspace\\NeuralCoder${this.rand}.log\n`;
-                            const run_svg = document.createElement("svg");
-                            run_svg.innerHTML = _constants__WEBPACK_IMPORTED_MODULE_0__.Constants.ICON_RUN;
-                            (_d = (_c = (_b = (_a = run === null || run === void 0 ? void 0 : run.node.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) === null || _b === void 0 ? void 0 : _b.firstChild) === null || _c === void 0 ? void 0 : _c.firstChild) === null || _d === void 0 ? void 0 : _d.replaceWith(run_svg);
-                        });
-                    }
+                        }
+                    });
                 });
             }
         }
@@ -213,18 +246,29 @@ class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
     async optimizeAllCodeCells(config, formatter, notebook, run) {
         return this.optimizeCells(false, config, formatter, notebook, run);
     }
-    getCodeCells(selectedOnly = true, notebook) {
+    getCodeCells(ifmarkdown = true, notebook) {
         if (!this.notebookTracker.currentWidget) {
             return [];
         }
         const codeCells = [];
         notebook = notebook || this.notebookTracker.currentWidget.content;
         this.notebookname = notebook.title.label;
+        let count = 0;
         notebook.widgets.forEach((cell) => {
             if (cell.model.type === 'code') {
+                count += 1;
                 codeCells.push(cell);
             }
         });
+        if (ifmarkdown) {
+            _jupyterlab_notebook__WEBPACK_IMPORTED_MODULE_0__.NotebookActions.insertBelow(notebook);
+            this.notebookTracker.currentWidget.content.activeCellIndex = count + 1;
+            _jupyterlab_notebook__WEBPACK_IMPORTED_MODULE_0__.NotebookActions.changeCellType(notebook, 'markdown');
+            const activeCell = notebook.activeCell;
+            if (activeCell) {
+                this.markdown = activeCell;
+            }
+        }
         this.cells = codeCells;
         return codeCells;
     }
@@ -236,6 +280,13 @@ class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
         }
         console.log("arrive here 333");
         this.working = true;
+        const optimize_type = formatter !== undefined ? formatter : 'pytorch_mixed_precision_cpu';
+        if (optimize_type === 'auto-quant') {
+            selectedOnly = true;
+        }
+        else {
+            selectedOnly = false;
+        }
         const selectedCells = this.getCodeCells(selectedOnly, notebook);
         let cell = selectedCells[selectedCells.length - 1];
         if (selectedCells.length === 0) {
@@ -244,13 +295,17 @@ class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
                 resolve("false!");
             });
         }
-        const optimize_type = formatter !== undefined ? formatter : 'pytorch_mixed_precision_cpu';
         const currentTexts = selectedCells.map(cell => cell.model.value.text);
         if (optimize_type === 'auto-quant') {
             console.log("arrive here 444-111");
-            cell.outputArea.node.innerText = `[NeuralCoder INFO] Auto-Quant Started ......\n`;
-            cell.outputArea.node.innerText += `[NeuralCoder INFO] Code: User code from Jupyter Lab notebook "${this.notebookname}"\n`;
-            cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Mode: Throughput\n`;
+            if (this.markdown) {
+                this.markdown.model.value.text = `[NeuralCoder INFO] Auto-Quant Started ......  \n`;
+                this.markdown.model.value.text += `[NeuralCoder INFO] Code: User code from Jupyter Lab notebook "${this.notebookname}"  \n`;
+                this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Mode: Throughput  \n`;
+            }
+            // cell.outputArea.node.innerText = `[NeuralCoder INFO] Auto-Quant Started ......\n`
+            // cell.outputArea.node.innerText += `[NeuralCoder INFO] Code: User code from Jupyter Lab notebook "${this.notebookname}"\n`
+            // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Mode: Throughput\n`
             let runcode = `with open('${this.log_path}', 'a' ) as f:\n       f.write("[NeuralCoder INFO] Auto-Quant Started ......\\n")`;
             let expr = { path: "" };
             _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode, expr, false);
@@ -260,7 +315,7 @@ class JupyterlabNotebookCodeOptimizer extends JupyterlabCodeOptimizer {
             let runcode3 = `with open('${this.log_path}', 'a' ) as f:\n       f.write("[NeuralCoder INFO] Benchmark Mode: Throughput\\n")`;
             let expr3 = { path: "" };
             _utils__WEBPACK_IMPORTED_MODULE_1__["default"].sendKernelRequestFromNotebook(this.panel, runcode3, expr3, false);
-            cell.outputArea.node.setAttribute("class", "pad");
+            // cell.outputArea.node.setAttribute("class","pad")
             await this.optimizeCode(currentTexts, '', 'The Original Model', 'INC Enable INT8 (Static)', config, true, this.panel, cell, run);
             await this.optimizeCode(currentTexts, 'pytorch_inc_static_quant_fx', 'INC Enable INT8 (Static)', 'INC Enable INT8 (Dynamic)', config, true, this.panel, cell, run);
             await this.optimizeCode(currentTexts, 'pytorch_inc_dynamic_quant', 'INC Enable INT8 (Dynamic)', 'INC Enable BF16', config, true, this.panel, cell, run);
@@ -709,4 +764,4 @@ class NotebookUtilities {
 /***/ })
 
 }]);
-//# sourceMappingURL=lib_index_js.8480eaab59c98f3fe69b.js.map
+//# sourceMappingURL=lib_index_js.0c0187df9df8bc38b9c5.js.map

@@ -5,7 +5,7 @@ class JupyterlabCodeOptimizer {
     constructor(panel) {
         this.working = false;
         this.panel = panel;
-        this.tmp_path = Constants.WORK_PATH + "tmp.py";
+        this.tmp_path = "tmp.py";
         this.rand = NotebookUtilities.GetRandomNum(0, 200);
         this.log_path = Constants.WORK_PATH + "NeuralCoder" + this.rand + ".log";
         this.tmp_log_path = Constants.WORK_PATH + "NeuralCoder_tmp" + ".log";
@@ -79,10 +79,10 @@ class JupyterlabCodeOptimizer {
                 result.then(value => {
                     fps = Object.values(value.log.data)[0];
                     if (this.markdown) {
-                        this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)  \n`;
+                        this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (samples/second)  \n`;
                     }
-                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\n`
-                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (FPS)\\n`;
+                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (samples/second)\n`
+                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of The Original Model is ${fps} (samples/second)\\n`;
                     let runcode = `with open("${this.log_path}", 'a' ) as f:\n   f.write("${text}")`;
                     let expr = { path: "" };
                     NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode, expr, false);
@@ -106,10 +106,10 @@ class JupyterlabCodeOptimizer {
                 result.then(value => {
                     fps = Object.values(value.log.data)[0];
                     if (this.markdown) {
-                        this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)  \n`;
+                        this.markdown.model.value.text += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (samples/second)  \n`;
                     }
                     // cell.outputArea.node.innerText += `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\n`
-                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (FPS)\\n`;
+                    let text = `[NeuralCoder INFO] Benchmark Result (Performance) of ${name} is ${fps} (samples/second)\\n`;
                     let runcode = `with open("${this.log_path}", 'a' ) as f:\n       f.write("${text}")`;
                     let expr = { path: "" };
                     NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode, expr, false);
@@ -122,63 +122,70 @@ class JupyterlabCodeOptimizer {
                         let expr2 = { path: "" };
                         NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode2, expr2, false);
                     }
-                    let runcode2 = `with open("${this.tmp_log_path}", 'a' ) as f:\n       f.write("${text}")`;
-                    let expr2 = { path: "" };
-                    NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode2, expr2, false);
-                    if (formatter === 'pytorch_inc_bf16') {
-                        let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:]:\n        pat = r\'\\d+\\.?\\d+'\n        fps = re.search(pat,log_line).group()\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`;
-                        let read_expr = { boost: "boost", best_feature: "best_feature", best_name: "best_name", optimizeCode: "optimized_code", feature_l: "feature_l" };
-                        let read_result = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, read_log, read_expr, false);
-                        read_result.then(value => {
-                            var _a, _b, _c, _d;
-                            let boost = Object.values(value.boost.data)[0];
-                            let best_name = Object.values(value.best_name.data)[0];
-                            let optimizedTexts = Object.values(value.optimizeCode.data)[0];
-                            let optimizeCodes = optimizedTexts.split('# this is the beginning of a single code snippet\\n').slice(1);
-                            if (this.markdown) {
-                                this.markdown.model.value.text += `[NeuralCoder INFO] The Best Intel Optimization: ${best_name}  \n`;
-                                this.markdown.model.value.text += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.  \n`;
-                            }
-                            // cell.outputArea.node.innerText +=`[NeuralCoder INFO] The Best Intel Optimization: ${best_name}\n`
-                            // cell.outputArea.node.innerText += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.\n`
-                            optimizeCodes[optimizeCodes.length - 1] = optimizeCodes[optimizeCodes.length - 1].slice(0, -3);
-                            for (let i = 0; i < optimizeCodes.length; ++i) {
-                                const cell = this.cells[i];
-                                const currentTexts = this.cells.map(cell => cell.model.value.text);
-                                const currentText = currentTexts[i];
-                                let optimizedtext = optimizeCodes[i];
-                                optimizedtext = optimizedtext.replace(/\\'\\\\n\\'/g, "^^^");
-                                optimizedtext = optimizedtext.replace(/\\\\n"/g, "+++");
-                                optimizedtext = optimizedtext.replace(/\\\\n'/g, "+++");
-                                optimizedtext = optimizedtext.replace(/"\\\\n/g, "@@@");
-                                optimizedtext = optimizedtext.replace(/'\\\\n/g, "@@@");
-                                optimizedtext = optimizedtext.replace(/\\n/g, '\n');
-                                optimizedtext = optimizedtext.replace(/\\'/g, "'");
-                                optimizedtext = optimizedtext.replace(/\^\^\^/g, "'\\n'");
-                                optimizedtext = optimizedtext.replace(/\+\+\+/g, "\\n\"");
-                                optimizedtext = optimizedtext.replace(/\@\@\@/g, "\"\\n");
-                                if (cell.model.value.text === currentText) {
-                                    cell.model.value.text = optimizedtext;
-                                }
-                            }
-                            let command = "lscpu | grep 'Model name'";
-                            let get_hardware = `import subprocess\nsubp = subprocess.Popen("${command}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")\nsubp.wait(2)\nhardware = subp.communicate()[0].replace("Model name:","").strip()`;
-                            let expr_hardware = { hardware: "hardware" };
-                            let hard_res = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, get_hardware, expr_hardware, false);
-                            hard_res.then(value => {
-                                let hard = Object.values(value.hardware.data)[0];
+                    let runcode3 = `with open("${this.tmp_log_path}", 'a' ) as f:\n       f.write("${text}")`;
+                    let expr3 = { path: "" };
+                    let res_tmp = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, runcode3, expr3, false);
+                    res_tmp.then(value => {
+                        if (formatter === 'pytorch_inc_bf16') {
+                            let read_log = `import re\nwith open("${this.tmp_log_path}", 'r') as f:\n    logs = f.readlines()\n    fps_list=[]\n    for log_line in logs[-4:]:\n        pat = re.compile(r\'\\d+\\.?\\d+')\n        fps = re.findall(pat,log_line)[-1]\n        fps_list.append(float(fps))\nmaxi = max(fps_list)\nindex = fps_list.index(maxi)\nboost = round(maxi/fps_list[0],1)\nfeatures=['','pytorch_inc_static_quant_fx','pytorch_inc_dynamic_quant','pytorch_inc_bf16']\nfeature_name=['Original Model','INC Enable INT8 (Static)','INC Enable INT8 (Dynamic)','INC Enable BF16']\nbest_feature = features[index]\nbest_name = feature_name[index]\nfeature_l = []\nfeature_l.append(best_feature)\nfrom neural_coder import enable\nenable(code="${this.tmp_path}",features=feature_l, overwrite=True)\nwith open("${this.tmp_path}", 'r') as f:\n    optimized_code = f.read()\n`;
+                            let read_expr = { boost: "boost", best_feature: "best_feature", best_name: "best_name", optimizeCode: "optimized_code", feature_l: "fps_list", maxi: "maxi", index: "index" };
+                            let read_result = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, read_log, read_expr, false);
+                            read_result.then(value => {
+                                var _a, _b, _c, _d;
+                                console.log("resres", value);
+                                let boost = Object.values(value.boost.data)[0];
+                                let best_name = Object.values(value.best_name.data)[0];
+                                let optimizedTexts = Object.values(value.optimizeCode.data)[0];
+                                let optimizeCodes = optimizedTexts.split('# this is the beginning of a single code snippet\\n').slice(1);
                                 if (this.markdown) {
-                                    this.markdown.model.value.text += `[NeuralCoder INFO] HardWare: ${hard}  \n`;
-                                    this.markdown.model.value.text += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log  \n`;
+                                    this.markdown.model.value.text += `[NeuralCoder INFO] The Best Intel Optimization: ${best_name}  \n`;
+                                    this.markdown.model.value.text += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.  \n`;
                                 }
-                                // cell.outputArea.node.innerText += `[NeuralCoder INFO] HardWare: ${hard}\n`
+                                // cell.outputArea.node.innerText +=`[NeuralCoder INFO] The Best Intel Optimization: ${best_name}\n`
+                                // cell.outputArea.node.innerText += `[NeuralCoder INFO] You can get up to ${boost}X performance boost.\n`
+                                optimizeCodes[optimizeCodes.length - 1] = optimizeCodes[optimizeCodes.length - 1].slice(0, -3);
+                                for (let i = 0; i < optimizeCodes.length; ++i) {
+                                    const cell = this.cells[i];
+                                    const currentTexts = this.cells.map(cell => cell.model.value.text);
+                                    const currentText = currentTexts[i];
+                                    let optimizedtext = optimizeCodes[i];
+                                    optimizedtext = optimizedtext.replace(/\\'\\\\n\\'/g, "^^^");
+                                    optimizedtext = optimizedtext.replace(/\\\\n"/g, "+++");
+                                    optimizedtext = optimizedtext.replace(/\\\\n'/g, "+++");
+                                    optimizedtext = optimizedtext.replace(/"\\\\n/g, "@@@");
+                                    optimizedtext = optimizedtext.replace(/'\\\\n/g, "@@@");
+                                    optimizedtext = optimizedtext.replace(/\\n/g, '\n');
+                                    optimizedtext = optimizedtext.replace(/\\'/g, "'");
+                                    optimizedtext = optimizedtext.replace(/\^\^\^/g, "'\\n'");
+                                    optimizedtext = optimizedtext.replace(/\+\+\+/g, "\\n\"");
+                                    optimizedtext = optimizedtext.replace(/\@\@\@/g, "\"\\n");
+                                    if (cell.model.value.text === currentText) {
+                                        cell.model.value.text = optimizedtext;
+                                    }
+                                }
+                                // if(this.markdown){
+                                //       this.markdown.model.value.text += `[NeuralCoder INFO] HardWare: 4th Gen Intel Xeon Scalable processor with AMX \n`
+                                //       this.markdown.model.value.text += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log  \n`
+                                //     }
+                                let command = "lscpu | grep 'Model name'";
+                                let get_hardware = `import subprocess\nsubp = subprocess.Popen("${command}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8")\nsubp.wait(2)\nhardware = subp.communicate()[0].replace("Model name:","").strip()`;
+                                let expr_hardware = { hardware: "hardware" };
+                                let hard_res = NotebookUtilities.sendKernelRequestFromNotebook(this.panel, get_hardware, expr_hardware, false);
+                                hard_res.then(value => {
+                                    let hard = Object.values(value.hardware.data)[0];
+                                    if (this.markdown) {
+                                        this.markdown.model.value.text += `[NeuralCoder INFO] HardWare: ${hard}  \n`;
+                                        this.markdown.model.value.text += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log  \n`;
+                                    }
+                                    // cell.outputArea.node.innerText += `[NeuralCoder INFO] HardWare: ${hard}\n`
+                                });
+                                //  cell.outputArea.node.innerText += `[NeuralCoder INFO] The log was saved to neural_coder_workspace\\NeuralCoder${this.rand}.log\n`
+                                const run_svg = document.createElement("svg");
+                                run_svg.innerHTML = Constants.ICON_RUN;
+                                (_d = (_c = (_b = (_a = run === null || run === void 0 ? void 0 : run.node.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) === null || _b === void 0 ? void 0 : _b.firstChild) === null || _c === void 0 ? void 0 : _c.firstChild) === null || _d === void 0 ? void 0 : _d.replaceWith(run_svg);
                             });
-                            //  cell.outputArea.node.innerText += `[NeuralCoder INFO] The log was saved to lab_workspace\\NeuralCoder${this.rand}.log\n`
-                            const run_svg = document.createElement("svg");
-                            run_svg.innerHTML = Constants.ICON_RUN;
-                            (_d = (_c = (_b = (_a = run === null || run === void 0 ? void 0 : run.node.firstChild) === null || _a === void 0 ? void 0 : _a.firstChild) === null || _b === void 0 ? void 0 : _b.firstChild) === null || _c === void 0 ? void 0 : _c.firstChild) === null || _d === void 0 ? void 0 : _d.replaceWith(run_svg);
-                        });
-                    }
+                        }
+                    });
                 });
             }
         }
