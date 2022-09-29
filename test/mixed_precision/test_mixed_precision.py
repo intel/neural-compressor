@@ -293,7 +293,6 @@ class TestMixedPrecision(unittest.TestCase):
     def setUpClass(self):
         os.environ['FORCE_FP16'] = '1'
         os.environ['FORCE_BF16'] = '1'
-        os.environ['MIX_PRECISION_TEST'] = '1' 
         self.onnx_model = build_matmul_model()
         self.matmul_dataset = MatmulDataset()
         self.tf_model = build_tf_graph()
@@ -304,7 +303,6 @@ class TestMixedPrecision(unittest.TestCase):
     def tearDownClass(self):
         del os.environ['FORCE_FP16']
         del os.environ['FORCE_BF16']
-        del os.environ['MIX_PRECISION_TEST']
         shutil.rmtree("./saved", ignore_errors=True)
         shutil.rmtree("./nc_workspace", ignore_errors=True)
         os.remove("test.yaml")

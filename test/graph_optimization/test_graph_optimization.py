@@ -177,14 +177,10 @@ class TestGraphOptimizationOnNonBF16Host(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-        if CpuInfo().bf16:
-            os.environ['MIX_PRECISION_TEST'] = '1'
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-        if CpuInfo().bf16:
-           del os.environ['MIX_PRECISION_TEST']
 
     @disable_random()
     @unittest.skipIf(tf.__version__ < "2.0", "does not support on 1.15up3")
@@ -239,7 +235,6 @@ class TestGraphOptimization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         os.environ['FORCE_BF16'] = '1'
-        os.environ['MIX_PRECISION_TEST'] = '1'
         build_fake_yaml()
         build_fake_yaml_2()
         build_fake_yaml_3()
@@ -250,7 +245,6 @@ class TestGraphOptimization(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         del os.environ['FORCE_BF16']
-        del os.environ['MIX_PRECISION_TEST']
         os.remove('fake_yaml.yaml')
         os.remove('fake_yaml_2.yaml')
         os.remove('fake_yaml_3.yaml')
@@ -968,7 +962,6 @@ class TestGraphOptmizationFP32(unittest.TestCase):
     @disable_random()
     def test_graph_optimization_fp32_only_with_force_bf16(self):
         os.environ['FORCE_BF16'] = '1'
-        os.environ['MIX_PRECISION_TEST'] = '1'
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])
