@@ -183,7 +183,7 @@ class ONNXRTAugment:
 
         self.augmented_model = model
 
-    def get_intermediate_outputs(self):
+    def get_intermediate_outputs(self, calib_mode=None):
         '''
             Gather intermediate model outputs after running inference
             :return: dictionary mapping: {node output tensor names: node output tensor }
@@ -228,14 +228,20 @@ class ONNXRTAugment:
                     break
                 if idx in self.iterations:
                     for output_idx, output in enumerate(session.run(None, ort_inputs)): 
-                        if output.size != 0:
+                        if calib_mode == 'naive' and output.size != 0:
                             output_dicts.setdefault(node_output_names[output_idx], \
                                 []).append([output.min(), output.max()])
+                        elif calib_mode == None:
+                            output_dicts.setdefault(node_output_names[output_idx], \
+                                []).append(output)
             else:
                 for output_idx, output in enumerate(session.run(None, ort_inputs)): 
-                    if output.size != 0:
+                    if calib_mode == 'naive' and output.size != 0:
                         output_dicts.setdefault(node_output_names[output_idx], \
                             []).append([output.min(), output.max()])
+                    elif calib_mode == None:
+                        output_dicts.setdefault(node_output_names[output_idx], \
+                            []).append(output)
 
         return list(output_dicts.keys()), output_dicts
 
@@ -344,7 +350,7 @@ class ONNXRTAugment:
 
     def dump_minmax(self, calib_mode='naive'):
         self.augment_graph()
-        node_output_names, output_dicts = self.get_intermediate_outputs()
+        node_output_names, output_dicts = self.get_intermediate_outputs(calib_mode)
         return self._map_calibration(node_output_names, output_dicts,
                                      calib_mode=calib_mode)
 
