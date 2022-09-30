@@ -207,6 +207,10 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
         <td colspan="2" align="center"><a href="docs/model_conversion.md">Model Conversion</a></td>
         <td colspan="2" align="center"><a href="docs/tensorboard.md">TensorBoard</a></td>
     </tr>
+    <tr>
+        <td colspan="3" align="center"><a href="docs/distillation_quantization.md">Distillation for Quantization</a></td>
+    </tr>    
+    
   </tbody>
   <thead>
       <tr>
