@@ -16,7 +16,7 @@ This feature helps automatically enable quantization features on a PyTorch model
 
 ## Usage
 - PyPI distribution with a one-line API call
-- [JupyterLab extension](../extensions/README.md)
+- [JupyterLab extension](../extensions/neural_compressor_ext_lab/README.md)
 
 ## Example
 ### PyPI distribution:

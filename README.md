@@ -24,11 +24,11 @@ Intel® Neural Compressor is a critical AI software component in the [Intel® on
 
 ## Installation
 
-#### Prerequisites
+### Prerequisites
 
 Python version: 3.7, 3.8, 3.9, 3.10
 
-#### Install on Linux
+### Install on Linux
 - Release binary install 
   ```Shell
   # install stable basic version from pip
@@ -166,7 +166,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   <tbody>
     <tr>
       <td colspan="3" align="center"><a href="docs/design.md">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./examples">Examples</a></td>
+      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
       <td colspan="2" align="center"><a href="docs/bench.md">GUI</a></td>
       <td colspan="2" align="center"><a href="docs/api-introduction.md">APIs</a></td>
     </tr>
