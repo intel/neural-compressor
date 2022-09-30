@@ -2,7 +2,7 @@ Full Publications (38)
 ==========
 ## 2022 (20)
 * [Neural Coder (Intel Neural Compressor Plug-in): One-Click, No-Code Solution (Pat's Keynote IntelON 2022)](https://twitter.com/i/status/1574909338203967497) (Sep 2022)
-* [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) [Chinese](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA) (Sep 2022)
+* [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) [[Chinese version](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA)] (Sep 2022)
 * [Efficient Text Classification with Intel Neural Compressor](https://medium.com/intel-analytics-software/efficient-text-classification-with-intel-neural-compressor-4853296deeac) (Sep 2022)
 * [Dynamic Neural Architecture Search with Intel Neural Compressor](https://medium.com/intel-analytics-software/dynamic-neural-architecture-search-with-intel-neural-compressor-7b05eaf325f3) (Sep 2022)
 * [Easy Quantization in PyTorch Using Fine-Grained FX](https://medium.com/intel-analytics-software/easy-quantization-in-pytorch-using-fine-grained-fx-80be2c4bc2d6) (Sep 2022)
