@@ -208,7 +208,8 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
         <td colspan="2" align="center"><a href="docs/tensorboard.md">TensorBoard</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="docs/distillation_quantization.md">Distillation for Quantization</a></td>
+        <td colspan="4" align="center"><a href="docs/distillation_quantization.md">Distillation for Quantization</a></td>
+        <td colspan="5" align="center"><a href="neural_coder">Neural Coder (No-Code Solution)</a></td>
     </tr>    
     
   </tbody>
