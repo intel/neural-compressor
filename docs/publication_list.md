@@ -1,14 +1,14 @@
-Full Publications 
+Full Publications (38)
 ==========
-
+## 2022 (20)
+* [Neural Coder (Intel Neural Compressor Plug-in): One-Click, No-Code Solution (Sep 2022, Pat's Keynote IntelON 2022)](https://twitter.com/i/status/1574909338203967497) (Sep 2022)
 * [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) (Sep 2022)
 * [Efficient Text Classification with Intel Neural Compressor](https://medium.com/intel-analytics-software/efficient-text-classification-with-intel-neural-compressor-4853296deeac) (Sep 2022)
 * [Dynamic Neural Architecture Search with Intel Neural Compressor](https://medium.com/intel-analytics-software/dynamic-neural-architecture-search-with-intel-neural-compressor-7b05eaf325f3) (Sep 2022)
 * [Easy Quantization in PyTorch Using Fine-Grained FX](https://medium.com/intel-analytics-software/easy-quantization-in-pytorch-using-fine-grained-fx-80be2c4bc2d6) (Sep 2022)
 * [One-Click Enabling of Intel Neural Compressor Features in PyTorch Scripts](https://medium.com/intel-analytics-software/one-click-enable-intel-neural-compressor-features-in-pytorch-scripts-5d4e31f5a22b) (Aug 2022)
 * [Deep learning inference optimization for Address Purification](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
-* [Accelerate AI Inference without Sacrificing Accuracy](https://www.intel.com/content/www/us/en/developer/videos/accelerate-inference-without-sacrificing-accuracy.html#gs.9yottx)
-* [Accelerate Deep Learning with Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/videos/accelerate-deep-learning-with-intel-tensorflow.html#gs.9yrw90)
+* [Accelerate AI Inference without Sacrificing Accuracy](https://www.intel.com/content/www/us/en/developer/videos/accelerate-inference-without-sacrificing-accuracy.html#gs.9yottx) (Jun 2022)
 * [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
 * [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
 * [Intel® Neural Compressor oneAPI](https://www.intel.com/content/www/us/en/developer/tools/oneapi/neural-compressor.html) (Jun 2022)
@@ -21,10 +21,13 @@ Full Publications
 * [Intel Neural Compressor Quantization with SigOpt](https://sigopt.com/blog/intel-neural-compressor-quantization-with-sigopt/) (Jan 2022) 
 * [AI Performance and Productivity with Intel® Neural Compressor](https://twitter.com/IntelAI/status/1469079414562557952) (Jan 2022)
 * [Ease-of-use quantization for PyTorch with Intel® Neural Compressor](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html) (Jan 2022)
+
+## 2021 (14)
 * [Intel Neural Compressor Tutorial on BiliBili](https://space.bilibili.com/1840724569?from=search&seid=8673550305007703901&spm_id_from=333.337.0.0) (Dec 2021)
 * [Faster AI/ML Results With Intel Neural Compressor](https://gestaltit.com/tech-talks/intel/intel-2021/jpwarren/faster-ai-ml-results-with-intel-neural-compressor) (Dec 2021)
 * [Prune Once for All: Sparse Pre-Trained Language Models](https://nips.cc/Conferences/2021/Schedule?showEvent=21839) (Nov 2021)
 * [Faster, Easier Optimization with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/optimization-with-intel-neural-compressor.html) (Nov 2021)
+* [Accelerate Deep Learning with Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/videos/accelerate-deep-learning-with-intel-tensorflow.html#gs.9yrw90) (Oct 2021)
 * [Intel® Neural Compressor: A Scalable Quantization Tool for ONNX Models](https://events.linuxfoundation.org/lf-ai-data-day-onnx-community-virtual-meetup-fall/program/schedule) (Oct 2021)
 * [A "Double Play" for MLPerf™ Inference Performance Gains with 3rd Generation Intel® Xeon® Scalable Processors](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/intel-mlperf-inference-performance.html) (Sep 2021)
 * [Optimize TensorFlow Pre-trained Model for Inference](https://software.intel.com/content/www/us/en/develop/articles/optimize-tensorflow-pre-trained-model-inference.html) (Jun 2021)
@@ -34,7 +37,11 @@ Full Publications
 * [Using Low-Precision Optimizations for High-Performance DL Inference Applications](https://techdecoded.intel.io/essentials/using-low-precision-optimizations-for-high-performance-dl-inference-applications/#gs.z20k91) (Apr 2021)
 * [Quantization support for ONNX using LPOT (Low precision optimization tool)](https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391) (Mar 2021)
 * [DL Boost Quantization with CERN's 3D-GANs model](https://www.nextplatform.com/2021/02/01/cern-uses-dlboost-oneapi-to-juice-inference-without-accuracy-loss/) (Feb 2021)
+
+## 2020 (2)
 * [Reduced Precision Strategies for Deep Learning: 3DGAN Use Case](https://indico.cern.ch/event/852553/contributions/4059283/attachments/2126838/3581708/Rehm_Florian-IML-Reduced_Precision.pdf) - [presentation](https://indico.cern.ch/event/852553/contributions/4059283/attachments/2126838/3588271/IML2020_wedam_rehm.mp4) on [4th IML Machine Learning Workshop](https://indico.cern.ch/event/852553/contributions/4059283/) (Oct 2020)
 * [Intel Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/intel-low-precision-optimization-tool.html) (Sep 2020)
+
+## 2018 (2)
 * [Lower Numerical Precision Deep Learning Inference and Training](https://www.intel.com/content/www/us/en/developer/articles/technical/lower-numerical-precision-deep-learning-inference-and-training.html) (May 2018)
 * [Highly Efficient 8-bit Low Precision Inference of Convolutional Neural Networks with IntelCaffe](https://arxiv.org/abs/1805.08691) (May 2018)
