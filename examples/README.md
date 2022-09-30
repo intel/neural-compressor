@@ -575,7 +575,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT large</td>
     <td>Natural Language Processing</td>
-    <td>Structured</td>
+    <td>Structured (2x1)</td>
     <td>Group Lasso</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager">eager</a></td>
   </tr>
@@ -589,7 +589,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>bert-base-uncased</td>
     <td>Natural Language Processing</td>
-    <td>Structured</td>
+    <td>Structured (Filter/Channel-wise)</td>
     <td>Gradient Sensitivity</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/gradient_sensitivity/eager">eager</a></td>
   </tr>
@@ -610,14 +610,14 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>Bert-mini</td>
     <td>Natural Language Processing (text classification)</td>
-    <td>Structured</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
     <td>Snip-momentum</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">eager</a></td>
   </tr>
   <tr>
     <td>Bert-mini</td>
     <td>Natural Language Processing (question answering)</td>
-    <td>Structured</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
     <td>Snip-momentum</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">eager</a></td>
   </tr>
