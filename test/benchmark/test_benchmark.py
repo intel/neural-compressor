@@ -255,8 +255,8 @@ class TestObjective(unittest.TestCase):
         os.system("python fake2.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
         with open('benchmark.log', "r") as f:
             for line in f:
-                accuracy = re.search(r"Throughput: (\d+(\.\d+)?)", line)
-            self.assertIsNotNone(accuracy)
+                throughput = re.search(r"Throughput: (\d+(\.\d+)?)", line)
+            self.assertIsNotNone(throughput)
         os.system("rm *.log")
 
     def test_benchmark_with_conf(self):
