@@ -25,6 +25,12 @@ terms are listed below.
    horovod
    
    intel-optimized-tensorflow
+   
+   tf2onnx
+   
+   onnx
+   
+   flatbuffers
 
                                 Apache License
                             Version 2.0, January 2004
