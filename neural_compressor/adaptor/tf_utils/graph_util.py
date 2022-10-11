@@ -77,7 +77,7 @@ class GraphAnalyzer():
             return True
         elif op_type in ("Conv3D", "Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                          "MaxPool", "MaxPool3D", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
-                         "Mean", "MatMul", "FusedBatchNormV3"):
+                         "Mean", "MatMul", "FusedBatchNormV3", "_MklFusedInstanceNorm"):
             return self._has_positive_input(
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(
                     start_node.input[0])].node)

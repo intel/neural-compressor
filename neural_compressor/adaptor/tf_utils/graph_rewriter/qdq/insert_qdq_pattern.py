@@ -175,7 +175,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
                    "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul",
-                   "BatchMatMulV2", "FakeQuantWithMinMaxVars")
+                   "BatchMatMulV2", "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
@@ -572,6 +572,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
         if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op:
+            return True
+        if "_MklFusedInstanceNorm" == self.graph_info[matched_node_name].node.op:
             return True
         return False
 

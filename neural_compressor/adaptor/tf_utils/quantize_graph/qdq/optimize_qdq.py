@@ -23,6 +23,7 @@ from ..quantize_graph_base import QuantizeGraphBase
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 from .fuse_qdq_conv import FuseNodeStartWithConv2d
 from .fuse_qdq_bn import FuseNodeStartWithFusedBatchNormV3
+from .fuse_qdq_in import FuseNodeStartWithFusedInstanceNorm
 from .fuse_qdq_concatv2 import FuseNodeStartWithConcatV2
 from .fuse_qdq_matmul import FuseNodeStartWithMatmul
 from .fuse_qdq_pooling import FuseNodeStartWithPooling
@@ -74,6 +75,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("Conv3D", FuseNodeStartWithConv2d)
         self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
         self.register_transformer("FusedBatchNormV3", FuseNodeStartWithFusedBatchNormV3)
+        self.register_transformer("_MklFusedInstanceNorm", FuseNodeStartWithFusedInstanceNorm)
         self.register_transformer("AvgPool", FuseNodeStartWithPooling)
         self.register_transformer("ConcatV2", FuseNodeStartWithConcatV2)
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)

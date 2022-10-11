@@ -21,8 +21,9 @@ from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
+from tensorflow.python.framework import dtypes
 from tensorflow.python.platform import tf_logging
-
+from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
 class FuseDecomposedINOptimizer():
@@ -235,10 +236,18 @@ class FuseDecomposedINOptimizer():
 
             # Mean and variance values will be computed at runtime for fp32 & bf16 input.
             # Pass a "dummy" node for mean and variance.
+            mean_variance_dim = tensor_util.MakeNdarray(gamma_op.attr["value"].tensor).shape[-1]
+            dummy_mean_node = \
+                helper.create_constant_node(node.name + '_dummy_mean',
+                                            [0.]*mean_variance_dim, dtypes.float32)
+            dummy_variance_node = \
+                helper.create_constant_node(node.name + '_dummy_variance',
+                                            [1.]*mean_variance_dim, dtypes.float32)
             new_fused_instancenorm_op.input.extend([input_data_op.name, gamma_op.name,
-                                                beta_op.name, gamma_op.name,
-                                                gamma_op.name])
-
+                                                    beta_op.name, dummy_mean_node.name,
+                                                    dummy_variance_node.name])
+            new_ops.append(dummy_mean_node)
+            new_ops.append(dummy_variance_node)
             new_ops.append(new_fused_instancenorm_op)
 
         result_graph_def = graph_pb2.GraphDef()

@@ -24,7 +24,7 @@
 
   ops: &common_ops
     int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'FusedBatchNorm', 'FusedBatchNormV2','FusedBatchNormV3',
-           'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+           'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool', '_MklFusedInstanceNorm']
     uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
     bf16: ["Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
            "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
@@ -81,6 +81,14 @@
             'activation': {
                         'dtype': ['int8'],
                         'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        }
+                    },
+          '_MklFusedInstanceNorm': {
+            'activation': {
+                        'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -283,7 +291,9 @@
         'Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
-        'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2'
+        'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2',
+        'Dequantize + _MklFusedInstanceNorm + Relu + QuantizeV2',
+        'Dequantize + _MklFusedInstanceNorm + LeakyRelu + QuantizeV2'
         ]
     uint8: [
         'Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2',

@@ -39,6 +39,7 @@ class TensorFlowAdaptor(Adaptor):
         "Conv3D": "conv3d",
         "DepthwiseConv2dNative": "conv2d",
         "FusedBatchNormV3": "batchnorm",
+        "_MklFusedInstanceNorm": "instancenorm",
         "MaxPool": "pooling",
         "MaxPool3D": "pooling",
         "AvgPool": "pooling",
@@ -268,7 +269,7 @@ class TensorFlowAdaptor(Adaptor):
             output_postfix = "_fp32.output"
             inspect_node_types = ["Conv2D", "DepthwiseConv2dNative", "MaxPool", "AvgPool",
                                   "ConcatV2", "MatMul", "FusedBatchNormV3", "FusedBatchNorm", "BiasAdd",
-                                  "Relu", "Relu6", "Dequantize"]
+                                  "_MklFusedInstanceNorm", "Relu", "Relu6", "Dequantize"]
             fp32_inspect_node_name = []
             int8_inspect_node_name = []
             q_node_scale = {}
@@ -316,7 +317,7 @@ class TensorFlowAdaptor(Adaptor):
                 # Inspect weights, bias. Need further optimize
                 if node.op == "Const" and graph_info[graph_info[node.name].outputs[0]].node.op \
                     in ["Conv2D", "DepthwiseConv2dNative", "MatMul",
-                    "FusedBatchNormV3", "BiasAdd"]:
+                    "FusedBatchNormV3", "_MklFusedInstanceNorm", "BiasAdd"]:
                     const_value = tensor_util.MakeNdarray(node.attr.get(
                                   'value').tensor).astype(np.float32)
                     self.log_histogram(writer, node.name, const_value)
@@ -610,7 +611,7 @@ class TensorFlowAdaptor(Adaptor):
                                'QuantizedMaxPool', 'QuantizedAvgPool',
                                'QuantizedConcatV2', 'QuantizedMatMul',
                                '_QuantizedFusedBatchNorm', '_QuantizedMatMul',
-                               '_QuantizedBatchMatMul']
+                               '_QuantizedBatchMatMul', '_QuantizedFusedInstanceNorm']
         from tensorflow.python.framework import dtypes
 
         res = {}
@@ -629,6 +630,8 @@ class TensorFlowAdaptor(Adaptor):
                 origin_op_type = possible_int8_res[0].split('Quantized')[-1]
                 if origin_op_type == 'FusedBatchNorm':
                     origin_op_type = 'FusedBatchNormV3'
+                if origin_op_type == 'FusedInstanceNorm':
+                    origin_op_type = '_MklFusedInstanceNorm'
                 if origin_op_type == 'Depthwise':
                     origin_op_type = 'DepthwiseConv2dNative'
                 if origin_op_type == 'BatchMatMul':
@@ -1597,16 +1600,19 @@ class TensorflowQuery(QueryBackendCapability):
             try:
                 self.cur_config = self._get_specified_version_cfg(content)
                 if not self.performance_only:
-                    remove_int8_ops = ['FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3']
+                    remove_int8_ops = ['FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3',
+                                       '_MklFusedInstanceNorm']
                     for op in remove_int8_ops:
                         while op in self.cur_config['ops']['int8']:
                             self.cur_config['ops']['int8'].remove(op)
                         if self.cur_config.get('capabilities'):
                             self.cur_config['capabilities']['int8'].pop(op, None)
-                        pattern = f'Dequantize + {op} + Relu + QuantizeV2'
-                        if self.cur_config.get('patterns'):
-                            while pattern in self.cur_config['patterns']['int8']:
-                                self.cur_config['patterns']['int8'].remove(pattern)
+                        patterns = [f'Dequantize + {op} + Relu + QuantizeV2',
+                                    f'Dequantize + {op} + LeakyRelu + QuantizeV2']
+                        for pattern in patterns:
+                            if self.cur_config.get('patterns'):
+                                while pattern in self.cur_config['patterns']['int8']:
+                                    self.cur_config['patterns']['int8'].remove(pattern)
 
             except Exception as e:
                 logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))

@@ -228,18 +228,27 @@ class FreezeValueTransformer(GraphRewriterBase):
         """
         for node_name, value in max_name_value.items():
             bn_node_name = node_name.replace('eightbit_requant_range', 'eightbit_quantized_bn')
+            in_node_name = node_name.replace('eightbit_requant_range', 'eightbit_quantized_in')
             if not self.graph_info.get(bn_node_name) or \
                 not bn_node_name.endswith('_eightbit_quantized_bn'):
                 bn_node_name = None
+            if not self.graph_info.get(in_node_name) or \
+                not in_node_name.endswith('_eightbit_quantized_in'):
+                in_node_name = None
             if node_name not in self.graph_info \
-                and bn_node_name not in self.graph_info:
+                and bn_node_name not in self.graph_info \
+                    and in_node_name not in self.graph_info:
                 continue
 
             min_node = node_def_pb2.NodeDef()
             min_node.op = "Const"
             min_node_postfix = "/frozen_min"
-            min_node.name = bn_node_name + "/frozen_bn_output_min" if bn_node_name \
-                else node_name + min_node_postfix
+            if bn_node_name:
+                min_node.name = bn_node_name + "/frozen_bn_output_min"
+            elif in_node_name:
+                min_node.name = in_node_name + "/frozen_in_output_min"
+            else:
+                min_node.name = node_name + min_node_postfix
             min_node.attr["dtype"].CopyFrom(
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             min_node.attr["value"].CopyFrom(
@@ -250,8 +259,12 @@ class FreezeValueTransformer(GraphRewriterBase):
             max_node = node_def_pb2.NodeDef()
             max_node.op = "Const"
             max_node_postfix = "/frozen_max"
-            max_node.name = bn_node_name + "/frozen_bn_output_max" if bn_node_name \
-                else node_name + max_node_postfix
+            if bn_node_name:
+                max_node.name = bn_node_name + "/frozen_bn_output_max"
+            elif in_node_name:
+                max_node.name = in_node_name + "/frozen_in_output_max"
+            else:
+                max_node.name = node_name + max_node_postfix
             max_node.attr["dtype"].CopyFrom(
                 attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
             max_node.attr["value"].CopyFrom(
@@ -269,6 +282,17 @@ class FreezeValueTransformer(GraphRewriterBase):
                     max_node,
                     [Helper.node_name_from_input(bn_node_name)],
                     bn_node_name + '_input8_output_max'
+                )
+            elif in_node_name:
+                self.cur_graph.replace_const_node(
+                    min_node,
+                    [Helper.node_name_from_input(in_node_name)],
+                    in_node_name + '_input7_output_min'
+                )
+                self.cur_graph.replace_const_node(
+                    max_node,
+                    [Helper.node_name_from_input(in_node_name)],
+                    in_node_name + '_input8_output_max'
                 )
             elif not self.itex_mode and node_name in self.cur_graph.parent_frame_details and \
                  self.cur_graph.parent_frame_details[node_name]:         # pragma: no cover
