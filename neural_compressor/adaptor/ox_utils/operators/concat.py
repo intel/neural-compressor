@@ -17,25 +17,27 @@
 #
 
 import onnx
-from .base_operator import QuantOperatorBase
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
-        attribute_to_kwarg, ms_domain
-from onnx import onnx_pb as onnx_proto
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
-from .qdq_base_operator import QDQOperatorBase
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
-class QDQConcat(QDQOperatorBase):
+@op_registry(op_types="Concat")
+class ConcatOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(ConcatOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def quantize(self):
+    def quantize_check(self):
         node = self.node
         inits = [i.name for i in self.quantizer.model.initializer()]
         if all([inp not in self.quantizer.quantized_value_map and inp not in inits \
             for inp in node.input]) or \
             not all([inp in self.quantizer.quantized_value_map or inp in inits \
             for inp in node.input]):
-            return
+            return False
+        return True
+
+    def quantize(self):
+        node = self.node
+        inits = [i.name for i in self.quantizer.model.initializer()] 
         for idx, inp in enumerate(node.input):
             initializer_use_weight_qType = inp not in inits
             self.quantizer.quantize_inputs(node, [idx], initializer_use_weight_qType)
@@ -43,18 +45,23 @@ class QDQConcat(QDQOperatorBase):
             self.quantizer.quantize_outputs(node)
         node.name = node.name + "_quant"
 
-class QLinearConcat(QuantOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def convert(self):
+    def convert_check(self, convert_format):
         node = self.node
-
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+            
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)
         if len(children) == 0 or len(parents) == 0 or not node.name.endswith('_quant'):
-            return
+            return False
+        return True
 
+    def convert(self, convert_format):
+        node = self.node
+        
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
+        
         if all([i.op_type == 'DequantizeLinear' for i in parents]) and \
             any([i.op_type == 'QuantizeLinear' for i in children]):
             inputs = []
@@ -81,3 +88,9 @@ class QLinearConcat(QuantOperatorBase):
 
             self.quantizer.new_nodes += [qlconcat_node]
             self.quantizer.remove_nodes.append(node)
+    
+    def cast(self): # pragma: no cover
+        node = self.node
+        if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
+            return
+        self.quantizer.dtype_cast(self.node, self.dtype)

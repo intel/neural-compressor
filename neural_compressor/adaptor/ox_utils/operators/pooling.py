@@ -17,38 +17,42 @@
 #
 
 import onnx
-from .base_operator import QuantOperatorBase
-from .qdq_base_operator import QDQOperatorBase
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
-        attribute_to_kwarg, ms_domain
-from onnx import onnx_pb as onnx_proto
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
-class QDQPool(QDQOperatorBase):
+@op_registry(op_types="AveragePool")
+class PoolOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(PoolOperator, self).__init__(onnx_quantizer, onnx_node)
+
+    def quantize_check(self):
+        node = self.node
+        if not self.quantizer.is_valid_quantize_weight(node.input[0]):
+            return False
+        return True
 
     def quantize(self):
         node = self.node
-        if not self.quantizer.is_valid_quantize_weight(node.input[0]):
-            return
-
-        self.quantizer.quantize_inputs(self.node)
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
-            self.quantizer.quantize_outputs(self.node)
+        super().quantize()
         node.name = node.name + "_quant"
 
-class QLinearPool(QuantOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def convert(self):
+    def convert_check(self, convert_format):
         node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+            
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)
  
         if len(children) == 0 or len(parents) == 0 or not node.name.endswith('_quant'):
-            return
+            return False
+        return True
+
+    def convert(self, convert_format):
+        node = self.node
+        
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
 
         if all([i.op_type == 'DequantizeLinear' for i in parents]) and \
             any([i.op_type == 'QuantizeLinear' for i in children]):

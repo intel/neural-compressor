@@ -9,7 +9,7 @@ from onnx import helper, TensorProto, numpy_helper
 
 sys.path.append('..')
 from neural_compressor.experimental.data.datasets.dataset import Dataset
-from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.data import DATASETS, DATALOADERS
 

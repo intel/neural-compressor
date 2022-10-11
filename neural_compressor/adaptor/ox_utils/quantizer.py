@@ -29,8 +29,6 @@ from onnx import TensorProto
 from onnx import shape_inference
 from onnxruntime import SessionOptions, InferenceSession, GraphOptimizationLevel
 
-from neural_compressor.adaptor.ox_utils.registry import CreateQDQQuantizer, \
-    CreateOpConverter, CreateCaster
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue, QuantizedInitializer, \
     _get_qrange_for_qType, cast_tensor, make_quant_node, make_dquant_node
 from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
@@ -40,6 +38,7 @@ from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping
 from neural_compressor import options
 from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
 logger = logging.getLogger()
 
@@ -209,10 +208,11 @@ class Quantizer:
     def insert_qdq(self):
         for node in self.model.nodes():
             if self.should_quantize(node):
-                op_quantizer = CreateQDQQuantizer(self, node)
-                op_quantizer.quantize()
+                op_quantizer = OPERATORS[node.op_type](self, node)
+                if op_quantizer.quantize_check():
+                    op_quantizer.quantize()
             elif self.should_cast(node): # pragma: no cover
-                op_caster = CreateCaster(self, node)
+                op_caster = OPERATORS[node.op_type](self, node)
                 op_caster.cast()
         self.model.graph().node.extend(self.new_nodes)
         self.model.remove_nodes(self.remove_nodes)
@@ -236,9 +236,10 @@ class Quantizer:
         for node in self.model.nodes():
             if node.op_type not in ['QuantizeLinear', 'DequantizeLinear'] and \
                 self.should_convert(node):
-                op_converter = CreateOpConverter(self, node,
-                    self.config[node.name.split('_quant')[0]]['activation']['quant_mode'])
-                op_converter.convert()
+                op_converter = OPERATORS[node.op_type](self, node)
+                mode = self.config[node.name.split('_quant')[0]]['activation']['quant_mode']
+                if op_converter.convert_check(mode):
+                    op_converter.convert(mode)
         self.model.graph().node.extend(self.new_nodes)
         self.model.remove_nodes(self.remove_nodes)
         for node, old_input_name, new_input_name in self.replace_input:

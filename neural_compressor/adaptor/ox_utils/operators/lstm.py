@@ -17,46 +17,47 @@
 #
 
 import onnx
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import  ms_domain, attribute_to_kwarg
 import numpy
-from .base_operator import QuantOperatorBase
-from .qdq_base_operator import QDQOperatorBase
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, QuantType
-from onnx import onnx_pb as onnx_proto
-'''
-    Quantize LSTM
-'''
 
-
-class LSTMQuant(QuantOperatorBase): # pragma: no cover
+@op_registry(op_types="LSTM")
+class LSTMOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(LSTMOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def convert(self):
-        '''
-            parameter node: LSTM node.
-            parameter new_nodes_list: List of new nodes created before processing this node.
-            return: a list of nodes in topological order that represents quantized Attention node.
-        '''
+    def quantize(self):
+        return
+    
+    def convert_check(self, convert_format): 
         node = self.node
-        assert (node.op_type == "LSTM")
-
+        assert convert_format in ['dynamic'], \
+            "convert format for {} should be in ['dynamic']".format(node.op_type)
+            
         if (not self.quantizer.is_valid_quantize_weight(node.input[1]) or
-            not self.quantizer.is_valid_quantize_weight(node.input[2])):
-            super().convert()
-            return
+            not self.quantizer.is_valid_quantize_weight(node.input[2])): # pragma: no cover
+            return False
 
         model = self.quantizer.model
         W = model.get_initializer(node.input[1])
         R = model.get_initializer(node.input[2])
 
-        if (len(W.dims) != 3 or len(R.dims) != 3):
-            super().convert()
-            return
+        if (len(W.dims) != 3 or len(R.dims) != 3): # pragma: no cover
+            return False
 
+        return True
+
+    def convert(self, convert_format):
+        node = self.node
+
+        model = self.quantizer.model
+        W = model.get_initializer(self.node.input[1])
+        R = model.get_initializer(self.node.input[2])
+    
         [W_num_dir, W_4_hidden_size, W_input_size] = W.dims
         [R_num_dir, R_4_hidden_size, R_hidden_size] = R.dims
 
-        if self.per_channel:
+        if self.per_channel: # pragma: no cover
             del W.dims[0]
             del R.dims[0]
             W.dims[0] = W_num_dir * W_4_hidden_size
@@ -93,7 +94,7 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
         W_quant_scale = model.get_initializer(quant_input_weight_tuple[2])
         R_quant_scale = model.get_initializer(quant_recurrent_weight_tuple[2])
 
-        if self.per_channel:
+        if self.per_channel: # pragma: no cover
             W_quant_zp.dims[:] = [W_num_dir, W_4_hidden_size]
             R_quant_zp.dims[:] = [R_num_dir, R_4_hidden_size]
             W_quant_scale.dims[:] = [W_num_dir, W_4_hidden_size]
@@ -123,11 +124,3 @@ class LSTMQuant(QuantOperatorBase): # pragma: no cover
                                                 inputs, node.output, quant_lstm_name, **kwargs)
         self.quantizer.remove_nodes.append(node)
         self.quantizer.new_nodes.append(quant_lstm_node)
-
-class QDQLSTM(QDQOperatorBase): # pragma: no cover
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        return
- 

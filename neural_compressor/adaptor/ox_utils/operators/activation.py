@@ -17,28 +17,39 @@
 #
 
 import onnx
-from .base_operator import QuantOperatorBase
-from .qdq_base_operator import QDQOperatorBase
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
-                                                 attribute_to_kwarg, ms_domain
-from onnx import onnx_pb as onnx_proto
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
-
-class QLinearActivation(QuantOperatorBase):
+@op_registry(op_types="LeakyRelu, Sigmoid")
+class ActivationOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(ActivationOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def convert(self):
+    def quantize_check(self):
         node = self.node
-        if node.op_type in ['Relu', 'Clip']:
-            return
-            
-        if len(self.quantizer.model.get_children(node)) == 0 or \
-            not node.name.endswith('_quant'):
-            return
-        # No assert on op_type as it is controlled by registry
-        # only try to quantize when given quantization parameters for it
+        data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
+        if not data_found:
+            return False
+        return True
+    
+    def quantize(self):
+        node = self.node
+        super().quantize()
+        node.name = node.name + "_quant"
+
+    def convert_check(self, convert_format):
+        node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+        
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 or not node.name.endswith('_quant'):
+            return False
+        return True
+
+    def convert(self, convert_format):
+        node = self.node
+
         parent = self.quantizer.model.get_parents(node)[0]
         child = self.quantizer.model.get_children(node)[0]
 
@@ -48,7 +59,7 @@ class QLinearActivation(QuantOperatorBase):
 
         qlinear_activation_output = child.output[0]
         kwargs = {}
-        for attribute in node.attribute:
+        for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
@@ -59,28 +70,21 @@ class QLinearActivation(QuantOperatorBase):
         self.quantizer.new_nodes.append(qlinear_activation_node)
         self.quantizer.remove_nodes.extend([parent, child, node])
 
-class QDQRemovableActivation(QDQOperatorBase):
+@op_registry(op_types="Relu, Clip")
+class RemovableActivationOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(RemovableActivationOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def quantize(self):
+    def quantize_check(self):
         node = self.node
         if node.input[0] not in self.quantizer.quantized_value_map:
-            return
-        elif node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
+            return False
+        return True
+    
+    def quantize(self):
+        node = self.node
+        if node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
             self.quantizer.dequantize_tensor(node, node.input[0])
         else:
             self.quantizer.model.replace_input_of_all_nodes(node.output[0], node.input[0])
             self.quantizer.remove_nodes.append(node)
-
-class QDQActivation(QDQOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        node = self.node
-        data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
-        if not data_found:
-            return
-        super().quantize()
-        node.name = node.name + "_quant"

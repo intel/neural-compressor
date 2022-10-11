@@ -16,48 +16,41 @@
 # limitations under the License.
 #
 
-import numpy
 import onnx
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
-                                                 attribute_to_kwarg
-from .base_operator import QuantOperatorBase
-from .qdq_base_operator import QDQOperatorBase
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue, quantize_nparray
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, quantize_nparray
 
-class QDQPad(QDQOperatorBase):
+@op_registry(op_types="Pad")
+class PadOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(PadOperator, self).__init__(onnx_quantizer, onnx_node)
+
+    def quantize_check(self):
+        # if opset version is less than 11, just no change
+        if self.quantizer.opset_version < 11: # pragma: no cover
+            return False
+        return True
 
     def quantize(self):
         node = self.node
-        assert (node.op_type == "Pad")
-
-        # Only after version 11, it has the optional constant_value
-        # If input[0] is not quantized, do not quanitize this node
-        if self.quantizer.opset_version < 11:
-            return
-
         self.quantizer.quantize_inputs(node, [0])
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)
         node.name = node.name + "_quant"
 
-class QPad(QuantOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def convert(self):
+    def convert_check(self, convert_format):
         node = self.node
-        assert (node.op_type == "Pad")
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
 
-        # Only after version 11, it has the optional constant_value
-        # If input[0] is not quantized, do not quanitize this node
-        if self.quantizer.opset_version < 11:
-            return
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 or not node.name.endswith('_quant'): # pragma: no cover
+            return False
+        return True
 
-        if len(self.quantizer.model.get_children(node)) == 0 or \
-            not node.name.endswith('_quant'):
-            return
+    def convert(self, convert_format):
+        node = self.node
+        
         parent = self.quantizer.model.get_parents(node)[0]
         child = self.quantizer.model.get_children(node)[0]
 
@@ -98,7 +91,6 @@ class QPad(QuantOperatorBase):
                 node.input.extend([parent.input[2]])
 
         # Create an entry for output quantized value
-
         node.input[0] = parent.input[0]
         node.output[0] = child.output[0]
         self.quantizer.remove_nodes.extend([parent, child])

@@ -16,26 +16,43 @@
 # limitations under the License.
 #
 
-from .qdq_base_operator import QDQOperatorBase
-from .base_operator import QuantOperatorBase
-from .base_operator_cast import CastOperatorBase
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
 
-# For operators that support 8bits operations directly, and output could
-# reuse input[0]'s type, zeropoint, scale; For example,Transpose, Reshape, etc.
-
-class Direct8BitOp(QuantOperatorBase):
+@op_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
+class Direct8BitOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(Direct8BitOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def convert(self):
+    def quantize_check(self):
         node = self.node
+        if not self.quantizer.is_valid_quantize_weight(node.input[0]):
+            return False
+        return True
+        
+    def quantize(self):
+        node = self.node
+        self.quantizer.quantize_inputs(self.node, direct_int8=True)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+            self.quantizer.quantize_outputs(self.node, direct_int8=True)
+        node.name = node.name + "_quant"
+
+    def convert_check(self, convert_format):
+        node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+            
         parents = self.quantizer.model.get_parents(node)
         children = self.quantizer.model.get_children(node)
         if (len(children) == 0 and len(parents) == 0) or \
             not node.name.endswith('_quant'):
-            return
+            return False
+        return True
 
+    def convert(self, convert_format):
+        node = self.node
+       
+        parents = self.quantizer.model.get_parents(node)
+        children = self.quantizer.model.get_children(node)
         if any([i.op_type == 'DequantizeLinear' for i in parents]) and \
             any([i.op_type == 'QuantizeLinear' for i in children]):
             for parent in parents:
@@ -49,27 +66,20 @@ class Direct8BitOp(QuantOperatorBase):
                     self.quantizer.model.replace_input_of_all_nodes(
                         child.output[0], node.output[0] + '_quantized')
             node.output[0] = node.output[0] + '_quantized' 
-
-class QDQDirect8BitOp(QDQOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
+    
+    def cast(self): # pragma: no cover
         node = self.node
-        if not self.quantizer.is_valid_quantize_weight(node.input[0]):
+        if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
-        self.quantizer.quantize_inputs(self.node, direct_int8=True)
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
-            self.quantizer.quantize_outputs(self.node, direct_int8=True)
-        node.name = node.name + "_quant"
+        self.quantizer.dtype_cast(self.node, self.dtype)
 
-class DirectCast(CastOperatorBase):
+@op_registry(op_types="Shape, Loop, Slice")
+class DirectCastOperator(Operator): # pragma: no cover
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(DirectCastOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def cast(self):
         node = self.node
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
-        super().cast()
- 
+        self.quantizer.dtype_cast(self.node, self.dtype)

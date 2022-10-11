@@ -324,7 +324,7 @@ class ONNXRTAdaptor(Adaptor):
                    field_names=["Op Type", "Total", "INT8", "BF16", "FP16", "FP32"]).print_stat()
 
     def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
-        from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+        from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from neural_compressor.model.onnx_model import ONNXModel
         if not isinstance(model, ONNXModel):
             model = ONNXModel(model)
@@ -346,7 +346,7 @@ class ONNXRTAdaptor(Adaptor):
                        quantization_cfg=None):
         '''The function is used by tune strategy class for dumping tensor info.
         '''
-        from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+        from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from neural_compressor.model.onnx_model import ONNXModel
         from neural_compressor.utils.utility import dump_data_to_local
         if not isinstance(model, ONNXModel):

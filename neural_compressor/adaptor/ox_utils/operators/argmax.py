@@ -16,13 +16,21 @@
 # limitations under the License.
 #
 
-from .base_operator import QuantOperatorBase
 
-class QArgMax(QuantOperatorBase):
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+
+@op_registry(op_types="ArgMax")
+class ArgMaxOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(ArgMaxOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def convert(self):
+    def convert_check(self, convert_format):
+        node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+        return True
+
+    def convert(self, convert_format):
         node = self.node
         origin_name = node.input[0].split('_argmax_node')[0]
 

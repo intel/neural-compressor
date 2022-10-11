@@ -16,32 +16,40 @@
 # limitations under the License.
 #
 
-import onnx
-from .base_operator import QuantOperatorBase
-from .direct_q8 import QDQDirect8BitOp
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
-from onnx import onnx_pb as onnx_proto
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
 
-
-class QMaxPool(QuantOperatorBase):
+@op_registry(op_types="MaxPool")
+class MaxPoolOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def convert(self):
-        node = self.node
-        assert (node.op_type == "MaxPool")
-
+        super(MaxPoolOperator, self).__init__(onnx_quantizer, onnx_node)
+    
+    def quantize_check(self):
+        # if opset version is less than 12, just no change
         if self.quantizer.opset_version < 12: # pragma: no cover
-            return
+            return False
+        return True
 
-        if len(self.quantizer.model.get_children(node)) == 0 or \
-            not node.name.endswith('_quant'):
-            return
+    def quantize(self):
+        node = self.node
+        super().quantize()
+        node.name = node.name + '_quant'
+
+    def convert_check(self, convert_format):
+        node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 or not node.name.endswith('_quant'): # pragma: no cover
+            return False
+        return True
+
+    def convert(self, convert_format):
+        node = self.node
         parent = self.quantizer.model.get_parents(node)[0]
         children = self.quantizer.model.get_children(node)
         if parent.op_type != 'DequantizeLinear' or \
-            all([i.op_type != 'QuantizeLinear' for i in children]):
+            all([i.op_type != 'QuantizeLinear' for i in children]): # pragma: no cover
             return
         node.input[0] = parent.input[0]
         node.output[0] = node.output[0] + '_quantized'
@@ -53,18 +61,3 @@ class QMaxPool(QuantOperatorBase):
                                     child.output[0], node.output[0])
 
         self.quantizer.remove_nodes.append(parent)
-
-class QDQMaxPool(QDQDirect8BitOp):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        node = self.node
-        assert (node.op_type == "MaxPool")
-
-        # if version is less than 12, just no change
-        if self.quantizer.opset_version < 12:
-            return
-
-        # Direct 8bits op
-        super().quantize()
