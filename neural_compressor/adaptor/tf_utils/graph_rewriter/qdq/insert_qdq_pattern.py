@@ -360,7 +360,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if not is_asymmetric:
                 Helper.set_attr_string(quant_v2_node, "round_mode", b"HALF_TO_EVEN")
             #Helper.set_attr_bool(quant_v2_node, "narrow_range", False if is_asymmetric else True)
-            if "BatchMatMul" in self.graph_info[op_name].node.op:
+            if self.performance_only or "BatchMatMul" in self.graph_info[op_name].node.op:
                 Helper.set_attr_string(
                     quant_v2_node, "mode", b"SCALED")
             else:
@@ -376,7 +376,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     "Dequantize", op_name + '_dequantize',
                     [quant_v2_node.name, quant_v2_node.name + ':1', quant_v2_node.name + ':2'])
             Helper.set_attr_dtype(dequantize_node, "T", dtype)
-            if "BatchMatMul" in self.graph_info[op_name].node.op:
+            if self.performance_only or "BatchMatMul" in self.graph_info[op_name].node.op:
                 Helper.set_attr_string(
                     dequantize_node, "mode", b"SCALED")
             else:

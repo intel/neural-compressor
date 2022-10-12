@@ -131,7 +131,8 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                     quantized_output_name = quantized_node_name,
                     original_node_name = match_node_name[-1],
                     dtype = dtypes.qint8,
-                    min_tensor_index = 1
+                    min_tensor_index = 1,
+                    performance_only=self.performance_only
                     )
 
             else:

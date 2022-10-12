@@ -26,7 +26,7 @@ from tensorflow.python.platform import tf_logging
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper as helper
 from neural_compressor.utils.utility import dump_elapsed_time
 
-class FuseDecomposedINOptimizer():
+class FuseDecomposedINOptimizer(): # pragma: no cover
     def __init__(self, input_graph_def):
         self.input_graph_def = input_graph_def
 

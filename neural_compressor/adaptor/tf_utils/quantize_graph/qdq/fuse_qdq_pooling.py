@@ -65,7 +65,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.add_output_graph_node(quantized_pool_node)
                 deq_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
                 self._intel_cpu_add_dequantize_result_node(
-                    quantized_op_name, node.name, dtype=deq_type)
+                    quantized_op_name, node.name, dtype=deq_type, performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)

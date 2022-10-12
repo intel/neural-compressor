@@ -323,7 +323,8 @@ class QuantizeNodeBase():
                                               quantized_output_name,
                                               original_node_name,
                                               dtype=dtypes.quint8,
-                                              min_tensor_index=1):
+                                              min_tensor_index=1,
+                                              performance_only=False):
         min_max_inputs = [
             "%s:%s" % (quantized_output_name, min_tensor_index),
             "%s:%s" % (quantized_output_name, min_tensor_index + 1)
@@ -334,8 +335,11 @@ class QuantizeNodeBase():
             "Dequantize", dequantize_name,
             [quantized_output_name, min_max_inputs[0], min_max_inputs[1]])
         helper.set_attr_dtype(dequantize_node, "T", dtype)
-        helper.set_attr_string(dequantize_node, "mode",
-                               b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
+        if performance_only:
+            helper.set_attr_string(dequantize_node, "mode", b"SCALED")
+        else:
+            helper.set_attr_string(dequantize_node, "mode",
+                                b"MIN_FIRST" if self.is_asymmetric else b"SCALED")
         self.add_output_graph_node(dequantize_node)
 
     def eightbitize_single_input_tensor_node(self, original_node,

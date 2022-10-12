@@ -330,7 +330,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8)
+                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
                 else:
                     dtype = dtypes.quint8
                     if [i for i in self.node_name_mapping[relu_node_name].output \
@@ -340,7 +341,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -472,9 +474,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
-
-
+                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -615,12 +616,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
                 else:
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype=dtypes.qint8)
+                        quantize_down_name, relu_node_name, dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -737,7 +740,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     node, quantized_node_name, dtypes.qint8)
 
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[2], dtypes.qint8)
+                    quantize_down_name, match_node_name[2], dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -818,7 +822,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, node.name, dtypes.qint8)
+                    quantize_down_name, node.name, dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -966,12 +971,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
                 else:
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype=dtypes.qint8)
+                        quantize_down_name, relu_node_name, dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -1075,7 +1082,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[2], dtypes.qint8)
+                    quantize_down_name, match_node_name[2], dtypes.qint8,
+                    performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1161,7 +1169,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[1], dtypes.qint8)
+                    quantize_down_name, match_node_name[1], dtypes.qint8,
+                    performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1334,7 +1343,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8)
+                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
                 else:
                     dtype = dtypes.quint8
                     if [i for i in self.node_name_mapping[relu_node_name].output \
@@ -1344,7 +1354,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1468,7 +1479,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.quint8, is_relu6)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[6], dtypes.quint8)
+                    quantize_down_name, match_node_name[6], dtypes.quint8,
+                    performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1584,9 +1596,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, swish_node_name, dtype=dtypes.qint8)
-
-
+                    quantize_down_name, swish_node_name, dtype=dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -1706,7 +1717,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
+                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
