@@ -57,6 +57,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DAddReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
@@ -1188,6 +1190,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         if add_a_node.op != 'Const' and add_b_node.op == 'Const':
              need_insert_dummy_biasadd = 0
+             if len(match_node_name) == 5 and 'Relu' in match_node_name[3]:
+                return self.apply_newly_conv_biasadd_relu_fusion(match_node_name)
+
         if need_insert_dummy_biasadd:
              new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
              #after insert dummy biasadd, that is Conv+dummybiasadd+add*+add*+relu*

@@ -173,7 +173,9 @@ class BF16Convert(GraphRewriterBase):
                 if outputs_dt_input_node[0] in allowed_input_node_dt_val and \
                         dtypes.bfloat16.as_datatype_enum in allowed_input_node_dt_val[outputs_dt_input_node[0]]:
                     input_node.attr[outputs_dt_input_node[0]].CopyFrom(DT_BFLOAT16)
-            elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op:
+            # ResizeBilinear input can be of different types but output is always float
+            elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op and \
+                 input_node.op != 'ResizeBilinear':
                 self._bf16_convert(input_node.name)
             else:
                 cast_node_name = input_name.replace(':', '_') + "/" + bf16_node_name + "_FP32toBF16"
@@ -193,6 +195,8 @@ class BF16Convert(GraphRewriterBase):
                                attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
 
         for output_name in bf16_node_outputs:
+            if bf16_node.op == 'ResizeBilinear':
+                continue
             output_detail = self.cur_graph.node_name_details[output_name]
             output_node = output_detail.node
             inputs_dt_input_node, _ = self._dtype(output_node)
