@@ -23,6 +23,7 @@ from ..utils import logger
 
 from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .st_utils.tuning_structs import OpTuningConfig
+from .st_utils.tuning_space import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
@@ -118,7 +119,7 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
             # Fallback the ops supported both static and dynamic from static to dynamic
-            # tuning items: None
+            # Tuning items: None
             if self.cfg.quantization.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                         item in tuning_space.query_items_by_quant_mode('dynamic')]
@@ -127,19 +128,15 @@ class BasicTuneStrategy(TuneStrategy):
                 else:
                     logger.info("Non ops that support both dynamic")
 
-                def dynamic_op_tuning_cfg_from_static(op_tuning_cfg: OpTuningConfig):
-                    new_op_tuning_cfg = deepcopy(op_tuning_cfg)
-                    new_op_tuning_cfg.op_quant_mode = 'dynamic'
-                    return new_op_tuning_cfg
-
                 new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
                 for item in static_dynamic_items:
-                    new_op_tuning_cfg[item.name] = dynamic_op_tuning_cfg_from_static(new_op_tuning_cfg[item.name])
+                    new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
+                                                   new_op_tuning_cfg[item.name])
                 new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield new_op_tuning_cfg
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
-            # step5. fallback
+            # Fallback
             for target_dtype in ['bf16', 'fp32']:
                 target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
                 fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
@@ -173,4 +170,27 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
-
+                        
+    def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
+        op_state = op_static_cfg.get_state()
+        op_name = op_static_cfg.op_name
+        op_type = op_static_cfg.op_type
+        op_quant_mode = 'dynamic'
+        tuning_space = self.tuning_space
+        dynamic_state = {}
+        for att in ['weight', 'activation']:
+            if att not in op_state:
+                continue
+            for item_name, item_val in op_state[att].items():
+                att_item = (att, item_name)
+                if att_item not in TUNING_ITEMS_LST:
+                    continue
+                if tuning_space.query_item_option((op_name, op_type), op_quant_mode, att_item, item_val):
+                    dynamic_state[att_item] = item_val
+                else:
+                    quant_mode_item = tuning_space.query_quant_mode_item((op_name, op_type), op_quant_mode)
+                    tuning_item = quant_mode_item.get_option_by_name(att_item)
+                    dynamic_state[att_item] = tuning_item.options[0] if tuning_item else None
+        return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)
+        
+        
