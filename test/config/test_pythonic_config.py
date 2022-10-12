@@ -150,6 +150,7 @@ class TestPyhonicConf(unittest.TestCase):
         config.quantization.accuracy_criterion.relative = 0.5
         config.quantization.reduce_range = False
         config.quantization.use_bf16 = False
+        config.benchmark.cores_per_instance = 10
 
         self.assertEqual(config.quantization.inputs, ['image'])
         self.assertEqual(config.quantization.outputs, ['out'])
@@ -162,6 +163,7 @@ class TestPyhonicConf(unittest.TestCase):
         self.assertEqual(config.quantization.objective, 'accuracy')
         self.assertEqual(config.quantization.timeout, 100)
         self.assertEqual(config.quantization.accuracy_criterion.relative, 0.5)
+        self.assertEqual(config.benchmark.cores_per_instance, 10)
 
         config.quantization.accuracy_criterion.absolute = 0.4
         self.assertEqual(config.quantization.accuracy_criterion.absolute, 0.4)

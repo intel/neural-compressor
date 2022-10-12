@@ -1317,13 +1317,21 @@ class Conf(object):
             'tuning.workspace.resume': pythonic_config.options.resume_from,
             'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
             'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
-            'evaluation.performance.pythonic_config.cores_per_instance': 
+            'evaluation.performance.configs.cores_per_instance':
                 pythonic_config.benchmark.cores_per_instance,
-            'evaluation.performance.pythonic_config.num_of_instance': 
+            'evaluation.performance.configs.num_of_instance':
                 pythonic_config.benchmark.num_of_instance,
-            'evaluation.performance.pythonic_config.inter_num_of_threads': 
+            'evaluation.performance.configs.inter_num_of_threads':
                 pythonic_config.benchmark.inter_num_of_threads,
-            'evaluation.performance.pythonic_config.intra_num_of_threads': 
+            'evaluation.performance.configs.intra_num_of_threads':
+                pythonic_config.benchmark.intra_num_of_threads,
+            'evaluation.accuracy.configs.cores_per_instance':
+                pythonic_config.benchmark.cores_per_instance,
+            'evaluation.accuracy.configs.num_of_instance':
+                pythonic_config.benchmark.num_of_instance,
+            'evaluation.accuracy.configs.inter_num_of_threads':
+                pythonic_config.benchmark.inter_num_of_threads,
+            'evaluation.accuracy.configs.intra_num_of_threads':
                 pythonic_config.benchmark.intra_num_of_threads,
             'use_bf16': pythonic_config.quantization.use_bf16,
             'reduce_range': pythonic_config.quantization.reduce_range
