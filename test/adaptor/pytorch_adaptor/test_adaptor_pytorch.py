@@ -608,6 +608,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                              type(common_model._model.linear))
             shutil.rmtree('./saved', ignore_errors=True)
 
+    @unittest.skipIf(PT_VERSION < Version("1.12.0-rc1"), "this function will be affected by IPEX")
     def test_non_quant_module(self):
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             model = PartialQuantModel()

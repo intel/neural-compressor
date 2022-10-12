@@ -2416,8 +2416,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
                 not metric.compare_label for metric in metrics])
 
-        ipex_config = (self.ipex_config_path if not self.benchmark else os.path.join(
-            self.workspace_path, "best_configure.json"))
+        ipex_config = (self.ipex_config_path if not self.benchmark else None)
         if not IPEX_110 and not IPEX_112:
             conf = (ipex.AmpConf(torch.int8, configure_file=ipex_config)
                     if not self.is_baseline else ipex.AmpConf(None))
