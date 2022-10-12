@@ -21,21 +21,21 @@ pruning:
       # if start step equals to end step, oneshot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends
-      not_to_prune_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
+      excluded_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
       prune_layer_type: ["Linear"] # the module type which you want to prune (Linear, Conv2d, etc.)
       target_sparsity: 0.9 # the sparsity you want the model to be pruned.
       max_sparsity_ratio_per_layer: 0.98 # the sparsity ratio's maximum which one layer can reach.
 
       pruners: # below each "Pruner" defines a pruning process for a group of layers. This enables us to apply different pruning methods for different layers in one model.
         - !Pruner
-            exclude_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
+            extra_excluded_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
             pattern: "1x1" # pattern type, we support "NxM" and "N:M"
             update_frequency_on_step: 100 # if use iterative pruning scheduler, this define the pruning frequency.
             prune_domain: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
             prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
         - !Pruner
-            exclude_names: [".*output", ".*intermediate"]
+            extra_excluded_names: [".*output", ".*intermediate"]
             pattern: "4x1"
             update_frequency_on_step: 100
             prune_domain: "global"
@@ -89,13 +89,13 @@ python3 ./run_glue_no_trainer.py \
             --task_name "mrpc" \
             --max_length "128" \
             --per_device_train_batch_size "16" \
-            --learning_rate 5e-5 \
-            --num_train_epochs 10 \
-            --weight_decay 5e-5   \
+            --learning_rate "5e-5" \
+            --num_train_epochs "10" \
+            --weight_decay "5e-5"   \
             --lr_scheduler_type "constant"\
-	    --seed 9 \
-	    --sparsity_warm_epochs 1\
-	    --cooldown_epochs 0\
+	    --seed "9" \
+	    --sparsity_warm_epochs "1"\
+	    --cooldown_epochs "0"\
 	    --do_prune
 ```
 ```
@@ -105,11 +105,11 @@ python3 ./run_glue_no_trainer.py \
             --task_name "sst2" \
             --max_length "128" \
             --per_device_train_batch_size "16" \
-            --learning_rate 5e-5 \
-	    --weight_decay 1e-4 \
-            --num_train_epochs 6 \
-            --sparsity_warm_epochs 0 \
-	    --seed 12
+            --learning_rate "5e-5" \
+	    --weight_decay "1e-4" \
+            --num_train_epochs "6" \
+            --sparsity_warm_epochs "0" \
+	    --seed "12"
 ```
 We can also choose a NxM (4x1) pattern:
 ```
@@ -119,13 +119,13 @@ python3 ./run_glue_no_trainer.py \
         --task_name "mrpc" \
         --max_length "128" \
         --per_device_train_batch_size "16" \
-        --learning_rate 1e-3 \
-        --num_train_epochs 15 \
-        --weight_decay 1e-3  \
-        --cooldown_epochs 5 \
-        --sparsity_warm_epochs 1\
+        --learning_rate "1e-3" \
+        --num_train_epochs "15" \
+        --weight_decay "1e-3"  \
+        --cooldown_epochs "5" \
+        --sparsity_warm_epochs "1"\
         --lr_scheduler_type "constant"\
-        --distill_loss_weight 5\
+        --distill_loss_weight "5"\
         --do_prune
 ```
 ```
@@ -135,22 +135,22 @@ python3 ./run_glue_no_trainer.py \
         --task_name "sst2" \
         --max_length "128" \
         --per_device_train_batch_size "16" \
-        --learning_rate 5e-5 \
-        --distill_loss_weight 2.0 \
-        --num_train_epochs 15 \
-        --weight_decay 5e-5   \
-        --cooldown_epochs 5 \
-        --sparsity_warm_epochs 0\
+        --learning_rate "5e-5" \
+        --distill_loss_weight "2.0" \
+        --num_train_epochs "15" \
+        --weight_decay "5e-5"   \
+        --cooldown_epochs "5" \
+        --sparsity_warm_epochs "0"\
         --lr_scheduler_type "constant"\
         --do_prune
 ```
 We can also train a dense model on glue datasets (by setting --do_prune to False):
 ```
-python run_glue_no_trainer.py --model_name_or_path ./bert-mini --task_name sst2 --max_length 128 --per_device_train_batch_size 32 --learning_rate 5e-5 --num_train_epochs 10  --output_dir result/ 2>&1 | tee  sst2_orig.log
+python run_glue_no_trainer.py --model_name_or_path "./bert-mini" --task_name "sst2" --max_length "128" --per_device_train_batch_size "32" --learning_rate "5e-5" --num_train_epochs "10" --output_dir "result/" 2>&1 | tee  sst2_orig.log
 ```
 or for mrpc,
 ```
-python3 run_glue_no_trainer.py  --model_name_or_path ./bert-mini  --task_name mrpc --max_length 128 --per_device_train_batch_size 16  --learning_rate 5e-5 --num_train_epoch 5 --weight_decay 5e-5 --output_dir result/ 2>&1 | tee sst2_snip.log 
+python3 run_glue_no_trainer.py  --model_name_or_path "./bert-mini"  --task_name "mrpc" --max_length "128" --per_device_train_batch_size "16" --learning_rate "5e-5" --num_train_epoch "5" --weight_decay "5e-5" --output_dir "result/" 2>&1 | tee sst2_snip.log 
 ```
 ### Results
 #### MRPC

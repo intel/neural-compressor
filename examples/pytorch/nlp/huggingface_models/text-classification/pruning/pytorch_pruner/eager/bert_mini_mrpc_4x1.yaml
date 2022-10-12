@@ -9,7 +9,7 @@ pruning:
     weight_compression_pytorch:
       start_step: 0
       end_step: 0
-      not_to_prune_names: ["classifier", "pooler", ".*embeddings*"]
+      excluded_names: ["classifier", "pooler", ".*embeddings*"]
       prune_layer_type: ["Linear"]
       target_sparsity: 0.9
       max_sparsity_ratio_per_layer: 0.98

@@ -22,7 +22,7 @@ pruning:
       # if start step equals to end step, oneshot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends
-      not_to_prune_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
+      excluded_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
       prune_layer_type: ["Linear"] # the module type which you want to prune (Linear, Conv2d, etc.)
       target_sparsity: 0.9 # the sparsity you want the model to be pruned.
       max_sparsity_ratio_per_layer: 0.98 # the sparsity ratio's maximum which one layer can reach.
@@ -30,14 +30,14 @@ pruning:
       pruners: # below each "Pruner" defines a pruning process for a group of layers. This enables us to apply different pruning methods for different layers in one model.
         # Local settings
         - !Pruner
-            exclude_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
+            extra_excluded_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
             pattern: "1x1" # pattern type, we support "NxM" and "N:M"
             update_frequency_on_step: 100 # if use iterative pruning scheduler, this define the pruning frequency.
             prune_domain: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
             prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
         - !Pruner
-            exclude_names: [".*output", ".*intermediate"]
+            extra_excluded_names: [".*output", ".*intermediate"]
             pattern: "4x1"
             update_frequency_on_step: 100
             prune_domain: "global"
@@ -94,7 +94,7 @@ python3 ./run_qa_no_trainer.py \
             --per_device_train_batch_size "8" \
             --weight_decay "1e-7" \
             --learning_rate "1e-4" \
-            --num_train_epochs 10 \
+            --num_train_epochs "10" \
             --teacher_model_name_or_path "/path/to/dense_finetuned_model/" \
             --distill_loss_weight "8.0"
 ```
@@ -110,9 +110,9 @@ python ./run_qa_no_trainer.py \
         --per_device_eval_batch_size "16" \
         --num_warmup_steps "1000" \
         --do_prune \
-        --cooldown_epochs 5 \
+        --cooldown_epochs "5" \
         --learning_rate "4.5e-4" \
-        --num_train_epochs 10 \
+        --num_train_epochs "10" \
         --weight_decay  "1e-7" \
         --output_dir "pruned_squad_bert-mini" \
         --teacher_model_name_or_path "/path/to/dense_finetuned_model/" \
@@ -131,7 +131,7 @@ python \
     --per_device_eval_batch_size "16" \
     --num_warmup_steps "1000" \
     --learning_rate "5e-5" \
-    --num_train_epochs 5 \
+    --num_train_epochs "5" \
     --output_dir "./output_bert-mini"
 ```
 ### Results

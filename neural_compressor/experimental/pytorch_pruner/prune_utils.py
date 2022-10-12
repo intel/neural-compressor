@@ -70,7 +70,7 @@ def process_and_check_config(val):
     val = val["pruning"]['approach']['weight_compression_pytorch']
     start_step = reset_non_value_to_default(val, "start_step", 0)
     end_step = reset_non_value_to_default(val, "end_step", 0)
-    not_to_prune_names = reset_non_value_to_default(val, "not_to_prune_names", [])
+    excluded_names = reset_non_value_to_default(val, "excluded_names", [])
     prune_layer_type = reset_non_value_to_default(val, "prune_layer_type", ['Conv2d', 'Linear'])
     target_sparsity = reset_non_value_to_default(val, "target_sparsity", 0.0)  ## be care of this val
     update_frequency_on_step = int(reset_non_value_to_default(val, "update_frequency_on_step", 1))
@@ -79,7 +79,7 @@ def process_and_check_config(val):
     sparsity_decay_type = reset_non_value_to_default(val, "sparsity_decay_type", "exp")
     max_sparsity_ratio_per_layer = reset_non_value_to_default(val, "max_sparsity_ratio_per_layer", 0.98)
     names = reset_non_value_to_default(val, "names", [])
-    exclude_names = reset_non_value_to_default(val, "exclude_names", [])
+    extra_excluded_names = reset_non_value_to_default(val, "extra_excluded_names", [])
     pattern = reset_non_value_to_default(val, "pattern", "tile_pattern_4x1")
 
     pruners_info = []
@@ -87,7 +87,7 @@ def process_and_check_config(val):
         pruner = {}
         pruner['start_step'] = reset_non_value_to_default(info, 'start_step', start_step)
         pruner['end_step'] = reset_non_value_to_default(info, 'end_step', end_step)
-        pruner['not_to_prune_names'] = reset_non_value_to_default(info, 'not_to_prune_names', not_to_prune_names)
+        pruner['excluded_names'] = reset_non_value_to_default(info, 'excluded_names', excluded_names)
         pruner['prune_layer_type'] = reset_non_value_to_default(info, 'prune_layer_type', prune_layer_type)
         pruner['target_sparsity'] = reset_non_value_to_default(info, 'target_sparsity', target_sparsity)
         pruner['update_frequency_on_step'] = reset_non_value_to_default(info, 'update_frequency_on_step', \
@@ -98,8 +98,8 @@ def process_and_check_config(val):
         pruner['max_sparsity_ratio_per_layer'] = reset_non_value_to_default(info, 'max_sparsity_ratio_per_layer', \
                                                                  max_sparsity_ratio_per_layer)
         pruner['names'] = reset_non_value_to_default(info, 'names', names)
-        pruner['exclude_names'] = reset_non_value_to_default(info, 'exclude_names',
-                                                  exclude_names)
+        pruner['extra_excluded_names'] = reset_non_value_to_default(info, 'extra_excluded_names',
+                                                  extra_excluded_names)
         pruner['pattern'] = reset_non_value_to_default(info, 'pattern',
                                             pattern)                                                  
 
@@ -115,9 +115,10 @@ def process_config(config):
             with open(config, 'r') as f:
                 content = f.read()
                 try:
-                    from .schema_check import schema
-                except ImportError:
                     from ...conf.config import schema
+                except ImportError:
+                    from .schema_check import schema
+
                 val = yaml.safe_load(content)
                 schema.validate(val)
         except FileNotFoundError as f:
@@ -157,10 +158,10 @@ def parse_to_prune(model, config):
 
 def parse_not_to_prune(modules, config):
     """drop non pruned layers"""
-    not_to_prune = config["exclude_names"]
-    not_to_prune.extend(config["not_to_prune_names"])
+    exclude_names = config["extra_excluded_names"]
+    exclude_names.extend(config["excluded_names"])
 
-    patterns = [re.compile(s) for s in not_to_prune]
+    patterns = [re.compile(s) for s in exclude_names]
     if len(patterns) <= 0:
         return modules
     new_module = {}

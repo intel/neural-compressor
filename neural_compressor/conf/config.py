@@ -54,7 +54,8 @@ class Pruner():
                  method='per_tensor',
                  prune_type='basic_magnitude',##for pytorch pruning, these values should be None
                  start_step=None, end_step=None, update_frequency_on_step=None, prune_domain=None,
-                 sparsity_decay_type=None, pattern="tile_pattern_1x1", names=None, exclude_names=None, parameters=None):
+                 sparsity_decay_type=None, pattern="tile_pattern_1x1", names=None,
+                 extra_excluded_names=None, parameters=None):
         self.start_epoch = start_epoch
         self.end_epoch = end_epoch
         self.update_frequency = update_frequency
@@ -66,7 +67,7 @@ class Pruner():
         self.update_frequency_on_step = update_frequency_on_step
         self.prune_domain = prune_domain
         self.sparsity_decay_type = sparsity_decay_type
-        self.exclude_names = exclude_names
+        self.extra_excluded_names = extra_excluded_names
         self.pattern = pattern
         ## move this to experimental/pruning to support dynamic pruning
         # assert prune_type.replace('_', '') in [i.lower() for i in PRUNERS], \
@@ -682,10 +683,10 @@ weight_compression_schema = Schema({
     Optional('end_step', default=0): int,
     Optional('update_frequency', default=1.0): float,
     Optional('update_frequency_on_step', default=1):int,
-    Optional('not_to_prune_names', default=[]):list,
+    Optional('excluded_names', default=[]):list,
     Optional('prune_domain', default="global"): str,
     Optional('names', default=[]): list,
-    Optional('exclude_names', default=None): list,
+    Optional('extra_excluded_names', default=None): list,
     Optional('prune_layer_type', default=None): list,
     Optional('sparsity_decay_type', default="exp"): str,
     Optional('pattern', default="tile_pattern_1x1"): str,

@@ -9,7 +9,7 @@ pruning:
     weight_compression_pytorch:
       start_step: 0
       end_step: 0
-      not_to_prune_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense", "LayerNorm"]
+      excluded_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense", "LayerNorm"]
       prune_layer_type: ["Linear"]
       target_sparsity: 0.5
       update_frequency_on_step: 1000

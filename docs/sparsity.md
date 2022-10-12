@@ -57,7 +57,7 @@ We validate the sparsity on typical models across different domains (including C
 | DLRM      | 4x***16***         | 85%            |Criteo Terabyte| 80.29%                  | 80.25%                  |
 | Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)         | 90%            |MRPC| 87.22%                  | 87.52%                  |
 | Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)         | 90%            |SST-2| 86.92%                  | 87.61%                  |
-| Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager)         | 90%            |SQuAD| 76.27%                  | 76.87%                  |
+| Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager)         | 80%            |SQuAD| 76.27%                  | 76.87%                  |
 | Bert Mini | [2 in ***4***](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)       | 50%            |MRPC| 86.95%                  | 87.52%                  |
 | Bert Mini | [2 in ***4***](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)         | 50%            |SST-2| 86.93%                  | 87.61%                  |
 | Bert Mini | [2 in ***4***](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager)        | 50%            |SQuAD| 76.85%                  | 76.87%                  |

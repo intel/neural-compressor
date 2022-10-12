@@ -22,8 +22,8 @@ def build_fake_yaml():
           target_sparsity: 0.9
           start_step: 0
           end_step: 10
-          not_to_prune_names: ["classifier"]
-          exclude_names: [".*query",".*key", ".*value"]
+          excluded_names: ["classifier"]
+              
           update_frequency_on_step: 1
           sparsity_decay_type: "exp"
           pruners:
@@ -32,6 +32,7 @@ def build_fake_yaml():
                 end_step: 10
                 prune_type: "magnitude"
                 names: ['layer1.*']
+                extra_excluded_names: ['layer2.*']   
                 prune_domain: "global"
                 pattern: "tile_pattern_4x1"
 
