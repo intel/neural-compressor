@@ -236,6 +236,25 @@
           'RNNCell': *cap_dynamic_s8_1_11_LSTM,
           'GRUCell': *cap_dynamic_s8_1_11_LSTM,
           'Embedding': *cap_dynamic_s8_1_11_EmbeddingBag,
+          'Conv2d':  &cap_dynamic_s8_1_11_Conv {
+            'activation': {
+                        'dtype': ['uint8'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'weight': {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Conv1d': *cap_dynamic_s8_1_11_Conv,
+          'Conv3d': *cap_dynamic_s8_1_11_Conv,
+          'ConvTranspose1d': *cap_dynamic_s8_1_11_Conv,
+          'ConvTranspose2d': *cap_dynamic_s8_1_11_Conv,
+          'ConvTranspose3d': *cap_dynamic_s8_1_11_Conv,
           'default': {
             'activation': {
                         'dtype': ['uint8'],

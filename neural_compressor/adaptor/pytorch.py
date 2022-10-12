@@ -3397,7 +3397,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 self._fuse_sub_graph(tmp_model, prefix='', is_qat=is_qat)
                 fused_model = tmp_model
         except Exception as e:  # pragma: no cover
+            self.sub_module_list = []
             fused_model = model._model
+            self._fuse_sub_graph(fused_model, prefix='', is_qat=is_qat)
             logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
         return fused_model
 
