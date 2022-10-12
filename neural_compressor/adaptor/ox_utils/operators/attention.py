@@ -60,9 +60,11 @@ class AttentionOperator(Operator):
         inputs.extend(quantized_name)
         inputs.append(node.input[2])
         inputs.extend(scale)
-        inputs.append(node.input[3] if len(node.input) > 3 else "")
+        if len(node.input) > 3:
+            inputs.append(node.input[3])
         inputs.extend(zp)
-        inputs.extend([node.input[4] if len(node.input) > 4 else ""])
+        if len(node.input) > 4:
+            inputs.append(node.input[4])
 
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover

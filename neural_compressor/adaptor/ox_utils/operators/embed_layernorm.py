@@ -52,7 +52,8 @@ class EmbedLayerNormalizationOperator(Operator):
         for parent in parents:
             inputs.append(parent.input[0])
         # 'mask' (optional)
-        inputs.extend([node.input[7] if len(node.input) > 7 else ""])
+        if len(node.input) > 7:
+            inputs.append(node.input[7])
 
         for parent in parents:
             inputs.append(parent.input[1])

@@ -652,7 +652,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
                 ai_onnx_domain = [opset for opset in q_model.model.opset_import if not opset.domain or opset.domain == "ai.onnx"]
                 if ai_onnx_domain[0].version > 12 or Version(ort.__version__) < Version("1.12.0"):
                     for op in fp32_tensor['weight'].keys():
-                        print(sorted(fp32_tensor['weight'][op].keys()), sorted(int8_tensor['weight'][op].keys()))
                         self.assertTrue(sorted(fp32_tensor['weight'][op].keys()) == sorted(int8_tensor['weight'][op].keys()))
                 fp32_tensor = quantizer.strategy.adaptor.inspect_tensor(opt_model.model, self.cv_dataloader, op_list, inspect_type='all')
                 int8_tensor = quantizer.strategy.adaptor.inspect_tensor(q_model.model, self.cv_dataloader, op_list, inspect_type='all')
@@ -949,7 +948,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'
         conf.quantization.model_wise = {'weight': {'granularity': ['per_tensor']}, 'activation': {'granularity': ['per_tensor']}}
-        conf.tuning.exit_policy.max_trials = 6
+        conf.tuning.exit_policy.max_trials = 5
         conf.tuning.accuracy_criterion.relative = 0.01
         conf.tuning.accuracy_criterion.higher_is_better = False
         conf.tuning.exit_policy.timeout = 100
