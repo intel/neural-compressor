@@ -19,13 +19,14 @@
     name: '1.12'
 
   precisions: &default_precisions
-    names: int8, uint8, fp32
+    names: int8, uint8, bf16, fp32
     valid_mixed_precisions: []
 
   ops:
     int8: &ops_default_s8 ['conv3d', 'conv3d', 'batchNorm2d', 'batchNorm3d', 'linear', 'relu', 'convrelu2d',
            'convrelu3d', 'linearrelu', 'convbn2d', 'convbnrelu2d', 'convsumrelu2d', 'convsumrelu3d']
     uint8: *ops_default_s8
+    bf16: []
     fp32: ['*'] # '*' means all op types
 
   capabilities: &1_12_capabilities
