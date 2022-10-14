@@ -1,13 +1,13 @@
 #!/bin/bash
 set -x
 
-export nnUNet_preprocessed=${BUILD_DIR}/preprocessed_data
-export nnUNet_raw_data_base=${BUILD_DIR}/raw_data
-export RESULTS_FOLDER=${BUILD_DIR}/result
-
 function main {
 
   init_params "$@"
+  export BUILD_DIR=${dataset_location}
+  export nnUNet_preprocessed=${BUILD_DIR}/preprocessed_data
+  export nnUNet_raw_data_base=${BUILD_DIR}/raw_data
+  export RESULTS_FOLDER=${BUILD_DIR}/result
   run_benchmark
 
 }

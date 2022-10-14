@@ -55,7 +55,7 @@ def create_directories():
 def download_model(input_graph):
     pwd = os.getcwd()
     os.chdir(os.path.join(pwd, MODEL_DIR))
-    if input_graph is 'NONE':
+    if input_graph == 'NONE':
         print("Downloading TF model from Zenodo")
         if not os.path.isfile(TF_MODEL):
             os.system('wget -O 224_224_160.pb https://zenodo.org/record/3928991/files/224_224_160.pb?download=1;')

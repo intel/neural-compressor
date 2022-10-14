@@ -82,16 +82,11 @@ if __name__ == "__main__":
     def eval_func(graph):
         print("Run inference for accuracy")
         args = get_args()
-        setup(args.data_location, args.input_model)
+        #setup(args.data_location, args.input_model)
 
-        graph = tf.Graph()
-        with graph.as_default():
-            graph_def = tf.compat.v1.GraphDef()
-            with open(args.input_model, "rb") as f:
-                graph_def.ParseFromString(f.read())
-            output_graph = optimize_for_inference(graph_def, [INPUTS], [OUTPUTS],
-                                dtypes.float32.as_datatype_enum, False)
-            tf.import_graph_def(output_graph, name="")
+        output_graph = optimize_for_inference(graph.as_graph_def(), [INPUTS], [OUTPUTS],
+                            dtypes.float32.as_datatype_enum, False)
+        tf.import_graph_def(output_graph, name="")
 
         input_tensor = graph.get_tensor_by_name('input:0')
         output_tensor = graph.get_tensor_by_name('Identity:0')
@@ -105,7 +100,7 @@ if __name__ == "__main__":
         sess = tf.compat.v1.Session(graph=graph, config=config)
         if args.mode:
             print("Inference with real data")
-            preprocessed_data_dir = "build/preprocessed_data"
+            preprocessed_data_dir = os.path.join(args.data_location, "preprocessed_data")
             with open(os.path.join(preprocessed_data_dir, "preprocessed_files.pkl"), "rb") as f:
                 preprocessed_files = pickle.load(f)
 
@@ -146,12 +141,13 @@ if __name__ == "__main__":
                 print('Latency: {:.3f} ms'.format(latency * 1000))
                 print('Throughput: {:.3f} items/sec'.format(1./ latency))
             else:
-                output_folder = "build/postprocessed_data"
+                output_folder = os.path.join(args.data_location, "postprocessed_data")
                 output_files = preprocessed_files
                 # Post Process
                 postprocess_output(predictions, dictionaries, validation_indices, output_folder, output_files)
 
-                ground_truths = "build/raw_data/nnUNet_raw_data/Task043_BraTS2019/labelsTr"
+                ground_truths = os.path.join(args.data_location, \
+                     "raw_data/nnUNet_raw_data/Task043_BraTS2019/labelsTr")
                 # Run evaluation
                 print("Running evaluation...")
                 evaluate_regions(output_folder, ground_truths, get_brats_regions())
@@ -167,7 +163,8 @@ if __name__ == "__main__":
                             enhancing = float(words[3])
                             mean = (whole + core + enhancing) / 3
                             accuracy=mean
-                            print("Accuracy: mean = {:.5f}, whole tumor = {:.4f}, tumor core = {:.4f}, enhancing tumor = {:.4f}".format(mean, whole, core, enhancing))
+                            print("Batch size =", args.batch_size)
+                            print("Accuracy is {:.5f}".format(mean))
                             break
                 print("Done!")
                 return accuracy

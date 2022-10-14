@@ -570,9 +570,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
-                #if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
-                #    helper.copy_attr(quantized_conv_node, "alpha",
-                #    self.node_name_mapping[relu_node_name].node.attr["alpha"])
+                if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
+                   helper.copy_attr(quantized_conv_node, "alpha",
+                   self.node_name_mapping[relu_node_name].node.attr["alpha"])
                 if node.op != 'DepthwiseConv3dNative' and "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
