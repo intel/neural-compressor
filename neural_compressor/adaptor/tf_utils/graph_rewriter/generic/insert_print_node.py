@@ -46,10 +46,12 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
         if top_node.op == 'ConcatV2':
             for i in range(top_node.attr['N'].i):
                 insert_node_pairs.append([top_node.input[i], self.post_node_name])
-        elif top_node.op == 'BatchMatMulV2':
+        elif top_node.op in ('BatchMatMul', 'BatchMatMulV2'):
             insert_node_pairs.append([top_node.input[0], self.post_node_name])
             if graph_info[top_node.input[1]].node.op != 'Const':
-                insert_node_pairs.append([top_node.input[1], self.post_node_name])  
+                insert_node_pairs.append([top_node.input[1], self.post_node_name])
+        elif top_node.op in ('Conv2DBackpropInput', 'Conv3DBackpropInputV2'):
+            insert_node_pairs.append([top_node.input[2], self.post_node_name])
         else:
             refresh_pre_node_name = graph_info[self.pre_node_name].node.input[0]
             # Check the Conv2D could be fused with previous Pad or not.

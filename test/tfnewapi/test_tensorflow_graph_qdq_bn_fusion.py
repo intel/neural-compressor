@@ -117,7 +117,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         qbn_num = 0
         dq_num = 0
         for i in output_graph.graph_def.node:
-            if i.op == '_QuantizedDepthwiseConv2D' \
+            if i.op == '_FusedQuantizedDepthwiseConv2D' \
                 and i.attr['Thost_inputs'].list.type != [11, 11, 1, 1, 1, 1, 1, 1, 1]:
                 conv_input_type = False
                 break
@@ -165,7 +165,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         dq_num = 0
         qbn_output_max_name = 'batch_normalization/FusedBatchNormV3_eightbit_quantized_bn/frozen_bn_output_max'
         for i in output_graph.graph_def.node:
-            if i.op == '_QuantizedConv2D' \
+            if i.op == '_FusedQuantizedConv2D' \
                 and i.attr['Thost_inputs'].list.type != [11, 11, 1, 1, 1, 1, 1, 1, 1]:
                 conv_input_type = False
                 break
@@ -224,7 +224,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             if i.op in ['Relu6']:
                 found_fusion = False
                 break
-            if i.op == '_QuantizedConv2D':
+            if i.op == '_FusedQuantizedConv2D':
                 qconv_num += 1
             if i.op == '_QuantizedFusedBatchNorm':
                 qbn_num += 1
@@ -284,7 +284,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             if i.op in ['Relu6', '_FusedBatchNormEx']:
                 found_fusion = False
                 break
-            if i.op == '_QuantizedConv2D':
+            if i.op == '_FusedQuantizedConv2D':
                 qconv_num += 1
             if i.op == '_QuantizedFusedBatchNorm':
                 qbn_num += 1

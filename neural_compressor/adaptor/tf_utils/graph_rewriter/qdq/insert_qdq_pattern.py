@@ -97,7 +97,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.g_weight.graph = self.g.dump_graph()
         self.graph_info = self.g_weight.parse_graph()
         target_nodes = self.g_weight.query_fusion_pattern_nodes(
-               [["Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul", "BatchMatMul", "BatchMatMulV2"]])
+               [["Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul", \
+                 "BatchMatMul", "BatchMatMulV2", "Conv2DBackpropInput", "Conv3DBackpropInputV2"]])
         for i in target_nodes:
             if i[0] not in quantizable_op_names:
                 continue
@@ -174,8 +175,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     def _check_op_list(self, node_type):
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
-                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul",
-                   "BatchMatMulV2", "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm")
+                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
+                   "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
+                   "Conv2DBackpropInput", "Conv3DBackpropInputV2")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
@@ -218,7 +220,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
     def _insert_qdq_pattern_for_common_ops(self, original_node, is_asymmetric):
         namespace_prefix = original_node.name + "_eightbit"
-        for each_input_name in self.node_name_mapping[original_node.name].input[:1]:
+        if original_node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
+            all_inputs = self.node_name_mapping[original_node.name].input[-1:]
+        else:
+            all_inputs = self.node_name_mapping[original_node.name].input[:1]
+        for each_input_name in all_inputs:
             if each_input_name[0] == '^':
                 continue
 
@@ -382,9 +388,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             else:
                 Helper.set_attr_string(
                     dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if self.graph_info[op_name].node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
+                input_index = 2
 
             self.g.add_node(quant_v2_node,
-                            self.graph_info[op_name].node.input[0],
+                            self.graph_info[op_name].node.input[input_index],
                             [dequantize_node.name])
             self.g.add_node(dequantize_node, quant_v2_node.name, [op_name])
             self.g.add_node(reshape_dims_node, None, [reshape_input_name])
@@ -414,12 +422,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
        
         # The weight node of BatchMatMul may have no value
         if 'value' in weight_node.attr and \
-           host_op_type in ("Conv2D", "MatMul", "BatchMatMul", "BatchMatMulV2", "Conv3D"):
+           host_op_type in ("Conv2D", "MatMul", "BatchMatMul", "BatchMatMulV2", "Conv3D", \
+                            "Conv2DBackpropInput", "Conv3DBackpropInputV2"):
             float_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
             if per_channel:
-                if host_op_type == 'Conv3D':
+                if host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
-                elif host_op_type == 'Conv2D':
+                elif host_op_type in ('Conv2D', 'Conv2DBackpropInput'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1))
@@ -510,10 +519,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         Helper.set_attr_dtype(dequant_node, "T", dtypes.qint8)
         Helper.set_attr_string(dequant_node, "mode", b"SCALED")
         if per_channel:
-            if host_op_type == 'Conv2D':
+            if host_op_type == 'Conv2D' or host_op_type == 'Conv2DBackpropInput':
                 Helper.set_attr_int(quant_node, 'axis', 3)
                 Helper.set_attr_int(dequant_node, 'axis', 3)
-            elif host_op_type == 'Conv3D':
+            elif host_op_type == 'Conv3D' or host_op_type == 'Conv3DBackpropInputV2':
                 Helper.set_attr_int(quant_node, 'axis', 4)
                 Helper.set_attr_int(dequant_node, 'axis', 4)
             elif host_op_type == 'MatMul':

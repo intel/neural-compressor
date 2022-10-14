@@ -116,7 +116,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -149,7 +149,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -184,7 +184,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D' and \
+                if i.op == '_FusedQuantizedConv3D' and \
                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
                     found_conv_fusion = True
                     break
@@ -331,7 +331,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D':
+                if i.op == '_FusedQuantizedConv2D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -367,7 +367,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
@@ -409,7 +409,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
@@ -449,7 +449,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -521,7 +521,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -557,7 +557,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -596,7 +596,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
@@ -637,7 +637,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -670,7 +670,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             output_graph = quantizer.fit()
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -704,7 +704,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             output_graph = quantizer.fit()
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -742,7 +742,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             output_graph = quantizer.fit()
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D':
+                if i.op == '_FusedQuantizedConv2D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -779,7 +779,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             output_graph = quantizer.fit()
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                    found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -818,7 +818,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -852,7 +852,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             output_graph = quantizer.fit()
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                    found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 

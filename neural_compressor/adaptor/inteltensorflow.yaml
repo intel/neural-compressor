@@ -24,8 +24,10 @@
 
   ops: &common_ops
     int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'FusedBatchNorm', 'FusedBatchNormV2','FusedBatchNormV3',
-           'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool', '_MklFusedInstanceNorm']
-    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+           'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool', '_MklFusedInstanceNorm',
+           'Conv2DBackpropInput', 'Conv3DBackpropInputV2']
+    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2',
+            'MaxPool', 'MaxPool3D', 'AvgPool', 'Conv2DBackpropInput', 'Conv3DBackpropInputV2']
     bf16: ["Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
            "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
            "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", "Einsum", # allow_list
@@ -296,7 +298,9 @@
         'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
         'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2',
         'Dequantize + _MklFusedInstanceNorm + Relu + QuantizeV2',
-        'Dequantize + _MklFusedInstanceNorm + LeakyRelu + QuantizeV2'
+        'Dequantize + _MklFusedInstanceNorm + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2DBackpropInput + BiasAdd + QuantizeV2',
+        'Dequantize + Conv3DBackpropInputV2 + BiasAdd + QuantizeV2'
         ]
     uint8: [
         'Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2',
@@ -370,8 +374,9 @@
         'Dequantize + Conv3D + Add + Relu + QuantizeV2',
         'Dequantize + Conv3D + Add + Relu6 + QuantizeV2',
         'Dequantize + Conv3D + Add + Eelu + QuantizeV2',
-        'Dequantize + Conv3D + Add + LeakyRelu + QuantizeV2'
-
+        'Dequantize + Conv3D + Add + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2DBackpropInput + BiasAdd + QuantizeV2',
+        'Dequantize + Conv3DBackpropInputV2 + BiasAdd + QuantizeV2'
   ]
 
   grappler_optimization: &common_grappler_optimization

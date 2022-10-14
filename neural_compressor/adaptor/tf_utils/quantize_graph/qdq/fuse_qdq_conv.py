@@ -282,7 +282,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                             match_node_name[3 + relu_offset]].node.input[sum_index]
                     ] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv3D"
+                node_op = "_FusedQuantizedConv3D"
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -435,7 +435,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ] + all_input_names[2:] + [
                     sum_node_name
                 ]  + control_inputs
-                node_op = "_QuantizedConv3D"
+                node_op = "_FusedQuantizedConv3D"
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -564,7 +564,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
 
                 quantized_conv_node = helper.create_node(
-                    "_QuantizedConv3D",
+                    "_FusedQuantizedConv3D",
                     quantized_node_name,
                     quantized_node_input_names)
 
@@ -700,7 +700,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + [bias_node_name] + all_input_names[2:]
                 if node.op == "Conv3D":
                     quantized_conv_node = helper.create_node(
-                        "_QuantizedConv3D",
+                        "_FusedQuantizedConv3D",
                         quantized_node_name,
                         quantized_node_input_names)
 
@@ -785,8 +785,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     postfix = "_eightbit_quantized_conv3d"
                 quantized_node_name = node.name + postfix
                 quantized_conv_node = helper.create_node(
-                    "_QuantizedConv3D"
-                    if self.per_channel else "_QuantizedConv3D",
+                    "_FusedQuantizedConv3D"
+                    if self.per_channel else "_FusedQuantizedConv3D",
                     quantized_node_name, all_input_names)
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
@@ -915,9 +915,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 is_elu = self.node_name_mapping[relu_node_name].node.op == "Elu"
                 is_sigmoid = self.node_name_mapping[relu_node_name].node.op == "Sigmoid"
 
-                node_op = '_QuantizedDepthwiseConv2D'
+                node_op = '_FusedQuantizedDepthwiseConv2D'
                 if node.op == 'Conv2D':
-                    node_op = "_QuantizedConv2D"
+                    node_op = "_FusedQuantizedConv2D"
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1042,8 +1042,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D'
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1128,8 +1128,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if node.op == "Conv2D":
                     quantized_node_name = node.name + "_eightbit_quantized_conv"
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D'
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     all_input_names)
 
@@ -1291,8 +1291,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                             match_node_name[3 + relu_offset]].node.input[sum_index]
                     ] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D' 
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D' 
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -1437,8 +1437,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D'
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1555,9 +1555,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
 
-                node_op = '_QuantizedDepthwiseConv2D'
+                node_op = '_FusedQuantizedDepthwiseConv2D'
                 if node.op == 'Conv2D':
-                    node_op = "_QuantizedConv2D"
+                    node_op = "_FusedQuantizedConv2D"
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1677,8 +1677,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ] + all_input_names[2:] + [
                     sum_node_name
                 ] + control_inputs
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D' 
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D' 
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)

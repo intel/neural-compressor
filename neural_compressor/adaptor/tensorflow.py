@@ -47,7 +47,9 @@ class TensorFlowAdaptor(Adaptor):
         "MatMul": "matmul",
         "BatchMatMul": "matmul",
         "BatchMatMulV2": "matmul",
-        "Pad": "pad"
+        "Pad": "pad",
+        "Conv2DBackpropInput": "deconv2d",
+        "Conv3DBackpropInputV2": "deconv3d"
     }
     def __init__(self, framework_specific_info):
         super().__init__(framework_specific_info)
@@ -607,11 +609,12 @@ class TensorFlowAdaptor(Adaptor):
         fp32_op_list=list(set(fp32_op_list_uint8).union(set(fp32_op_list_int8)))
 
 
-        int8_op_prefix_list = ['QuantizedConv2D', '_QuantizedConv3D', 'QuantizedDepthwise',
+        int8_op_prefix_list = ['QuantizedConv2D', '_FusedQuantizedConv3D', 'QuantizedDepthwise',
                                'QuantizedMaxPool', 'QuantizedAvgPool',
                                'QuantizedConcatV2', 'QuantizedMatMul',
                                '_QuantizedFusedBatchNorm', '_QuantizedMatMul',
-                               '_QuantizedBatchMatMul', '_QuantizedFusedInstanceNorm']
+                               '_QuantizedBatchMatMul', '_QuantizedFusedInstanceNorm',
+                               '_FusedQuantizedDeconv2D', '_FusedQuantizedDeconv3D']
         from tensorflow.python.framework import dtypes
 
         res = {}
@@ -636,6 +639,10 @@ class TensorFlowAdaptor(Adaptor):
                     origin_op_type = 'DepthwiseConv2dNative'
                 if origin_op_type == 'BatchMatMul':
                     origin_op_type = 'BatchMatMulV2'
+                if origin_op_type == 'Deconv2D':
+                    origin_op_type = 'Conv2DBackpropInput'
+                if origin_op_type == 'Deconv3D':
+                    origin_op_type = 'Conv3DBackpropInputV2'
                 res[origin_op_type]['INT8'] += 1
 
             if i.op in fp32_op_list:
