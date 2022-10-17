@@ -42,24 +42,21 @@ class TestRegisterMetric(unittest.TestCase):
         from neural_compressor import Benchmark, Quantization
         from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
         from neural_compressor.experimental.metric.metric import TensorflowTopK
+        os.environ['NC_ENV_CONF'] = 'True'
 
         evaluator = Benchmark('fake_yaml.yaml')
-
         evaluator.postprocess('label_benchmark', LabelShift, label_shift=1) 
         evaluator.metric('topk_benchmark', TensorflowTopK)
-        # as we supported multi instance, the result will print out instead of return
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
         evaluator(self.pb_path, b_dataloader=dataloader)
 
         quantizer = Quantization('fake_yaml.yaml')
         quantizer.postprocess('label_quantize', LabelShift, label_shift=1) 
         quantizer.metric('topk_quantize', TensorflowTopK)
-
         evaluator = Benchmark('fake_yaml.yaml')
         evaluator.metric('topk_second', TensorflowTopK)
-
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        result = evaluator(self.pb_path, b_dataloader=dataloader)
+        evaluator(self.pb_path, b_dataloader=dataloader)
 
 
 if __name__ == "__main__":
