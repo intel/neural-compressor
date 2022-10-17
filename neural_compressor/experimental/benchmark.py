@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import os
+import re
 import sys
 import numpy as np
 import subprocess
@@ -110,7 +111,26 @@ class Benchmark(object):
         if os.environ.get('NC_ENV_CONF') == 'True':
             return self.run_instance(mode)
         else:
-            return self.config_instance()
+            self.config_instance()
+
+            num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
+            cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+            latency_l = []
+            throughput_l = []
+            for i in range(0, num_of_instance):
+                log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+                with open(log, "r") as f:
+                    for line in f:
+                        latency = re.search(r"Latency:\s+(\d+(\.\d+)?)", line)
+                        latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
+                        throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?)", line)
+                        throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
+            assert len(latency_l)==len(throughput_l)==num_of_instance, \
+                "Multiple instance benchmark failed with some instance!"
+            logger.info("\n\nMultiple instance benchmark summary: ")
+            logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
+            logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
+            return None
 
     fit = __call__
 
