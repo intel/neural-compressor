@@ -15,7 +15,7 @@
 
 model:                                               # mandatory. used to specify model specific information.
   name: oob_models
-  framework: inteltensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: input
   outputs: output
 

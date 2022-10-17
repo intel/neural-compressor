@@ -25,7 +25,7 @@ torch = LazyImport('torch')
 
 logger = logging.getLogger()
 
-@dataset_registry(dataset_type="dummy", framework="tensorflow, inteltensorflow, tensorflow_itex, \
+@dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
                                                    onnxrt_qlinearops, onnxrt_integerops, \
                                                    pytorch, pytorch_ipex, pytorch_fx, \
                                                    mxnet",
@@ -60,8 +60,8 @@ class DummyDataset(Dataset):
         transform=None, filter=None):
 
         dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8': np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool,\
-                     'string': np.str}
+                     'int8': np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':bool,\
+                     'string': str}
 
         np.random.seed(9527)
         self.transform = transform
@@ -78,13 +78,13 @@ class DummyDataset(Dataset):
                 assert len(low) == len(shape) and all(isinstance(elem, float) for elem in low), \
                     'low list should have same length with shape with element data type float'
             else:
-                low = (low * np.ones(len(shape))).astype(np.float)
+                low = (low * np.ones(len(shape))).astype(float)
 
             if isinstance(high, list):
                 assert len(high) == len(shape) and all(isinstance(elem, float) for elem in high), \
                     'high list should have same length with shape with element data type float'
             else:
-                high = (high * np.ones(len(shape))).astype(np.float)
+                high = (high * np.ones(len(shape))).astype(float)
 
             if isinstance(dtype, list):
                 assert len(dtype) == len(shape) and \

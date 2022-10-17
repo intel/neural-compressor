@@ -37,7 +37,7 @@ tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')
 
 @transform_registry(transform_type="QuantizedInput", \
-                    process="preprocess", framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    process="preprocess", framework="tensorflow, tensorflow_itex")
 class QuantizedInput(BaseTransform):
     """Convert the dtype of input to quantize it.
 
@@ -69,8 +69,8 @@ class QuantizedInput(BaseTransform):
         return image, label
 
 @transform_registry(transform_type="LabelShift", \
-    process="postprocess", framework="pytorch, tensorflow, inteltensorflow, \
-                           tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
+    process="postprocess", framework="pytorch, tensorflow, tensorflow_itex,\
+                           onnxrt_qlinearops, onnxrt_integerops")
 class LabelShift(BaseTransform):
     """Convert label to label - label_shift.
 

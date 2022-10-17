@@ -119,7 +119,7 @@ In examples directory, there is a transformer_lt_mlperf.yaml. We could remove mo
 ```yaml
 model:
   name: transformer_lt_mlperf
-  framework: inteltensorflow
+  framework: tensorflow
   inputs: input_tokens
   outputs: model/Transformer/strided_slice_15
 

@@ -76,8 +76,11 @@ class TensorFlowAdaptor(Adaptor):
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name), performance_only=self.performance_only)
         self.itex_mode = cfg_yaml_name == 'tensorflow_itex.yaml'
-        self.qdq_enabled = cfg_yaml_name == 'inteltensorflow.yaml' or \
-                                   cfg_yaml_name == 'tensorflow_itex.yaml'
+
+        from pkg_resources import parse_version
+        import tensorflow as tf
+        self.new_api = True if parse_version(tf.version.VERSION) == parse_version('2.11.0202242') else False
+        self.qdq_enabled = cfg_yaml_name == 'tensorflow_itex.yaml' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
@@ -85,7 +88,6 @@ class TensorFlowAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.callbacks = []
-        self.new_api = False
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -1438,9 +1440,6 @@ class TensorFlowAdaptor(Adaptor):
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     def __init__(self, framework_specific_info):
         super().__init__(framework_specific_info)
-        from pkg_resources import parse_version
-        import tensorflow as tf
-        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -1789,16 +1788,3 @@ class TensorflowQuery(QueryBackendCapability):
                 final_out.append(_generate_pattern(similar_sequences))
 
         return final_out
-
-@adaptor_registry
-class IntelTensorFlowAdaptor(TensorFlowAdaptor):
-    def __init__(self, framework_specific_info):
-        super().__init__(framework_specific_info)
-        from pkg_resources import parse_version
-        import tensorflow as tf
-        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
-        # not enable qdq mode for old api
-        if not self.new_api:
-            self.qdq_enabled = False
-            self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
-

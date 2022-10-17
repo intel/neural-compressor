@@ -44,7 +44,7 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
-from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2
+from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2, version1_lt_version2
 
 TF_SUPPORTED_MAX_VERSION = '2.10.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -95,6 +95,7 @@ class GraphConverterWithoutCalib:
     # pylint: disable=no-member
     def _check_tf_version(self):
         is_supported_version = False
+        is_sprbase_version = False
         try:
             from tensorflow import python
             if (hasattr(python, "pywrap_tensorflow")
@@ -115,32 +116,34 @@ class GraphConverterWithoutCalib:
 
             if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
                 is_supported_version = True
+            
+            if version1_eq_version2(tf.version.VERSION, '2.11.0202242'):
+                is_supported_version = True
+                is_sprbase_version = True
 
         except Exception as e:
             raise ValueError(e)
         finally:# pragma: no cover
-            if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION):
+            if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
                 logger.warning(
-                    str('Please note the {} version of Intel® Optimizations for '
-                        'TensorFlow is not fully verified! '
-                        'Suggest to use the versions '
-                        'between {} and {} if meet problem.').format(tf.version.VERSION,
-                                                                     TF_SUPPORTED_MIN_VERSION,
-                                                                     TF_SUPPORTED_MAX_VERSION))
+                    str('Please note the {} version of TensorFlow is not fully verified! '
+                        'Suggest to use the versions between {} and {} if meet problem.')
+                        .format(tf.version.VERSION, TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
+
             if version1_eq_version2(tf.version.VERSION, '2.5.0') and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
                 logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
                              "when TensorFlow 2.5.0 installed.")
 
-            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+            if version1_gte_version2(tf.version.VERSION, '2.6.0') and \
+               version1_lt_version2(tf.version.VERSION, '2.9.0') and \
+               os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
                              "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(
-                    str('Please install Intel® Optimizations for TensorFlow '
-                        'or MKL enabled source build TensorFlow '
-                        'within version >={} and <={}.').format(TF_SUPPORTED_MIN_VERSION,
-                                                                TF_SUPPORTED_MAX_VERSION))
+                    str('Please install TensorFlow within version >={} and <={}.')
+                    .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \

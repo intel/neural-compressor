@@ -22,7 +22,6 @@ from .onnxrt_dataloader import ONNXRTDataLoader
 from .default_dataloader import DefaultDataLoader
 
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
-               "inteltensorflow": TensorflowDataLoader,
                "tensorflow_itex": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
                "pytorch": PyTorchDataLoader,

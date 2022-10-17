@@ -45,7 +45,6 @@ from pkg_resources import parse_version
 
 required_libs = {
     'tensorflow': ['tensorflow'],
-    'inteltensorflow': ['tensorflow'],
     'pytorch': ['torch'],
     'pytorch_fx': ['torch'],
     'pytorch_ipex': ['torch', 'intel_extension_for_pytorch'],

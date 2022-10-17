@@ -12,11 +12,11 @@ from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
-def build_inteltensorflow_yaml():
+def build_tensorflow_yaml():
     fake_yaml = '''
         model:
-          name: inteltensorflow_yaml
-          framework: inteltensorflow
+          name: tensorflow_yaml
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:
@@ -41,18 +41,18 @@ def build_inteltensorflow_yaml():
               path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('inteltensorflow_yaml.yaml', "w", encoding="utf-8") as f:
+    with open('tensorflow_yaml.yaml', "w", encoding="utf-8") as f:
         yaml.dump(y, f)
     f.close()
 
 class TestConvRequantizedFusionNewAPI(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        build_inteltensorflow_yaml()
+        build_tensorflow_yaml()
 
     @classmethod
     def tearDownClass(self):
-        os.remove('inteltensorflow_yaml.yaml')
+        os.remove('tensorflow_yaml.yaml')
 
     @disable_random()
     def test_conv_biasadd_relu6_fusion(self):
@@ -75,7 +75,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -107,7 +107,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100,64,64,64,1), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -140,7 +140,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100,64,64,64,1), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -175,7 +175,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100,64,64,64,1), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -208,7 +208,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -256,7 +256,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100,64,64,64,1), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -291,7 +291,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -322,7 +322,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -357,7 +357,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -399,7 +399,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -440,7 +440,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -480,7 +480,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -512,7 +512,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100,64,64,64,1), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -548,7 +548,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -586,7 +586,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -628,7 +628,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -662,7 +662,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -696,7 +696,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -734,7 +734,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -771,7 +771,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -809,7 +809,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -844,7 +844,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
             from neural_compressor.experimental import Quantization, common
-            quantizer = Quantization('inteltensorflow_yaml.yaml')
+            quantizer = Quantization('tensorflow_yaml.yaml')
             dataset = quantizer.dataset('dummy', shape=(100, 128, 64, 64, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)

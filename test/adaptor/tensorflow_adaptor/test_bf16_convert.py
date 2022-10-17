@@ -40,7 +40,7 @@ def build_newapi_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
           outputs: final
         device: cpu
@@ -329,7 +329,7 @@ class TestBF16Convert(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=float)
             x = tf.compat.v1.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)

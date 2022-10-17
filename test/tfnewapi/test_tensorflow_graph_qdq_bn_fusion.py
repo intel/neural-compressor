@@ -15,7 +15,7 @@ def build_fake_yaml_1():
     fake_yaml_1 = '''
         model:
           name: fake_yaml_1
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:
@@ -48,7 +48,7 @@ def build_fake_yaml_2():
     fake_yaml_2 = '''
         model:
           name: fake_yaml_2
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:

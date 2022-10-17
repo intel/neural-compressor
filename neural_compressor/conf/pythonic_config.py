@@ -363,7 +363,7 @@ class QuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, 
-            ['tensorflow', 'tensorflow_itex', 'inteltensorflow', 'pytorch',
+            ['tensorflow', 'tensorflow_itex', 'pytorch',
             'pytorch_ipex', 'pytorch_fx', 'onnxrt_qlinearops', 'onnxrt_integerops',
             'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet']):
             self._backend = backend

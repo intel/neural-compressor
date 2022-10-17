@@ -24,24 +24,20 @@ import tensorflow as tf
 
 from collections import OrderedDict, UserDict
 from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import tensor_util
 from tensorflow.python.platform import gfile
 from neural_compressor.utils.utility import get_all_fp32_data
 from neural_compressor.utils.utility import get_tensor_histogram
 from neural_compressor.utils.utility import combine_histogram
 from neural_compressor.utils.utility import CaptureOutputToFile
-from neural_compressor.utils.utility import str2array
-from neural_compressor.utils.utility import Dequantize, DequantizeWeight
 from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.experimental.common import Model
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2,version1_lt_version2
-from .util import version1_gte_version2,version1_lte_version2
+from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2
+from .util import version1_gte_version2,version1_lte_version2,version1_lt_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph_common import QuantizeGraphHelper
-from .quantize_graph.quantize_graph_conv import FuseNodeStartWithConv2d
 from .quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
 
 from .graph_util import GraphAnalyzer
@@ -236,6 +232,7 @@ class GraphConverter:
 
     def _check_tf_version(self):
         is_supported_version = False
+        is_sprbase_version = False
         try:
             from tensorflow import python
             if (hasattr(python, "pywrap_tensorflow")
@@ -253,35 +250,37 @@ class GraphConverter:
 
             if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
-                 
+
             if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
                 is_supported_version = True
-                
+
+            if version1_eq_version2(tf.version.VERSION, '2.11.0202242'):
+                is_supported_version = True
+                is_sprbase_version = True
+
         except Exception as e:
             raise ValueError(e)
         finally:
-            if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION):
+            if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
                 logger.warning(
-                    str('Please note the {} version of Intel® Optimizations for '
-                        'TensorFlow is not fully verified! '
-                        'Suggest to use the versions '
-                        'between {} and {} if meet problem.').format(tf.version.VERSION,
-                                                                     TF_SUPPORTED_MIN_VERSION,
-                                                                     TF_SUPPORTED_MAX_VERSION))
+                    str('Please note the {} version of TensorFlow is not fully verified! '
+                        'Suggest to use the versions between {} and {} if meet problem.')
+                        .format(tf.version.VERSION, TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
+
             if version1_eq_version2(tf.version.VERSION, '2.5.0') and os.getenv('TF_ENABLE_MKL_NATIVE_FORMAT') != '0':
                 logger.fatal("Please set environment variable TF_ENABLE_MKL_NATIVE_FORMAT=0 "
                              "when TensorFlow 2.5.0 installed.")
 
-            if version1_gte_version2(tf.version.VERSION, '2.6.0') and os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
+            if version1_gte_version2(tf.version.VERSION, '2.6.0') and \
+               version1_lt_version2(tf.version.VERSION, '2.9.0') and \
+               os.getenv('TF_ENABLE_ONEDNN_OPTS') != '1':
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
                              "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 
             if not is_supported_version:
                 raise ValueError(
-                    str('Please install Intel® Optimizations for TensorFlow '
-                        'or MKL enabled TensorFlow from source code '
-                        'within version >={} and <={}.').format(TF_SUPPORTED_MIN_VERSION,
-                                                                TF_SUPPORTED_MAX_VERSION))
+                    str('Please install TensorFlow within version >={} and <={}.')
+                    .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \

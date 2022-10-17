@@ -45,7 +45,7 @@ def bleu_tokenize(string):
     string = uregex.symbol_re.sub(r" \1 ", string)
     return string.split()
 
-@metric_registry('BLEU', 'tensorflow, inteltensorflow')
+@metric_registry('BLEU', 'tensorflow, tensorflow_itex')
 class BLEU(object):
     """Computes Bilingual Evaluation Understudy Score
 

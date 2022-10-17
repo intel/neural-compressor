@@ -21,7 +21,7 @@ import glob
 from .dataset import dataset_registry, Dataset
 
 
-@dataset_registry(dataset_type="style_transfer", framework="tensorflow, inteltensorflow, \
+@dataset_registry(dataset_type="style_transfer", framework="tensorflow, \
                   tensorflow_itex", dataset_format='')
 class StyleTransferDataset(Dataset):
     """Dataset used for style transfer task.
