@@ -14,7 +14,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: x
           outputs: op_to_store
         device: cpu
@@ -43,7 +43,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../../neural_compressor/adaptor/inteltensorflow.yaml")).get_eightbit_patterns(True)
+        os.path.dirname(__file__), "../../neural_compressor/adaptor/tensorflow.yaml")).get_eightbit_patterns(True)
 
     @classmethod
     def tearDownClass(self):
@@ -75,7 +75,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                 for i in output_graph.graph_def.node:
                     if i.op == '_QuantizedMatMul' and \
-                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Requantize']:
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Dequantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)
@@ -348,7 +348,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
-            y = tf.matmul(x, x, name='no_quant_matmul')
+            y = tf.matmul(x, x, name='quant_matmul_non_const_weight')
             biasadd = tf.nn.bias_add(y, [1, 2])
             z = tf.nn.relu(biasadd)
             found_quantized_matmul = True
@@ -369,7 +369,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     if i.op == 'MatMul':
                         found_quantized_matmul = False
                         break
-            self.assertEqual(found_quantized_matmul, False)
+            self.assertEqual(found_quantized_matmul, True)
 
     def test_matmul_biasadd_non_const_weight(self):
         g = tf.Graph()
@@ -377,7 +377,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
-            y = tf.matmul(x, x, name='no_quant_matmul')
+            y = tf.matmul(x, x, name='quant_matmul_non_const_weight')
             z = tf.nn.bias_add(y, [1, 2])
             found_quantized_matmul = True
 
@@ -397,7 +397,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     if i.op == 'MatMul':
                         found_quantized_matmul = False
                         break
-            self.assertEqual(found_quantized_matmul, False)
+            self.assertEqual(found_quantized_matmul, True)
 
     @disable_random()
     def test_matmul_with_dummy_biasadd(self):
@@ -829,7 +829,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                 for i in output_graph.graph_def.node:
                     if i.op == '_QuantizedMatMul' and \
-                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Requantize']:
+                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Dequantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)
@@ -1106,7 +1106,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
 
                 for i in output_graph.graph_def.node:
                     if i.op == '_QuantizedMatMul' and \
-                       i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
+                       i.attr['fused_ops'].list.s == [b'Dequantize']:
                         found_quantized_matmul = True
                         break
                 self.assertEqual(found_quantized_matmul, True)

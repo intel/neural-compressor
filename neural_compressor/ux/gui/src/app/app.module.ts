@@ -28,13 +28,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSortModule } from '@angular/material/sort';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { PredefinedModelsComponent } from './predefined-models/predefined-models.component';
-import { ModelListPipe } from './pipes/model-list.pipe';
+import { UnderscorePipe } from './pipes/underscore.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModelService } from './services/model.service';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -45,7 +46,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { GraphComponent } from './graph/graph.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { CommonModule } from '@angular/common';
+import { APP_BASE_HREF, CommonModule } from '@angular/common';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { HomeComponent } from './home/home.component';
@@ -84,6 +85,9 @@ import { PrintJsonPipe } from './pipes/print-json.pipe';
 import { GenerateConfigDialogComponent } from './generate-config-dialog/generate-config-dialog.component';
 import { WarningComponent } from './warning/warning.component';
 
+const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefix }}'
+  ? '' : document.getElementById('url_prefix').innerText;
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -91,7 +95,7 @@ import { WarningComponent } from './warning/warning.component';
     ErrorComponent,
     WarningComponent,
     PredefinedModelsComponent,
-    ModelListPipe,
+    UnderscorePipe,
     LongNamePipe,
     PrintJsonPipe,
     FileBrowserComponent,
@@ -140,6 +144,7 @@ import { WarningComponent } from './warning/warning.component';
     MatRadioModule,
     MatSelectModule,
     MatSidenavModule,
+    MatSortModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
@@ -166,7 +171,10 @@ import { WarningComponent } from './warning/warning.component';
       useClass: AuthenticationInterceptor,
       multi: true
     },
-
+    {
+      provide: APP_BASE_HREF,
+      useValue: prefix.slice(-1) === '/' ? prefix : prefix + '/'
+    }
   ],
   entryComponents: [
     ErrorComponent,

@@ -28,6 +28,7 @@ from neural_compressor.ux.utils.utils import load_precisions_config
 from neural_compressor.ux.utils.workload.dataloader import Transform
 from neural_compressor.ux.utils.workload.evaluation import Configs, Evaluation
 from neural_compressor.ux.utils.workload.graph_optimization import GraphOptimization
+from neural_compressor.ux.utils.workload.mixed_precision import MixedPrecision
 from neural_compressor.ux.utils.workload.model import Model
 from neural_compressor.ux.utils.workload.pruning import Pruning
 from neural_compressor.ux.utils.workload.quantization import Quantization
@@ -48,6 +49,7 @@ class Config(JsonSerializer):
         self.evaluation: Optional[Evaluation] = None
         self.pruning: Optional[Pruning] = None
         self.graph_optimization: Optional[GraphOptimization] = None
+        self.mixed_precision: Optional[MixedPrecision] = None
 
         self.initialize(data)
 
@@ -73,6 +75,9 @@ class Config(JsonSerializer):
 
         if isinstance(data.get("graph_optimization"), dict):
             self.graph_optimization = GraphOptimization(data.get("graph_optimization", {}))
+
+        if isinstance(data.get("mixed_precision"), dict):
+            self.mixed_precision = MixedPrecision(data.get("mixed_precision", {}))
 
     def remove_dataloader(self) -> None:
         """Remove datalader."""
@@ -359,10 +364,10 @@ class Config(JsonSerializer):
                 f"Precision {precision} is not supported "
                 f"in graph optimization for framework {framework}.",
             )
-        if self.graph_optimization is None:
-            self.graph_optimization = GraphOptimization({"precisions": precision})
-        else:
+        if self.graph_optimization is not None:
             self.graph_optimization.precisions = precision
+        if self.mixed_precision is not None:
+            self.mixed_precision.precisions = precision
 
     def load(self, path: str) -> None:
         """Load configuration from file."""

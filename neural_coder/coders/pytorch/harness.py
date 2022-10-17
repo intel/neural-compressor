@@ -269,7 +269,7 @@ class Harness(object):
                             if is_eval_func and "[coder-enabled]" not in line:
                                 if eval_func_type == "non-forward":
                                     pass # do something
-                                
+                                inference_line = line
                                 inference_line_indent_level = get_line_indent_level(line)
 
                                 if "indent_inference_line" in loc:
@@ -312,7 +312,20 @@ class Harness(object):
                                 if "insert_above_inference_line" in loc:
                                     idx_offset = 0
                                 elif "insert_below_inference_line" in loc:
-                                    idx_offset = 1
+                                    if ")" in line:  # e.g. model = Net(xxx)
+                                        idx_offset = 1
+                                    else:  # e.g. model = Net(xxx, \n xxx, \n xxx)
+                                        do_search = True
+                                        i_search = 1
+                                        while do_search:
+                                            following_line = lines[line_idx + i_search]
+                                            if ")" in following_line:
+                                                do_search = False
+                                            i_search += 1
+                                            inference_line = \
+                                                inference_line + "\n" + \
+                                                " " * (get_line_indent_level(line) + 4) + following_line
+                                        idx_offset = i_search
                                 
                                 if "insert_above_inference_line" in loc or "insert_below_inference_line" in loc:
                                     bk_trans_content_this = bk_trans_content[bk_trans_location.index(loc)]
@@ -348,7 +361,7 @@ class Harness(object):
                                         lines_to_insert = lines_to_insert.replace("ACCURACY_MODE", 
                                                                                     str(globals.eval_accuracy))
                                         lines_to_insert = lines_to_insert.replace("INFERENCE_LINE", 
-                                                                                    line.strip())
+                                                                                    inference_line.strip())
 
                                     ### register
                                     

@@ -17,7 +17,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
           outputs: predict
         device: cpu
@@ -194,5 +194,43 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
                   quantized_concat = True
             self.assertEqual(quantized_concat, True)
 
+    @disable_random()
+    def test_concat_with_qint8_and_fp32_input_type(self):
+        x = tf.compat.v1.placeholder(
+            tf.float32, [1, 128, 128, 16], name="input")
+        bias = tf.compat.v1.get_variable("bias", [16],
+                                              initializer=tf.compat.v1.random_normal_initializer())
+
+        bias_add = tf.nn.bias_add(x, bias)
+
+        pool = tf.nn.avg_pool(x, ksize=1, strides=[1, 1, 1, 1], name='avgpool', padding="SAME")
+        concat = tf.concat([bias_add, pool], 1)
+        final_node = tf.nn.relu(concat , name='op_to_store')
+        out_name = final_node.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+            from neural_compressor.experimental import Quantization, common
+
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset(
+                'dummy', shape=(100, 128, 128, 16), label=True)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            dtype = None
+            quantized_concat = False
+            from tensorflow.python.framework import dtypes
+            for i in output_graph.graph_def.node:
+              if i.op == 'QuantizedConcatV2':
+                  dtype = dtypes.DType(i.attr['T'].type)
+                  quantized_concat = True
+            self.assertEqual(quantized_concat, True)
+            self.assertEqual(dtype, dtypes.qint8)
+            
 if __name__ == "__main__":
     unittest.main()

@@ -254,6 +254,103 @@ class Optimization(Base):
         }
 
     @staticmethod
+    def update_batch_size(
+        db_session: session.Session,
+        optimization_id: int,
+        batch_size: int,
+    ) -> dict:
+        """Update batch size of optimization."""
+        optimization = (
+            db_session.query(Optimization).filter(Optimization.id == optimization_id).one()
+        )
+        optimization.batch_size = batch_size
+        db_session.add(optimization)
+        db_session.flush()
+
+        return {
+            "id": optimization.id,
+            "batch_size": optimization.batch_size,
+        }
+
+    @staticmethod
+    def update_sampling_size(
+        db_session: session.Session,
+        optimization_id: int,
+        sampling_size: int,
+    ) -> dict:
+        """Update sampling size of optimization."""
+        optimization = (
+            db_session.query(Optimization).filter(Optimization.id == optimization_id).one()
+        )
+        optimization.sampling_size = sampling_size
+        db_session.add(optimization)
+        db_session.flush()
+
+        return {
+            "id": optimization.id,
+            "sampling_size": optimization.sampling_size,
+        }
+
+    @staticmethod
+    def update_precision(
+        db_session: session.Session,
+        optimization_id: int,
+        precision_id: int,
+        optimization_type_id: int,
+    ) -> dict:
+        """Update precision of optimization."""
+        optimization = (
+            db_session.query(Optimization).filter(Optimization.id == optimization_id).one()
+        )
+        optimization.optimization_type_id = optimization_type_id
+        optimization.precision_id = precision_id
+        db_session.add(optimization)
+        db_session.flush()
+
+        return {
+            "id": optimization.id,
+            "precision_id": optimization.precision_id,
+        }
+
+    @staticmethod
+    def update_dataset(
+        db_session: session.Session,
+        optimization_id: int,
+        dataset_id: int,
+    ) -> dict:
+        """Update dataset of optimization."""
+        optimization = (
+            db_session.query(Optimization).filter(Optimization.id == optimization_id).one()
+        )
+        optimization.dataset_id = dataset_id
+        db_session.add(optimization)
+        db_session.flush()
+
+        return {
+            "id": optimization.id,
+            "dataset_id": optimization.dataset_id,
+        }
+
+    @staticmethod
+    def update_tuning_details(
+        db_session: session.Session,
+        optimization_id: int,
+        tuning_details_id: Optional[int],
+    ) -> dict:
+        """Update tuning details of optimization."""
+        optimization = (
+            db_session.query(Optimization).filter(Optimization.id == optimization_id).one()
+        )
+        optimization.tuning_details_id = tuning_details_id
+        db_session.add(optimization)
+        db_session.flush()
+
+        return {
+            "id": optimization.id,
+            "tuning_details_id": optimization.tuning_details_id,
+        }
+
+    @staticmethod
     def clean_status(
         db_session: session.Session,
         status_to_clean: ExecutionStatus,

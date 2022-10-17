@@ -222,12 +222,15 @@ class TestBenchmarkService(unittest.TestCase):
 
     @patch("neural_compressor.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
     @patch("neural_compressor.ux.web.service.benchmark.BenchmarkService._get_workload_data")
-    def test_get_output(
+    def test_get_output_no_refresh(
         self,
         mocked_get_workload_data: MagicMock,
         mocked_serve_from_filesystem: MagicMock,
     ) -> None:
         """Test get_output."""
+        data = {
+            "id": [1],
+        }
         filesystem_response = Response("fake output content")
 
         mocked_get_workload_data.return_value = {
@@ -235,15 +238,40 @@ class TestBenchmarkService(unittest.TestCase):
         }
         mocked_serve_from_filesystem.return_value = filesystem_response
 
-        actual = BenchmarkService.get_output(
-            {
-                "id": [1],
-            },
+        actual = BenchmarkService.get_output(data)
+
+        self.assertEqual(filesystem_response.data, actual.data)
+        self.assertIsNone(actual.headers.get("refresh", None))
+        mocked_get_workload_data.assert_called_with(data)
+        mocked_serve_from_filesystem.assert_called_once_with(
+            path="/some/fake/output/path.log",
+            mimetype="text/plain",
         )
+
+    @patch("neural_compressor.ux.web.service.workload.ResponseGenerator.serve_from_filesystem")
+    @patch("neural_compressor.ux.web.service.benchmark.BenchmarkService._get_workload_data")
+    def test_get_output(
+        self,
+        mocked_get_workload_data: MagicMock,
+        mocked_serve_from_filesystem: MagicMock,
+    ) -> None:
+        """Test get_output."""
+        data = {
+            "id": [1],
+            "autorefresh": [3],
+        }
+        filesystem_response = Response("fake output content")
+
+        mocked_get_workload_data.return_value = {
+            "log_path": "/some/fake/output/path.log",
+        }
+        mocked_serve_from_filesystem.return_value = filesystem_response
+
+        actual = BenchmarkService.get_output(data)
 
         self.assertEqual(filesystem_response.data, actual.data)
         self.assertEqual("3", actual.headers.get("refresh"))
-        mocked_get_workload_data.assert_called_with({"id": [1]})
+        mocked_get_workload_data.assert_called_with(data)
         mocked_serve_from_filesystem.assert_called_once_with(
             path="/some/fake/output/path.log",
             mimetype="text/plain",
@@ -257,21 +285,21 @@ class TestBenchmarkService(unittest.TestCase):
         mocked_serve_from_filesystem: MagicMock,
     ) -> None:
         """Test get_output."""
+        data = {
+            "id": [1],
+            "autorefresh": [5],
+        }
         mocked_get_workload_data.return_value = {
             "log_path": "/some/fake/output/path.log",
         }
         mocked_serve_from_filesystem.side_effect = NotFoundException("Unable to find file.")
 
-        actual = BenchmarkService.get_output(
-            {
-                "id": [1],
-            },
-        )
+        actual = BenchmarkService.get_output(data)
 
         self.assertEqual("Unable to find file.", actual.data.decode("utf-8"))
         self.assertEqual(404, actual.status_code)
-        self.assertEqual("3", actual.headers.get("refresh"))
-        mocked_get_workload_data.assert_called_with({"id": [1]})
+        self.assertEqual("5", actual.headers.get("refresh"))
+        mocked_get_workload_data.assert_called_with(data)
         mocked_serve_from_filesystem.assert_called_once_with(
             path="/some/fake/output/path.log",
             mimetype="text/plain",

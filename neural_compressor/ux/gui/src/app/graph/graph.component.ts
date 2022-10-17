@@ -25,8 +25,10 @@ import { ModelService } from '../services/model.service';
 export class GraphComponent implements OnChanges, OnInit {
 
   @Input() modelPath: string;
-  @Input() diagnosisTab?: boolean;
-  @Input() diagnosisTabParams?: {};
+  @Input() showOps?: boolean;
+  @Input() diagnosisTabParams?: { Pattern: { sequence: string[] } };
+
+  @ViewChild('sidenav') sidenav: MatSidenav;
 
   edges: Edge[] = [];
   nodes: Node[] = [];
@@ -40,8 +42,6 @@ export class GraphComponent implements OnChanges, OnInit {
   updateObservable: Subject<string> = new Subject<string>();
   center$: Subject<boolean> = new Subject();
   zoomToFit$: Subject<boolean> = new Subject();
-
-  @ViewChild('sidenav') sidenav: MatSidenav;
 
   customColor = [
     '#005B85',
@@ -69,7 +69,7 @@ export class GraphComponent implements OnChanges, OnInit {
 
   ngOnChanges(): void {
     this.showSpinner = true;
-    if (this.diagnosisTabParams['Pattern']) {
+    if (this.diagnosisTabParams?.Pattern) {
       this.highlightPatternInGraph();
     } else {
       this.getGraph();
@@ -80,12 +80,12 @@ export class GraphComponent implements OnChanges, OnInit {
     this.modelService.highlightPatternInGraph(
       this.modelPath,
       this.diagnosisTabParams['OP name'],
-      this.diagnosisTabParams['Pattern']['sequence']
+      this.diagnosisTabParams.Pattern.sequence
     )
       .subscribe(
-        response => {
-          this.updateGraph(response['graph']);
-          this.expandedNodesArray = response['groups'];
+        (response: { graph: any; groups: any }) => {
+          this.updateGraph(response.graph);
+          this.expandedNodesArray = response.groups;
           this.panToNodeObservable.next(this.diagnosisTabParams['OP name']);
         },
         error => {
@@ -116,8 +116,8 @@ export class GraphComponent implements OnChanges, OnInit {
   }
 
   updateGraph(graph: any) {
-    let nodes = [];
-    let edges = [];
+    const nodes = [];
+    const edges = [];
     graph.nodes.forEach(node => {
       nodes.push({
         id: node.id,
@@ -141,11 +141,11 @@ export class GraphComponent implements OnChanges, OnInit {
   }
 
   getDetails(node: Node) {
-    if (this.diagnosisTab) {
+    if (this.showOps) {
       this.modelService.getNodeDetails$.next(node.id);
     } else {
       this.nodeDetails = node;
-      this.sidenav.open()
+      this.sidenav.open();
     }
   }
 
@@ -162,7 +162,7 @@ export class GraphComponent implements OnChanges, OnInit {
     }
     this.modelService.getModelGraph(this.modelPath, this.expandedNodesArray)
       .subscribe(
-        graph => { this.updateGraph(graph) },
+        graph => { this.updateGraph(graph); },
         error => {
           this.modelService.openErrorDialog(error);
         });
@@ -180,15 +180,15 @@ interface Node {
   properties: {
     name: string;
     type: string;
-  },
+  };
   data?: {
-    color: string
-  },
-  node_type: string,
-  color: string,
+    color: string;
+  };
+  node_type: string;
+  color: string;
 }
 
 interface Edge {
-  target: string,
-  source: string,
+  target: string;
+  source: string;
 }

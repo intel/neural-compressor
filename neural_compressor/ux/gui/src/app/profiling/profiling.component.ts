@@ -21,8 +21,8 @@ import { ProfilingFormComponent } from '../profiling-form/profiling-form.compone
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 
-declare var require: any;
-var shajs = require('sha.js');
+declare let require: any;
+const shajs = require('sha.js');
 
 @Component({
   selector: 'app-profiling',
@@ -39,12 +39,12 @@ export class ProfilingComponent implements OnInit {
   token = '';
 
   profiling = {
-    "name": "Quantized model profiling",
-    "project_id": 1,
-    "model_id": 2,
-    "dataset_id": 1,
-    "batch_size": 1,
-    "num_threads": 7
+    name: 'Quantized model profiling',
+    project_id: 1,
+    model_id: 2,
+    dataset_id: 1,
+    batch_size: 1,
+    num_threads: 7
   };
   activeProfilingId = -1;
   profilingList = [];
@@ -52,7 +52,7 @@ export class ProfilingComponent implements OnInit {
   profilingData = [];
   profilingDataHeaders = [];
   profilingChartData = [{
-    name: 'Profiling',
+    name: 'node',
     series: []
   }];
   showChart = false;
@@ -64,10 +64,10 @@ export class ProfilingComponent implements OnInit {
     4: true
   };
 
-  xAxis: boolean = true;
-  yAxis: boolean = true;
-  showYAxisLabel: boolean = true;
-  showXAxisLabel: boolean = true;
+  xAxis = true;
+  yAxis = true;
+  showYAxisLabel = true;
+  showXAxisLabel = true;
   viewLine: any[] = [900, 300];
 
   customColor = {
@@ -97,8 +97,8 @@ export class ProfilingComponent implements OnInit {
     this.token = this.modelService.getToken();
     this.getProfilingList();
     this.modelService.projectChanged$
-      .subscribe(response => {
-        this.getProfilingList(response['id']);
+      .subscribe((response: { id: number }) => {
+        this.getProfilingList(response.id);
         this.activeProfilingId = -1;
         this.profilingData = [];
       });
@@ -127,7 +127,7 @@ export class ProfilingComponent implements OnInit {
 
   executeProfiling(profilingId: number) {
     const dateTime = Date.now();
-    let requestId = shajs('sha384').update(String(dateTime)).digest('hex');
+    const requestId = shajs('sha384').update(String(dateTime)).digest('hex');
 
     this.profilingList.find(profiling => profiling.id === profilingId).status = 'wip';
     this.modelService.executeProfiling(profilingId, requestId)
@@ -142,8 +142,8 @@ export class ProfilingComponent implements OnInit {
   getProfilingList(id?: number) {
     this.modelService.getProfilingList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.profilingList = response['profilings'];
+        (response: { profilings: any }) => {
+          this.profilingList = response.profilings;
         },
         error => {
           this.modelService.openErrorDialog(error);
@@ -155,8 +155,8 @@ export class ProfilingComponent implements OnInit {
     this.profilingData = [];
     this.modelService.getProfilingDetails(id)
       .subscribe(
-        response => {
-          this.profilingData = response['results']?.sort((a, b) => a.total_execution_time < b.total_execution_time ? 1 : -1);
+        (response: { results: any }) => {
+          this.profilingData = response.results?.sort((a, b) => a.total_execution_time < b.total_execution_time ? 1 : -1);
           if (this.profilingData) {
             this.profilingDataHeaders = Object.keys(this.profilingData[0]).filter(key => !key.includes('id'));
             this.showProfilingChart();
@@ -182,8 +182,8 @@ export class ProfilingComponent implements OnInit {
     Object.keys(this.showInChart).forEach(index => {
       if (this.showInChart[index]) {
         this.profilingChartData[0].series.push({
-          name: this.profilingData[index]['node_name'],
-          value: this.profilingData[index]['total_execution_time']
+          name: this.profilingData[index].node_name,
+          value: this.profilingData[index].total_execution_time
         });
       }
     });
@@ -192,11 +192,11 @@ export class ProfilingComponent implements OnInit {
   }
 
   deleteProfiling(id: number, name: string) {
-    let dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
         what: 'profiling',
-        id: id,
-        name: name
+        id,
+        name
       }
     });
 
@@ -205,13 +205,42 @@ export class ProfilingComponent implements OnInit {
         if (response.confirm) {
           this.modelService.delete('profiling', id, name)
             .subscribe(
-              response =>
+              deleted =>
                 this.getProfilingList(),
               error =>
                 this.modelService.openErrorDialog(error)
             );
         }
       });
+  }
+
+  editProfiling(id: number) {
+    const dialogRef = this.dialog.open(ProfilingFormComponent, {
+      width: '60%',
+      data: {
+        projectId: this.activatedRoute.snapshot.params.id,
+        profilingId: id,
+        editing: true,
+        index: this.profilingList.length,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(
+      response => {
+        this.getProfilingList();
+      });
+  }
+
+  openLogs(id: number) {
+    const autoRefreshTime = this.getAutoRefreshTime(id);
+    window.open(`${this.apiBaseUrl}api/profiling/output.log?id=${id}&autorefresh=${autoRefreshTime}&token=${this.token}`, '_blank');
+  }
+
+  getAutoRefreshTime(id: number): number {
+    if (this.profilingList.find(profiling => profiling.id === id).status === 'wip') {
+      return 3;
+    }
+    return 0;
   }
 
   typeOf(obj): string {

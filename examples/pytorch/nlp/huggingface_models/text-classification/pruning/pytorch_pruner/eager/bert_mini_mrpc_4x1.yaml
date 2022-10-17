@@ -1,0 +1,23 @@
+version: 1.0
+
+model:
+  name: "bert-mini"
+  framework: "pytorch"
+
+pruning:
+  approach:
+    weight_compression_pytorch:
+      start_step: 0
+      end_step: 0
+      excluded_names: ["classifier", "pooler", ".*embeddings*"]
+      prune_layer_type: ["Linear"]
+      target_sparsity: 0.9
+      max_sparsity_ratio_per_layer: 0.98
+
+      pruners:
+        - !Pruner
+            pattern: "4x1"
+            update_frequency_on_step: 50
+            prune_domain: "global"
+            prune_type: "snip_momentum"
+            sparsity_decay_type: "exp"

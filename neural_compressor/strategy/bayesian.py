@@ -21,8 +21,14 @@ import numpy as np
 from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
+
+from collections import OrderedDict
+
 from ..utils import logger
 from .strategy import strategy_registry, TuneStrategy
+from .st_utils.tuning_sampler import OpWiseTuningSampler
+from .st_utils.tuning_structs import OpTuningConfig
+
 
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
@@ -91,28 +97,16 @@ class BayesianTuneStrategy(TuneStrategy):
         return save_dict
 
     def params_to_tune_configs(self, params):
-        op_cfgs = {}
-        op_cfgs['op'] = {}
-        for op, configs in self.opwise_quant_cfgs.items():
-            if len(configs) > 1:
-                value = int(params[op[0]])
-                if value == len(configs):
-                    value = len(configs) - 1
-                op_cfgs['op'][op] = copy.deepcopy(configs[value])
-            elif len(configs) == 1:
-                op_cfgs['op'][op] = copy.deepcopy(configs[0])
+        op_tuning_cfg = {}
+        calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        for op_name_type, configs in self.op_configs.items():
+            if len(configs) == 1:
+                op_tuning_cfg[op_name_type] = configs[0]
             else:
-                op_cfgs['op'][op] = copy.deepcopy(self.opwise_tune_cfgs[op][0])
-        if len(self.calib_iter) > 1:
-            value = int(params['calib_iteration'])
-            if value == len(self.calib_iter):
-                value = len(configs) - 1
-            op_cfgs['calib_iteration'] = int(self.calib_iter[value])
-            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[value])
-        else:
-            op_cfgs['calib_iteration'] = int(self.calib_iter[0])
-            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[0])
-        return op_cfgs
+                op_tuning_cfg[op_name_type] = configs[min(len(configs) - 1, int(params[op_name_type[0]]))]
+        calib_sampling_size = calib_sampling_size_lst[min(len(configs) - 1, int(params['calib_sampling_size']))]
+        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        return op_tuning_cfg
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
@@ -120,12 +114,19 @@ class BayesianTuneStrategy(TuneStrategy):
 
         """
         params = None
-        pbounds = {}
-        for op, configs in self.opwise_quant_cfgs.items():
+        pbounds = {} 
+        from copy import deepcopy
+        tuning_space = self.tuning_space
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+                                           op_item_dtype_dict, initial_op_tuning_cfg)
+        self.op_configs = op_wise_pool.get_opwise_candidate()
+
+        for op_name_type, configs in self.op_configs.items():
             if len(configs) > 1:
-                pbounds[op[0]] = (0, len(configs))
-        if len(self.calib_iter) > 1:
-            pbounds['calib_iteration'] = (0, len(self.calib_iter))
+                pbounds[op_name_type[0]] = (0, len(configs))
+        pbounds['calib_sampling_size'] = (0, len(calib_sampling_size_lst))
         if len(pbounds) == 0:
             yield self.params_to_tune_configs(params)
             return

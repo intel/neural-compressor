@@ -29,8 +29,6 @@ from onnx import TensorProto
 from onnx import shape_inference
 from onnxruntime import SessionOptions, InferenceSession, GraphOptimizationLevel
 
-from neural_compressor.adaptor.ox_utils.registry import CreateQDQQuantizer, \
-    CreateOpConverter, CreateCaster
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue, QuantizedInitializer, \
     _get_qrange_for_qType, cast_tensor, make_quant_node, make_dquant_node
 from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
@@ -40,17 +38,18 @@ from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping
 from neural_compressor import options
 from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
 logger = logging.getLogger()
 
-
 class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,
-                 op_types_to_quantize, fallback_list=['fp32']):
+                 op_types_to_quantize, fallback_list=['fp32'], reduce_range=None):
         model = onnx.shape_inference.infer_shapes(model)
         self.model = ONNXModel(model)
         self.config = q_config
-        self.reduce_range = False if CpuInfo().vnni else True
+        self.reduce_range = reduce_range if reduce_range is not None \
+            else False if CpuInfo().vnni else True
         self.mode = mode # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
         self.fuse_dynamic_quant = False
@@ -108,7 +107,7 @@ class Quantizer:
             opset_version = 11
 
         if opset_version < 13 and self.mode == 'qdq':
-            logger.warning("Per-Channel support with QDQ format requires onnx opset >= 13," \
+            logger.warning("Per-channel support with QDQ format requires opset version >= 13," \
                 " use per-tensor granularity instead")
         return opset_version
 
@@ -129,8 +128,7 @@ class Quantizer:
         self.remove_redundant_pairs()
  
         # step 3: convert q-node-dq to qlinear op if needed
-        if self.mode != 'qdq':
-            self.convert_qdq_to_operator_oriented()
+        self.convert_qdq_to_operator_oriented()
  
         self.merge_dedicated_qdq_pair() 
  
@@ -210,10 +208,11 @@ class Quantizer:
     def insert_qdq(self):
         for node in self.model.nodes():
             if self.should_quantize(node):
-                op_quantizer = CreateQDQQuantizer(self, node)
-                op_quantizer.quantize()
+                op_quantizer = OPERATORS[node.op_type](self, node)
+                if op_quantizer.quantize_check():
+                    op_quantizer.quantize()
             elif self.should_cast(node): # pragma: no cover
-                op_caster = CreateCaster(self, node)
+                op_caster = OPERATORS[node.op_type](self, node)
                 op_caster.cast()
         self.model.graph().node.extend(self.new_nodes)
         self.model.remove_nodes(self.remove_nodes)
@@ -224,7 +223,8 @@ class Quantizer:
  
     def should_convert(self, node):
         name = node.name.split('_quant')[0]
-        if name in self.config and self.config[name] not in self.fallback_list:
+        if name in self.config and self.config[name] not in self.fallback_list and \
+            (self.config[name]['activation']['quant_mode'] == 'dynamic' or self.mode != 'qdq'):
             return True
         else:
             return False
@@ -236,8 +236,10 @@ class Quantizer:
         for node in self.model.nodes():
             if node.op_type not in ['QuantizeLinear', 'DequantizeLinear'] and \
                 self.should_convert(node):
-                op_converter = CreateOpConverter(self, node)
-                op_converter.convert()
+                op_converter = OPERATORS[node.op_type](self, node)
+                mode = self.config[node.name.split('_quant')[0]]['activation']['quant_mode']
+                if op_converter.convert_check(mode):
+                    op_converter.convert(mode)
         self.model.graph().node.extend(self.new_nodes)
         self.model.remove_nodes(self.remove_nodes)
         for node, old_input_name, new_input_name in self.replace_input:
@@ -365,7 +367,7 @@ class Quantizer:
                                                          dtype_mapping[cfg], TensorProto.FLOAT)
 
     def quantize_outputs(self, node, initializer_use_weight_qType=True, direct_int8=False):
-        if not self.static:
+        if self.config[node.name]['activation']['quant_mode'] == 'dynamic':
             return
         for idx, tensor_name in enumerate(node.output):
             if tensor_name in self.value_infos and \
@@ -490,7 +492,8 @@ class Quantizer:
                     data_found, scale_name, zp_name, _, _ = \
                         self._get_quantization_params(tensor_name)
  
-                if self.static:
+                if self.config[node.name.split('_quant')[0]]['activation']['quant_mode'] != \
+                    'dynamic':
                     if data_found == False:
                         raise ValueError(
                             "Quantization parameters are not specified for param {}."
@@ -526,54 +529,71 @@ class Quantizer:
                                                                 self.new_nodes,
                                                                 self.model.graph())
                     if qlinear_node is None:
-                        if data_found == True:
-                            qlinear_node = make_quant_node(tensor_name + "_QuantizeLinear",
-                                [tensor_name, scale_name, zp_name], [tensor_name + "_quantized"])
+                        if self.fuse_dynamic_quant and \
+                            self.config[node.name]['activation']['dtype'] == \
+                                onnx_proto.TensorProto.UINT8 and \
+                            self.config[node.name]['activation']['scheme'] == 'asym':
+                            scale_name = tensor_name + "_scale"
+                            zeropoint_name = tensor_name + "_zero_point"
+                            if find_by_name(scale_name, self.model.initializer()):
+                                self.model.remove_initializer(
+                                    find_by_name(scale_name, self.model.initializer()))
+                            if find_by_name(zeropoint_name, self.model.initializer()):
+                                self.model.remove_initializer(
+                                    find_by_name(zeropoint_name, self.model.initializer()))
+                            qlinear_node = onnx.helper.make_node("DynamicQuantizeLinear", 
+                                [tensor_name],
+                                [tensor_name + "_quantized", scale_name, zeropoint_name],
+                                tensor_name + "_QuantizeLinear")
                         else:
-                            if self.fuse_dynamic_quant and \
-                                self.config[node.name]['activation']['dtype'] == \
-                                    onnx_proto.TensorProto.UINT8 and \
-                                self.config[node.name]['activation']['scheme'] == 'asym':
-                                scale_name = tensor_name + "_scale"
-                                zeropoint_name = tensor_name + "_zero_point"
-                                qlinear_node = onnx.helper.make_node("DynamicQuantizeLinear", 
-                                    [tensor_name],
-                                    [tensor_name + "_quantized", scale_name, zeropoint_name],
-                                    tensor_name + "_QuantizeLinear")
-                            else:
-                                scale_name, zp_name, _, _ = \
-                                    self._get_dynamic_input_quantization_params(
-                                    tensor_name, self.config[node.name]['activation']['dtype'])
-                                qlinear_node = make_quant_node(tensor_name + "_QuantizeLinear",
-                                                            [tensor_name, scale_name, zp_name], 
-                                                            [tensor_name + "_quantized"])
+                            scale_name, zp_name, _, _ = \
+                                self._get_dynamic_input_quantization_params(
+                                tensor_name, self.config[node.name]['activation']['dtype'])
+                            qlinear_node = make_quant_node(tensor_name + "_QuantizeLinear",
+                                                        [tensor_name, scale_name, zp_name], 
+                                                        [tensor_name + "_quantized"])
                         if qlinear_node not in self.new_nodes:
                             self.new_nodes.append(qlinear_node)
                         self.quantized_value_map[tensor_name] = QuantizedValue(
                             tensor_name, 
-                            tensor_name + "_quantized", 
+                            qlinear_node.output[0],
                             scale_name, 
                             zp_name, 
                             self.config[node.name]['activation']['dtype'])                        
-                    self.replace_input.append([node, tensor_name, tensor_name + "_quantized"])
+                    self.replace_input.append([node, tensor_name, qlinear_node.output[0]])
  
     def quantize_bias_tensor(self, node):
         input_name, weight_name, bias_name = node.input
-        if self.quantization_params is None or input_name not in self.quantization_params and \
-            input_name not in self.quantized_value_map:
+        if self.quantization_params is None or \
+            input_name not in self.quantization_params or \
+            input_name not in self.quantized_value_map or \
+            (input_name in self.quantized_value_map and \
+            find_by_name(self.quantized_value_map[input_name].scale_name, 
+            self.model.initializer()) is None):
             self._dynamic_quantize_bias(input_name, weight_name + '_scale', bias_name,
                 bias_name + "_quantized")
         else:
-            _, quant_value = self.quantize_bias(bias_name, input_name, weight_name)
+            beta = 1.0
+            if node.op_type in ['Gemm']:
+                beta_attribute = [attr for attr in node.attribute if attr.name == "beta"]
+                if len(beta_attribute):
+                    beta = onnx.helper.get_attribute_value(beta_attribute[0])
+            _, quant_value = self.quantize_bias(bias_name, input_name, weight_name, beta)
             self.model.remove_initializer(find_by_name(bias_name, self.model.initializer()))
             inputs = [quant_value.q_name, quant_value.scale_name, quant_value.zp_name]
-            dequant_node = onnx.helper.make_node("DequantizeLinear", inputs, 
-                [bias_name + '_dequantized'], bias_name + '_DequantizeLinear')
+            axis = None
+            if find_by_name(weight_name + '_DequantizeLinear', self.new_nodes):
+                dq_node = find_by_name(weight_name + '_DequantizeLinear', self.new_nodes)
+                if dq_node.op_type == 'DequantizeLinear' and \
+                    find_by_name('axis', dq_node.attribute):
+                    axis = find_by_name('axis', dq_node.attribute).i
+            dequant_node = make_dquant_node(bias_name + '_DequantizeLinear', inputs, 
+                [bias_name + '_dequantized'], axis)
             self.new_nodes.append(dequant_node)
             self.replace_input.append([find_by_name(node.name, self.model.nodes()), 
                 bias_name, bias_name + '_dequantized'])
 
-    def quantize_bias(self, bias_name, input_name, weight_name, new_node_list=[]):
+    def quantize_bias(self, bias_name, input_name, weight_name, beta=1.0):
         '''
         Quantized the bias. Zero Point == 0 and Scale == Input_Scale * Weight_Scale
         '''
@@ -598,7 +618,7 @@ class Quantizer:
 
         # calcuate scale for bias
 
-        bias_scale = input_scale * weight_scale
+        bias_scale = input_scale * weight_scale * beta
 
         # quantize bias
         quantized_data = (np.asarray(bias_data) / bias_scale).round().astype(np.int32)
@@ -691,7 +711,7 @@ class Quantizer:
                         [weight_name, scale_name, zp_name], [weight_name + "_quantized"])
                 dequant_node = make_dquant_node(weight_name + "_DequantizeLinear",
                             [weight_name + "_quantized", scale_name, zp_name], 
-                            [weight_name + "_dequantized"])
+                            [weight_name + "_dequantized"], axis)
                 self.replace_input.append([node, weight_name, dequant_node.output[0]])
                 self.new_nodes.extend([qlinear_node, dequant_node])
             else:
@@ -701,7 +721,7 @@ class Quantizer:
                                                                                axis)
                 inputs = [q_name, scale_name, zp_name]
                 dequant_node = make_dquant_node(weight_name + '_DequantizeLinear',
-                    [q_name, scale_name, zp_name], [weight_name + "_dequantized"])
+                    [q_name, scale_name, zp_name], [weight_name + "_dequantized"], axis)
                 self.new_nodes.append(dequant_node)
 
                 # Replace weight_name with output of DequantizeLinear

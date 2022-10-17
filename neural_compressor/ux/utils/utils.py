@@ -18,6 +18,7 @@ import json
 import os
 import re
 import socket
+from copy import copy
 from functools import wraps
 from importlib.util import find_spec
 from pathlib import Path
@@ -263,12 +264,14 @@ def get_module_version(module_name: str) -> str:
         f"import {module_name} as module; print(module.__version__)",
     ]
     proc = Proc()
-    proc.run(args=command)
+    proc.run(args=command, ignore_exit_codes=[0, 1])
     if proc.is_ok:
         for line in proc.output:
             version = line.strip()
     proc.remove_logs()
-    if version is None:
+    try:
+        version = str(parse_version(version))
+    except Exception:
         raise ClientErrorException(f"Could not found version of {module_name} module.")
     return version
 
@@ -360,9 +363,18 @@ def load_model_wise_params(framework: str) -> dict:
     return {"model_wise": parameters}
 
 
+def load_metrics_config() -> List[dict]:
+    """Load transforms configs from json."""
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        "configs",
+        "metrics.json",
+    )
+    return _load_json_as_list(json_path)
+
+
 def get_metrics_dict() -> dict:
     """Get metrics list from Neural Compressor and add help messages."""
-    help_dict = load_help_nc_params("metrics")
     metrics = {}
 
     for framework, fw_metrics in registry_metrics.items():
@@ -371,65 +383,52 @@ def get_metrics_dict() -> dict:
             continue
         raw_metric_list = list(fw_metrics.keys()) if fw_metrics else []
         raw_metric_list += ["custom"]
-        metrics_updated = _update_metric_parameters(raw_metric_list)
-        for metric, value in metrics_updated.copy().items():
-            if isinstance(value, dict):
-                for key in value.copy().keys():
-                    for field in ["help", "label"]:
-                        msg_key = f"__{field}__{key}"
-                        metrics_updated[metric][msg_key] = help_dict.get(
-                            metric,
-                            {},
-                        ).get(msg_key, "")
-            metrics_updated[f"__help__{metric}"] = help_dict.get(
-                f"__help__{metric}",
-                "",
-            )
-        metrics.update({inc_framework_name: _parse_help_in_dict(metrics_updated)})
+
+        fw_metrics = []
+
+        metrics_config = load_metrics_config()
+
+        for metric_name in raw_metric_list:
+            if metric_name in [metric_item.get("name", None) for metric_item in metrics_config]:
+                metric_config = None
+                for metric_item in metrics_config:
+                    if metric_item.get("name") == metric_name:
+                        metric_config = metric_item
+                if metric_config is not None:
+                    fw_metrics.append(_update_metric_parameters(metric_config))
+            else:
+                fw_metrics.append(
+                    {
+                        "name": metric_name,
+                        "help": "",
+                        "value": None,
+                    },
+                )
+
+        metrics.update({inc_framework_name: fw_metrics})
 
     return metrics
 
 
-def _update_metric_parameters(metric_list: List[str]) -> Dict[str, Any]:
+def _update_metric_parameters(metric: Dict[str, Any]) -> Dict[str, Any]:
     """Add parameters to metrics."""
-    metrics: Dict[str, Any] = {}
-    for metric in metric_list:
-        if metric == "topk":
-            metrics.update({metric: {"k": [1, 5]}})
-        elif metric == "COCOmAP":
-            annotation_path = os.path.join(WORKDIR_LOCATION, "label_map.yaml")
-            metrics.update({metric: {"anno_path": annotation_path}})
-        elif metric in ["MSE", "RMSE", "MAE"]:
-            metrics.update({metric: {"compare_label": True}})
-        else:
-            metrics.update({metric: None})
-    return metrics
+    updated_metric = copy(metric)
+    metric_name = updated_metric.get("name")
 
+    if isinstance(metric_name, str) and metric_name.startswith("COCOmAP"):
+        annotation_path = os.path.join(WORKDIR_LOCATION, "label_map.yaml")
+        metric_params = updated_metric.get("params", None)
+        if metric_params is None:
+            updated_metric.update({"params": []})
+        for metric_param in metric_params:
+            if metric_param.get("name") == "anno_path":
+                metric_param.update(
+                    {
+                        "value": annotation_path,
+                    },
+                )
 
-def _parse_help_in_dict(data: dict) -> list:
-    parsed_list = []
-    for key, value in data.items():
-        if key.startswith("__help__") or key.startswith("__label__"):
-            continue
-        if isinstance(value, dict):
-            parsed_list.append(
-                {
-                    "name": key,
-                    "help": data.get(f"__help__{key}", ""),
-                    "params": _parse_help_in_dict(value),
-                },
-            )
-        else:
-            item = {
-                "name": key,
-                "help": data.get(f"__help__{key}", ""),
-                "value": value,
-            }
-            label = data.get(f"__label__{key}")
-            if label:
-                item["label"] = label
-            parsed_list.append(item)
-    return parsed_list
+    return updated_metric
 
 
 def load_help_nc_params(parameter: str) -> Dict[str, Any]:
@@ -636,3 +635,25 @@ def export_to_csv(data: List[dict], file: str) -> None:
         writer.writeheader()
         for entry in data:
             writer.writerow(entry)
+
+
+def parse_version(string_version: Optional[str]) -> str:
+    """Parse module version."""
+    if string_version is None:
+        raise InternalException("Missing version to parse.")
+    regex = r"^(?P<major>\d+)\.?(?P<minor>\d+)?\.?(?P<patch>\d+)?\.?(?P<postfix>.*)$"
+    match = re.match(regex, string_version)
+    if match is None:
+        raise InternalException("Could not parse version.")
+    search_result = match.groupdict()
+    version_order = ["major", "minor", "patch"]
+    version_list = []
+    for version_component in version_order:
+        ver = search_result.get(version_component, None)
+        if ver is not None:
+            version_list.append(ver)
+    version = ".".join(version_list)
+
+    if version == "":
+        raise InternalException("Could not parse version.")
+    return version

@@ -27,8 +27,6 @@ class BatchSizeCoder(object):
                 new_line = self.modify(line)
                 self.result.append(new_line)
             else:
-                if line == '' and self.result[-1] == '':
-                    continue
                 self.result.append(line)
         for index, line in enumerate(self.result):
             if index != len(self.result)-1:

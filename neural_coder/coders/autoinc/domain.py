@@ -23,5 +23,7 @@ def determine_domain(path) -> str:
             return 'transformers_trainer'
         else:
             return 'transformers_no_trainer'
+    elif 'onnx.load(' in codes:
+        return 'onnx'
     else:
         return 'random model'

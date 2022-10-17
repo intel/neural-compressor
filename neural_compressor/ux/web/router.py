@@ -38,6 +38,7 @@ from neural_compressor.ux.components.db_manager.db_operations import (
 from neural_compressor.ux.components.file_browser.file_browser import get_directory_entries
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.graph_reader import GraphReader
+from neural_compressor.ux.components.jobs_management import jobs_control_queue, parse_job_id
 from neural_compressor.ux.components.manage_workspace import get_default_path
 from neural_compressor.ux.components.model_zoo.list_models import list_models
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
@@ -74,6 +75,12 @@ class DeferredRoutingDefinition(RoutingDefinition):
     pass
 
 
+class DeferredSubprocessRoutingDefinition(RoutingDefinition):
+    """Routing executed in separate thread and it spawns subprocess."""
+
+    pass
+
+
 class Router:
     """Connector between api.py and components."""
 
@@ -103,13 +110,16 @@ class Router:
             "optimization/add": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.add_optimization,
             ),
+            "optimization/edit": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.edit_optimization,
+            ),
             "optimization/delete": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.delete_optimization,
             ),
             "optimization/list": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.list_optimizations,
             ),
-            "optimization/execute": DeferredRoutingDefinition(execute_optimization),
+            "optimization/execute": DeferredSubprocessRoutingDefinition(execute_optimization),
             "optimization/config.yaml": RealtimeRoutingDefinition(OptimizationService.get_config),
             "optimization/output.log": RealtimeRoutingDefinition(OptimizationService.get_output),
             "optimization/pin_accuracy_benchmark": RealtimeRoutingDefinition(
@@ -121,16 +131,18 @@ class Router:
             "benchmark": RealtimeRoutingDefinition(BenchmarkAPIInterface.get_benchmark_details),
             "benchmark/delete": RealtimeRoutingDefinition(BenchmarkAPIInterface.delete_benchmark),
             "benchmark/add": RealtimeRoutingDefinition(BenchmarkAPIInterface.add_benchmark),
+            "benchmark/edit": RealtimeRoutingDefinition(BenchmarkAPIInterface.edit_benchmark),
             "benchmark/list": RealtimeRoutingDefinition(BenchmarkAPIInterface.list_benchmarks),
-            "benchmark/execute": DeferredRoutingDefinition(execute_benchmark),
+            "benchmark/execute": DeferredSubprocessRoutingDefinition(execute_benchmark),
             "benchmark/config.yaml": RealtimeRoutingDefinition(BenchmarkService.get_config),
             "benchmark/output.log": RealtimeRoutingDefinition(BenchmarkService.get_output),
             "profiling": RealtimeRoutingDefinition(ProfilingAPIInterface.get_profiling_details),
             "profiling/delete": RealtimeRoutingDefinition(ProfilingAPIInterface.delete_profiling),
             "profiling/results/csv": RealtimeRoutingDefinition(ProfilingService.generate_csv),
             "profiling/add": RealtimeRoutingDefinition(ProfilingAPIInterface.add_profiling),
+            "profiling/edit": RealtimeRoutingDefinition(ProfilingAPIInterface.edit_profiling),
             "profiling/list": RealtimeRoutingDefinition(ProfilingAPIInterface.list_profilings),
-            "profiling/execute": DeferredRoutingDefinition(execute_profiling),
+            "profiling/execute": DeferredSubprocessRoutingDefinition(execute_profiling),
             "profiling/config.yaml": RealtimeRoutingDefinition(ProfilingService.get_config),
             "profiling/output.log": RealtimeRoutingDefinition(ProfilingService.get_output),
             "examples/list": RealtimeRoutingDefinition(list_models),
@@ -212,6 +224,23 @@ class Router:
             t = Thread(target=routing_definition.callback, args=(data,))
             t.daemon = True
             t.start()
+            return {"exit_code": 102, "message": "processing"}
+        if isinstance(routing_definition, DeferredSubprocessRoutingDefinition):
+            self._validate_deffered_routing_data(data)
+            target = routing_definition.callback
+            args = (data,)
+            # look for full job_id e.g. optimization_2, benchmark_5
+            for key, val in data.items():
+                if key != "request_id" and "id" in key:
+                    field_name = key.split("_")[0]
+                    job_id = parse_job_id(field_name, val)
+            request_id = data["request_id"]
+            jobs_control_queue.schedule_job(
+                target=target,
+                args=args,
+                job_id=job_id,
+                request_id=request_id,
+            )
             return {"exit_code": 102, "message": "processing"}
         raise ValueError(
             f"Unsupported RoutingDefinition type: {routing_definition.__class__.__name__}",

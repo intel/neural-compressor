@@ -257,6 +257,10 @@ def parse_args():
                         help='loss weights of distillation, should be a list of length 2, '
                         'and sum to 1.0, first for student targets loss weight, '
                         'second for teacher student loss weight.')
+    parser.add_argument("--local_rank", default=-1, type=int, 
+                        help='used for assigning rank to the process in local machine.')
+    parser.add_argument("--no_cuda", action='store_true', 
+                        help='use cpu for training.')
     args = parser.parse_args()
 
     # Sanity checks
@@ -467,7 +471,7 @@ def main():
     args = parse_args()
 
     # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
-    accelerator = Accelerator()
+    accelerator = Accelerator(cpu=args.no_cuda)
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -836,14 +840,32 @@ def main():
                 if os.path.exists(npy_file):
                     teacher_logits = [list(x) for x in np.load(npy_file, allow_pickle=True)]
                 else:
-                    train_dataloader = DataLoader(train_dataset, collate_fn=data_collator, batch_size=args.batch_size)
-                    train_dataloader = accelerator.prepare(train_dataloader)
+                    sampler = None
+                    if accelerator.num_processes > 1:
+                        from transformers.trainer_pt_utils import ShardSampler
+                        sampler = ShardSampler(
+                            train_dataset,
+                            batch_size=args.batch_size,
+                            num_processes=accelerator.num_processes,
+                            process_index=accelerator.process_index,
+                        )
+                    train_dataloader = DataLoader(
+                        train_dataset, collate_fn=data_collator, sampler=sampler, batch_size=args.batch_size
+                    )
                     train_dataloader = tqdm(train_dataloader, desc="Evaluating")
                     teacher_logits = []
                     for step, batch in enumerate(train_dataloader):
+                        batch = move_input_to_device(batch, next(teacher_model.parameters()).device)
                         outputs = teacher_model(**batch).cpu().detach().numpy()
+                        if accelerator.num_processes > 1:
+                            outputs_list = [None for i in range(accelerator.num_processes)]
+                            torch.distributed.all_gather_object(outputs_list, outputs)
+                            outputs = np.concatenate(outputs_list, axis=0)
                         teacher_logits += [[s,e] for s,e in zip(outputs[0::2], outputs[1::2])]
-                    np.save(npy_file, teacher_logits, allow_pickle=True)
+                    if accelerator.num_processes > 1:
+                        teacher_logits = teacher_logits[:len(train_dataset)]
+                    if accelerator.local_process_index in [-1, 0]:
+                        np.save(npy_file, teacher_logits, allow_pickle=True)
                 return train_dataset.add_column('teacher_logits', teacher_logits)
             with torch.no_grad():
                 train_dataset = get_logits(teacher_model, train_dataset)
@@ -934,9 +956,8 @@ def main():
                 if 'teacher_logits' in input_names:
                     input_names.remove('teacher_logits')
                 break
-            model = symbolic_trace(model, input_names=input_names, \
-                                   batch_size=args.batch_size, \
-                                   sequence_length=args.max_seq_length)
+            model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
+                                   batch_size=args.batch_size, sequence_length=args.max_seq_length)
                                    
             from neural_compressor.experimental.scheduler import Scheduler
             from neural_compressor.experimental import Quantization
@@ -954,7 +975,9 @@ def main():
             agent.pruning_func = train_func
             agent.eval_func = eval_func
             model = agent()
-        model.save(args.output_dir)
+        model = common.Model(accelerator.unwrap_model(model.model))
+        if accelerator.local_process_index in [-1, 0]:
+            model.save(args.output_dir)
         # change to framework model for further use
         model = model.model
         

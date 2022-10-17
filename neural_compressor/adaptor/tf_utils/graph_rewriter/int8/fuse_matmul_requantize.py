@@ -83,9 +83,43 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
 
+            weight_node = self.graph_info[Helper.node_name_from_input(new_node.input[1])].node
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
+
+            if max_input_node.op == 'Enter': # pragma: no cover
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node.op == 'Enter': # pragma: no cover
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter': # pragma: no cover
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter': # pragma: no cover
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
 
             if max_filter_node.op == 'Const':
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
@@ -95,9 +129,9 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
                 weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                        weight_node.attr['value'].tensor)
                 bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                        bias_node.attr['value'].tensor)
                 is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
@@ -124,6 +158,9 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
                                         if self.device == 'gpu' else qint32_type
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
                                                 if self.device == 'gpu' else qint32_type))
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
             new_node.attr["Toutput"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
@@ -145,6 +182,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
             self.graph_analyzer.remove_node(quantized_node_name)
 
         return self.graph_analyzer.dump_graph()
+
 class FuseMatMulRequantizeTransformer(GraphRewriterBase):
     """Fuse Quantized MatMul Op with the successor Requantize Op.
     """
@@ -201,9 +239,43 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
             is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
 
+            weight_node = self.graph_info[new_node.input[1]].node
             bias_node = self.graph_info[new_node.input[2]].node
             max_input_node = self.graph_info[last_node.input[-1]].node
             min_input_node = self.graph_info[last_node.input[-2]].node
+
+            if max_input_node.op == 'Enter': # pragma: no cover
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node.op == 'Enter': # pragma: no cover
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter': # pragma: no cover
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter': # pragma: no cover
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
 
             if last_node.op.find('Requantize') != -1 or last_node.op.find('QuantizeV2') != -1:
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
@@ -213,9 +285,9 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
                 weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
+                        weight_node.attr['value'].tensor)
                 bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                        bias_node.attr['value'].tensor)
 
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
@@ -251,6 +323,9 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
                     deq_node_name = self.graph_info[requantize_node_name].outputs[0]
                     deq_node = self.graph_info[deq_node_name].node
                     deq_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
@@ -261,7 +336,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
         return self.graph_analyzer.dump_graph()
 
-class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
+class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
     """Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
     """
     def __init__(self, model, device='cpu'):
@@ -293,10 +368,10 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
 
             quantized_node_op = i[-1][0]
             
-            if "BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
-               and ("Relu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') and \
-                    "LeakyRelu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') and \
-                    "Relu6" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')):
+            # "BiasAdd" + "Add" only supports "Dequantize"
+            attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
+                               .decode('UTF-8', 'ignore').strip() if x.isprintable())
+            if not "BiasAddAdd" in attr_fused_ops:
                 continue
 
             new_node = node_def_pb2.NodeDef()
@@ -324,35 +399,71 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                 new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
 
             top_node_name = Helper.node_name_from_input(quantized_node.input[0])
-            attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
-                               .decode('UTF-8', 'ignore').strip() if x.isprintable())
-            if "BiasAddAdd" in attr_fused_ops:
+            max_filter_node = None
+            min_filter_node = None
+
+            # MatMul + BiasAdd + Add
+            # The Min and Max of non-const weight node are from QuantizeV2's output, not valid nodes.
+            # Add check here for excluding this case.
+            if ":2" not in new_node.input[7]:
                 max_filter_node = self.graph_info[new_node.input[7]].node
+            if ":1" not in new_node.input[6]:
                 min_filter_node = self.graph_info[new_node.input[6]].node
-            else:
-                max_filter_node = self.graph_info[new_node.input[6]].node
-                min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
+            weight_node = self.graph_info[Helper.node_name_from_input(new_node.input[1])].node
             bias_node = self.graph_info[Helper.node_name_from_input(new_node.input[2])].node
-            max_input_node = self.graph_info[last_node.input[-1]].node
-            min_input_node = self.graph_info[last_node.input[-2]].node
+            if not last_node.op == 'QuantizedConcatV2':
+                max_input_node = self.graph_info[last_node.input[-1]].node
+                min_input_node = self.graph_info[last_node.input[-2]].node
             
             type_bias = float32_type
-            if max_filter_node.op == 'Const':
+            if not last_node.op == 'QuantizedConcatV2' and max_input_node.op == 'Enter': # pragma: no cover
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter': # pragma: no cover
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter': # pragma: no cover
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node.op == 'Enter': # pragma: no cover
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
+
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Const' \
+              and weight_node.op == 'Const' and not last_node.op == 'QuantizedConcatV2':
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
                 max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
-                weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
-                bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                weights_tensor = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(bias_node.attr['value'].tensor)
                 is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
 
-                if  -self.eps <= input_range <= self.eps:
+                if -self.eps <= input_range <= self.eps:
                     input_range += self.eps
 
                 if -self.eps <= max_input_value - min_input_value <= self.eps:
@@ -373,39 +484,20 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase):
                 bias_node.attr['value'].tensor.dtype = float32_type \
                                         if self.device == 'gpu' else qint32_type
                 type_bias = float32_type if self.device == 'gpu' else qint32_type
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
             else:
                 type_bias = float32_type
 
             new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=type_bias))
 
-            if "BiasAddAdd" in attr_fused_ops:
-                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Add', b'Dequantize'])
-                Helper.set_attr_type_list(new_node, 'Thost_inputs', [
-                    uint8_type, int8_type, type_bias, float32_type, float32_type, float32_type, 
-                    float32_type, float32_type, float32_type, float32_type
-                    ])
-            else:
-                if "GeluApproximate" in  attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', \
-                                [b'BiasAdd', b'GeluApproximate', b'Dequantize'])
-                elif "GeluExact" in attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'GeluExact', b'Dequantize'])
-                elif "Elu" in attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Elu', b'Dequantize'])
-                elif "Tanh" in attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Tanh', b'Dequantize'])
-                elif "LeakyRelu" in attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu', b'Dequantize'])
-                elif "Relu6" in attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu6', b'Dequantize'])
-                elif "Sigmoid" in attr_fused_ops:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Sigmoid', b'Dequantize'])
-                else:
-                    Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Dequantize'])
-                Helper.set_attr_type_list(new_node, 'Thost_inputs', [
-                    uint8_type, int8_type, type_bias, float32_type, float32_type,
-                    float32_type, float32_type, float32_type, float32_type
-                    ])
+            Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Add', b'Dequantize'])
+            Helper.set_attr_type_list(new_node, 'Thost_inputs', [
+                uint8_type, int8_type, type_bias, float32_type, float32_type, float32_type, 
+                float32_type, float32_type, float32_type, float32_type
+                ])
+
             Helper.set_attr_type_list(new_node, 'Thost_outputs', [float32_type])
             new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
 
@@ -448,12 +540,9 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
         float32_type = dtypes.float32.as_datatype_enum
         qint32_type = dtypes.qint32.as_datatype_enum
 
-        while True:
-            target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-                [["_QuantizedMatMul"], ['Requantize']])
-            if len(target_nodes) == 0:
-                break
-            i = target_nodes[0]
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
+            [["_QuantizedMatMul"], ['Requantize']])
+        for i in target_nodes:
             quantized_node_name = i[0]
             quantized_node = self.graph_info[quantized_node_name].node
             requantize_node_name = i[1]
@@ -462,11 +551,13 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
             requested_output_max_name = requantize_node.input[4]
 
             quantized_node_op = i[-1][0]
-            if ("BiasAdd" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8') \
-               and "Relu" not in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')) or \
-               ("Relu6" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')) or \
-               ("LeakyRelu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8')):
-                break
+            attr_fused_ops = ''.join(x for x in quantized_node.attr["fused_ops"].SerializeToString()\
+                               .decode('UTF-8', 'ignore').strip() if x.isprintable())
+            # "Requantize"
+            # "BiasAdd", "Requantize"
+            # "BiasAdd", "Activation", "Requantize"
+            if "BiasAddAdd" in attr_fused_ops:
+                continue
 
             new_node = node_def_pb2.NodeDef()
 
@@ -480,7 +571,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
             if 'transpose_b' in quantized_node.attr:
                 new_node.attr["transpose_b"].CopyFrom(quantized_node.attr['transpose_b'])
             if 'transpose_a' in quantized_node.attr:
-                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])  
+                new_node.attr["transpose_a"].CopyFrom(quantized_node.attr['transpose_a'])
             if 'T1' in quantized_node.attr:
                 new_node.attr["T1"].CopyFrom(quantized_node.attr['T1'])
             if 'T2' in quantized_node.attr:
@@ -493,23 +584,66 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                 new_node.attr["output_quant_mode"].CopyFrom(quantized_node.attr["output_quant_mode"])
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
-            max_filter_node = self.graph_info[new_node.input[6]].node
-            min_filter_node = self.graph_info[new_node.input[5]].node
+            max_filter_node = None
+            min_filter_node = None
+            # The Min and Max of non-const weight node are from QuantizeV2's output, not valid nodes.
+            # Add check here for excluding this case.
+            if ":2" not in new_node.input[6]:
+                max_filter_node = self.graph_info[new_node.input[6]].node
+            if ":1" not in new_node.input[5]:
+                min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
             is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
-            bias_node = self.graph_info[new_node.input[2]].node
-            max_input_node = self.graph_info[last_node.input[-1]].node
-            min_input_node = self.graph_info[last_node.input[-2]].node
-            if last_node.op.find('_QuantizedMatMul') != -1 or last_node.op.find('QuantizeV2') != -1:
+            weight_node = self.graph_info[new_node.input[1]].node
+            bias_node = None
+            if "BiasAdd" in attr_fused_ops:
+                bias_node = self.graph_info[new_node.input[2]].node
+            if not last_node.op == 'QuantizedConcatV2':
+                max_input_node = self.graph_info[last_node.input[-1]].node
+                min_input_node = self.graph_info[last_node.input[-2]].node
+
+            if not last_node.op == 'QuantizedConcatV2' and max_input_node.op == 'Enter': # pragma: no cover
+                min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
+                max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
+                min_input_parent_node = self.graph_info[min_input_parent_name].node
+                max_input_parent_node = self.graph_info[max_input_parent_name].node
+                if min_input_parent_node.op != 'Const' or max_input_parent_node.op != 'Const':
+                    continue
+                min_input_node = min_input_parent_node
+                max_input_node = max_input_parent_node
+            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter': # pragma: no cover
+                min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
+                max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
+                min_filter_parent_node = self.graph_info[min_filter_parent_name].node
+                max_filter_parent_node = self.graph_info[max_filter_parent_name].node
+                if min_filter_parent_node.op != 'Const' or max_filter_parent_node.op != 'Const':
+                    continue
+                min_filter_node = min_filter_parent_node
+                max_filter_node = max_filter_parent_node
+            if weight_node.op == 'Enter': # pragma: no cover
+                weight_parent_name = Helper.node_name_from_input(weight_node.input[0])
+                weight_parent_node = self.graph_info[weight_parent_name].node
+                if weight_parent_node.op != 'Const':
+                    continue
+                weight_node = weight_parent_node
+            bias_enter_node = None
+            if bias_node and bias_node.op == 'Enter': # pragma: no cover
+                bias_enter_node = bias_node
+                bias_parent_name = Helper.node_name_from_input(bias_node.input[0])
+                bias_parent_node = self.graph_info[bias_parent_name].node
+                if bias_parent_node.op != 'Const':
+                    continue
+                bias_node = bias_parent_node
+
+            if bias_node and (last_node.op.find('_QuantizedMatMul') != -1 or last_node.op.find('QuantizeV2') != -1 \
+               and max_filter_node and min_filter_node):
                 min_input_value = (min_input_node.attr['value'].tensor.float_val)[0]
                 max_input_value = (max_input_node.attr['value'].tensor.float_val)[0]
                 max_filter_value = (max_filter_node.attr['value'].tensor.float_val)[0]
                 min_filter_value = (min_filter_node.attr['value'].tensor.float_val)[0]
 
-                weights_tensor = tensor_util.MakeNdarray(
-                        self.graph_info[new_node.input[1]].node.attr['value'].tensor)
-                bias_tensor = tensor_util.MakeNdarray(
-                    self.graph_info[new_node.input[2]].node.attr['value'].tensor)
+                weights_tensor = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+                bias_tensor = tensor_util.MakeNdarray(bias_node.attr['value'].tensor)
 
                 input_range = max_input_value - min_input_value if is_min_first else max(
                         abs(max_input_value), abs(min_input_value))
@@ -534,14 +668,15 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
 
                 bias_node.attr['value'].tensor.dtype = float32_type \
                                         if self.device == 'gpu' else qint32_type
+                if bias_enter_node:
+                    bias_enter_node.attr["T"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
+                                                if self.device == 'gpu' else qint32_type))
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type \
                                                 if self.device == 'gpu' else qint32_type))
 
-                #TODO enabled below commit once the graph refactor pre_optimize commmitted.
-                if "Relu" in quantized_node.attr["fused_ops"].SerializeToString().decode('UTF-8'):
-                    deq_node_name = self.graph_info[requantize_node_name].outputs[0]
-                    deq_node = self.graph_info[deq_node_name].node
-                    deq_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+                deq_node_name = self.graph_info[requantize_node_name].outputs[0]
+                deq_node = self.graph_info[deq_node_name].node
+                deq_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
 
                 Helper.set_attr_type_list(new_node, "Thost_inputs", [
                                         uint8_type, int8_type,
@@ -550,15 +685,44 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                                         float32_type, float32_type, float32_type])
             else:
                 new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=float32_type))
-                Helper.set_attr_type_list(new_node, "Thost_inputs", [
-                                        uint8_type, int8_type, float32_type,
-                                        float32_type, float32_type, float32_type,
-                                        float32_type, float32_type, float32_type])
+                deq_node_name = self.graph_info[requantize_node_name].outputs[0]
+                deq_node = self.graph_info[deq_node_name].node
+                deq_node.attr['T'].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
+                if bias_node:
+                    Helper.set_attr_type_list(new_node, "Thost_inputs", [
+                                            uint8_type, int8_type, float32_type,
+                                            float32_type, float32_type, float32_type,
+                                            float32_type, float32_type, float32_type])
+                else:
+                    Helper.set_attr_type_list(new_node, "Thost_inputs", [
+                                            uint8_type, int8_type,
+                                            float32_type, float32_type, float32_type,
+                                            float32_type, float32_type, float32_type])
 
             Helper.set_attr_type_list(new_node, 'Thost_outputs', [
                                       uint8_type, float32_type, float32_type])
 
-            Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Requantize'])
+            if "GeluApproximate" in  attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', \
+                            [b'BiasAdd', b'GeluApproximate', b'Requantize'])
+            elif "GeluExact" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'GeluExact', b'Requantize'])
+            elif "Elu" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Elu', b'Requantize'])
+            elif "LeakyRelu" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu', b'Requantize'])
+            elif "Relu6" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu6', b'Requantize'])
+            elif "Tanh" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Tanh', b'Requantize'])
+            elif "Sigmoid" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Sigmoid', b'Requantize'])
+            elif "Relu" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Relu', b'Requantize'])
+            elif "BiasAdd" in attr_fused_ops:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'BiasAdd', b'Requantize'])
+            else:
+                Helper.set_attr_string_list(new_node, 'fused_ops', [b'Requantize'])
             new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=uint8_type))
 
             self.graph_analyzer.replace_single_node(

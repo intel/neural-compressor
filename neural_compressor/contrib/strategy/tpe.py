@@ -24,6 +24,10 @@ import hyperopt as hpo
 from hyperopt import fmin, hp, STATUS_OK, Trials
 from neural_compressor.utils import logger
 from neural_compressor.strategy.strategy import strategy_registry, TuneStrategy
+from collections import OrderedDict
+from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler
+from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
+
 
 try:
     import pandas as pd
@@ -164,8 +168,43 @@ class TpeTuneStrategy(TuneStrategy):
                      "best_result_file: {}".format(best_result_file))
         if Path(trials_file).exists():
             os.remove(trials_file)
-        status = True;
+        status = True
         tuning_history = self._find_self_tuning_history()
+
+        from copy import deepcopy
+        tuning_space = self.tuning_space
+        initial_op_tuning_cfg = {}
+        for item in tuning_space.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        # step1. collect the ops that support static and dynamic
+        quant_mode_wise_items = OrderedDict()
+        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        pre_items = set()
+        for quant_mode in query_order:
+            items = tuning_space.query_items_by_quant_mode(quant_mode)
+            filtered_items = [item for item in items if item not in pre_items]
+            pre_items = pre_items.union(set(items))
+            quant_mode_wise_items[quant_mode] = filtered_items
+
+        def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+            for item in items_lst:
+                op_item_dtype_dict[item.name] = target_quant_mode
+
+        op_item_dtype_dict = OrderedDict()
+        for quant_mode, quant_mode_items in quant_mode_wise_items.items():
+            initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
+        op_wise_pool = OpWiseTuningSampler(tuning_space, [], [], 
+                                           op_item_dtype_dict, initial_op_tuning_cfg)
+        self.op_configs = op_wise_pool.get_opwise_candidate()
+        self.opwise_tune_cfgs = {}
+        for key, val in self.op_configs.items():
+            self.opwise_tune_cfgs[key[0]] =val
+        self.opwise_tune_cfgs['calib_sampling_size'] = \
+            self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+
         if tuning_history and not self.warm_start:
             # prepare loss function scaling (best result from basic can be used)
             best_lat, worse_acc_loss = 0, 0
@@ -278,29 +317,16 @@ class TpeTuneStrategy(TuneStrategy):
 
     def object_evaluation(self, tune_cfg, model):
         # check if config was alredy evaluated
-        op_cfgs = {}
-        op_cfgs['calib_iteration'] = int(self.calib_iter[0])
-        op_cfgs['op'] = {}
-        for param, configs in tune_cfg.items():
-            op_cfgs['op'][(param)] = configs
-        history = self._find_history(op_cfgs)
-        if history:
-            self.last_tune_result = history['tune_result']
-            self.last_qmodel = None
-            self.cfg_evaluated = True
-            return history['result']
-
+        op_cfgs = self._tune_cfg_converter(tune_cfg)
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
         self.last_tune_result = self._evaluate(self.last_qmodel)
         logger.info("The last tune result is {}.".format(
             (self.last_tune_result[0], self.last_tune_result[1][0])))
-
         saved_tune_cfg = copy.deepcopy(op_cfgs)
         saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-
         # prepare result
         result = self._compute_metrics(
-            tune_cfg,
+            op_cfgs['op'],
             self.last_tune_result[0],
             self.last_tune_result[1][0])
         result['source'] = 'tpe'

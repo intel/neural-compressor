@@ -80,7 +80,7 @@ def parse_args():
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')
-    parser.add_argument('--warmup-inference', type=int, default=10, help='warmup for latency')                    
+    parser.add_argument('--warmup-inference', type=int, default=10, help='warmup for latency')
     parser.add_argument('--inference-iters', type=int, default=100,
                         help='number of iterations for inference')
     return parser.parse_args()
@@ -105,13 +105,13 @@ def dboxes300_coco():
 
 
 def lr_warmup(optim, wb, iter_num, base_lr, args):
-	if iter_num < wb:
-		# mlperf warmup rule
-		warmup_step = base_lr / (wb * (2 ** args.warmup_factor))
-		new_lr = base_lr - (wb - iter_num) * warmup_step
+    if iter_num < wb:
+        # mlperf warmup rule
+        warmup_step = base_lr / (wb * (2 ** args.warmup_factor))
+        new_lr = base_lr - (wb - iter_num) * warmup_step
 
-		for param_group in optim.param_groups:
-			param_group['lr'] = new_lr
+        for param_group in optim.param_groups:
+            param_group['lr'] = new_lr
 
 def train300_mlperf_coco(args):
     global torch
@@ -205,7 +205,7 @@ def train300_mlperf_coco(args):
     else:
         N_gpu = 1
 
-	# parallelize
+# parallelize
     if args.distributed:
         ssd300 = DDP(ssd300)
 
@@ -230,7 +230,7 @@ def train300_mlperf_coco(args):
         if use_cuda:
             model.cuda()
         ret = []
-        
+
 
         overlap_threshold = 0.50
         nms_max_detections = 200
@@ -251,7 +251,7 @@ def train300_mlperf_coco(args):
                     results = encoder.decode_batch(ploc, plabel,
                                                 overlap_threshold,
                                                 nms_max_detections,
-                                                nms_valid_thresh=nms_valid_thresh)    
+                                                nms_valid_thresh=nms_valid_thresh)
                 except:
                     #raise
                     print("")
@@ -274,7 +274,7 @@ def train300_mlperf_coco(args):
                                             inv_map[label_]])
 
             if args.log_interval and not (nbatch+1) % args.log_interval:
-                    print("Completed inference on batch: {}".format(nbatch+1))
+                print("Completed inference on batch: {}".format(nbatch+1))
 
             if args.benchmark and nbatch >= args.inference_iters:
                 throughput = (args.inference_iters+1-args.warmup_inference)/inference_time
@@ -297,7 +297,7 @@ def train300_mlperf_coco(args):
             return
 
         print("Current AP: {:.5f} AP goal: {:.5f}".format(E.stats[0], threshold))
-        return current_accuracy 
+        return current_accuracy
 
     if args.tune:
         def training_func_for_nc(model):
@@ -406,12 +406,13 @@ def train300_mlperf_coco(args):
         ssd300.eval()
         if args.int8:
             from neural_compressor.utils.pytorch import load
-            new_model = load(
-                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), ssd300)
+            new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
+                             ssd300,
+                             dataloader=train_dataloader)
         else:
             new_model = ssd300
         eval_func(new_model)
-        return            
+        return
 
     return False
 

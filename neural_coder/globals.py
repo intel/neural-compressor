@@ -20,6 +20,9 @@ consider_imports = True
 # target batch size for feature of changing PyTorch batch size
 target_batch_size = 1
 
+# mark for successful batch size change
+batch_size_changed = False
+
 # number of benchmark iteration for feature of PyTorch benchmark
 num_benchmark_iteration = 30
 
@@ -65,6 +68,7 @@ def reset_globals():
 
     global list_calib_dataloader_name
     global list_eval_func_lines
+    global list_eval_func_name
 
     list_code_path = []
     list_code_line_instance = []  # list of CodeLine instances
@@ -95,3 +99,4 @@ def reset_globals():
 
     list_calib_dataloader_name = []
     list_eval_func_lines = []
+    list_eval_func_name = []

@@ -23,47 +23,40 @@
     valid_mixed_precisions: []
 
   ops: &common_ops
-    int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', #'FusedBatchNorm', 'FusedBatchNormV2','FusedBatchNormV3',
-           'MatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
-    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
-    bf16: ['Conv2D', 'Conv2DBackpropFilter', 'Conv2DBackpropInput', 'Conv3D', 'Conv3DBackpropFilterV2',
-           'Conv3DBackpropInputV2', 'DepthwiseConv2dNative', 'DepthwiseConv2dNativeBackpropFilter',
-           'DepthwiseConv2dNativeBackpropInput', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', # allow_list
-           'Add', 'AddN', 'AddV2', 'AvgPool', 'AvgPool3D', 'AvgPool3DGrad', 'AvgPoolGrad', 'BiasAdd',
-           'BiasAddGrad', 'BiasAddV1', 'FusedBatchNormV2', 'FusedBatchNormGradV2', 'FusedBatchNormV3',
-           'FusedBatchNormGradV3', 'LeakyRelu', 'LeakyReluGrad', 'Mul', 'Sub', 'Elu', 'EluGrad', 'FloorDiv',
-           '_FusedBatchNormEx', 'Log', 'Log1p', 'LogSoftmax', 'Prod', 'RealDiv', 'Reciprocal', 'Selu',
-           'SeluGrad', 'Sigmoid', 'SigmoidGrad', 'Softmax', 'Softplus', 'SoftplusGrad', 'Softsign',
-           'SoftsignGrad', 'Sqrt', 'Tanh', 'TanhGrad', #infer_list
-           'Abs', 'ArgMax', 'ArgMin', 'BatchToSpace', 'BatchToSpaceND', 'BroadcastTo', 'Ceil', 'CheckNumerics',
-           'ClipByValue', 'Concat', 'ConcatV2', 'DepthToSpace', 'DynamicPartition', 'DynamicStitch',
-           'EnsureShape', 'Enter', #'Range',
-           'Equal', 'Exit', 'ExpandDims', 'Fill', 'Floor',
-            'Gather', 'GatherNd', 'GatherV2', 'Greater', 'GreaterEqual',
-           'Identity', 'IsFinite', 'IsInf', 'IsNan', 'Less', 'LessEqual',
-           'Max', 'Maximum', 'MaxPool', 'MaxPool3D', 'MaxPool3DGrad', 'MaxPoolGrad', 'MaxPoolGradGrad',
-           'MaxPoolGradGradV2', 'MaxPoolGradV2', 'MaxPoolV2', 'Merge', 'Min', 'Minimum', 'MirrorPad', 'MirrorPadGrad',
-           'Neg', 'NextIteration', 'NotEqual', 'OnesLike', 'Pack', 'Pad', 'PadV2', 'PreventGradient', 'Rank',
-           'Relu', 'Relu6', 'Relu6Grad', 'ReluGrad', 'Reshape',
-           'ResizeNearestNeighbor', 'ResizeNearestNeighborGrad',
-           'Reverse', 'ReverseSequence', 'ReverseV2', #'Round',
-           'Select', 'SelectV2', 'Shape', 'ShapeN', 'Sign',
-           'Slice', 'Snapshot', 'SpaceToBatch', 'SpaceToBatchND', 'SpaceToDepth', 'Split', 'SplitV', 'Squeeze',
-           'StopGradient', 'StridedSlice', 'StridedSliceGrad', 'Switch',
-           'Tile', 'TopK', 'TopKV2', 'Transpose', 'Where', 'Unpack', 'ZerosLike']  #clear_list
+    int8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'FusedBatchNorm', 'FusedBatchNormV2','FusedBatchNormV3',
+           'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+    uint8: ['Conv2D', 'Conv3D', 'DepthwiseConv2dNative', 'MatMul', 'BatchMatMul', 'BatchMatMulV2', 'ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool']
+    bf16: ["Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
+           "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
+           "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", # allow_list
+           "Add", "AddN", "AddV2", "AvgPool", "AvgPool3D", "AvgPool3DGrad", "AvgPoolGrad", "BiasAdd", "BiasAddGrad", "BiasAddV1",
+           "Erf", "FusedBatchNormV2", "FusedBatchNormGradV2", "FusedBatchNormV3", "FusedBatchNormGradV3", "LeakyRelu", "LeakyReluGrad",
+           "Mul", "Sub", "Elu", "EluGrad", "FloorDiv", "_FusedBatchNormEx", "Log", "Log1p", "LogSoftmax", "Prod", "RealDiv", "Reciprocal",
+           "Selu", "SeluGrad", "Sigmoid", "SigmoidGrad", "Softmax", "Softplus", "SoftplusGrad", "Softsign", "SoftsignGrad", "Sqrt",
+           "Tanh", "TanhGrad", #infer_list
+           "Abs", "ArgMax","ArgMin","BatchToSpace","BatchToSpaceND","BroadcastTo","Ceil","CheckNumerics","ClipByValue","Concat","ConcatV2",
+           "DepthToSpace","DynamicPartition","DynamicStitch","EnsureShape","Enter","Equal","Exit","ExpandDims","Fill","Floor","Gather",
+           "GatherNd","GatherV2","Greater","GreaterEqual","Identity","IsFinite","IsInf","IsNan","Less","LessEqual","Max","Maximum","MaxPool",
+           "MaxPool3D","MaxPool3DGrad","MaxPoolGrad","MaxPoolGradGrad","MaxPoolGradGradV2","MaxPoolGradV2","MaxPoolV2","Merge","Min","Minimum",
+           "MirrorPad","MirrorPadGrad","Neg","NextIteration","NotEqual","OnesLike","Pack","Pad","PadV2","PreventGradient","Rank","Relu","Relu6",
+           "Relu6Grad","ReluGrad","Reshape","ResizeNearestNeighbor","ResizeNearestNeighborGrad","Reverse","ReverseSequence","ReverseV2","Round",
+           "Select","SelectV2","Shape","ShapeN","Sign","Slice","Snapshot","SpaceToBatch","SpaceToBatchND","SpaceToDepth","Split","SplitV","Squeeze",
+           "StopGradient","StridedSlice","StridedSliceGrad","Switch","Tile","TopK","TopKV2","Transpose","Where","Unpack","ZerosLike" #clear list
+           ]
     fp32: ['*'] # '*' means all op types
 
   capabilities: &common_capabilities
     int8: &ref_2_4_int8 {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -71,7 +64,8 @@
                     },
           'FusedBatchNormV3': {
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -79,13 +73,14 @@
                     },
           'Conv3D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -93,19 +88,20 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
                     },
-          'BatchMatMulV2': {
+          'BatchMatMul': {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -114,6 +110,21 @@
                         },
             'activation': {
                         'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'BatchMatMulV2': {
+            'weight': {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -121,7 +132,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -132,13 +144,14 @@
     uint8: &ref_2_4_uint8 {
           'Conv2D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel','per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -146,13 +159,14 @@
                     },
           'Conv3D': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel', 'per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax', 'kl']
@@ -160,19 +174,20 @@
                     },
           'MatMul': {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         }
                     },
-          'BatchMatMulV2': {
+          'BatchMatMul': {
             'weight': {
                         'dtype': ['int8', 'fp32'],
                         'scheme': ['sym'],
@@ -180,7 +195,22 @@
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['int8', 'fp32'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'BatchMatMulV2': {
+            'weight': {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -188,7 +218,8 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
+                        'quant_mode': 'static',
                         'algorithm': ['minmax'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor']
@@ -219,7 +250,11 @@
         'Dequantize + Conv2D + BiasAdd + Relu6 + QuantizeV2',
         'Dequantize + Conv2D + Relu6 + QuantizeV2',
         'Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Add + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + AddV2 + LeakyRelu + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2',
+        'Dequantize + Conv2D + Sigmoid + QuantizeV2',
         'Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + Add + QuantizeV2',
@@ -247,7 +282,7 @@
         'Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
-        #'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2'
+        'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2'
         ]
     uint8: [
         'Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2',
@@ -271,16 +306,40 @@
         'Dequantize + Conv2D + BiasAdd + QuantizeV2',
         'Dequantize + Conv2D + Add + Add + Relu + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2',
-        'Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2', 
+        'Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + Relu + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
-        'Dequantize + MatMul + BiasAdd + Relu + QuantizeV2',
         'Dequantize + MatMul + BiasAdd + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Add + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + AddV2 + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Relu + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Relu6 + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + LeakyRelu + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Gelu + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Elu + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Tanh + QuantizeV2',
+        'Dequantize + MatMul + BiasAdd + Sigmoid + QuantizeV2',
+        'Dequantize + MatMul + Add + QuantizeV2',
+        'Dequantize + MatMul + AddV2 + QuantizeV2',
         'Dequantize + MatMul + Relu + QuantizeV2',
-        'Dequantize + BatchMatMulV2',
-        'Dequantize + BatchMatMulV2 + Mul + Add',
+        'Dequantize + MatMul + Relu6 + QuantizeV2',
+        'Dequantize + MatMul + LeakyRelu + QuantizeV2',
+        'Dequantize + MatMul + Gelu + QuantizeV2',
+        'Dequantize + MatMul + Elu + QuantizeV2',
+        'Dequantize + MatMul + Tanh + QuantizeV2',
+        'Dequantize + MatMul + Sigmoid + QuantizeV2',
+        'Dequantize + BatchMatMul + Mul + QuantizeV2',
+        'Dequantize + BatchMatMulV2 + Mul + QuantizeV2',
+        'Dequantize + BatchMatMul + Add + QuantizeV2',
+        'Dequantize + BatchMatMulV2 + Add + QuantizeV2',
+        'Dequantize + BatchMatMul + AddV2 + QuantizeV2',
+        'Dequantize + BatchMatMulV2 + AddV2 + QuantizeV2',
+        'Dequantize + BatchMatMul + Mul + Add + QuantizeV2',
+        'Dequantize + BatchMatMulV2 + Mul + Add + QuantizeV2',
+        'Dequantize + BatchMatMul + Mul + AddV2 + QuantizeV2',
+        'Dequantize + BatchMatMulV2 + Mul + AddV2 + QuantizeV2',
         'Dequantize + Conv3D + AddV2 + AddV2 + Relu + QuantizeV2',
         'Dequantize + Conv3D + Add + Relu + QuantizeV2',
         'Dequantize + Conv3D + AddV2 + Relu + QuantizeV2',
@@ -290,6 +349,7 @@
         'Dequantize + Conv3D + AddV2 + Relu6 + QuantizeV2',
         'Dequantize + Conv3D + Eelu + QuantizeV2',
         'Dequantize + Conv3D + LeakyRelu + QuantizeV2'
+
   ]
 
   grappler_optimization: &common_grappler_optimization

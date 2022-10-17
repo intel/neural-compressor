@@ -38,7 +38,7 @@ def optimize_pt_script(
     if optimization.output_precision == "int8 static quantization":
         enable(
             code=copy_model_path,
-            features=["pytorch_inc_static_quant"],
+            features=["pytorch_inc_static_quant_fx"],
             overwrite=False,
             save_patch_path=optimization.workdir + "/",
         )

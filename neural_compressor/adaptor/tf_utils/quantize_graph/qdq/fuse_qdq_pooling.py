@@ -65,7 +65,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.add_output_graph_node(quantized_pool_node)
                 deq_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
                 self._intel_cpu_add_dequantize_result_node(
-                    quantized_op_name, node.name, dtype=deq_type)
+                    quantized_op_name, node.name, dtype=deq_type, performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -108,14 +108,14 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph
+                return self.input_graph, []
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
-            return self.output_graph
+            return self.output_graph, []
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph
+        return self.input_graph, []

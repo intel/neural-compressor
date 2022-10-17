@@ -129,6 +129,17 @@ class TestConfig(unittest.TestCase):
                     },
                 },
             },
+            "mixed_precision": {
+                "precisions": "bf16",
+                "op_wise": {
+                    "weight": {
+                        "dtype": "bf16",
+                    },
+                    "activation": {
+                        "dtype": "fp32",
+                    },
+                },
+            },
             "pruning": {
                 "train": {
                     "optimizer": {
@@ -554,6 +565,17 @@ class TestConfig(unittest.TestCase):
                 },
                 "graph_optimization": {
                     "precisions": "bf16,fp32",
+                    "op_wise": {
+                        "weight": {
+                            "dtype": "bf16",
+                        },
+                        "activation": {
+                            "dtype": "fp32",
+                        },
+                    },
+                },
+                "mixed_precision": {
+                    "precisions": "bf16",
                     "op_wise": {
                         "weight": {
                             "dtype": "bf16",
@@ -1317,7 +1339,8 @@ class TestConfig(unittest.TestCase):
 
         config.set_optimization_precision("framework_foo", "precision2")
 
-        self.assertEqual("precision2", config.graph_optimization.precisions)
+        self.assertIsNone(config.graph_optimization)
+        self.assertIsNone(config.mixed_precision)
         mocked_load_precisions_config.assert_called_once()
 
     def test_load(self) -> None:

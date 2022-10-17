@@ -23,16 +23,19 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
+
 class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
     """Fuse Pad op into Conv2D
     Pad + Conv2D --> Conv2D
     """
 
-    def __init__(self, model, excluded_op_names, inputs, cfg):
+    def __init__(self, model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False):
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs
         self.cfg = cfg
+        self.new_api = new_api
+        self.itex_qdq_mode = itex_qdq_mode
 
     def do_transformation(self):
         cur_graph = GraphAnalyzer()
@@ -41,7 +44,7 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
 
         target_nodes = cur_graph.query_fusion_pattern_nodes(
-            [["Pad"], ["Conv2D"], ('BiasAdd', 'Add', 'AddV2')])
+            [["Pad"], ["Conv2D", "DepthwiseConv2dNative"], ('BiasAdd', 'Add', 'AddV2')])
 
         for node_combination in target_nodes:
             conv_name = node_combination[1]
@@ -71,8 +74,13 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             padding_tensor = tensor_util.MakeNdarray(
                 graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
-            enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
+            if self.itex_qdq_mode:
+                enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
                                                 version1_gt_version2(tf.version.VERSION, '2.7'))
+            else:
+                enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or self.new_api)
+
+
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
             cur_graph.remove_node_with_single_input_output(pad_node.name)
@@ -80,8 +88,14 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             conv_node = graph_info[node_combination[1]].node
             # Helper.set_attr_int_list(conv_node, "padding_list", padding_tensor)
             # only when padding attr is explicit, the explicit_paddings is not empty
-            if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
-                Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
-                Helper.set_attr_int_list(conv_node, "explicit_paddings", padding_tensor)
+
+            if self.itex_qdq_mode:
+                if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
+                    Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
+                    Helper.set_attr_int_list(conv_node, "explicit_paddings", padding_tensor)
+            else:
+                if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover
+                    Helper.set_attr_string(conv_node, 'padding', b'EXPLICIT')
+                    Helper.set_attr_int_list(conv_node, "explicit_paddings", padding_tensor)
 
         return cur_graph.dump_graph()

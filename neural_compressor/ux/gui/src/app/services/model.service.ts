@@ -33,11 +33,14 @@ export class ModelService {
   openDatasetDialog$: Subject<boolean> = new Subject<boolean>();
   optimizationCreated$: Subject<boolean> = new Subject<boolean>();
   benchmarkCreated$: Subject<boolean> = new Subject<boolean>();
-  projectChanged$: Subject<{}> = new Subject<{}>();
+  projectChanged$: Subject<any> = new Subject<any>();
   getNodeDetails$: Subject<string> = new Subject<string>();
 
   token;
-  systemInfo = {};
+  systemInfo: {
+    cores_per_socket: number;
+    sockets: number;
+  };
 
   constructor(
     private http: HttpClient,
@@ -56,7 +59,10 @@ export class ModelService {
     this.http.get(
       this.baseUrl + 'api/system_info'
     ).subscribe(
-      resp => {
+      (resp: {
+        cores_per_socket: number;
+        sockets: number;
+      }) => {
         this.systemInfo = resp;
       },
       error => {
@@ -68,7 +74,7 @@ export class ModelService {
   getDefaultPath(name: string) {
     return this.http.post(
       this.baseUrl + 'api/get_default_path',
-      { name: name }
+      { name }
     );
   }
 
@@ -89,8 +95,8 @@ export class ModelService {
       this.baseUrl + 'api/model/graph/highlight_pattern',
       {
         path: [path],
-        op_name: op_name,
-        pattern: pattern
+        op_name,
+        pattern
       }
     );
   }
@@ -99,16 +105,16 @@ export class ModelService {
     return this.http.get(this.baseUrl + 'api/dict/' + param);
   }
 
-  getDictionaryWithParam(path: string, paramName: string, param: {}) {
+  getDictionaryWithParam(path: string, paramName: string, param: any) {
     return this.http.post(this.baseUrl + 'api/dict/' + path + '/' + paramName, param);
   }
 
-  getPossibleValues(param: string, config?: {}) {
+  getPossibleValues(param: string, config?: any) {
     return this.http.post(
       this.baseUrl + 'api/get_possible_values',
       {
-        param: param,
-        config: config
+        param,
+        config
       }
     );
   }
@@ -124,7 +130,7 @@ export class ModelService {
     return this.http.get(this.baseUrl + 'api/filesystem', {
       params: {
         path: path + '/',
-        filter: filter
+        filter
       }
     });
   }
@@ -142,7 +148,7 @@ export class ModelService {
   }
 
   getProjectDetails(id) {
-    return this.http.post(this.baseUrl + 'api/project', { id: id });
+    return this.http.post(this.baseUrl + 'api/project', { id });
   }
 
   createProject(newProject) {
@@ -165,13 +171,13 @@ export class ModelService {
   }
 
   getDatasetDetails(id) {
-    return this.http.post(this.baseUrl + 'api/dataset', { id: id });
+    return this.http.post(this.baseUrl + 'api/dataset', { id });
   }
 
   getPredefinedDatasets(framework: FrameworkName, domain: DomainName, domainFlavour: DomainFlavourName) {
     return this.http.post(this.baseUrl + 'api/dataset/predefined', {
-      framework: framework,
-      domain: domain,
+      framework,
+      domain,
       domain_flavour: domainFlavour
     });
   }
@@ -185,7 +191,7 @@ export class ModelService {
   }
 
   getOptimizationDetails(id) {
-    return this.http.post(this.baseUrl + 'api/optimization', { id: id });
+    return this.http.post(this.baseUrl + 'api/optimization', { id });
   }
 
   addOptimization(optimization) {
@@ -199,6 +205,13 @@ export class ModelService {
         request_id: requestId,
         optimization_id: optimizationId,
       }
+    );
+  }
+
+  editOptimization(details: any) {
+    return this.http.post(
+      this.baseUrl + 'api/optimization/edit',
+      details
     );
   }
 
@@ -220,8 +233,8 @@ export class ModelService {
 
   addNotes(id, notes) {
     return this.http.post(this.baseUrl + 'api/project/note', {
-      id: id,
-      notes: notes
+      id,
+      notes
     });
   }
 
@@ -238,7 +251,7 @@ export class ModelService {
   }
 
   getBenchmarkDetails(id) {
-    return this.http.post(this.baseUrl + 'api/benchmark', { id: id });
+    return this.http.post(this.baseUrl + 'api/benchmark', { id });
   }
 
   executeBenchmark(benchmarkId, requestId) {
@@ -251,6 +264,13 @@ export class ModelService {
     );
   }
 
+  editBenchmark(details: any) {
+    return this.http.post(
+      this.baseUrl + 'api/benchmark/edit',
+      details
+    );
+  }
+
   addProfiling(profiling) {
     return this.http.post(this.baseUrl + 'api/profiling/add', profiling);
   }
@@ -260,7 +280,7 @@ export class ModelService {
   }
 
   getProfilingDetails(id) {
-    return this.http.post(this.baseUrl + 'api/profiling', { id: id });
+    return this.http.post(this.baseUrl + 'api/profiling', { id });
   }
 
   executeProfiling(profilingId, requestId) {
@@ -270,6 +290,13 @@ export class ModelService {
         profiling_id: profilingId,
         request_id: requestId,
       }
+    );
+  }
+
+  editProfiling(details: any) {
+    return this.http.post(
+      this.baseUrl + 'api/profiling/edit',
+      details
     );
   }
 
@@ -293,8 +320,8 @@ export class ModelService {
     return this.http.post(
       this.baseUrl + `api/${what}/delete`,
       {
-        id: id,
-        name: name
+        id,
+        name
       }
     );
   }
@@ -303,8 +330,8 @@ export class ModelService {
     return this.http.post(
       this.baseUrl + `api/diagnosis/op_list`,
       {
-        project_id: project_id,
-        model_id: model_id
+        project_id,
+        model_id
       }
     );
   }
@@ -313,9 +340,9 @@ export class ModelService {
     return this.http.post(
       this.baseUrl + `api/diagnosis/op_details`,
       {
-        project_id: project_id,
-        model_id: model_id,
-        op_name: op_name
+        project_id,
+        model_id,
+        op_name
       }
     );
   }
@@ -331,7 +358,7 @@ export class ModelService {
     return this.http.post(
       this.baseUrl + `api/diagnosis/model_wise_params`,
       {
-        optimization_id: optimization_id
+        optimization_id
       }
     );
   }
@@ -340,10 +367,10 @@ export class ModelService {
     return this.http.post(
       this.baseUrl + `api/diagnosis/histogram`,
       {
-        project_id: project_id,
-        model_id: model_id,
-        op_name: op_name,
-        type: type
+        project_id,
+        model_id,
+        op_name,
+        type
 
       }
     );

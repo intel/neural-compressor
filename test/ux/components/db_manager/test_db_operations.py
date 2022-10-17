@@ -105,8 +105,15 @@ class TestDatasetAPIInterface(unittest.TestCase):
                     },
                 ],
             },
-            "metric": "COCOmAP",
-            "metric_param": {},
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "output_index_mapping": {
+                    "boxes": 1,
+                    "classes": 3,
+                    "num_detections": 0,
+                    "scores": 2,
+                },
+            },
         }
         self.assertDictEqual(actual, expected)
 

@@ -77,7 +77,7 @@ class GraphAnalyzer():
             return True
         elif op_type in ("Conv3D", "Conv2D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                          "MaxPool", "MaxPool3D", "Requantize", "AvgPool", "Pad", "CropAndResize", "Dequantize",
-                         "Mean", "MatMul", "FusedBatchNormV3"):
+                         "Mean", "MatMul", "FusedBatchNormV3", "_MklFusedInstanceNorm"):
             return self._has_positive_input(
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(
                     start_node.input[0])].node)
@@ -106,7 +106,7 @@ class GraphAnalyzer():
         """
         input_node_names = []
         output_node_names = []
-        unlikely_output_types = ['Const', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
+        unlikely_output_types = ['Const', 'HostConst', 'Assign', 'NoOp', 'Parameter', 'Assert', 'save',
                                  'global_step', 'read', 'switch', 'cond', 'train',
                                  'init_ops', '[A-Za-z]+Dataset']
         unlikely_input_types = ['FIFOQueueV2', 'QueueDequeueV2', 'QueueDequeueUpToV2',
@@ -121,7 +121,7 @@ class GraphAnalyzer():
                         exclude_input_names += i.outputs
                     else:
                         extra_input_names.append(i.node.name)
-            if i.node.op == 'Const':
+            if i.node.op in ['Const', 'HostConst']:
                 continue
             if not i.node.input and not i.outputs:
                 logger.debug("Skip isolated node {}.".format(i.node.name))
@@ -581,6 +581,44 @@ class GraphAnalyzer():
 
         return output_graph_def
 
+    def get_frame_info(self):
+        from collections import OrderedDict
+        self.parent_frame_details = OrderedDict()
+        input_node_names, _ = self.get_graph_input_output()
+
+        traverse_list = copy.deepcopy(input_node_names)
+        visited = []
+
+        while traverse_list:
+            node_name = traverse_list.pop(0)
+            node_details = self.node_name_details[node_name]
+
+            if node_details.node.name in visited:
+                continue
+
+            for output in node_details.outputs:
+                traverse_list.append(output)
+
+                inputs = node_details.node.input
+                if not inputs:
+                    self.parent_frame_details[node_details.node.name] = None
+                if self.node_name_details[output].node.op == 'Enter':
+                    self.parent_frame_details[output] = self.node_name_details[output].node
+                elif self.node_name_details[output].node.op == 'Exit':
+                    self.parent_frame_details[output] = None
+                else:
+                    if output in self.parent_frame_details and self.parent_frame_details[output]:
+                        if node_details.node.name in self.parent_frame_details and \
+                           self.parent_frame_details[node_details.node.name]:
+                            assert self.parent_frame_details[output].attr['frame_name'] == \
+                            self.parent_frame_details[node_details.node.name].attr['frame_name']
+                    else:
+                        if node_details.node.name in self.parent_frame_details:
+                            self.parent_frame_details[output] = self.parent_frame_details[node_details.node.name]
+
+            visited.append(node_details.node.name)
+        return self.parent_frame_details
+
     def parse_graph(self, input_graph_def=None):
         """Analyze the input graphdef and return the list contains each node's input/output
             node names
@@ -841,6 +879,8 @@ class GraphRewriterHelper():
                 np.sum(np.array(weights_tensor, dtype=np.int32),
                         axis=0,
                         dtype=np.int32)):
+            if bias_index >= bias_tensor.size:
+                continue
             int32_bias.append(int(np.around(bias_tensor[bias_index] *
                                     bias_scale + value * relative_scale)))
 

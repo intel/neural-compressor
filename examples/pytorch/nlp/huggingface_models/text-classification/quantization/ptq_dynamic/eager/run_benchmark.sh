@@ -103,13 +103,14 @@ function run_benchmark {
         model_name_or_path=$input_model
     fi
 
+    extra_cmd='--model_name_or_path '${input_model}
     if [[ ${int8} == "true" ]]; then
+        extra_cmd='--model_name_or_path '${tuned_checkpoint}
         extra_cmd=$extra_cmd" --int8"
     fi
     echo $extra_cmd
 
     python -u run_glue_tune.py \
-        --model_name_or_path ${tuned_checkpoint} \
         --task_name ${TASK_NAME} \
         --do_eval \
         --max_seq_length ${MAX_SEQ_LENGTH} \

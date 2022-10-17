@@ -14,7 +14,7 @@
 # limitations under the License.
 # pylint: disable=no-member
 """Optimization_type package contains class representing optimization_type table in database."""
-from typing import Any
+from typing import Any, List
 
 from sqlalchemy import Column, DateTime, Integer, String, event
 from sqlalchemy.orm import relationship, session, sessionmaker
@@ -50,6 +50,19 @@ class OptimizationType(Base):
         secondary=precision_optimization_type_association,
         back_populates="optimization_types",
     )
+
+    @staticmethod
+    def add(db_session: session.Session, name: str) -> int:
+        """
+        Add optimization type to DB.
+
+        returns id of added optimization type
+        """
+        new_optimization_type = OptimizationType(name=name)
+        db_session.add(new_optimization_type)
+        db_session.flush()
+
+        return int(new_optimization_type.id)
 
     @staticmethod
     def list(db_session: session.Session) -> dict:
@@ -89,6 +102,32 @@ class OptimizationType(Base):
                 },
             )
         return {"optimization_types": optimization_types}
+
+    @staticmethod
+    def get_optimization_type_for_precision(
+        db_session: session.Session,
+        precision_id: int,
+    ) -> List[dict]:
+        """Get optimization types for specified precision."""
+        optimization_types = []
+        optimization_type_instances = (
+            db_session.query(OptimizationType)
+            .select_from(OptimizationType)
+            .join(Precision.optimization_types)
+            .order_by(OptimizationType.id)
+        )
+        for optimization_type in optimization_type_instances:
+            contains_precision = any(
+                [precision_id == precision.id for precision in optimization_type.precisions],
+            )
+            if contains_precision:
+                optimization_types.append(
+                    {
+                        "id": optimization_type.id,
+                        "name": optimization_type.name,
+                    },
+                )
+        return optimization_types
 
     @staticmethod
     def get_optimization_type_id(db_session: session.Session, optimization_name: str) -> int:

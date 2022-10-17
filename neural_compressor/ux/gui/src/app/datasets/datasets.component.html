@@ -46,7 +46,7 @@
       <ng-container *ngFor="let detail of datasetDetails | keyvalue">
         <ng-container *ngIf="!['metric', 'parameters', 'transforms', 'id', 'project_id'].includes(detail.key)">
           <tr *ngIf="detail.value">
-            <th>{{ detail.key | modelList}}</th>
+            <th>{{ detail.key | underscoreToSpace}}</th>
             <td class="cell">
               <a [ngClass]="{'text-up' : detail.key.includes('template')}">
                 {{ detail.value }}
@@ -70,7 +70,7 @@
     <h2>Parameters</h2>
     <table class="rounded">
       <tr *ngFor="let param of  datasetDetails['parameters'] | keyvalue">
-        <th>{{ param.key | modelList }}</th>
+        <th>{{ param.key | underscoreToSpace }}</th>
         <td>{{ param.value }}</td>
       </tr>
     </table>
@@ -84,7 +84,7 @@
           <td class="header" colspan=2>{{ transform.name }}</td>
         </tr>
         <tr *ngFor="let param of transform['params'] | keyvalue">
-          <th>{{ param.key | modelList }}</th>
+          <th>{{ param.key | underscoreToSpace }}</th>
           <td>{{ param.value }}</td>
         </tr>
       </table>
@@ -96,13 +96,26 @@
     <h2>Metric</h2>
     <table class="rounded">
       <tr>
-        <td class="header" colspan=2>{{ datasetDetails['metric']['name'] }}</td>
+        <td class="header" colspan=3>{{ datasetDetails['metric']['name'] }}</td>
       </tr>
       <ng-container *ngFor="let metricParam of datasetDetails['metric'] | keyvalue">
-        <tr *ngIf="metricParam.key !== 'name'">
-          <td>{{ metricParam.key }}</td>
-          <td>{{ metricParam.value }}</td>
+        <tr *ngIf="metricParam.key !== 'name' && typeOf(metricParam.value) !== 'object'">
+          <th>{{ metricParam.key | underscoreToSpace }}</th>
+          <td>{{ metricParam.value | json }}</td>
+          <td>{{ typeOf(metricParam.value) }}</td>
         </tr>
+        <ng-container *ngIf="typeOf(metricParam.value) === 'object'">
+          <tr *ngFor="let subMetricParam of datasetDetails['metric']['param'] | keyvalue">
+            <th>{{ subMetricParam.key | underscoreToSpace }}</th>
+            <td *ngIf="typeOf(subMetricParam.value) === 'string'">{{ subMetricParam.value }}</td>
+            <td *ngIf="typeOf(subMetricParam.value) === 'object'">
+              <a *ngFor="let subsub of subMetricParam.value | keyvalue">
+                {{ subsub.key }} : {{ subsub.value }}
+                <br />
+              </a>
+            </td>
+          </tr>
+        </ng-container>
       </ng-container>
     </table>
   </div>

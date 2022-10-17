@@ -28,7 +28,7 @@ transformation:
       [+]     count_iter_ = 0
       [+]     total_time_ = 0
       [+]     num_iter_ = NUM_BENCHMARK_ITERATION
-      [+]     num_warmup_iter_ = 5
+      [+]     num_warmup_iter_ = 10
       [+]     list_batch_time_ = []
       [+]     for i_ in range(num_iter_):
       [+]         count_iter_ = count_iter_ + 1

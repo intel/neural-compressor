@@ -338,10 +338,11 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def generate_quantized_weight_node(host_op_type,
-                                            input_node,
-                                            per_channel,
-                                            weight_bit=7.0,
-                                            device='cpu'):
+                                       input_node,
+                                       per_channel,
+                                       weight_bit=7.0,
+                                       device='cpu',
+                                       enter_node=None):
         base_name = input_node.name + "_"
         qint8_const_name = base_name + "qint8_const"
         min_name = base_name + "min"
@@ -349,9 +350,10 @@ class QuantizeGraphHelper():
         float_tensor = tensor_util.MakeNdarray(input_node.attr["value"].tensor)
         epsilon = 1e-4  # Needs to be set empirically if accuracy is not satisfactory
         range_coefficent = 127 / (2 ** weight_bit - 1)
-        if host_op_type in ("Conv2D", "MatMul", "Conv3D"):
+        if host_op_type in ("Conv2D", "MatMul", "Conv3D", "BatchMatMulV2", \
+                            "Conv2DBackpropInput", "Conv3DBackpropInputV2"):
             if per_channel:
-                if host_op_type == 'Conv3D':
+                if host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
@@ -408,9 +410,39 @@ class QuantizeGraphHelper():
                                                                     shape=shape)
 
         min_node = QuantizeGraphHelper.create_constant_node(min_name, min_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
 
         max_node = QuantizeGraphHelper.create_constant_node(max_name, max_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
 
-        return qint8_const_node, min_node, max_node
+        qint8_const_enter_node = None
+        min_enter_node = None
+        max_enter_node = None
+
+        if enter_node:
+            qint8_const_enter_node = QuantizeGraphHelper.create_node('Enter', \
+                                           qint8_const_name + '_enter', [qint8_const_name])
+            QuantizeGraphHelper.set_attr_string(qint8_const_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            QuantizeGraphHelper.set_attr_dtype(qint8_const_enter_node, 'T', dtypes.qint8)
+            QuantizeGraphHelper.set_attr_bool(qint8_const_enter_node, 'is_constant', True)
+            QuantizeGraphHelper.set_attr_int(qint8_const_enter_node, \
+                                         'parallel_iterations', enter_node.attr['parallel_iterations'].i)
+
+            min_enter_node = QuantizeGraphHelper.create_node('Enter', min_name + '_enter', [min_name])
+            QuantizeGraphHelper.set_attr_string(min_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            QuantizeGraphHelper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
+            QuantizeGraphHelper.set_attr_bool(min_enter_node, 'is_constant', True)
+            QuantizeGraphHelper.set_attr_int(min_enter_node, 'parallel_iterations', \
+                                             enter_node.attr['parallel_iterations'].i)
+
+            max_enter_node = QuantizeGraphHelper.create_node('Enter', max_name + '_enter', [max_name])
+            QuantizeGraphHelper.set_attr_string(max_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            QuantizeGraphHelper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
+            QuantizeGraphHelper.set_attr_bool(max_enter_node, 'is_constant', True)
+            QuantizeGraphHelper.set_attr_int(max_enter_node, 'parallel_iterations',\
+                                             enter_node.attr['parallel_iterations'].i)
+
+        return qint8_const_node, min_node, max_node, qint8_const_enter_node, min_enter_node, max_enter_node

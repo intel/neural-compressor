@@ -9,15 +9,16 @@ pruning and then distillation and then quantization.
 ## Validated Orchestration Types
 
 ### One-shot
-
+Since quantization-aware training, pruning and distillation all have training processes, we can achieve the goal of optimization through one shot training.
 - Pruning during quantization-aware training
 - Distillation with pattern lock pruning
 - Distillation with pattern lock pruning and quantization-aware training
  
 ### Multi-shot
-
+Of course, besides one-shot, we also support separate execution of each optimization process.
 - Pruning and then post-training quantization
 - Distillation and then post-training quantization
+- Distillation, then pruning and post-training quantization
 
 ## Orchestration user facing API
 
@@ -54,4 +55,9 @@ opt_model = scheduler.fit()
 
 ### Examples
 
-For orchestration related examples, please refer to [Orchestration examples](../examples/README.md).
+For orchestration one-shot related examples, please refer to [One-shot examples](../examples/pytorch/nlp/huggingface_models/question-answering/optimization_pipeline/prune_once_for_all/fx/README.md).
+
+For orchestration multi-shot related examples, please refer to [Multi-shot examples](../examples/pytorch/image_recognition/torchvision_models/optimization_pipeline/).
+
+### Publications
+All the experiments from [Prune Once for ALL](https://arxiv.org/abs/2111.05754) can be reproduced using [Optimum-Intel](https://github.com/huggingface/optimum-intel) with Intel Neural Compressor.

@@ -125,9 +125,12 @@ def register_nnModule_instance_definition():
                cl.class_name not in globals.list_class_name and \
                "(" not in cl.return_item:
                 def_cl.append(cl)
-            elif is_def and "__dict__[args.arch]" in rhs:
+            elif is_def and "__dict__[args.arch]" in cl.line_content:
                 def_cl.append(cl)
-            elif is_def and "hub.load" in rhs:
+            # bug
+            elif is_def and "hub.load" in cl.line_content:
+                def_cl.append(cl)
+            elif is_def and "onnx.load" in cl.line_content:
                 def_cl.append(cl)
             elif is_def and "." in stripped and \
                 stripped[stripped.find("=") + 1: stripped.find(".")] in globals.list_class_name:

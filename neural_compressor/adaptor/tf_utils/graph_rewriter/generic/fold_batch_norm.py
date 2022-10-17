@@ -34,13 +34,15 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
         ["conv_op", "mean_op", "var_op", "beta_op", "gamma_op"],
         # Order of inputs for FusedBatchNorm.
         "FusedBatchNorm": ["conv_op", "gamma_op", "beta_op", "mean_op", "var_op"],
-        "FusedBatchNormV3": ["conv_op", "gamma_op", "beta_op", "mean_op", "var_op"]
+        "FusedBatchNormV3": ["conv_op", "gamma_op", "beta_op", "mean_op", "var_op"],
+        "_FusedBatchNormEx": ["conv_op", "gamma_op", "beta_op", "mean_op", "var_op"]
     }
     # Name of the attribute epsilon value is stored in.
     EPSILON_ATTR = {
         "BatchNormWithGlobalNormalization": "variance_epsilon",
         "FusedBatchNorm": "epsilon",
-        "FusedBatchNormV3": "epsilon"
+        "FusedBatchNormV3": "epsilon",
+        "_FusedBatchNormEx": "epsilon"
     }
 
     def scale_after_normalization(self, node):
@@ -70,8 +72,8 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
         scaling into the convolution weights. This function identifies the typical
         pattern of batch normalization subgraphs, and performs the transformation to
         fold the computations down into a simpler form. It currently only spots batch
-        normalization that's performed by the BatchNormWithGlobalNormalization and
-        FusedBatchNorm ops, and will need to be extended in the future to handle the
+        normalization that's performed by the BatchNormWithGlobalNormalization, FusedBatchNorm,
+        FusedBatchNormV3 and _FusedBatchNormEx ops, and will need to be extended in the future to handle the
         newer style.
 
         Returns:
@@ -86,7 +88,7 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
         graph_info = cur_graph.parse_graph()
         target_nodes = cur_graph.query_fusion_pattern_nodes(
             [["Conv2D", "DepthwiseConv2dNative"], ("BiasAdd", "Add", "AddV2"),
-             ["BatchNormWithGlobalNormalization", "FusedBatchNorm", "FusedBatchNormV3"]])
+             ["BatchNormWithGlobalNormalization", "FusedBatchNorm", "FusedBatchNormV3", "_FusedBatchNormEx"]])
         for node_combination in target_nodes:
             matched_node = node_combination[:-1]
             has_add_op = True if len(node_combination[-1]) == 3 else False
@@ -95,6 +97,15 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
                 matched_node[0])].node.input[1]
             weights_node = graph_info[Helper.node_name_from_input(weights_node_name)].node
             bn_node = graph_info[Helper.node_name_from_input(matched_node[-1])].node
+
+            # oneDNN enabled _FusedBatchNormEx only supports num_side_inputs == 0
+            # and Relu/Identity activations.
+            if bn_node.op == "_FusedBatchNormEx":
+                if bn_node.attr["num_side_inputs"].i != 0:
+                    continue
+                if not (bn_node.attr["activation_mode"].s == b"Identity" or
+                        bn_node.attr["activation_mode"].s == b"Relu"):
+                    continue
 
             if weights_node.op != "Const":
                 self.logger.warning("Didn't find expected conv Constant input to '%s', "
@@ -219,10 +230,31 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
             bias_add_node.attr["T"].CopyFrom(conv_node.attr["T"])
             bias_add_node.attr["data_format"].CopyFrom(conv_node.attr["data_format"])
             bias_add_node.input.extend([conv_node.name, offset_node.name])
+            if bn_node.op == "_FusedBatchNormEx" and bn_node.attr["activation_mode"].s == b"Relu":
+                # Create Relu op which takes Bias-Add as input.
+                #  Conv2D/Depthwise-Conv2D                         Conv2D/Depthwise-Conv2D
+                #      |                                                 |
+                #  Bias-Add (originally _FusedBatchNormEx) <---->     Bias-Add
+                #      |                                              |       \
+                #   <some-node>                                  <some-node>   Relu
+                relu_node = node_def_pb2.NodeDef()
+                relu_node.op = "Relu"
+                relu_node.name = bn_node.name + "_bn_relu"
+                relu_node.attr["T"].CopyFrom(conv_node.attr["T"])
+                relu_node.input.extend([bias_add_node.name])
 
             cur_graph.add_node(offset_node, [], [bias_add_node.name])
             cur_graph.add_node(bias_add_node, conv_node.name,
                                graph_info[Helper.node_name_from_input(matched_node[-1])].outputs)
+            if bn_node.op == "_FusedBatchNormEx" and bn_node.attr["activation_mode"].s == b"Relu":
+                matchd_node_outputs = graph_info[Helper.node_name_from_input(matched_node[-1])].outputs
+                cur_graph.add_node(offset_node, [], [bias_add_node.name])
+                cur_graph.add_node(bias_add_node, conv_node.name, [relu_node.name])
+                cur_graph.add_node(relu_node, bias_add_node.name, matchd_node_outputs)
+            else:
+                cur_graph.add_node(offset_node, [], [bias_add_node.name])
+                cur_graph.add_node(bias_add_node, conv_node.name,
+                                graph_info[Helper.node_name_from_input(matched_node[-1])].outputs)
             cur_graph.replace_const_node(scaled_weights_node, [conv_node.name], weights_node_name)
 
             cur_graph.remove_node(weights_node_name)

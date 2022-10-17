@@ -1,5 +1,5 @@
 <mat-horizontal-stepper #stepper>
-  <mat-step [completed]="false">
+  <mat-step *ngIf="!data.editing" [completed]="false">
     <ng-template matStepLabel>Name</ng-template>
     <h2>Name</h2>
     <p>Choose name of the optimization.</p>

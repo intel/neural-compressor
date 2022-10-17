@@ -23,7 +23,8 @@ from nnunet.network_architecture.initialization import InitWeights_He
 from nnunet.network_architecture.neural_network import SegmentationNetwork
 import torch.nn.functional
 from torch.quantization import QuantStub, DeQuantStub
-from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
+from neural_compressor.adaptor.pytorch import get_torch_version
+from packaging.version import Version
 
 class ConvDropoutNormNonlin(nn.Module):
     """
@@ -70,7 +71,7 @@ class ConvDropoutNormNonlin(nn.Module):
         if self.dropout is not None:
             x = self.dropout(x)
         version = get_torch_version()
-        if version >= PyTorchVersionMode.PT17.value:
+        if version >= Version("1.7.0-rc1"):
             return self.lrelu(self.quant(self.instnorm(self.dequant(x))))
         else:
             return self.quant(self.lrelu(self.instnorm(self.dequant(x))))
@@ -411,7 +412,7 @@ class Generic_UNet(SegmentationNetwork):
 
         for u in range(len(self.tu)):
             version = get_torch_version()
-            if version >= PyTorchVersionMode.PT111.value:
+            if version >= Version("1.11.0-rc1"):
                 x = self.tu[u](x)
                 x = torch.cat((x, skips[-(u + 1)]), dim=1)
                 x = self.dequant(x)

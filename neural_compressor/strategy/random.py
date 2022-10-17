@@ -17,7 +17,11 @@
 
 import numpy as np
 from .strategy import strategy_registry, TuneStrategy
+from collections import OrderedDict
 
+from .st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
+from .st_utils.tuning_structs import OpTuningConfig
+from ..utils import logger
 
 @strategy_registry
 class RandomTuneStrategy(TuneStrategy):
@@ -82,20 +86,42 @@ class RandomTuneStrategy(TuneStrategy):
            according to last tuning result.
 
         """
-        # generate tuning space according to user chosen tuning strategy
+        from copy import deepcopy
+        tuning_space = self.tuning_space
+        initial_op_tuning_cfg = {}
+        for item in tuning_space.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+        # collect the ops that support static and dynamic
+        quant_mode_wise_items = OrderedDict()
+        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        pre_items = set()
+        for quant_mode in query_order:
+            items = tuning_space.query_items_by_quant_mode(quant_mode)
+            filtered_items = [item for item in items if item not in pre_items]
+            pre_items = pre_items.union(set(items))
+            quant_mode_wise_items[quant_mode] = filtered_items
 
+        def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+            for item in items_lst:
+                op_item_dtype_dict[item.name] = target_quant_mode
+
+        op_item_dtype_dict = OrderedDict()
+        for quant_mode, quant_mode_items in quant_mode_wise_items.items():
+            initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
+
+        op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [], 
+                                                            op_item_dtype_dict, initial_op_tuning_cfg)
+        op_tuning_cfg_lst = list(op_wise_tuning_sampler)
+        op_tuning_cfg_cnt = len(op_tuning_cfg_lst)
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        calib_sampling_size_cnt = len(calib_sampling_size_lst)
         while True:
-            op_cfgs = {}
-            index = np.random.choice(len(self.calib_iter))
-            op_cfgs['calib_iteration'] = int(self.calib_iter[index])
-            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[index])
-            op_cfgs['op'] = {}
-            for op, configs in self.opwise_quant_cfgs.items():
-                cfgs_len = len(configs)
-                if cfgs_len > 0:
-                    op_cfgs['op'][op] = configs[np.random.choice(cfgs_len)]
-                else:
-                    op_cfgs['op'][op] = self.opwise_tune_cfgs[op][np.random.choice(
-                                        len(self.opwise_tune_cfgs[op]))]
-
-            yield op_cfgs
+            calib_index = np.random.choice(calib_sampling_size_cnt)
+            calib_sampling_size = calib_sampling_size_lst[calib_index]
+            op_tuning_cfg_index = np.random.choice(op_tuning_cfg_cnt)
+            op_tuning_cfg = op_tuning_cfg_lst[op_tuning_cfg_index]
+            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+            yield op_tuning_cfg
+        return

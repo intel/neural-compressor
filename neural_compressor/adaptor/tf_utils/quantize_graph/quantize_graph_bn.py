@@ -78,6 +78,14 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
                     quantized_node_input_names)
                 if relu_node_name is not None:
                     helper.set_attr_string(quantized_bn_node, "activation_mode", b'Relu')
+                if self.node_name_mapping[offset_name].node.op == "Const":
+                    helper.set_attr_bool(quantized_bn_node, "is_offset_const", True)
+                else:
+                    helper.set_attr_bool(quantized_bn_node, "is_offset_const", False)
+                if self.node_name_mapping[mean_name].node.op == "Const":
+                    helper.set_attr_bool(quantized_bn_node, "is_mean_const", True)
+                else:
+                    helper.set_attr_bool(quantized_bn_node, "is_mean_const", False)
                 helper.set_attr_dtype(quantized_bn_node, "T", dtypes.qint8)
                 helper.set_attr_dtype(quantized_bn_node, "U", dtypes.float32)
                 helper.set_attr_dtype(quantized_bn_node, "Tout", dtypes.qint8)
@@ -108,17 +116,13 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
 
                 """
                 # 0. output
-                # 5. output_min
-                # 6. output_max
+                # 1. output_min
+                # 2. output_max
                 """
                 helper.set_attr_type_list(quantized_bn_node, 'out_types', [
                                           dtypes.qint8.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
                                           dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,
-                                          dtypes.float32.as_datatype_enum,   
-                                          dtypes.float32.as_datatype_enum,   
                                           ])
                 self.add_output_graph_node(output_min_node)
                 self.add_output_graph_node(output_max_node)
@@ -127,7 +131,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
                     quantized_output_name = quantized_node_name,
                     original_node_name = match_node_name[-1],
                     dtype = dtypes.qint8,
-                    min_tensor_index = 5
+                    min_tensor_index = 1
                     )
 
             else:
@@ -146,11 +150,17 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
         if matched_node_name:
             self.output_graph = graph_pb2.GraphDef()
             fusion_name = ''.join(matched_rule)
-            if fusion_name in self.fusion_mapping:
+            bn_node = self.node_name_mapping[matched_node_name[0]].node
+            is_training = bn_node.attr['is_training'].b
+            if fusion_name in self.fusion_mapping and is_training == False:
                 self.fusion_mapping[fusion_name](matched_node_name)
             else:
-                if self.new_api:
-                    self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
+                if is_training == True:
+                    self.logger.info \
+                        ("Skip quantizing the BN node '{}' due to the attr 'is_training == true'." \
+                            .format(bn_node.name))
+                elif self.new_api:
+                    self.logger.info("Unknown fusion pattern {} .".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
                 return self.input_graph, []
@@ -159,5 +169,5 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
-            return self.output_graph, matched_node_name
-        return self.input_graph, []
+            return self.output_graph, matched_node_name, []
+        return self.input_graph, [], []

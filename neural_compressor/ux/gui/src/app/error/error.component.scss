@@ -101,6 +101,14 @@ table.rounded {
 
   tr:first-child {
 
+    th:first-child {
+      border-radius: 0.5rem 0 0 0;
+    }
+
+    th:last-child {
+      border-radius: 0 0.5rem 0 0;
+    }
+
     td:first-child {
       border-radius: 0.5rem 0 0 0;
     }

@@ -20,7 +20,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:
@@ -184,7 +184,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedDepthwiseConv2D':
+                if i.op == '_FusedQuantizedDepthwiseConv2D':
                     found_conv_fusion = True
                     break
 
@@ -205,7 +205,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
         found_conv_fusion = False
 
         for i in output_graph.graph_def.node:
-            if i.op == '_QuantizedConv2D':
+            if i.op == '_FusedQuantizedConv2D':
                 found_conv_fusion = True
                 break
 
@@ -240,7 +240,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedDepthwiseConv2D':
+                if i.op == '_FusedQuantizedDepthwiseConv2D':
                     found_conv_fusion = True
                     break
 

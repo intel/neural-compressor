@@ -23,6 +23,7 @@ from neural_compressor.ux.utils.exceptions import ClientErrorException
 fake_metrics: dict = {
     "topk": {},
     "COCOmAP": {},
+    "COCOmAPv2": {},
     "MSE": {},
     "RMSE": {},
     "MAE": {},
@@ -705,6 +706,7 @@ class TestParamsFeeder(unittest.TestCase):
                 },
             },
         )
+
         actual = feeder.get_precisions()
 
         self.assertEqual([], actual)
@@ -789,60 +791,24 @@ class TestParamsFeeder(unittest.TestCase):
             feeder.get_metrics()
 
     @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.get_metrics_dict",
+        "neural_compressor.ux.components.configuration_wizard.params_feeder.registry_metrics",
+        {"onnxrt_qlinearops": fake_metrics},
     )
+    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_onnxrt(
         self,
         mocked_check_module: MagicMock,
-        mocked_get_metrics_dict: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_get_metrics_dict.return_value = {
-            "onnxrt": [
-                {
-                    "name": "topk",
-                    "help": "help for topk",
-                    "params": [
-                        {
-                            "name": "k",
-                            "help": "help for k in topk",
-                            "value": [1, 5],
-                        },
-                    ],
-                },
-                {
-                    "name": "COCOmAP",
-                    "help": "",
-                    "params": [
-                        {
-                            "name": "anno_path",
-                            "help": "",
-                            "value": "/foo/bar/workdir/label_map.yaml",
-                        },
-                    ],
-                },
-                {
-                    "name": "metric1",
-                    "help": "help for metric1",
-                    "value": None,
-                },
-                {
-                    "name": "custom",
-                    "help": "",
-                    "value": None,
-                },
-            ],
-        }
-
         expected = [
             {
                 "name": "topk",
-                "help": "help for topk",
+                "help": "",
                 "params": [
                     {
                         "name": "k",
-                        "help": "help for k in topk",
+                        "help": "Number of top elements to look at for computing accuracy",
                         "value": [1, 5],
                     },
                 ],
@@ -853,19 +819,93 @@ class TestParamsFeeder(unittest.TestCase):
                 "params": [
                     {
                         "name": "anno_path",
-                        "help": "",
+                        "help": "annotation path",
                         "value": "/foo/bar/workdir/label_map.yaml",
+                        "label": "annotation path",
+                    },
+                ],
+            },
+            {
+                "name": "COCOmAPv2",
+                "help": "",
+                "params": [
+                    {
+                        "name": "anno_path",
+                        "help": "annotation path",
+                        "value": "/foo/bar/workdir/label_map.yaml",
+                        "label": "annotation path",
+                    },
+                    {
+                        "name": "output_index_mapping",
+                        "help": "Output index mapping",
+                        "value": None,
+                        "params": [
+                            {
+                                "name": "num_detections",
+                                "help": "",
+                                "value": -1,
+                            },
+                            {
+                                "name": "boxes",
+                                "help": "",
+                                "value": 0,
+                            },
+                            {
+                                "name": "scores",
+                                "help": "",
+                                "value": 1,
+                            },
+                            {
+                                "name": "classes",
+                                "help": "",
+                                "value": 2,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                "name": "MSE",
+                "help": "",
+                "params": [
+                    {
+                        "name": "compare_label",
+                        "help": "",
+                        "value": True,
+                    },
+                ],
+            },
+            {
+                "name": "RMSE",
+                "help": "",
+                "params": [
+                    {
+                        "name": "compare_label",
+                        "help": "",
+                        "value": True,
+                    },
+                ],
+            },
+            {
+                "name": "MAE",
+                "help": "",
+                "params": [
+                    {
+                        "name": "compare_label",
+                        "help": "",
+                        "value": True,
                     },
                 ],
             },
             {
                 "name": "metric1",
-                "help": "help for metric1",
+                "help": "",
                 "value": None,
             },
             {
                 "name": "custom",
-                "help": "",
+                "help": "Create your own metric. After you choose this option code "
+                "template will be generated on the server",
                 "value": None,
             },
         ]
@@ -881,67 +921,36 @@ class TestParamsFeeder(unittest.TestCase):
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("onnxrt")
-        mocked_get_metrics_dict.assert_called_once()
         self.assertEqual(expected, actual)
 
-    @patch(
-        "neural_compressor.ux.utils.utils.get_metrics_dict",
-        {"tensorflow": fake_metrics},
-        {"onnxrt_qlinearops": fake_metrics},
-    )
-    @patch(
-        "neural_compressor.ux.components.configuration_wizard.params_feeder.get_metrics_dict",
-    )
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.check_module")
     def test_get_metrics_for_unknown_framework(
         self,
         mocked_check_module: MagicMock,
-        mocked_get_metrics_dict: MagicMock,
     ) -> None:
         """Test that get_domains fails when no config given."""
-        mocked_get_metrics_dict.return_value = {
-            "onnxrt": [
-                {
-                    "name": "topk",
-                    "help": "help for topk",
-                    "params": [
-                        {
-                            "name": "k",
-                            "help": "help for k in topk",
-                            "value": [1, 5],
-                        },
-                    ],
-                },
-            ],
-            "tensorflow": [
-                {
-                    "name": "topk",
-                    "help": "help for topk",
-                    "params": [
-                        {
-                            "name": "k",
-                            "help": "help for k in topk",
-                            "value": [1, 5],
-                        },
-                    ],
-                },
-            ],
-        }
-
-        expected: list = []
+        framework_name = "unknown_framework"
 
         feeder = Feeder(
             data={
                 "config": {
-                    "framework": "unknown_framework",
+                    "framework": framework_name,
                 },
             },
         )
 
+        expected: list = [
+            {
+                "name": "custom",
+                "help": "Create your own metric. After you choose this option code "
+                "template will be generated on the server",
+                "value": None,
+            },
+        ]
+
         actual = feeder.get_metrics()
 
         mocked_check_module.assert_called_once_with("unknown_framework")
-        mocked_get_metrics_dict.assert_called_once()
         self.assertEqual(expected, actual)
 
     @patch("neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder")

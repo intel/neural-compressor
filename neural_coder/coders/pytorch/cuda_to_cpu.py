@@ -22,20 +22,41 @@ class CudaToCpu(object):
 
     def transform(self):
         lines = self.file.split('\n')
+        # determine if jump the whole file (in cases where: args.device, args.cuda etc)
+        to_jump = False
         for line in lines:
-            if self.is_delete(line):
-                indent_level = get_line_indent_level(line)
-                new_line = " " * indent_level + "pass"
-                self.result.append(new_line)
-            elif self.is_modify(line):
-                new_line = self.change_to_cpu(line)
-                self.result.append(new_line)
-            else:
+            if self.is_jump_file(line):
+                to_jump = True
+                break
+
+        if to_jump: # this file do not need transformation
+            for line in lines:
                 self.result.append(line)
+        else: # this file might need transformation
+            for line in lines:
+                if self.is_delete(line):
+                    indent_level = get_line_indent_level(line)
+                    new_line = " " * indent_level + "pass"
+                    self.result.append(new_line)
+                elif self.is_modify(line):
+                    new_line = self.change_to_cpu(line)
+                    self.result.append(new_line)
+                else:
+                    self.result.append(line)
         for index, line in enumerate(self.result):
             if index != len(self.result)-1:
                 self.result[index] += '\n'
         return ''.join(self.result)
+
+    def is_jump_file(self, s):
+        if "args.device" in s \
+            or "args.cpu" in s \
+            or "args.gpu" in s \
+            or "args.cuda" in s \
+            or "torch.cuda.is_available()" in s:
+            return True
+        else:
+            return False
 
     def is_delete(self, s):
         if 'cuda.' in s and '=' not in s and "if" not in s:

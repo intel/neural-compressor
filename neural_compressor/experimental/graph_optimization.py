@@ -126,9 +126,14 @@ class Graph_Optimization():
             self._model.output_tensor_names = cfg.model.outputs
             self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
-        else: 
-            logger.warning("Only TensorFlow graph optimization is supported at current stage.") 
-            sys.exit(0) 
+
+            if 'bf16' in self._precisions or \
+               (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
+               (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
+                os.environ['MIX_PRECISION_TEST'] = '1'
+        else:
+            logger.warning("Only TensorFlow graph optimization is supported at current stage.")
+            sys.exit(0)
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
@@ -207,7 +212,8 @@ class Graph_Optimization():
                                "doesn't support bf16 instruction.")
                 sys.exit(0)
 
-        self.conf.usr_cfg.graph_optimization.precisions = self._precisions
+        self.conf.usr_cfg.graph_optimization.precisions = self._precisions if \
+            isinstance(self._precisions, list) else [self._precisions]
         self.conf.usr_cfg.model.inputs = self._input
         if isinstance(self._output, str) and ',' in self._output:
             self.conf.usr_cfg.model.outputs = [s.strip() for s in self._output.split(',')]

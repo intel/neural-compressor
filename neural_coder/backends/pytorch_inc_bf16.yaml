@@ -17,11 +17,18 @@ transformation:
     - insert_below_model_definition_line
   content:
     - |-
+      [+] torch.backends.quantized.engine = 'onednn'
       [+] from neural_compressor.experimental import MixedPrecision
       [+] converter = MixedPrecision()
       [+] converter.precisions = 'bf16'
       [+] converter.model = MODEL_NAME
       [+] MODEL_NAME = converter()
+      [+] try:
+      [+]     with torch.no_grad():
+      [+]         MODEL_NAME = torch.jit.script(MODEL_NAME)
+      [+]     MODEL_NAME = torch.jit.freeze(MODEL_NAME)
+      [+] except:
+      [+]     pass
   order:
     - below:
       above:

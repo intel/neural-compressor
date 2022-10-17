@@ -171,6 +171,48 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/keras_models/resnet50_fashion/quantization/ptq">keras</a></td>
   </tr>
   <tr>
+    <td>ResNet50 V2</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
+    <td>ResNet101</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/resnet101/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
+    <td>Inception V3</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
+    <td>Inception Resnet V2</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/inception_resnet_v2/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
+    <td>ResNet101 V2</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
+    <td>MobileNet V2</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
+    <td>Xception</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/xception/quantization/ptq">keras</a></td>
+  </tr>
+  <tr>
     <td>ResNet V2</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
@@ -463,6 +505,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
   </tr>
+    <tr>
+    <td>distilbert-base-uncased-distilled-squad</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+  </tr>
   <tr>
     <td>t5-small</td>
     <td>Natural Language Processing</td>
@@ -527,7 +575,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT large</td>
     <td>Natural Language Processing</td>
-    <td>Structured</td>
+    <td>Structured (2x1)</td>
     <td>Group Lasso</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager">eager</a></td>
   </tr>
@@ -541,7 +589,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>bert-base-uncased</td>
     <td>Natural Language Processing</td>
-    <td>Structured</td>
+    <td>Structured (Filter/Channel-wise)</td>
     <td>Gradient Sensitivity</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/gradient_sensitivity/eager">eager</a></td>
   </tr>
@@ -558,6 +606,20 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Unstructured</td>
     <td>Pattern Lock</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-mini</td>
+    <td>Natural Language Processing (text classification)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-mini</td>
+    <td>Natural Language Processing (question answering)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">eager</a></td>
   </tr>
 </tbody>
 </table>

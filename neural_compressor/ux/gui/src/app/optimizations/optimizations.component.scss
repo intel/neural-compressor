@@ -45,8 +45,6 @@ img {
   width: 100%;
 }
 
-
-
 td {
   padding: 5px;
 }
@@ -73,4 +71,14 @@ th {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.margin-5px {
+  margin-left: 5px;
+}
+
+.small-input {
+  background-color: white;
+  border: 1px $light-gray solid;
+  border-radius: 4px;
 }

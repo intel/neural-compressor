@@ -105,7 +105,7 @@ class Pruner:
     def on_before_optimizer_step(self):
         pass
 
-    def on_train_begin(self):
+    def on_train_begin(self, dataloader=None):
         pass
 
     def on_train_end(self):

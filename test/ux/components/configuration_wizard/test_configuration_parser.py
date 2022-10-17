@@ -576,6 +576,101 @@ class TestEvaluationParser(TestParser):
                 },
             )
 
+    def test_parsing_metric(self) -> None:
+        """Test parsing metric parameters."""
+        data = {
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "output_index_mapping": {
+                    "num_detections": "0",
+                    "boxes": "1",
+                    "scores": "2",
+                    "classes": "3",
+                },
+            },
+        }
+
+        expected = {
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "output_index_mapping": {
+                    "num_detections": 0,
+                    "boxes": 1,
+                    "scores": 2,
+                    "classes": 3,
+                },
+            },
+        }
+
+        actual = self.parser.parse(data)
+
+        self.assertEqual(actual, expected)
+
+    def test_parsing_COCOmAP_metric(self) -> None:
+        """Test parsing COCOmAP metric parameters."""
+        data = {
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "anno_path": "/path/to/labels.txt",
+                "output_index_mapping": {
+                    "num_detections": "0",
+                    "boxes": "1",
+                    "scores": "2",
+                    "classes": "3",
+                },
+            },
+        }
+
+        expected = {
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "anno_path": "/path/to/labels.txt",
+                "output_index_mapping": {
+                    "num_detections": 0,
+                    "boxes": 1,
+                    "scores": 2,
+                    "classes": 3,
+                },
+            },
+        }
+
+        actual = self.parser.parse(data)
+
+        self.assertEqual(actual, expected)
+
+    def test_parsing_COCOmAP_metric_empty_anno_path(self) -> None:
+        """Test parsing COCOmAP metric parameters."""
+        data = {
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "anno_path": "",
+                "output_index_mapping": {
+                    "num_detections": "0",
+                    "boxes": "1",
+                    "scores": "2",
+                    "classes": "3",
+                },
+            },
+        }
+
+        expected = {
+            "metric": "COCOmAPv2",
+            "metric_param": {
+                "output_index_mapping": {
+                    "num_detections": 0,
+                    "boxes": 1,
+                    "scores": 2,
+                    "classes": 3,
+                },
+            },
+        }
+
+        actual = self.parser.parse(data)
+
+        self.maxDiff = None
+
+        self.assertEqual(actual, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

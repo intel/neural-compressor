@@ -36,7 +36,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     """
 
     def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
-                 bf16_ops, quantized_nodes, device):
+                 bf16_ops, quantized_nodes, device, performance_only, itex_mode):
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
@@ -45,9 +45,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.bf16_ops = bf16_ops
         self.quantized_nodes = quantized_nodes
         self.device = device
+        self.performance_only = performance_only
+        self.itex_mode = itex_mode
 
         self.node_name_mapping = {}
-        for node in self.model.graph_def.node:
+        for node in self.model.node:
             if node.name not in self.node_name_mapping:
                 self.node_name_mapping[node.name] = node
             else:
@@ -70,7 +72,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 quantizable_op_names.append(i.split('__')[0])
 
         self.g = GraphAnalyzer()
-        self.g.graph = copy.deepcopy(self.model.graph_def)
+        self.g.graph = copy.deepcopy(self.model)
         self.graph_info = self.g.parse_graph()
         
         # insert QDQ pattern for op's input
@@ -95,7 +97,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.g_weight.graph = self.g.dump_graph()
         self.graph_info = self.g_weight.parse_graph()
         target_nodes = self.g_weight.query_fusion_pattern_nodes(
-               [["Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul", "BatchMatMulV2"]])
+               [["Conv2D", "Conv3D", "DepthwiseConv2dNative", "MatMul", \
+                 "BatchMatMul", "BatchMatMulV2", "Conv2DBackpropInput", "Conv3DBackpropInputV2"]])
         for i in target_nodes:
             if i[0] not in quantizable_op_names:
                 continue
@@ -106,6 +109,22 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             computational_node = self.graph_info[computational_node_name].node
             weight_name = computational_node.input[1]
             weight_node = self.graph_info[weight_name].node
+            if re.search(r"\w+:\d+", weight_name):
+                weight_node = self.graph_info[weight_name.rsplit(':', 1)[0]].node
+            else:
+                weight_node = self.graph_info[weight_name].node
+            enter_node = None
+            if weight_node.op == 'Enter':
+                if self.itex_mode:
+                    parent_node = self.graph_info[Helper.node_name_from_input(weight_node.input[0])].node
+                    if not parent_node.op == 'Const':
+                        continue
+                    else:
+                        enter_node = weight_node
+                        weight_node = parent_node
+                else:
+                    continue
+
             if computational_node_name in self.op_wise_config.keys():
                 op_wise_cfg = self.op_wise_config[computational_node_name]
                 per_channel = op_wise_cfg[0]
@@ -116,23 +135,61 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             
             self._insert_qdq_pattern_for_weight_node(computational_node,
                                                      weight_node,
+                                                     enter_node,
                                                      min_max_values,
                                                      per_channel,
                                                      weight_bit,
                                                      self.device)
+        # Adaption for strip equivalent nodes feature
+        # Replicate shared Dequantize for next step fusion
+        self.g_qdq = GraphAnalyzer()
+        self.g_qdq.graph = self.g_weight.dump_graph()
+        self.graph_info = self.g_qdq.parse_graph()
+        patterns = [['QuantizeV2'], ['Dequantize']]
+        matched_nodes = self.g_qdq.query_fusion_pattern_nodes(patterns)
+        for i in matched_nodes:
+            quantize_node_name = self.graph_info[i[0]].node.name
+            deq_node_name = self.graph_info[i[1]].node.name
+            deq_node = self.graph_info[i[1]].node
+            len_deq_outputs = len(self.g_qdq.node_name_details[deq_node_name].outputs)
+            if len_deq_outputs == 1:
+                continue
 
-        return self.g_weight.dump_graph()
+            for index in range(len_deq_outputs - 1):
+                rep_dequantize_node = Helper.create_node(
+                    "Dequantize", deq_node_name + '_' + str(index + 1),
+                    [quantize_node_name, quantize_node_name + ':1', quantize_node_name + ':2'])
+                rep_dequantize_node.attr["T"].CopyFrom(deq_node.attr['T'])
+                rep_dequantize_node.attr["mode"].CopyFrom(deq_node.attr['mode'])
+                if 'axis' in deq_node.attr:
+                    rep_dequantize_node.attr["axis"].CopyFrom(deq_node.attr['axis'])
+                next_node_name = self.g_qdq.node_name_details[deq_node_name].outputs[index+1]
+                self.g_qdq.add_node(rep_dequantize_node, quantize_node_name, [next_node_name])
+                for input_index, each_input in enumerate(self.g_qdq.node_name_details[next_node_name].node.input):
+                    if each_input == deq_node_name:
+                        self.g_qdq.node_name_details[next_node_name].node.input[input_index] = \
+                            rep_dequantize_node.name
+
+        return self.g_qdq.dump_graph()
 
     def _check_op_list(self, node_type):
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
-                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMulV2", "FakeQuantWithMinMaxVars")
+                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
+                   "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
+                   "Conv2DBackpropInput", "Conv3DBackpropInputV2")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
-        if node.op in ("Relu", "Relu6", "Elu") or \
+        if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
-            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0))):
+            ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
+                and (node.op != "Relu"
+                     or not self.performance_only
+                     or self.node_name_mapping \
+                        [Helper.node_name_from_input(node.input[0])].op.find("FusedBatchNorm") == -1
+                     or self.node_name_mapping \
+                        [Helper.node_name_from_input(node.input[0])].attr['is_training'].b):
             return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
@@ -143,23 +200,38 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
         elif self._check_op_list(node.op):
-            if "split:" in node.input[0]:
-                input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
+            if node.op == 'ConcatV2':
+                find_relu = False
+                for i in range(0,node.attr['N'].i):
+                    if re.search(r"\w+:\d+", node.input[i]):
+                        input_node = self.node_name_mapping[node.input[i].rsplit(':', 1)[0]]
+                    else:
+                        input_node = self.node_name_mapping[node.input[i]]
+                    find_relu |= self._find_relu_node(input_node)
+                return find_relu
             else:
-                input_node = self.node_name_mapping[node.input[0]]
-            return self._find_relu_node(input_node)
+                if re.search(r"\w+:\d+", node.input[0]):
+                    input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
+                else:
+                    input_node = self.node_name_mapping[node.input[0]]
+                return self._find_relu_node(input_node)
         else:
             return False
 
     def _insert_qdq_pattern_for_common_ops(self, original_node, is_asymmetric):
         namespace_prefix = original_node.name + "_eightbit"
-        for each_input_name in self.node_name_mapping[original_node.name].input[:1]:
+        if original_node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
+            all_inputs = self.node_name_mapping[original_node.name].input[-1:]
+        else:
+            all_inputs = self.node_name_mapping[original_node.name].input[:1]
+        for each_input_name in all_inputs:
             if each_input_name[0] == '^':
                 continue
 
             if self.node_name_mapping[original_node.name].op == "MatMul":
                 dtype = dtypes.quint8
-            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2":
+            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2" \
+                 or self.node_name_mapping[original_node.name].op == "BatchMatMul":
                 dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
@@ -179,7 +251,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                     namespace_prefix,
                                                     each_input_name,
                                                     is_asymmetric,
-                                                    dtype)
+                                                    dtype,
+                                                    device=self.device)
 
 
     def _insert_qdq_pattern_for_concatv2(self, original_node, is_asymmetric):
@@ -193,27 +266,29 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                     original_input_name,
                                                     is_asymmetric,
                                                     dtypes.quint8,
-                                                    input_idx)
+                                                    input_idx,
+                                                    device=self.device)
             input_idx += 1
 
 
     def _insert_qdq_pattern_for_each_input(self, op_name, namespace_prefix,
                                            input_name, is_asymmetric,
-                                           dtype=dtypes.quint8, input_index=0):
+                                           dtype=dtypes.quint8, input_index=0,
+                                           device='cpu'):
         """Takes one float input to an op, and converts it to quantized form."""
         unique_input_name = input_name.replace(":", "__port__").replace("^", "__hat__")
         min_input_name = namespace_prefix + "_min_" + unique_input_name
         max_input_name = namespace_prefix + "_max_" + unique_input_name
         quantize_input_name = namespace_prefix + "_quantize_" + unique_input_name
 
-        reshape_dims_name = namespace_prefix + "_reshape_dims"
-        reduction_dims_name = namespace_prefix + "_reduction_dims"
+        reshape_dims_name = namespace_prefix + "_reshape_dims" + unique_input_name
+        reduction_dims_name = namespace_prefix + "_reduction_dims" + unique_input_name
 
         if self.fake_quant: # pragma: no cover
             min_node = Helper.create_constant_node(
-                min_input_name, -1., dtypes.float32)
+                min_input_name, -1., dtypes.float32, device="cpu")
             max_node = Helper.create_constant_node(
-                max_input_name, 1., dtypes.float32)
+                max_input_name, 1., dtypes.float32, device="cpu")
             quant_v2_node = Helper.create_node(
                 "QuantizeV2", quantize_input_name,
                 [input_name, min_input_name, max_input_name])
@@ -221,8 +296,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             if not is_asymmetric:
                 Helper.set_attr_string(quant_v2_node, "round_mode", b"HALF_TO_EVEN")
             #Helper.set_attr_bool(quant_v2_node, "narrow_range", False if is_asymmetric else True)
-            Helper.set_attr_string(
-                quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+
             if "Concat" in self.graph_info[op_name].node.op:
                 dequantize_node = Helper.create_node(
                     "Dequantize", op_name + '_dequantize_' + str(input_index),
@@ -232,8 +312,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     "Dequantize", op_name + '_dequantize',
                     [quant_v2_node.name, quant_v2_node.name + ':1', quant_v2_node.name + ':2'])
             Helper.set_attr_dtype(dequantize_node, "T", dtype)
-            Helper.set_attr_string(
-                dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+
             self.g.add_node(quant_v2_node,
                             self.graph_info[op_name].node.input[0],
                             [dequantize_node.name])
@@ -267,15 +352,26 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             Helper.set_attr_dtype(max_input_node, "T", dtypes.float32)
             Helper.set_attr_dtype(max_input_node, "Tidx", dtypes.int32)
             Helper.set_attr_bool(max_input_node, "keep_dims", False)
+            
+            if "BatchMatMul" in self.graph_info[op_name].node.op:
+                min_input_node.input.append("^" + input_name)
+                max_input_node.input.append("^" + input_name)
 
+            if self.itex_mode:
+                min_input_node.input.append("^" + input_name)
+                max_input_node.input.append("^" + input_name)
             quant_v2_node = Helper.create_node("QuantizeV2", quantize_input_name,
                 [input_name, min_input_name, max_input_name])
             Helper.set_attr_dtype(quant_v2_node, "T", dtype)
             if not is_asymmetric:
                 Helper.set_attr_string(quant_v2_node, "round_mode", b"HALF_TO_EVEN")
             #Helper.set_attr_bool(quant_v2_node, "narrow_range", False if is_asymmetric else True)
-            Helper.set_attr_string(
-                quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if self.performance_only or "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    quant_v2_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
 
             if "Concat" in self.graph_info[op_name].node.op:
                 dequantize_node = Helper.create_node(
@@ -286,11 +382,17 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     "Dequantize", op_name + '_dequantize',
                     [quant_v2_node.name, quant_v2_node.name + ':1', quant_v2_node.name + ':2'])
             Helper.set_attr_dtype(dequantize_node, "T", dtype)
-            Helper.set_attr_string(
-                dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if self.performance_only or "BatchMatMul" in self.graph_info[op_name].node.op:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"SCALED")
+            else:
+                Helper.set_attr_string(
+                    dequantize_node, "mode", b"MIN_FIRST" if is_asymmetric else b"SCALED")
+            if self.graph_info[op_name].node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
+                input_index = 2
 
             self.g.add_node(quant_v2_node,
-                            self.graph_info[op_name].node.input[0],
+                            self.graph_info[op_name].node.input[input_index],
                             [dequantize_node.name])
             self.g.add_node(dequantize_node, quant_v2_node.name, [op_name])
             self.g.add_node(reshape_dims_node, None, [reshape_input_name])
@@ -303,6 +405,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     def _insert_qdq_pattern_for_weight_node(self,
                                             computational_node,
                                             weight_node,
+                                            enter_node,
                                             min_max_values,
                                             per_channel,
                                             weight_bit=7.0,
@@ -319,12 +422,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
        
         # The weight node of BatchMatMul may have no value
         if 'value' in weight_node.attr and \
-           host_op_type in ("Conv2D", "MatMul", "BatchMatMulV2", "Conv3D"):
+           host_op_type in ("Conv2D", "MatMul", "BatchMatMul", "BatchMatMulV2", "Conv3D", \
+                            "Conv2DBackpropInput", "Conv3DBackpropInputV2"):
             float_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
             if per_channel:
-                if host_op_type == 'Conv3D':
+                if host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
-                elif host_op_type == 'Conv2D':
+                elif host_op_type in ('Conv2D', 'Conv2DBackpropInput'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1))
@@ -380,12 +484,32 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             max_value = np.max(min_max_values[computational_node.name+'__max'])
 
         min_node = Helper.create_constant_node(min_name, min_value,
-                                                            dtypes.float32, device=device)
+                                                            dtypes.float32, device="cpu")
         max_node = Helper.create_constant_node(max_name, max_value,
-                                                            dtypes.float32, device=device)
-        quant_node = Helper.create_node(
-                "QuantizeV2", qint8_const_name + '_quant',
-                [weight_node.name, min_name, max_name])
+                                                            dtypes.float32, device="cpu")
+        if "BatchMatMul" in host_op_type and "BatchMatMul" not in weight_node.op:
+            min_node.input.append("^" + weight_node.name)
+            max_node.input.append("^" + weight_node.name)
+
+        quant_const_enter_node = None
+        min_enter_node = None
+        max_enter_node = None
+        if enter_node:
+            quant_const_enter_node = Helper.create_node('Enter', \
+                                           qint8_const_name + '_enter', [weight_node.name])
+            Helper.set_attr_string(quant_const_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            Helper.set_attr_dtype(quant_const_enter_node, 'T', dtypes.float32)
+            Helper.set_attr_bool(quant_const_enter_node, 'is_constant', True)
+            Helper.set_attr_int(quant_const_enter_node, \
+                                         'parallel_iterations', enter_node.attr['parallel_iterations'].i)
+            quant_node = Helper.create_node(
+                    "QuantizeV2", qint8_const_name + '_quant',
+                    [quant_const_enter_node.name, min_name, max_name])
+        else:
+            quant_node = Helper.create_node(
+                    "QuantizeV2", qint8_const_name + '_quant',
+                    [weight_node.name, min_name, max_name])
         dequant_node = Helper.create_node(
             "Dequantize", base_name + '_dequant',
             [quant_node.name, quant_node.name + ':1', quant_node.name + ':2'])
@@ -395,10 +519,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         Helper.set_attr_dtype(dequant_node, "T", dtypes.qint8)
         Helper.set_attr_string(dequant_node, "mode", b"SCALED")
         if per_channel:
-            if host_op_type == 'Conv2D':
+            if host_op_type == 'Conv2D' or host_op_type == 'Conv2DBackpropInput':
                 Helper.set_attr_int(quant_node, 'axis', 3)
                 Helper.set_attr_int(dequant_node, 'axis', 3)
-            elif host_op_type == 'Conv3D':
+            elif host_op_type == 'Conv3D' or host_op_type == 'Conv3DBackpropInputV2':
                 Helper.set_attr_int(quant_node, 'axis', 4)
                 Helper.set_attr_int(dequant_node, 'axis', 4)
             elif host_op_type == 'MatMul':
@@ -410,12 +534,38 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         if host_op_type == 'DepthwiseConv2dNative':
             Helper.set_attr_int(quant_node, 'axis', 2)
             Helper.set_attr_int(dequant_node, 'axis', 2)
-        
-        self.g_weight.add_node(quant_node, weight_node.name, [])
-        self.g_weight.add_node(min_node, None, [quant_node.name])
-        self.g_weight.add_node(max_node, None, [quant_node.name])
-        self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
-        computational_node.input[1] = dequant_node.name
+
+        if enter_node:
+            min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
+            Helper.set_attr_string(min_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            Helper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
+            Helper.set_attr_bool(min_enter_node, 'is_constant', True)
+            Helper.set_attr_int(min_enter_node, 'parallel_iterations', \
+                                             enter_node.attr['parallel_iterations'].i)
+
+            max_enter_node = Helper.create_node('Enter', max_name + '_enter', [max_name])
+            Helper.set_attr_string(max_enter_node,
+                                           'frame_name', enter_node.attr['frame_name'].s)
+            Helper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
+            Helper.set_attr_bool(max_enter_node, 'is_constant', True)
+            Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
+                                             enter_node.attr['parallel_iterations'].i)
+
+            self.g_weight.add_node(quant_const_enter_node, weight_node.name, [quant_node.name])
+            self.g_weight.add_node(quant_node, quant_const_enter_node.name, [])
+            self.g_weight.add_node(min_node, None, [min_enter_node.name])
+            self.g_weight.add_node(max_node, None, [max_enter_node.name])
+            self.g_weight.add_node(min_enter_node, min_node.name, [quant_node.name])
+            self.g_weight.add_node(max_enter_node, max_node.name, [quant_node.name])
+            self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
+            computational_node.input[1] = dequant_node.name
+        else:
+            self.g_weight.add_node(quant_node, weight_node.name, [])
+            self.g_weight.add_node(min_node, None, [quant_node.name])
+            self.g_weight.add_node(max_node, None, [quant_node.name])
+            self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
+            computational_node.input[1] = dequant_node.name
 
     def _ignore_insert_qdq_pattern(self, matched_node_name):
         if matched_node_name in self.fp32_ops or \
@@ -427,10 +577,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while
         # transpose_a could be set to True.
-        if self.graph_info[matched_node_name].node.op == "MatMul":
+        if not self.itex_mode and self.graph_info[matched_node_name].node.op == "MatMul":
             if self.graph_info[matched_node_name].node.attr["transpose_a"].b == True:
                 return True
-
+        if "FusedBatchNorm" in self.graph_info[matched_node_name].node.op:
+            return True
+        if "_MklFusedInstanceNorm" == self.graph_info[matched_node_name].node.op:
+            return True
         return False
 
 

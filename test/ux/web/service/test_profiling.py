@@ -228,6 +228,10 @@ class TestProfilingService(unittest.TestCase):
         mocked_serve_from_filesystem: MagicMock,
     ) -> None:
         """Test get_output."""
+        data = {
+            "id": [1],
+            "autorefresh": [15],
+        }
         filesystem_response = Response("fake output content")
 
         mocked_get_workload_data.return_value = {
@@ -235,15 +239,11 @@ class TestProfilingService(unittest.TestCase):
         }
         mocked_serve_from_filesystem.return_value = filesystem_response
 
-        actual = ProfilingService.get_output(
-            {
-                "id": [1],
-            },
-        )
+        actual = ProfilingService.get_output(data)
 
         self.assertEqual(filesystem_response.data, actual.data)
-        self.assertEqual("3", actual.headers.get("refresh"))
-        mocked_get_workload_data.assert_called_with({"id": [1]})
+        self.assertEqual("15", actual.headers.get("refresh"))
+        mocked_get_workload_data.assert_called_with(data)
         mocked_serve_from_filesystem.assert_called_once_with(
             path="/some/fake/output/path.log",
             mimetype="text/plain",
@@ -257,21 +257,20 @@ class TestProfilingService(unittest.TestCase):
         mocked_serve_from_filesystem: MagicMock,
     ) -> None:
         """Test get_output."""
+        data = {
+            "id": [1],
+        }
         mocked_get_workload_data.return_value = {
             "log_path": "/some/fake/output/path.log",
         }
         mocked_serve_from_filesystem.side_effect = NotFoundException("Unable to find file.")
 
-        actual = ProfilingService.get_output(
-            {
-                "id": [1],
-            },
-        )
+        actual = ProfilingService.get_output(data)
 
         self.assertEqual("Unable to find file.", actual.data.decode("utf-8"))
         self.assertEqual(404, actual.status_code)
-        self.assertEqual("3", actual.headers.get("refresh"))
-        mocked_get_workload_data.assert_called_with({"id": [1]})
+        self.assertIsNone(actual.headers.get("refresh", None))
+        mocked_get_workload_data.assert_called_with(data)
         mocked_serve_from_filesystem.assert_called_once_with(
             path="/some/fake/output/path.log",
             mimetype="text/plain",

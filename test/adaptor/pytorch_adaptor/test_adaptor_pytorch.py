@@ -1,28 +1,28 @@
+import copy
+import neural_compressor.adaptor.pytorch as nc_torch
+import numpy as np
+import os
+import shutil
 import torch
 import torch.nn as nn
 import torch.nn.quantized as nnq
-from torch.quantization import QuantStub, DeQuantStub
 import unittest
-import os
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.model import MODELS
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
-import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.conf.config import QuantConf
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils.utility import recover
-import shutil
-import copy
-import numpy as np
 from neural_compressor.utils.utility import LazyImport
+from torch.quantization import QuantStub, DeQuantStub
+from packaging.version import Version
 
 # improve lazy import UT coverage
 resnet18 = LazyImport("torchvision.models.resnet18")
 q_resnet18 = LazyImport("torchvision.models.quantization.resnet18")
 
 PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= PyTorchVersionMode.PT18.value:
+if PT_VERSION >= Version("1.8.0-rc1"):
     FX_MODE = True
 else:
     FX_MODE = False
@@ -67,10 +67,7 @@ fake_ptq_yaml = '''
 
     quantization:
       op_wise: {
-              'quant': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
-              },
+
               'layer1.0.conv1': {
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -110,17 +107,41 @@ fake_ptq_yaml = '''
         path: saved
     '''
 
+fake_auto_yaml = '''
+    model:
+      name: imagenet
+      framework: pytorch_fx
+
+    quantization:
+      approach: post_training_auto_quant
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+      performance:
+        warmup: 1
+        iteration: 10
+
+    tuning:
+      accuracy_criterion:
+        relative:  0.01
+      exit_policy:
+        timeout: 1000
+        max_trials: 3
+      random_seed: 9527
+      workspace:
+        path: saved
+    '''
+
+
 fake_ptq_yaml_for_fx = '''
     model:
       name: imagenet
       framework: pytorch_fx
 
     quantization:
+      approach: post_training_auto_quant
       op_wise: {
-              'quant': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
-              },
               'layer1.0.conv1': {
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -186,10 +207,6 @@ fake_qat_yaml = '''
           CrossEntropyLoss:
             reduction: mean
       op_wise: {
-              'quant': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
-              },
               'layer1.0.conv1': {
                 'activation': {'dtype': ['fp32']},
                 'weight': {'dtype': ['fp32']}
@@ -237,9 +254,11 @@ def build_pytorch_yaml():
     with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_qat_yaml)
 
+    with open('auto_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_auto_yaml)
 
 def build_pytorch_fx_yaml():
-    if PT_VERSION >= PyTorchVersionMode.PT19.value:
+    if PT_VERSION >= Version("1.9.0-rc1"):
       fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
     else:
       fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
@@ -415,7 +434,6 @@ class LSTMModel(nn.Module):
         c0 = torch.randn(2, 10, 256)
         hidden = (h0, c0)
         emb = self.encoder(input)
-        #import pdb;pdb.set_trace()
         output, hidden = self.rnn(emb, hidden)
         output = self.drop(output)
         decoded = self.decoder(output)
@@ -468,6 +486,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         os.remove('dynamic_yaml.yaml')
         os.remove('qat_yaml.yaml')
         os.remove('dump_yaml.yaml')
+        os.remove('auto_yaml.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
@@ -589,6 +608,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                              type(common_model._model.linear))
             shutil.rmtree('./saved', ignore_errors=True)
 
+    @unittest.skipIf(PT_VERSION < Version("1.12.0-rc1"), "this function will be affected by IPEX")
     def test_non_quant_module(self):
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             model = PartialQuantModel()
@@ -608,6 +628,25 @@ class TestPytorchAdaptor(unittest.TestCase):
             saved_model = load("./saved", model, **non_quant_dict)
             eval_func(saved_model)
             shutil.rmtree('./saved', ignore_errors=True)
+
+    def test_auto_quant(self):
+        def eval_func(model):
+            return 1
+
+        model_origin = LSTMModel(
+            ntoken = 10,
+            ninp = 512,
+            nhid = 256,
+            nlayers = 2,
+        )
+        # run fx_quant in neural_compressor and save the quantized GraphModule
+        quantizer = Quantization('auto_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (3, 10), label=True)
+        quantizer.eval_func = eval_func
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = common.Model(model_origin)
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
 
     def test_workspace_path(self):
         model = M()
@@ -667,7 +706,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
         a = load_array('saved/dump_tensor/activation_iter1.npz')
         w = load_array('saved/dump_tensor/weight.npz')
-        if PT_VERSION >= PyTorchVersionMode.PT18.value:
+        if PT_VERSION >= Version("1.8.0-rc1"):
           self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
                           a['conv1.0'].item()['conv1.0.output0'].shape[1])
         else:
@@ -748,7 +787,7 @@ class TestPytorchAdaptor(unittest.TestCase):
               fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
-        if PT_VERSION >= PyTorchVersionMode.PT18.value:
+        if PT_VERSION >= Version("1.8.0-rc1"):
             model.model.dequant.qconfig = torch.quantization.default_qconfig
         nc_torch._fallback_quantizable_ops_recursively(
             model.model, '', fallback_ops, op_qcfgs={})
@@ -788,8 +827,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             if fake_yaml == 'fx_qat_yaml.yaml':
                 quantizer.q_func = q_func
-            else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = common.Model(model_origin,
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
@@ -803,17 +841,19 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+                                    {'preserved_attributes': []}, \
+                                'dataloader': quantizer.calib_dataloader
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
             # recover int8 model with only tune_cfg
             history_file = './saved/history.snapshot'
             model_fx_recover = recover(model_origin, history_file, 0,
-                            **{'prepare_custom_config_dict': \
+                            **{'prepare_custom_config_dict':
                                     {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+                               'convert_custom_config_dict':
+                                    {'preserved_attributes': []},
+                               'dataloader': quantizer.calib_dataloader
                               })
             self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree('./saved', ignore_errors=True)
@@ -839,12 +879,13 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+                                    {'preserved_attributes': []}, \
+                               'dataloader': quantizer.calib_dataloader
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             shutil.rmtree('./saved', ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
     def test_fx_dynamic_quant(self):
         model = LSTMModel(
@@ -893,9 +934,9 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         # recover int8 model with only tune_cfg
         history_file = './saved/history.snapshot'
         model_fx_recover = recover(model, history_file, 0,
-                            **{'prepare_custom_config_dict': \
+                            **{'prepare_custom_config_dict':
                                     {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
+                               'convert_custom_config_dict':
                                     {'preserved_attributes': []}
                               })
         self.assertEqual(model_fx.code, model_fx_recover.code)
@@ -922,12 +963,11 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             if fake_yaml == 'fx_qat_yaml.yaml':
                 quantizer.q_func = q_func
-            else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = common.Model(model_origin)
             q_model = quantizer.fit()
-            self.assertTrue('quantize' in str(type(q_model._model.encoder)))
-            self.assertTrue('quantize' in str(type(q_model._model.rnn)))
+            self.assertTrue('quantize' in str(type(q_model.model.encoder)))
+            self.assertTrue('quantize' in str(type(q_model.model.rnn)))
 
     def test_fx_sub_module_quant(self):
         for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml', 'fx_dynamic_yaml.yaml']:
@@ -938,8 +978,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             if fake_yaml == 'fx_qat_yaml.yaml':
                 quantizer.q_func = q_func
-            else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = common.Model(model_origin,
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
@@ -953,7 +992,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+                                    {'preserved_attributes': []}, \
+                               'dataloader': quantizer.calib_dataloader
                               })
             self.assertTrue(isinstance(model_fx.sub, torch.fx.graph_module.GraphModule))
 
@@ -963,32 +1003,40 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+                                    {'preserved_attributes': []}, \
+                               'dataloader': quantizer.calib_dataloader
                               })
             self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree('./saved', ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
+    @unittest.skipIf(PT_VERSION < Version("1.11.0-rc1"),
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_bf16_capability(self):
         model_origin = DynamicControlModel()
         os.environ['FORCE_BF16'] = '1'
         q_capability = self.adaptor._get_quantizable_ops(model_origin)
         del os.environ['FORCE_BF16']
-        self.assertEqual(q_capability['optypewise']['Conv2d']['weight']['dtype'], \
-            [ 'int8', 'fp32'])
-        self.assertEqual(q_capability['optypewise']['Conv2d']['activation']['dtype'], \
-            [ 'uint8', 'fp32'])
-        self.assertEqual(q_capability['optypewise']['Linear']['weight']['dtype'], \
-            ['bf16', 'int8', 'fp32'])
-        self.assertEqual(q_capability['optypewise']['Linear']['activation']['dtype'], \
-            ['bf16', 'uint8', 'fp32'])
-        self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['weight']['dtype'], \
-                    ['int8', 'fp32'])
-        self.assertEqual(q_capability['opwise'][('conv', 'Conv2d')]['activation']['dtype'], \
-                    ['uint8', 'fp32'])
-    
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT111.value,
+
+        self.assertEqual(
+            [elem['weight']['dtype'] for elem in q_capability['optypewise']['Conv2d']],
+            [['int8'], 'fp32'])
+        self.assertEqual(
+            [elem['activation']['dtype'] for elem in q_capability['optypewise']['Conv2d']],
+            [['uint8'], 'fp32'])
+        self.assertEqual(
+            [elem['weight']['dtype'] for elem in q_capability['opwise'][('conv', 'Conv2d')]],
+            [['int8'], 'fp32'])
+        self.assertEqual(
+            [elem['activation']['dtype'] for elem in q_capability['opwise'][('conv', 'Conv2d')]],
+            [['uint8'], 'fp32'])
+        self.assertEqual(
+            [elem['weight']['dtype'] for elem in q_capability['opwise'][('linear', 'Linear')]],
+            [['int8'], 'fp32', 'bf16'])
+        self.assertEqual(
+            [elem['activation']['dtype'] for elem in q_capability['opwise'][('linear', 'Linear')]],
+            [['uint8'], 'fp32', 'bf16'])
+
+    @unittest.skipIf(PT_VERSION < Version("1.11.0-rc1"),
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_mix_precision(self):
         fake_yaml = 'fx_ptq_yaml.yaml'
@@ -1020,7 +1068,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         from neural_compressor.adaptor.torch_utils.symbolic_trace import symbolic_trace
         model_origin = DynamicControlModel()
         traced_model = symbolic_trace(model_origin, is_qat=False)
-        if PT_VERSION >= PyTorchVersionMode.PT111.value:
+        if PT_VERSION >= Version("1.11.0-rc1"):
             self.assertTrue(isinstance(traced_model.sub, torch.nn.Module))
             self.assertTrue(isinstance(traced_model.conv, torch.fx.graph_module.GraphModule))
         else:

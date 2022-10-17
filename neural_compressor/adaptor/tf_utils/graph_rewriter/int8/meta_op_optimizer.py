@@ -20,15 +20,13 @@ from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+from tensorflow.python.framework import dtypes
 
 
 class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
     """Fuse the pattern like Dequantize + MetaOp + Quantize into MetaOp(set its type to int8).
        With such changes, the Quantize and Dequantize OP will removed for better performance.
     """
-    meta_op_type_list = ['Reshape', 'Squeeze']
-
     def __init__(self, model):
         super().__init__(model)
 
@@ -37,74 +35,75 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
 
         self.graph_info = self.graph_analyzer.parse_graph()
 
-    def _check_and_apply_transform(self, quantize_node_name):
-        cur_node = self.graph_info[quantize_node_name].node
-        res = [quantize_node_name]
-        found_meta_op_flag = False
-        while cur_node.input:
-            pre_node_name = Helper.node_name_from_input(cur_node.input[0])
-            pre_node = self.graph_info[pre_node_name].node
-            pre_node_op = pre_node.op
-            if pre_node_op in self.meta_op_type_list:
-                res.insert(0, pre_node_name)
-                cur_node = pre_node
-            elif pre_node_op == 'Dequantize' and len(self.graph_info[pre_node_name].outputs) == 1:
-                res.insert(0, pre_node_name)
-                found_meta_op_flag = True
-                break
-            else:
-                break
-
-        dequantize_node_name = res[0]
-        quantize_node_name = res[-1]
-        deq_node = self.graph_info[dequantize_node_name].node
-        quant_node = self.graph_info[quantize_node_name].node
-
-        if found_meta_op_flag and len(res) > 2 and \
-            quant_node.attr['mode'].s.decode() == deq_node.attr['mode'].s.decode():
-            deq_min_range = self.graph_info[dequantize_node_name].node.input[1]
-            deq_max_range = self.graph_info[dequantize_node_name].node.input[2]
-            quant_output_min = quantize_node_name + ':1'
-            quant_output_max = quantize_node_name + ':2'
-            quantize_input_name = res[-2]
-
-            quantized_node_name = self.graph_info[quantize_node_name].outputs[0]
-
-            for index, value in enumerate(self.graph_info[quantized_node_name].node.input):
-                if value == quant_output_min:
-                    self.graph_info[quantized_node_name].node.input[index] = deq_min_range
-
-                if value == quant_output_max:
-                    self.graph_info[quantized_node_name].node.input[index] = deq_max_range
-
-                if index == 0:
-                    self.graph_info[quantized_node_name].node.input[index] = quantize_input_name
-
-            new_dtype = self.graph_info[dequantize_node_name].node.attr['T'].type
-            for node_name in res[1: -1]:
-                self.graph_info[node_name].node.attr['T'].type = new_dtype
-
-            if 'T1' in self.graph_info[quantized_node_name].node.attr:
-                self.graph_info[quantized_node_name].node.attr['T1'].type = new_dtype
-
-            if 'Tinput' in self.graph_info[quantized_node_name].node.attr:
-                self.graph_info[quantized_node_name].node.attr['Tinput'].type = new_dtype
-
-            if 'T' in self.graph_info[quantized_node_name].node.attr:
-                self.graph_info[quantized_node_name].node.attr['T'].type = new_dtype
-
-            self.graph_info[res[1]
-                            ].node.input[0] = self.graph_info[dequantize_node_name].node.input[0]
-            self.graph_analyzer.remove_node(dequantize_node_name)
-            self.graph_analyzer.remove_node(self.graph_info[quantize_node_name].node.input[1])
-            self.graph_analyzer.remove_node(self.graph_info[quantize_node_name].node.input[2])
-            self.graph_analyzer.remove_node(quantize_node_name)
-
     @dump_elapsed_time("Pass MetaOpOptimizer")
     def do_transformation(self):
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes( \
+                          [['Dequantize'], ('Squeeze', 'Reshape'), ('Squeeze','Reshape'), ['QuantizeV2']])
+        for i in target_nodes:
+            if len(i[-1]) == 2:
+                continue
 
-        deq_node = self.graph_analyzer.query_fusion_pattern_nodes([['QuantizeV2']])
+            dequantize_node_name = i[0]
+            if len(i[-1]) == 3:
+                quantize_node_name = i[2]
+            else:
+                quantize_node_name = i[3]
+                dequantize_node_name = i[0]
+                if self.graph_info[i[1]].node.op == self.graph_info[i[2]].node.op:
+                    continue
+            deq_node = self.graph_info[dequantize_node_name].node
+            quant_node = self.graph_info[quantize_node_name].node
+            if len(self.graph_info[dequantize_node_name].outputs) != 1:
+                continue
 
-        for i in deq_node:
-            self._check_and_apply_transform(i[0])
+            if quant_node.attr['mode'].s.decode() == deq_node.attr['mode'].s.decode():
+                deq_min_range = self.graph_info[dequantize_node_name].node.input[1]
+                deq_max_range = self.graph_info[dequantize_node_name].node.input[2]
+                quant_output_min = quantize_node_name + ':1'
+                quant_output_max = quantize_node_name + ':2'
+                if len(i[-1]) == 3:
+                    quantize_input_name = i[1]
+                else:
+                    quantize_input_name = i[2]
+
+                quantized_node_name = self.graph_info[quantize_node_name].outputs[0]
+                # _QuantizedBatchMatMul requires T1 and T2 with qint8 type
+                # _QuantizedFusedBatchNorm requires T with qint8 type
+                if (self.graph_info[quantized_node_name].node.op == '_QuantizedBatchMatMul' or \
+                    self.graph_info[quantized_node_name].node.op == '_QuantizedFusedBatchNorm') and \
+                    self.graph_info[dequantize_node_name].node.attr['T'].type != dtypes.qint8.as_datatype_enum:
+                    continue
+
+                for index, value in enumerate(self.graph_info[quantized_node_name].node.input):
+                    if value == quant_output_min:
+                        self.graph_info[quantized_node_name].node.input[index] = deq_min_range
+
+                    if value == quant_output_max:
+                        self.graph_info[quantized_node_name].node.input[index] = deq_max_range
+
+                    if index == 0:
+                        self.graph_info[quantized_node_name].node.input[index] = quantize_input_name
+
+                new_dtype = self.graph_info[dequantize_node_name].node.attr['T'].type
+                for node_name in i[1: -1]:
+                    self.graph_info[node_name].node.attr['T'].type = new_dtype
+
+                if 'T1' in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr['T1'].type = new_dtype
+
+                if 'Tinput' in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr['Tinput'].type = new_dtype
+
+                if 'Thost_inputs' in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr['Thost_inputs'].list.type[0] = new_dtype
+
+                if 'T' in self.graph_info[quantized_node_name].node.attr:
+                    self.graph_info[quantized_node_name].node.attr['T'].type = new_dtype
+
+                self.graph_info[i[1]].node.input[0] = \
+                     self.graph_info[dequantize_node_name].node.input[0]
+                self.graph_analyzer.remove_node(dequantize_node_name)
+                self.graph_analyzer.remove_node(self.graph_info[quantize_node_name].node.input[1])
+                self.graph_analyzer.remove_node(self.graph_info[quantize_node_name].node.input[2])
+                self.graph_analyzer.remove_node(quantize_node_name)
         return GraphAnalyzer().dump_graph()

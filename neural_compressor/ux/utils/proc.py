@@ -20,10 +20,13 @@ import json
 import os
 import re
 import subprocess
+import threading
 import uuid
 from contextlib import ExitStack
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
+from neural_compressor.ux.components.jobs_management import jobs_control_queue
+from neural_compressor.ux.components.jobs_management.jobs_manager import _Job
 from neural_compressor.ux.utils.logger import log
 
 
@@ -128,6 +131,11 @@ class Proc(object):
                 startupinfo=startupinfo,
                 creationflags=creationflags,
             )
+            current_thread_obj = threading.current_thread()
+            # check if function was called in Job object
+            if isinstance(current_thread_obj, _Job):
+                jobs_control_queue.add_subprocess(current_thread_obj.job_id, proc)
+
             with ExitStack() as stack:
                 files = [
                     stack.enter_context(open(fname, "a", encoding="utf-8"))

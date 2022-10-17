@@ -19,7 +19,7 @@ from neural_compressor.utils.logger import log
 import math
 import os
 import random
-import copy
+import collections
 import datasets
 from datasets import load_dataset, load_metric
 import torch
@@ -28,7 +28,7 @@ import torch.distributed as dist
 from tqdm.auto import tqdm
 
 import numpy as np
-
+from accelerate import Accelerator
 import transformers
 from transformers import (
     AdamW,
@@ -165,6 +165,10 @@ def parse_args():
                         help='loss weights of distillation, should be a list of length 2, '
                         'and sum to 1.0, first for student targets loss weight, '
                         'second for teacher student loss weight.')
+    parser.add_argument("--local_rank", default=-1, type=int, 
+                        help='used for assigning rank to the process in local machine.')
+    parser.add_argument("--no_cuda", action='store_true', 
+                        help='use cpu for training.')
     args = parser.parse_args()
 
     # Sanity checks
@@ -190,22 +194,12 @@ def move_input_to_device(input, device):
         return tuple([move_input_to_device(ele, device) for ele in input])
     elif isinstance(input, list):
         return [move_input_to_device(ele, device) for ele in input]
-    elif isinstance(input, dict):
+    elif isinstance(input, dict) or isinstance(input, collections.UserDict):
         return {key:move_input_to_device(input[key], device) for key in input}
     else:
         assert False, "only support input type of torch.Tensor, tuple, list and dict."
 
-def gather_results(predictions, gt):
-    if rank != -1:
-        pred_list = [predictions.clone() for _ in range(world)] if rank == 0 else []
-        gt_list = [gt.clone() for _ in range(world)] if rank == 0 else []
-        dist.gather(predictions, gather_list=pred_list)
-        dist.gather(gt, gather_list=gt_list)
-        return pred_list[0], gt_list[0]
-    else:
-        return predictions, gt
-
-def evaluation(model, eval_dataloader, metric):
+def evaluation(model, accelerator, eval_dataloader, metric):
     logger.info("***** Running eval *****")
     logger.info(f"  Num examples = {len(eval_dataloader) }")
     model.eval()
@@ -216,17 +210,17 @@ def evaluation(model, eval_dataloader, metric):
         outputs = model(**batch)['logits']
         predictions = outputs.argmax(dim=-1)
         metric.add_batch(
-            predictions=predictions,
-            references=batch["labels"],
+            predictions=accelerator.gather(predictions),
+            references=accelerator.gather(batch["labels"]),
         )
 
     eval_metric = metric.compute()
     logger.info(f"eval_metric : {eval_metric}")
     return eval_metric['accuracy']
 
-def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, agent, eval_dataloader, metric):
+def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, agent, accelerator, eval_dataloader, metric):
     # Train!
-    total_batch_size = args.batch_size * args.gradient_accumulation_steps
+    total_batch_size = args.batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
     logger.info("***** Running training *****")
     logger.info(f"  Num examples = {len(train_dataloader)}")
@@ -260,7 +254,7 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
                 loss = criterion(outputs['logits'], batch["labels"])
                 loss = agent.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
-            loss.backward()
+            accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 agent.on_before_optimizer_step()
                 optimizer.step()
@@ -271,21 +265,32 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
             if completed_steps >= args.max_train_steps:
                 break
         agent.on_epoch_end()
-        evaluation(model, eval_dataloader, metric)
+        evaluation(model, accelerator, eval_dataloader, metric)
     agent.on_train_end()
 
 
 def main():
     args = parse_args()
 
+    # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
+    accelerator = Accelerator(cpu=args.no_cuda)
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
+    logger.info(accelerator.state)
 
-    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+    # Setup logging, we only want one process per machine to log things on the screen.
+    # accelerator.is_local_main_process is only True for one process per machine.
+    logger.setLevel(logging.INFO if accelerator.is_local_main_process else logging.ERROR)
+    if accelerator.is_local_main_process:
+        datasets.utils.logging.set_verbosity_warning()
+        transformers.utils.logging.set_verbosity_info()
+    else:
+        datasets.utils.logging.set_verbosity_error()
+        transformers.utils.logging.set_verbosity_error()
 
     # If passed along, set the training seed now.
     if args.seed is not None:
@@ -361,7 +366,6 @@ def main():
         except:
             raise TypeError('Provided {} is not a valid checkpoint file, '
                             'please provide .pt file'.format(args.resume))
-    model.to(device)
 
     # Preprocessing the datasets
     if args.task_name is not None:
@@ -419,9 +423,10 @@ def main():
                 result["labels"] = examples["label"]
         return result
 
-    processed_datasets = raw_datasets.map(
-        preprocess_function, batched=True, remove_columns=raw_datasets["train"].column_names
-    )
+    with accelerator.main_process_first():
+        processed_datasets = raw_datasets.map(
+            preprocess_function, batched=True, remove_columns=raw_datasets["train"].column_names
+        )
 
     train_dataset = processed_datasets["train"]
     eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
@@ -439,7 +444,7 @@ def main():
         # Otherwise, `DataCollatorWithPadding` will apply dynamic padding for us (by padding to the maximum length of
         # the samples passed). When using mixed precision, we add `pad_to_multiple_of=8` to pad all tensors to multiple
         # of 8s, which will enable the use of Tensor Cores on NVIDIA hardware with compute capability >= 7.5 (Volta).
-        data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=None)
+        data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
     if args.do_distillation:
         teacher_config = AutoConfig.from_pretrained(args.teacher_model_name_or_path, \
@@ -453,7 +458,7 @@ def main():
             from_tf=bool(".ckpt" in args.teacher_model_name_or_path),
             config=teacher_config,
         )
-        teacher_model.to(device)
+        teacher_model = accelerator.prepare(teacher_model)
         para_counter = lambda model:sum(p.numel() for p in model.parameters())
         logger.info("***** Number of teacher model parameters: {:.2f}M *****".format(\
                     para_counter(teacher_model)/10**6))
@@ -471,15 +476,31 @@ def main():
                 if os.path.exists(npy_file):
                     teacher_logits = [x for x in np.load(npy_file)]
                 else:
+                    sampler = None
+                    if accelerator.num_processes > 1:
+                        from transformers.trainer_pt_utils import ShardSampler
+                        sampler = ShardSampler(
+                            train_dataset,
+                            batch_size=args.batch_size,
+                            num_processes=accelerator.num_processes,
+                            process_index=accelerator.process_index,
+                        )
                     train_dataloader = DataLoader(train_dataset, collate_fn=data_collator, \
-                                            batch_size=args.batch_size)
+                                                  sampler=sampler, batch_size=args.batch_size)
                     train_dataloader = tqdm(train_dataloader, desc="Evaluating")
                     teacher_logits = []
                     for step, batch in enumerate(train_dataloader):
-                        batch = move_input_to_device(batch, device)
-                        outputs = teacher_model(**batch)
-                        teacher_logits += [x for x in outputs['logits'].cpu().detach().numpy()]
-                    np.save(npy_file, np.array(teacher_logits))
+                        batch = move_input_to_device(batch, next(teacher_model.parameters()).device)
+                        outputs = teacher_model(**batch)['logits'].cpu().detach().numpy()
+                        if accelerator.num_processes > 1:
+                            outputs_list = [None for i in range(accelerator.num_processes)]
+                            dist.all_gather_object(outputs_list, outputs)
+                            outputs = np.concatenate(outputs_list, axis=0)
+                        teacher_logits += [x for x in outputs]
+                    if accelerator.num_processes > 1:
+                        teacher_logits = teacher_logits[:len(train_dataset)]
+                    if accelerator.local_process_index in [-1, 0]:
+                        np.save(npy_file, np.array(teacher_logits))
                 return train_dataset.add_column('teacher_logits', teacher_logits)
             with torch.no_grad():
                 train_dataset = get_logits(teacher_model, train_dataset)
@@ -505,6 +526,11 @@ def main():
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
 
+    # Prepare everything with our `accelerator`.
+    model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
+        model, optimizer, train_dataloader, eval_dataloader
+    )
+
     # Note -> the training dataloader needs to be prepared before we grab his length below (cause its length will be
     # shorter in multiprocess)
 
@@ -528,10 +554,10 @@ def main():
 
     def train_func(model):
         return train(args, model, train_dataloader, lr_scheduler, \
-                                criterion, optimizer, agent, eval_dataloader, metric)
+                     criterion, optimizer, agent, accelerator, eval_dataloader, metric)
 
     def eval_func(model):
-        return evaluation(model, eval_dataloader, metric)
+        return evaluation(model, accelerator, eval_dataloader, metric)
 
     if args.do_prune:
         # Pruning!
@@ -540,7 +566,7 @@ def main():
         criterion = None # use huggingface's loss
         if args.do_distillation:
             logger.info('='*30 + 'Teacher model on validation set' + '='*30)
-            evaluation(teacher_model, eval_dataloader, metric)  
+            evaluation(teacher_model, accelerator, eval_dataloader, metric)  
 
             # from neural_compressor.experimental import Distillation
             from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
@@ -556,9 +582,8 @@ def main():
             for input in eval_dataloader:
                 input_names = input.keys()
                 break
-            model = symbolic_trace(model, input_names=input_names, \
-                                   batch_size=args.batch_size, \
-                                   sequence_length=args.max_seq_length)
+            model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
+                                   batch_size=args.batch_size, sequence_length=args.max_seq_length)
 
             from neural_compressor.experimental.scheduler import Scheduler
             from neural_compressor.experimental import Quantization
@@ -576,7 +601,9 @@ def main():
             agent.pruning_func = train_func
             agent.eval_func = eval_func
             model = agent()
-        model.save(args.output_dir)
+        model = common.Model(accelerator.unwrap_model(model.model))
+        if accelerator.local_process_index in [-1, 0]:
+            model.save(args.output_dir)
         # change to framework model for further use
         model = model.model
 
@@ -589,8 +616,8 @@ def main():
             outputs = model(**batch)
             predictions = outputs['logits'].argmax(dim=-1)
             metric.add_batch(
-                predictions=predictions,
-                references=batch["labels"],
+                predictions=accelerator.gather(predictions),
+                references=accelerator.gather(batch["labels"]),
             )
 
         eval_metric = metric.compute()
@@ -608,15 +635,13 @@ def main():
             batch = move_input_to_device(batch, model_device)
             outputs = model(**batch)
             predictions = outputs['logits'].argmax(dim=-1)
-            pred, gt = gather_results(predictions, batch["labels"])
-            metric.add_batch(predictions=pred, references=gt)
+            metric.add_batch(
+                predictions=accelerator.gather(predictions),
+                references=accelerator.gather(batch["labels"]),
+            )
 
         eval_metric = metric.compute()
         logger.info(f"mnli-mm: {eval_metric}")
 
 if __name__ == "__main__":
-    rank, world = int(os.environ.get('PMI_RANK', -1)), int(os.environ.get('PMI_SIZE', 1))
-    if rank != -1:
-        logger.warning('start distributed training...')
-        dist.init_process_group(backend='mpi')
     main()

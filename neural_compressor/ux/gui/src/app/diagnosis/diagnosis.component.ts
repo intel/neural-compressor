@@ -19,6 +19,7 @@ import { ModelWiseComponent } from '../model-wise/model-wise.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigPreviewComponent } from '../config-preview/config-preview.component';
 import { GenerateConfigDialogComponent } from '../generate-config-dialog/generate-config-dialog.component';
+import { Sort } from '@angular/material/sort';
 
 @Component({
   selector: 'app-diagnosis',
@@ -32,8 +33,13 @@ export class DiagnosisComponent implements OnInit {
   models = [];
   modelId: number;
   optimizationId?: number;
-  opList = {};
-  opDetails = {};
+  opList;
+  sortedOpList: any[];
+  opDetails: {
+    Pattern: any;
+    Weights: any;
+    'OP name': string;
+  };
   activeOp = '';
   activeType: 'weights' | 'activation';
   chartOptions;
@@ -53,24 +59,28 @@ export class DiagnosisComponent implements OnInit {
 
   ngOnInit(): void {
     this.getModels();
-    this.modelId = this.inputModelId;
-    this.optimizationId = null;
-    this.getOpList(this.inputModelId);
+    this.modelService.projectChanged$
+      .subscribe((response: { id: number }) => {
+        this.getModels(response.id);
+      });
     this.modelService.getNodeDetails$
       .subscribe(
-        response => this.getOpDetails(this.modelId, response)
-      )
+        response => this.getOpDetails(this.modelId, response),
+        error => this.modelService.openErrorDialog(error)
+      );
   }
 
   getModels(id?: number) {
     this.modelService.getModelList(id ?? this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.models = response['models'];
+        (response: { models: any }) => {
+          this.models = response.models;
+          this.modelId = this.models[0].id;
+          this.optimizationId = null;
+          this.getOpList(this.inputModelId);
         },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
+        error => this.modelService.openErrorDialog(error)
+      );
   }
 
   getOpList(modelId: number) {
@@ -80,8 +90,8 @@ export class DiagnosisComponent implements OnInit {
     // Update optimization ID
     this.modelService.getOptimizationList(this.activatedRoute.snapshot.params.id)
       .subscribe(
-        response => {
-          this.optimizationId = response['optimizations'].find(x => x.optimized_model?.id == this.modelId)?.id
+        (response: { optimizations: any }) => {
+          this.optimizationId = response.optimizations.find(x => x.optimized_model?.id === this.modelId)?.id;
         },
         error => {
           if (error.error === 'No row was found when one was required') {
@@ -95,34 +105,34 @@ export class DiagnosisComponent implements OnInit {
         response => {
           this.showSpinner = false;
           this.opList = response;
+          this.sortedOpList = this.opList.slice();
           this.showOps = true;
         },
         error => {
           this.showSpinner = false;
           if (error.error === 'No row was found when one was required') {
             this.showOps = false;
-          } else if (error.error.match("No such file or directory: '.*/dequan_min_max.pkl'")) {
+          } else if (error.error.match('No such file or directory: \'.*/dequan_min_max.pkl\'')) {
             this.modelService.openWarningDialog(
-              "Diagnosis is supported only for real data quantization."
-            )
+              'Diagnosis is supported only for real data quantization.'
+            );
             this.showOps = false;
           } else {
             this.modelService.openErrorDialog(error);
           }
         });
   }
-  
 
   getOpDetails(modelId: number, opName: string) {
     this.activeOp = opName;
     this.modelService.getOpDetails(this.activatedRoute.snapshot.params.id, modelId, opName)
       .subscribe(
-        response => {
+        (response: { Pattern: any; Weights: any; 'OP name': string }) => {
           if (Object.keys(response).length) {
             this.showOps = true;
             this.opDetails = response;
-            this.precision = response['Pattern']['precision'];
-            this.granularity = response['Weights']['granularity'];
+            this.precision = response.Pattern.precision;
+            this.granularity = response.Weights.granularity;
           }
         },
         error => {
@@ -144,23 +154,24 @@ export class DiagnosisComponent implements OnInit {
 
   applyChanges() {
     const dialogRef = this.dialog.open(GenerateConfigDialogComponent);
-    let updatedValuesToSave = {
+    const updatedValuesToSave = {
       op_wise: {},
       model_wise: {},
       project_id: this.activatedRoute.snapshot.params.id,
       model_id: this.modelId,
       optimization_id: this.optimizationId,
+      optimization_name: ''
     };
 
     Object.keys(this.updatedValues).forEach(opName => {
       updatedValuesToSave.op_wise[opName] = {};
       if (this.updatedValues[opName].precision) {
-        updatedValuesToSave.op_wise[opName]['pattern'] = {
+        updatedValuesToSave.op_wise[opName].pattern = {
           precision: this.updatedValues[opName].precision
         };
       }
       if (this.updatedValues[opName].granularity) {
-        updatedValuesToSave.op_wise[opName]['weight'] = {
+        updatedValuesToSave.op_wise[opName].weight = {
           granularity: this.updatedValues[opName].granularity
         };
       }
@@ -168,14 +179,14 @@ export class DiagnosisComponent implements OnInit {
 
     updatedValuesToSave.model_wise = this.modelWise;
 
-    dialogRef.afterClosed().subscribe(response => {
+    dialogRef.afterClosed().subscribe((response: { optimizationName: string }) => {
       if (response) {
-        updatedValuesToSave['optimization_name'] = response['optimizationName'];
+        updatedValuesToSave.optimization_name = response.optimizationName;
 
         this.modelService.generateOptimization(updatedValuesToSave)
           .subscribe(
-            response => {
-              this.router.navigate(['project', this.activatedRoute.snapshot.params.id, 'optimizations'], { queryParamsHandling: "merge" });
+            generated => {
+              this.router.navigate(['project', this.activatedRoute.snapshot.params.id, 'optimizations'], { queryParamsHandling: 'merge' });
               this.modelService.projectChanged$.next({ id: this.activatedRoute.snapshot.params.id, tab: 'optimizations' });
             },
             error => {
@@ -185,13 +196,27 @@ export class DiagnosisComponent implements OnInit {
     });
   }
 
+  sortData(sort: Sort) {
+    const data = this.opList.slice();
+    if (!sort.active || sort.direction === '') {
+      this.sortedOpList = data;
+      return;
+    }
+
+    this.sortedOpList = data.sort((a, b) => this.compare(a[sort.active], b[sort.active], sort.direction === 'asc'));
+  }
+
+  compare(a: number | string, b: number | string, isAsc: boolean) {
+    return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+  }
+
   viewConfiguration() {
-    let updatedValuesToShow = {
+    const updatedValuesToShow = {
       op_wise: {},
       model_wise: {},
     };
-    updatedValuesToShow['model_wise'] = this.modelWise;
-    updatedValuesToShow['op_wise'] = this.updatedValues;
+    updatedValuesToShow.model_wise = this.modelWise;
+    updatedValuesToShow.op_wise = this.updatedValues;
     const dialogRef = this.dialog.open(ConfigPreviewComponent, {
       data: {
         updatedValues: updatedValuesToShow
@@ -201,8 +226,8 @@ export class DiagnosisComponent implements OnInit {
 
   resetChanges(opName: string) {
     delete this.updatedValues[opName];
-    this.precision = this.opDetails['Pattern']['precision'];
-    this.granularity = this.opDetails['Weights']['granularity'];
+    this.precision = this.opDetails.Pattern.precision;
+    this.granularity = this.opDetails.Weights.granularity;
   }
 
   openModelWiseDialog() {
@@ -215,7 +240,7 @@ export class DiagnosisComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(response => {
       if (response) {
-        this.modelWise = response['modelWise'];
+        this.modelWise = response.modelWise;
       }
     });
   }

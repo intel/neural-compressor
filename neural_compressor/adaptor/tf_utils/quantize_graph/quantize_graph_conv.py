@@ -33,6 +33,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
+        self.exclude_conv_name = []
 
         self.fusion_mapping = {
             'Conv2DBiasAdd': self.apply_conv_biasadd_fusion,
@@ -66,6 +67,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         # TODO this is workaround as the tf 2.1 doesn't support depthwise/conv s8
         # feature.
         if self.enable_s8 and not self._find_relu_node(matched_node.node):
+            self.exclude_conv_name.append(match_node_name[0])
             self.output_graph = self.input_graph
             return
 
@@ -98,7 +100,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantized_conv_node = helper.create_node(
                         "QuantizedDepthwiseConv2D", quantized_node_name,
                         all_input_names)
-
+                
                 helper.copy_attr(quantized_conv_node, "strides",
                                  node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding",
@@ -385,6 +387,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
 
-            return self.output_graph, matched_node_name
+            return self.output_graph, matched_node_name, self.exclude_conv_name
 
-        return self.input_graph, []
+        return self.input_graph, [], []

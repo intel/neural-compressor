@@ -31,7 +31,7 @@ export class NotificationComponent {
   ) { }
 
   navigateTo() {
-    this.router.navigate(['project', this.data.projectId, this.data.tab], { queryParamsHandling: "merge" });
+    this.router.navigate(['project', this.data.projectId, this.data.tab], { queryParamsHandling: 'merge' });
     this.modelService.projectChanged$.next({ id: this.data.projectId, tab: this.data.tab });
   }
 

@@ -430,6 +430,12 @@ class MXNetQuery(QueryBackendCapability):
                 self.cur_config = None
                 raise ValueError("Please check if the format of {} follows Neural Compressor yaml schema.".
                                  format(self.cfg))
+        self._update_cfg_with_usr_definition()
+
+    def _update_cfg_with_usr_definition(self):
+        from neural_compressor.conf.pythonic_config import mxnet_config
+        if mxnet_config.precisions is not None:
+            self.cur_config['precisions']['names'] = ','.join(mxnet_config.precisions)
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.

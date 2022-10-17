@@ -30,12 +30,12 @@ export class AuthenticationInterceptor implements HttpInterceptor {
   ) { }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    let headers = new HttpHeaders({
-      'Authorization': this.modelService.getToken(),
+    const headers = new HttpHeaders({
+      Authorization: this.modelService.getToken(),
     });
 
     const modifiedReq = request.clone({
-      headers: headers
+      headers
     });
 
     return next.handle(modifiedReq);

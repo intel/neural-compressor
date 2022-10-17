@@ -4,10 +4,9 @@
   </mat-spinner>
   <div class="item-no-background width-200">
     <h3 class="center width-200">Models</h3>
-    <mat-button-toggle-group class="toggle-group width-200" [(ngModel)]="modelId"
-      (change)="getOpList(modelId)" vertical="true">
-      <mat-button-toggle *ngFor="let model of models" [value]="model.id">
-        {{ model.name }}
+    <mat-button-toggle-group class="width-200" [(ngModel)]="modelId" (change)="getOpList(modelId)" vertical="true">
+      <mat-button-toggle *ngFor="let model of models" [value]="model.id" [matTooltip]="model.name">
+        {{ model.name | longName:20 }}
       </mat-button-toggle>
     </mat-button-toggle-group>
 
@@ -35,19 +34,22 @@
   </div>
 
   <div [ngClass]="{'item': true, 'graph': showOps, 'graph-100': !showOps}">
-    <app-graph [modelPath]="modelPath" [diagnosisTab]="true" [diagnosisTabParams]="opDetails"></app-graph>
+    <app-graph [modelPath]="modelPath" [showOps]="showOps" [diagnosisTabParams]="opDetails">
+    </app-graph>
   </div>
 
   <div *ngIf="showOps" class="item-no-background op-table">
     <mat-card class="overflow">
-      <table class="rounded overflow" *ngIf="opList[0]">
+      <table *ngIf="opList && opList[0]" matSort (matSortChange)="sortData($event)" class="rounded overflow">
         <tr>
-          <td class="header" *ngFor="let parameter of opList[0] | keyvalue : returnZero">{{ parameter.key }}
-          </td>
+          <th class="header" [mat-sort-header]="parameter.key"
+            *ngFor="let parameter of opList[0] | keyvalue : returnZero">
+            {{ parameter.key }}
+          </th>
         </tr>
-        <tr *ngFor="let op of opList" [ngClass]="{'active': op['OP name'] === activeOp, 'pointer': true}"
+        <tr *ngFor="let op of sortedOpList" [ngClass]="{'active': op['OP name'] === activeOp, 'pointer': true}"
           (click)="getOpDetails(modelId, op['OP name'])" matTooltip="Click to see details">
-          <td [ngClass]=" typeOf(parameter.value) === 'number' ? 'align-right' : 'center'"
+          <td [ngClass]="typeOf(parameter.value) === 'number' ? 'align-right nowrap cell' : 'cell'"
             *ngFor="let parameter of op | keyvalue : returnZero">
             <span *ngIf="parameter.key === 'OP name'" matBadgeOverlap="false"
               [matBadge]="updatedValues[parameter.value] ? objectKeys(updatedValues[parameter.value]).length : null"
@@ -66,7 +68,7 @@
     </mat-card>
     <br>
 
-    <mat-card *ngIf="opDetails['OP name']">
+    <mat-card *ngIf="opDetails && opDetails['OP name']">
       <table class="rounded">
         <tr>
           <td class="header">{{ opDetails['OP name'] }}

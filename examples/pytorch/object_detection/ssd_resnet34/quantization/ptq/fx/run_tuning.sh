@@ -41,7 +41,11 @@ function run_tuning {
         extra_cmd=$extra_cmd"--profile ${topology}-pytorch "
     fi
     if [ -n "$dataset_location" ];then
-        extra_cmd=$extra_cmd"--dataset-path ${dataset_location} "
+        if [ "${dataset_location}" != "convert_dataset" ]; then
+            ln -s ${dataset_location}"/preprocessed" "preprocessed"
+            ln -s ${dataset_location} "convert_dataset"
+        fi
+        extra_cmd=$extra_cmd"--dataset-path ${dataset_location} --cache_dir ${dataset_location} "
     fi
     if [ -n "$input_model" ];then
         extra_cmd=$extra_cmd"--model ${input_model} "

@@ -26,6 +26,7 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
 from neural_compressor.utils import logger
 from .graph_util import GraphAnalyzer
+from .graph_util import GraphRewriterHelper
 from pkg_resources import parse_version
 
 def version1_lt_version2(version1, version2):
@@ -302,6 +303,9 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
     cur_graph.graph = graph_def
     graph_info = cur_graph.parse_graph()
     type_attr = {"Sub": "T", "RealDiv": "T", "Identity": "T"}
+    # this op should not be stripped for table initialization
+    if 'init_all_tables' in graph_info.keys():
+        output_node_names.append('init_all_tables')
     not_found = {name for name in input_node_names}
     for node_name in list(graph_info.keys()):
         if node_name in not_found:
@@ -335,6 +339,70 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
 
     return tf.compat.v1.graph_util.extract_sub_graph(cur_graph.dump_graph(),
                                                      output_node_names)
+
+def strip_equivalent_nodes(graph_def, output_node_names):
+    """
+    Strip nodes with the same input and attr
+    """
+    stripped_graph = GraphAnalyzer()
+    stripped_graph.graph = graph_def
+    stripped_graph_info = stripped_graph.parse_graph()
+    def is_equivalent_input(input_tensor_list_1, input_tensor_list_2):
+        if len(input_tensor_list_1) != len(input_tensor_list_2):
+            return False
+        const_num = 0
+        for input_tensor_1, input_tensor_2 in zip(input_tensor_list_1, input_tensor_list_2):
+            input_node_1 = \
+                stripped_graph_info[GraphRewriterHelper.node_name_from_input(input_tensor_1)].node
+            input_node_2 = \
+                stripped_graph_info[GraphRewriterHelper.node_name_from_input(input_tensor_2)].node
+            if input_node_1.op in ["Const", "HostConst"] and input_node_2.op in ["Const", "HostConst"]:
+                if input_node_1.attr != input_node_2.attr:
+                    return False
+                const_num += 1
+            elif input_tensor_1 != input_tensor_2:
+                return False
+        if const_num == len(input_tensor_list_1):
+            return False
+        return True
+
+    nodes_to_remove = []
+    replaced_nodes_type = {}
+    stripped_graph_node_names = list(stripped_graph_info.keys())
+    len_nodes = len(stripped_graph_node_names)
+    for idx_1 in range(len_nodes-1):
+        node_name_1 = stripped_graph_node_names[idx_1]
+        node_1 = stripped_graph_info[node_name_1].node
+        if node_1.op in ["Const", "HostConst", "MatMul", "TensorArrayV3"] \
+            or node_name_1 in nodes_to_remove:
+            continue
+        for idx_2 in range(idx_1+1, len_nodes):
+            node_name_2 = stripped_graph_node_names[idx_2]
+            node_2 = stripped_graph_info[node_name_2].node
+            if node_1.op == node_2.op \
+                and node_name_1 != node_name_2 \
+                    and node_2 not in nodes_to_remove \
+                        and node_1.input \
+                            and is_equivalent_input(node_1.input, node_2.input) \
+                                and node_1.attr == node_2.attr:
+                for ouput_node_name in stripped_graph_info[node_name_2].outputs:
+                    output_node = stripped_graph_info[ouput_node_name].node
+                    for idx_output_node_input, output_node_input_name in enumerate(output_node.input):
+                        if GraphRewriterHelper.node_name_from_input(output_node_input_name) == \
+                            node_name_2:
+                            new_input = output_node_input_name.replace(node_name_2, node_name_1)
+                            output_node.input[idx_output_node_input] = new_input
+                            logger.debug("Replacing {} node '{}' with equivalent node '{}': " \
+                                "set {} node '{}'.input[{}] = '{}'" \
+                                    .format(node_1.op, node_name_2, node_name_1, output_node.op,
+                                    output_node.name, idx_output_node_input, new_input))
+                            replaced_nodes_type[node_1.op] = replaced_nodes_type.get(node_1.op, 0) + 1
+                            nodes_to_remove.append(node_name_2)
+    for node_to_remove in nodes_to_remove:
+        stripped_graph.remove_node(node_to_remove)
+    return tf.compat.v1.graph_util.extract_sub_graph \
+        (stripped_graph.dump_graph(), list(set(stripped_graph_node_names).intersection(output_node_names))), \
+            replaced_nodes_type
 
 # THIS API IS TO BE DEPRECATED!
 def get_graph_def(model, outputs=[], auto_input_output=False):

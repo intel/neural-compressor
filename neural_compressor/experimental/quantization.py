@@ -27,6 +27,7 @@ from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
 from ..conf.config import QuantConf
+from ..conf.pythonic_config import Config
 from warnings import warn
 
 class Quantization(Component):
@@ -54,6 +55,9 @@ class Quantization(Component):
         super(Quantization, self).__init__()
         if isinstance(conf_fname_or_obj, QuantConf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = QuantConf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = QuantConf(conf_fname_or_obj)
         self._init_with_conf()
@@ -69,6 +73,9 @@ class Quantization(Component):
             if self._eval_dataloader is None:
                 eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
                 if eval_dataloader_cfg is None:
+                    logger.info("Because both eval_dataloader_cfg and user-defined eval_func are None," \
+                        " automatically setting 'tuning.exit_policy.performance_only = True'.")
+                    deep_set(cfg, 'tuning.exit_policy.performance_only', True)
                     logger.info("Generate a fake evaluation function.")
                     self._eval_func = self._fake_eval_func
                 else:
@@ -78,21 +85,29 @@ class Quantization(Component):
 
                     self._eval_dataloader = create_dataloader(self.framework, \
                                                               eval_dataloader_cfg)
+        if os.environ.get("PERFORMANCE_ONLY") in ['0', '1']:
+            performance_only = bool(int(os.environ.get("PERFORMANCE_ONLY")))
+            deep_set(cfg, 'tuning.exit_policy.performance_only', performance_only)
+            logger.info("Get environ 'PERFORMANCE_ONLY={}'," \
+                " force setting 'tuning.exit_policy.performance_only = True'.".format(performance_only))
 
     def _create_calib_dataloader(self, cfg):
         approach_cfg = deep_get(cfg, 'quantization.approach')
         if self._train_func:
             assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
                    'set for {}'.format(approach_cfg)
-            assert self._calib_dataloader is None, 'q_func has provided by user, ' \
-                   'calib_dataloader property should not be set.'
 
         if self._calib_dataloader is None and self._train_func is None:
-            if approach_cfg == 'post_training_static_quant':
+            if approach_cfg in ['post_training_static_quant', 'post_training_auto_quant']:
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
+
+                if approach_cfg == "post_training_auto_quant" and calib_dataloader_cfg == None:
+                    logger.error("dataloader is required for 'post_training_auto_quant'. "
+                                 "use 'post_training_dynamic_quant' instead if no dataloader provided.")
                 assert calib_dataloader_cfg is not None, \
                        'dataloader field of calibration field of quantization section ' \
                        'in yaml file should be configured as calib_dataloader property is NOT set!'
+                
                 if deep_get(calib_dataloader_cfg, 'shuffle'):
                     logger.warning("Reset `shuffle` field to False when post_training_static_quant"
                                    " is selected.")

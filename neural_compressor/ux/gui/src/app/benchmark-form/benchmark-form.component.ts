@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ModelService } from '../services/model.service';
 
 @Component({
   selector: 'app-benchmark-form',
   templateUrl: './benchmark-form.component.html',
-  styleUrls: ['./benchmark-form.component.scss', './../error/error.component.scss', './../home/home.component.scss', './../datasets/datasets.component.scss']
+  styleUrls: ['./benchmark-form.component.scss', './../error/error.component.scss', './../home/home.component.scss',
+    './../datasets/datasets.component.scss']
 })
 export class BenchmarkFormComponent implements OnInit {
 
@@ -36,19 +37,18 @@ export class BenchmarkFormComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data,
     public modelService: ModelService,
-    private _formBuilder: FormBuilder,
   ) { }
 
   ngOnInit(): void {
     this.name = 'Benchmark' + String(this.data.index + 1);
-    if (this.data.framework === "pytorch") {
+    if (this.data.framework === 'pytorch') {
       this.modes = ['performance'];
     }
-    this.getDatasetList()
+    this.getDatasetList();
     this.modelService.getModelList(this.data.projectId)
       .subscribe(
-        response => {
-          this.models = response['models'];
+        (response: { models: [] }) => {
+          this.models = response.models;
           if (this.models.length > 0) {
             this.modelId = this.models[0].id;
           }
@@ -57,13 +57,13 @@ export class BenchmarkFormComponent implements OnInit {
           this.modelService.openErrorDialog(error);
         });
 
-    this.benchmarkFormGroup = this._formBuilder.group({
-      batchSize: [1],
-      warmup: [5],
-      iterations: [10],
-      numOfInstance: [this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'] / 4],
-      coresPerInstance: [4],
-      commandLine: ['']
+    this.benchmarkFormGroup = new FormGroup({
+      batchSize: new FormControl(1),
+      warmup: new FormControl(5),
+      iterations: new FormControl(10),
+      numOfInstance: new FormControl(this.modelService.systemInfo.cores_per_socket * this.modelService.systemInfo.sockets / 4),
+      coresPerInstance: new FormControl(4, { nonNullable: true }),
+      commandLine: new FormControl(''),
     });
 
     this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
@@ -72,8 +72,8 @@ export class BenchmarkFormComponent implements OnInit {
   getDatasetList() {
     this.modelService.getDatasetList(this.data.projectId)
       .subscribe(
-        response => {
-          this.datasets = response['datasets'];
+        (response: { datasets: [] }) => {
+          this.datasets = response.datasets;
           if (this.datasets.length > 0) {
             this.datasetId = this.datasets[0].id;
           }
@@ -84,7 +84,8 @@ export class BenchmarkFormComponent implements OnInit {
   }
 
   coresValidated(): boolean {
-    return this.benchmarkFormGroup.get('coresPerInstance').value * this.benchmarkFormGroup.get('numOfInstance').value <= this.modelService.systemInfo['cores_per_socket'] * this.modelService.systemInfo['sockets'];
+    return this.benchmarkFormGroup.get('coresPerInstance').value * this.benchmarkFormGroup.get('numOfInstance').value
+      <= this.modelService.systemInfo.cores_per_socket * this.modelService.systemInfo.sockets;
   }
 
   openDatasetDialog() {
@@ -92,26 +93,42 @@ export class BenchmarkFormComponent implements OnInit {
   }
 
   addBenchmark() {
-    this.modelService.addBenchmark({
-      project_id: this.data.projectId,
-      name: this.name,
-      mode: this.mode,
-      dataset_id: this.datasetId,
-      model_id: this.modelId,
-      batch_size: this.benchmarkFormGroup.get('batchSize').value,
-      iterations: this.allSamples ? -1 : this.benchmarkFormGroup.get('iterations').value,
-      number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
-      cores_per_instance: this.benchmarkFormGroup.get('coresPerInstance').value,
-      warmup_iterations: this.benchmarkFormGroup.get('warmup').value,
-      command_line: this.benchmarkFormGroup.get('commandLine').value
-    })
-      .subscribe(
-        response => {
-          this.modelService.benchmarkCreated$.next(true);
-        },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
+    if (!this.data.editing) {
+      this.modelService.addBenchmark({
+        project_id: this.data.projectId,
+        name: this.name,
+        mode: this.mode,
+        dataset_id: this.datasetId,
+        model_id: this.modelId,
+        batch_size: this.benchmarkFormGroup.get('batchSize').value,
+        iterations: this.allSamples ? -1 : this.benchmarkFormGroup.get('iterations').value,
+        number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
+        cores_per_instance: this.benchmarkFormGroup.get('coresPerInstance').value,
+        warmup_iterations: this.benchmarkFormGroup.get('warmup').value,
+        command_line: this.benchmarkFormGroup.get('commandLine').value
+      })
+        .subscribe(
+          response => {
+            this.modelService.benchmarkCreated$.next(true);
+          },
+          error => {
+            this.modelService.openErrorDialog(error);
+          });
+    } else {
+      this.modelService.editBenchmark({
+        id: this.data.benchmarkId,
+        dataset_id: this.datasetId,
+        mode: this.mode,
+        batch_size: this.benchmarkFormGroup.get('batchSize').value,
+        number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
+        cores_per_instance: this.benchmarkFormGroup.get('coresPerInstance').value,
+      })
+        .subscribe(
+          response => { this.modelService.benchmarkCreated$.next(true); },
+          error => {
+            this.modelService.openErrorDialog(error);
+          });
+    }
   }
 
 }

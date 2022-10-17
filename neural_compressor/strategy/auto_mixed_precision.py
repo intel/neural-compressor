@@ -21,6 +21,10 @@ from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
+from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .st_utils.tuning_structs import OpTuningConfig
+
+
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     """The auto-mixed precision strategy which tunes the mixed precision model with below order.
@@ -76,141 +80,64 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-            according to last tuning result.
-
-        """
-        # Model wise tuning
-        op_cfgs = {}
-        best_cfg = None
-        if len(self.metric_name) == 1 or self.metric_weight is not None:
-            best_acc = float('-inf') if self.higher_is_better else float('inf')
-        else:
-            best_acc = [float('-inf') if higher_is_better else float('inf') for \
-                higher_is_better in self.metric_criterion]
-
-        logger.debug("Start AutoMixedPrecision strategy by model-wise tuning")
-        op_cfgs['calib_iteration'] = 1
-        op_cfgs['calib_sampling_size'] = 100
+        from copy import deepcopy
 
         # filter quantization dtype
+        # TODO align with the old mixed-precison
         target_dtype = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
             else self.cfg.mixed_precision.precisions
-        filtered_quant_cfgs = filter(lambda x: all([v['activation']['dtype'] in target_dtype \
-            for k, v in x.items()]), self.combined_model_wise_quant_cfgs)
-        filtered_opwise_tune_cfgs = OrderedDict()
-        for k, v in self.opwise_tune_cfgs.items():
-            filtered_opwise_tune_cfgs[k] = list(filter(lambda x: x['activation']['dtype'] \
-                in target_dtype or x['activation']['dtype'] == 'fp32', v))
-        for combined_cfg in filtered_quant_cfgs:
-            op_cfgs['op'] = OrderedDict()
-            for op, op_cfg in self.opwise_quant_cfgs.items():
-                if op[1] in combined_cfg.keys() and len(op_cfg) > 0:
-                    op_cfgs['op'][op] = copy.deepcopy(
-                        self._get_common_cfg(combined_cfg[op[1]], op_cfg))
-                elif op[1] not in combined_cfg.keys() or not op_cfg:
-                    pass
-                else:
-                    op_cfgs['op'][op] = copy.deepcopy(
-                        filtered_opwise_tune_cfgs[op][0])
 
-            yield op_cfgs
-            acc, _ = self.last_tune_result
-            # if acc >= best_acc or self.eval_dataloader is None:
-            if not isinstance(acc, list) and ((self.higher_is_better and acc >= best_acc) \
-                or (not self.higher_is_better and acc <= best_acc)):
-                best_acc = acc
-                best_cfg = copy.deepcopy(op_cfgs)
-            elif len(self.metric_name) > 1 and self.metric_weight is not None:
-                acc = np.mean(np.array(acc) * self.metric_weight)
-                if (self.higher_is_better and acc >= best_acc) or \
-                    (not self.higher_is_better and acc <= best_acc):
-                    best_acc = acc
-                    best_cfg = copy.deepcopy(op_cfgs)
-            elif len(self.metric_name) > 1 and self.metric_weight is None:
-                if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
-                    acc_i, best_i, higher_is_better in \
-                    zip(acc, best_acc, self.metric_criterion)]):
-                    best_acc = acc
-                    best_cfg = copy.deepcopy(op_cfgs)
+        tuning_space = self.tuning_space
+        initial_op_tuning_cfg = {}
+        for item in tuning_space.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
 
-        if best_cfg is not None:
-            fallback_dtypes = []
-            for data_type in ["fp32"]:
-                for _, tune_space in self.modelwise_tune_space.items():
-                    if (data_type in tune_space["activation"]["dtype"] and
-                        data_type not in fallback_dtypes):
-                        fallback_dtypes.append(data_type)
-
-            for fallback_dtype in fallback_dtypes:
-                logger.debug(
-                    "Continue basic strategy by sorting opwise {} fallback priority".format
-                    (fallback_dtype))
-                ops_acc = OrderedDict()
-                for op, configs in reversed(filtered_opwise_tune_cfgs.items()):
-                    op_cfgs = copy.deepcopy(best_cfg)
-                    for cfg in configs:
-                        if fallback_dtype == cfg['activation']['dtype']:
-                            op_cfgs['op'][op]['activation'].clear()
-                            op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                            if 'weight' in cfg and op_cfgs['op'][op]['weight'] is not None:
-                                assert cfg['weight']['dtype'] == fallback_dtype
-                                op_cfgs['op'][op]['weight'].clear()
-                                op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
-                    yield op_cfgs
-                    acc, _ = self.last_tune_result
-                    ops_acc[op] = acc
-
-                op_cfgs = copy.deepcopy(best_cfg)
-                if ops_acc is not None:
-                    ordered_ops = sorted(ops_acc.keys(), key=lambda key: ops_acc[key],
-                                         reverse=self.higher_is_better)
-                    for op in ordered_ops:
-                        old_cfg = copy.deepcopy(op_cfgs['op'][op])
-                        for cfg in filtered_opwise_tune_cfgs[op]:
-                            if fallback_dtype == cfg['activation']['dtype']:
-                                op_cfgs['op'][op]['activation'].clear()
-                                op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if 'weight' in cfg and op_cfgs['op'][op]['weight'] is not None:
-                                    assert cfg['weight']['dtype'] == fallback_dtype
-                                    op_cfgs['op'][op]['weight'].clear()
-                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
-                        yield op_cfgs
-                        acc, _ = self.last_tune_result
-
-                        if not isinstance(acc, list):
-                            if ((self.higher_is_better and acc <= best_acc) \
-                                or (not self.higher_is_better and acc >= best_acc)):
-                                op_cfgs['op'][op] = copy.deepcopy(old_cfg)
-                            else:
-                                best_acc = acc
-                        elif len(self.metric_name) > 1 and self.metric_weight is not None:
-                            if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
-                                acc_i, best_i, higher_is_better in \
-                                zip(acc, best_acc, self.metric_criterion)]):
-                                op_cfgs['op'][op] = copy.deepcopy(old_cfg)
-                            else:
-                                best_acc = acc
-
-                    op_cfgs = copy.deepcopy(best_cfg)
-                    for op in ordered_ops:
-                        for cfg in filtered_opwise_tune_cfgs[op]:
-                            if fallback_dtype == cfg['activation']['dtype']:
-                                op_cfgs['op'][op]['activation'].clear()
-                                op_cfgs['op'][op]['activation']['dtype'] = fallback_dtype
-                                if ('weight' in op_cfgs['op'][op] and
-                                        op_cfgs['op'][op]['weight'] is not None):
-                                    op_cfgs['op'][op]['weight'].clear()
-                                    op_cfgs['op'][op]['weight']['dtype'] = fallback_dtype
-                        yield op_cfgs
+        # step1. target_dtype AMAP, collect the ops that support target_dtype
+        if not target_dtype:
+            target_dtype = 'bf16'
         else:
-            logger.debug(filtered_opwise_tune_cfgs)
-            op_cfgs['op'] = OrderedDict()
-            for op in filtered_opwise_tune_cfgs.keys():
-                op_cfgs['op'][op] = copy.deepcopy(filtered_opwise_tune_cfgs[op][0])
-            yield op_cfgs
+            target_dtype = target_dtype[0]
+        bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
+        bf16_items_name = [item.name for item in bf16_items]
+        op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
+        for op_name_type in bf16_items_name:
+            op_tuning_cfg[op_name_type] = OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
+        calib_sampling_size = 1
+        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        yield op_tuning_cfg
 
-        return
+        # step2. fallback
+        target_dtype = 'fp32'
+        fallback_items_name_lst = bf16_items_name[::-1]
+        if fallback_items_name_lst:
+            logger.info(f"Start to fallback op to {target_dtype} one by one.")
+        op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
+        initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
+        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
+                                                initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                op_dtypes=op_dtypes, accumulate=False)
+        op_fallback_acc_impact = OrderedDict()
+        for op_index, op_tuning_cfg in enumerate(fallback_sampler):
+            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+            yield op_tuning_cfg
+            acc, _ = self.last_tune_result
+            op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
+
+        # do accumulated fallback according to the order in the previous stage
+        if len(op_fallback_acc_impact) > 0:
+            ordered_ops = sorted(op_fallback_acc_impact.keys(), key=lambda key: op_fallback_acc_impact[key],
+                                reverse=self.higher_is_better)
+            op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
+            logger.info("Start to accumulate fallback to {target_dtype}.")
+            initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
+            fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
+                                                    initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                    op_dtypes=op_dtypes, accumulate=True)
+            for op_tuning_cfg in fallback_sampler:
+                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                yield op_tuning_cfg
 
     def traverse(self):
         # get fp32 model baseline
@@ -248,9 +175,9 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             logger.info("FP32 baseline is: {}".format(baseline_msg))
 
         trials_count = 0
-        for tune_cfg in self.next_tune_cfg():
+        for op_tuning_cfg in self.next_tune_cfg():
             # add tune_cfg here as quantize use tune_cfg
-            tune_cfg['advance'] = self.cfg.quantization.advance
+            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
             if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
@@ -265,13 +192,14 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
             if self.eval_dataloader or self.eval_func:
+                q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)
-
+                self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
                 need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
                 # record the tuning history
                 saved_tune_cfg = copy.deepcopy(tune_cfg)
                 saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-                self._add_tuning_history(saved_tune_cfg, saved_last_tune_result)
+                self._add_tuning_history(saved_tune_cfg, saved_last_tune_result, q_config=q_config)
             else:
                 # If the eval_dataloader was not specified under the config yaml file,
                 # We only converted the model with customized precisions.
@@ -280,3 +208,5 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
             if need_stop:
                 break
+
+

@@ -9,7 +9,7 @@ from onnx import helper, TensorProto, numpy_helper
 
 sys.path.append('..')
 from neural_compressor.experimental.data.datasets.dataset import Dataset
-from neural_compressor.adaptor.ox_utils.onnxrt_mid import ONNXRTAugment
+from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.data import DATASETS, DATALOADERS
 
@@ -104,7 +104,6 @@ class TestDataset2(Dataset):
 class TestAugment(unittest.TestCase):
 
     work_space = './onnxrt_calib_test' 
-    augment_path = "./onnxrt_calib_test/aug.onnx"
     
     @classmethod
     def setUpClass(cls):
@@ -121,7 +120,6 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model), 
                                 dataloader, 
                                 [], 
-                                self.augment_path,
                                 iterations=[0, 1],
                                 white_nodes=["conv"])
         map_dumped_tensors = augment.dump_tensor()
@@ -134,7 +132,6 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model),
                                 dataloader,
                                 [],
-                                self.augment_path,
                                 iterations=[0],
                                 white_nodes=["conv", "relu"])
         map_dumped_tensors = augment.dump_tensor(weight=True)
@@ -146,7 +143,6 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model), 
                                 dataloader, 
                                 [], 
-                                self.augment_path,
                                 iterations=[0],
                                 white_nodes=["gather"])
         map_dumped_tensors = augment.dump_tensor()
@@ -157,7 +153,6 @@ class TestAugment(unittest.TestCase):
         augment = ONNXRTAugment(ONNXModel(model),
                                 dataloader, 
                                 ["Conv", "Relu"],
-                                self.augment_path,
                                 iterations=[0])
         calib_params = augment.dump_calibration()
         assert "A" in calib_params and "B" in calib_params and "D" in calib_params and "C" in calib_params
@@ -184,24 +179,19 @@ class TestAugment(unittest.TestCase):
 
         # Augmenting graph
         data_reader = None
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_1.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], augmented_model_path)
-        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'])
         augment.augment_graph()
         augmented_model = augment.augmented_model
-        onnx.save(augmented_model, augmented_model_path)
 
-        # Checking if each added ReduceMin and ReduceMax node and its output exists
+        # Checking if output exists
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['A_ReduceMin', 'A_ReduceMax', 'B_ReduceMin', 'B_ReduceMax', 'C_ReduceMin', \
-            'C_ReduceMax', 'D_ReduceMin', 'D_ReduceMax', 'F_ReduceMin', 'F_ReduceMax']
-        added_outputs = ['A_ReduceMin', 'A_ReduceMax', 'B_ReduceMin', 'B_ReduceMax', 'C_ReduceMin', \
-            'C_ReduceMax', 'D_ReduceMin', 'D_ReduceMax', 'F_ReduceMin', 'F_ReduceMax']
-        # Original 3 nodes + added ReduceMin/Max nodes * 6 (exlude graph input/output)
-        self.assertEqual(len(augmented_model_node_names), 15)
-        # Original 1 graph output + added outputs * 6
-        self.assertEqual(len(augmented_model_outputs), 13)
+        added_node_names = ['Conv', 'Clip', 'MatMul']
+        added_outputs = ['A', 'B', 'C', 'D', 'E', 'F']
+        # Original 3 nodes (exlude graph input/output)
+        self.assertEqual(len(augmented_model_node_names), 3)
+        # Original 1 graph output + 5 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 6)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -227,24 +217,19 @@ class TestAugment(unittest.TestCase):
 
         # Augmenting graph
         data_reader = None
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_2.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], augmented_model_path)
-        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], )
         augment.augment_graph()
         augmented_model = augment.augmented_model
-        onnx.save(augmented_model, augmented_model_path)
         
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['I_ReduceMin', 'I_ReduceMax', 'J_ReduceMin', 'J_ReduceMax', 'H_ReduceMin', 'H_ReduceMax', \
-            'G_ReduceMin', 'G_ReduceMax', 'K_ReduceMin', 'K_ReduceMax']
-        added_outputs = ['I_ReduceMin', 'I_ReduceMax', 'J_ReduceMin', 'J_ReduceMax', 'H_ReduceMin', 'H_ReduceMax',\
-            'G_ReduceMin', 'G_ReduceMax', 'K_ReduceMin', 'K_ReduceMax']
-        # Original 2 nodes + added ReduceMin/Max nodes * 4
-        self.assertEqual(len(augmented_model_node_names), 12)
-        # Original 1 graph output + added outputs * 4
-        self.assertEqual(len(augmented_model_outputs), 11)
+        added_node_names = ['Conv', 'Conv']
+        added_outputs = ['I', 'J', 'H', 'G', 'K']
+        # Original 2 nodes
+        self.assertEqual(len(augmented_model_node_names), 2)
+        # Original 1 graph output + 4 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 5)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -275,23 +260,18 @@ class TestAugment(unittest.TestCase):
 
         # Augmenting graph
         data_reader = None
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_3.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'], augmented_model_path)
-        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul'])
         augment.augment_graph()
         augmented_model = augment.augmented_model
-        onnx.save(augmented_model, augmented_model_path)
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['O_ReduceMin', 'O_ReduceMax', 'Q_ReduceMin', 'Q_ReduceMax', 'N_ReduceMin', \
-            'N_ReduceMax', 'P_ReduceMin', 'P_ReduceMax', 'M_ReduceMin', 'M_ReduceMax']
-        added_outputs =  ['O_ReduceMin', 'O_ReduceMax', 'Q_ReduceMin', 'Q_ReduceMax', 'N_ReduceMin', \
-            'N_ReduceMax', 'P_ReduceMin', 'P_ReduceMax', 'M_ReduceMin', 'M_ReduceMax']
-        # Original 4 nodes + added ReduceMin/Max nodes * 8
-        self.assertEqual(len(augmented_model_node_names), 14)
-        # Original 1 graph output + added outputs * 8
-        self.assertEqual(len(augmented_model_outputs), 11)
+        added_node_names = ['Relu', 'Conv', 'Clip', 'MatMul']
+        added_outputs =  ['P', 'M', 'N', 'O', 'Q']
+        # Original 4 nodes
+        self.assertEqual(len(augmented_model_node_names), 4)
+        # Original 1 graph output + 4 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 5)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -318,23 +298,18 @@ class TestAugment(unittest.TestCase):
 
         # Augmenting graph
         data_reader = None
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_4.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul', 'Attention'], augmented_model_path)
-        augment.augment_nodes = ["ReduceMin", "ReduceMax"]
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, ['Conv', 'MatMul', 'Attention'])
         augment.augment_graph()
         augmented_model = augment.augmented_model
-        onnx.save(augmented_model, augmented_model_path)
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['Attention_bias_ReduceMin', 'Attention_bias_ReduceMax', 'Attention_weight_ReduceMin', \
-            'Attention_weight_ReduceMax', 'S_ReduceMin', 'S_ReduceMax', 'R_ReduceMin', 'R_ReduceMax', 'T_ReduceMin', 'T_ReduceMax']
-        added_outputs = ['Attention_bias_ReduceMin', 'Attention_bias_ReduceMax', 'Attention_weight_ReduceMin', \
-            'Attention_weight_ReduceMax', 'S_ReduceMin', 'S_ReduceMax', 'R_ReduceMin', 'R_ReduceMax', 'T_ReduceMin', 'T_ReduceMax']
-        # Original 2 nodes + added ReduceMin/Max nodes * 5
-        self.assertEqual(len(augmented_model_node_names), 12)
-        # Original 1 graph output + added outputs * 5
-        self.assertEqual(len(augmented_model_outputs), 11)
+        added_node_names = ['Attention', 'MatMul']
+        added_outputs = ['R', 'Attention_mask', 'S', 'T', 'Attention_bias', 'Attention_weight']
+        # Original 2 nodes
+        self.assertEqual(len(augmented_model_node_names), 2)
+        # Original 1 graph output + 5 intermediate outputs
+        self.assertEqual(len(augmented_model_outputs), 6)
         for name in added_node_names:
             self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
@@ -402,19 +377,20 @@ class TestAugment(unittest.TestCase):
 
         # Augmenting graph
         data_reader = None
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader, [], augmented_model_path, white_nodes=['attention'])
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, [], white_nodes=['attention'])
         augment.augment_nodes = ['DequantizeLinear']
         augment.already_quantized = True
         augment.augment_graph(activation_only=True, weight_only=False)
         augmented_model = augment.augmented_model
-        onnx.save(augmented_model, augmented_model_path)
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_outputs = ['attn_output']
+        added_node_names = ['attention_quant', 'attn_output_QuantizeLinear']
+        added_outputs = ['attn_output', 'output']
         self.assertEqual(len(augmented_model_node_names), 2)
         self.assertEqual(len(augmented_model_outputs), 2)
+        for name in added_node_names:
+            self.assertTrue(name in augmented_model_node_names)
         for output in added_outputs:
             self.assertTrue(output in augmented_model_outputs)
 
@@ -465,18 +441,16 @@ class TestAugment(unittest.TestCase):
 
         # Augmenting graph
         data_reader = None
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_6.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader, [], augmented_model_path, white_nodes=['conv'])
+        augment = ONNXRTAugment(ONNXModel(model), data_reader, [], white_nodes=['conv'])
         augment.augment_nodes = ["DequantizeLinear"]
         augment.already_quantized = True
         augment.augment_graph(activation_only=True, weight_only=False)
         augmented_model = augment.augmented_model
-        onnx.save(augmented_model, augmented_model_path)
 
         augmented_model_node_names = [node.name for node in augmented_model.graph.node]
         augmented_model_outputs = [output.name for output in augmented_model.graph.output]
-        added_node_names = ['D_quantized_DequantizeLinear']
-        added_outputs = ['D_quantized_output']
+        added_node_names = ['A_QuantizeLinear', 'conv_quant', 'D_DequantizeLinear', 'D_quantized_DequantizeLinear']
+        added_outputs = ['D', 'D_quantized_output']
         self.assertEqual(len(augmented_model_node_names), 4)
         self.assertEqual(len(augmented_model_outputs), 2)
         for name in added_node_names:
@@ -524,16 +498,15 @@ class TestAugment(unittest.TestCase):
         graph.initializer.add().CopyFrom(X5_bias)
         model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
         data_reader = TestDataset()
-        augmented_model_path = os.path.join(self.work_space,'./augmented_test_model_5.onnx')
-        augment = ONNXRTAugment(ONNXModel(model), data_reader,['Conv', 'MatMul'], augmented_model_path)
+        augment = ONNXRTAugment(ONNXModel(model), data_reader,['Conv', 'MatMul'])
 
         #test calculation of quantization params
         #TO_DO: check rmin/rmax
         quantization_params_dict = augment.dump_calibration()
-        node_output_names, output_dicts_list = augment.get_intermediate_outputs()
+        node_output_names, output_dicts_list = augment.get_intermediate_outputs('naive')
         dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary
-        self.assertEqual(len(quantization_params_dict), 11)
+        self.assertEqual(len(quantization_params_dict), 12)
         
         #check the computation of zp and scale
         for key, value in quantization_params_dict.items():

@@ -33,7 +33,7 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
     """
 
     def __init__(self, input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, \
-                 fake_quant=False, new_api=False):
+                 fake_quant=False, new_api=False, performance_only=False, itex_mode=False):
         """Quantize Graph For Intel Cpu
 
         Arguments:
@@ -63,8 +63,11 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         self.device = device
         self.fake_quant = fake_quant
         self.new_api = new_api
+        self.performance_only = performance_only
+        self.itex_mode = itex_mode
 
         self.all_quantizable_node = []
+        self.exclude_node_names = []
         self.register_transformer("MaxPool", FuseNodeStartWithPooling)
         self.register_transformer("MaxPool3D", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
@@ -87,19 +90,23 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                 count += 1
                 if count == all_node_length:
                     remove_redundant_quant_flag = True
-                self.input_graph, quantizable_node_names = self.transformers[node.op](
+                self.input_graph, quantizable_node_names, exclude_node_names= self.transformers[node.op](
                     input_graph=self.input_graph,
                     patterns=self.op_wise_seq[node.op],
                     remove_redundant_quant_flag=remove_redundant_quant_flag,
                     op_wise_cfg=self.op_wise_config[node.name],
                     op_wise_config_name_list=op_wise_config_name_list,
                     start_node_name=node.name, device=self.device, \
-                    fake_quant=self.fake_quant, new_api=self.new_api).apply_the_transform()
+                    fake_quant=self.fake_quant, new_api=self.new_api,
+                    performance_only=self.performance_only,
+                    itex_mode=self.itex_mode).apply_the_transform()
                 if quantizable_node_names:
                     if node.op in ('ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool'):
                         self.all_quantizable_node.extend([[i] for i in quantizable_node_names])
                     else:
                         self.all_quantizable_node.append(quantizable_node_names)
+                if exclude_node_names:
+                    self.exclude_node_names.extend(exclude_node_names)
 
         return self.remove_dead_nodes(self.input_graph, self.output_node_names), \
-            self.all_quantizable_node
+            self.all_quantizable_node, self.exclude_node_names

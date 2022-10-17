@@ -37,13 +37,13 @@
     int8: &cap_s8_1_11 {
           'Conv1d': &cap_s8_1_11_Conv1d {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['kl', 'minmax']
@@ -54,7 +54,7 @@
           'Conv3d': *cap_s8_1_11_Conv1d,
           'EmbeddingBag': &cap_static_s8_1_11_EmbeddingBag {
             'weight': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym_float'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
@@ -90,13 +90,13 @@
                     },
           'ConvTranspose1d': &cap_static_s8_1_11_ConvTranspose1d {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['kl', 'minmax']
@@ -106,13 +106,13 @@
           'ConvTranspose3d': *cap_static_s8_1_11_ConvTranspose1d,
           'default': &cap_static_s8_1_11_default {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['kl']
                         },
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
@@ -123,13 +123,13 @@
     quant_aware: &cap_qat_1_11 {
           'Conv1d': &cap_qa_1_11_Conv1d {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -140,7 +140,7 @@
           'Conv3d': *cap_qa_1_11_Conv1d,
           'EmbeddingBag': &cap_qat_s8_1_11_EmbeddingBag {
             'weight': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym_float'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
@@ -159,13 +159,13 @@
           'QuantStub': *cap_static_s8_1_11_QuantStub,
           'ConvTranspose1d': &cap_qa_s8_1_11_ConvTranspose1d {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -174,13 +174,13 @@
           'ConvTranspose2d': *cap_qa_s8_1_11_ConvTranspose1d,
           'default': &cap_qa_s8_1_11_default {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
@@ -190,13 +190,13 @@
     dynamic: &cap_dynamic_s8_1_11 {
           'Linear': &cap_dynamic_s8_1_11_Linear {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -204,13 +204,13 @@
                     },
           'LSTM': &cap_dynamic_s8_1_11_LSTM {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': [ 'sym', 'asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -218,7 +218,7 @@
                     },
           'EmbeddingBag': &cap_dynamic_s8_1_11_EmbeddingBag {
             'weight': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym_float'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
@@ -236,15 +236,34 @@
           'RNNCell': *cap_dynamic_s8_1_11_LSTM,
           'GRUCell': *cap_dynamic_s8_1_11_LSTM,
           'Embedding': *cap_dynamic_s8_1_11_EmbeddingBag,
-          'default': {
+          'Conv2d':  &cap_dynamic_s8_1_11_Conv {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Conv1d': *cap_dynamic_s8_1_11_Conv,
+          'Conv3d': *cap_dynamic_s8_1_11_Conv,
+          'ConvTranspose1d': *cap_dynamic_s8_1_11_Conv,
+          'ConvTranspose2d': *cap_dynamic_s8_1_11_Conv,
+          'ConvTranspose3d': *cap_dynamic_s8_1_11_Conv,
+          'default': {
+            'activation': {
+                        'dtype': ['uint8'],
+                        'scheme': ['asym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'weight': {
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
@@ -363,13 +382,13 @@
     int8: &cap_s8_1_6 {
           'Conv1d': &cap_s8_1_6_Conv1d {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym', 'sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['kl', 'minmax']
@@ -388,7 +407,7 @@
                     },
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['kl']
@@ -400,13 +419,13 @@
     dynamic: &cap_dynamic_s8_1_6 {
           'Linear': &cap_dynamic_s8_1_6_Linear {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_channel'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -414,13 +433,13 @@
                     },
           'LSTM': &cap_dynamic_s8_1_6_LSTM {
             'weight': {
-                        'dtype': ['int8', 'fp32'],
+                        'dtype': ['int8'],
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
                         },
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['sym', 'asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -432,7 +451,7 @@
           'GRUCell': *cap_dynamic_s8_1_6_LSTM,
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -485,7 +504,7 @@
           'LSTM': *cap_dynamic_s8_1_6_LSTM,
           'default': {
             'activation': {
-                        'dtype': ['uint8', 'fp32'],
+                        'dtype': ['uint8'],
                         'scheme': ['asym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']

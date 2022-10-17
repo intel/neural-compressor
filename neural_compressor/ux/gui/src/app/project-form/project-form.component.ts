@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
@@ -20,8 +20,8 @@ import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { GraphComponent } from '../graph/graph.component';
 import { FileBrowserFilter, ModelService, NewModel } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
-declare var require: any;
-var shajs = require('sha.js');
+declare let require: any;
+const shajs = require('sha.js');
 
 @Component({
   selector: 'app-project-form',
@@ -34,7 +34,8 @@ export class ProjectFormComponent implements OnInit {
   showSpinner = false;
   showGraphButton = false;
   showDomain = false;
-  showExamples = true;
+  showExamples = false;
+  predefined = true;
   showShapeWarning: boolean;
 
   projectFormGroup: FormGroup;
@@ -58,8 +59,8 @@ export class ProjectFormComponent implements OnInit {
   };
 
   boundaryNodes: {
-    inputs: 'none' | 'custom' | 'select',
-    outputs: 'none' | 'custom' | 'select',
+    inputs: 'none' | 'custom' | 'select';
+    outputs: 'none' | 'custom' | 'select';
   };
 
   inputs = [];
@@ -71,7 +72,6 @@ export class ProjectFormComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
-    private _formBuilder: FormBuilder,
     public modelService: ModelService,
     public socketService: SocketService,
     private router: Router
@@ -97,7 +97,7 @@ export class ProjectFormComponent implements OnInit {
           this.showSpinner = true;
           this.showGraphButton = false;
           this.socketService.getBoundaryNodes(this.getNewModel()).subscribe(
-            response => { },
+            boundaryNodes => { },
             error => {
               this.modelService.openErrorDialog(error);
             }
@@ -116,39 +116,39 @@ export class ProjectFormComponent implements OnInit {
       });
 
     this.socketService.boundaryNodesFinish$
-      .subscribe(result => {
+      .subscribe((result: { status: string; id: number; data: any }) => {
         this.showSpinner = false;
-        if (result['status'] === 'success') {
-          if (result['data'] && this.projectFormGroup.get('modelLocation').value && result['data'].request_id === this.id) {
-            this.projectFormGroup.get('domainFlavour').setValue(result['data']['domain_flavour']);
-            if (result['data']['domain']?.length) {
-              this.projectFormGroup.get('modelDomain').setValue(result['data']['domain']);
+        if (result.status === 'success') {
+          if (result.data && this.projectFormGroup.get('modelLocation').value && result.data.request_id === this.id) {
+            this.projectFormGroup.get('domainFlavour').setValue(result.data.domain_flavour);
+            if (result.data.domain?.length) {
+              this.projectFormGroup.get('modelDomain').setValue(result.data.domain);
               this.showDomain = false;
             } else {
               this.projectFormGroup.get('modelDomain').reset();
               this.showDomain = true;
             }
-            this.projectFormGroup.get('shape').setValue(result['data']['shape']);
-            this.showShapeWarning = result['data']['shape'] ? true : false;
-            this.projectFormGroup.get('framework').setValue(result['data']['framework']);
+            this.projectFormGroup.get('shape').setValue(result.data.shape);
+            this.showShapeWarning = result.data.shape ? true : false;
+            this.projectFormGroup.get('framework').setValue(result.data.framework);
             ['inputs', 'outputs'].forEach(param => {
-              this[param] = result['data'][param];
-              if (Array.isArray(result['data'][param])) {
+              this[param] = result.data[param];
+              if (Array.isArray(result.data[param])) {
                 this.isFieldRequired('projectFormGroup', 'input', true);
                 this.isFieldRequired('projectFormGroup', 'output', true);
-                if (result['data'][param].length === 0) {
+                if (result.data[param].length === 0) {
                   this.boundaryNodes[param] = 'custom';
-                } else if (result['data'][param].length === 1) {
+                } else if (result.data[param].length === 1) {
                   this.boundaryNodes[param] = 'custom';
-                  this.projectFormGroup.get(param.slice(0, -1)).setValue(result['data'][param]);
+                  this.projectFormGroup.get(param.slice(0, -1)).setValue(result.data[param]);
                 } else {
                   this.boundaryNodes[param] = 'select';
-                  if (result['data']['domain'] === 'object_detection' && result['data']['domain_flavour'] === 'ssd') {
-                    if (["detection_bboxes", "detection_scores", "detection_classes"].every((val) => result['data']['outputs'].includes(val))) {
-                      this.projectFormGroup.get('output').setValue(["detection_bboxes", "detection_scores", "detection_classes"]);
+                  if (result.data.domain === 'object_detection' && result.data.domain_flavour === 'ssd') {
+                    if (['detection_bboxes', 'detection_scores', 'detection_classes'].every((val) => result.data.outputs.includes(val))) {
+                      this.projectFormGroup.get('output').setValue(['detection_bboxes', 'detection_scores', 'detection_classes']);
                     }
                   } else {
-                    const nonCustomParams = result['data'][param].filter(param => param !== 'custom');
+                    const nonCustomParams = result.data[param].filter(x => x !== 'custom');
                     if (nonCustomParams.length === 1) {
                       this.projectFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
                     } else if (nonCustomParams.includes('softmax_tensor')) {
@@ -164,14 +164,13 @@ export class ProjectFormComponent implements OnInit {
             });
           }
         } else {
-          this.modelService.openErrorDialog(result['data']['message']);
+          this.modelService.openErrorDialog(result.data.message);
         }
       });
   }
 
   getNewModel(): NewModel {
-    let model: NewModel;
-    model = {
+    const model = {
       domain: this.projectFormGroup.get('modelDomain').value,
       domain_flavour: this.projectFormGroup.get('domainFlavour').value,
       framework: this.projectFormGroup.get('framework').value,
@@ -184,28 +183,34 @@ export class ProjectFormComponent implements OnInit {
   getDomains() {
     this.modelService.getDictionary('domains')
       .subscribe(
-        resp => this.domains = resp['domains'],
+        (resp: { domains: any }) => this.domains = resp.domains,
         error => this.modelService.openErrorDialog(error));
   }
 
+  getExamples(event?) {
+    if (!event || event.selectedIndex === 2) {
+      this.showExamples = this.predefined;
+    }
+  }
+
   setFormValues() {
-    this.projectFormGroup = this._formBuilder.group({
-      name: ['Project' + String(this.modelService.projectCount + 1), Validators.required],
-      framework: ['', Validators.required],
-      modelLocation: ['', Validators.required],
-      modelDomain: [''],
-      domainFlavour: [''],
-      input: [''],
-      inputOther: [''],
-      output: [''],
-      outputOther: [''],
-      shape: ['']
+    this.projectFormGroup = new FormGroup({
+      name: new FormControl('Project' + String(this.modelService.projectCount + 1), Validators.required),
+      framework: new FormControl('', Validators.required),
+      modelLocation: new FormControl('', Validators.required),
+      modelDomain: new FormControl(''),
+      domainFlavour: new FormControl(''),
+      input: new FormControl(''),
+      inputOther: new FormControl(''),
+      output: new FormControl(''),
+      outputOther: new FormControl(''),
+      shape: new FormControl('')
     });
   }
 
   createProject() {
     this.showSpinner = true;
-    let newProject = {
+    const newProject = {
       name: this.projectFormGroup.get('name').value,
       model: {
         path: this.projectFormGroup.get('modelLocation').value,
@@ -218,10 +223,10 @@ export class ProjectFormComponent implements OnInit {
 
     this.modelService.createProject(newProject)
       .subscribe(
-        response => {
+        (response: { project_id: number }) => {
           this.showSpinner = false;
           this.modelService.projectCreated$.next(true);
-          this.router.navigate(['/project', response['project_id']], { queryParamsHandling: "merge" });
+          this.router.navigate(['/project', response.project_id], { queryParamsHandling: 'merge' });
         },
         error => {
           this.showSpinner = false;
@@ -247,8 +252,10 @@ export class ProjectFormComponent implements OnInit {
       width: '60%',
       height: '60%',
       data: {
-        path: this.projectFormGroup.get(fieldName) && this.projectFormGroup.get(fieldName).value ? this.projectFormGroup.get(fieldName).value.split("/").slice(0, -1).join("/") : this.modelService.workspacePath,
-        filter: filter,
+        path: this.projectFormGroup.get(fieldName) && this.projectFormGroup.get(fieldName).value
+          ? this.projectFormGroup.get(fieldName).value.split('/').slice(0, -1).join('/')
+          : this.modelService.workspacePath,
+        filter,
         filesToFind: paramFile
       }
     });
@@ -261,7 +268,8 @@ export class ProjectFormComponent implements OnInit {
   }
 
   boundaryNodesVisible(): boolean {
-    return (this.boundaryNodes.inputs !== 'none' || this.boundaryNodes.outputs !== 'none') && this.projectFormGroup.get('modelLocation').value && !this.showSpinner;
+    return (this.boundaryNodes.inputs !== 'none' || this.boundaryNodes.outputs !== 'none')
+      && this.projectFormGroup.get('modelLocation').value && !this.showSpinner;
   }
 
   boundaryNodesChanged(value, type: 'input' | 'output') {

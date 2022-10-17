@@ -17,12 +17,12 @@
 
 from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
 from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
-from ..adaptor.pytorch import PyTorchVersionMode
 from ..adaptor.pytorch import PyTorch_FXAdaptor
-from ..adaptor.torch_utils.util import get_embedding_contiguous
+from ..adaptor.torch_utils import util
 from . import logger
-import torch
+from packaging.version import Version
 from torch.quantization import add_observer_, convert
+import torch
 import torch.quantization as tq
 import yaml
 import os
@@ -106,7 +106,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, **kwargs):
         from torch.quantization.quantize_fx import prepare_qat_fx, convert_fx
         quantized_ops = {op[0]: q_cfgs for op in tune_cfg['quantizable_ops']}
         version = get_torch_version()
-        if version < PyTorchVersionMode.PT111.value:
+        if version < Version("1.11.0-rc1"):
             quantized_ops["default_qconfig"] = None
         else:
             from torch.ao.quantization import default_embedding_qat_qconfig
@@ -116,12 +116,32 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, **kwargs):
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         model.train()
         if tune_cfg['sub_module_list'] is None:
-            model = prepare_qat_fx(model, fx_op_cfgs,
-               prepare_custom_config_dict=kwargs.get('prepare_custom_config_dict', None)
-               if kwargs is not None else None)
-            model = convert_fx(model,
-              convert_custom_config_dict=kwargs.get('convert_custom_config_dict', None)
-                if kwargs is not None else None)
+            # pylint: disable=E1123
+            if version > Version("1.12.1"):  # pragma: no cover
+                from ..adaptor.pytorch import get_example_inputs
+                example_inputs = get_example_inputs(kwargs["dataloader"] if "dataloader" in
+                                                    kwargs else None)
+
+                model = prepare_qat_fx(
+                    model,
+                    fx_op_cfgs,
+                    example_inputs=example_inputs,
+                    prepare_custom_config=kwargs.get('prepare_custom_config_dict', None)
+                    if kwargs is not None else None)
+                model = convert_fx(
+                    model,
+                    convert_custom_config=kwargs.get('convert_custom_config_dict', None)
+                    if kwargs is not None else None)
+            else:
+                model = prepare_qat_fx(
+                    model,
+                    fx_op_cfgs,
+                    prepare_custom_config_dict=kwargs.get('prepare_custom_config_dict', None)
+                    if kwargs is not None else None)
+                model = convert_fx(
+                    model,
+                    convert_custom_config_dict=kwargs.get('convert_custom_config_dict', None)
+                    if kwargs is not None else None)
         else:
             logger.info('Fx trace of the entire model failed. ' + \
                         'We will conduct auto quantization')
@@ -197,20 +217,31 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     q_model.eval()
     version = get_torch_version()
+
+    approach_quant_mode = None
+    if tune_cfg['approach'] == "post_training_dynamic_quant":
+        approach_quant_mode = 'dynamic'
+    elif tune_cfg['approach'] == "post_training_static_quant":
+        approach_quant_mode = 'static'
+
+    for _, op_cfg in tune_cfg['op'].items():
+        if 'quant_mode' not in op_cfg['activation']:
+            op_cfg['activation']['quant_mode'] = approach_quant_mode
+
     if tune_cfg['approach'] != "post_training_dynamic_quant":
-        if version < PyTorchVersionMode.PT17.value:   # pragma: no cover
+        if version < Version("1.7.0-rc1"):   # pragma: no cover
             q_mapping = tq.default_mappings.DEFAULT_MODULE_MAPPING
-        elif version < PyTorchVersionMode.PT18.value:   # pragma: no cover
+        elif version < Version("1.8.0-rc1"):   # pragma: no cover
             q_mapping = \
                 tq.quantization_mappings.get_static_quant_module_mappings()
         else:
             q_mapping = \
                 tq.quantization_mappings.get_default_static_quant_module_mappings()
     else:
-        if version < PyTorchVersionMode.PT17.value:   # pragma: no cover
+        if version < Version("1.7.0-rc1"):   # pragma: no cover
             q_mapping = \
                 tq.default_mappings.DEFAULT_DYNAMIC_MODULE_MAPPING
-        elif version < PyTorchVersionMode.PT18.value:   # pragma: no cover
+        elif version < Version("1.8.0-rc1"):   # pragma: no cover
             q_mapping = \
                 tq.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
@@ -219,9 +250,18 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     if tune_cfg['framework'] == "pytorch_fx":             # pragma: no cover
         # For torch.fx approach
-        assert version >= PyTorchVersionMode.PT18.value, \
+        assert version >= Version("1.8.0-rc1"), \
                       "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
+
+        # pragma: no cover
+        if version > Version("1.12.1") and tune_cfg['approach'] != "post_training_dynamic_quant":
+            from ..adaptor.pytorch import get_example_inputs
+            example_inputs = get_example_inputs(kwargs["dataloader"] if "dataloader" in
+                                                kwargs else None)
+        else:
+            example_inputs = None
+
         if kwargs is None:
             kwargs = {}
         prepare_custom_config_dict = kwargs.get(
@@ -232,28 +272,56 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
         fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg['approach'])
         if not tune_cfg['fx_sub_module_list']:
+            tmp_model = q_model
             if tune_cfg['approach'] == "quant_aware_training":
                 q_model.train()
-                q_model = prepare_qat_fx(q_model, fx_op_cfgs,
-                  prepare_custom_config_dict=prepare_custom_config_dict)
+                if version > Version("1.12.1"):  # pragma: no cover
+                    # pylint: disable=E1123
+                    q_model = prepare_qat_fx(q_model,
+                                             fx_op_cfgs,
+                                             prepare_custom_config=prepare_custom_config_dict,
+                                             example_inputs=example_inputs)
+                else:
+                    q_model = prepare_qat_fx(q_model,
+                                             fx_op_cfgs,
+                                             prepare_custom_config_dict=prepare_custom_config_dict)
             else:
-                q_model = prepare_fx(q_model, fx_op_cfgs,
-                  prepare_custom_config_dict=prepare_custom_config_dict)
-            q_model = convert_fx(q_model,
-              convert_custom_config_dict=convert_custom_config_dict)
+                if version > Version("1.12.1"):  # pragma: no cover
+                    # pylint: disable=E1123
+                    q_model = prepare_fx(q_model,
+                                         fx_op_cfgs,
+                                         prepare_custom_config=prepare_custom_config_dict,
+                                         example_inputs=example_inputs)
+                else:
+                    q_model = prepare_fx(q_model,
+                                         fx_op_cfgs,
+                                         prepare_custom_config_dict=prepare_custom_config_dict)
+            if version > Version("1.12.1"):  # pragma: no cover
+                # pylint: disable=E1123
+                q_model = convert_fx(q_model,
+                  convert_custom_config=convert_custom_config_dict)
+            else:
+                q_model = convert_fx(q_model,
+                  convert_custom_config_dict=convert_custom_config_dict)
+            util.append_attr(q_model, tmp_model)
+            del tmp_model
         else:
             sub_module_list = tune_cfg['fx_sub_module_list']
             if tune_cfg['approach'] == "quant_aware_training":
                 q_model.train()
-                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list, \
-                                                    fx_op_cfgs, q_model, \
-                                                    prefix='',is_qat=True)
+                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list,
+                                                    fx_op_cfgs,
+                                                    q_model,
+                                                    prefix='',
+                                                    is_qat=True,
+                                                    example_inputs=example_inputs)
             else:
-                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list, \
-                                                    fx_op_cfgs, q_model, \
-                                                    prefix='')
-            PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, \
-                                                q_model, prefix='')
+                PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list,
+                                                    fx_op_cfgs,
+                                                    q_model,
+                                                    prefix='',
+                                                    example_inputs=example_inputs)
+            PyTorch_FXAdaptor.convert_sub_graph(sub_module_list, q_model, prefix='')
     else:
         if tune_cfg['approach'] == "post_training_dynamic_quant":
             op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg['approach'])
@@ -271,12 +339,12 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         q_model = convert(q_model, mapping=q_mapping, inplace=True)
 
     bf16_ops_list = tune_cfg['bf16_ops_list'] if 'bf16_ops_list' in tune_cfg.keys() else []
-    if len(bf16_ops_list) > 0 and (version >= PyTorchVersionMode.PT111.value):
+    if len(bf16_ops_list) > 0 and (version >= Version("1.11.0-rc1")):
         from ..adaptor.torch_utils.bf16_convert import Convert
         q_model = Convert(q_model, tune_cfg)
     if checkpoint_dir is None and history_cfg is not None:
         _set_activation_scale_zeropoint(q_model, history_cfg)
     else:
         q_model.load_state_dict(stat_dict)
-    get_embedding_contiguous(q_model)
+    util.get_embedding_contiguous(q_model)
     return q_model

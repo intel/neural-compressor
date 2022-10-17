@@ -497,7 +497,7 @@ class TestGraphConvFusion(unittest.TestCase):
         op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(neural_compressor.__file__), "adaptor/tensorflow.yaml")).get_eightbit_patterns()
 
-        output_graph, _ = QuantizeGraphForIntel(self._tmp_graph_def, self.inputs, self.outputs,
+        output_graph, _, _ = QuantizeGraphForIntel(self._tmp_graph_def, self.inputs, self.outputs,
                                              self.op_wise_config, op_wise_sequences,
                                              'cpu').do_transform()
 

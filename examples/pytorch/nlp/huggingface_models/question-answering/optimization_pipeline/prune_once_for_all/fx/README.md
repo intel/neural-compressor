@@ -47,5 +47,22 @@ python run_qa_no_trainer_pruneOFA.py --dataset_name squad \
       --learning_rate 1e-5 --do_eval --num_train_epochs 2 --do_quantization \
       --output_dir /path/to/stage2_output_dir --loss_weights 0 1 \
       --temperature 2 --seed 5143 --pad_to_max_length  --run_teacher_logits \
-      --resume /path/to/stage1_output_dir/best_model_weights.pt
+      --resume /path/to/stage1_output_dir/best_model.pt
+```
+
+We also supported Distributed Data Parallel training on single node and multi nodes settings. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
+<br>
+For example, bash command of stage 1 for SQuAD task will look like the following, where *`<MASTER_ADDRESS>`* is the address of the master node, it won't be necessary for single node case, *`<NUM_PROCESSES_PER_NODE>`* is the desired processes to use in current node, for node with GPU, usually set to number of GPUs in this node, for node without GPU and use CPU for training, it's recommended set to 1, *`<NUM_NODES>`* is the number of nodes to use, *`<NODE_RANK>`* is the rank of the current node, rank starts from 0 to *`<NUM_NODES>`*`-1`.
+<br>
+Also please note that to use CPU for training in each node with multi nodes settings, argument `--no_cuda` is mandatory. In multi nodes setting, following command needs to be lanuched in each node, and all the commands should be the same except for *`<NODE_RANK>`*, which should be integer from 0 to *`<NUM_NODES>`*`-1` assigned to each node.
+
+```bash
+python -m torch.distributed.launch --master_addr=<MASTER_ADDRESS> --nproc_per_node=<NUM_PROCESSES_PER_NODE> --nnodes=<NUM_NODES> --node_rank=<NODE_RANK> \
+      run_qa_no_trainer_pruneOFA.py --dataset_name squad \
+      --model_name_or_path Intel/bert-base-uncased-sparse-90-unstructured-pruneofa \
+      --teacher_model_name_or_path csarron/bert-base-uncased-squad-v1 \
+      --do_prune --do_distillation --max_seq_length 384 --batch_size 12 \
+      --learning_rate 1.5e-4 --do_eval --num_train_epochs 8 \
+      --output_dir /path/to/stage1_output_dir --loss_weights 0 1 \
+      --temperature 2 --seed 5143 --pad_to_max_length --run_teacher_logits
 ```

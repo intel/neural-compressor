@@ -32,6 +32,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
+        self.exclude_matmul_name = []
         self.fusion_op_type = set(fusion[0] for fusion in self.patterns)
         self.fusion_mapping = {
             'MatMulBiasAdd': self.apply_matmul_biasadd_fusion,
@@ -154,6 +155,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         # transpose_a/transpose_b could be set to True.
         if matched_node.node.attr["transpose_a"].b == True or \
                 matched_node.node.attr["transpose_b"].b == True:
+            self.exclude_matmul_name.append(match_node_name[0])
             self.output_graph = self.input_graph
             return []
 
@@ -273,6 +275,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
-            return self.output_graph, matched_nodes
+            return self.output_graph, matched_nodes, self.exclude_matmul_name
 
-        return self.input_graph, []
+        return self.input_graph, [], []

@@ -179,8 +179,9 @@ def main():
         model.eval()
         if args.int8:
             from neural_compressor.utils.pytorch import load
-            new_model = load(
-                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
+            new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
+                             model,
+                             dataloader=val_loader)
         else:
             new_model = model
         validate(val_loader, new_model, criterion, args)

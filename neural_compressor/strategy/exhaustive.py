@@ -20,6 +20,9 @@ import itertools
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 
+from .st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
+from .st_utils.tuning_structs import OpTuningConfig
+from ..utils import logger
 
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):
@@ -82,25 +85,49 @@ class ExhaustiveTuneStrategy(TuneStrategy):
     def next_tune_cfg(self):
         # generate tuning space according to user chosen tuning strategy
 
-        op_cfgs = {}
-        op_cfgs['op'] = OrderedDict()
-        for i, iterations in enumerate(self.calib_iter):
-            op_cfgs['calib_iteration'] = int(iterations)
-            op_cfgs['calib_sampling_size'] = int(self.calib_sampling_size[i])
-            op_lists = []
-            op_cfg_lists = []
-            for op, configs in self.opwise_quant_cfgs.items():
-                if len(configs) == 0:
-                    configs = copy.deepcopy(
-                        self.opwise_tune_cfgs[op])
-                op_lists.append(op)
-                op_cfg_lists.append(configs)
-            for cfgs in itertools.product(*op_cfg_lists):
-                index = 0
-                for cfg in cfgs:
-                    op_cfgs['op'][op_lists[index]] = cfg
-                    index += 1
+        from copy import deepcopy
+        tuning_space = self.tuning_space
+        initial_op_tuning_cfg = {}
+        for item in tuning_space.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        for calib_sampling_size in calib_sampling_size_lst:
+            # step1. collect the ops that support static and dynamic
+            quant_mode_wise_items = OrderedDict()
+            query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+            pre_items = set()
+            for quant_mode in query_order:
+                items = tuning_space.query_items_by_quant_mode(quant_mode)
+                filtered_items = [item for item in items if item not in pre_items]
+                pre_items = pre_items.union(set(items))
+                quant_mode_wise_items[quant_mode] = filtered_items
 
-                yield op_cfgs
+            def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+                for item in items_lst:
+                    op_item_dtype_dict[item.name] = target_quant_mode
+
+            op_item_dtype_dict = OrderedDict()
+            for quant_mode, quant_mode_items in quant_mode_wise_items.items():
+                initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
+
+            # step3. optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
+            early_stop_tuning = False
+            stage1_cnt = 0
+            int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
+            stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
+            op_wise_tuning_sampler = OpWiseTuningSampler(tuning_space, [], [], 
+                                                         op_item_dtype_dict, initial_op_tuning_cfg)
+            # TODO combine with op wise 
+            model_wise_tuning_sampler = ModelWiseTuningSampler(tuning_space, [], [], 
+                                                               op_item_dtype_dict, initial_op_tuning_cfg)
+            for op_tuning_cfg in op_wise_tuning_sampler:
+                stage1_cnt += 1
+                if early_stop_tuning and stage1_cnt > stage1_max:
+                    logger.info("Early stopping the stage 1.")
+                    break
+                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                yield op_tuning_cfg
 
         return

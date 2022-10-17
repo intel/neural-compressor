@@ -13,9 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Optimization class factory."""
+from typing import Mapping, Type
 
 from neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization import (
     GraphOptimization,
+)
+from neural_compressor.ux.components.optimization.mixed_precision.mixed_precision import (
+    MixedPrecision,
 )
 from neural_compressor.ux.components.optimization.optimization import Optimization
 from neural_compressor.ux.components.optimization.tune.tuning import Tuning
@@ -38,9 +42,10 @@ class OptimizationFactory:
             optimization_type = optimization_data["optimization_type"]["name"]
         except KeyError:
             raise InternalException("Missing optimization type.")
-        optimization_map = {
+        optimization_map: Mapping[str, Type[Optimization]] = {
             OptimizationTypes.QUANTIZATION.value: Tuning,
             OptimizationTypes.GRAPH_OPTIMIZATION.value: GraphOptimization,
+            OptimizationTypes.MIXED_PRECISION.value: MixedPrecision,
         }
         optimization = optimization_map.get(optimization_type, None)
         if optimization is None:

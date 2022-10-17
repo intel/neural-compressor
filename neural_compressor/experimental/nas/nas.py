@@ -23,6 +23,7 @@ from collections.abc import Iterable
 from .nas_utils import find_pareto_front, NASMethods
 from .search_algorithms import BayesianOptimizationSearcher, GridSearcher, RandomSearcher
 from neural_compressor.conf.config import Conf, NASConfig
+from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.utils.utility import logger, LazyImport
 
 torch = LazyImport('torch')
@@ -32,22 +33,27 @@ class NAS(object):
     def __new__(self, conf_fname_or_obj, *args, **kwargs):
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
-                self.conf = Conf(conf_fname_or_obj).usr_cfg
+                self.conf = Conf(conf_fname_or_obj)
         elif isinstance(conf_fname_or_obj, NASConfig):
-            self.conf = conf_fname_or_obj.usr_cfg
+            self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = NASConfig()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else: # pragma: no cover
             raise NotImplementedError(
                 "Please provide a str path to the config file."
             )
-        assert self.conf.nas is not None, "nas section must be set"
-        if isinstance(self.conf.nas.approach, str) and \
-            self.conf.nas.approach.lower() in NASMethods:
-            method = self.conf.nas.approach.lower()
+        assert self.conf.usr_cfg.nas is not None, "nas section must be set"
+        if isinstance(self.conf.usr_cfg.nas.approach, str) and \
+            self.conf.usr_cfg.nas.approach.lower() in NASMethods:
+            method = self.conf.usr_cfg.nas.approach.lower()
         else:
             logger.warning(
                 "NAS approach not set in config, use default NAS approach, i.e. Basic."
             )
             method = 'basic'
+        if isinstance(self.conf, NASConfig):
+            return NASMethods[method](self.conf, *args, **kwargs)
         return NASMethods[method](conf_fname_or_obj, *args, **kwargs)
 
 

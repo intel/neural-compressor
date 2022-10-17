@@ -36,6 +36,32 @@ def build_fake_yaml():
         f.write(fake_yaml)
     f.close()
 
+def build_newapi_fake_yaml():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: input
+          outputs: final
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+            strategy:
+              name: basic
+            exit_policy:
+              max_trials: 2
+            accuracy_criterion:
+              relative: 0.01
+            workspace:
+              path: saved
+        '''
+    with open('newapi_fake_yaml.yaml',"w",encoding="utf-8") as f:
+        f.write(fake_yaml)
+    f.close()
+
 def build_fake_bf16_rnn_yaml():
     fake_yaml = '''
         model:
@@ -283,13 +309,49 @@ class TestBF16Convert(unittest.TestCase):
         self.test_graph = create_test_graph()
         self.test_fp32_graph = create_test_graph(False)
         build_fake_yaml()
+        build_newapi_fake_yaml()
         build_fake_bf16_rnn_yaml()
 
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+        os.remove('newapi_fake_yaml.yaml')
         os.remove('fake_bf16_rnn.yaml')
         shutil.rmtree("saved", ignore_errors=True)
+    
+    @unittest.skipIf("2.10.020" in tf.version.VERSION, "Not supports newAPI feature")
+    def test_bf16_transpose_b_matmul(self):
+        from tensorflow.core.framework import attr_value_pb2
+        os.environ['FORCE_BF16'] = '1'
+        os.environ['MIX_PRECISION_TEST'] = '1'
+        DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
+        g = tf.Graph()
+        with g.as_default():
+
+            x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
+            y_data = np.array([[1, 2], [3, 4]], dtype=float)
+            x = tf.compat.v1.placeholder(tf.float32, shape=[2, 2], name='x')
+            y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
+            z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)
+            z = tf.nn.relu6(z, name='op_to_store')
+            is_bf16 = False
+            with tf.compat.v1.Session() as sess:
+                sess.run(z, feed_dict={x: x_data, y: y_data})
+                float_graph_def = sess.graph.as_graph_def()
+
+                from neural_compressor.experimental import Quantization, common
+                quantizer = Quantization('fake_yaml.yaml')
+                dataset = quantizer.dataset('dummy', shape=(2, 2), label=True)
+                quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
+                quantizer.model = float_graph_def
+                output_graph = quantizer.fit()
+                for i in output_graph.graph_def.node:
+                    if i.op == 'MatMul' and i.attr["T"] == DT_BFLOAT16:
+                        is_bf16 = True
+                        break
+            self.assertEqual(is_bf16, True)
+
     @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 convert does not support 1.15up3")
     def test_rn50_convert(self):
         bf16_nodes = [node.name for node in self.input_graph.node if node.op in ["Conv2D", "AvgPool", "MatMul"]]
@@ -312,13 +374,13 @@ class TestBF16Convert(unittest.TestCase):
         self.assertEqual(new_conv2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_relu2.attr["T"].type, dtypes.bfloat16)
         self.assertEqual(new_conv3.attr["T"].type, dtypes.float32)
-        
-    @unittest.skipIf(tf.version.VERSION != "2.10.0", "Only supports newAPI feature")  
+ 
+    @unittest.skipIf("2.10.020" not in tf.version.VERSION, "Only supports newAPI feature")  
     def test_bf16_fallback(self):
         os.environ['FORCE_BF16'] = '1'
-
+        os.environ['MIX_PRECISION_TEST'] = '1'
         from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('fake_yaml.yaml')
+        quantizer = Quantization('newapi_fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.calib_dataloader = common.DataLoader(dataset)
@@ -330,11 +392,12 @@ class TestBF16Convert(unittest.TestCase):
                 cast_op_count += 1
             if node.op == 'Log':
                 self.assertEqual(node.attr["T"].type, dtypes.bfloat16.as_datatype_enum)
-        self.assertTrue(cast_op_count >= 1)
+        self.assertTrue(cast_op_count == 0)
 
     @unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.x")
     def test_bf16_rnn(self):
         os.environ['FORCE_BF16'] = '1'
+        os.environ['MIX_PRECISION_TEST'] = '1'
         try:
             inp = tf.keras.layers.Input(shape=(None, 4))
             lstm_1 = tf.keras.layers.LSTM(units=10,
@@ -389,7 +452,6 @@ class TestBF16Convert(unittest.TestCase):
         except (NotImplementedError):
             # Kernel bug, happens when the version of python is 3.7 and the version of numpy is >= 1.20.0
             pass
-
 
 if __name__ == "__main__":
     unittest.main()

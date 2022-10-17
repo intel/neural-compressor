@@ -91,7 +91,7 @@ class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
                 continue
 
             min_node = node_def_pb2.NodeDef()
-            min_node.op = "HostConst" if self.device == "gpu" else "Const"
+            min_node.op = "Const"
             min_node_postfix = "/frozen_min"
             min_node.name = node_name + min_node_postfix
             min_node.attr["dtype"].CopyFrom(
@@ -102,7 +102,7 @@ class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
                     dtypes.float32, [])))
 
             max_node = node_def_pb2.NodeDef()
-            max_node.op = "HostConst" if self.device == "gpu" else "Const"
+            max_node.op = "Const"
             max_node_postfix = "/frozen_max"
             max_node.name = node_name + max_node_postfix
             max_node.attr["dtype"].CopyFrom(

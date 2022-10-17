@@ -14,10 +14,7 @@
 # limitations under the License.
 """Onnxrt Graph reader."""
 
-from typing import Dict, List, Optional
-
-from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
-from onnx.onnx_ml_pb2 import AttributeProto, NodeProto
+from typing import Any, Dict, List, Optional
 
 from neural_compressor.ux.components.graph.attribute import Attribute
 from neural_compressor.ux.components.graph.graph import Graph
@@ -85,7 +82,7 @@ class OnnxrtReader:
             names.append("/".join(elements[0:idx]))
         return names
 
-    def _should_hide_node(self, node_def: NodeProto) -> bool:
+    def _should_hide_node(self, node_def: Any) -> bool:
         """Check if given node should be hidden."""
         if node_def.op_type not in ["Const", "Identity"]:
             return False
@@ -95,7 +92,7 @@ class OnnxrtReader:
 
         return True
 
-    def _node_def_has_not_hidden_inputs(self, node_def: NodeProto) -> bool:
+    def _node_def_has_not_hidden_inputs(self, node_def: Any) -> bool:
         """Check if node has any visible input."""
         not_hidden_input_ids = list(
             filter(
@@ -105,7 +102,7 @@ class OnnxrtReader:
         )
         return len(not_hidden_input_ids) > 0
 
-    def _hide_node(self, node: NodeProto) -> None:
+    def _hide_node(self, node: Any) -> None:
         """Mark node as hidden."""
         self._hidden_node_ids[node.name] = True
 
@@ -113,7 +110,7 @@ class OnnxrtReader:
         """Check if provided node_id is hidden."""
         return node_id in self._hidden_node_ids
 
-    def _convert_attributes(self, node_def: NodeProto) -> List[Attribute]:
+    def _convert_attributes(self, node_def: Any) -> List[Attribute]:
         """Convert NodeDef attributes to our format."""
         attributes = []
 
@@ -124,8 +121,10 @@ class OnnxrtReader:
 
         return attributes
 
-    def _convert_attribute(self, attribute: AttributeProto) -> Optional[Attribute]:
+    def _convert_attribute(self, attribute: Any) -> Optional[Attribute]:
         """Convert NodeDef attribute to our format."""
+        from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
+
         if 0 != len(attribute.s):
             return Attribute(attribute.name, "string", str(attribute.s.decode("utf-8")))
         if 0 != attribute.type:
@@ -162,7 +161,7 @@ class OnnxrtReader:
                 )
         return graph
 
-    def _add_edges_from_node(self, edges: dict, node: NodeProto) -> dict:
+    def _add_edges_from_node(self, edges: dict, node: Any) -> dict:
         """Add update edges from node data."""
         for edge in node.input:
             edge_data = edges.get(edge, {})

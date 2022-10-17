@@ -4,10 +4,16 @@ Sparsity is one of promising model compression techniques that can be used to ac
 
 The document describes the sparsity definition, sparsity training flow, validated models, and performance benefit using software sparsity. Note that the document discusses the sparse weight (with dense activation) for inference acceleration. Sparse activation or sparse embedding for inference acceleration or training acceleration is out of the scope.
 
-> **Note**: training for sparsity with 2:4 or similar structured pattern is under development
+> **Note**: training for sparsity with 2:4 or similar structured pattern is supported, please refer it at our new [API](../neural_compressor/experimental/pytorch_pruner/), [question-answering examples](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager) and [text-classification examples](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)
 
 ## Sparsity Definition
-Different from structured sparsity pattern [2:4](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/) what NVidia proposed in Ampere architecture, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size ```S``` means the contiguous ```S``` elements in this block are all zero values.
+NVidia proposed [2:4 sparsity](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/) (or known as "2in4 sparsity") in Ampere architecture, for every 4 continuous elements in a matrix, two of them are zero and others are non-zero.
+
+<a target="_blank" href="./docs/imgs/2in4_sparsity_demo.png">
+    <img src="../docs/imgs/2in4_sparsity_demo.png" width=600 height=200 alt="Sparsity Pattern">
+</a>
+
+Different from 2:4 sparsity above, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size ```S``` means the contiguous ```S``` elements in this block are all zero values.
 
 For a typical GEMM, the weight dimension is ```IC``` x ```OC```, where ```IC``` is the number of input channels and ```OC``` is the number of output channels. Note that sometimes ```IC``` is also called dimension ```K```, and ```OC``` is called dimension ```N```. The sparsity dimension is on ```OC``` (or ```N```).
 
@@ -45,16 +51,23 @@ def train():
 
 We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). The below table shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. We also provide a simplified [BERT example](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager) with only one sparse layer.
 
-|   Model   | Sparsity Pattern | Sparsity Ratio | Accuracy (Sparse Model) | Accuracy (Dense Model) |
-|-----------|:----------------:|:--------------:|:-----------------------:|:-----------------------:|
-| Bert Large| ***2***x1          | 70%            | 90.70%                  | 91.34%                  |
-| DLRM      | 4x***16***         | 85%            | 80.29%                  | 80.25%                  |
-| Bert Mini | ***16***x1         | 81%            | 81.89%                  | 82.93%                  |
-|ResNet50 v1.5 | ***2***x1         | 78%            | 75.3%                  | 76.13%                  |
-|SSD-ResNet34 | ***2***x1         | 75%            | 22.85%                  | 23%                  |
-|ResNext101| ***2***x1         | 73%            | 79.14%                  | 79.37%                  |
+|   Model   | Sparsity Pattern | Sparsity Ratio |Dataset| Accuracy (Sparse Model) | Accuracy (Dense Model) |
+|-----------|:----------------:|:--------------:|:-------------:|:-----------------------:|:-----------------------:|
+| Bert Large| [***2***x1](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager)          | 70%            |SQuAD| 90.70%                  | 91.34%                  |
+| DLRM      | 4x***16***         | 85%            |Criteo Terabyte| 80.29%                  | 80.25%                  |
+| Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)         | 90%            |MRPC| 87.22%                  | 87.52%                  |
+| Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)         | 90%            |SST-2| 86.92%                  | 87.61%                  |
+| Bert Mini | [***4***x1](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager)         | 80%            |SQuAD| 76.27%                  | 76.87%                  |
+| Bert Mini | [2 in ***4***](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)       | 50%            |MRPC| 86.95%                  | 87.52%                  |
+| Bert Mini | [2 in ***4***](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager)         | 50%            |SST-2| 86.93%                  | 87.61%                  |
+| Bert Mini | [2 in ***4***](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager)        | 50%            |SQuAD| 76.85%                  | 76.87%                  |
+|ResNet50 v1.5 | [***2***x1](../examples/pytorch/image_recognition/torchvision_models/pruning/magnitude/eager)         | 78%            |Image-Net| 75.3%                  | 76.13%                  |
+|SSD-ResNet34 | ***2***x1         | 75%            |Coco| 22.85%                  | 23%                  |
+|ResNext101| ***2***x1         | 73%            |Image-Net| 79.14%                  | 79.37%                  |
 
-Note: ***bold*** means the sparsity dimension (```OC```).
+Note: 
+* ***bold*** means the sparsity dimension (```OC```).
+* Bert-Mini related examples are developed based on our [Pytorch Pruner API](../neural_compressor/experimental/pytorch_pruner/). Examples of [question answering](../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager) and [text classification](../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager) are developed.
 
 ## Performance
 

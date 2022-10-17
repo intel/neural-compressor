@@ -15,9 +15,8 @@
 """Onnxrt model class."""
 import os
 import re
+import sys
 from typing import Any, List, Optional
-
-from google.protobuf.json_format import MessageToDict
 
 from neural_compressor.experimental.common.model import Model as NCModel
 from neural_compressor.model.onnx_model import ONNXModel
@@ -143,6 +142,8 @@ class OnnxrtModel(Model):
     @property
     def input_shape(self) -> Shape:
         """Try to detect data shape."""
+        from google.protobuf.json_format import MessageToDict
+
         shape = None
         trusted = False
 
@@ -216,7 +217,8 @@ class OnnxrtModel(Model):
         """Ensure all requirements are installed."""
         check_module("onnx")
         check_module("onnxruntime")
-        check_module("onnxruntime_extensions")
+        if sys.version_info < (3,10): # pragma: no cover
+            check_module("onnxruntime_extensions")
 
     @property
     def filtered_input_nodes(self) -> List[Any]:

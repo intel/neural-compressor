@@ -27,7 +27,6 @@ from .graph_cse_optimizer import GraphCseOptimizer
 from .fold_constant import GraphFoldConstantOptimizer
 from .fold_batch_norm import FoldBatchNormNodesOptimizer
 from .rename_batch_norm import RenameBatchNormOptimizer
-from .update_enter import UpdateEnterOptimizer
 from .convert_layout import ConvertLayoutOptimizer
 from .fuse_gelu import FuseGeluOptimizer
 from .fuse_reshape_transpose import FuseTransposeReshapeOptimizer
@@ -43,14 +42,20 @@ from .convert_nan_to_random import ConvertNanToRandom
 from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
+from .fuse_decomposed_in import FuseDecomposedINOptimizer
+from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 
 class PreOptimization():
     def __init__(self, model, optimization, new_api):
         self.model = model
         self.optimization = optimization
+        # Table initialization should disable grappler dependency and pruning pass
+        node_names = [node.name for node in model.graph_def.node]
+        if 'init_all_tables' in node_names:
+            self.optimization['dependency'] = False
+            self.optimization['pruning'] = False
         self.new_api = new_api
-
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = model.graph_def
         self.analyzer.parse_graph()
@@ -113,6 +118,7 @@ class PreOptimization():
         # Then the FuseDecomposedBNOptimizer can't fuse the small decomposed ops to BN.
         if self.new_api:
             self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = FuseDecomposedINOptimizer(self._tmp_graph_def).do_transformation()
 
         # disable fold constant for itex qdq mode
         if not itex_mode:
@@ -134,10 +140,6 @@ class PreOptimization():
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = RenameBatchNormOptimizer(
-            self._tmp_graph_def).do_transformation()
-
-        #TODO we should handle all control ops elegantly not bypass it.
-        self._tmp_graph_def, excluded_node_names = UpdateEnterOptimizer(
             self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = ConvertLeakyReluOptimizer(
@@ -170,10 +172,13 @@ class PreOptimization():
 
         self._tmp_graph_def = ConvertNanToRandom(
             self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = StripEquivalentNodesOptimizer(
+            self._tmp_graph_def, output_node_names).do_transformation()
+
         if self.new_api:
             self._tmp_graph_def = DilatedContraction(
                 self._tmp_graph_def).do_transformation()
-        self._excluded_node_names.extend(excluded_node_names)
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         origin_model.graph_def = self._tmp_graph_def

@@ -107,6 +107,23 @@ class Dataloader(Base):
             )
         return dataloaders_list
 
+    @staticmethod
+    def update_params(
+        db_session: session.Session,
+        dataloader_id: int,
+        params: List[dict],
+    ) -> dict:
+        """Update dataloader default parameters."""
+        dataloader = db_session.query(Dataloader).filter(Dataloader.id == dataloader_id).one()
+        dataloader.params = json.dumps(params)
+        db_session.add(dataloader)
+        db_session.flush()
+
+        return {
+            "id": dataloader.id,
+            "params": dataloader.params,
+        }
+
 
 @event.listens_for(Dataloader.__table__, "after_create")
 def fill_dictionary(*args: list, **kwargs: dict) -> None:

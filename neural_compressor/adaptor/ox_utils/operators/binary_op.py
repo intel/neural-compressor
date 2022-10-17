@@ -17,29 +17,49 @@
 #
 
 import onnx
-from .base_operator import QuantOperatorBase
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, \
-                                                 QuantizedValueType
-from onnx import onnx_pb as onnx_proto
-from neural_compressor.adaptor.ox_utils.util import QuantizedValue
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
-class QLinearBinaryOp(QuantOperatorBase):
+@op_registry(op_types="Add, Mul")
+class BinaryOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(BinaryOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def convert(self):
+    def quantize_check(self):
         node = self.node
-        if len(self.quantizer.model.get_children(node)) == 0:
-            return
+        data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
+        if not data_found:
+            return False
+        if not all([self.quantizer.is_valid_quantize_weight(i) for i in node.input]):
+            return False
+        return True
+
+    def quantize(self):
+        node = self.node
+        self.quantizer.quantize_inputs(node, initializer_use_weight_qType=False)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+            self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"
+
+    def convert_check(self, convert_format):
+        node = self.node
+        assert convert_format in ['static'], \
+            "convert format for {} should be in ['static']".format(node.op_type)
+
+        children = self.quantizer.model.get_children(node)
+        if len(children) == 0 or not node.name.endswith('_quant'):
+            return False
+        return True
+
+    def convert(self, convert_format):
+        node = self.node
         parents = self.quantizer.model.get_parents(node)
-        if all([i.op_type != 'DequantizeLinear' for i in parents]):
-            return
         child = self.quantizer.model.get_children(node)[0]
 
         qlinear_binary_math_output = child.output[0]
 
         kwargs = {}
-        for attribute in node.attribute:
+        for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
@@ -58,18 +78,3 @@ class QLinearBinaryOp(QuantOperatorBase):
         self.quantizer.remove_nodes.extend(parents)
         self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(node)
-
-class QDQBinaryOp(QuantOperatorBase):
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        node = self.node
-        data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
-        if not data_found:
-            return
- 
-        self.quantizer.quantize_inputs(node, initializer_use_weight_qType=False)
-        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
-            self.quantizer.quantize_outputs(node)
-        node.name = node.name + "_quant"

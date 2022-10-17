@@ -1094,7 +1094,8 @@ class TestVOCTransform(unittest.TestCase):
 
         def _int64_list_feature(values):
             import collections
-            if not isinstance(values, collections.Iterable):
+            import collections.abc
+            if not isinstance(values, collections.abc.Iterable):
                 values = [values]
             return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
 

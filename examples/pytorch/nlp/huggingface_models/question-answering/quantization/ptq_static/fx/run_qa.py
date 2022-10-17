@@ -616,9 +616,9 @@ def main():
         if save_metrics:
             trainer.save_metrics("eval", metrics)
         logger.info("metrics keys: {}".format(metrics.keys()))
-        print('Batch size = %d', batch_size)
+        print('Batch size = %d' % batch_size)
         print("Finally Eval {} Accuracy: {}".format(metric_name, metrics.get(metric_name)))
-        print("Latency: %.3f ms", (evalTime / samples * 1000))
+        print("Latency: %.3f ms" % (evalTime / samples * 1000))
         print("Throughput: {} samples/sec".format(samples / evalTime))
         return metrics.get(metric_name)
 
@@ -641,7 +641,7 @@ def main():
 
     if model_args.int8:
         from neural_compressor.utils.pytorch import load
-        model = load(training_args.output_dir, model)
+        model = load(training_args.output_dir, model, dataloader=eval_dataloader)
     if model_args.benchmark or model_args.accuracy_only:
         eval_func(model)
         return

@@ -30,7 +30,8 @@ class TestMXNetQuery(unittest.TestCase):
 
     def test_get_version(self):
         Query_version = self.Queryhandler.get_version()
-        self.assertEqual(mx.__version__, Query_version)
+        # if the mxnet version not in cfgs, the default maybe be ok.
+        self.assertNotIn([mx.__version__, 'default'], [Query_version])
 
     def test_get_precisions(self):
         Query_precisions = self.Queryhandler.get_precisions()

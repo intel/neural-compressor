@@ -8,8 +8,8 @@ import os
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.model import MODELS
 import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.adaptor.pytorch import PyTorchVersionMode
 from neural_compressor.experimental import Quantization, common
+from packaging.version import Version
 import shutil
 import copy
 import numpy as np
@@ -24,7 +24,7 @@ except:
     TEST_IPEX = False
 
 PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= PyTorchVersionMode.PT18.value:
+if PT_VERSION >= Version("1.8.0-rc1"):
     FX_MODE = True
 else:
     FX_MODE = False
@@ -159,8 +159,6 @@ class TestPytorchAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_quantization_saved(self):
-        from neural_compressor.utils.pytorch import load
-
         for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml']:
             if fake_yaml in ['dynamic_yaml.yaml']:
                 model = torchvision.models.quantization.resnet18()
@@ -202,7 +200,6 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_fx_static_quantization_saved(self):
-        from neural_compressor.utils.pytorch import load
         fake_yaml = 'fx_ptq_yaml.yaml'
         model = copy.deepcopy(self.model)
         model.eval().fuse_model()
@@ -214,10 +211,9 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
     
-    @unittest.skipIf(PT_VERSION < PyTorchVersionMode.PT19.value,
+    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
     def test_fx_dynamic_quantization_saved(self):
-        from neural_compressor.utils.pytorch import load
         fake_yaml = 'fx_dynamic_yaml.yaml'
         model = torchvision.models.resnet18()
         quantizer = Quantization(fake_yaml)
@@ -227,39 +223,6 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         q_model = quantizer.fit()
         self.assertTrue(bool(q_model))
-
-
-@unittest.skipIf(not TEST_IPEX, "Unsupport Intel PyTorch Extension")
-class TestPytorchIPEXAdaptor(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        build_ipex_yaml()
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove('ipex_yaml.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-    def test_tuning_ipex(self):
-        from neural_compressor.experimental import Quantization
-        model = torchvision.models.resnet18()
-        quantizer = Quantization('ipex_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
-        quantizer.model = model
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        nc_model = quantizer.fit()
-        nc_model.save("./saved")
-        try:
-            script_model = torch.jit.script(model.to(ipex.DEVICE))
-        except:
-            script_model = torch.jit.trace(model.to(ipex.DEVICE), torch.randn(10, 3, 224, 224).to(ipex.DEVICE))
-        from neural_compressor.experimental import Benchmark
-        evaluator = Benchmark('ipex_yaml.yaml')
-        evaluator.model = script_model
-        evaluator.b_dataloader = common.DataLoader(dataset)
-        results = evaluator()
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -85,5 +85,24 @@ class Eval_Func(object):
                     lines[index] = '[+] ' + ' ' * 8 + line
             lines = '\n'.join(lines)
             globals.list_eval_func_lines.append(lines)
+        elif domain_ == 'onnx':
+            # look for sess = onnxruntime.InferenceSession(MODEL_NAME.SerializeToString(), None)
+            codes = open(globals.list_code_path[0], 'r').read().split('\n')
+            start = 0
+            for idx, line in enumerate(codes):
+                if "onnxruntime.InferenceSession(" in line:
+                    start = idx
+                    break
+            line_indent = get_line_indent_level(codes[start])
+            target = None
+            for i in range(start, -1, -1):
+                if "def" in codes[i] and (line_indent - get_line_indent_level(codes[i])) == 4:
+                    target = codes[i].split(' ')[1]
+                    break
+            func_name = None
+            for i in range(len(target)):
+                if target[i] == '(':
+                    globals.list_eval_func_name.append(target[:i])
+                    break
         else: # random model
             pass

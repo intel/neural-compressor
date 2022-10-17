@@ -22,7 +22,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models.quantization as quantize_models
 import torchvision.models as models
-from neural_compressor.adaptor.pytorch import get_torch_version, PyTorchVersionMode
+from neural_compressor.adaptor.pytorch import get_torch_version
+from packaging.version import Version
 
 try:
     try:
@@ -211,7 +212,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # create model
         if args.pretrained:
             print("=> using pre-trained model '{}'".format(args.arch))
-            if args.ipex or pytorch_version >= PyTorchVersionMode.PT17.value:
+            if args.ipex or pytorch_version >= Version("1.7.0-rc1"):
                 model = models.__dict__[args.arch](pretrained=True)
             else:
                 model = quantize_models.__dict__[args.arch](pretrained=True, quantize=False)
@@ -326,7 +327,7 @@ def main_worker(gpu, ngpus_per_node, args):
             quantizer = Quantization("./conf_ipex.yaml")
         else:
             model.eval()
-            if pytorch_version < PyTorchVersionMode.PT17.value:
+            if pytorch_version < Version("1.7.0-rc1"):
                 model.fuse_model()
             quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
@@ -350,31 +351,8 @@ def main_worker(gpu, ngpus_per_node, args):
                     new_model = model
                 ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
                                                 "best_configure.json")
-            else:
-                if pytorch_version < PyTorchVersionMode.PT17.value:
-                    model.fuse_model()
-                from neural_compressor.utils.pytorch import load
-                new_model = load(
-                    os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
         else:
-            if args.ipex:
-                if not IPEX_110 and not IPEX_112:
-                    # TODO: It will remove when IPEX spport to save script model.
-                    model.to(ipex.DEVICE)
-                    try:
-                        new_model = torch.jit.script(model)
-                    except:
-                        new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
-                else:
-                    model = ipex.optimize(model, dtype=torch.float32, inplace=True)
-                    x = torch.randn(args.batch_size, 3, 224, 224).contiguous(memory_format=torch.channels_last)
-                    with torch.no_grad():
-                        model = torch.jit.trace(model, x).eval()
-                    model = torch.jit.freeze(model)
-                    new_model = model
-            else:
-                model.fuse_model()
-                new_model = model
+            new_model = model
         validate(val_loader, new_model, criterion, args, ipex_config_path)
         return
 

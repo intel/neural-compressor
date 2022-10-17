@@ -1,4 +1,4 @@
-<mat-horizontal-stepper #stepper>
+<mat-horizontal-stepper #stepper (selectionChange)="getExamples($event)">
   <mat-step [stepControl]="projectFormGroup" [completed]="false">
     <ng-template matStepLabel>Project name</ng-template>
     <h2>Project</h2>
@@ -24,7 +24,7 @@
     <ng-template matStepLabel>Project type</ng-template>
     <h2>Choose custom or predefined project</h2>
     <mat-card>
-      <mat-radio-group [(ngModel)]="showExamples">
+      <mat-radio-group [(ngModel)]="predefined">
         <mat-radio-button id="predefined-radio" [value]="true">
           <b>predefined model</b> - choose model from predefined quantization configurations (basic)
         </mat-radio-button><br><br>
@@ -35,7 +35,7 @@
     </mat-card>
     <br />
     <div class="float-right">
-      <button id="next_btn2" mat-raised-button matStepperNext>
+      <button id="next_btn2" mat-raised-button matStepperNext (click)="getExamples()">
         <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
         Next
       </button>
@@ -144,7 +144,7 @@
                     <mat-option *ngFor="let domain of domains" [value]="domain.name" matTooltipPosition="right"
                       [matTooltip]="domain.help">
                       <ng-container *ngIf="domain.name === 'nlp'">NLP</ng-container>
-                      <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | modelList | titlecase }}
+                      <ng-container *ngIf="domain.name !== 'nlp'">{{ domain.name | underscoreToSpace | titlecase }}
                       </ng-container>
                     </mat-option>
                   </mat-select>

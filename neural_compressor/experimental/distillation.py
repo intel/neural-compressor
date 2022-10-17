@@ -24,6 +24,7 @@ from .common import Model
 from ..adaptor import FRAMEWORKS
 from neural_compressor.experimental.common import Criterions, Optimizers
 from ..conf.config import DistillationConf
+from ..conf.pythonic_config import Config
 
 class Distillation(Component):
     """
@@ -39,6 +40,9 @@ class Distillation(Component):
         super(Distillation, self).__init__()
         if isinstance(conf_fname_or_obj, DistillationConf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = DistillationConf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = DistillationConf(conf_fname_or_obj)
         self._init_with_conf()
@@ -52,7 +56,7 @@ class Distillation(Component):
         self.best_model = None
         self._train_cfg = None
 
-    def _on_train_begin(self):
+    def _on_train_begin(self, dataloader=None):
         """ called before training """
         assert self._model, 'student_model must be set.'
         if self._eval_func is not None:

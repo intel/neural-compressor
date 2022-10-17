@@ -5,16 +5,17 @@ Intel® Neural Compressor
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
 [![python](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-1.12-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-1.14-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-90%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 </div>
 
 ---
+<div align="left">
 
-Intel® Neural Compressor, formerly known as Intel® Low Precision Optimization Tool, an open-source Python library running on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep learning frameworks for popular network compression technologies, such as quantization, pruning, knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help user quickly find out the best quantized model. It also implements different weight pruning algorithms to generate pruned model with predefined sparsity goal and supports knowledge distillation to distill the knowledge from the teacher model to the student model. 
-Intel® Neural Compressor has been one of the critical AI software components in [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+Intel® Neural Compressor, formerly known as Intel® Low Precision Optimization Tool, is an open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help the user quickly find out the best quantized model. It also implements different weight-pruning algorithms to generate a pruned model with predefined sparsity goal. It also supports knowledge distillation to distill the knowledge from the teacher model to the student model. 
+Intel® Neural Compressor is a critical AI software component in the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
 
 > **Note:**
 > GPU support is under development.
@@ -23,31 +24,32 @@ Intel® Neural Compressor has been one of the critical AI software components in
 
 ## Installation
 
-**Prerequisites**
+### Prerequisites
 
-- Python version: 3.7 or 3.8 or 3.9 or 3.10
+Python version: 3.7, 3.8, 3.9, 3.10
 
-**Install on Linux**
+### Install on Linux
+- Release binary install 
   ```Shell
   # install stable basic version from pip
   pip install neural-compressor
-  # install stable full version from pip (including GUI)
+  # Or install stable full version from pip (including GUI)
   pip install neural-compressor-full
-
+  ```
+- Nightly binary install
+  ```Shell
+  git clone https://github.com/intel/neural-compressor.git
+  cd neural-compressor
+  pip install -r requirements.txt
   # install nightly basic version from pip
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # install nightly full version from pip (including GUI)
+  # Or install nightly full version from pip (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
-
-  # install stable basic version from from conda
-  conda install neural-compressor -c conda-forge -c intel
-  # install stable full version from from conda (including GUI)
-  conda install neural-compressor-full -c conda-forge -c intel  
   ```
 More installation methods can be found at [Installation Guide](./docs/installation_guide.md). Please check out our [FAQ](./docs/faq.md) for more details.
 
 ## Getting Started
-* Quantization with Python API  
+### Quantization with Python API    
 
 ```shell
 # A TensorFlow Example
@@ -65,10 +67,10 @@ dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
 quantizer.calib_dataloader = common.DataLoader(dataset)
 quantizer.fit()
 ```
-* Quantization with [GUI](./docs/bench.md)
+### Quantization with [GUI](./docs/bench.md)
 ```shell
 # An ONNX Example
-pip install onnx==1.9.0 onnxruntime==1.10.0 onnxruntime-extensions
+pip install onnx==1.12.0 onnxruntime==1.12.1 onnxruntime-extensions
 # Prepare fp32 model
 wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet50-v1-12.onnx
 # Start GUI
@@ -78,7 +80,7 @@ inc_bench
   <img src="./docs/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
-* Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
+### Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
 
 ```python
 from neural_coder import auto_quant
@@ -94,7 +96,7 @@ auto_quant(
 
 ## System Requirements
 
-Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64), specially optimized for the following CPUs:
+Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64) that are specifically optimized for the following CPUs:
 
 * Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
 * Future Intel Xeon Scalable processor (code name Sapphire Rapids)
@@ -142,15 +144,16 @@ Intel® Neural Compressor supports systems based on [Intel 64 architecture or co
 </table>
 
 > **Note:**
-> Please set the environment variable TF_ENABLE_ONEDNN_OPTS=1 to enable oneDNN optimizations if you are using TensorFlow from v2.6 to v2.8. oneDNN has been fully default from TensorFlow v2.9.
+> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
 
 ### Validated Models
-Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with performance speedup geomean 2.2x and up to 4.2x on VNNI while minimizing the accuracy loss. And also provided 30+ pruning and knowledge distillation samples.  
-More details for validated models are available [here](docs/validated_model_list.md).   
+Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](docs/validated_model_list.md).   
 
-<a target="_blank" href="./docs/imgs/release_data.png">
-  <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=600>
-</a>
+<div style = "width: 77%; margin-bottom: 2%;">
+  <a target="_blank" href="./docs/imgs/release_data.png">
+    <img src="./docs/imgs/release_data.png" alt="Architecture" width=800 height=600>
+  </a>
+</div>
 
 ## Documentation
 
@@ -163,7 +166,7 @@ More details for validated models are available [here](docs/validated_model_list
   <tbody>
     <tr>
       <td colspan="3" align="center"><a href="docs/design.md">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./examples">Examples</a></td>
+      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
       <td colspan="2" align="center"><a href="docs/bench.md">GUI</a></td>
       <td colspan="2" align="center"><a href="docs/api-introduction.md">APIs</a></td>
     </tr>
@@ -194,8 +197,9 @@ More details for validated models are available [here](docs/validated_model_list
     <tr>
         <td colspan="2" align="center"><a href="docs/Quantization.md">Quantization</a></td>
         <td colspan="1" align="center"><a href="docs/pruning.md">Pruning</a> <a href="docs/sparsity.md">(Sparsity)</a> </td> 
-        <td colspan="3" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
-        <td colspan="3" align="center"><a href="docs/mixed_precision.md">Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
+        <td colspan="2" align="center"><a href="docs/mixed_precision.md">Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="docs/orchestration.md">Orchestration</a></td>
     </tr>
     <tr>
         <td colspan="2" align="center"><a href="docs/benchmark.md">Benchmarking</a></td>
@@ -203,6 +207,11 @@ More details for validated models are available [here](docs/validated_model_list
         <td colspan="2" align="center"><a href="docs/model_conversion.md">Model Conversion</a></td>
         <td colspan="2" align="center"><a href="docs/tensorboard.md">TensorBoard</a></td>
     </tr>
+    <tr>
+        <td colspan="4" align="center"><a href="docs/distillation_quantization.md">Distillation for Quantization</a></td>
+        <td colspan="5" align="center"><a href="neural_coder">Neural Coder (No-Code Solution)</a></td>
+    </tr>    
+    
   </tbody>
   <thead>
       <tr>
@@ -220,17 +229,15 @@ More details for validated models are available [here](docs/validated_model_list
 
 ## Selected Publications
 
-* [地址标准化服务AI深度学习模型推理优化实践](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
-* [Dynamic Quantization with Intel Neural Compressor and Transformers](https://www.youtube.com/watch?v=-_2ha2CNWXA) (Mar 2022)
-* [PyTorch Inference Acceleration with Intel® Neural Compressor](https://medium.com/pytorch/pytorch-inference-acceleration-with-intel-neural-compressor-842ef4210d7d) (Jun 2022)
-* [Intel and Hugging Face Partner to Democratize Machine Learning Hardware Acceleration](https://huggingface.co/blog/intel) (Jun 2022)
-* [Intel® Deep Learning Boost - Boost Network Security AI Inference Performance in Google Cloud Platform (GCP)](https://networkbuilders.intel.com/solutionslibrary/intel-deep-learning-boost-boost-network-security-ai-inference-performance-in-google-cloud-platform-gcp-technology-guide) (Apr 2022)
-* [Intel® Neural Compressor joined PyTorch ecosystem tool ](https://pytorch.org/ecosystem/) (Apr 2022)
-* [New instructions in the Intel® Xeon® Scalable processors combined with optimized software frameworks enable real-time AI within network workloads](https://builders.intel.com/docs/networkbuilders/ai-technologies-unleash-ai-innovation-in-network-applications-solution-brief-1637303210.pdf) (Feb 2022)
-* [Quantizing ONNX Models using Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Quantizing-ONNX-Models-using-Intel-Neural-Compressor/post/1355237) (Feb 2022)
-* [Quantize AI Model by Intel® oneAPI AI Analytics Toolkit on Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) (Feb 2022)
+* [Neural Coder (Intel Neural Compressor Plug-in): One-Click, No-Code Solution (Pat's Keynote IntelON 2022)](https://twitter.com/i/status/1574909338203967497) (Sep 2022)
+* [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) (Sep 2022)
+* [Efficient Text Classification with Intel Neural Compressor](https://medium.com/intel-analytics-software/efficient-text-classification-with-intel-neural-compressor-4853296deeac) (Sep 2022)
+* [Dynamic Neural Architecture Search with Intel Neural Compressor](https://medium.com/intel-analytics-software/dynamic-neural-architecture-search-with-intel-neural-compressor-7b05eaf325f3) (Sep 2022)
+* [Easy Quantization in PyTorch Using Fine-Grained FX](https://medium.com/intel-analytics-software/easy-quantization-in-pytorch-using-fine-grained-fx-80be2c4bc2d6) (Sep 2022)
+* [One-Click Enabling of Intel Neural Compressor Features in PyTorch Scripts](https://medium.com/intel-analytics-software/one-click-enable-intel-neural-compressor-features-in-pytorch-scripts-5d4e31f5a22b) (Aug 2022)
+* [Deep learning inference optimization for Address Purification](https://zhuanlan.zhihu.com/p/552484413?utm_source=ZHShareTargetIDMore&utm_medium=social&utm_oi=667097517833981952) (Aug 2022)
 
-> Please check out our [full publication list](docs/publication_list.md).
+> View our [full publication list](docs/publication_list.md).
 
 ## Additional Content
 
@@ -240,6 +247,6 @@ More details for validated models are available [here](docs/validated_model_list
 * [Security Policy](docs/security_policy.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
-## Hiring :star:
+## Hiring
 
-We are actively hiring. Please send your resume to inc.maintainers@intel.com if you have interests in model compression techniques.
+We are actively hiring. Send your resume to inc.maintainers@intel.com if you are interested in model compression techniques.

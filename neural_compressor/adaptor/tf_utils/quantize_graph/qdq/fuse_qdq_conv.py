@@ -57,6 +57,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DAddReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
@@ -104,9 +106,17 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv3DAddV2QuantizeV2': self.apply_conv3d_add_fusion,
                 'DequantizeConv3DAddV2ReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DEluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddEluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddEluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DBiasAddLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
+                'DequantizeConv3DAddLeakyReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeDepthwiseConv2dNativeQuantizeV2': self.apply_newly_conv_single_fusion
             }
 
@@ -272,7 +282,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                             match_node_name[3 + relu_offset]].node.input[sum_index]
                     ] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv3D"
+                node_op = "_FusedQuantizedConv3D"
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -320,7 +330,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8)
+                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
                 else:
                     dtype = dtypes.quint8
                     if [i for i in self.node_name_mapping[relu_node_name].output \
@@ -330,7 +341,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -423,7 +435,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ] + all_input_names[2:] + [
                     sum_node_name
                 ]  + control_inputs
-                node_op = "_QuantizedConv3D"
+                node_op = "_FusedQuantizedConv3D"
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -462,9 +474,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
-
-
+                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -553,15 +564,15 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 is_leakyrelu = self.node_name_mapping[relu_node_name].node.op == "LeakyRelu"
 
                 quantized_conv_node = helper.create_node(
-                    "_QuantizedConv3D",
+                    "_FusedQuantizedConv3D",
                     quantized_node_name,
                     quantized_node_input_names)
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
                 if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
-                    helper.copy_attr(quantized_conv_node, "alpha",
-                    self.node_name_mapping[relu_node_name].node.attr["alpha"])
+                   helper.copy_attr(quantized_conv_node, "alpha",
+                   self.node_name_mapping[relu_node_name].node.attr["alpha"])
                 if node.op != 'DepthwiseConv3dNative' and "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -575,7 +586,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 # helper.set_attr_dtype(quantized_conv_node, "alpha", dtypes.quint8)
                 helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
                                                 # if self.device == 'gpu' else dtypes.qint32)
-                helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu'])
+                if self.node_name_mapping[relu_node_name].node.op == "LeakyRelu":
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'LeakyRelu'])
+                elif self.node_name_mapping[relu_node_name].node.op == "Elu":
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Elu'])
+                else:
+                    helper.set_attr_string_list(quantized_conv_node, 'fused_ops', [b'BiasAdd', b'Relu'])
                 helper.set_attr_type_list(quantized_conv_node, 'Thost_inputs', [
                     input_data_type.as_datatype_enum,
                     dtypes.qint8.as_datatype_enum,
@@ -600,12 +616,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
                 else:
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype=dtypes.qint8)
+                        quantize_down_name, relu_node_name, dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -682,7 +700,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + [bias_node_name] + all_input_names[2:]
                 if node.op == "Conv3D":
                     quantized_conv_node = helper.create_node(
-                        "_QuantizedConv3D",
+                        "_FusedQuantizedConv3D",
                         quantized_node_name,
                         quantized_node_input_names)
 
@@ -722,7 +740,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     node, quantized_node_name, dtypes.qint8)
 
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[2], dtypes.qint8)
+                    quantize_down_name, match_node_name[2], dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -766,8 +785,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     postfix = "_eightbit_quantized_conv3d"
                 quantized_node_name = node.name + postfix
                 quantized_conv_node = helper.create_node(
-                    "_QuantizedConv3D"
-                    if self.per_channel else "_QuantizedConv3D",
+                    "_FusedQuantizedConv3D"
+                    if self.per_channel else "_FusedQuantizedConv3D",
                     quantized_node_name, all_input_names)
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
@@ -803,7 +822,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, node.name, dtypes.qint8)
+                    quantize_down_name, node.name, dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -895,9 +915,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 is_elu = self.node_name_mapping[relu_node_name].node.op == "Elu"
                 is_sigmoid = self.node_name_mapping[relu_node_name].node.op == "Sigmoid"
 
-                node_op = '_QuantizedDepthwiseConv2D'
+                node_op = '_FusedQuantizedDepthwiseConv2D'
                 if node.op == 'Conv2D':
-                    node_op = "_QuantizedConv2D"
+                    node_op = "_FusedQuantizedConv2D"
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -951,12 +971,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
                 else:
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype=dtypes.qint8)
+                        quantize_down_name, relu_node_name, dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -1020,8 +1042,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D'
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1060,7 +1082,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[2], dtypes.qint8)
+                    quantize_down_name, match_node_name[2], dtypes.qint8,
+                    performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1105,8 +1128,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if node.op == "Conv2D":
                     quantized_node_name = node.name + "_eightbit_quantized_conv"
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D'
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     all_input_names)
 
@@ -1146,7 +1169,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[1], dtypes.qint8)
+                    quantize_down_name, match_node_name[1], dtypes.qint8,
+                    performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1175,6 +1199,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         if add_a_node.op != 'Const' and add_b_node.op == 'Const':
              need_insert_dummy_biasadd = 0
+             if len(match_node_name) == 5 and 'Relu' in match_node_name[3]:
+                return self.apply_newly_conv_biasadd_relu_fusion(match_node_name)
+
         if need_insert_dummy_biasadd:
              new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
              #after insert dummy biasadd, that is Conv+dummybiasadd+add*+add*+relu*
@@ -1264,8 +1291,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                             match_node_name[3 + relu_offset]].node.input[sum_index]
                     ] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D' 
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D' 
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -1316,7 +1343,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8)
+                        quantize_down_name, match_node_name[4], dtype=dtypes.qint8,
+                        performance_only=self.performance_only)
                 else:
                     dtype = dtypes.quint8
                     if [i for i in self.node_name_mapping[relu_node_name].output \
@@ -1326,7 +1354,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantize_down_name = self._add_quantize_down_nodes(
                         node, quantized_node_name, dtype, is_relu6)
                     self._intel_cpu_add_dequantize_result_node(
-                        quantize_down_name, relu_node_name, dtype)
+                        quantize_down_name, relu_node_name, dtype,
+                        performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1408,8 +1437,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
 
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D'
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D'
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1450,7 +1479,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.quint8, is_relu6)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[6], dtypes.quint8)
+                    quantize_down_name, match_node_name[6], dtypes.quint8,
+                    performance_only=self.performance_only)
 
             else:
                 new_node = node_def_pb2.NodeDef()
@@ -1525,9 +1555,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantized_node_input_names = all_input_names[:2] + \
                     [bias_node_name] + all_input_names[2:] + control_inputs
 
-                node_op = '_QuantizedDepthwiseConv2D'
+                node_op = '_FusedQuantizedDepthwiseConv2D'
                 if node.op == 'Conv2D':
-                    node_op = "_QuantizedConv2D"
+                    node_op = "_FusedQuantizedConv2D"
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
 
@@ -1566,9 +1596,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, swish_node_name, dtype=dtypes.qint8)
-
-
+                    quantize_down_name, swish_node_name, dtype=dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -1648,8 +1677,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 ] + all_input_names[2:] + [
                     sum_node_name
                 ] + control_inputs
-                node_op = "_QuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_QuantizedDepthwiseConv2D' 
+                node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
+                        else '_FusedQuantizedDepthwiseConv2D' 
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
@@ -1688,7 +1717,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(
                                     node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
-                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8)
+                    quantize_down_name, match_node_name[3], dtype=dtypes.qint8,
+                    performance_only=self.performance_only)
             else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
@@ -1722,18 +1752,18 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph
+                return self.input_graph, []
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
 
-            return self.output_graph
+            return self.output_graph, []
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph
+        return self.input_graph, []
 
     def _is_match_conv(self, patterns, qdq_inserted=False):
         """Detect the rule matched nodes collections.
@@ -1807,22 +1837,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                                 add_op_quantizable = False
                         next_node_op = self.node_name_mapping[
                             next_node_name].node.op
-
-                        if next_node_op in ("Add", "AddV2", "AddN"):
-                            next_node = self.node_name_mapping[
-                                next_node_name].node
-                            next_node_inputs = list(next_node.input)
-                            cur_node_index = next_node_inputs.index(
-                                cur_node_name)
-
-                            for index, input_name in enumerate(
-                                    next_node_inputs):
-                                node_type = self.node_name_mapping[helper.node_name_from_input(
-                                    input_name)].node.op
-                                if input_name != cur_node_name and index < cur_node_index and \
-                                        node_type != 'Dequantize':
-                                    add_op_quantizable = False
-                                    break
                         if add_op_quantizable and next_node_op == sub_rule[-sub_rule_len]:
                             if not is_shared_output:
                                 matched_node_name.append(next_node_name)

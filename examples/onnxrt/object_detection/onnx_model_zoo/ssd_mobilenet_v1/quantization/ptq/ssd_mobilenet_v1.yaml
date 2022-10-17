@@ -24,9 +24,9 @@ model:                                               # mandatory. used to specif
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant
   op_wise: {
-    'Preprocessor/*': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}},
+    'Preprocessor/.*?': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}},
     'add': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}},
-    'Postprocessor/*': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}},
+    'Postprocessor/.*?': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}},
  
   }
   calibration:

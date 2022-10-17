@@ -75,7 +75,9 @@ nc_model.save("Path_to_save_configure_file")
 from neural_compressor.utils.pytorch import load
 quantized_model = load(
     os.path.join(Path, 'best_configure.yaml'),
-    os.path.join(Path, 'best_model_weights.pt'), fp32_model)
+    os.path.join(Path, 'best_model_weights.pt'),
+    fp32_model,
+    dataloader=your_dataloader)
 ```
 
 Please refer to [Sample code](./pytorch/tools/test_net.py)

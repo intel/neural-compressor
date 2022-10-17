@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { combineLatest, Subject } from 'rxjs';
 import { FileBrowserComponent } from '../file-browser/file-browser.component';
@@ -28,7 +28,7 @@ export class DatasetFormComponent implements OnInit {
   datasetFormGroup: FormGroup;
 
   metrics = [];
-  metricParam: string | boolean;
+  metricParam: string;
   metricParams = [];
 
   dataLoaders = [];
@@ -50,7 +50,6 @@ export class DatasetFormComponent implements OnInit {
   metricValue$: Subject<boolean> = new Subject<boolean>();
 
   constructor(
-    private _formBuilder: FormBuilder,
     public dialog: MatDialog,
     public modelService: ModelService,
     @Inject(MAT_DIALOG_DATA) public data
@@ -75,16 +74,16 @@ export class DatasetFormComponent implements OnInit {
 
     this.modelService.getDictionaryWithParam('dataloaders', 'framework', { framework: this.data.framework.toLowerCase() })
       .subscribe(
-        response => {
-          this.dataLoaders = response['dataloaders'];
+        (response: { dataloaders: any }) => {
+          this.dataLoaders = response.dataloaders;
         },
         error => {
           this.modelService.openErrorDialog(error);
         });
     this.modelService.getDictionaryWithParam('transforms', 'framework', { framework: this.data.framework.toLowerCase() })
       .subscribe(
-        response => {
-          this.transformations = response['transforms'];
+        (response: { transforms: any }) => {
+          this.transformations = response.transforms;
         },
         error => {
           this.modelService.openErrorDialog(error);
@@ -97,8 +96,8 @@ export class DatasetFormComponent implements OnInit {
   getPossibleValues() {
     this.modelService.getPossibleValues('metric', { framework: this.data.framework.toLowerCase() })
       .subscribe(
-        resp => {
-          this.metrics = resp['metric'];
+        (response: { metric: any }) => {
+          this.metrics = response.metric;
           this.metricList$.next(true);
           this.getPredefinedDatasets();
         },
@@ -107,37 +106,37 @@ export class DatasetFormComponent implements OnInit {
 
   getPredefinedDatasets() {
     this.modelService.getPredefinedDatasets(this.data.framework, this.data.domain, this.data.domainFlavour)
-      .subscribe(response => {
-        for (let i = 0; i < response['transform'].length; i++) {
-          this.addNewTransformation(response['transform'][i]['name']);
-          this.setDefaultTransformationParam({ value: response['transform'][i] }, i);
+      .subscribe((response: { transform: [{ name: string }]; dataloader: any; metric: any }) => {
+        for (let i = 0; i < response.transform.length; i++) {
+          this.addNewTransformation(response.transform[i].name);
+          this.setDefaultTransformationParam({ value: response.transform[i] }, i);
         }
 
-        this.datasetFormGroup.get('dataLoader').setValue(response['dataloader']['name']);
-        this.setDefaultDataLoaderParam({ value: response['dataloader']['name'] });
-        if (response['dataloader']['params']?.[0].name === 'root') {
-          this.datasetLocationPlaceholder = response['dataloader']['params'][0].value;
+        this.datasetFormGroup.get('dataLoader').setValue(response.dataloader.name);
+        this.setDefaultDataLoaderParam({ value: response.dataloader.name });
+        if (response.dataloader.params?.[0].name === 'root') {
+          this.datasetLocationPlaceholder = response.dataloader.params[0].value;
           this.isFieldRequired('datasetLocation', true);
         } else {
           this.isFieldRequired('datasetLocation', false);
         }
 
-        this.datasetFormGroup.get('metric').setValue(response['metric']);
-        this.setDefaultMetricParam({ value: response['metric'] });
+        this.datasetFormGroup.get('metric').setValue(response.metric);
+        this.setDefaultMetricParam({ value: response.metric });
       });
   }
 
   setFormValues() {
-    this.datasetFormGroup = this._formBuilder.group({
-      name: ['Dataset' + String(this.data.index + 1), Validators.required],
-      dataLoader: ['', Validators.required],
-      datasetLocation: [''],
-      datasetParams0: [''],
-      datasetParams1: [''],
-      transform: [''],
-      transformParams: [''],
-      metric: ['', Validators.required],
-      metricParam: [''],
+    this.datasetFormGroup = new FormGroup({
+      name: new FormControl('Dataset' + String(this.data.index + 1), Validators.required),
+      dataLoader: new FormControl('', Validators.required),
+      datasetLocation: new FormControl(''),
+      datasetParams0: new FormControl(''),
+      datasetParams1: new FormControl(''),
+      transform: new FormControl(''),
+      transformParams: new FormControl(''),
+      metric: new FormControl('', Validators.required),
+      metricParam: new FormControl(''),
     });
   }
 
@@ -151,10 +150,10 @@ export class DatasetFormComponent implements OnInit {
           Object.keys(param).forEach(paramValue => {
             this.dataLoaderParams[index][paramValue] = param[paramValue];
           });
-        })
+        });
       }
       this.showDatasetLocation = this.dataLoaders.find(x => x.name === event.value)?.show_dataset_location;
-      let hasRootEntry = this.dataLoaderParams.find(x => x.name == "root") !== undefined;
+      const hasRootEntry = this.dataLoaderParams.find(x => x.name === 'root') !== undefined;
       if (hasRootEntry) {
         this.isFieldRequired('datasetLocation', true);
       } else {
@@ -176,15 +175,15 @@ export class DatasetFormComponent implements OnInit {
   setDefaultTransformationParam(event, index: number) {
     if (!event.value.hasOwnProperty('params')) {
       // Case when event source is MatSelect
-      this.transformationParams[index]['params'] = this.transformations.find(x => x.name === event.value).params;
+      this.transformationParams[index].params = this.transformations.find(x => x.name === event.value).params;
       return;
     }
 
-    let transformParameters: { name: string, value: any }[] = this.transformations.find(x => x.name === event.value.name).params;
+    const transformParameters: { name: string; value: any }[] = this.transformations.find(x => x.name === event.value.name).params;
     event.value.params.forEach(item => {
       transformParameters.find(x => x.name === item.name).value = item.value;
     });
-    this.transformationParams[index]['params'] = transformParameters;
+    this.transformationParams[index].params = transformParameters;
   }
 
   addNewTransformation(name?: string) {
@@ -198,7 +197,7 @@ export class DatasetFormComponent implements OnInit {
   setDefaultMetricParam(event) {
     if (this.metrics.length) {
       this.metricParams = this.metrics.find(x => x.name === event.value)?.params;
-      if (this.metricParams) {
+      if (this.metricParams && this.metricParams.length === 1) {
         this.metricParam = this.metricParams[0].value;
         if (Array.isArray(this.metricParams[0].value)) {
           this.metricParam = this.metricParams[0].value[0];
@@ -211,58 +210,79 @@ export class DatasetFormComponent implements OnInit {
 
   addDataset() {
     const readyDataset = {
-      "project_id": this.data.projectId,
-      "name": this.datasetFormGroup.get('name').value,
-      "dataset_path": this.datasetFormGroup.get('datasetLocation').value,
-      "transform": this.getTransformParams(this.transformationParams),
-      "dataloader": {
-        "name": this.datasetFormGroup.get('dataLoader').value,
-        "params": this.dataLoaderParams ? this.getParams(this.dataLoaderParams) : null,
+      project_id: this.data.projectId,
+      name: this.datasetFormGroup.get('name').value,
+      dataset_path: this.datasetFormGroup.get('datasetLocation').value,
+      transform: this.getTransformParams(this.transformationParams),
+      dataloader: {
+        name: this.datasetFormGroup.get('dataLoader').value,
+        params: this.dataLoaderParams ? this.getParams(this.dataLoaderParams) : null,
       },
-      "metric": this.datasetFormGroup.get('metric').value,
-      "metric_param": this.metricParam
-    }
+      metric: this.datasetFormGroup.get('metric').value,
+      metric_param: this.getMetricParams(),
+    };
 
     this.modelService.addDataset(readyDataset)
       .subscribe(
-        response => { this.modelService.datasetCreated$.next(true) },
-        error => {
-          this.modelService.openErrorDialog(error);
-        });
+        response => { this.modelService.datasetCreated$.next(true); },
+        error => { this.modelService.openErrorDialog(error); }
+      );
   }
 
-  getParams(obj: any[]): {} {
-    let newObj = {};
+  getMetricParams(): any {
+    const parsedMetricParameter = {};
+    if (this.metricParam) {
+      return this.metricParam;
+    } else {
+      this.metricParams.forEach(param => {
+        if (param.params) {
+          parsedMetricParameter[param.name] = {};
+          param.params.forEach(nestedParam => {
+            parsedMetricParameter[param.name][nestedParam.name] = nestedParam.value;
+          });
+        } else {
+          parsedMetricParameter[param.name] = param.value;
+        }
+      });
+    }
+    return parsedMetricParameter;
+  }
+
+  getParams(obj: any[]): any {
+    const newObj = {};
     obj.forEach(item => {
-      if (item['name'] === 'size' && this.resizeCustom && item['value'] === 'custom') {
-        newObj[item['name']] = this.resizeCustom;
+      if (item.name === 'size' && this.resizeCustom && item.value === 'custom') {
+        newObj[item.name] = this.resizeCustom;
       } else {
-        newObj[item['name']] = item['value'];
+        newObj[item.name] = item.value;
       }
     });
     return newObj;
   }
 
-  getTransformParams(obj: any[]): { name: string; params: {}; }[] {
-    let newObj = [];
+  getTransformParams(obj: any[]): { name: string; params: any }[] {
+    if (this.datasetFormGroup.get('dataLoader').value === 'custom') {
+      return [];
+    }
+    const newObj = [];
     obj.forEach(item => {
       newObj.push({
         name: item.name,
         params: item.params && Array.isArray(item.params) ? this.getParams(item.params) : null
-      })
+      });
     });
     return newObj;
   }
 
-  openDialog(fieldName: string, filter: FileBrowserFilter, paramFile?) {
+  openDialog(inputFieldName: string, filter: FileBrowserFilter, paramFile?) {
     const fileCategories = { 'dev-v1.1.json': 'label_file', 'vocab.txt': 'vocab_file' };
 
     const dialogRef = this.dialog.open(FileBrowserComponent, {
       width: '60%',
       height: '60%',
       data: {
-        path: this.getPath(fieldName),
-        filter: filter,
+        path: this.getPath(inputFieldName),
+        filter,
         filesToFind: paramFile ? Object.keys(fileCategories) : null
       }
     });
@@ -272,14 +292,14 @@ export class DatasetFormComponent implements OnInit {
         if (response.chosenFile) {
           if (paramFile && paramFile !== 'datasetLocation') {
             if (paramFile === 'dataset') {
-              this.dataLoaderParams.find(x => x.name === fieldName).value = response.chosenFile;
+              this.dataLoaderParams.find(x => x.name === inputFieldName).value = response.chosenFile;
             } else if (paramFile === 'metric') {
               this.metricParam = response.chosenFile;
             } else {
-              paramFile.find(x => x.name === fieldName).value = response.chosenFile;
+              paramFile.find(x => x.name === inputFieldName).value = response.chosenFile;
             }
           } else {
-            this.datasetFormGroup.get(fieldName).setValue(response.chosenFile);
+            this.datasetFormGroup.get(inputFieldName).setValue(response.chosenFile);
           }
 
           if (response.foundFiles.length) {
@@ -302,8 +322,9 @@ export class DatasetFormComponent implements OnInit {
   }
 
   getPath(fieldName: string) {
-    return this.datasetFormGroup.get(fieldName) && this.datasetFormGroup.get(fieldName).value && !this.datasetFormGroup.get(fieldName).value.includes('/path/to/')
-      ? this.datasetFormGroup.get(fieldName).value.split("/").slice(0, -1).join("/")
+    return this.datasetFormGroup.get(fieldName) && this.datasetFormGroup.get(fieldName).value
+      && !this.datasetFormGroup.get(fieldName).value.includes('/path/to/')
+      ? this.datasetFormGroup.get(fieldName).value.split('/').slice(0, -1).join('/')
       : this.modelService.workspacePath;
   }
 

@@ -173,7 +173,9 @@ class BF16Convert(GraphRewriterBase):
                 if outputs_dt_input_node[0] in allowed_input_node_dt_val and \
                         dtypes.bfloat16.as_datatype_enum in allowed_input_node_dt_val[outputs_dt_input_node[0]]:
                     input_node.attr[outputs_dt_input_node[0]].CopyFrom(DT_BFLOAT16)
-            elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op:
+            # ResizeBilinear input can be of different types but output is always float
+            elif input_node.name in self.bf16_ops and "Dequantize" not in input_node.op and \
+                 input_node.op != 'ResizeBilinear':
                 self._bf16_convert(input_node.name)
             else:
                 cast_node_name = input_name.replace(':', '_') + "/" + bf16_node_name + "_FP32toBF16"
@@ -193,6 +195,8 @@ class BF16Convert(GraphRewriterBase):
                                attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum))
 
         for output_name in bf16_node_outputs:
+            if bf16_node.op == 'ResizeBilinear':
+                continue
             output_detail = self.cur_graph.node_name_details[output_name]
             output_node = output_detail.node
             inputs_dt_input_node, _ = self._dtype(output_node)
@@ -222,7 +226,8 @@ class BF16Convert(GraphRewriterBase):
                          inputs_dt_input_node[i] in allowed_output_node_dt_val and \
                          dtypes.bfloat16.as_datatype_enum not in allowed_output_node_dt_val[inputs_dt_input_node[i]]:
                     cast_node_name = bf16_node_name + "/" + output_node.name + "_BF16toFP32"
-                    assert cast_node_name not in list(self.cur_graph.node_name_details.keys())
+                    if cast_node_name in self.cur_graph.node_name_details.keys():
+                        continue
                     output_cast_node = Helper.create_node(
                         "Cast", cast_node_name, [input_name])
                     Helper.set_attr_dtype(output_cast_node, "DstT", dtypes.float32)
@@ -243,7 +248,7 @@ class BF16Convert(GraphRewriterBase):
                 if "fused_ops" in self.cur_graph.node_name_details[bf16_node_name].node.attr:
                     self.bf16_ops.remove(bf16_node_name)
                     continue
-        for bf16_node_name in set(self.bf16_ops):
+        for bf16_node_name in sorted(list(set(self.bf16_ops))):
             self._bf16_convert(bf16_node_name)
         return self.cur_graph.dump_graph()
 

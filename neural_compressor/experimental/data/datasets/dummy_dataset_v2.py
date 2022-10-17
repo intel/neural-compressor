@@ -24,7 +24,7 @@ from functools import reduce
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
-@dataset_registry(dataset_type="dummy_v2", framework="tensorflow, inteltensorflow, tensorflow_itex, \
+@dataset_registry(dataset_type="dummy_v2", framework="tensorflow, tensorflow_itex, \
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')
@@ -143,7 +143,7 @@ class DummyDataset(IterableDataset):
     def __len__(self):
         return sys.maxsize
 
-@dataset_registry(dataset_type="sparse_dummy_v2", framework="tensorflow, inteltensorflow, tensorflow_itex, \
+@dataset_registry(dataset_type="sparse_dummy_v2", framework="tensorflow, tensorflow_itex, \
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')

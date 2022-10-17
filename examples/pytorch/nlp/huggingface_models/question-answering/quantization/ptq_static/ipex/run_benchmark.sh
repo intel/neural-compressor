@@ -74,6 +74,20 @@ function run_benchmark {
             --max_seq_length 384 \
             --no_cuda \
             --output_dir $tuned_checkpoint \
+            --per_gpu_eval_batch_size $batch_size \
+            $mode_cmd \
+            ${extra_cmd}
+    fi
+    if [[ "${topology}" == "distilbert_base_ipex" ]]; then
+        model_name_or_path="distilbert-base-uncased-distilled-squad"
+        python run_qa.py \
+            --model_name_or_path $model_name_or_path \
+            --dataset_name squad \
+            --do_eval \
+            --max_seq_length 384 \
+            --no_cuda \
+            --output_dir $tuned_checkpoint \
+            --per_gpu_eval_batch_size $batch_size \
             $mode_cmd \
             ${extra_cmd}
     fi
@@ -90,6 +104,7 @@ function run_benchmark {
             --doc_stride 128 \
             --no_cuda \
             --output_dir $tuned_checkpoint \
+            --per_gpu_eval_batch_size $batch_size \
             $mode_cmd \
             ${extra_cmd}
     fi

@@ -38,6 +38,7 @@ from .common import Metric as NCMetric
 from .common import Postprocess as NCPostprocess
 from .common import _generate_common_dataloader
 from ..model.model import get_model_fwk_name
+from ..conf.pythonic_config import Config
 
 def set_env_var(env_var, value, overwrite_existing=False):
     """Sets the specified environment variable. Only set new env in two cases:
@@ -82,10 +83,14 @@ class Benchmark(object):
         self._model = None
         self._b_dataloader = None
         self._b_func = None
+        self._custom_b_func = False
         self._metric = None
         self._results = {}
         if isinstance(conf_fname_or_obj, BenchmarkConf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = BenchmarkConf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
@@ -95,9 +100,6 @@ class Benchmark(object):
     def __call__(self, mode='performance'):
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
-        # use first eval config in yaml if mode from __call__not same with yaml config
-        if not mode in cfg.evaluation:
-            mode = list(cfg.evaluation.keys())[0]
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
         # disable multi-instance for accuracy mode
@@ -200,7 +202,7 @@ class Benchmark(object):
                     deep_get(cfg, 'evaluation.{}.metric'.format(mode))
         b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
 
-        if self._b_dataloader is None:
+        if self._b_func is None and self._b_dataloader is None:
             assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
                 'dataloader field of yaml file is missing'
 
@@ -214,6 +216,8 @@ class Benchmark(object):
                                     metric, \
                                     b_postprocess_cfg,
                                     iteration=iteration)
+        else:
+            self._custom_b_func = True
 
         objectives = [i.lower() for i in cfg.tuning.multi_objectives.objective] if \
             deep_get(cfg, 'tuning.multi_objectives') else [cfg.tuning.objective]
@@ -222,7 +226,10 @@ class Benchmark(object):
                               cfg.tuning.accuracy_criterion,
                               is_measure=True)
 
-        val = self.objectives.evaluate(self._b_func, self._model)
+        if self._custom_b_func:
+            val = self.objectives.evaluate(self._b_func, self._model.model)
+        else:
+            val = self.objectives.evaluate(self._b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val

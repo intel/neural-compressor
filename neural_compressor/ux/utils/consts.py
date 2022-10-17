@@ -55,6 +55,7 @@ class OptimizationTypes(Enum):
 
     QUANTIZATION = "Quantization"
     GRAPH_OPTIMIZATION = "Graph optimization"
+    MIXED_PRECISION = "Mixed precision"
 
 
 class ExecutionStatus(Enum):
@@ -93,7 +94,8 @@ precision_optimization_types = {
         Precisions.INT8_STATIC_QUANTIZATION,
         Precisions.INT8_DYNAMIC_QUANTIZATION,
     ],
-    OptimizationTypes.GRAPH_OPTIMIZATION: [Precisions.BF16, Precisions.FP32],
+    OptimizationTypes.MIXED_PRECISION: [Precisions.BF16],
+    OptimizationTypes.GRAPH_OPTIMIZATION: [Precisions.FP32, Precisions.BF16],
 }
 
 postprocess_transforms = ["SquadV1"]

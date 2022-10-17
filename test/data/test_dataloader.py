@@ -587,6 +587,7 @@ class TestDataloader(unittest.TestCase):
     def test_voc_record(self):
         import six
         import collections
+        import collections.abc
         import tensorflow as tf
         tf.compat.v1.disable_eager_execution()
 
@@ -597,7 +598,7 @@ class TestDataloader(unittest.TestCase):
                 bytes_list=tf.train.BytesList(value=[norm2bytes(values)]))
 
         def _int64_list_feature(values):
-            if not isinstance(values, collections.Iterable):
+            if not isinstance(values, collections.abc.Iterable):
                 values = [values]
             return tf.train.Feature(int64_list=tf.train.Int64List(value=values))
 

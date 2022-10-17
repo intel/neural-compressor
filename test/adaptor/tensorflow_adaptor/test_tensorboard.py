@@ -10,6 +10,7 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
+from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 tf.compat.v1.disable_eager_execution()
 
 def build_fake_yaml():
@@ -195,7 +196,8 @@ class TestTensorboard(unittest.TestCase):
         shutil.rmtree("saved", ignore_errors=True)
         shutil.rmtree("runs/", ignore_errors=True)
     
-    @unittest.skipIf(tf.version.VERSION > '2.5.0', " Skip test_bf16_fallback case for tf 2.6.0 and above.")
+    @unittest.skipIf(version1_gt_version2(tf.version.VERSION, '2.5.0'), \
+                     "Skip test_bf16_fallback case for tf 2.6.0 and above.")
     def test_run_basic_one_trial(self):
         from neural_compressor.experimental import Quantization, common
 

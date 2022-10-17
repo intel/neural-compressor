@@ -24,6 +24,7 @@ import { ModelService } from '../services/model.service';
 export class ModelWiseComponent implements OnInit {
 
   modelWiseParams;
+  error;
   selectorParams = {
     weight: [],
     activation: [],
@@ -59,19 +60,19 @@ export class ModelWiseComponent implements OnInit {
           this.selectParameter(type, paramName);
           this.params[type][index] = paramName;
           this.chosenParams[type][paramName] = this.data.modelWise[type][paramName];
-        })
+        });
       });
     }
 
     this.modelService.getModelWiseParams(this.data.optimizationId)
       .subscribe(
-        response => {
-          this.modelWiseParams = response['model_wise'];
-          this.selectorParams.weight = Object.keys(response['model_wise']['weight']);
-          this.selectorParams.activation = Object.keys(response['model_wise']['activation']);
+        (response: { model_wise: any }) => {
+          this.modelWiseParams = response.model_wise;
+          this.selectorParams.weight = Object.keys(response.model_wise.weight);
+          this.selectorParams.activation = Object.keys(response.model_wise.activation);
         },
         error => {
-          this.modelService.openErrorDialog(error);
+          this.error = error;
         });
   }
 

@@ -35,14 +35,12 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()
+        g.get_frame_info()
         valid_ops = ('BiasAdd', 'Add', 'AddV2', 'AddN')
         target_nodes = g.query_fusion_pattern_nodes([['MatMul', 'Conv2D'],])
         for i in target_nodes:
-            # only apply this pass for tensorflow release 2.9.1 and lower version for
-            # old quantization API.
+            # only apply this pass for tensorflow old quantization API, pre_optimize does this check
             # use conv+dummy_biasadd+relu because TF do not support conv+relu now. 
-            if version1_gt_version2(tf.version.VERSION, '2.9.1'):
-                continue
             if i[0] in self.outputs:
                 continue
             next_node_names = graph_info[i[0]].outputs
@@ -50,14 +48,21 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
                 graph_info[Helper.node_name_from_input(next_node_names[0])].node.op in valid_ops:
                 continue
             bias_node_name = i[0] + '_dummy_biasadd'
-            bias_const_node_name = i[0] + '_fake_const'
+            bias_const_node_name = i[0] + '_dummy_biasadd_const'
             matmul_a_node_name = Helper.node_name_from_input(graph_info[i[0]].node.input[0])
             matmul_a_node = graph_info[matmul_a_node_name].node
             matmul_b_node_name = Helper.node_name_from_input(graph_info[i[0]].node.input[1])
             matmul_b_node = graph_info[matmul_b_node_name].node
 
-            if matmul_a_node.op == 'Const' or matmul_b_node.op != 'Const':
+            if matmul_a_node.op == 'Const' or matmul_b_node.op not in ['Const', 'Enter']:
                 continue
+            if matmul_b_node.op == 'Enter':
+                parent_node = graph_info[Helper.node_name_from_input(matmul_b_node.input[0])].node
+                if parent_node.op != 'Const':
+                    continue
+                else:
+                    matmul_b_node = parent_node
+                    matmul_b_node_name = matmul_b_node.name
 
             if graph_info[i[0]].node.op == 'MatMul':
                 t_b_index = 0 if graph_info[i[0]].node.attr['transpose_b'].b else 1
@@ -74,9 +79,26 @@ class InjectDummyBiasAddOptimizer(GraphRewriterBase):
 
             bias_const_node = Helper.create_constant_node(
                 bias_const_node_name, bias_add_content, dtypes.float32, shape=[bias_add_length])
-            bias_node = Helper.create_node('BiasAdd', bias_node_name, [i[0], bias_const_node_name])
+
+            if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]:         # pragma: no cover
+                bias_const_enter_node = Helper.create_node(
+                    'Enter', bias_const_node_name+'_enter', [bias_const_node_name])
+                Helper.set_attr_string(bias_const_enter_node,
+                                       'frame_name', g.parent_frame_details[i[0]].attr['frame_name'].s)
+                Helper.set_attr_dtype(bias_const_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(bias_const_enter_node, 'is_constant', True)
+                Helper.set_attr_int(bias_const_enter_node, 'parallel_iterations', \
+                                    g.parent_frame_details[i[0]].attr['parallel_iterations'].i)
+
+            bias_node = Helper.create_node('BiasAdd', bias_node_name, \
+                        [i[0], bias_const_enter_node.name if i[0] in g.parent_frame_details \
+                        and g.parent_frame_details[i[0]] else bias_const_node_name])
             Helper.set_attr_dtype(bias_node, "T", dtypes.float32)
             g.add_node(bias_node, i[0], next_node_names)
-            g.add_node(bias_const_node, None, [bias_node_name])
+            if i[0] in g.parent_frame_details and g.parent_frame_details[i[0]]:
+                g.add_node(bias_const_node, None, [bias_const_enter_node.name])
+                g.add_node(bias_const_enter_node, bias_const_node_name, [bias_node_name])
+            else:
+                g.add_node(bias_const_node, None, [bias_node_name])
 
         return g.dump_graph()

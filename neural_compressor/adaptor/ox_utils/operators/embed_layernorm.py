@@ -17,35 +17,30 @@
 #
 
 import onnx
-from .base_operator import QuantOperatorBase
-from .qdq_base_operator import QDQOperatorBase
-from onnx import onnx_pb as onnx_proto
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, \
-                                                 attribute_to_kwarg, ms_domain
-'''
-Quantize EmbedLayerNormalization
-'''
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
-
-class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
+@op_registry(op_types="EmbedLayerNormalization")
+class EmbedLayerNormalizationOperator(Operator):
     def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
+        super(EmbedLayerNormalizationOperator, self).__init__(onnx_quantizer, onnx_node)
 
-    def convert(self):
+    def quantize(self):
         node = self.node
-        assert (node.op_type == "EmbedLayerNormalization")
+        self.quantizer.quantize_inputs(node, [2, 3, 4, 5, 6])
+        node.name = node.name + "_quant"
 
-        '''
-        Pre-quantization EmbedLayerNorm inputs:
-        [0] input_ids (int32)
-        [1] segment_ids (int32)
-        [2] word_embedding (float32)
-        [3] position_embedding (float32)
-        [4] segment_embedding (float32)
-        [5] gamma (float32)
-        [6] beta (float32)
-        [7] mask (int32) (optional)
-        '''
+    def convert_check(self, convert_format):
+        node = self.node
+        assert convert_format in ['dynamic', 'static'], \
+            "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
+            
+        if not node.name.endswith('_quant'):
+            return False
+        return True
+
+    def convert(self, convert_format):
+        node = self.node
 
         parents = [i for i in self.quantizer.model.get_parents(node) \
             if i.op_type == 'DequantizeLinear']
@@ -57,36 +52,16 @@ class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
         for parent in parents:
             inputs.append(parent.input[0])
         # 'mask' (optional)
-        inputs.extend([node.input[7] if len(node.input) > 7 else ""])
+        if len(node.input) > 7:
+            inputs.append(node.input[7])
 
         for parent in parents:
             inputs.append(parent.input[1])
         for parent in parents:
             inputs.append(parent.input[2])
  
-        '''
-        Quantized Input Tensor List
-        [0] input_ids (int32)
-        [1] segment_ids (int32)
-        [2] word_embedding (uint8)
-        [3] position_embedding (uint8)
-        [4] segment_embedding (uint8)
-        [5] gamma (uint8)
-        [6] beta (uint8)
-        [7] mask (int32) (optional)
-        [8] word_embedding_scale (float)
-        [9] position_embedding_scale (float)
-        [10] segment_embedding_scale (float)
-        [11] gamma_scale (float)
-        [12] beta_scale (float)
-        [13] word_embedding_zero_point (uint8)
-        [14] position_embedding_zero_point (uint8)
-        [15] segment_embedding_zero_point (uint8)
-        [16] gamma_zero_point (uint8)
-        [17] beta_zero_point (uint8)
-        '''
         kwargs = {}
-        for attribute in node.attribute:
+        for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
         kwargs["domain"] = ms_domain
 
@@ -95,13 +70,3 @@ class EmbedLayerNormalizationQuant(QuantOperatorBase): # pragma: no cover
                                                        node.name, **kwargs)
         self.quantizer.new_nodes.append(qembed_layer_norm_node)
         self.quantizer.remove_nodes.extend(parents)
-
-class QDQEmbedLayerNormalization(QDQOperatorBase): # pragma: no cover
-    def __init__(self, onnx_quantizer, onnx_node):
-        super().__init__(onnx_quantizer, onnx_node)
-
-    def quantize(self):
-        node = self.node
-        assert (node.op_type == "EmbedLayerNormalization")
-        self.quantizer.quantize_inputs(node, [2, 3, 4, 5, 6])
-        node.name = node.name + "_quant"

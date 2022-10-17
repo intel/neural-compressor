@@ -50,6 +50,18 @@ function run_tuning {
             --output_dir $tuned_checkpoint \
             ${extra_cmd}
     fi
+    if [[ "${topology}" == "distilbert_base_ipex" ]]; then
+        model_name_or_path="distilbert-base-uncased-distilled-squad"
+        python run_qa.py \
+           --model_name_or_path $model_name_or_path \
+           --dataset_name squad \
+           --do_eval \
+           --max_seq_length 384 \
+           --no_cuda \
+           --tune \
+           --output_dir $tuned_checkpoint \
+           ${extra_cmd}
+    fi
     if [[ "${topology}" == "bert_large_1_10_ipex" ]]; then
         pip install transformers==3.0.2
         python run_qa_1_10.py \

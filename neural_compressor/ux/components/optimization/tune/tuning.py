@@ -131,7 +131,7 @@ class TuningDetails(JsonSerializer):
     exit_policy: dict
     random_seed: int
 
-    def __init__(self, data: Optional[dict]):
+    def __init__(self, data: Optional[dict] = None):
         """Initialize tuning details with data."""
         super().__init__()
         """Initialize tuning detials interface with data."""

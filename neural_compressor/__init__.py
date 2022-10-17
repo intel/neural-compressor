@@ -26,5 +26,6 @@ from .model.model import export
 from .utils.utility import set_backend
 from .utils import options
 from .conf.config import conf
+from .conf.pythonic_config import config
 
 set_backend('NA')

@@ -131,6 +131,10 @@ class MixedPrecision(GraphOptimization):
             self._model.input_tensor_names = cfg.model.inputs if \
                 not self._input else self._input
             self._model.workspace_path = cfg.tuning.workspace.path
+            if 'bf16' in self._precisions or \
+               (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
+               (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
+                os.environ['MIX_PRECISION_TEST'] = '1'
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
