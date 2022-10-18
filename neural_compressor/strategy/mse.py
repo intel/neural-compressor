@@ -176,7 +176,7 @@ class MSETuneStrategy(TuneStrategy):
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for calib_sampling_size in calib_sampling_size_lst:
-            # step1. collect the ops that support static and dynamic
+            # Collect the ops that support static and dynamic
             quant_mode_wise_items = OrderedDict()
             query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
             pre_items = set()
@@ -194,11 +194,11 @@ class MSETuneStrategy(TuneStrategy):
             for quant_mode, quant_mode_items in quant_mode_wise_items.items():
                 initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
 
-            # step3. optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-            early_stop_tuning = False
+            # Optype-wise tuning 
+            early_stop_tuning = True
             stage1_cnt = 0
             int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
-            stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
+            stage1_max = 2  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for op_tuning_cfg in op_wise_tuning_sampler:
@@ -209,8 +209,7 @@ class MSETuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
 
-            # step4. fallback the ops supported both static and dynamic from static to dynamic
-            # tuning items: None
+            # Fallback the ops supported both static and dynamic from static to dynamic
             static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                     item in tuning_space.query_items_by_quant_mode('dynamic')]
             if static_dynamic_items:
@@ -247,7 +246,7 @@ class MSETuneStrategy(TuneStrategy):
                 while not self.objectives.compare(self.last_tune_result, self.baseline):
                     ops_lst = self.adaptor.calcutate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
-                                                                    tune_cfg, 
+                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=True)
                     select_op_info = ops_lst[0]
                     logger.info(f"The op {select_op_info} have the highest sensitivity in the current state, \
@@ -261,7 +260,7 @@ class MSETuneStrategy(TuneStrategy):
                 while self.objectives.compare(self.last_tune_result, self.baseline):
                     ops_lst = self.adaptor.calcutate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
-                                                                    tune_cfg, 
+                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=False)
                     select_op_info = ops_lst[0]
                     logger.info(f"The op {select_op_info} have the lowesr sensitivity in the current state, \

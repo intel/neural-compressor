@@ -350,6 +350,7 @@ class TuneStrategy(object):
         else:
             tune_cfg['calib_iteration'] = 1
         tune_cfg['advance'] = self.cfg.quantization.advance
+        tune_cfg['approach'] = self.cfg.quantization.approach
         return tune_cfg
 
     def set_tuning_space(self, conf):
@@ -881,6 +882,13 @@ class TuneStrategy(object):
 
     def _fake_eval_func(self, model):
         return 1.
+
+    def _collect_ops_by_quant_mode(self, tune_cfg, quant_mode):
+        ops_lst = []
+        for op_info, op_config in tune_cfg.items():
+            if isinstance(op_config, OpTuningConfig) and quant_mode in op_config.op_quant_mode:
+                ops_lst.append(op_info)
+        return ops_lst
 
     def _diagnosis(self):
         import logging
