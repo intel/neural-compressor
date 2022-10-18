@@ -3148,8 +3148,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
+        module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
+            if self.is_fused_module(child):
+                for name, _ in child.named_children():
+                    module_prefix = op_name + '.' + name
+                    if module_prefix in module_dict:
+                        module_dict.pop(module_prefix)  # remove sub-modules of fused modules
+        for op_name, child in module_dict.items():
             if type(child) in self.white_list \
                and type(child) != torch.nn.Sequential \
                and type(child) != torch.quantization.stubs.DeQuantStub:
@@ -3461,6 +3467,23 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         except:  # pragma: no cover
             logger.info('Module has no forward function')
         return False
+
+    def calcutate_op_sensitivity(self, model, dataloader, tune_cfg, fallback=True):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): fp32 model
+            dataloader (string): dataloader contains real data.
+            tune_cfg (dict): dictionary of tune configure for each op.
+            fallback (bool): switch method in fallback stage and re-quantize stage
+
+        Returns:
+            ops_lst (list): sorted op list by sensitivity
+        """
+        from .torch_utils.util import get_fallback_order
+        ordered_ops = get_fallback_order(self, model, dataloader, tune_cfg, fallback)
+        return ordered_ops
 
 
 class PyTorchQuery(QueryBackendCapability):

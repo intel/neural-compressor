@@ -1,0 +1,64 @@
+import os
+import copy
+import shutil
+import unittest
+import torchvision
+from neural_compressor.experimental import Quantization, common
+
+
+def build_mse_yaml():
+    mse_yaml = '''
+    model:
+        name: resnet18
+        framework: pytorch_fx
+
+    tuning:
+        strategy:
+            name: mse
+        accuracy_criterion:
+            relative:  0.01
+        exit_policy:
+            timeout: 0
+    '''
+    with open('mse_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(mse_yaml)
+
+
+i=0
+def eval_func(model):
+    global i
+    i += 1
+    if i == 1:
+        return 1
+    elif i <= 4:
+        return 0
+    elif 6 >= i > 4:
+        return 1
+    elif i > 6:
+        return 0
+
+
+class TestMSEStrategy(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        build_mse_yaml()
+        self.model = torchvision.models.resnet18()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('mse_yaml.yaml')
+        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree('runs', ignore_errors=True)
+
+    def test_quantization_saved(self):
+        model = copy.deepcopy(self.model)
+        quantizer = Quantization('mse_yaml.yaml')
+        dataset = quantizer.dataset('dummy', (1, 3, 224, 224))
+        quantizer.model = model
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_func = eval_func
+        q_model = quantizer.fit()
+        q_model.save('./saved')
+
+if __name__ == "__main__":
+    unittest.main()

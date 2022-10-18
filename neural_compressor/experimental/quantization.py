@@ -107,11 +107,7 @@ class Quantization(Component):
                 assert calib_dataloader_cfg is not None, \
                        'dataloader field of calibration field of quantization section ' \
                        'in yaml file should be configured as calib_dataloader property is NOT set!'
-                
-                if deep_get(calib_dataloader_cfg, 'shuffle'):
-                    logger.warning("Reset `shuffle` field to False when post_training_static_quant"
-                                   " is selected.")
-                    deep_set(calib_dataloader_cfg, 'shuffle', False)
+
             elif approach_cfg == 'quant_aware_training':
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.train.dataloader')
                 assert calib_dataloader_cfg is not None, \
