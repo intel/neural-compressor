@@ -16,6 +16,11 @@ from neural_compressor.utils.utility import recover
 from neural_compressor.utils.utility import LazyImport
 from torch.quantization import QuantStub, DeQuantStub
 from packaging.version import Version
+try:
+    import intel_extension_for_pytorch as ipex
+    IPEX = True
+except:
+    IPEX = False
 
 # improve lazy import UT coverage
 resnet18 = LazyImport("torchvision.models.resnet18")
@@ -608,7 +613,7 @@ class TestPytorchAdaptor(unittest.TestCase):
                              type(common_model._model.linear))
             shutil.rmtree('./saved', ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < Version("1.12.0-rc1"), "this function will be affected by IPEX")
+    @unittest.skipIf(IPEX, "this function is affected by IPEX, Fixing now.")
     def test_non_quant_module(self):
         for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
             model = PartialQuantModel()
