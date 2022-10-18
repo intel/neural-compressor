@@ -30,11 +30,11 @@ def eval_func(model):
     i += 1
     if i == 1:
         return 1
-    elif i <= 4:
+    elif i <= 7:
         return 0
-    elif 6 >= i > 4:
+    elif 10 >= i > 7:
         return 1
-    elif i > 6:
+    elif i > 10:
         return 0
 
 

@@ -3473,7 +3473,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
            and it will get all quantizable ops from model.
 
         Args:
-            model (object): fp32 model
+            model (object): INC model containing fp32 model
             dataloader (string): dataloader contains real data.
             tune_cfg (dict): dictionary of tune configure for each op.
             fallback (bool): switch method in fallback stage and re-quantize stage
@@ -3482,7 +3482,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             ops_lst (list): sorted op list by sensitivity
         """
         from .torch_utils.util import get_fallback_order
-        ordered_ops = get_fallback_order(self, model, dataloader, tune_cfg, fallback)
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, fallback)
         return ordered_ops
 
 
