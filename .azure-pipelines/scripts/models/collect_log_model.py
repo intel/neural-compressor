@@ -16,7 +16,7 @@ print('===== collecting log model =======')
 print('build_id: '+args.build_id)
 OS='linux'
 PLATFORM='icx'
-URL ='https://dev.azure.com/lpot-inc/test-lpot-public/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
+URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
 
 print(args)
 

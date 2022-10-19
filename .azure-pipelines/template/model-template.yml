@@ -5,7 +5,7 @@ parameters:
 - name: framework
   type: string
   default: 'tensorflow'
-  
+
 - name: modelContainerName
   type: string
   default: 'model'
@@ -17,7 +17,7 @@ steps:
       repoName: 'neural-compressor'
       repoTag: 'py38'
       dockerFileName: 'Dockerfile'
-      containerName: ${{ parameters.modelContainerName }}    
+      containerName: ${{ parameters.modelContainerName }}
 
   - script: |
       docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \

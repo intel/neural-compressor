@@ -298,13 +298,12 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               source: 'specific'
-              artifact: 'FinalReport'
               patterns: '**.log'
               path: $(OUT_SCRIPT_PATH)/last_generated
-              project: 'test-lpot-public'
-              pipeline: 45
+              project: $(System.TeamProject)
+              pipeline: $(System.DefinitionId)
               runVersion: 'specific'
-              runId: $(model_runID)
+              runId: $(Build.BuildId)
               retryDownloadCount: 3
             displayName: 'Download last logs'
           - script: |
@@ -324,7 +323,3 @@ stages:
                 exit 1
               fi
             displayName: "Specify performance regression"
-
-
-
-
