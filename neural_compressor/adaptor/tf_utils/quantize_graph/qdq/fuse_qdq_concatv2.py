@@ -151,6 +151,21 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
 
                 if cur_node.name != self.start_node_name:
                     continue
+                
+                if not do_transform:
+                    _, normal_inputs = self._get_node_input(cur_node.name)
+                    original_inputs = normal_inputs[:cur_node.attr['N'].i]
+                    unsupported_input_type = False
+                    for each_input in original_inputs:
+                        output_attr = 'out_type'
+                        if str(self.node_name_mapping[each_input].node.attr[output_attr]) == '':
+                            output_attr = 'T'
+                        input_dtype = dtypes.DType(self.node_name_mapping[each_input].node.attr[output_attr].type)
+                        if input_dtype != dtypes.bfloat16 and input_dtype != dtypes.float32:
+                            unsupported_input_type = True
+                            break
+                    if unsupported_input_type:
+                        continue
 
                 for sub_rule in self.sorted_patterns:
                     if sub_rule[0] != "Dequantize" or sub_rule[-1] != "QuantizeV2":
@@ -185,6 +200,8 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                                 if self._get_node_from_name(q_input).op == 'QuantizeV2':
                                     pre_input = self._get_firt_input_from_name(q_input)
                                     new_inputs.append(pre_input)
+                            else:
+                                new_inputs.append(each_input)
                         new_inputs.append(cur_node.input[-1])
                         for i in range(0, cur_node.attr['N'].i+1):
                             cur_node.input.pop()
