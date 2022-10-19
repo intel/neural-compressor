@@ -823,7 +823,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api, self.device)
 
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
@@ -1419,7 +1419,7 @@ class TensorFlowAdaptor(Adaptor):
                 tf.compat.v1.GraphDef: the quantized model
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api, self.device)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
