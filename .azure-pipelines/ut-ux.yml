@@ -27,8 +27,8 @@ stages:
           dockerFileName: 'Dockerfile'
           containerName: $(UX_CONTAINER_NAME)
 
-    - script: |
-        docker exec ${{ parameters.UXContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc_full.sh \
-        && bash ut/run_ux.sh"
-      displayName: 'Install Neural Compressor and run UT'
+      - script: |
+          docker exec ${{ parameters.UXContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+          && bash install_nc_full.sh \
+          && bash ut/run_ux.sh"
+        displayName: 'Install Neural Compressor and run UT'
