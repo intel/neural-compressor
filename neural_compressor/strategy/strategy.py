@@ -168,6 +168,7 @@ class TuneStrategy(object):
         self.best_qmodel = None
         self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
         self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
+        self.re_quant = False
 
         self.capability = self.adaptor.query_fw_capability(model)
         logger.debug(self.capability)
@@ -251,6 +252,9 @@ class TuneStrategy(object):
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
             if need_stop:
+                if self.re_quant:
+                    logger.info("Start to re-quant ops.")
+                    continue
                 if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
