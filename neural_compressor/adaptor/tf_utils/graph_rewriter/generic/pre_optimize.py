@@ -17,6 +17,7 @@
 
 
 import logging
+import tensorflow as tf
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 from .fuse_column_wise_mul import FuseColumnWiseMulOptimizer
@@ -45,9 +46,10 @@ from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
 from .fuse_decomposed_in import FuseDecomposedINOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 
 class PreOptimization():
-    def __init__(self, model, optimization, new_api):
+    def __init__(self, model, optimization, new_api, device):
         self.model = model
         self.optimization = optimization
         # Table initialization should disable grappler dependency and pruning pass
@@ -56,6 +58,7 @@ class PreOptimization():
             self.optimization['dependency'] = False
             self.optimization['pruning'] = False
         self.new_api = new_api
+        self.device = device
         self.analyzer = GraphAnalyzer()
         self.analyzer.graph = model.graph_def
         self.analyzer.parse_graph()
@@ -100,8 +103,43 @@ class PreOptimization():
         input_node_names = self.model.input_node_names
         input_output_names = output_node_names + input_node_names
 
-        self._tmp_graph_def = ConvertLayoutOptimizer(
-            self.model.graph_def, output_node_names).do_transformation()
+        # Add device info before convert layout
+        # Google in layout optimizer where all nodes in the graph are expected to have their device 
+        # information set (earlier version < 2.10.0 this was not needed).
+        if version1_gte_version2(tf.version.VERSION, '2.10.0'):
+            cur_graph = GraphAnalyzer()
+            cur_graph.graph = self.model.graph_def
+            graph_info = cur_graph.parse_graph()
+            if self.device == 'cpu':
+                cpus = tf.config.list_physical_devices("CPU")
+                node_device = cpus[0].name.replace('physical_device:', '')
+            else:
+                gpus = tf.config.list_physical_devices("GPU")
+                if len(gpus) == 0:
+                    cpus = tf.config.list_physical_devices("CPU")
+                    node_device = cpus[0].name.replace('physical_device:', '')
+                else:
+                    node_device = gpus[0].name.replace('physical_device:', '')
+            for node_name in list(graph_info.keys()):
+                node = graph_info[node_name].node
+                node.device = node_device
+            self._tmp_graph_def = cur_graph.dump_graph()
+
+            self._tmp_graph_def = ConvertLayoutOptimizer(
+                self._tmp_graph_def, output_node_names).do_transformation()
+        else:
+            self._tmp_graph_def = ConvertLayoutOptimizer(
+                self.model.graph_def, output_node_names).do_transformation()
+
+        # Remove device info after convert layout
+        if version1_gte_version2(tf.version.VERSION, '2.10.0'):
+            cur_graph = GraphAnalyzer()
+            cur_graph.graph = self._tmp_graph_def
+            graph_info = cur_graph.parse_graph()
+            for node_name in list(graph_info.keys()):
+                node = graph_info[node_name].node
+                node.device = ''
+            self._tmp_graph_def = cur_graph.dump_graph()
 
         self._tmp_graph_def = GrapplerOptimizer(
             self._tmp_graph_def, input_output_names, self.optimization).do_transformation()

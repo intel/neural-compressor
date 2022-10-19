@@ -49,12 +49,11 @@ class ConvertLayoutOptimizer(GraphRewriterBase):
                 convert = True
                 break
         if convert and version1_gt_version2(tf.version.VERSION, '2.3.0'):
-
             g = tf.Graph()
             with g.as_default(): # pylint: disable=not-context-manager
                 g = tf.compat.v1.import_graph_def(self.model, name='')
                 meta_graph = saver_lib.export_meta_graph(
-                    graph_def=self.model, graph=g, clear_devices=True)
+                    graph_def=self.model, graph=g, clear_devices=False)
                 fetch_collection = meta_graph_pb2.CollectionDef()
                 for fetch in self.outputs:
                     fetch_collection.node_list.value.append(fetch) # pylint: disable=no-member
