@@ -158,13 +158,15 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
+        sess = model.sess
+        iter_op = model.iter_op
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
         # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
-        node_names = [node.name for node in model.sess.graph.as_graph_def().node]
+        node_names = [node.name for node in sess.graph.as_graph_def().node]
         if 'init_all_tables' in node_names:
-            init_table_op = model.sess.graph.get_operation_by_name('init_all_tables')
-            model.sess.run(init_table_op)
+            init_table_op = sess.graph.get_operation_by_name('init_all_tables')
+            sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
         for idx, (inputs, labels) in enumerate(self.data_loader):
@@ -224,8 +226,8 @@ class GraphConverter:
                            if check_shape(dis_tensor, dis_input):
                                feed_dict.update({dis_tensor: dis_input})    
                                break
-            _ = model.sess.run(output_tensor, feed_dict) if model.iter_op==[] \
-                else iterator_sess_run(model.sess, model.iter_op, \
+            _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
+                else iterator_sess_run(sess, iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
             if idx + 1 == self.calib_iteration:
                 break
