@@ -45,9 +45,9 @@ from transformers.utils.versions import require_version
 from typing import Optional
 from utils_qa import postprocess_qa_predictions
 try:
+    import intel_extension_for_pytorch as ipex
     from intel_extension_for_pytorch.quantization import prepare, convert
     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-    IPEX_112 = True
 except:
     assert False, "transformers 4.19.0 requests IPEX version higher or equal to 1.12"
 
@@ -630,6 +630,7 @@ def main():
         return take_eval_steps(model, trainer, metric_name)
 
     if model_args.tune:
+        ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('conf.yaml')
         quantizer.eval_func = eval_func
@@ -640,32 +641,13 @@ def main():
         return
 
     if model_args.benchmark or model_args.accuracy_only:
+        ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
+        model.eval()
         if model_args.int8:
-            if IPEX_112:
-                from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                import intel_extension_for_pytorch as ipex
-                import torch
-                static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                    qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                   qscheme=torch.per_channel_symmetric))
-                sample = next(iter(trainer.get_eval_dataloader()))
-                example_inputs = []
-                for key, value in sample.items():
-                    example_inputs.append(value)
-                ipex.quantization.prepare(model, static_qconfig, \
-                                        example_inputs=example_inputs, inplace=True)
-                configure_dir = os.path.join(os.getcwd(), training_args.output_dir, "best_configure.json")
-                model.load_qconf_summary(qconf_summary = configure_dir)
-                model = ipex.quantization.convert(model)
-                with torch.no_grad():
-                    model = torch.jit.trace(model, example_inputs, strict=False)
-                    model = torch.jit.freeze(model)
-                output = model(**sample)
-                output = model(**sample)
-                trainer.model = model
-            else:
-                assert "this script request IPEX version higher or equal to 1.12, please see README.md for details"
+            from neural_compressor.utils.pytorch import load
+            q_model = load(training_args.output_dir, model)
+            trainer.model = q_model
+
         start_time = timeit.default_timer()
         results = trainer.evaluate()
         evalTime = timeit.default_timer() - start_time

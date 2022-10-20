@@ -30,6 +30,12 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+try:  # pragma: no cover
+    import intel_extension_for_pytorch as ipex
+    IPEX = True
+except:
+    IPEX = False
+
 
 torch = LazyImport("torch")
 json = LazyImport("json")
@@ -47,21 +53,6 @@ def get_torch_version():
         assert False, 'Got an unknown version of torch: {}'.format(e)
     version = Version(torch_version)
     return version
-
-
-try:  # pragma: no cover
-    try:
-        import intel_pytorch_extension as ipex
-        IPEX_110 = False
-        IPEX_112 = False
-    except:
-        import intel_extension_for_pytorch as ipex
-        import torch.fx.experimental.optimization as optimization
-        IPEX_112 = True
-        IPEX_110 = True
-except:
-    IPEX_110 = None
-    IPEX_112 = None
 
 
 def get_example_inputs(dataloader):  # pragma: no cover
@@ -108,26 +99,21 @@ def get_torch_white_list(approach):
 
 
 def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode='inference'):
+    version = get_torch_version()
     if isinstance(input, dict) or isinstance(input, UserDict):
         if device == 'cpu':
             output = model(**input)
         elif device == 'ipex':  # pragma: no cover
             # have to split the case to avoid exposing ipex.DEVICE outside
             # which require intel extension installed
-            if IPEX_110:
+            if version < Version("1.12.0-rc1"):
                 if running_mode == "calibration":
-                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                    with ipex.quantization.calibrate(conf, default_recipe=True):   # pylint: disable=E1101
                         output = model(**input)
                 else:
                     output = model(**input)
-            elif IPEX_112:
-                output = model(**input)
             else:
-                for inp in input.keys():
-                    input[inp] = input[inp].to(ipex.DEVICE) \
-                        if isinstance(input[inp], torch.Tensor) else input[inp]
-                with ipex.AutoMixPrecision(conf, running_mode=running_mode):
-                    output = model(**input)
+                output = model(**input)
         else:  # pragma: no cover
             for inp in input.keys():
                 input[inp] = input[inp].to("dpcpp" if device=="gpu" else device) \
@@ -137,20 +123,14 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
         if device == 'cpu':
             output = model(*input)
         elif device == 'ipex':  # pragma: no cover
-            if IPEX_110:
+            if version < Version("1.12.0-rc1"):
                 if running_mode == "calibration":
-                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                    with ipex.quantization.calibrate(conf, default_recipe=True):   # pylint: disable=E1101
                         output = model(*input)
                 else:
                     output = model(*input)
-            elif IPEX_112:
-                output = model(*input)
             else:
-                input = [inp.to(ipex.DEVICE) \
-                         if isinstance(inp, torch.Tensor) else inp
-                         for inp in input]
-                with ipex.AutoMixPrecision(conf, running_mode=running_mode):
-                    output = model(*input)
+                output = model(*input)
         else:  # pragma: no cover
             tmp_device = "dpcpp" if device == "gpu" else device
             input = [inp.to(tmp_device) \
@@ -161,18 +141,14 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
         if device == 'cpu' or not isinstance(input, torch.Tensor):
             output = model(input)
         elif device == 'ipex':  # pragma: no cover
-            if IPEX_110:
+            if version < Version("1.12.0-rc1"):
                 if running_mode == "calibration":
-                    with ipex.quantization.calibrate(conf, default_recipe=True):
+                    with ipex.quantization.calibrate(conf, default_recipe=True):    # pylint: disable=E1101
                         output = model(input)
                 else:
                     output = model(input)
-            elif IPEX_112:
-                output = model(input)
             else:
-                input = input.to(ipex.DEVICE)
-                with ipex.AutoMixPrecision(conf, running_mode=running_mode):
-                    output = model(input)
+                output = model(input)
         else:  # pragma: no cover
             input = input.to("dpcpp" if device == "gpu" else device)  # pylint: disable=no-member
             output = model(input)
@@ -831,7 +807,6 @@ class TemplateAdaptor(Adaptor):
                           conf=None,
                           calib_sampling_size=1):
         assert iterations > 0
-
         with torch.no_grad():
             if isinstance(dataloader, BaseDataLoader):
                 batch_size = dataloader.batch_size
@@ -2137,12 +2112,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
 
-        global IPEX_110, IPEX_112
-        assert IPEX_110 is not None and IPEX_112 is not None, 'Please install intel_extension_for_pytorch.'
+        assert IPEX, "Please install intel-extension-for-pytorch."
         self.version = get_torch_version()
-        IPEX_110 = True if Version("1.10.0-rc1") <= self.version and \
-                            self.version <= Version("1.11.0") else False
-        IPEX_112 = True if self.version >= Version("1.12.0-rc1") else False
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(
             local_config_file=os.path.join(os.path.dirname(__file__), query_config_file))
@@ -2181,48 +2152,26 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                 repr(e)))
             model_ = model
-
-        if not IPEX_110 and not IPEX_112:
-            try:
-                q_model = torch.jit.script(model_.model.eval().to(ipex.DEVICE))
-            except:
-                try:
-                    for input, _ in dataloader:
-                        q_model = torch.jit.trace(model_.model.eval().to(ipex.DEVICE),
-                                                  input.to(ipex.DEVICE)).to(ipex.DEVICE)
-                        break
-                except:
-                    logger.info("Fail to convert this model to PyTorch Script model.")
-                    q_model = model_.model.eval().to(ipex.DEVICE)
-
-        if IPEX_110 or IPEX_112:
-            q_model = model_._model.eval()
+        assert not self.version < Version("1.10.0-rc1"), "INC support IPEX version >= 1.10.0"
+        q_model = model_._model.eval()
         qscheme = self._cfg_to_qconfig(tune_cfg)
+        import torch.fx.experimental.optimization as optimization
+        try:
+            q_model = optimization.fuse(q_model)
+        except:
+            q_model = q_model
         if self.approach == 'post_training_static_quant':
             iterations = tune_cfg.get('calib_iteration', 1)
-            if not IPEX_110 and not IPEX_112:
-                ipex_conf = ipex.AmpConf(torch.int8, configure_file=self.ipex_config_path)
-                self.model_calibration(q_model, dataloader, iterations, ipex_conf,
-                                       tune_cfg.get('calib_sampling_size', 1))
-                ipex_conf.save(self.ipex_config_path)
-            if IPEX_110:
-                ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,
+            if self.version < Version("1.12.0-rc1"):
+                ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,  # pylint: disable=E1101
                                                         qscheme=qscheme)
-                try:
-                    q_model = optimization.fuse(q_model)
-                except:
-                    q_model = q_model
-                try:
-                    q_model.model = optimization.fuse(q_model.model)
-                except:
-                    q_model = q_model
                 self.model_calibration(q_model, dataloader, iterations, ipex_conf,
                                        tune_cfg.get('calib_sampling_size', 1))
                 ipex_conf.save(self.ipex_config_path)
                 example_inputs = get_example_inputs(dataloader)
-                ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)
-                q_model = ipex.quantization.convert(q_model, ipex_conf, example_inputs)
-            if IPEX_112:
+                ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)   # pylint: disable=E1101
+                q_model = ipex.quantization.convert(q_model, ipex_conf, example_inputs)   # pylint: disable=E1121
+            else:
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 static_qconfig = QConfig(activation=MinMaxObserver.with_args(
                     qscheme=torch.per_tensor_affine, dtype=torch.quint8),
@@ -2237,13 +2186,22 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                        tune_cfg.get('calib_sampling_size', 1))
                 q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
                 q_model = ipex.quantization.convert(q_model)
-                with torch.no_grad():
-                    try:
-                        q_model = torch.jit.trace(q_model, example_inputs)
-                        q_model = torch.jit.freeze(q_model)
-                    except:
-                        q_model = torch.jit.trace(q_model, example_inputs, strict=False)
-                        q_model = torch.jit.freeze(q_model)
+            try:
+                q_model = torch.jit.trace(q_model, example_inputs)
+                q_model = torch.jit.freeze(q_model.eval())
+            except:
+                q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                q_model = torch.jit.freeze(q_model.eval())
+            # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
+            # At the 2nd run, the llga pass will be triggered and the model is turned into
+            # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
+            if isinstance(example_inputs, torch.Tensor):
+                q_model(example_inputs)
+                q_model(example_inputs)
+            else:
+                q_model(*example_inputs)
+                q_model(*example_inputs)
+            
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
         model_._model = q_model
@@ -2288,25 +2246,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             }
         """
         assert self.cfgs is not None, "No configure for IPEX int8 model..."
-        if not IPEX_110 and not IPEX_112:
-            for key in tune_cfg['op']:
-                value = tune_cfg['op'][key]
-                assert isinstance(value, dict)
-                assert 'activation' in value
-                if value['activation']['dtype'] == 'fp32':
-                    if 'weight' in value:
-                        assert value['weight']['dtype'] == 'fp32'
-                    for op_cfg in self.cfgs:
-                        if op_cfg["id"] == key[0]:
-                            op_cfg["quantized"] = False
-                else:
-                    for op_cfg in self.cfgs:
-                        if op_cfg["id"] == key[0]:
-                            op_cfg["quantized"] = True
-            with open(self.ipex_config_path, 'w') as write_f:
-                json.dump(self.cfgs, write_f)
-            return None
-        if IPEX_110:
+        if self.version < Version("1.12.0-rc1"):
             for key in tune_cfg['op']:
                 try:
                     scheme = tune_cfg['op'][key]['activation']['scheme']
@@ -2358,7 +2298,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 return torch.per_tensor_affine
             else:
                 return torch.per_tensor_symmetric
-        if IPEX_112:
+        else:
             self.cfgs = torch_utils.util.check_cfg_and_qconfig(tune_cfg['op'],
                                               self.cfgs,
                                               self.op_infos_from_cfgs,
@@ -2408,22 +2348,16 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         model_ = model._model
         model_.eval()
-        if self.is_baseline and not IPEX_110 and not IPEX_112:
-            model_.eval()
-            model_.to(ipex.DEVICE)
 
         if metrics:
             self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
                 not metric.compare_label for metric in metrics])
 
         ipex_config = (self.ipex_config_path if not self.benchmark else None)
-        if not IPEX_110 and not IPEX_112:
-            conf = (ipex.AmpConf(torch.int8, configure_file=ipex_config)
-                    if not self.is_baseline else ipex.AmpConf(None))
-        if IPEX_110:
-            conf = (ipex.quantization.QuantConf(configure_file=ipex_config)
-                    if not self.is_baseline else ipex.quantization.QuantConf(None))
-        if IPEX_112:
+        if self.version < Version("1.12.0-rc1"):
+            conf = (ipex.quantization.QuantConf(configure_file=ipex_config)   # pylint: disable=E1101
+                    if not self.is_baseline else None)
+        else:
             conf = None
 
         return self.model_eval(model_, dataloader, postprocess, metrics, measurer, iteration, conf)
@@ -2466,49 +2400,26 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 repr(e)))
             model_ = model
 
-        if not IPEX_110 and not IPEX_112:
-            model_.eval().to(ipex.DEVICE)
-            try:
-                init_model = torch.jit.script(model_)
-            except:
-                try:
-                    for input, _ in self.q_dataloader:
-                        init_model = torch.jit.trace(model_, input.to(ipex.DEVICE))
-                        break
-                except:
-                    logger.info("Fail to convert this model to PyTorch Script model")
-                    init_model = model_
-        if IPEX_110 or IPEX_112:
-            model_.eval()
-            init_model = model_
-
+        model_.eval()
+        init_model = model_
+        # to fuse
+        import torch.fx.experimental.optimization as optimization
+        try:
+            init_model = optimization.fuse(init_model)
+        except:
+            init_model = init_model
         # create a quantization config file for intel pytorch extension model
+        batch_size = self.q_dataloader.batch_size
         os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
-        if not IPEX_110 and not IPEX_112:
-            ipex_conf = ipex.AmpConf(torch.int8)
+        if self.version < Version("1.12.0-rc1"):
+            ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)   # pylint: disable=E1101
             self.model_calibration(
                 init_model,
                 self.q_dataloader,
                 conf=ipex_conf,
             )
             ipex_conf.save(self.ipex_config_path)
-        if IPEX_110:
-            ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)
-            try:
-                init_model = optimization.fuse(init_model)
-            except:
-                init_model = init_model
-            try:
-                init_model.model = optimization.fuse(init_model.model)
-            except:
-                init_model = init_model
-            self.model_calibration(
-                init_model,
-                self.q_dataloader,
-                conf=ipex_conf,
-            )
-            ipex_conf.save(self.ipex_config_path)
-        if IPEX_112:
+        else:
             if self.approach == 'post_training_static_quant':
                 from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                 static_qconfig = QConfig(activation=MinMaxObserver.with_args(
@@ -2520,19 +2431,20 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                         example_inputs=example_inputs, inplace=True)
             self.model_calibration(init_model, self.q_dataloader)
             init_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+        if isinstance(self.q_dataloader, BaseDataLoader):
+            self.q_dataloader.batch(batch_size)
+            logger.info('Recovery `calibration.dataloader.batchsize` {} according to config.yaml'.format(batch_size))
         del init_model
-
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
-            if IPEX_110:
+            if self.version < Version("1.12.0-rc1"):
                 self.default_cfgs = copy.deepcopy(self.cfgs)
                 self.fuse_ops = self.get_fuse_ops(self.cfgs)
-            if not IPEX_112 or IPEX_110:
                 for op_cfg in self.cfgs:
                     quantizable_ops.append(
                         (op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]
                          if op_cfg["name"] in unify_op_type_mapping_ipex else op_cfg["name"]))
-            if IPEX_112:
+            else:
                 ops_name, op_infos_from_cfgs, input_tensor_id_op_name, \
                                 output_tensor_id_op_name = torch_utils.util.paser_cfgs(self.cfgs)
                 quantizable_op_names = torch_utils.util.get_quantizable_ops_from_cfgs(ops_name,

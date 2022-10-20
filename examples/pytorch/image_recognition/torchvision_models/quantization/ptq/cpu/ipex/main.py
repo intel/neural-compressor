@@ -25,33 +25,6 @@ import torchvision.models as models
 from neural_compressor.adaptor.pytorch import get_torch_version
 from packaging.version import Version
 
-try:
-    try:
-        import intel_pytorch_extension as ipex
-        IPEX_110 = False
-        IPEX_112 = False
-    except:
-        try:
-            import intel_extension_for_pytorch as ipex
-            from intel_extension_for_pytorch.quantization import prepare, convert
-            from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-            IPEX_110 = False
-            IPEX_112 = True
-        except:
-            import intel_extension_for_pytorch as ipex
-            import torch.fx.experimental.optimization as optimization
-            IPEX_110 = True
-            IPEX_112 = False
-    TEST_IPEX = True
-    model_names = sorted(name for name in models.__dict__
-        if name.islower() and not name.startswith("__")
-        and callable(models.__dict__[name]))
-except:
-    IPEX_110 = None
-    TEST_IPEX = False
-    model_names = sorted(name for name in quantize_models.__dict__
-        if name.islower() and not name.startswith("__")
-        and callable(quantize_models.__dict__[name]))
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -141,9 +114,6 @@ best_acc1 = 0
 def main():
     args = parser.parse_args()
     print(args)
-
-    if args.ipex:
-        assert TEST_IPEX, 'Please import intel_pytorch_extension or intel_extension_for_pytorch according to version.'
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -323,13 +293,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.tune:
         from neural_compressor.experimental import Quantization, common
-        if args.ipex:
-            quantizer = Quantization("./conf_ipex.yaml")
-        else:
-            model.eval()
-            if pytorch_version < Version("1.7.0-rc1"):
-                model.fuse_model()
-            quantizer = Quantization("./conf.yaml")
+        quantizer = Quantization("./conf_ipex.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
@@ -339,21 +303,12 @@ def main_worker(gpu, ngpus_per_node, args):
         model.eval()
         ipex_config_path = None
         if args.int8:
-            if args.ipex:
-                if not IPEX_110 and not IPEX_112:
-                    # TODO: It will remove when IPEX spport to save script model.
-                    model.to(ipex.DEVICE)
-                    try:
-                        new_model = torch.jit.script(model)
-                    except:
-                        new_model = torch.jit.trace(model, torch.randn(1, 3, 224, 224).to(ipex.DEVICE))
-                else:
-                    new_model = model
-                ipex_config_path = os.path.join(os.path.expanduser(args.tuned_checkpoint),
-                                                "best_configure.json")
+            from neural_compressor.utils.pytorch import load
+            q_model = load(os.path.expanduser(args.tuned_checkpoint), model)
+            model = q_model
         else:
-            new_model = model
-        validate(val_loader, new_model, criterion, args, ipex_config_path)
+            model = model
+        validate(val_loader, model, criterion, args, ipex_config_path)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -434,42 +389,9 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
                              prefix='Test: ')
 
     # switch to evaluate mode
-    model.eval()
-    if args.ipex:
-        if not IPEX_110 and not IPEX_112:
-            conf = (
-                ipex.AmpConf(torch.int8, configure_file=ipex_config_path)
-                if ipex_config_path is not None
-                else ipex.AmpConf(None)
-                )
-        if IPEX_110:
-            if ipex_config_path is not None:
-                conf = ipex.quantization.QuantConf(configure_file=ipex_config_path)
-                model = optimization.fuse(model, inplace=True)
-                for idx, (input, label) in enumerate(val_loader):
-                    x = input.contiguous(memory_format=torch.channels_last)
-                    break
-                model = ipex.quantization.convert(model, conf, x)
-            else:
-                model = model
-        if IPEX_112:
-            if ipex_config_path is not None:
-                x = torch.randn(args.batch_size, 3, 224, 224).contiguous(memory_format=torch.channels_last) 
-                qconfig = QConfig(
-                        activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_symmetric, dtype=torch.qint8),
-                        weight= PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric))
-                prepared_model = ipex.quantization.prepare(model, qconfig, x, inplace=True)
-                prepared_model.load_qconf_summary(qconf_summary=ipex_config_path)
-                model = ipex.quantization.convert(prepared_model)
-                model = torch.jit.trace(model, x)
-                model = torch.jit.freeze(model.eval())
-                y = model(x)
-                y = model(x)
-                print("running int8 model\n")
-            else:
-                model = model
     with torch.no_grad():
         for i, (input, target) in enumerate(val_loader):
+            input = input.contiguous(memory_format=torch.channels_last) 
             if i >= args.warmup_iter:
                 start = time.time()
             if args.gpu is not None:
@@ -477,15 +399,7 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
                 target = target.cuda(args.gpu, non_blocking=True)
 
             # compute output
-            if args.ipex:
-                if not IPEX_110 and not IPEX_112:
-                    with ipex.AutoMixPrecision(conf, running_mode='inference'):
-                        output = model(input.to(ipex.DEVICE))
-                    target = target.to(ipex.DEVICE)
-                else:
-                    output = model(input)
-            else:
-                output = model(input)
+            output = model(input)
            
            # measure elapsed time
             if i >= args.warmup_iter:

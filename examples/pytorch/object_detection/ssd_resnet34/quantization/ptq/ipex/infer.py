@@ -33,13 +33,13 @@ import numpy as np
 import torch.fx.experimental.optimization as optimization
 
 try:
+    import intel_extension_for_pytorch as ipex
     from intel_extension_for_pytorch.quantization import prepare, convert
     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-    IPEX_112 = True
 except:
-    IPEX_112 = False
+    assert False, "please install intel-extension-for-pytorch, support version higher than 1.10"
 
-import intel_extension_for_pytorch as ipex
+#disable for fp32, bf16
 use_ipex = False
 
 
@@ -624,6 +624,8 @@ def eval_ssd_r34_mlperf_coco(args):
             return False
 
     if args.tune:
+         ssd_r34.eval()
+         ssd_r34.model = optimization.fuse(ssd_r34.model)
          from neural_compressor.experimental import Quantization, common
          quantizer = Quantization("./conf.yaml")
          quantizer.model = common.Model(ssd_r34)
@@ -634,41 +636,12 @@ def eval_ssd_r34_mlperf_coco(args):
          return
 
     if args.benchmark or args.accuracy_mode:
+        ssd_r34.eval()
         if args.int8:
-            config_file = os.path.join(args.tuned_checkpoint, "best_configure.json")
-            assert os.path.exists(config_file), "there is no ipex config file, Please tune with Neural Compressor first!"
-            if IPEX_112:
-                ssd_r34 = ssd_r34.eval()
-                print('int8 conv_bn_fusion enabled')
-                with torch.no_grad():
-                    ssd_r34.model = optimization.fuse(ssd_r34.model, inplace=False)
-                    qconfig = QConfig(activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric))
-                    example_inputs = torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last)
-                    prepared_model = prepare(ssd_r34, qconfig, example_inputs=example_inputs, inplace=False)
-                    print("INT8 LLGA start trace")
-                    # insert quant/dequant based on configure.json
-                    prepared_model.load_qconf_summary(qconf_summary = config_file)
-                    convert_model = convert(prepared_model)
-                    with torch.no_grad():
-                       model = torch.jit.trace(convert_model, example_inputs, check_trace=False).eval()
-                    model = torch.jit.freeze(model)
-                    print("done ipex default recipe.......................")
-                    # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-                    # At the 2nd run, the llga pass will be triggered and the model is turned into an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                    with torch.no_grad():
-                        for i in range(2):
-                            _, _ = model(example_inputs)
-                    ssd_r34 = model
-            else:
-                ssd_r34 = ssd_r34.eval()
-                print('int8 conv_bn_fusion enabled')
-                ssd_r34.model = optimization.fuse(ssd_r34.model)
-                print("INT8 LLGA start trace")
-                # insert quant/dequant based on configure.json
-                conf = ipex.quantization.QuantConf(configure_file = config_file)
-                ssd_r34 = ipex.quantization.convert(ssd_r34, conf, torch.randn(args.batch_size, 3, 1200, 1200).to(memory_format=torch.channels_last))
-                print("done ipex default recipe.......................")
+            config_file = os.path.join(args.tuned_checkpoint, "best_model.pt")
+            assert os.path.exists(config_file), "there is no ipex model file, Please tune with Neural Compressor first!"
+            from neural_compressor.utils.pytorch import load
+            ssd_r34 = load(args.tuned_checkpoint, ssd_r34)
         coco_eval(ssd_r34)
         return
 
