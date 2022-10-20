@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ModelService } from '../services/model.service';
 
@@ -24,12 +24,8 @@ import { ModelService } from '../services/model.service';
 })
 export class BenchmarkFormComponent implements OnInit {
 
-  name: string;
-  modelId;
   models = [];
-  datasetId;
   datasets = [];
-  mode = 'performance';
   modes = ['accuracy', 'performance'];
   benchmarkFormGroup: FormGroup;
   allSamples = true;
@@ -40,33 +36,42 @@ export class BenchmarkFormComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.name = 'Benchmark' + String(this.data.index + 1);
     if (this.data.framework === 'pytorch') {
       this.modes = ['performance'];
     }
     this.getDatasetList();
+    this.setFormValues();
+
     this.modelService.getModelList(this.data.projectId)
       .subscribe(
         (response: { models: [] }) => {
           this.models = response.models;
           if (this.models.length > 0) {
-            this.modelId = this.models[0].id;
+            this.benchmarkFormGroup.get('modelId').setValue(this.models[0].id);
           }
         },
         error => {
           this.modelService.openErrorDialog(error);
         });
 
+    this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
+  }
+
+  setFormValues() {
     this.benchmarkFormGroup = new FormGroup({
+      name: new FormControl('Benchmark' + String(this.data.index + 1), Validators.required),
+      mode: new FormControl('performance', Validators.required),
+      modelId: new FormControl('', Validators.required),
+      datasetId: new FormControl('', Validators.required),
       batchSize: new FormControl(1),
       warmup: new FormControl(5),
       iterations: new FormControl(10),
-      numOfInstance: new FormControl(this.modelService.systemInfo.cores_per_socket * this.modelService.systemInfo.sockets / 4),
+      numOfInstance: new FormControl(
+        this.modelService.systemInfo.systeminfo.cores_per_socket * this.modelService.systemInfo.systeminfo.sockets / 4
+      ),
       coresPerInstance: new FormControl(4, { nonNullable: true }),
       commandLine: new FormControl(''),
     });
-
-    this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
   }
 
   getDatasetList() {
@@ -75,7 +80,7 @@ export class BenchmarkFormComponent implements OnInit {
         (response: { datasets: [] }) => {
           this.datasets = response.datasets;
           if (this.datasets.length > 0) {
-            this.datasetId = this.datasets[0].id;
+            this.benchmarkFormGroup.get('datasetId').setValue(this.datasets[0].id);
           }
         },
         error => {
@@ -85,7 +90,7 @@ export class BenchmarkFormComponent implements OnInit {
 
   coresValidated(): boolean {
     return this.benchmarkFormGroup.get('coresPerInstance').value * this.benchmarkFormGroup.get('numOfInstance').value
-      <= this.modelService.systemInfo.cores_per_socket * this.modelService.systemInfo.sockets;
+      <= this.modelService.systemInfo.systeminfo.cores_per_socket * this.modelService.systemInfo.systeminfo.sockets;
   }
 
   openDatasetDialog() {
@@ -96,10 +101,10 @@ export class BenchmarkFormComponent implements OnInit {
     if (!this.data.editing) {
       this.modelService.addBenchmark({
         project_id: this.data.projectId,
-        name: this.name,
-        mode: this.mode,
-        dataset_id: this.datasetId,
-        model_id: this.modelId,
+        name: this.benchmarkFormGroup.get('name').value,
+        mode: this.benchmarkFormGroup.get('mode').value,
+        dataset_id: this.benchmarkFormGroup.get('datasetId').value,
+        model_id: this.benchmarkFormGroup.get('modelId').value,
         batch_size: this.benchmarkFormGroup.get('batchSize').value,
         iterations: this.allSamples ? -1 : this.benchmarkFormGroup.get('iterations').value,
         number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
@@ -117,8 +122,8 @@ export class BenchmarkFormComponent implements OnInit {
     } else {
       this.modelService.editBenchmark({
         id: this.data.benchmarkId,
-        dataset_id: this.datasetId,
-        mode: this.mode,
+        dataset_id: this.benchmarkFormGroup.get('datasetId').value,
+        mode: this.benchmarkFormGroup.get('mode').value,
         batch_size: this.benchmarkFormGroup.get('batchSize').value,
         number_of_instance: this.benchmarkFormGroup.get('numOfInstance').value,
         cores_per_instance: this.benchmarkFormGroup.get('coresPerInstance').value,

@@ -45,6 +45,11 @@ img {
   width: 100%;
 }
 
+.action-btn:focus {
+  background-color: $blue !important;
+  border: solid 2px $accent-yellow;
+}
+
 td {
   padding: 5px;
 }
@@ -55,16 +60,6 @@ th {
 
 .wrap {
   overflow-wrap: anywhere;
-}
-
-.pin {
-  text-decoration: underline;
-  color: $dark-blue;
-  cursor: pointer;
-}
-
-.pin:hover {
-  color: $energy-blue;
 }
 
 .chart {
@@ -78,7 +73,6 @@ th {
 }
 
 .small-input {
-  background-color: white;
   border: 1px $light-gray solid;
   border-radius: 4px;
 }

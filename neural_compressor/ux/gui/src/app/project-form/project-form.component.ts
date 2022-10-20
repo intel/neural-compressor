@@ -20,6 +20,7 @@ import { FileBrowserComponent } from '../file-browser/file-browser.component';
 import { GraphComponent } from '../graph/graph.component';
 import { FileBrowserFilter, ModelService, NewModel } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
+import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 declare let require: any;
 const shajs = require('sha.js');
 
@@ -35,8 +36,9 @@ export class ProjectFormComponent implements OnInit {
   showGraphButton = false;
   showDomain = false;
   showExamples = false;
-  predefined = true;
+  disableFinish = false;
   showShapeWarning: boolean;
+  showPanelHeader = true;
 
   projectFormGroup: FormGroup;
   domains = [];
@@ -66,8 +68,12 @@ export class ProjectFormComponent implements OnInit {
   inputs = [];
   outputs = [];
   order = {
-    input: [],
-    output: []
+    inputs: [],
+    outputs: []
+  };
+  customBoundaryNodes = {
+    inputs: false,
+    outputs: false
   };
 
   constructor(
@@ -96,6 +102,10 @@ export class ProjectFormComponent implements OnInit {
         if (this.projectFormGroup.get('modelLocation').value) {
           this.showSpinner = true;
           this.showGraphButton = false;
+          this.order = {
+            inputs: [],
+            outputs: []
+          };
           this.socketService.getBoundaryNodes(this.getNewModel()).subscribe(
             boundaryNodes => { },
             error => {
@@ -133,33 +143,36 @@ export class ProjectFormComponent implements OnInit {
             this.projectFormGroup.get('framework').setValue(result.data.framework);
             ['inputs', 'outputs'].forEach(param => {
               this[param] = result.data[param];
+              this[param].splice(this[param].indexOf('custom'), 1);
               if (Array.isArray(result.data[param])) {
-                this.isFieldRequired('projectFormGroup', 'input', true);
-                this.isFieldRequired('projectFormGroup', 'output', true);
+                this.isFieldRequired('projectFormGroup', param, true);
                 if (result.data[param].length === 0) {
                   this.boundaryNodes[param] = 'custom';
+                  this.customBoundaryNodes[param] = true;
                 } else if (result.data[param].length === 1) {
                   this.boundaryNodes[param] = 'custom';
-                  this.projectFormGroup.get(param.slice(0, -1)).setValue(result.data[param]);
+                  this.customBoundaryNodes[param] = true;
+                  this.projectFormGroup.get(param).setValue(result.data[param]);
                 } else {
                   this.boundaryNodes[param] = 'select';
+                  this.isFieldRequired('projectFormGroup', param, false);
+                  this.disableFinish = true;
                   if (result.data.domain === 'object_detection' && result.data.domain_flavour === 'ssd') {
                     if (['detection_bboxes', 'detection_scores', 'detection_classes'].every((val) => result.data.outputs.includes(val))) {
-                      this.projectFormGroup.get('output').setValue(['detection_bboxes', 'detection_scores', 'detection_classes']);
+                      this.setDefaultBoundaryNode('outputs', ['detection_bboxes', 'detection_scores', 'detection_classes']);
                     }
                   } else {
                     const nonCustomParams = result.data[param].filter(x => x !== 'custom');
                     if (nonCustomParams.length === 1) {
-                      this.projectFormGroup.get(param.slice(0, -1)).setValue(nonCustomParams);
+                      this.projectFormGroup.get(param).setValue(nonCustomParams);
                     } else if (nonCustomParams.includes('softmax_tensor')) {
-                      this.projectFormGroup.get(param.slice(0, -1)).setValue(['softmax_tensor']);
+                      this.setDefaultBoundaryNode('outputs', ['softmax_tensor']);
                     }
                   }
                 }
               } else {
                 this.boundaryNodes[param] = 'none';
-                this.isFieldRequired('projectFormGroup', 'input', false);
-                this.isFieldRequired('projectFormGroup', 'output', false);
+                this.isFieldRequired('projectFormGroup', param, false);
               }
             });
           }
@@ -167,6 +180,13 @@ export class ProjectFormComponent implements OnInit {
           this.modelService.openErrorDialog(result.data.message);
         }
       });
+  }
+
+  setDefaultBoundaryNode(nodeType: 'inputs' | 'outputs', values: string[]) {
+    this.projectFormGroup.get(nodeType).setValue(values);
+    this.order[nodeType] = values;
+    this[nodeType] = this[nodeType].filter(x => !values.includes(x));
+    this.disableFinish = false;
   }
 
   getNewModel(): NewModel {
@@ -189,7 +209,7 @@ export class ProjectFormComponent implements OnInit {
 
   getExamples(event?) {
     if (!event || event.selectedIndex === 2) {
-      this.showExamples = this.predefined;
+      this.showExamples = this.projectFormGroup.get('predefined').value;
     }
   }
 
@@ -200,11 +220,10 @@ export class ProjectFormComponent implements OnInit {
       modelLocation: new FormControl('', Validators.required),
       modelDomain: new FormControl(''),
       domainFlavour: new FormControl(''),
-      input: new FormControl(''),
-      inputOther: new FormControl(''),
-      output: new FormControl(''),
-      outputOther: new FormControl(''),
-      shape: new FormControl('')
+      inputs: new FormControl(''),
+      outputs: new FormControl(''),
+      shape: new FormControl(''),
+      predefined: new FormControl(true),
     });
   }
 
@@ -215,8 +234,8 @@ export class ProjectFormComponent implements OnInit {
       model: {
         path: this.projectFormGroup.get('modelLocation').value,
         domain: this.projectFormGroup.get('modelDomain').value,
-        input_nodes: this.getBoundaryNodes('input'),
-        output_nodes: this.getBoundaryNodes('output'),
+        input_nodes: this.getBoundaryNodes('inputs'),
+        output_nodes: this.getBoundaryNodes('outputs'),
         shape: this.projectFormGroup.get('shape').value,
       }
     };
@@ -232,6 +251,25 @@ export class ProjectFormComponent implements OnInit {
           this.showSpinner = false;
           this.modelService.openErrorDialog(error);
         });
+  }
+
+  drop(event: CdkDragDrop<string[]>) {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(
+        event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex,
+      );
+    }
+    if ((this.boundaryNodes.inputs === 'select' && !this.order.inputs.length)
+      || (this.boundaryNodes.outputs === 'select' && !this.order.outputs.length)) {
+      this.disableFinish = true;
+    } else {
+      this.disableFinish = false;
+    }
   }
 
   showGraph() {
@@ -267,12 +305,27 @@ export class ProjectFormComponent implements OnInit {
     });
   }
 
+  changeCustomBoundaryNodes(nodeType: 'inputs' | 'outputs') {
+    this.customBoundaryNodes[nodeType] = !this.customBoundaryNodes[nodeType];
+    if (this.customBoundaryNodes[nodeType]) {
+      this.boundaryNodes[nodeType] = 'custom';
+      this.isFieldRequired('projectFormGroup', nodeType, true);
+    } else if (this[nodeType].length) {
+      this.boundaryNodes[nodeType] = 'select';
+      this.isFieldRequired('projectFormGroup', nodeType, false);
+      this.disableFinish = true;
+    } else {
+      this.boundaryNodes[nodeType] = 'none';
+      this.isFieldRequired('projectFormGroup', nodeType, false);
+    }
+  }
+
   boundaryNodesVisible(): boolean {
     return (this.boundaryNodes.inputs !== 'none' || this.boundaryNodes.outputs !== 'none')
       && this.projectFormGroup.get('modelLocation').value && !this.showSpinner;
   }
 
-  boundaryNodesChanged(value, type: 'input' | 'output') {
+  boundaryNodesChanged(value, type: 'inputs' | 'outputs') {
     if (value === 'custom') {
       if (!this.order[type].includes(value)) {
         this.projectFormGroup.get(type).setValue([value]);
@@ -290,10 +343,7 @@ export class ProjectFormComponent implements OnInit {
     }
   }
 
-  getBoundaryNodes(type: 'input' | 'output') {
-    if (this.projectFormGroup.get(type + 'Other').value.length) {
-      return [this.projectFormGroup.get(type + 'Other').value];
-    }
+  getBoundaryNodes(type: 'inputs' | 'outputs'): any {
     if (this.order[type].length) {
       return this.order[type];
     }
@@ -313,5 +363,9 @@ export class ProjectFormComponent implements OnInit {
       this.projectFormGroup.controls[field].clearValidators();
     }
     this.projectFormGroup.controls[field].updateValueAndValidity();
+  }
+
+  togglePanel(show: boolean) {
+    this.showPanelHeader = show;
   }
 }

@@ -46,7 +46,7 @@
 .sidenav {
   font-family: IntelOneRg;
   font-size: 150%;
-  background-color: $dark-gray;
+  background-color: $dark-gray !important;
   color: white;
 }
 
@@ -64,10 +64,11 @@
 }
 
 .footer {
-  position: fixed;
-  bottom: 0px;
+  color: $gray;
   text-align: center;
-  color: $dark-gray;
+  margin-top: 5px;
+  padding-top: 5px;
+  z-index: 10;
 }
 
 .footer-wrapper {
@@ -89,8 +90,8 @@
 
 .hw-info-button {
   float: right;
-  color: $darker-gray;
-  background-color: $light-gray;
+  color: $darker-gray !important;
+  background-color: $light-gray !important;
   margin-top: 15px;
   margin-right: 5px;
 }
@@ -100,6 +101,23 @@
   height: 15px;
   top: -1px;
   position: relative;
+}
+
+.theme-img {
+  width: 25px;
+  height: 25px;
+  margin: 5px;
+}
+
+.theme-container {
+  position: fixed;
+  bottom: 0px;
+  width: 370px;
+  background-color: #005B85 !important;
+}
+
+.flex-stretch {
+  flex: 1 0 auto;
 }
 
 @media all and (max-width:1500px) {
@@ -117,7 +135,8 @@
     margin-right: 5px;
   }
 
-  .sidenav {
+  .sidenav,
+  .bottom {
     width: 300px;
   }
 

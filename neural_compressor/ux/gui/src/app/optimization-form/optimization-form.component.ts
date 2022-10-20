@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { Component, Inject, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ModelService } from '../services/model.service';
 
@@ -25,14 +26,13 @@ export class OptimizationFormComponent implements OnInit {
   precisions = [];
   precisionsPyTorch = [];
   precisionsOther = [];
-  precisionId: number;
 
   optimizationTypes = [];
   optimizationTypeId: number;
 
   datasets = [];
-  datasetId = 0;
-  name: string;
+
+  optimizationFormGroup: FormGroup;
 
   constructor(
     public modelService: ModelService,
@@ -40,10 +40,18 @@ export class OptimizationFormComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.name = 'Optimization' + String(this.data.index + 1);
     this.getPrecisions();
     this.getDatasets();
+    this.setFormValues();
     this.modelService.datasetCreated$.subscribe(response => this.getDatasets());
+  }
+
+  setFormValues() {
+    this.optimizationFormGroup = new FormGroup({
+      name: new FormControl('Optimization' + String(this.data.index + 1), Validators.required),
+      precisionId: new FormControl('', Validators.required),
+      datasetId: new FormControl('', Validators.required)
+    });
   }
 
   getPrecisions() {
@@ -51,7 +59,7 @@ export class OptimizationFormComponent implements OnInit {
       .subscribe(
         (response: { precisions: any }) => {
           this.precisions = response.precisions;
-          this.precisionId = this.precisions.find(x => x.name === 'int8').id;
+          this.optimizationFormGroup.get('precisionId').setValue(this.precisions.find(x => x.name === 'int8').id);
           this.precisions.forEach((element) => {
             if (element.name === 'int8 dynamic quantization' || element.name === 'int8 static quantization') {
               const insert = Object.assign({}, element);
@@ -75,7 +83,7 @@ export class OptimizationFormComponent implements OnInit {
 
   getOptimizationTypes() {
     this.modelService.getDictionaryWithParam('optimization_types', 'precision',
-      { precision: this.precisions.find(x => x.id === this.precisionId).name })
+      { precision: this.precisions.find(x => x.id === this.optimizationFormGroup.get('precisionId').value).name })
       .subscribe(
         (response: { optimization_types: any }) => {
           this.optimizationTypes = response.optimization_types;
@@ -97,7 +105,7 @@ export class OptimizationFormComponent implements OnInit {
         (response: { datasets: any }) => {
           this.datasets = response.datasets;
           if (this.datasets.length > 0) {
-            this.datasetId = this.datasets[0].id;
+            this.optimizationFormGroup.get('datasetId').setValue(this.datasets[0].id);
           }
         },
         error => {
@@ -113,10 +121,10 @@ export class OptimizationFormComponent implements OnInit {
     if (!this.data.editing) {
       this.modelService.addOptimization({
         project_id: this.data.projectId,
-        name: this.name,
-        precision_id: this.precisionId,
+        name: this.optimizationFormGroup.get('name').value,
+        precision_id: this.optimizationFormGroup.get('precisionId').value,
         optimization_type_id: this.optimizationTypeId,
-        dataset_id: this.datasetId
+        dataset_id: this.optimizationFormGroup.get('datasetId').value
       })
         .subscribe(
           response => { this.modelService.optimizationCreated$.next(true); },
@@ -126,8 +134,8 @@ export class OptimizationFormComponent implements OnInit {
     } else {
       this.modelService.editOptimization({
         id: this.data.optimizationId,
-        precision_id: this.precisionId,
-        dataset_id: this.datasetId
+        precision_id: this.optimizationFormGroup.get('precisionId').value,
+        dataset_id: this.optimizationFormGroup.get('datasetId').value
       })
         .subscribe(
           response => { this.modelService.optimizationCreated$.next(true); },

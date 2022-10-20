@@ -25,15 +25,20 @@
   color: black;
 }
 
+.create-new-btn:focus {
+  background-color: #ffcf31;
+}
+
 .inline-block {
   display: inline-block;
   width: 20%;
-  height: 40vh !important;
+  height: 45vh !important;
   margin: 3%;
+  padding-bottom: 30px;
 }
 
 .img-container {
-  height: 50%;
+  height: 20vh;
   margin: auto;
   text-align: center;
   margin-top: 10%;
@@ -88,4 +93,3 @@
 .button-img {
   height: 50px;
 }
-

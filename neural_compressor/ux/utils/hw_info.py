@@ -17,14 +17,16 @@
 import platform
 import re
 import subprocess
+import sys
 from typing import Any, Dict, Union
 
 import cpuinfo
 import psutil
 
+from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.utils import determine_ip
+from neural_compressor.ux.utils.utils import determine_ip, get_module_version
 
 
 class HWInfo(JsonSerializer):
@@ -46,6 +48,9 @@ class HWInfo(JsonSerializer):
     kernel: str = ""
     min_cpu_freq: str = ""
     max_cpu_freq: str = ""
+    framework_info: dict = {}
+    sub_dependencies_info: dict = {}
+    bf16_support: bool = False
 
     def __init__(self) -> None:
         """Initialize HW Info class and gather information platform hardware."""
@@ -59,20 +64,30 @@ class HWInfo(JsonSerializer):
     ) -> Dict[str, Any]:
         """Serialize class to dict."""
         return {
-            "sockets": self.sockets,
-            "cores": self.cores,
-            "cores_per_socket": self.cores_per_socket,
-            "threads_per_socket": self.threads_per_socket,
-            "total_memory": self.total_memory,
-            "system": self.system,
-            "ip": self.ip,
-            "platform": self.platform,
-            "hyperthreading_enabled": self.hyperthreading_enabled,
-            "turboboost_enabled": self.turboboost_enabled,
-            "bios_version": self.bios_version,
-            "kernel": self.kernel,
-            "min_cpu_freq": self.min_cpu_freq,
-            "max_cpu_freq": self.max_cpu_freq,
+            "systeminfo": {
+                "sockets": self.sockets,
+                "cores": self.cores,
+                "cores_per_socket": self.cores_per_socket,
+                "threads_per_socket": self.threads_per_socket,
+                "total_memory": self.total_memory,
+                "system": self.system,
+                "ip": self.ip,
+                "platform": self.platform,
+                "hyperthreading_enabled": self.hyperthreading_enabled,
+                "turboboost_enabled": self.turboboost_enabled,
+                "bios_version": self.bios_version,
+                "kernel": self.kernel,
+                "min_cpu_freq": self.min_cpu_freq,
+                "max_cpu_freq": self.max_cpu_freq,
+                "bf16_support": self.bf16_support,
+            },
+            "frameworks": {
+                "pytorch_version": self.framework_info.get("torch"),
+                "onnx_version": self.framework_info.get("onnx"),
+                "tensorflow_version": self.framework_info.get("tensorflow"),
+                "pytorch_sub_dependencies": self.sub_dependencies_info.get("pytorch"),
+                "onnx_sub_dependencies": self.sub_dependencies_info.get("onnx"),
+            },
         }
 
     def initialize(self) -> None:
@@ -113,13 +128,21 @@ class HWInfo(JsonSerializer):
                 HWInfo.max_cpu_freq = "n/a"
             else:
                 HWInfo.max_cpu_freq = f"{max_cpu_freq}Hz"
+
+        frameworks = ["onnx", "torch", "tensorflow"]
+        for framework in frameworks:
+            HWInfo.framework_info[framework] = get_framework_info(framework)
+        HWInfo.sub_dependencies_info = get_framework_dependency_info()
+
+        HWInfo.bf16_support = CpuInfo().bf16
+
         HWInfo.initialized = True
 
 
 def get_number_of_sockets() -> int:
     """Get number of sockets in platform."""
     cmd = "lscpu | grep 'Socket(s)' | cut -d ':' -f 2"
-    if psutil.WINDOWS:
+    if sys.platform == "win32":
         cmd = 'wmic cpu get DeviceID | find /c "CPU"'
 
     proc = subprocess.Popen(
@@ -225,3 +248,37 @@ def get_kernel_version() -> str:
         return platform.release()
     else:
         return platform.platform()
+
+
+def get_framework_info(framework_name: str) -> str:
+    """
+    Check framework version.
+
+    Return version if enabled, n/a if disabled.
+    """
+    try:
+        version = get_module_version(framework_name)
+    except Exception:
+        version = "n/a"
+    return version
+
+
+def get_framework_dependency_info() -> Dict[str, Any]:
+    """Return framework subdependencies version."""
+    sub_dependencies_info: Dict[str, Any] = {}
+    framework_dependency_list = {
+        "pytorch": ["torchvision"],
+        "onnx": ["onnxruntime", "onnxruntime_extensions", "torch"],
+    }
+    for framework, package in framework_dependency_list.items():
+        sub_dependencies_info[framework] = {}
+        for item in package:
+            sub_dependencies_info[framework][item] = get_framework_info(item)
+
+    version_info: Dict[str, Any] = {}
+    for key, value in sub_dependencies_info.items():
+        summary = ""
+        for name, version in value.items():
+            summary = summary + f"{name} : {version} "
+        version_info[key] = summary
+    return version_info

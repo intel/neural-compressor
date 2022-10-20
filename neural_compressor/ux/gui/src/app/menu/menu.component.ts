@@ -84,7 +84,8 @@ export class MenuComponent implements OnInit {
 
   createNewProject() {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
-      width: '60%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
     });
 
     this.modelService.projectCreated$.subscribe(

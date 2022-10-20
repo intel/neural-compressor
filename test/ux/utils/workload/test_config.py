@@ -1379,8 +1379,6 @@ class TestConfig(unittest.TestCase):
             default_flow_style=None,
             sort_keys=False,
         )
-        print("expected_yaml")
-        print(expected_yaml)
 
         with patch("neural_compressor.ux.utils.workload.config.open", mock_open()) as mocked_open:
             config.dump("path to yaml file")

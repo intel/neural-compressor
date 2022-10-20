@@ -60,12 +60,10 @@
             <ng-container *ngIf="node.node_type === 'group_node'">
               <svg:g class="group-node" (click)="expand(node.id)" [matTooltip]="'Click to expand'">
                 <svg:foreignObject width="350" height="120" class="group-node-container">
-                  <div>
-                    <a class="group-node-label">{{ node.label }}</a>
-                    <button mat-icon-button class="expand-button">
-                      <img src="./../../assets/008a-plus-solid.svg">
-                    </button>
-                  </div>
+                  <p class="group-node-label">{{ node.label }}</p>
+                  <button mat-icon-button class="expand-button">
+                    <img src="./../../assets/008a-plus-solid.svg">
+                  </button>
                 </svg:foreignObject>
               </svg:g>
             </ng-container>

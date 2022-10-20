@@ -21,8 +21,9 @@
         </a>
       </td>
       <td class="center cell">
-        <img matTooltip="Delete this dataset" class="plus-icon" src="./../../assets/057b-trash-outlined.svg"
-          (click)="$event.stopPropagation();deleteDataset(dataset.id, dataset.name)">
+        <button mat-icon-button (click)="$event.stopPropagation();deleteDataset(dataset.id, dataset.name)">
+          <img matTooltip="Delete this dataset" class="plus-icon" src="./../../assets/057b-trash-outlined.svg">
+        </button>
       </td>
     </tr>
   </table>
@@ -71,7 +72,7 @@
     <table class="rounded">
       <tr *ngFor="let param of  datasetDetails['parameters'] | keyvalue">
         <th>{{ param.key | underscoreToSpace }}</th>
-        <td>{{ param.value }}</td>
+        <td>{{ param.key === 'input_shape' ? (param.value | json) : param.value }}</td>
       </tr>
     </table>
   </div>
@@ -102,7 +103,6 @@
         <tr *ngIf="metricParam.key !== 'name' && typeOf(metricParam.value) !== 'object'">
           <th>{{ metricParam.key | underscoreToSpace }}</th>
           <td>{{ metricParam.value | json }}</td>
-          <td>{{ typeOf(metricParam.value) }}</td>
         </tr>
         <ng-container *ngIf="typeOf(metricParam.value) === 'object'">
           <tr *ngFor="let subMetricParam of datasetDetails['metric']['param'] | keyvalue">

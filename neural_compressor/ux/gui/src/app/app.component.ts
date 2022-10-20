@@ -11,10 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, OnInit } from '@angular/core';
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { Component, HostBinding, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ErrorComponent } from './error/error.component';
 import { NotificationComponent } from './notification/notification.component';
 import { ModelService } from './services/model.service';
 import { SocketService } from './services/socket.service';
@@ -26,10 +27,13 @@ import { SystemInfoComponent } from './system-info/system-info.component';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
+  @HostBinding('class') className = '';
   tokenIsSet = false;
   workspacePath: string;
+  toggleControl = new FormControl(false);
 
   constructor(
+    private overlay: OverlayContainer,
     private modelService: ModelService,
     private socketService: SocketService,
     public dialog: MatDialog,
@@ -37,6 +41,7 @@ export class AppComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.setColorTheme();
     this.modelService.setToken(window.location.search.replace('?token=', ''));
     this.tokenIsSet = true;
     this.getWorkspace();
@@ -45,6 +50,34 @@ export class AppComponent implements OnInit {
       .subscribe(response => {
         this.openSnackBar(response.tab, response.id);
       });
+  }
+
+  setColorTheme() {
+    if (localStorage.getItem('darkMode') === 'darkMode') {
+      this.setDarkMode();
+      this.toggleControl.setValue(true);
+    }
+    this.toggleControl.valueChanges.subscribe((darkMode) => {
+      if (darkMode) {
+        this.setDarkMode();
+      } else {
+        this.setLightMode();
+      }
+    });
+  }
+
+  setDarkMode() {
+    this.modelService.colorMode$.next('dark/');
+    this.className = 'darkMode';
+    this.overlay.getContainerElement().classList.add('darkMode');
+    localStorage.setItem('darkMode', 'darkMode');
+  }
+
+  setLightMode() {
+    this.modelService.colorMode$.next('');
+    this.className = '';
+    this.overlay.getContainerElement().classList.remove('darkMode');
+    localStorage.setItem('darkMode', '');
   }
 
   getWorkspace() {
@@ -62,7 +95,12 @@ export class AppComponent implements OnInit {
 
   showSystemInfo() {
     const dialogRef = this.dialog.open(SystemInfoComponent, {
-      data: this.modelService.systemInfo
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      data: {
+        'system info': this.modelService.systemInfo.systeminfo,
+        'framework info': this.modelService.systemInfo.frameworks
+      }
     });
   }
 

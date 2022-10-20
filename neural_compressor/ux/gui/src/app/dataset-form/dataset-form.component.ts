@@ -30,6 +30,7 @@ export class DatasetFormComponent implements OnInit {
   metrics = [];
   metricParam: string;
   metricParams = [];
+  metricParamsCopy = [];
 
   dataLoaders = [];
   dataLoaderParams = [];
@@ -197,6 +198,7 @@ export class DatasetFormComponent implements OnInit {
   setDefaultMetricParam(event) {
     if (this.metrics.length) {
       this.metricParams = this.metrics.find(x => x.name === event.value)?.params;
+      this.metricParamsCopy = (JSON.parse(JSON.stringify(this.metricParams)));
       if (this.metricParams && this.metricParams.length === 1) {
         this.metricParam = this.metricParams[0].value;
         if (Array.isArray(this.metricParams[0].value)) {
@@ -234,7 +236,7 @@ export class DatasetFormComponent implements OnInit {
     if (this.metricParam) {
       return this.metricParam;
     } else {
-      this.metricParams.forEach(param => {
+      this.metricParamsCopy.forEach(param => {
         if (param.params) {
           parsedMetricParameter[param.name] = {};
           param.params.forEach(nestedParam => {

@@ -60,6 +60,17 @@ class TestParser(unittest.TestCase):
     ) -> None:
         self._assert_parses_to_expected_list_type(value, expected, [element_type])
 
+    def _assert_parses_to_multidim_list(
+        self,
+        value: Any,
+        required_type: list,
+        expected: list,
+    ) -> None:
+        parsed_value = self.parser.parse_value(value, required_type)
+        self.assertEqual(parsed_value, expected)
+        self.assertIs(type(parsed_value), list)
+        self._assert_parses_to_multidim_list_type(parsed_value, required_type)
+
     def _assert_parses_to_expected_type(
         self,
         value: Any,
@@ -90,6 +101,17 @@ class TestParser(unittest.TestCase):
         self.assertIs(type(parsed_value), list)
         for element in parsed_value:
             self.assertIs(type(element), required_type[0])
+
+    def _assert_parses_to_multidim_list_type(
+        self,
+        value: Any,
+        required_type: list,
+    ) -> None:
+        if not isinstance(value, list):
+            self.assertIs(type(value), required_type)
+        else:
+            for element in value:
+                self._assert_parses_to_multidim_list_type(element, required_type[0])
 
 
 class TestValueParser(TestParser):
@@ -158,6 +180,20 @@ class TestValueParser(TestParser):
     def test_string_with_brackets_to_list(self) -> None:
         """Test parsing string to list."""
         self._assert_parses_to_expected_list("[3, 14, 15, 9]", int, [3, 14, 15, 9])
+
+    def test_string_with_brackets_to_multidim_list(self) -> None:
+        """Test parsing string to multidim list."""
+        self._assert_parses_to_multidim_list("[[3, 14, 15, 9]]", [[int]], [[3, 14, 15, 9]])
+
+    def test_string_with_round_brackets_to_multidim_list(self) -> None:
+        """Test parsing string with round brackets to multidim list."""
+        self._assert_parses_to_multidim_list("(3, 14, 15, 9)", [[int]], [[3, 14, 15, 9]])
+        self._assert_parses_to_multidim_list("((3, 14, 15, 9))", [[int]], [[3, 14, 15, 9]])
+        self._assert_parses_to_multidim_list("((3, 14), (15, 9))", [[int]], [[3, 14], [15, 9]])
+
+    def test_string_without_brackets_to_multidim_list(self) -> None:
+        """Test parsing string with no brackets to multidim list."""
+        self._assert_parses_to_multidim_list("3, 14, 15, 9", [[int]], [[3, 14, 15, 9]])
 
     def test_string_to_bool_false_lowercase(self) -> None:
         """Test parsing 'false' to boolean."""
@@ -613,10 +649,10 @@ class TestEvaluationParser(TestParser):
             "metric_param": {
                 "anno_path": "/path/to/labels.txt",
                 "output_index_mapping": {
-                    "num_detections": "0",
-                    "boxes": "1",
-                    "scores": "2",
-                    "classes": "3",
+                    "num_detections": 0,
+                    "boxes": 1,
+                    "scores": 2,
+                    "classes": 3,
                 },
             },
         }

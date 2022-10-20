@@ -41,6 +41,7 @@ requirements:
     - sqlalchemy ==1.4.27
     - alembic ==1.7.7
     - cython
+    - pywin32  # [win]
 test:
   imports:
     - neural_compressor

@@ -8,26 +8,29 @@
   <img src="./../../assets/077-arrow-up.svg">
 </button>
 <button mat-raised-button id="file-browser-choose-btn" class="confirm" color="accent" [disabled]="!chosenFile"
-  (click)="chooseFile(chosenFile, true)" matTooltip="Save selection" [disabled]="showSpinner">Choose</button>
+  type="submit" (click)="chooseFile(chosenFile, true)" matTooltip="Save selection"
+  [disabled]="showSpinner">Choose</button>
 
 <mat-dialog-content class="file-container">
   <ng-container *ngFor="let item of contents">
     <p *ngIf="item.type === 'directory'">
-      <button id="file-browser-directory-btn" [ngClass]="{'chosen': item.name === chosenFile, 'file-button':true}"
-        (click)="chooseFile(item.name, false)" (dblclick)="getFileSystem(item.name)">
+      <button id="file-browser-directory-btn" [ngClass]="{'chosen': item.name === chosenFile, 'file-button label':true}"
+        (click)="chooseFile(item.name, false)" (dblclick)="getFileSystem(item.name)"
+        (keyup.enter)="getFileSystem(item.name)">
         <img *ngIf="item.is_model" src="./../../assets/model-folder.svg">
         <img *ngIf="!item.is_model" src="./../../assets/050a-folder-solid.svg">
-        {{ item.name.replace(currentPath + '/', '') }}
+        {{ item.name.replace(currentPath + slash, '') }}
       </button>
     </p>
   </ng-container>
   <ng-container *ngFor="let item of contents">
     <p *ngIf="item.type === 'file'">
-      <button id="file-browser-file-btn" [ngClass]="{'chosen': item.name === chosenFile, 'file-button':true}"
-        (dblclick)="chooseFile(item.name, true)" (click)="chooseFile(item.name, false)">
+      <button id="file-browser-file-btn" [ngClass]="{'chosen': item.name === chosenFile, 'file-button label':true}"
+        (dblclick)="chooseFile(item.name, true)" (click)="chooseFile(item.name, false)"
+        (keyup.enter)="chooseFile(item.name, true)">
         <img *ngIf="item.is_model" src="./../../assets/model-file.svg">
         <img *ngIf="!item.is_model" src="./../../assets/145b-document-outlined.svg">
-        {{ item.name.replace(currentPath + '/', '') }}
+        {{ item.name.replace(currentPath + slash, '') }}
       </button>
     </p>
   </ng-container>

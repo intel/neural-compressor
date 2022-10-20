@@ -20,6 +20,7 @@ import logging
 import os
 import secrets
 import socket
+import sys
 from typing import Dict
 
 from numpy.random import randint
@@ -223,8 +224,32 @@ class Configuration:
         token_filepath = os.path.join(WORKDIR_LOCATION, "token")
         with open(token_filepath, "w") as token_file:
             token_file.write(self.token)
-        os.chown(token_filepath, uid=os.geteuid(), gid=os.getgid())
-        os.chmod(token_filepath, 0o600)
+
+        if sys.platform == "win32":
+            import ntsecuritycon as con  # pylint: disable=import-error
+            import win32api  # pylint: disable=import-error
+            import win32security  # pylint: disable=import-error
+
+            user, _, _ = win32security.LookupAccountName("", win32api.GetUserName())
+            security_descriptor = win32security.GetFileSecurity(
+                token_filepath,
+                win32security.DACL_SECURITY_INFORMATION,
+            )
+            dacl = win32security.ACL()
+            dacl.AddAccessAllowedAce(
+                win32security.ACL_REVISION,
+                con.FILE_GENERIC_READ | con.FILE_GENERIC_WRITE,
+                user,
+            )
+            security_descriptor.SetSecurityDescriptorDacl(1, dacl, 0)
+            win32security.SetFileSecurity(
+                token_filepath,
+                win32security.DACL_SECURITY_INFORMATION,
+                security_descriptor,
+            )
+        else:
+            os.chown(token_filepath, uid=os.geteuid(), gid=os.getgid())
+            os.chmod(token_filepath, 0o600)
         log.debug(f"Token has been dumped to {token_filepath}.")
 
     def _ensure_valid_port(self, port: int) -> None:

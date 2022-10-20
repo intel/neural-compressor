@@ -29,4 +29,7 @@ export class SystemInfoComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  unsorted(): number {
+    return 0;
+  }
 }

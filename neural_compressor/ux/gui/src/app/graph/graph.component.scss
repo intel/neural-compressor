@@ -16,6 +16,7 @@
 .node {
   cursor: pointer;
   font-family: IntelClearBd;
+  color: black !important;
 
   :hover {
     background-color: #E9E9E9;
@@ -61,7 +62,7 @@
 
 .group-node-label {
   position: relative;
-  top: 50px;
+  top: 20px;
 }
 
 .node-text {
@@ -70,7 +71,6 @@
 }
 
 .sidenav {
-  background-color: white !important;
   min-height: 10%;
   max-height: 30%;
   width: 40%;
@@ -117,7 +117,7 @@
   position: absolute;
   top: 60px;
   right: 0px;
-  background-color: #e1e1e1;
+  background-color: rgba(182, 182, 182, 0.13);
 }
 
 .nodes-table {
@@ -160,9 +160,10 @@
   margin-left: 5px;
 }
 
-.mat-drawer-container {
-  background-color: white;
-}
+// .mat-drawer-container {
+//   background-color: white;
+//   color: black;
+// }
 
 .yellow {
   color: #FFE17A !important;
