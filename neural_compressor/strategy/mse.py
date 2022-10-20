@@ -22,6 +22,7 @@ from collections import OrderedDict
 from typing import Dict, Any, List
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
+from time import time 
 
 from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .st_utils.tuning_structs import OpTuningConfig
@@ -245,14 +246,18 @@ class MSETuneStrategy(TuneStrategy):
                                         self._collect_ops_by_quant_mode(tune_cfg, 'static')
                 op_quant_cfgs = {op_info: tune_cfg_backup[op_info] for op_info in quant_ops_in_tune_cfg}
                 fallback_records = []
+                self.re_quant = True
                 while not self.objectives.compare(self.last_tune_result, self.baseline):
+                    # Record the time of calcutating the sensitivity
+                    start = time()
                     ops_lst = self.adaptor.calcutate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=True)
+                    logger.debug(f"The op sensitivity analysis took {time() - start:.2f}s.")
                     select_op_info = ops_lst[0]
                     logger.info(f"The op {select_op_info} have the highest sensitivity in the current state, \
-                                 fallback it to fp32.")
+                        fallback it to fp32.")
                     tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0], 
                                                               select_op_info[1], 
                                                               'fp32', 
@@ -266,15 +271,17 @@ class MSETuneStrategy(TuneStrategy):
                     yield tune_cfg
 
                 logger.info(f"The accuracy meeting the accuracy requirements, stop fallback ops.")
-                self.re_quant = True
                 while self.objectives.compare(self.last_tune_result, self.baseline) and \
                     len(fallback_records) > 0 and len(fallback_records[-1]) > 1:
                     logger.info(f"Start to re-quant the fallback op in the previous stage.")
-                    tmp_fallback_ops = fallback_records[-1] if fallback_records else [] # track the current fallback ops
+                    # Track the current fallback ops
+                    tmp_fallback_ops = fallback_records[-1] if fallback_records else [] 
+                    start = time()
                     ops_lst = self.adaptor.calcutate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=False)
+                    logger.debug(f"The op sensitivity analysis took {time() - start:.2f}s.")
                     for select_op_info in ops_lst:
                         assert select_op_info in tmp_fallback_ops, f"{select_op_info} not in fallback list."
                         new_fallback_ops = deepcopy(tmp_fallback_ops)
@@ -299,7 +306,7 @@ class MSETuneStrategy(TuneStrategy):
                                         item in tuning_space.query_items_by_quant_mode(target_dtype)]
                     if fallback_items_lst:
                         logger.info(f"Start to fallback op to {target_dtype} one by one.")
-                    # replace it with sorted items list
+                    # Replace it with sorted items list
                     fallback_items_name_lst = [item.name for item in fallback_items_lst]
                     # TODO check the best_qmodel
                     ordered_op_name_types = self.mse_impact_lst(fallback_items_name_lst, self.model, self.best_qmodel)
@@ -316,7 +323,7 @@ class MSETuneStrategy(TuneStrategy):
                         acc, _ = self.last_tune_result
                         op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
-                    # do accumulated fallback according to the order in the previous stage
+                    # Do accumulated fallback according to the order in the previous stage
                     if len(op_fallback_acc_impact) > 0:
                         ordered_ops = sorted(op_fallback_acc_impact.keys(), 
                                             key=lambda key: op_fallback_acc_impact[key],
