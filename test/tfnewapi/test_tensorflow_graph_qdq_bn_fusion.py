@@ -9,7 +9,9 @@ import tensorflow as tf
 import logging
 from tensorflow.python.framework import graph_util
 from tensorflow.core.framework import attr_value_pb2
+from tensorflow.python.framework import dtypes
 from neural_compressor.adaptor.tf_utils.util import disable_random
+from neural_compressor.utils.utility import CpuInfo
 
 def build_fake_yaml_1():
     fake_yaml_1 = '''
@@ -132,6 +134,48 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         self.assertEqual(found_fusion, True)
         self.assertEqual(qbn_num, 1)
         self.assertEqual(dq_num, 1)
+
+    @disable_random()
+    def test_training_bn_relu_depthwiseconv_biasadd_relu6_fusion(self):
+        logging.getLogger().info("test_depthwiseconv_biasadd_relu_fusion")
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        normed_0 = tf.compat.v1.layers.batch_normalization(x, training=True)
+        relu = tf.nn.relu(normed_0, name='op_to_store_0')
+        conv = tf.compat.v1.nn.depthwise_conv2d_native(relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
+        normed_1 = tf.compat.v1.layers.batch_normalization(conv)
+        relu6 = tf.nn.relu6(normed_1, name='op_to_store_1')
+        out_name = relu6.name.split(':')[0]
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+        from neural_compressor.experimental import Quantization, common
+        quantizer = Quantization('fake_yaml_1.yaml')
+        dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.model = output_graph_def
+        output_graph = quantizer.fit()
+        bn_num, bf16_bn_num, qbn_num, dq_num = 0, 0, 0, 0
+        for i in output_graph.graph_def.node:
+            if i.op == 'FusedBatchNormV3':
+                bn_num += 1
+                if i.attr['T'].type == dtypes.bfloat16.as_datatype_enum:
+                    bf16_bn_num += 1
+            if i.op == '_QuantizedFusedBatchNorm':
+                qbn_num += 1
+            if i.op == 'Dequantize':
+                dq_num += 1
+        self.assertEqual(bn_num, 1)
+        self.assertEqual(qbn_num, 0)
+        self.assertEqual(dq_num, 1)
+        bf16_enabled = bool(CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1')
+        if bf16_enabled:
+            self.assertEqual(bf16_bn_num, 1)
 
     @disable_random()
     def test_bn_relu_conv_biasadd_relu(self):
