@@ -79,7 +79,7 @@ function run_tuning {
         --arch-sparse-feature-size=128 --max-ind-range=40000000 \
         --numpy-rand-seed=727  --inference-only --ipex-interaction \
         --print-freq=100 --print-time --mini-batch-size=2048 --test-mini-batch-size=16384 \
-        --test-freq=2048 --print-auc $ARGS \
+        --save-model ${tuned_checkpoint} --test-freq=2048 --print-auc $ARGS \
         --load-model=${input_model}
     elif [[ ${mode} == "benchmark" ]]; then
         LOG_0="${LOG}/throughput.log"
@@ -92,7 +92,7 @@ function run_tuning {
         --arch-sparse-feature-size=128 --max-ind-range=40000000 --ipex-interaction \
         --numpy-rand-seed=727  --inference-only --num-batches=1000 \
         --print-freq=10 --print-time --mini-batch-size=128 --test-mini-batch-size=${batch_size} \
-        --share-weight-instance=$CORES --num-cpu-cores=$CORES\
+        --save-model ${tuned_checkpoint} --share-weight-instance=$CORES --num-cpu-cores=$CORES\
         $ARGS |tee $LOG_0
         wait
         set +x

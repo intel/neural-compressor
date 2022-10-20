@@ -93,19 +93,14 @@ from torch.nn.parallel.replicate import replicate
 from torch.nn.parallel.scatter_gather import gather, scatter
 from torch.nn.parameter import Parameter
 from torch.optim.lr_scheduler import _LRScheduler
-
-# intel
-import intel_extension_for_pytorch as ipex
 from torch.utils import ThroughputBenchmark
 # For distributed run
 import extend_distributed as ext_dist
 
 try:
-    from intel_extension_for_pytorch.quantization import prepare, convert
-    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-    IPEX_112 = True
+    import intel_extension_for_pytorch as ipex
 except:
-    IPEX_112 = False
+    assert False, "please install intel-extension-for-pytorch, support version higher than 1.10"
 
 
 exc = getattr(builtins, "IOError", "FileNotFoundError")
@@ -411,32 +406,12 @@ def trace_model(args, dlrm, test_ld, inplace=True):
                 dlrm.emb_l.bfloat16()
             dlrm = ipex.optimize(dlrm, dtype=torch.bfloat16, inplace=inplace)
         elif args.int8 and not args.tune:
-            if IPEX_112:
-                if args.num_cpu_cores != 0:
-                    torch.set_num_threads(args.num_cpu_cores)
-                qconfig = QConfig(activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_symmetric, dtype=torch.qint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric))
-                prepare(dlrm, qconfig, example_inputs=(X, lS_o, lS_i), inplace=True)
-                dlrm.load_qconf_summary(qconf_summary = args.int8_configure)
-                convert(dlrm, inplace=True)
-                dlrm = torch.jit.trace(dlrm, [X, lS_o, lS_i])
-                dlrm = torch.jit.freeze(dlrm)
-            else:
-                conf = ipex.quantization.QuantConf(args.int8_configure)
-                dlrm = ipex.quantization.convert(dlrm, conf, (X, lS_o, lS_i))
+            from neural_compressor.utils.pytorch import load
+            dlrm = load(args.save_model, dlrm)
         elif args.int8 and args.tune:
             dlrm = dlrm
         else:
             dlrm = ipex.optimize(dlrm, dtype=torch.float, inplace=inplace)
-        if not IPEX_112 and not args.tune:
-            if args.int8:
-                dlrm = freeze(dlrm)
-            else:
-                with torch.cpu.amp.autocast(enabled=args.bf16):
-                    dlrm = torch.jit.trace(dlrm, (X, lS_o, lS_i), check_trace=True)
-                    dlrm = torch.jit.freeze(dlrm)
-        dlrm(X, lS_o, lS_i)
-        dlrm(X, lS_o, lS_i)
         return dlrm
 
 
