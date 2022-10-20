@@ -28,6 +28,7 @@
     "url": "https://github.com/intel/neural-compressor.git"
   },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "build": "jlpm build:lib && jlpm build:labextension:dev",
     "build:prod": "jlpm clean && jlpm build:lib && jlpm build:labextension",
     "build:labextension": "jupyter labextension build .",
@@ -85,12 +86,11 @@
     "es-abstract": "^1.20.2",
     "es-to-primitive": "^1.2.1",
     "fs": "^0.0.1-security",
-    "got": "^12.4.1",
     "has": "^1.0.3",
     "icss-utils": "^5.1.0",
     "react": "^17.0.2",
     "react-sanitized-html": "^2.0.0",
-    "sanitize-html": "^1.27.5",
+    "sanitize-html": "^2.7.2",
     "shelljs": "^0.8.5",
     "stream": "^0.0.2",
     "util": "^0.12.4"
@@ -104,9 +104,11 @@
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
+    "got": "^12.1.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
+    "semver": "^4.3.2",
     "stylelint": "^14.3.0",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-recommended": "^6.0.0",
@@ -143,5 +145,10 @@
         "jlpm clean:all"
       ]
     }
+  },
+  "resolutions": {
+    "got": "^12.1.0",
+    "semver": "^4.3.2",
+    "bl": "^1.2.3"
   }
 }
