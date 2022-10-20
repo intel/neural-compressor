@@ -60,7 +60,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a>  / <a href="./tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a>  / <a href="./tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>MobileNet V3</td>
@@ -114,13 +114,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet V2 50</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 152</td>
@@ -171,12 +171,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/keras_models/resnet50_fashion/quantization/ptq">keras</a></td>
   </tr>
   <tr>
-    <td>ResNet50 V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
     <td>ResNet101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
@@ -193,18 +187,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/keras_models/inception_resnet_v2/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>ResNet101 V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>MobileNet V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>Xception</td>
@@ -903,19 +885,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BERT SQuAD</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/bert-squad/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/bert-squad/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/language_translation/onnx_model_zoo/bert-squad/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/onnx_model_zoo/bert-squad/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>GPT2 lm head WikiText</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./onnxrt/language_translation/gpb2/quantization/ptq">integerops</a></td>
+    <td><a href="./onnxrt/language_translation/onnx_model_zoo/gpt2/quantization/ptq">integerops</a></td>
   </tr>
   <tr>
     <td>MobileBERT SQuAD MLPerf</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/mobilebert/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/language_translation/onnx_model_zoo/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/onnx_model_zoo/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BiDAF</td>
