@@ -48,4 +48,3 @@ echo "Tuning time spend: "$((end_seconds-start_seconds))"s "
 echo "Tuning strategy: ${strategy}"
 
 echo "Total resident size (kbytes): $(cat /proc/meminfo |grep 'MemTotal' |sed 's/[^0-9]//g')"
-

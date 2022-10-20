@@ -18,7 +18,7 @@ variables:
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: 'UT_coverage_report'
-  REPO: 'https://github.com/VincyZhang/neural-compressor'
+  REPO: 'https://github.com/intel/neural-compressor'
 
 
 stages:

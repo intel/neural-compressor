@@ -20,7 +20,7 @@ then please modify the tag so that the tagging requirement is met. For example r
 
 ```console
 $ PYTHON=python3.8
-$ INC_BRANCH=v1.13
+$ INC_BRANCH=v1.12
 $ IMAGE_NAME=neural-compressor
 $ IMAGE_TAG=${INC_BRANCH}-devel
 $ docker build --build-arg PYTHON=${PYTHON} --build-arg INC_BRANCH=${INC_BRANCH} -f Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .

@@ -4,7 +4,7 @@ parameters:
   default: 'commonDockerConfig'
 - name: repo
   type: string
-  default: 'https://github.com/VincyZhang/neural-compressor'  
+  default: 'https://github.com/intel/neural-compressor'  
 - name: utScriptFileName
   type: string
 - name: uploadPath

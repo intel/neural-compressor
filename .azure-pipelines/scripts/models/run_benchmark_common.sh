@@ -88,9 +88,3 @@ else
 #    multiInstance
     multiInstance 2>&1 | tee ${log_dir}/${framework}-${model}-performance-${precision}.log
 fi
-
-
-
-
-
-

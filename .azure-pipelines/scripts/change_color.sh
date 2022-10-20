@@ -79,5 +79,3 @@ BG_GRAY="echo -en \\E[47m"
 
 # close 
 RESET="echo -en \\E[0m"
-
-

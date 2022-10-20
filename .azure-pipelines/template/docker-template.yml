@@ -15,7 +15,7 @@ parameters:
   type: string
 - name: repo
   type: string
-  default: 'https://github.com/VincyZhang/neural-compressor'
+  default: 'https://github.com/intel/neural-compressor'
 
 steps:
 - ${{ if eq(parameters.dockerConfigName, 'commonDockerConfig') }}:

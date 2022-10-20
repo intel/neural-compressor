@@ -328,5 +328,3 @@ if __name__ == "__main__":
     if args.new_benchmark=='true':
         update_yaml_config_benchmark_acc(args.yaml, batch_size=args.batch_size)
         update_yaml_config_benchmark_perf(args.yaml, batch_size=args.batch_size, multi_instance=args.multi_instance)
-
-
