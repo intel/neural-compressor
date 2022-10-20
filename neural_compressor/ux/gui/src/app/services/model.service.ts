@@ -28,6 +28,7 @@ export class ModelService {
   workspacePath: string;
   projectCount = 0;
 
+  colorMode$: Subject<string> = new Subject<''>();
   projectCreated$: Subject<boolean> = new Subject<boolean>();
   datasetCreated$: Subject<boolean> = new Subject<boolean>();
   openDatasetDialog$: Subject<boolean> = new Subject<boolean>();
@@ -38,8 +39,13 @@ export class ModelService {
 
   token;
   systemInfo: {
-    cores_per_socket: number;
-    sockets: number;
+    systeminfo: {
+      bf16_support: boolean;
+      cores_per_socket: number;
+      sockets: number;
+      system: string;
+    };
+    frameworks: object;
   };
 
   constructor(
@@ -60,8 +66,13 @@ export class ModelService {
       this.baseUrl + 'api/system_info'
     ).subscribe(
       (resp: {
-        cores_per_socket: number;
-        sockets: number;
+        systeminfo: {
+          bf16_support: boolean;
+          cores_per_socket: number;
+          sockets: number;
+          system: string;
+        };
+        frameworks: object;
       }) => {
         this.systemInfo = resp;
       },

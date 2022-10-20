@@ -12,7 +12,7 @@
     (selectedTabChange)="onTabChanged($event)">
     <mat-tab>
       <ng-template mat-tab-label>
-        <img class="tab-icon" src="./../../assets/298a-workflow-process-solid.svg">
+        <img class="tab-icon" [attr.src]="'./../../assets/' + themeCatalog + '298a-workflow-process-solid.svg'">
         <div joyrideStep="addOptimizationTour" [stepContent]="addOptimizationTour">
           Optimizations
         </div>
@@ -27,7 +27,7 @@
 
     <mat-tab>
       <ng-template mat-tab-label>
-        <img class="tab-icon" src="./../../assets/174-gauge.svg">
+        <img class="tab-icon" [attr.src]="'./../../assets/' + themeCatalog + '174-gauge.svg'">
         <div joyrideStep="benchmarkTour" [stepContent]="benchmarkTour">
           Benchmarks
         </div>
@@ -44,9 +44,9 @@
       <mat-tab [disabled]="!project['input_model']['supports_profiling']">
         <ng-template mat-tab-label>
           <img *ngIf="project['input_model']['supports_profiling']" class="tab-icon"
-            src="./../../assets/043-organize.svg">
+            [attr.src]="'./../../assets/' + themeCatalog + '043-organize.svg'">
           <img *ngIf="!project['input_model']['supports_profiling']" class="tab-icon"
-            src="./../../assets/043-organize-disabled.svg">
+            [attr.src]="'./../../assets/' + themeCatalog + '043-organize-disabled.svg'">
           <div joyrideStep="profilingTour" [stepContent]="profilingTour"
             [matTooltip]="!project['input_model']['supports_profiling'] ? 'Profiling is not available for this model.' : null">
             Profiling
@@ -62,9 +62,11 @@
 
     <mat-tab [disabled]="is_pytorch">
       <ng-template mat-tab-label>
-        <img *ngIf="!is_pytorch" class="tab-icon" src="./../../assets/234a-database-solid.svg">
-        <img *ngIf="is_pytorch" class="tab-icon" src="./../../assets/234a-database-solid-disable.svg">
-        <div joyrideStep="datasetTour" [stepContent]="datasetTour"
+        <img *ngIf="!is_pytorch" class="tab-icon" [attr.src]="'./../../assets/' + themeCatalog
+          + '234a-database-solid.svg'">
+        <img *ngIf="is_pytorch" class="tab-icon" [attr.src]="'./../../assets/' + themeCatalog
+          + '234a-database-solid-disable.svg'">
+        <div joyrideStep=" datasetTour" [stepContent]="datasetTour"
           [matTooltip]="!is_pytorch ? null :'Datasets is not available for PyTorch Script-based Model.'">
           Datasets
         </div>
@@ -82,9 +84,10 @@
     <ng-container *ngIf="project['input_model']">
       <mat-tab [disabled]="!project['input_model']['supports_graph']">
         <ng-template mat-tab-label>
-          <img *ngIf="project['input_model']['supports_graph']" class="tab-icon" src="./../../assets/307-org-chart.svg">
-          <img *ngIf="!project['input_model']['supports_graph']" class="tab-icon"
-            src="./../../assets/307-org-chart-disabled.svg">
+          <img *ngIf="project['input_model']['supports_graph']" class="tab-icon" [attr.src]="'./../../assets/' +
+        themeCatalog + '307-org-chart.svg'">
+          <img *ngIf=" !project['input_model']['supports_graph']" class="tab-icon"
+            [attr.src]="'./../../assets/' + themeCatalog + '307-org-chart-disabled.svg'">
           <div joyrideStep="graphTour" [stepContent]="graphTour"
             [matTooltip]="!project['input_model']['supports_graph'] ? 'Graph is not available for this model.' : null">
             Diagnosis
@@ -104,16 +107,16 @@
 
     <mat-tab>
       <ng-template mat-tab-label>
-        <img class="tab-icon" src="./../../assets/005a-help-solid.svg">
+        <img class="tab-icon" [attr.src]="'./../../assets/' + themeCatalog + '005a-help-solid.svg'">
         Project info
       </ng-template>
       <mat-card>
-        <div class="item item-row1" joyrideStep="secondStep">
+        <div class="item-row1" joyrideStep="secondStep">
           <h2>Project details</h2>
           <table class="rounded">
             <tr>
               <td class="header">Project name</td>
-              <td class="cell">{{ project['name'] }}</td>
+              <td class="cell">{{ project[' name'] }}</td>
             </tr>
             <tr>
               <td class="header">Created at</td>
@@ -146,7 +149,7 @@
             </tr>
           </table>
         </div>
-        <div class="item">
+        <div>
           <h2>Notes</h2>
           <mat-form-field appearance="fill" class="notes">
             <mat-label>Notes</mat-label>

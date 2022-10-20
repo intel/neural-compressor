@@ -34,7 +34,6 @@ button {
 .chip {
   height: 50px;
   border: 1px solid $gray;
-  margin: 3px;
 }
 
 @media all and (max-width:1500px) {
@@ -44,15 +43,11 @@ button {
 }
 
 .domain-btn {
-  width: 48%;
-}
-
-.model-btn {
-  width: 19%;
+  width: 50%;
 }
 
 .active {
-  background-color: $energy-blue;
+  background-color: $energy-blue !important;
   border: none;
 }
 
@@ -60,4 +55,10 @@ button {
   color: $energy-blue;
   margin: auto;
   text-align: center;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-content: stretch;
 }

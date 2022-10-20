@@ -15,10 +15,12 @@
 """Configuration type parser."""
 import json
 from collections.abc import Iterable
+from copy import deepcopy
 from typing import Any, Dict, List, Type, Union
 
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.hw_info import HWInfo
+from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.utils import parse_bool_value
 
 
@@ -92,8 +94,9 @@ class ConfigurationParser:
             "bool": bool,
         }
 
-    def parse(self, data: dict) -> dict:
+    def parse(self, input_data: dict) -> dict:
         """Parse configuration."""
+        data = deepcopy(input_data)
         transforms_data = data.get("transform", None)
         if transforms_data is not None:
             data.update({"transform": self.parse_transforms(transforms_data)})
@@ -110,7 +113,9 @@ class ConfigurationParser:
 
         metric_params = data.get("metric_param", None)
         if metric_params and isinstance(metric_params, dict):
-            data["metric_param"] = self.parse_metric(metric_params)
+            parsed_metric_params = self.parse_metric(metric_params)
+
+            data.update({"metric_param": parsed_metric_params})
 
         if "tuning" in data.keys():
             data["tuning"] = parse_bool_value(data["tuning"])
@@ -227,13 +232,15 @@ class ConfigurationParser:
         for param_name, param_value in metric_data.items():
             if isinstance(param_value, dict):
                 parsed_data.update({param_name: self.parse_metric(param_value)})
-            elif isinstance(param_value, str):
+            elif isinstance(param_value, str) or isinstance(param_value, int):
                 if param_value == "":
                     continue
                 param_type = self.get_param_type("metric", param_name)
                 if param_type is None:
+                    log.debug("Could not find param type.")
                     continue
-                parsed_data.update({param_name: self.parse_value(param_value, param_type)})
+                parsed_value = self.parse_value(param_value, param_type)
+                parsed_data.update({param_name: parsed_value})
         return parsed_data
 
     def get_param_type(
@@ -313,6 +320,8 @@ def normalize_string_list(string_list: str, required_type: Union[Type, List[Type
     if not isinstance(string_list, str):
         return string_list
     if isinstance(required_type, list):
+        string_list = string_list.replace("(", "[")
+        string_list = string_list.replace(")", "]")
         while not string_list.startswith("[["):
             string_list = "[" + string_list
         while not string_list.endswith("]]"):

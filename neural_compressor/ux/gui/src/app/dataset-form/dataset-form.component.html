@@ -1,4 +1,4 @@
-<h1>Add new dataset</h1>
+<h1 class="dataset-title">Add new dataset</h1>
 <p>Set your custom dataset name, dataset type, its location and other parameters.</p>
 <mat-dialog-content>
   <form [formGroup]="datasetFormGroup">
@@ -144,11 +144,11 @@
         <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
         Fill the code template before tuning
       </a>
-      <ng-container *ngFor="let param of metricParams">
+      <ng-container *ngFor="let param of metricParams; let index = index">
         <ng-container *ngIf="isArray(param.value)">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>{{ param.label || param.name }}</mat-label>
-            <mat-select [(ngModel)]="param.value" [ngModelOptions]="{standalone: true}">
+            <mat-select [(ngModel)]="metricParamsCopy[index].value" [ngModelOptions]="{standalone: true}">
               <mat-option *ngFor="let option of param.value" [value]="option">{{ option }}</mat-option>
             </mat-select>
           </mat-form-field>
@@ -156,7 +156,7 @@
         <ng-container *ngIf="typeOf(param.value) === 'boolean'">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>{{ param.label || param.name }}</mat-label>
-            <mat-select [(ngModel)]="param.value" [ngModelOptions]="{standalone: true}">
+            <mat-select [(ngModel)]="metricParamsCopy[index].value" [ngModelOptions]="{standalone: true}">
               <mat-option [value]="true">yes</mat-option>
               <mat-option [value]="false">no</mat-option>
             </mat-select>
@@ -166,8 +166,8 @@
           <mat-form-field [ngClass]="{'form-field' : true, 'long': fileBrowserParams.includes(param.name)}"
             appearance="outline">
             <mat-label>{{ param.label || param.name }}</mat-label>
-            <input [(ngModel)]="param.value" matInput [ngModelOptions]="{standalone: true}" matTooltipPosition="right"
-              [matTooltip]="param.help">
+            <input [(ngModel)]="metricParamsCopy[index].value" matInput [ngModelOptions]="{standalone: true}"
+              matTooltipPosition="right" [matTooltip]="param.help">
           </mat-form-field>
           <button id="choose-eval-btn" *ngIf="fileBrowserParams.includes(param.name)" mat-raised-button color="primary"
             class="browse choose-file-btn" (click)="openDialog(param.name, 'all', 'metric')">
@@ -177,7 +177,8 @@
         </ng-container>
         <ng-container *ngIf="isArray(param.params)">
           <h3>{{ param.name | underscoreToSpace }}</h3>
-          <mat-form-field *ngFor="let subparam of param.params" class="form-field" appearance="outline">
+          <mat-form-field *ngFor="let subparam of metricParamsCopy[index].params" class="form-field"
+            appearance="outline">
             <mat-label>{{ subparam.label || subparam.name }}</mat-label>
             <input [(ngModel)]="subparam.value" matInput [ngModelOptions]="{standalone: true}"
               matTooltipPosition="right" [matTooltip]="subparam.help">
@@ -190,8 +191,9 @@
 
 <br />
 <div class="float-right">
-  <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent" class="browse"
-    [disabled]="datasetFormGroup.status === 'INVALID'" (click)="addDataset()" queryParamsHandling="preserve">
+  <button id="finish-adv-btn" class="finish-button" mat-raised-button mat-dialog-close color="accent" class="browse"
+    type="submit" [disabled]="datasetFormGroup.status === 'INVALID'" (click)="addDataset()"
+    queryParamsHandling="preserve">
     <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
     Finish
   </button>

@@ -4,29 +4,30 @@
     Remove project
   </h1>
 
-  <div mat-dialog-content>
-    <p>Type project name to delete it. This action cannot be undone.</p>
+  <form>
+    <div mat-dialog-content>
+      <p>Type project name to delete it. This action cannot be undone.</p>
 
-    <form>
       <mat-form-field appearance="fill">
         <mat-label>Project name</mat-label>
         <input matInput [(ngModel)]="projectName">
       </mat-form-field>
-    </form>
 
-    <p [ngStyle]="{'visibility': projectName.length && projectName !== data.projectName ? 'visible' : 'hidden'}"
-      class="warning">
-      <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
-      Warning: Project name does not match the project ID.
-    </p>
+      <p [ngStyle]="{'visibility': projectName.length && projectName !== data.projectName ? 'visible' : 'hidden'}"
+        class="warning">
+        <img class="warning-icon" src="./../../assets/006a-alert-solid-orange.svg">
+        Warning: Project name does not match the project ID.
+      </p>
 
-  </div>
+    </div>
 
-  <br />
-  <div class="float-right">
-    <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="warn" class="browse"
-      [disabled]="projectName !== data.projectName" (click)="removeProject()" queryParamsHandling="preserve">
-      Delete project
-    </button>
-  </div>
+    <br />
+    <div class="float-right">
+      <button id="finish-adv-btn" class="finish-button" mat-raised-button mat-dialog-close color="warn" class="browse"
+        type="submit" [disabled]="projectName !== data.projectName" (click)="removeProject()"
+        queryParamsHandling="preserve">
+        Delete project
+      </button>
+    </div>
+  </form>
 </div>

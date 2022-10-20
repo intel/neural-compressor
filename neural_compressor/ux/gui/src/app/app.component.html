@@ -14,6 +14,15 @@
         System info
       </button>
       <app-menu></app-menu>
+
+      <mat-toolbar class="theme-container">
+        <div class="flex-stretch"></div>
+        <img class="theme-img" src="./../../assets/221a-sunny-day-solid.svg">
+        <mat-slide-toggle [formControl]="toggleControl">
+        </mat-slide-toggle>
+        <img class="theme-img" src="./../../assets/222-night.svg">
+      </mat-toolbar>
+
     </mat-sidenav>
     <mat-sidenav-content>
       <div *ngIf="!sidenav.opened" class="pointer title-hidden">
@@ -27,7 +36,9 @@
       </div>
       <div class="footer-wrapper">
         <footer class="footer">
-          © Intel Corporation
+          <p>
+            © Intel Corporation
+          </p>
         </footer>
       </div>
     </mat-sidenav-content>

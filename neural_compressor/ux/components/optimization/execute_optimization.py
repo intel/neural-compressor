@@ -233,6 +233,20 @@ def execute_optimization(data: Dict[str, Any]) -> dict:
             if is_pytorch_script:
                 optimized_model_data["model_path"] = logs[0]
 
+            optimization_data = OptimizationAPIInterface.get_optimization_details(
+                {
+                    "id": optimization_id,
+                },
+            )
+            if optimization_data["optimized_model"] is not None:
+                existing_model_id = optimization_data["optimized_model"]["id"]
+                existing_model_name = optimization_data["optimized_model"]["name"]
+                ModelAPIInterface.delete_model(
+                    {
+                        "id": existing_model_id,
+                        "name": existing_model_name,
+                    },
+                )
             optimized_model_id = ModelAPIInterface.add_model(optimized_model_data)
             OptimizationAPIInterface.update_optimized_model(
                 {

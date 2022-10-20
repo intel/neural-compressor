@@ -27,24 +27,36 @@ export class ProjectComponent implements OnInit {
     notes: '',
     name: ''
   };
+  themeCatalog = '';
   is_pytorch = false;
   projectId;
   selectedTab = 0;
   tabs = ['optimizations', 'benchmarks', 'profiling', 'datasets', 'diagnosis', 'info'];
 
   constructor(
-    private modelService: ModelService,
+    public modelService: ModelService,
     public activatedRoute: ActivatedRoute,
     private router: Router,
     private readonly joyrideService: JoyrideService) {
   }
 
   ngOnInit() {
+    this.setColorTheme();
     this.projectId = this.activatedRoute.snapshot.params.id;
     this.getProject(this.projectId);
     this.modelService.projectChanged$
       .subscribe((response: { id: number; tab: string }) => {
         this.getProject(response.id, response.tab);
+      });
+  }
+
+  setColorTheme() {
+    if (localStorage.getItem('darkMode') === 'darkMode') {
+      this.themeCatalog = 'dark/';
+    }
+    this.modelService.colorMode$
+      .subscribe(resp => {
+        this.themeCatalog = resp;
       });
   }
 

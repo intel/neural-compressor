@@ -15,9 +15,10 @@
 # pylint: disable=no-member
 """The Optimization class."""
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from sqlalchemy import DDL, Column, DateTime, ForeignKey, Integer, String, event
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import relationship, session
 from sqlalchemy.sql import func
 
@@ -553,6 +554,21 @@ class Optimization(Base):
             )
             optimizations.append(optimization_info)
         return {"optimizations": optimizations}
+
+    @staticmethod
+    def unpin_benchmark(
+        db_connection: Union[session.Session, Connection],
+        benchmark_id: int,
+    ) -> None:
+        """Unpin benchmark from optimization."""
+        update_queries = [
+            f"UPDATE optimization SET performance_benchmark_id=null "
+            f"WHERE performance_benchmark_id={benchmark_id}",
+            f"UPDATE optimization SET accuracy_benchmark_id=null "
+            f"WHERE accuracy_benchmark_id={benchmark_id}",
+        ]
+        for update_query in update_queries:
+            db_connection.execute(update_query)
 
     @staticmethod
     def build_info(

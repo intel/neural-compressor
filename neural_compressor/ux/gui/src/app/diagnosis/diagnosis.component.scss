@@ -62,10 +62,6 @@
   color: white;
 }
 
-.op-details {
-  background-color: white;
-}
-
 .width-200 {
   width: 200px;
 }
@@ -75,7 +71,7 @@ mat-button-toggle-group {
 }
 
 .gray-background {
-  background-color: $lighter-gray1;
+  background-color: rgba(182, 182, 182, 0.13);
 }
 
 .field {

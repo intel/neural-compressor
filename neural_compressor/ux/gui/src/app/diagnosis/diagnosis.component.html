@@ -76,7 +76,7 @@
         </tr>
       </table>
 
-      <div class="op-details">
+      <div>
         <div class="gray-background field">
           <h3>Pattern</h3>
           sequence: {{ opDetails['Pattern']['sequence'] | json }}<br>
@@ -84,7 +84,7 @@
           <mat-form-field class="select" appearance="outline">
             <mat-select [(ngModel)]="precision"
               (selectionChange)="updateValue('precision', precision, opDetails['OP name'])">
-              <mat-option *ngFor="let prec of ['int8', 'fp32']" [value]="prec">
+              <mat-option *ngFor="let prec of supportedPrecisions" [value]="prec">
                 {{ prec }}
               </mat-option>
             </mat-select>
