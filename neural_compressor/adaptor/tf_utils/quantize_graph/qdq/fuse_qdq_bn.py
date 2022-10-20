@@ -36,6 +36,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
             }
         else:
             self.fusion_mapping = {}
+        self.exclude_bn_nodes = []
 
     def apply_newly_bn_relu_fusion(self, match_node_name):
         matched_node = self.node_name_mapping[match_node_name[0]]
@@ -164,11 +165,12 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                     self.logger.info \
                         ("Skip quantizing the BN node '{}' due to the attr 'is_training == true'." \
                             .format(bn_node.name))
+                    self.exclude_bn_nodes.append(bn_node.name)
                 elif self.new_api:
                     self.logger.info("Unknown fusion pattern {} .".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph, []
+                return self.input_graph, self.exclude_bn_nodes
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
