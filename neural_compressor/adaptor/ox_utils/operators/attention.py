@@ -60,8 +60,7 @@ class AttentionOperator(Operator):
         inputs.extend(quantized_name)
         inputs.append(node.input[2])
         inputs.extend(scale)
-        if len(node.input) > 3:
-            inputs.append(node.input[3])
+        inputs.append(node.input[3] if len(node.input) > 3 else "")
         inputs.extend(zp)
         if len(node.input) > 4:
             inputs.append(node.input[4])
