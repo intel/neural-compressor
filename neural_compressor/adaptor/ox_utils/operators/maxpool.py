@@ -24,15 +24,22 @@ class MaxPoolOperator(Operator):
         super(MaxPoolOperator, self).__init__(onnx_quantizer, onnx_node)
     
     def quantize_check(self):
+        node = self.node
         # if opset version is less than 12, just no change
         if self.quantizer.opset_version < 12: # pragma: no cover
             return False
+
+        if not self.quantizer.is_valid_quantize_weight(node.input[0]): # pragma: no cover
+            return False
+            
         return True
 
     def quantize(self):
         node = self.node
-        super().quantize()
-        node.name = node.name + '_quant'
+        self.quantizer.quantize_inputs(self.node, direct_int8=True)
+        if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
+            self.quantizer.quantize_outputs(self.node, direct_int8=True)
+        node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
         node = self.node
