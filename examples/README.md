@@ -461,7 +461,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>RNN-T</td>
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> / <a href="./pytorch/speech_recognition/rnnt/quantization/ptq_static/ipex">ipex</a></td>
+    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> </td>
   </tr>
   <tr>
     <td>Wav2Vec2</td>
