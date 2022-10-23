@@ -244,7 +244,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 * [Release Information](docs/releases_info.md)
 * [Contribution Guidelines](docs/contributions.md)
 * [Legal Information](docs/legal_information.md)
-* [Security Policy](docs/security_policy.md)
+* [Security Policy](SECURITY.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
 ## Hiring
