@@ -112,7 +112,13 @@ class Benchmark(object):
             return self.run_instance(mode)
         else:
             self.config_instance()
+            self.summary_benchmark()
+            return None
 
+    fit = __call__
+
+    def summary_benchmark(self):
+        if sys.platform in ['linux']:
             num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             latency_l = []
@@ -130,9 +136,9 @@ class Benchmark(object):
             logger.info("\n\nMultiple instance benchmark summary: ")
             logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
             logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
-            return None
-
-    fit = __call__
+        else:
+            # (TODO) should add summary after win32 benchmark has log
+            pass
 
     def config_instance(self):
         raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
