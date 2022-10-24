@@ -59,7 +59,7 @@ steps:
     docker stop $(docker ps -aq)
     docker rm -vf $(docker ps -aq) || true
     env | sort      
-  displayName: 'Clean Docker'
+  displayName: 'Clean docker container'
 
 - ${{ if ne(parameters.containerName, '') }}:
   - task: Bash@3

@@ -228,17 +228,17 @@ stages:
               fi
             displayName: "Check Test Status"
 
-      - job: bert_base_MRPC_static
-        displayName: bert_base_MRPC_static
+      - job: distilbert_base_MRPC_qdq
+        displayName: distilbert_base_MRPC_qdq
         steps:
           - template: template/model-template.yml
             parameters:
-              modelName: 'bert_base_MRPC_static'
+              modelName: 'distilbert_base_MRPC_qdq'
               framework: 'onnxrt'
                
           - script: |
-              if [ $(onnxrt_bert_base_MRPC_static_failed) == 'true' ]; then
-                echo "[Failed] Model bert_base_MRPC_static failed, please check artifacts and logs."
+              if [ $(onnxrt_distilbert_base_MRPC_qdq_failed) == 'true' ]; then
+                echo "[Failed] Model distilbert_base_MRPC_qdq failed, please check artifacts and logs."
                 exit 1
               fi
             displayName: "Check Test Status"
