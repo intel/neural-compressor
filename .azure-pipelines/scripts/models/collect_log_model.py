@@ -50,11 +50,11 @@ def main():
                 print(file_name)
                 if 'performance-'+precision in name:
                     for line in open(file_name, "r"):
-                        results = parse_perf_line(line)
-                        if results["throughput"]:
-                            throughput += results["throughput"]
-                        if results["batch_size"]:
-                            bs = results["batch_size"]
+                        result= parse_perf_line(line)
+                        if result["throughput"]:
+                            throughput += result["throughput"]
+                        if result["batch_size"]:
+                            bs = result["batch_size"]
         # set model status failed
         if throughput==0.0:
             os.system('echo "##vso[task.setvariable variable='+args.framework+'_'+args.model+'_failed]true"')
