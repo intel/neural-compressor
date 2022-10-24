@@ -150,7 +150,6 @@ stages:
           path: $(DOWNLOAD_PATH)
 
       - script: |
-          echo "------ Collecting logs ------"
           echo "--- create container ---"
           docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
           echo "--- docker ps ---"

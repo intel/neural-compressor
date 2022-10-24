@@ -289,7 +289,6 @@ stages:
             inputs:
               versionSpec: '3.8.0'
           - script: |
-              echo "------ Collecting logs ------"
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
               mkdir last_generated
