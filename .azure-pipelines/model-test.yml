@@ -302,7 +302,7 @@ stages:
               patterns: '**.log'
               path: $(OUT_SCRIPT_PATH)/last_generated
               project: $(System.TeamProject)
-              pipeline: $(System.DefinitionId)
+              pipeline: 'Baseline'
               runVersion: 'specific'
               runId: $(model_runID)
               retryDownloadCount: 3
