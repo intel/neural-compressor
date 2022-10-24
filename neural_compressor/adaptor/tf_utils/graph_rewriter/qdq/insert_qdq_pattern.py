@@ -17,6 +17,7 @@
 
 import copy
 import numpy as np
+from collections import namedtuple
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -47,13 +48,17 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.device = device
         self.performance_only = performance_only
         self.itex_mode = itex_mode
-
+        self.node_details = namedtuple('node_details', ['node', 'output'])
         self.node_name_mapping = {}
         for node in self.model.node:
-            if node.name not in self.node_name_mapping:
-                self.node_name_mapping[node.name] = node
-            else:
-                raise ValueError("Duplicate node names detected for ", node.name)
+            if node.name in self.node_name_mapping:
+                raise ValueError("Duplicate Node Found when _parse_graph, the node name is {}" \
+                    .format(node.name))
+            self.node_name_mapping[node.name] = self.node_details(node=node, output=[])
+        for node_name in self.node_name_mapping:
+            for each_input in self.node_name_mapping[node_name].node.input:
+                self.node_name_mapping \
+                    [Helper.node_name_from_input(each_input)].output.append(node_name)
 
     @dump_elapsed_time("Pass GenerateGraphWithQDQPattern")
     def do_transformation(self):
@@ -187,10 +192,12 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 and (node.op != "Relu"
                      or not self.performance_only
                      or self.node_name_mapping \
-                        [Helper.node_name_from_input(node.input[0])].op.find("FusedBatchNorm") == -1
+                        [Helper.node_name_from_input(node.input[0])].node.op.find("FusedBatchNorm") == -1
                      or self.node_name_mapping \
-                        [Helper.node_name_from_input(node.input[0])].attr['is_training'].b):
-            return True
+                        [Helper.node_name_from_input(node.input[0])].node.attr['is_training'].b
+                     or len(self.node_name_mapping \
+                        [Helper.node_name_from_input(node.input[0])].output) > 1):
+                        return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
         elif (node.op.find("QuantizedConv") != -1
@@ -204,16 +211,16 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 find_relu = False
                 for i in range(0,node.attr['N'].i):
                     if re.search(r"\w+:\d+", node.input[i]):
-                        input_node = self.node_name_mapping[node.input[i].rsplit(':', 1)[0]]
+                        input_node = self.node_name_mapping[node.input[i].rsplit(':', 1)[0]].node
                     else:
-                        input_node = self.node_name_mapping[node.input[i]]
+                        input_node = self.node_name_mapping[node.input[i]].node
                     find_relu |= self._find_relu_node(input_node)
                 return find_relu
             else:
                 if re.search(r"\w+:\d+", node.input[0]):
-                    input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]]
+                    input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]].node
                 else:
-                    input_node = self.node_name_mapping[node.input[0]]
+                    input_node = self.node_name_mapping[node.input[0]].node
                 return self._find_relu_node(input_node)
         else:
             return False
@@ -221,17 +228,17 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
     def _insert_qdq_pattern_for_common_ops(self, original_node, is_asymmetric):
         namespace_prefix = original_node.name + "_eightbit"
         if original_node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
-            all_inputs = self.node_name_mapping[original_node.name].input[-1:]
+            all_inputs = self.node_name_mapping[original_node.name].node.input[-1:]
         else:
-            all_inputs = self.node_name_mapping[original_node.name].input[:1]
+            all_inputs = self.node_name_mapping[original_node.name].node.input[:1]
         for each_input_name in all_inputs:
             if each_input_name[0] == '^':
                 continue
 
-            if self.node_name_mapping[original_node.name].op == "MatMul":
+            if self.node_name_mapping[original_node.name].node.op == "MatMul":
                 dtype = dtypes.quint8
-            elif self.node_name_mapping[original_node.name].op == "BatchMatMulV2" \
-                 or self.node_name_mapping[original_node.name].op == "BatchMatMul":
+            elif self.node_name_mapping[original_node.name].node.op == "BatchMatMulV2" \
+                or self.node_name_mapping[original_node.name].node.op == "BatchMatMul":
                 dtype = dtypes.qint8
             else:
                 input_node_name = Helper.node_name_from_input(each_input_name)
@@ -239,13 +246,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     if self.graph_info[input_node_name].node.op == "Dequantize":
                         dtype = dtypes.DType(
                             self.graph_info[input_node_name].node.attr["T"].type)
-                    elif self._find_relu_node(self.node_name_mapping[original_node.name]):
+                    elif self._find_relu_node(self.node_name_mapping[original_node.name].node):
                         dtype = dtypes.quint8
                     else:
                         dtype = dtypes.qint8
                 else:
                     dtype = dtypes.quint8 if self._find_relu_node(
-                        self.node_name_mapping[original_node.name]
+                        self.node_name_mapping[original_node.name].node
                     ) else dtypes.qint8
             self._insert_qdq_pattern_for_each_input(original_node.name,
                                                     namespace_prefix,
