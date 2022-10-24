@@ -271,19 +271,14 @@ def update_yaml_config_benchmark_acc(yaml_path: str, batch_size = None):
 def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_instance = None):
     # Get cpu information for multi-instance
     total_cores = psutil.cpu_count(logical=False)
-    # total_sockets = get_number_of_sockets()
     total_sockets = 1
     ncores_per_socket = total_cores / total_sockets
-
-    num_sockets = 1  # Use only one socket
-    num_benchmark_cores = ncores_per_socket * num_sockets
-
     ncores_per_instance = ncores_per_socket
     iters = 100
 
     if multi_instance=='true':
         ncores_per_instance = 4
-        iters = 500
+        iters = 200
 
     with open(yaml_path) as f:
         yaml_config = yaml.round_trip_load(f, preserve_quotes=True)
@@ -301,7 +296,7 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_i
         else:
             configs.update({
                 'cores_per_instance': int(ncores_per_instance),
-                'num_of_instance': int(num_benchmark_cores // ncores_per_instance)
+                'num_of_instance': int(ncores_per_socket // ncores_per_instance)
             })
             for attr in ['intra_num_of_threads', 'inter_num_of_threads', 'kmp_blocktime']:
                 if configs.get(attr):

@@ -110,12 +110,12 @@ else
 fi
 
 
-# ======== update yaml config ========
+echo "======== update yaml config ========"
 echo -e "\nPrint origin yaml..."
 cat ${yaml}
 python ${SCRIPTS_PATH}/update_yaml_config.py --yaml=${yaml} --framework=${framework} \
 --dataset_location=${dataset_location} --batch_size=${batch_size} --strategy=${strategy} \
---new_benchmark=${new_benchmark} --multi_instance='false'
+--new_benchmark=${new_benchmark} --multi_instance='true'
 echo -e "\nPrint updated yaml... "
 cat ${yaml}
 

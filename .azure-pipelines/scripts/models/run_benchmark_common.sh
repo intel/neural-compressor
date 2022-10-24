@@ -82,9 +82,9 @@ function multiInstance() {
 cmd="${benchmark_cmd} --input_model=${input_model}"
 
 if [ "${new_benchmark}" == "true" ]; then
-    echo "run performance in precision ${precision}"
+    echo "run with internal benchmark..."
     eval ${cmd} 2>&1 | tee ${log_dir}/${framework}-${model}-performance-${precision}.log
 else
-#    multiInstance
-    multiInstance 2>&1 | tee ${log_dir}/${framework}-${model}-performance-${precision}.log
+    echo "run with external multiInstance benchmark..."
+    multiInstance
 fi

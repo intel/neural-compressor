@@ -29,7 +29,7 @@ if [ "${model}" == "resnet18" ]; then
     input_model=""
     yaml="conf.yaml"
     strategy="bayesian"
-    batch_size=100
+    batch_size=1
     new_benchmark=false
     tuning_cmd="bash run_tuning.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=benchmark --batch_size=${batch_size} --iters=200"
@@ -39,7 +39,7 @@ elif [ "${model}" == "resnet18_fx" ]; then
     input_model=""
     yaml="conf.yaml"
     strategy="basic"
-    batch_size=100
+    batch_size=1
     new_benchmark=false
     tuning_cmd="bash run_tuning.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=benchmark --batch_size=${batch_size} --iters=200"
