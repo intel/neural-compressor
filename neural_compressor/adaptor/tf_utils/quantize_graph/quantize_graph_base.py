@@ -281,8 +281,10 @@ class QuantizeNodeBase():
                      or self.node_name_mapping \
                         [helper.node_name_from_input(node.input[0])].node.op.find("FusedBatchNorm") == -1
                      or self.node_name_mapping \
-                        [helper.node_name_from_input(node.input[0])].node.attr['is_training'].b):
-            return True
+                        [helper.node_name_from_input(node.input[0])].node.attr['is_training'].b
+                     or len(self.node_name_mapping \
+                        [helper.node_name_from_input(node.input[0])].output) > 1):
+                        return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
         elif (node.op.find("QuantizedConv") != -1
