@@ -278,7 +278,7 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_i
 
     if multi_instance=='true':
         ncores_per_instance = 4
-        iters = 200
+        iters = 500
 
     with open(yaml_path) as f:
         yaml_config = yaml.round_trip_load(f, preserve_quotes=True)
