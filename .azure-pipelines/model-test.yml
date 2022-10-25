@@ -13,11 +13,11 @@ parameters:
 - name: test_tf
   displayName: Run tensorflow models?
   type: boolean
-  default: true
+  default: false
 - name: test_pt
   displayName: Run pytorch models?
   type: boolean
-  default: true
+  default: false
 - name: test_onnx
   displayName: Run onnxrt models?
   type: boolean
@@ -25,7 +25,7 @@ parameters:
 - name: test_mxnet
   displayName: Run mxnet models?
   type: boolean
-  default: true
+  default: false
 
 stages:
 - ${{ if eq(parameters.test_tf, true) }}:

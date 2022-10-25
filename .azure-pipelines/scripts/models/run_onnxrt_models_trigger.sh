@@ -18,7 +18,7 @@ do
 done
 
 FRAMEWORK="onnxrt"
-FRAMEWORK_VERSION="1.11.0"
+FRAMEWORK_VERSION="1.12.1"
 
 
 # ======== set up config for onnxrt models ========
