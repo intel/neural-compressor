@@ -2606,7 +2606,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch_fx"
         # pragma: no cover
-        if self.approach != 'post_training_dynamic_quant' and self.version > Version("1.12.1"):
+        if self.approach != 'post_training_dynamic_quant' and self.version.release >= Version("1.13.0").release:
             assert dataloader is not None, "Please pass a dataloader to quantizer!"
             example_inputs = get_example_inputs(dataloader)
         else:
