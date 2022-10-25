@@ -137,8 +137,11 @@ if [[ "${framework}" == "onnxrt" ]]; then
   model_name="${log_dir}/${model}/${framework}-${model}-tune.onnx"
 elif [[ "${framework}" == "mxnet" ]]; then
   model_name="${log_dir}/${model}"
-else
+elif [[ "${framework}" == "tensorflow" ]]; then
   model_name="${log_dir}/${model}/${framework}-${model}-tune.pb"
+elif [[ "${framework}" == "pytorch" ]]; then
+  model_name=${input_model}
+  benchmark_cmd="${benchmark_cmd} --int8=true"
 fi
 /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh --framework=${framework} --model=${model} \
  --input_model="${model_name}" --benchmark_cmd="${benchmark_cmd}" \
