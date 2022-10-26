@@ -62,7 +62,6 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                     if re.search(key_patterns["pattern"], line):
                         print(f"Replacing {key} key.")
                         line = re.sub(key_patterns["pattern"], key_patterns["replacement"], line)
-                # print(line)
                 config.write(line)
 
     if framework == "pytorch":
@@ -94,7 +93,6 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                     if re.search(key_patterns["pattern"], line):
                         print(f"Replacing {key} key.")
                         line = re.sub(key_patterns["pattern"], key_patterns["replacement"], line)
-                # print(line)
                 config.write(line)
 
 
@@ -236,8 +234,6 @@ def update_yaml_config_tuning(yaml_file, strategy = None, mode = None, batch_siz
 
     yaml_content = yaml.round_trip_dump(yaml_config)
 
-    # print(yaml_content)
-
     with open(yaml_file, 'w') as output_file:
         output_file.write(yaml_content)
 
@@ -261,8 +257,6 @@ def update_yaml_config_benchmark_acc(yaml_path: str, batch_size = None):
     print(f"====== update_yaml_config_benchmark_acc ========")
 
     yaml_content = yaml.round_trip_dump(yaml_config)
-
-    # print(yaml_content)
 
     with open(yaml_path, 'w') as output_file:
         output_file.write(yaml_content)
@@ -308,8 +302,6 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_i
     print(f"====== update_yaml_config_benchmark_perf ========")
 
     yaml_content = yaml.round_trip_dump(yaml_config)
-
-    # print(yaml_content)
 
     with open(yaml_path, 'w') as output_file:
         output_file.write(yaml_content)
