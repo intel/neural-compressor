@@ -9,6 +9,16 @@ variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
 
+tensorflowJobList: [
+  {
+    jobName: 'resnet50v1_5',
+    displayName: 'resnet50v1.5',
+    modelName: 'resnet50v1.5',
+    framework: 'tensorflow',
+    modelFailedName: 'tensorflow_resnet50v1.5_failed',      
+  }
+]
+
 parameters:
 - name: test_tf
   displayName: Run tensorflow models?
@@ -33,200 +43,201 @@ stages:
     displayName: Tensorflow Model Test
     dependsOn: []
     jobs:
-      - job: resnet50v1_5
-        displayName: resnet50v1.5
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet50v1.5'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_resnet50v1.5_failed'
+      for jobItem in tensorflowJobList:
+        - job: jobItem.jobName
+          displayName: jobItem.displayName
+          steps:
+            - template: template/model-job-template.yml
+              parameters:
+                modelName: jobItem.modelName
+                framework: jobItem.framework
+                modelFailedName: jobItem.modelFailedName
 
-      - job: ssd_resnet50_v1
-        displayName: ssd_resnet50_v1
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'ssd_resnet50_v1'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_ssd_resnet50_v1_failed'
+#       - job: ssd_resnet50_v1
+#         displayName: ssd_resnet50_v1
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'ssd_resnet50_v1'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_ssd_resnet50_v1_failed'
 
-      - job: ssd_mobilenet_v1_ckpt
-        displayName: ssd_mobilenet_v1_ckpt
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'ssd_mobilenet_v1_ckpt'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_ssd_mobilenet_v1_ckpt_failed'
+#       - job: ssd_mobilenet_v1_ckpt
+#         displayName: ssd_mobilenet_v1_ckpt
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'ssd_mobilenet_v1_ckpt'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_ssd_mobilenet_v1_ckpt_failed'
 
-      - job: inception_v1
-        displayName: inception_v1
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'inception_v1'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_inception_v1_failed'
+#       - job: inception_v1
+#         displayName: inception_v1
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'inception_v1'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_inception_v1_failed'
 
-      - job: resnet50_fashion
-        displayName: resnet50_fashion
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet50_fashion'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_resnet50_fashion_failed'              
+#       - job: resnet50_fashion
+#         displayName: resnet50_fashion
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'resnet50_fashion'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_resnet50_fashion_failed'              
 
-      - job: darknet19
-        displayName: darknet19
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'darknet19'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_darknet19_failed'              
+#       - job: darknet19
+#         displayName: darknet19
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'darknet19'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_darknet19_failed'              
 
-      - job: densenet121
-        displayName: densenet-121
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'densenet-121'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_densenet-121_failed'              
+#       - job: densenet121
+#         displayName: densenet-121
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'densenet-121'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_densenet-121_failed'              
 
-      - job: resnet101
-        displayName: resnet-101
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet-101'
-              framework: 'tensorflow'
-              modelFailedName: 'tensorflow_resnet-101_failed'              
+#       - job: resnet101
+#         displayName: resnet-101
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'resnet-101'
+#               framework: 'tensorflow'
+#               modelFailedName: 'tensorflow_resnet-101_failed'              
 
-- ${{ if eq(parameters.test_pt, true) }}:
-  - stage: PyTorchModels
-    displayName: PyTorch Model Test
-    dependsOn: []
-    jobs:
-      - job: resnet18
-        displayName: resnet18
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet18'
-              framework: 'pytorch'
-              modelFailedName: 'pytorch_resnet18_failed'              
+# - ${{ if eq(parameters.test_pt, true) }}:
+#   - stage: PyTorchModels
+#     displayName: PyTorch Model Test
+#     dependsOn: []
+#     jobs:
+#       - job: resnet18
+#         displayName: resnet18
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'resnet18'
+#               framework: 'pytorch'
+#               modelFailedName: 'pytorch_resnet18_failed'              
 
-      - job: resnet18_fx
-        displayName: resnet18_fx
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet18_fx'
-              framework: 'pytorch'
-              modelFailedName: 'pytorch_resnet18_fx_failed'              
+#       - job: resnet18_fx
+#         displayName: resnet18_fx
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'resnet18_fx'
+#               framework: 'pytorch'
+#               modelFailedName: 'pytorch_resnet18_fx_failed'              
 
-- ${{ if eq(parameters.test_mxnet, true) }}:
-  - stage: MXNetModels
-    displayName: Mxnet Model Test
-    dependsOn: []
-    jobs:
-      - job: resnet50v1
-        displayName: resnet50v1
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet50v1'
-              framework: 'mxnet'
-              modelFailedName: 'mxnet_resnet50v1_failed'              
+# - ${{ if eq(parameters.test_mxnet, true) }}:
+#   - stage: MXNetModels
+#     displayName: Mxnet Model Test
+#     dependsOn: []
+#     jobs:
+#       - job: resnet50v1
+#         displayName: resnet50v1
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'resnet50v1'
+#               framework: 'mxnet'
+#               modelFailedName: 'mxnet_resnet50v1_failed'              
 
-- ${{ if eq(parameters.test_onnx, true) }}:
-  - stage: ONNXModels
-    displayName: ONNXrt Model Test
-    dependsOn: []
-    jobs:
-      - job: resnet50_v1_12
-        displayName: resnet50-v1-12
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'resnet50-v1-12'
-              framework: 'onnxrt'
-              modelFailedName: 'onnxrt_resnet50-v1-12_failed'              
+# - ${{ if eq(parameters.test_onnx, true) }}:
+#   - stage: ONNXModels
+#     displayName: ONNXrt Model Test
+#     dependsOn: []
+#     jobs:
+#       - job: resnet50_v1_12
+#         displayName: resnet50-v1-12
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'resnet50-v1-12'
+#               framework: 'onnxrt'
+#               modelFailedName: 'onnxrt_resnet50-v1-12_failed'              
 
-      - job: bert_base_MRPC_dynamic
-        displayName: bert_base_MRPC_dynamic
-        steps:
-          - template: template/model-job-template.yml
-            parameters:
-              modelName: 'bert_base_MRPC_dynamic'
-              framework: 'onnxrt'
-              modelFailedName: 'onnxrt_bert_base_MRPC_dynamic_failed'              
+#       - job: bert_base_MRPC_dynamic
+#         displayName: bert_base_MRPC_dynamic
+#         steps:
+#           - template: template/model-job-template.yml
+#             parameters:
+#               modelName: 'bert_base_MRPC_dynamic'
+#               framework: 'onnxrt'
+#               modelFailedName: 'onnxrt_bert_base_MRPC_dynamic_failed'              
 
-  - stage: GenerateLogs
-    displayName: Generate Report
-    dependsOn: [ TensorflowModels, PyTorchModels, MXNetModels, ONNXModels ]
-    condition: succeededOrFailed()
-    jobs:
-      - job: GenerateReport
-        displayName: generate report
-        steps:
-          - script: |
-              echo ${BUILD_SOURCESDIRECTORY}
-              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune
-            displayName: 'Clean workspace'
-          - checkout: self
-            clean: true
-            displayName: 'Checkout out Repo'
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact:
-              patterns: '**/*_summary.log'
-              path: $(OUT_SCRIPT_PATH)
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact:
-              patterns: '**/*_tuning_info.log'
-              path: $(OUT_SCRIPT_PATH)
-          - task: UsePythonVersion@0
-            displayName: 'Use Python 3.8.0'
-            inputs:
-              versionSpec: '3.8.0'
-          - script: |
-              cd ${OUT_SCRIPT_PATH}
-              mkdir generated
-              mkdir last_generated
-              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
-            displayName: "Collect all logs"
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              source: 'specific'
-              artifact: 'FinalReport'
-              patterns: '**.log'
-              path: $(OUT_SCRIPT_PATH)/last_generated
-              project: $(System.TeamProject)
-              pipeline: 'Baseline'
-              runVersion: 'specific'
-              runId: $(model_runID)
-              retryDownloadCount: 3
-            displayName: 'Download last logs'
-          - script: |
-              echo "------ Generating final report.html ------"
-              cd ${OUT_SCRIPT_PATH}
-              /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
-            displayName: 'Generate report'
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: $(OUT_SCRIPT_PATH)/generated
-              artifact: FinalReport
-              publishLocation: 'pipeline'
-            displayName: "Publish report"
-          - script: |
-              if [ $(is_perf_reg) == 'true' ]; then
-                echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
-                exit 1
-              fi
-            displayName: "Specify performance regression"
+#   - stage: GenerateLogs
+#     displayName: Generate Report
+#     dependsOn: [ TensorflowModels, PyTorchModels, MXNetModels, ONNXModels ]
+#     condition: succeededOrFailed()
+#     jobs:
+#       - job: GenerateReport
+#         displayName: generate report
+#         steps:
+#           - script: |
+#               echo ${BUILD_SOURCESDIRECTORY}
+#               sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+#               echo y | docker system prune
+#             displayName: 'Clean workspace'
+#           - checkout: self
+#             clean: true
+#             displayName: 'Checkout out Repo'
+#           - task: DownloadPipelineArtifact@2
+#             inputs:
+#               artifact:
+#               patterns: '**/*_summary.log'
+#               path: $(OUT_SCRIPT_PATH)
+#           - task: DownloadPipelineArtifact@2
+#             inputs:
+#               artifact:
+#               patterns: '**/*_tuning_info.log'
+#               path: $(OUT_SCRIPT_PATH)
+#           - task: UsePythonVersion@0
+#             displayName: 'Use Python 3.8.0'
+#             inputs:
+#               versionSpec: '3.8.0'
+#           - script: |
+#               cd ${OUT_SCRIPT_PATH}
+#               mkdir generated
+#               mkdir last_generated
+#               python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
+#             displayName: "Collect all logs"
+#           - task: DownloadPipelineArtifact@2
+#             inputs:
+#               source: 'specific'
+#               artifact: 'FinalReport'
+#               patterns: '**.log'
+#               path: $(OUT_SCRIPT_PATH)/last_generated
+#               project: $(System.TeamProject)
+#               pipeline: 'Baseline'
+#               runVersion: 'specific'
+#               runId: $(model_runID)
+#               retryDownloadCount: 3
+#             displayName: 'Download last logs'
+#           - script: |
+#               echo "------ Generating final report.html ------"
+#               cd ${OUT_SCRIPT_PATH}
+#               /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
+#             displayName: 'Generate report'
+#           - task: PublishPipelineArtifact@1
+#             inputs:
+#               targetPath: $(OUT_SCRIPT_PATH)/generated
+#               artifact: FinalReport
+#               publishLocation: 'pipeline'
+#             displayName: "Publish report"
+#           - script: |
+#               if [ $(is_perf_reg) == 'true' ]; then
+#                 echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
+#                 exit 1
+#               fi
+#             displayName: "Specify performance regression"
