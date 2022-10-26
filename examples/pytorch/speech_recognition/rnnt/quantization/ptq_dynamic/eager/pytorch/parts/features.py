@@ -162,8 +162,9 @@ class FilterbankFeatures(nn.Module):
         # do stft
         x = torch.stft(x, n_fft=self.n_fft, hop_length=self.hop_length,
                        win_length=self.win_length,
-                       center=True, window=self.window.to(dtype=torch.float))
-
+                       center=True, window=self.window.to(dtype=torch.float),
+                       return_complex=False
+                       )
         # get power spectrum
         x = x.pow(2).sum(-1)
 
