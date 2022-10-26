@@ -1,8 +1,8 @@
 parameters:
 - name: codeScanFileName
-  type: string   
+  type: string
 - name: uploadPath
-  type: string 
+  type: string
 
 - name: codeScanContainerName
   type: string
@@ -26,7 +26,5 @@ steps:
     inputs:
       targetPath: .azure-pipelines/scripts/codeScan/scanLog/${{ parameters.uploadPath }}
       artifact: ${{ parameters.codeScanFileName }}
-      publishLocation: 'pipeline'      
+      publishLocation: 'pipeline'
     displayName: "PublishPipelineArtifact"
-
-            

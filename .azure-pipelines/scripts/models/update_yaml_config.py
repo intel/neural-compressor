@@ -271,13 +271,8 @@ def update_yaml_config_benchmark_acc(yaml_path: str, batch_size = None):
 def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_instance = None):
     # Get cpu information for multi-instance
     total_cores = psutil.cpu_count(logical=False)
-    # total_sockets = get_number_of_sockets()
     total_sockets = 1
     ncores_per_socket = total_cores / total_sockets
-
-    num_sockets = 1  # Use only one socket
-    num_benchmark_cores = ncores_per_socket * num_sockets
-
     ncores_per_instance = ncores_per_socket
     iters = 100
 
@@ -301,7 +296,7 @@ def update_yaml_config_benchmark_perf(yaml_path: str, batch_size = None, multi_i
         else:
             configs.update({
                 'cores_per_instance': int(ncores_per_instance),
-                'num_of_instance': int(num_benchmark_cores // ncores_per_instance)
+                'num_of_instance': int(ncores_per_socket // ncores_per_instance)
             })
             for attr in ['intra_num_of_threads', 'inter_num_of_threads', 'kmp_blocktime']:
                 if configs.get(attr):
@@ -328,5 +323,3 @@ if __name__ == "__main__":
     if args.new_benchmark=='true':
         update_yaml_config_benchmark_acc(args.yaml, batch_size=args.batch_size)
         update_yaml_config_benchmark_perf(args.yaml, batch_size=args.batch_size, multi_instance=args.multi_instance)
-
-

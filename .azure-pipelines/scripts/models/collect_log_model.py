@@ -16,7 +16,7 @@ print('===== collecting log model =======')
 print('build_id: '+args.build_id)
 OS='linux'
 PLATFORM='icx'
-URL ='https://dev.azure.com/lpot-inc/test-lpot-public/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
+URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
 
 print(args)
 
@@ -43,19 +43,22 @@ def main():
     # get model benchmark results
     for precision in ['int8', 'fp32']:
         throughput = 0.0
+        bs = 1
         for root, dirs, files in os.walk(args.logs_dir):
             for name in files:
                 file_name = os.path.join(root, name)
                 print(file_name)
                 if 'performance-'+precision in name:
                     for line in open(file_name, "r"):
-                        result = parse_perf_line(line)
-                        if result:
-                            throughput += result
+                        result= parse_perf_line(line)
+                        if result.get("throughput"):
+                            throughput += result.get("throughput")
+                        if result.get("batch_size"):
+                            bs = result.get("batch_size")
         # set model status failed
         if throughput==0.0:
             os.system('echo "##vso[task.setvariable variable='+args.framework+'_'+args.model+'_failed]true"')
-        results.append('{};{};{};{};{};{};Inference;Performance;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, precision.upper(), args.model, throughput, URL))
+        results.append('{};{};{};{};{};{};Inference;Performance;{};{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, precision.upper(), args.model, bs, throughput, URL))
     # write model logs
     f = open(args.output_dir+'/'+args.framework+'_'+args.model+'_summary.log', "a")
     f.writelines("OS;Platform;Framework;Version;Precision;Model;Mode;Type;BS;Value;Url\n")
@@ -107,9 +110,17 @@ def parse_tuning_line(line, tmp):
 
 
 def parse_perf_line(line) -> float:
+    perf_data = {}
+
     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?)", line)
     if throughput and throughput.group(1):
-        return float(throughput.group(1))
+        perf_data.update({"throughput": float(throughput.group(1))})
+
+    batch_size = re.search(r"Batch size = ([0-9]+)", line)
+    if batch_size and batch_size.group(1):
+        perf_data.update({"batch_size": int(batch_size.group(1))})
+
+    return perf_data
 
 
 if __name__ == '__main__':

@@ -27,8 +27,8 @@ stages:
           dockerFileName: 'Dockerfile'
           containerName: $(NCODER_CONTAINER_NAME)
 
-    - script: |
-        docker exec $(NCODER_CONTAINER_NAME) bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-        && bash install_nc_full.sh \
-        && bash ut/run_ncoder.sh"
-      displayName: 'Install Neural Compressor and run UT'
+      - script: |
+          docker exec $(NCODER_CONTAINER_NAME) bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+          && bash install_nc_full.sh \
+          && bash ut/run_ncoder.sh"
+        displayName: 'Install Neural Compressor and run UT'

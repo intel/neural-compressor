@@ -28,7 +28,7 @@ if [ "${model}" == "resnet50v1" ]; then
     input_model="/tf_dataset/mxnet/resnet50_v1"
     yaml="cnn.yaml"
     strategy="mse"
-    batch_size=32
+    batch_size=1
     new_benchmark=false
     tuning_cmd="bash run_tuning.sh --topology=resnet50_v1 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet50_v1 --dataset_location=${dataset_location} --batch_size=1 --iters=500 --mode=benchmark"

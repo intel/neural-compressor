@@ -27,7 +27,7 @@ if [ "${model}" == "resnet50v1.5" ]; then
     input_model="/tf_dataset/pre-trained-models/resnet50v1_5/fp32/resnet50_v1.pb"
     yaml="resnet50_v1_5.yaml"
     strategy="basic"
-    batch_size=100
+    batch_size=1
     new_benchmark=true
     tuning_cmd="bash run_tuning.sh --config=${yaml} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
@@ -57,7 +57,7 @@ elif [ "${model}" == "inception_v1" ]; then
     input_model="/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_inception_v1.pb"
     yaml="inception_v1.yaml"
     strategy="basic"
-    batch_size=100
+    batch_size=1
     new_benchmark=true
     tuning_cmd="bash run_tuning.sh --config=${yaml} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
@@ -67,20 +67,20 @@ elif [ "${model}" == "darknet19" ]; then
     input_model="/tf_dataset/tensorflow/tf_oob_models/ov/all_tf_models/PublicInHouse/classification/darknet19/darknet19.pb"
     yaml="config.yaml"
     strategy="basic"
-    batch_size=100
+    batch_size=1
     new_benchmark=false
     tuning_cmd="bash run_tuning.sh --topology=${model} --dataset_location= --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=200"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=500"
 elif [ "${model}" == "densenet-121" ]; then
     model_src_dir="oob_models/quantization/ptq"
     dataset_location=""
     input_model="/tf_dataset/tensorflow/tf_oob_models/ov/all_tf_models/classification/densenet/121/tf/densenet-121.pb"
     yaml="config.yaml"
     strategy="basic"
-    batch_size=100
+    batch_size=1
     new_benchmark=false
     tuning_cmd="bash run_tuning.sh --topology=${model} --dataset_location= --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=200"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet-101" ]; then
     model_src_dir="oob_models/quantization/ptq"
     dataset_location=""
@@ -90,7 +90,7 @@ elif [ "${model}" == "resnet-101" ]; then
     batch_size=1
     new_benchmark=false
     tuning_cmd="bash run_tuning.sh --topology=${model} --dataset_location= --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=200"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet50_fashion" ]; then
     model_src_dir="image_recognition/keras_models/resnet50_fashion/quantization/ptq"
     dataset_location="/tf_dataset2/datasets/mnist/FashionMNIST_small"
@@ -108,4 +108,3 @@ fi
 --model=${model} --model_src_dir=${model_src_dir} --dataset_location=${dataset_location} \
 --input_model=${input_model} --batch_size=${batch_size} --strategy=${strategy} --new_benchmark=${new_benchmark} \
 --tuning_cmd="${tuning_cmd}" --benchmark_cmd="${benchmark_cmd}" --tune_acc=${tune_acc} --build_id=${build_id}
-

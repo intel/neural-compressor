@@ -70,7 +70,7 @@ elif [[ "${framework}" == "pytorch" ]]; then
   pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
   pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
 elif [[ "${framework}" == "onnxrt" ]]; then
-  pip install onnx==${fwk_ver}
+  pip install onnx==1.11.0
   pip install onnxruntime==${fwk_ver}
 elif [[ "${framework}" == "mxnet" ]]; then
   if [[ "${fwk_ver}" == "1.7.0" ]]; then
@@ -110,12 +110,12 @@ else
 fi
 
 
-# ======== update yaml config ========
+echo "======== update yaml config ========"
 echo -e "\nPrint origin yaml..."
 cat ${yaml}
 python ${SCRIPTS_PATH}/update_yaml_config.py --yaml=${yaml} --framework=${framework} \
 --dataset_location=${dataset_location} --batch_size=${batch_size} --strategy=${strategy} \
---new_benchmark=${new_benchmark} --multi_instance='false'
+--new_benchmark=${new_benchmark} --multi_instance='true'
 echo -e "\nPrint updated yaml... "
 cat ${yaml}
 
@@ -137,8 +137,11 @@ if [[ "${framework}" == "onnxrt" ]]; then
   model_name="${log_dir}/${model}/${framework}-${model}-tune.onnx"
 elif [[ "${framework}" == "mxnet" ]]; then
   model_name="${log_dir}/${model}"
-else
+elif [[ "${framework}" == "tensorflow" ]]; then
   model_name="${log_dir}/${model}/${framework}-${model}-tune.pb"
+elif [[ "${framework}" == "pytorch" ]]; then
+  model_name=${input_model}
+  benchmark_cmd="${benchmark_cmd} --int8=true"
 fi
 /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh --framework=${framework} --model=${model} \
  --input_model="${model_name}" --benchmark_cmd="${benchmark_cmd}" \
