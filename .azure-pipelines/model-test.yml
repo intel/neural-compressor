@@ -8,15 +8,6 @@ pool: ICX-16C
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
-  tensorflowJobList: [
-    {
-      jobName: 'resnet50v1_5',
-      displayName: 'resnet50v1.5',
-      modelName: 'resnet50v1.5',
-      framework: 'tensorflow',
-      modelFailedName: 'tensorflow_resnet50v1.5_failed',      
-    }
-  ]
 
 parameters:
 - name: test_tf
@@ -35,6 +26,18 @@ parameters:
   displayName: Run mxnet models?
   type: boolean
   default: true
+- name: tensorflowJobList
+  displayName: tensorflowJobList
+  type: list
+  default: [
+    {
+      jobName: 'resnet50v1_5',
+      displayName: 'resnet50v1.5',
+      modelName: 'resnet50v1.5',
+      framework: 'tensorflow',
+      modelFailedName: 'tensorflow_resnet50v1.5_failed',      
+    }
+  ]  
 
 stages:
 - ${{ if eq(parameters.test_tf, true) }}:
@@ -42,7 +45,7 @@ stages:
     displayName: Tensorflow Model Test
     dependsOn: []
     jobs:
-      for jobItem in $(tensorflowJobList):
+      for jobItem in ${{ parameters.tensorflowJobList }}:
         - job: jobItem.jobName
           displayName: jobItem.displayName
           steps:
