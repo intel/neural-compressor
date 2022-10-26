@@ -39,6 +39,34 @@ while [[ $# -gt 0 ]];do
       last_logt_dir=${2}
       shift 2
       ;;
+    --ghprbPullId)
+      ghprbPullId=${2}
+      shift 2
+      ;;
+    --MR_source_branch)
+      MR_source_branch=${2}
+      shift 2
+      ;;
+    --MR_source_repo)
+      MR_source_repo=${2}
+      shift 2
+      ;;
+    --MR_target_branch)
+      MR_target_branch=${2}
+      shift 2
+      ;;
+    --repo_url)
+      repo_url=${2}
+      shift 2
+      ;;
+    --source_commit_id)
+      source_commit_id=${2}
+      shift 2
+      ;;
+    --build_id)
+      build_id=${2}
+      shift 2
+      ;;
     *)
       shift
       ;;
@@ -58,7 +86,11 @@ summaryLogLast="${last_logt_dir}/summary.log"
 tuneLogLast="${last_logt_dir}/tuning_info.log"
 echo "summaryLogLast: ${summaryLogLast}"
 echo "tuneLogLast: ${tuneLogLast}"
-
+echo "MR_source_branch: ${MR_source_branch}"
+echo "MR_source_repo: ${MR_source_repo}"
+echo "MR_target_branch: ${MR_target_branch}"
+echo "repo_url: ${repo_url}"
+echo "commit_id: ${source_commit_id}"
 
 
 function main {
@@ -396,9 +428,9 @@ if [ "${qtools_branch}" == "" ];
 then
   commit_id=$(echo ${ghprbActualCommit} |awk '{print substr($1,1,7)}')
 
-  MR_TITLE="[ <a href='${ghprbPullLink}'>PR-${ghprbPullId}</a> ]"
+  MR_TITLE="[ <a href='${repo_url}/pull/${ghprbPullId}'>PR-${ghprbPullId}</a> ]"
   Test_Info_Title="<th colspan="2">Source Branch</th> <th colspan="4">Target Branch</th> <th colspan="4">Commit</th> "
-  Test_Info="<td colspan="2">${MR_source_branch}</td> <td colspan="4">${MR_target_branch}</td> <td colspan="4">${commit_id}"
+  Test_Info="<td colspan="2"><a href='${MR_source_repo}/tree/${MR_source_branch}'>${MR_source_branch}</a></td> <td colspan="4"><a href='${repo_url}/tree/${MR_target_branch}'>${MR_target_branch}</a></td> <td colspan="4"><a href='${MR_source_repo}/commit/${source_commit_id}'>${source_commit_id:0:6}</a></td>"
 else
   Test_Info_Title="<th colspan="4">Test Branch</th> <th colspan="4">Commit ID</th> "
   Test_Info="<th colspan="4">${qtools_branch}</th> <th colspan="4">${qtools_commit}</th> "
@@ -409,7 +441,7 @@ cat >> ${output_dir}/report.html << eof
 <body>
     <div id="main">
         <h1 align="center">Neural Compressor Tuning Tests ${MR_TITLE}
-        [ <a href="${RUN_DISPLAY_URL}">Job-${BUILD_NUMBER}</a> ]</h1>
+        [ <a href="https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId=${build_id}">Job-${build_id}</a> ]</h1>
       <h1 align="center">Test Status: ${Jenkins_job_status}</h1>
         <h2>Summary</h2>
         <table class="features-table">
@@ -418,7 +450,7 @@ cat >> ${output_dir}/report.html << eof
               ${Test_Info_Title}
               </tr>
               <tr>
-                    <td><a href="https://github.com/intel-innersource/frameworks.ai.lpot.intel-lpot">neural-compressor</a></td>
+                    <td><a href="https://github.com/intel/neural-compressor">neural-compressor</a></td>
               ${Test_Info}
                 </tr>
         </table>
