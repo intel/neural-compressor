@@ -36,122 +36,74 @@ stages:
       - job: resnet50v1_5
         displayName: resnet50v1.5
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet50v1.5'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_resnet50v1.5_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50v1.5 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_resnet50v1.5_failed'
 
       - job: ssd_resnet50_v1
         displayName: ssd_resnet50_v1
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'ssd_resnet50_v1'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_ssd_resnet50_v1_failed) == 'true' ]; then
-                echo "[Failed] Model ssd_resnet50_v1 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_ssd_resnet50_v1_failed'
 
       - job: ssd_mobilenet_v1_ckpt
         displayName: ssd_mobilenet_v1_ckpt
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'ssd_mobilenet_v1_ckpt'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_ssd_mobilenet_v1_ckpt_failed) == 'true' ]; then
-                echo "[Failed] Model ssd_mobilenet_v1_ckpt failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_ssd_mobilenet_v1_ckpt_failed'
 
       - job: inception_v1
         displayName: inception_v1
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'inception_v1'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_inception_v1_failed) == 'true' ]; then
-                echo "[Failed] Model inception_v1 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_inception_v1_failed'
 
       - job: resnet50_fashion
         displayName: resnet50_fashion
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet50_fashion'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_resnet50_fashion_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50_fashion failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_resnet50_fashion_failed'              
 
       - job: darknet19
         displayName: darknet19
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'darknet19'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_darknet19_failed) == 'true' ]; then
-                echo "[Failed] Model darknet19 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_darknet19_failed'              
 
       - job: densenet121
         displayName: densenet-121
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'densenet-121'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_densenet-121_failed) == 'true' ]; then
-                echo "[Failed] Model densenet-121 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_densenet-121_failed'              
 
       - job: resnet101
         displayName: resnet-101
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet-101'
               framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_resnet-101_failed) == 'true' ]; then
-                echo "[Failed] Model resnet-101 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'tensorflow_resnet-101_failed'              
 
 - ${{ if eq(parameters.test_pt, true) }}:
   - stage: PyTorchModels
@@ -161,32 +113,20 @@ stages:
       - job: resnet18
         displayName: resnet18
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet18'
               framework: 'pytorch'
-               
-          - script: |
-              if [ $(pytorch_resnet18_failed) == 'true' ]; then
-                echo "[Failed] Model resnet18 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'pytorch_resnet18_failed'              
 
       - job: resnet18_fx
         displayName: resnet18_fx
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet18_fx'
               framework: 'pytorch'
-               
-          - script: |
-              if [ $(pytorch_resnet18_fx_failed) == 'true' ]; then
-                echo "[Failed] Model resnet18_fx failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'pytorch_resnet18_fx_failed'              
 
 - ${{ if eq(parameters.test_mxnet, true) }}:
   - stage: MXNetModels
@@ -196,17 +136,11 @@ stages:
       - job: resnet50v1
         displayName: resnet50v1
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet50v1'
               framework: 'mxnet'
-               
-          - script: |
-              if [ $(mxnet_resnet50v1_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50v1 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'mxnet_resnet50v1_failed'              
 
 - ${{ if eq(parameters.test_onnx, true) }}:
   - stage: ONNXModels
@@ -216,47 +150,20 @@ stages:
       - job: resnet50_v1_12
         displayName: resnet50-v1-12
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'resnet50-v1-12'
               framework: 'onnxrt'
-               
-          - script: |
-              if [ $(onnxrt_resnet50-v1-12_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50-v1-12 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-#      - job: distilbert_base_MRPC_qdq
-#        displayName: distilbert_base_MRPC_qdq
-#        steps:
-#          - template: template/model-template.yml
-#            parameters:
-#              modelName: 'distilbert_base_MRPC_qdq'
-#              framework: 'onnxrt'
-#
-#          - script: |
-#              if [ $(onnxrt_distilbert_base_MRPC_qdq_failed) == 'true' ]; then
-#                echo "[Failed] Model distilbert_base_MRPC_qdq failed, please check artifacts and logs."
-#                exit 1
-#              fi
-#            displayName: "Check Test Status"
+              modelFailedName: 'onnxrt_resnet50-v1-12_failed'              
 
       - job: bert_base_MRPC_dynamic
         displayName: bert_base_MRPC_dynamic
         steps:
-          - template: template/model-template.yml
+          - template: template/model-job-template.yml
             parameters:
               modelName: 'bert_base_MRPC_dynamic'
               framework: 'onnxrt'
-               
-          - script: |
-              if [ $(onnxrt_bert_base_MRPC_dynamic_failed) == 'true' ]; then
-                echo "[Failed] Model bert_base_MRPC_dynamic failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+              modelFailedName: 'onnxrt_bert_base_MRPC_dynamic_failed'              
 
   - stage: GenerateLogs
     displayName: Generate Report

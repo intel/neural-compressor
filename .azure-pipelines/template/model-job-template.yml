@@ -1,0 +1,24 @@
+parameters:
+- name: modelName
+  type: string
+  default: 'resnet50v1.5'
+- name: framework
+  type: string
+  default: 'tensorflow'
+
+- name: modelFailedName
+  type: string
+
+
+steps:
+  - template: model-template.yml
+    parameters:
+      modelName: ${{ parameters.modelName }}
+      framework: ${{ parameters.framework }}
+        
+  - script: |
+      if [ ${{ parameters.modelFailedName }} == 'true' ]; then
+        echo "[Failed] Model ${{ parameters.modelName }} failed, please check artifacts and logs."
+        exit 1
+      fi
+    displayName: "Check Test Status"
