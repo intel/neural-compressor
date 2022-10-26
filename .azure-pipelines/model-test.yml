@@ -26,18 +26,22 @@ parameters:
   displayName: Run mxnet models?
   type: boolean
   default: true
+
 - name: tensorflowJobList
-  displayName: tensorflowJobList
-  type: list
-  default: [
-    {
-      jobName: 'resnet50v1_5',
-      displayName: 'resnet50v1.5',
-      modelName: 'resnet50v1.5',
-      framework: 'tensorflow',
-      modelFailedName: 'tensorflow_resnet50v1.5_failed',      
-    }
-  ]  
+  type: object
+  default:
+  - jobName: 'resnet50v1_5'
+    displayName: 'resnet50v1.5'
+    modelName: 'resnet50v1.5'
+    framework: 'tensorflow'
+    modelFailedName: 'tensorflow_resnet50v1.5_failed'
+
+  - jobName: 'ssd_mobilenet_v1_ckpt'
+    displayName: 'ssd_mobilenet_v1_ckpt'
+    modelName: 'ssd_mobilenet_v1_ckpt'
+    framework: 'tensorflow'
+    modelFailedName: 'tensorflow_ssd_mobilenet_v1_ckpt_failed'
+
 
 stages:
 - ${{ if eq(parameters.test_tf, true) }}:
@@ -45,15 +49,15 @@ stages:
     displayName: Tensorflow Model Test
     dependsOn: []
     jobs:
-      for jobItem in ${{ parameters.tensorflowJobList }}:
-        - job: jobItem.jobName
-          displayName: jobItem.displayName
+      - ${{ each jobItem in parameters.tensorflowJobList }}:
+        - job: ${{ jobItem.jobName }}
+          displayName: ${{ jobItem.displayName }}
           steps:
             - template: template/model-job-template.yml
               parameters:
-                modelName: jobItem.modelName
-                framework: jobItem.framework
-                modelFailedName: jobItem.modelFailedName
+                modelName: ${{ jobItem.modelName }}
+                framework: ${{ jobItem.framework }}
+                modelFailedName: ${{ jobItem.modelFailedName }}
 
 #       - job: ssd_resnet50_v1
 #         displayName: ssd_resnet50_v1
