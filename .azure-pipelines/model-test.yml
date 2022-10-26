@@ -8,7 +8,6 @@ pool: ICX-16C
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
-
   tensorflowJobList: [
     {
       jobName: 'resnet50v1_5',
