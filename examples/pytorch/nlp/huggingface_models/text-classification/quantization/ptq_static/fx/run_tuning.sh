@@ -37,6 +37,9 @@ function init_params {
 
 # run_tuning
 function run_tuning {
+    if [ "bert_base_SST-2" = "$topology" ];then
+        sed -i "/relative:/s|relative:.*|relative: 0.001|g" conf.yaml
+    fi
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
