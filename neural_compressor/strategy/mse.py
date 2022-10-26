@@ -254,9 +254,9 @@ class MSETuneStrategy(TuneStrategy):
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=True)
-                    logger.debug(f"The op sensitivity analysis took {time() - start:.2f}s.")
+                    logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     select_op_info = ops_lst[0]
-                    logger.info(f"The op {select_op_info} have the highest sensitivity in the current state, \
+                    logger.info(f"*** The op {select_op_info} have the highest sensitivity in the current state, \
                         fallback it to fp32.")
                     tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0], 
                                                               select_op_info[1], 
@@ -267,13 +267,15 @@ class MSETuneStrategy(TuneStrategy):
                         fallback_records = [[select_op_info]]
                     else:
                         fallback_records.append(fallback_records[-1] + [select_op_info])
-                    logger.debug(f"The fallback ops record: \n{tuning_record_msg(fallback_records)}")
+                    logger.debug(f"*** The fallback ops record: \n{tuning_record_msg(fallback_records)}")
                     yield tune_cfg
 
-                logger.info(f"The accuracy meeting the accuracy requirements, stop fallback ops.")
-                while self.objectives.compare(self.last_tune_result, self.baseline) and \
-                    len(fallback_records) > 0 and len(fallback_records[-1]) > 1:
-                    logger.info(f"Start to re-quant the fallback op in the previous stage.")
+                logger.info(f"*** The accuracy meeting the accuracy requirements, stop fallback ops.")
+                while self.objectives.compare(self.last_tune_result, self.baseline):
+                    if len(fallback_records) == 0:
+                        logger.info(f"*** Stop re-quan due to no int8 op left.")
+                        break
+                    logger.info(f"*** Start to re-quant the fallback op in the previous stage.")
                     # Track the current fallback ops
                     tmp_fallback_ops = fallback_records[-1] if fallback_records else [] 
                     start = time()
@@ -281,7 +283,7 @@ class MSETuneStrategy(TuneStrategy):
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=False)
-                    logger.debug(f"The op sensitivity analysis took {time() - start:.2f}s.")
+                    logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     for select_op_info in ops_lst:
                         #assert select_op_info in tmp_fallback_ops, f"{select_op_info} not in fallback list."
                         if select_op_info not in tmp_fallback_ops:
@@ -291,18 +293,18 @@ class MSETuneStrategy(TuneStrategy):
                         new_fallback_ops = deepcopy(tmp_fallback_ops)
                         new_fallback_ops.remove(select_op_info)
                         if new_fallback_ops not in fallback_records:
-                            logger.info(f"The op {select_op_info} have the lowest sensitivity in the current state, \
+                            logger.info(f"*** The op {select_op_info} have the lowest sensitivity in the current state, \
                                         re-quantize it.")
                             tune_cfg[select_op_info] = op_quant_cfgs[select_op_info]
                             fallback_records.append(new_fallback_ops)
-                            logger.debug(f"The fallback ops record: \n{tuning_record_msg(fallback_records)}")
+                            logger.debug(f"*** The fallback ops record: \n{tuning_record_msg(fallback_records)}")
                             yield tune_cfg
                             break
                         else:
-                            logger.debug(f"Skip re-qaunt {select_op_info}, due the config has been evallated.")
+                            logger.debug(f"*** Skip re-qaunt {select_op_info}, due the config has been evallated.")
                             continue
                 self.re_quant = False
-                logger.info(f"The accuracy not meeting the accuracy requirements, stop re-quantize ops.")
+                logger.info(f"*** The accuracy not meeting the accuracy requirements, stop re-quantize ops.")
             else:
                 # Fallback
                 for target_dtype in ['bf16', 'fp32']:

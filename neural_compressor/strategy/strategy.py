@@ -40,6 +40,7 @@ from ..algorithm.fast_bias_correction import FastBiasCorrection
 import copy
 import numpy as np
 from collections import OrderedDict
+from time import time
 from ..utils import logger
 
 
@@ -138,6 +139,7 @@ class TuneStrategy(object):
         self.tune_data = {}
         self.tune_result_record = []
         self.tuning_history = []
+        self.tuning_result_data = []
         # The tuning history ever made, structured like below:
         # [
         #   {
@@ -217,7 +219,9 @@ class TuneStrategy(object):
         self.show_baseline_info()
 
         trials_count = 0
+        traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
+            tuning_start_time = time()
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
@@ -251,9 +255,21 @@ class TuneStrategy(object):
                                     q_config=self.q_model.q_config)
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
+            now_time = time()
+            acc_res_msg = ""
+            performace_res_msg = ""
+            if self.tuning_result_data:
+                acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
+                performace_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
+            logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
+            logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
+            logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
+            logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
+            
+            
             if need_stop:
                 if self.re_quant:
-                    logger.info("Start to re-quant ops.")
+                    logger.info("*** Do not stop the tuning process, re-quantize the ops.")
                     continue
                 if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
@@ -777,7 +793,7 @@ class TuneStrategy(object):
             '{:.4f} '.format(self.last_tune_result[1][i]) if self.last_tune_result else 'n/a',
             '{:.4f} '.format(self.best_tune_result[1][i]) if self.best_tune_result else 'n/a'] \
             for i, obj in enumerate(self.objectives.representation)])
-
+        self.tuning_result_data = output_data
         Statistics(output_data,
                    header='Tune Result Statistics',
                    field_names=['Info Type', 'Baseline', 'Tune {} result'.format(trials_count), \
