@@ -9,15 +9,15 @@ variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
 
-tensorflowJobList: [
-  {
-    jobName: 'resnet50v1_5',
-    displayName: 'resnet50v1.5',
-    modelName: 'resnet50v1.5',
-    framework: 'tensorflow',
-    modelFailedName: 'tensorflow_resnet50v1.5_failed',      
-  }
-]
+  tensorflowJobList: [
+    {
+      jobName: 'resnet50v1_5',
+      displayName: 'resnet50v1.5',
+      modelName: 'resnet50v1.5',
+      framework: 'tensorflow',
+      modelFailedName: 'tensorflow_resnet50v1.5_failed',      
+    }
+  ]
 
 parameters:
 - name: test_tf
@@ -43,7 +43,7 @@ stages:
     displayName: Tensorflow Model Test
     dependsOn: []
     jobs:
-      for jobItem in tensorflowJobList:
+      for jobItem in $(tensorflowJobList):
         - job: jobItem.jobName
           displayName: jobItem.displayName
           steps:
