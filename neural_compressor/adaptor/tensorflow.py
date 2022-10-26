@@ -1425,6 +1425,59 @@ class TensorFlowAdaptor(Adaptor):
     def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
         from .tf_utils.util import tf_diagnosis_helper
         return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
+    
+    def calcutate_op_sensitivity(self, fp32_model, dataloader, tune_cfg, fallback=True):
+        """Compute the op sensitivity.
+        The sensitivity metric is the mse between the output of the last quantized op of 
+        the quantized model and the output of its corresponding op in the fp32 model.
+        Step1. backup the tune cfg
+        Step2. if fallback: fallback each int8 op and compute its mse
+               if re-quantize: re-quantize each fp32 op(fallback in the previous stage) and compute its ms
+        Step3. Sorted op name list according to its mse
+        Args:
+            fp32_model: The fp32 model.
+            dataloader: the dataloader with full dataset.
+            tune_cfg: tuning config
+            fallback: denote fallback stage or re-quantize stage
+
+        Returns:
+            An op names list that is sorted by its mse.
+        """
+        # Step1. backup the tune cfg
+        from copy import deepcopy
+        tune_cfg = deepcopy(tune_cfg)
+        int8_cfgs = {...} # key: (op_name, op_type), value: config
+        fp32_cfgs = {...} # key: (op_name, op_type), value: config
+        if fallback:
+            ops_lst = []  # all int8 ops
+        else:
+            ops_lst = [] # all fp32 ops
+        # Step2. compute mse
+        mse_result = self._get_mse_order(fp32_model, tune_cfg, int8_cfgs, fp32_cfgs, ops_lst, fallback)
+        # Step3. Sorted 
+        return ...
+        
+    def _inference_model_on_batches(self, model, dataloader, output_op_name):
+        output = None
+        ...
+        return output
+    
+    def _get_mse_order(self, fp32_model, tune_cfg, int8_cfgs, fp32_cfgs, ops_lst, fallback, dataloader):
+        mse_result = {}
+        for op in ops_lst:
+            ...
+            # Replace the op config in tune cfg
+            # Get q model
+            # Inference q model and get the output of the model [TODO, the last quantized op]
+            # Inference fp32 model and get the output of the fp32 model [TODO, the last quantized op]
+            # calculate mse
+        return mse_result
+            
+            
+            
+        
+
+
 
 
 @adaptor_registry
