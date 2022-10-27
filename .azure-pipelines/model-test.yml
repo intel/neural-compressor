@@ -174,7 +174,7 @@ stages:
 
   - stage: GenerateLogs
     displayName: Generate Report
-    dependsOn: [ TensorflowModels, PyTorchModels, PyTorchModels, ONNXModels ]
+    dependsOn: [ TensorflowModels, PyTorchModels, MXNetModels, ONNXModels ]
     condition: always()
     jobs:
       - job: GenerateReport
