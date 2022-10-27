@@ -171,10 +171,10 @@ stages:
                 modelName: ${{ jobItem.modelName }}
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}  
-                
+
   - stage: GenerateLogs
     displayName: Generate Report
-    condition: or(eq(parameters.test_tf, true), eq(parameters.test_pt, true), eq(parameters.test_mxnet, true), eq(parameters.test_onnx, true))
+    condition: or(eq('${{ parameters.test_tf }}', 'true'), eq('${{ parameters.test_pt }}', 'true'), eq('${{ parameters.test_mxnet }}', 'true'), eq('${{ parameters.test_onnx }}', 'true'))
     jobs:
       - job: GenerateReport
         displayName: generate report
