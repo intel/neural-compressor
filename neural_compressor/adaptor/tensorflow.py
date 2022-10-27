@@ -89,6 +89,8 @@ class TensorFlowAdaptor(Adaptor):
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.callbacks = []
 
+        self.optype_statistics = None
+
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
         # Convert to a numpy array
@@ -661,12 +663,17 @@ class TensorFlowAdaptor(Adaptor):
                         res[i.op]['FP32'] += 1
                 else:
                     res[i.op]['FP32'] += 1
-        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-                        res[op_type]['BF16'], res[op_type]['FP32']] for op_type in fp32_op_list]
+        
+        field_names = ["Op Type", "Total", "INT8", "BF16", "FP32"]
+        output_data = [[
+            op_type, sum(res[op_type].values()), 
+            res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']]
+        for op_type in fp32_op_list]
 
         Statistics(output_data,
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
 
     def _query_bf16_ops(self, matched_nodes):
         self.bf16_op_details = OrderedDict()

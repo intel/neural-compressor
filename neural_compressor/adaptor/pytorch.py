@@ -1134,6 +1134,8 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.dump_times = 0
         self.fused_dict = {}
 
+        self.optype_statistics = None
+
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         """Execute the quantize process on the specified model.
@@ -1424,14 +1426,18 @@ class PyTorchAdaptor(TemplateAdaptor):
         if ignore_log:
             logger.info("Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops" \
                         " due to accuracy issue in PyTorch.")
+        
+        field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
         output_data = [[
-            op_type,
-            sum(res[op_type].values()), res[op_type]['INT8'], res[op_type]['BF16'],
-            res[op_type]['FP32']
-        ] for op_type in res.keys()]
+            op_type, sum(res[op_type].values()), 
+            res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']] 
+        for op_type in res.keys()]
+        
         Statistics(output_data,
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
+        
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,

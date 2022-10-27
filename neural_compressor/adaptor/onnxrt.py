@@ -84,6 +84,8 @@ class ONNXRTAdaptor(Adaptor):
         self.quantize_params = {} # adaptor should know current params at any time
         self.min_max = None
 
+        self.optype_statistics = None
+
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """The function is used to do calibration and quanitization in post-training
@@ -316,12 +318,17 @@ class ONNXRTAdaptor(Adaptor):
             elif node.op_type in res:
                 res[node.op_type]['FP32'] += 1
 
-        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-            res[op_type]['BF16'], res[op_type]['FP16'], res[op_type]['FP32']] for \
-            op_type in res.keys()]
+        field_names=["Op Type", "Total", "INT8", "BF16", "FP16", "FP32"]
+        output_data = [[
+            op_type, sum(res[op_type].values()), 
+            res[op_type]['INT8'], res[op_type]['BF16'], 
+            res[op_type]['FP16'], res[op_type]['FP32']]
+        for op_type in res.keys()]
+        
         Statistics(output_data, 
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP16", "FP32"]).print_stat()
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
 
     def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
