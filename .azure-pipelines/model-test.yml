@@ -172,67 +172,67 @@ stages:
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}  
 
-  # - stage: GenerateLogs
-  #   displayName: Generate Report
-  #   condition: or(eq('${{ parameters.test_tf }}', 'true'), eq('${{ parameters.test_pt }}', 'true'), eq('${{ parameters.test_mxnet }}', 'true'), eq('${{ parameters.test_onnx }}', 'true'))
-  #   jobs:
-  #     - job: GenerateReport
-  #       displayName: generate report
-  #       steps:
-  #         - script: |
-  #             echo ${BUILD_SOURCESDIRECTORY}
-  #             sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-  #             echo y | docker system prune
-  #           displayName: 'Clean workspace'
-  #         - checkout: self
-  #           clean: true
-  #           displayName: 'Checkout out Repo'
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             artifact:
-  #             patterns: '**/*_summary.log'
-  #             path: $(OUT_SCRIPT_PATH)
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             artifact:
-  #             patterns: '**/*_tuning_info.log'
-  #             path: $(OUT_SCRIPT_PATH)
-  #         - task: UsePythonVersion@0
-  #           displayName: 'Use Python 3.8.0'
-  #           inputs:
-  #             versionSpec: '3.8.0'
-  #         - script: |
-  #             cd ${OUT_SCRIPT_PATH}
-  #             mkdir generated
-  #             mkdir last_generated
-  #             python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
-  #           displayName: "Collect all logs"
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             source: 'specific'
-  #             artifact: 'FinalReport'
-  #             patterns: '**.log'
-  #             path: $(OUT_SCRIPT_PATH)/last_generated
-  #             project: $(System.TeamProject)
-  #             pipeline: 'Baseline'
-  #             runVersion: 'specific'
-  #             runId: $(model_runID)
-  #             retryDownloadCount: 3
-  #           displayName: 'Download last logs'
-  #         - script: |
-  #             echo "------ Generating final report.html ------"
-  #             cd ${OUT_SCRIPT_PATH}
-  #             /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
-  #           displayName: 'Generate report'
-  #         - task: PublishPipelineArtifact@1
-  #           inputs:
-  #             targetPath: $(OUT_SCRIPT_PATH)/generated
-  #             artifact: FinalReport
-  #             publishLocation: 'pipeline'
-  #           displayName: "Publish report"
-  #         - script: |
-  #             if [ $(is_perf_reg) == 'true' ]; then
-  #               echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
-  #               exit 1
-  #             fi
-  #           displayName: "Specify performance regression"
+  - stage: GenerateLogs
+    displayName: Generate Report
+    condition: or(eq('${{ parameters.test_tf }}', 'true'), eq('${{ parameters.test_pt }}', 'true'), eq('${{ parameters.test_mxnet }}', 'true'), eq('${{ parameters.test_onnx }}', 'true'))
+    jobs:
+      - job: GenerateReport
+        displayName: generate report
+        steps:
+          - script: |
+              echo ${BUILD_SOURCESDIRECTORY}
+              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+              echo y | docker system prune
+            displayName: 'Clean workspace'
+          - checkout: self
+            clean: true
+            displayName: 'Checkout out Repo'
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: '**/*_summary.log'
+              path: $(OUT_SCRIPT_PATH)
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: '**/*_tuning_info.log'
+              path: $(OUT_SCRIPT_PATH)
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.8.0'
+            inputs:
+              versionSpec: '3.8.0'
+          - script: |
+              cd ${OUT_SCRIPT_PATH}
+              mkdir generated
+              mkdir last_generated
+              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
+            displayName: "Collect all logs"
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              source: 'specific'
+              artifact: 'FinalReport'
+              patterns: '**.log'
+              path: $(OUT_SCRIPT_PATH)/last_generated
+              project: $(System.TeamProject)
+              pipeline: 'Baseline'
+              runVersion: 'specific'
+              runId: $(model_runID)
+              retryDownloadCount: 3
+            displayName: 'Download last logs'
+          - script: |
+              echo "------ Generating final report.html ------"
+              cd ${OUT_SCRIPT_PATH}
+              /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
+            displayName: 'Generate report'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: $(OUT_SCRIPT_PATH)/generated
+              artifact: FinalReport
+              publishLocation: 'pipeline'
+            displayName: "Publish report"
+          - script: |
+              if [ $(is_perf_reg) == 'true' ]; then
+                echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
+                exit 1
+              fi
+            displayName: "Specify performance regression"
