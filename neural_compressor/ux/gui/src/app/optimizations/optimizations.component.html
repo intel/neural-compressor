@@ -32,7 +32,7 @@
         {{ pinnedAccuracyBenchmarks[optimization.id].result.accuracy }} %
       </a>
       <ng-container *ngIf="!pinnedAccuracyBenchmarks[optimization.id]">
-        <button mat-basic-button class="pin" matTooltip="Click to choose benchmark results to pin"
+        <button mat-basic-button class="link" matTooltip="Click to choose benchmark results to pin"
           *ngIf="availableAccuracyBenchmarks[optimization.id] && availableAccuracyBenchmarks[optimization.id].length">
           Click to pin benchmark
         </button>
