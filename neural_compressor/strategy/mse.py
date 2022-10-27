@@ -272,8 +272,8 @@ class MSETuneStrategy(TuneStrategy):
 
                 logger.info(f"*** The accuracy meeting the accuracy requirements, stop fallback ops.")
                 while self.objectives.compare(self.last_tune_result, self.baseline):
-                    if len(fallback_records) == 0:
-                        logger.info(f"*** Stop re-quan due to no int8 op left.")
+                    if len(fallback_records) == 0 or len(fallback_records[-1]) <= 1:
+                        logger.info(f"*** Stop re-quan due to no int8 op or only 1 int8 op left.")
                         break
                     logger.info(f"*** Start to re-quant the fallback op in the previous stage.")
                     # Track the current fallback ops
