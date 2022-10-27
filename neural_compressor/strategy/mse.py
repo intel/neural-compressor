@@ -236,6 +236,7 @@ class MSETuneStrategy(TuneStrategy):
                                     item in tuning_space.query_items_by_quant_mode(target_dtype)]
                 if fallback_items_lst:
                     logger.info(f"Start to fallback op to {target_dtype} one by one.")
+                    self._fallback_started()
                 # replace it with sorted items list
                 fallback_items_name_lst = [item.name for item in fallback_items_lst]
                 # TODO check the best_qmodel

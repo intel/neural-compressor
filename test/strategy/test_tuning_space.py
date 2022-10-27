@@ -193,7 +193,7 @@ class TestTuningSampler(unittest.TestCase):
         conf = None
         # Test the creation of tuning space 
         tuning_space = TuningSpace(self.capability, conf)
-        tuning_space.root_item.show_details()
+        print(tuning_space.root_item.get_details())
         # ops supported static 
         static_items = tuning_space.query_items_by_quant_mode('static')
         static_items_name = [item.name for item in static_items]
@@ -227,7 +227,7 @@ class TestTuningSampler(unittest.TestCase):
         }
         conf = DotDict(conf)
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
-        tuning_space2.root_item.show_details()
+        print(tuning_space2.root_item.get_details())
         found_per_tensor = False
         for quant_mode in ['static', 'dynamic']:
             for op_item in tuning_space2.query_items_by_quant_mode(quant_mode):
@@ -249,7 +249,7 @@ class TestTuningSampler(unittest.TestCase):
         }
         conf = DotDict(conf)
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
-        tuning_space2.root_item.show_details()
+        print(tuning_space2.root_item.get_details())
         found_act_algo_kl_optype1 = False
         found_act_algo_kl_others = False
         for quant_mode in ['static', 'dynamic']:
@@ -276,7 +276,7 @@ class TestTuningSampler(unittest.TestCase):
         }
         conf = DotDict(conf)
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
-        tuning_space2.root_item.show_details()
+        print(tuning_space2.root_item.get_details())
         found_quant_op_name4 = False
         found_fp32_op_name4 = False
         for quant_mode in ['static', 'dynamic']:
@@ -306,7 +306,7 @@ class TestTuningSampler(unittest.TestCase):
         # the optype_wise config will overwrite the model-wise config
         conf = DotDict(conf)
         tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
-        tuning_space2.root_item.show_details()
+        print(tuning_space2.root_item.get_details())
         found_per_tensor = False
         for quant_mode in ['static', 'dynamic']:
             for op_item in tuning_space2.query_items_by_quant_mode(quant_mode):

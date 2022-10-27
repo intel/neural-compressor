@@ -113,6 +113,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         fallback_items_name_lst = bf16_items_name[::-1]
         if fallback_items_name_lst:
             logger.info(f"Start to fallback op to {target_dtype} one by one.")
+            self._fallback_started()
         op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
         initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
         fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],

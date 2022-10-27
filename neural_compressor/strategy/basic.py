@@ -142,6 +142,7 @@ class BasicTuneStrategy(TuneStrategy):
                 fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
                 if fallback_items_lst:
                     logger.info(f"Start to fallback op to {target_dtype} one by one.")
+                    self._fallback_started()
                 fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
                 op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
                 initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
