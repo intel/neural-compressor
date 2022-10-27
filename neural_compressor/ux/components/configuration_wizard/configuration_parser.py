@@ -79,7 +79,7 @@ class ConfigurationParser:
         }
 
         self.metric_types: Dict[str, List[str]] = {
-            "str": ["anno_path"],
+            "str": ["anno_path", "task"],
             "int": ["num_detections", "boxes", "scores", "classes", "k"],
             "bool": ["compare_label"],
         }
