@@ -113,11 +113,10 @@ parameters:
 
 
 stages:
-# - ${{ if eq(parameters.test_tf, true) }}:
   - stage: TensorflowModels
     displayName: Tensorflow Model Test
     dependsOn: []
-    condition: eq('${{ parameters.test_tf }}', 'true')    
+    condition: eq('${{ parameters.test_tf }}', 'true')
     jobs:
       - ${{ each jobItem in parameters.tensorflowJobList }}:
         - job: ${{ jobItem.jobName }}
@@ -129,11 +128,10 @@ stages:
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}       
 
-# - ${{ if eq(parameters.test_pt, true) }}:
   - stage: PyTorchModels
     displayName: PyTorch Model Test
     dependsOn: []
-    condition: eq('${{ parameters.test_pt }}', 'true')    
+    condition: eq('${{ parameters.test_pt }}', 'true')
     jobs:
       - ${{ each jobItem in parameters.pyTorchJobList }}:
         - job: ${{ jobItem.jobName }}
@@ -145,11 +143,10 @@ stages:
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}  
 
-# - ${{ if eq(parameters.test_mxnet, true) }}:
   - stage: MXNetModels
     displayName: Mxnet Model Test
     dependsOn: []
-    condition: eq('${{ parameters.test_mxnet }}', 'true')    
+    condition: eq('${{ parameters.test_mxnet }}', 'true')
     jobs:
       - job: resnet50v1
         displayName: resnet50v1
@@ -160,7 +157,6 @@ stages:
               framework: 'mxnet'
               modelFailedName: 'mxnet_resnet50v1_failed'              
 
-# - ${{ if eq(parameters.test_onnx, true) }}:
   - stage: ONNXModels
     displayName: ONNXrt Model Test
     dependsOn: []
@@ -178,7 +174,8 @@ stages:
 
   - stage: GenerateLogs
     displayName: Generate Report
-    condition: or(eq('${{ parameters.test_tf }}', 'true'), eq('${{ parameters.test_pt }}', 'true'), eq('${{ parameters.test_mxnet }}', 'true'), eq('${{ parameters.test_onnx }}', 'true'))
+    dependsOn: [ TensorflowModels, PyTorchModels, PyTorchModels, ONNXModels ]
+    condition: always()
     jobs:
       - job: GenerateReport
         displayName: generate report
