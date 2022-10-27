@@ -34,41 +34,49 @@ parameters:
     displayName: 'resnet50v1.5'
     modelName: 'resnet50v1.5'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_resnet50v1.5_failed'
   - jobName: 'ssd_resnet50_v1'
     displayName: 'ssd_resnet50_v1'
     modelName: 'ssd_resnet50_v1'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'    
     modelFailedName: 'tensorflow_ssd_resnet50_v1_failed'    
   - jobName: 'ssd_mobilenet_v1_ckpt'
     displayName: 'ssd_mobilenet_v1_ckpt'
     modelName: 'ssd_mobilenet_v1_ckpt'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_ssd_mobilenet_v1_ckpt_failed'
   - jobName: 'inception_v1'
     displayName: 'inception_v1'
     modelName: 'inception_v1'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_inception_v1_failed'   
   - jobName: 'resnet50_fashion'
     displayName: 'resnet50_fashion'
     modelName: 'resnet50_fashion'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_resnet50_fashion_failed'   
   - jobName: 'darknet19'
     displayName: 'darknet19'
     modelName: 'darknet19'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_darknet19_failed'         
   - jobName: 'densenet121'
     displayName: 'densenet-121'
     modelName: 'densenet-121'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_densenet-121_failed'          
   - jobName: 'resnet101'
     displayName: 'resnet-101'
     modelName: 'resnet-101'
     framework: 'tensorflow'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'tensorflow_resnet-101_failed'       
 
 - name: pyTorchJobList
@@ -78,11 +86,13 @@ parameters:
     displayName: 'resnet18'
     modelName: 'resnet18'
     framework: 'pytorch'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'pytorch_resnet18_failed'     
   - jobName: 'resnet18_fx'
     displayName: 'resnet18_fx'
     modelName: 'resnet18_fx'
     framework: 'pytorch'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'pytorch_resnet18_fx_failed'  
 
 - name: onnxrtJobList
@@ -92,12 +102,15 @@ parameters:
     displayName: 'resnet50-v1-12'
     modelName: 'resnet50-v1-12'
     framework: 'onnxrt'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'onnxrt_resnet50-v1-12_failed'     
   - jobName: 'bert_base_MRPC_dynamic'
     displayName: 'bert_base_MRPC_dynamic'
     modelName: 'bert_base_MRPC_dynamic'
     framework: 'onnxrt'
+    modelTemplate: 'template/model-template.yml'
     modelFailedName: 'onnxrt_bert_base_MRPC_dynamic_failed'      
+
 
 stages:
 - ${{ if eq(parameters.test_tf, true) }}:
@@ -109,7 +122,7 @@ stages:
         - job: ${{ jobItem.jobName }}
           displayName: ${{ jobItem.displayName }}
           steps:
-            - template: template/model-job-template.yml
+            - template: ${{ jobItem.modelTemplate }}
               parameters:
                 modelName: ${{ jobItem.modelName }}
                 framework: ${{ jobItem.framework }}
@@ -124,7 +137,7 @@ stages:
         - job: ${{ jobItem.jobName }}
           displayName: ${{ jobItem.displayName }}
           steps:
-            - template: template/model-job-template.yml
+            - template: ${{ jobItem.modelTemplate }}
               parameters:
                 modelName: ${{ jobItem.modelName }}
                 framework: ${{ jobItem.framework }}
@@ -138,7 +151,7 @@ stages:
       - job: resnet50v1
         displayName: resnet50v1
         steps:
-          - template: template/model-job-template.yml
+          - template: template/model-template.yml
             parameters:
               modelName: 'resnet50v1'
               framework: 'mxnet'
@@ -153,15 +166,15 @@ stages:
         - job: ${{ jobItem.jobName }}
           displayName: ${{ jobItem.displayName }}
           steps:
-            - template: template/model-job-template.yml
+            - template:  ${{ jobItem.modelTemplate }}
               parameters:
                 modelName: ${{ jobItem.modelName }}
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}  
 
+- ${{ if or(eq(parameters.test_tf, true), eq(parameters.test_pt, true), eq(parameters.test_mxnet, true), eq(parameters.test_onnx, true)) }}:
   - stage: GenerateLogs
     displayName: Generate Report
-    dependsOn: [ TensorflowModels, PyTorchModels, MXNetModels, ONNXModels ]
     condition: succeededOrFailed()
     jobs:
       - job: GenerateReport

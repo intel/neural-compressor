@@ -5,10 +5,12 @@ parameters:
 - name: framework
   type: string
   default: 'tensorflow'
+- name: modelFailedName
+  type: string  
 
 - name: modelContainerName
   type: string
-  default: 'model'
+  default: 'model'  
 
 steps:
   - template: docker-template.yml
@@ -29,3 +31,10 @@ steps:
       targetPath: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}/
       artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
       publishLocation: 'pipeline'
+
+  - script: |
+      if [ ${{ parameters.modelFailedName }} == 'true' ]; then
+        echo "[Failed] Model ${{ parameters.modelName }} failed, please check artifacts and logs."
+        exit 1
+      fi
+    displayName: "Check Test Status"      
