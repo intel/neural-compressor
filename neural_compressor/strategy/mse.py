@@ -200,7 +200,7 @@ class MSETuneStrategy(TuneStrategy):
             early_stop_tuning = True
             stage1_cnt = 0
             int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
-            stage1_max = 2  # TODO set a more appropriate value
+            stage1_max = 8  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for op_tuning_cfg in op_wise_tuning_sampler:

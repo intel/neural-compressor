@@ -40,7 +40,7 @@ function run_tuning {
     if [ "mobilenet_v2" = "$topology" ];then
         sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf.yaml
     fi
-    if [ "resnet18_fx" = "$topology" ];then
+    if [ "resnet18" = "$topology" ];then
         sed -i "/relative:/s|relative:.*|relative: 0.001|g" conf.yaml
     fi
     extra_cmd=""
