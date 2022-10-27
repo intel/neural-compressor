@@ -113,10 +113,11 @@ parameters:
 
 
 stages:
-- ${{ if eq(parameters.test_tf, true) }}:
+# - ${{ if eq(parameters.test_tf, true) }}:
   - stage: TensorflowModels
     displayName: Tensorflow Model Test
     dependsOn: []
+    condition: eq('${{ parameters.test_tf }}', 'true')    
     jobs:
       - ${{ each jobItem in parameters.tensorflowJobList }}:
         - job: ${{ jobItem.jobName }}
@@ -128,10 +129,11 @@ stages:
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}       
 
-- ${{ if eq(parameters.test_pt, true) }}:
+# - ${{ if eq(parameters.test_pt, true) }}:
   - stage: PyTorchModels
     displayName: PyTorch Model Test
     dependsOn: []
+    condition: eq('${{ parameters.test_pt }}', 'true')    
     jobs:
       - ${{ each jobItem in parameters.pyTorchJobList }}:
         - job: ${{ jobItem.jobName }}
@@ -143,10 +145,11 @@ stages:
                 framework: ${{ jobItem.framework }}
                 modelFailedName: ${{ jobItem.modelFailedName }}  
 
-- ${{ if eq(parameters.test_mxnet, true) }}:
+# - ${{ if eq(parameters.test_mxnet, true) }}:
   - stage: MXNetModels
     displayName: Mxnet Model Test
     dependsOn: []
+    condition: eq('${{ parameters.test_mxnet }}', 'true')    
     jobs:
       - job: resnet50v1
         displayName: resnet50v1
@@ -157,10 +160,11 @@ stages:
               framework: 'mxnet'
               modelFailedName: 'mxnet_resnet50v1_failed'              
 
-- ${{ if eq(parameters.test_onnx, true) }}:
+# - ${{ if eq(parameters.test_onnx, true) }}:
   - stage: ONNXModels
     displayName: ONNXrt Model Test
     dependsOn: []
+    condition: eq('${{ parameters.test_onnx }}', 'true')
     jobs:
       - ${{ each jobItem in parameters.onnxrtJobList }}:
         - job: ${{ jobItem.jobName }}
