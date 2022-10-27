@@ -174,7 +174,7 @@ stages:
 
   - stage: GenerateLogs
     displayName: Generate Report
-    dependsOn: or(TensorflowModels, PyTorchModels, MXNetModels, ONNXModels)
+    dependsOn: or(eq(parameters.test_tf, true), eq(parameters.test_pt, true), eq(parameters.test_mxnet, true), eq(parameters.test_onnx, true))
     condition: succeededOrFailed()
     jobs:
       - job: GenerateReport
