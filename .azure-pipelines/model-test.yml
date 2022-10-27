@@ -198,10 +198,10 @@ stages:
               artifact:
               patterns: '**/*_tuning_info.log'
               path: $(OUT_SCRIPT_PATH)
-          - task: UsePythonVersion@0
-            displayName: 'Use Python 3.'
-            inputs:
-              versionSpec: '3'
+          # - task: UsePythonVersion@0
+          #   displayName: 'Use Python 3.'
+          #   inputs:
+          #     versionSpec: '3'
           - script: |
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
