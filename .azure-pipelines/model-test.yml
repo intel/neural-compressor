@@ -188,16 +188,11 @@ stages:
           - checkout: self
             clean: true
             displayName: 'Checkout out Repo'
-          # - task: DownloadPipelineArtifact@2
-          #   inputs:
-          #     artifact:
-          #     patterns: '**/*_summary.log'
-          #     path: $(OUT_SCRIPT_PATH)
-          # - task: DownloadPipelineArtifact@2
-          #   inputs:
-          #     artifact:
-          #     patterns: '**/*_tuning_info.log'
-          #     path: $(OUT_SCRIPT_PATH)
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: '**'
+              path: $(OUT_SCRIPT_PATH)
           - task: UsePythonVersion@0
             displayName: 'Use Python 3.'
             inputs:
@@ -231,12 +226,6 @@ stages:
               artifact: FinalReport
               publishLocation: 'pipeline'
             displayName: "Publish report"
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact:
-              patterns: '**/*_summary.log'
-              path: $(OUT_SCRIPT_PATH)
-            displayName: "Download all logs"            
           - script: |
               if [ $(is_perf_reg) == 'true' ]; then
                 echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
