@@ -29,15 +29,15 @@ parameters:
 
   - name: tensorflowModelList
     type: object
-    default: ["resnet50v1.5", "ssd_resnet50_v1", "ssd_mobilenet_v1_ckpt", "inception_v1", "resnet50_fashion", "darknet19", "densenet-121", "resnet-101"]
-      # - modelName: "resnet50v1.5"
-      # - modelName: "ssd_resnet50_v1"
-      # - modelName: "ssd_mobilenet_v1_ckpt"
-      # - modelName: "inception_v1"
-      # - modelName: "resnet50_fashion"
-      # - modelName: "darknet19"
-      # - modelName: "densenet-121"
-      # - modelName: "resnet-101"
+    default: 
+      - "resnet50v1.5"
+      - "ssd_resnet50_v1"
+      - "ssd_mobilenet_v1_ckpt"
+      - "inception_v1"
+      - "resnet50_fashion"
+      - "darknet19"
+      - "densenet-121"
+      - "resnet-101"
 
   - name: pyTorchModelList
     type: object
