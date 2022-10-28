@@ -58,7 +58,8 @@ stages:
     condition: eq('${{ parameters.test_tf }}', 'true')
     jobs:
       - ${{ each model in parameters.tensorflowModelList }}:
-          - job: ${{ model }}
+          - job:
+            displayName: ${{ env }}
             steps:
               - template: template/model-template.yml
                 parameters:
