@@ -53,6 +53,7 @@ parameters:
       - resnet50-v1-12
       - bert_base_MRPC_dynamic
 
+
 stages:
   - stage: TensorflowModels
     displayName: Tensorflow Model Test
