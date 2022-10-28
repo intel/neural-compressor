@@ -4,8 +4,6 @@ import numpy as np
 from tensorflow import keras
 from neural_compressor.experimental import Quantization,  common
 
-tf.compat.v1.disable_eager_execution()
-
 def main():
 
     quantizer = Quantization('./conf.yaml')

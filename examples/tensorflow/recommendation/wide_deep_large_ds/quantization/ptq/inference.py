@@ -39,8 +39,6 @@ from google.protobuf import text_format
 from argparse import ArgumentParser
 from tensorflow.python.tools.optimize_for_inference_lib import optimize_for_inference
 
-tf.compat.v1.disable_eager_execution()
-
 def load_graph(model_file):
     """This is a function to load TF graph from pb file
 
