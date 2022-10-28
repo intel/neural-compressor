@@ -30,14 +30,14 @@ parameters:
   - name: tensorflowModelList
     type: object
     default: 
-      - "resnet50v1.5"
-      - "ssd_resnet50_v1"
-      - "ssd_mobilenet_v1_ckpt"
-      - "inception_v1"
-      - "resnet50_fashion"
-      - "darknet19"
-      - "densenet-121"
-      - "resnet-101"
+      - resnet50v1.5
+      - ssd_resnet50_v1
+      - ssd_mobilenet_v1_ckpt
+      - inception_v1
+      - resnet50_fashion
+      - darknet19
+      - densenet-121
+      - resnet-101
 
   - name: pyTorchModelList
     type: object
@@ -57,12 +57,12 @@ stages:
     dependsOn: []
     condition: eq('${{ parameters.test_tf }}', 'true')
     jobs:
-      - ${{ each value in parameters.tensorflowModelList }}:
-          - job: ${{ value }}
+      - ${{ each model in parameters.tensorflowModelList }}:
+          - job: ${{ model }}
             steps:
               - template: template/model-template.yml
                 parameters:
-                  modelName: ${{ value }}
+                  modelName: ${{ model }}
                   framework: "tensorflow"
 
   - stage: PyTorchModels
