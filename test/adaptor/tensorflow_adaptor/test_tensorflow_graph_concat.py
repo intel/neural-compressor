@@ -3,15 +3,15 @@
 #  -*- coding: utf-8 -*-
 import unittest
 import os
-import tensorflow as tf
+import platform
 import yaml
 import neural_compressor
-
-
 from neural_compressor.adaptor.tf_utils.util import read_graph
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
+
+import tensorflow as tf
 from tensorflow.python.framework import graph_util
 
 
@@ -53,10 +53,12 @@ def build_fake_yaml():
 class TestTensorflowConcat(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/inceptionv3_fp32_pretrained_model.pb'
     pb_path = '/tmp/.neural_compressor/inceptionv3_fp32.pb'
-
+    platform = platform.system().lower()
+    if platform == "windows":
+        pb_path = 'C:\\tmp\\.neural_compressor\\inceptionv3_fp32.pb'
     @classmethod
     def setUpClass(self):
-        if not os.path.exists(self.pb_path):
+        if not os.path.exists(self.pb_path) and self.platform == "linux":
             os.system(
                 "mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(

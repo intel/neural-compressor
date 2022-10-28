@@ -4,6 +4,7 @@ import sys
 import shutil
 import yaml
 import json
+import platform
 import numpy as np
 import mxnet as mx
 import mxnet.gluon.nn as nn
@@ -100,6 +101,8 @@ class TestAdaptorMXNet(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
+      if platform.system().lower() == "windows":
+        self.skipTest(self, "not support mxnet on windows yet")
       build_mxnet()
       build_mxnet_kl()
 

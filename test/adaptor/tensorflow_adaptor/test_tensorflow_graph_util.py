@@ -1,14 +1,14 @@
 import unittest
 import copy
 import re
-import tensorflow as tf
 import numpy as np
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
+
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
-from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRewriterHelper
-
 
 class TestGraph_util(unittest.TestCase):
     x_node = node_def_pb2.NodeDef()

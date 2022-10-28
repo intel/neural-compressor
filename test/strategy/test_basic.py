@@ -4,7 +4,6 @@ import unittest
 import shutil
 import os
 import yaml
-import tensorflow as tf
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -120,6 +119,7 @@ def build_fake_yaml4():
     f.close()
 
 def build_fake_model():
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()

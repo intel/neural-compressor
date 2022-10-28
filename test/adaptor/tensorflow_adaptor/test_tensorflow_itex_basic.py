@@ -6,17 +6,17 @@ import os
 import shutil
 import yaml
 import numpy as np
-import tensorflow as tf
-
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2, version1_gte_version2
+
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 
 def build_fake_yaml(fake_yaml, save_path, **kwargs):
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)

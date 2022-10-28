@@ -1,6 +1,9 @@
 import numpy as np
 import unittest
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn import \
+    FuseDecomposedBNOptimizer
 
+import tensorflow.compat.v1 as tf
 from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import importer
@@ -12,10 +15,6 @@ from tensorflow.python.ops import math_ops  # pylint: disable=unused-import
 from tensorflow.python.ops import nn_ops
 from tensorflow.python.platform import test
 from tensorflow.python.tools import optimize_for_inference_lib
-import tensorflow.compat.v1 as tf
-
-from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn import \
-    FuseDecomposedBNOptimizer
 
 class OptimizeForInferenceTest(unittest.TestCase):
 

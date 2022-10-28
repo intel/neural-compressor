@@ -2,17 +2,16 @@
 import numpy as np
 import unittest
 import os
-
+import platform
 from neural_compressor.model import MODELS
-import torchvision
-import torch
-import onnx
-import mxnet.gluon.nn as nn
-import mxnet as mx
-import tensorflow as tf
 import neural_compressor.model.model as NCModel
 from neural_compressor.model.model import get_model_fwk_name
 from neural_compressor.experimental.common.model import Model
+
+import torchvision
+import torch
+import onnx
+import tensorflow as tf
 
 def build_graph():
     try:
@@ -157,13 +156,17 @@ class TestTensorflowModel(unittest.TestCase):
         mobilenet_ckpt_url = \
             'http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz'
         dst_path = '/tmp/.neural_compressor/mobilenet_v1_1.0_224.tgz'
-        if not os.path.exists(dst_path):
-            os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(
-                  mobilenet_ckpt_url, dst_path))
-        if not os.path.getsize(dst_path):
-            os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, mobilenet_ckpt_url))
-        os.system("mkdir -p ckpt && tar xvf {} -C ckpt".format(dst_path))
-        model = Model('./ckpt')
+        if platform.system().lower() == "windows":
+            model_path = 'C:\\tmp\.neural_compressor\\mobilenet_v1_1.0_224'
+        else:
+            model_path = './ckpt'
+            if not os.path.exists(dst_path):
+                os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(
+                      mobilenet_ckpt_url, dst_path))
+            if not os.path.getsize(dst_path):
+                os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, mobilenet_ckpt_url))
+            os.system("mkdir -p ckpt && tar xvf {0} -C {1}".format(dst_path, model_path))
+        model = Model(model_path)
         model.output_tensor_names = ['MobilenetV1/Predictions/Reshape_1']
         
         self.assertGreaterEqual(len(model.input_tensor_names), 1)
@@ -177,13 +180,17 @@ class TestTensorflowModel(unittest.TestCase):
         tf.compat.v1.reset_default_graph()
         inception_ckpt_url = \
             'http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz'
-        dst_path = '/tmp/.neural_compressor/slim/inception_v1_2016_08_28.tar.gz'
-        if not os.path.exists(dst_path):
-            os.system("mkdir -p /tmp/.neural_compressor/slim")
-            os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
-        if not os.path.getsize(dst_path):
-            os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, inception_ckpt_url))
-        os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
+        if platform.system().lower() == "windows":
+            dst_path = "C:\\tmp\\.neural_compressor\\inception_v1_2016_08_28.tar.g"
+        elif platform.system().lower() == "linux":
+            dst_path = '/tmp/.neural_compressor/slim/inception_v1_2016_08_28.tar.gz'
+        if platform.system().lower() == "linux":
+            if not os.path.exists(dst_path):
+                os.system("mkdir -p /tmp/.neural_compressor/slim")
+                os.system("wget {} -O {}".format(inception_ckpt_url, dst_path))
+            if not os.path.getsize(dst_path):
+                os.system("rm -fr {0} && wget {1} -O {0}".format(dst_path, inception_ckpt_url))
+            os.system("mkdir -p slim_ckpt && tar xvf {} -C slim_ckpt".format(dst_path))
         if tf.version.VERSION > '2.0.0':
             return
         from tf_slim.nets import inception  
@@ -240,7 +247,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf simple_model')
         os.system('rm -rf keras_model')
 
-    @unittest.skipIf(tf.version.VERSION < '2.4.0', "Only supports tf 2.4.0 or above")
+    @unittest.skipIf(tf.version.VERSION < '2.4.0' or platform.system().lower() == "windows", "Only supports tf 2.4.0 or above")
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
         center_resnet50_saved_model_url = 'https://gcs.tensorflow.google.cn/tfhub-modules/tensorflow/centernet/resnet50v1_fpn_512x512/1.tar.gz'
@@ -371,6 +378,7 @@ class TestPyTorchModel(unittest.TestCase):
         self.assertEqual('pytorch', get_model_fwk_name(PyTorchFXModel(ori_model)))
 
 def load_mxnet_model(symbol_file, param_file):
+    import mxnet as mx
     symbol = mx.sym.load(symbol_file)
     save_dict = mx.nd.load(param_file)
     arg_params = {}
@@ -384,6 +392,10 @@ def load_mxnet_model(symbol_file, param_file):
 class TestMXNetModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        if platform.system().lower() == "windows":
+            self.skipTest(self, "not support mxnet on windows yet")
+        import mxnet.gluon.nn as nn
+        import mxnet as mx
         net = nn.HybridSequential()
         net.add(nn.Dense(128, activation="relu"))
         net.add(nn.Dense(64, activation="relu"))
@@ -402,6 +414,7 @@ class TestMXNetModel(unittest.TestCase):
         os.remove('test2-0000.params')
 
     def test_model(self):
+        import mxnet as mx
         self.assertEqual('mxnet', get_model_fwk_name(self.net))
         model = MODELS['mxnet'](self.net)
         self.assertEqual(True, isinstance(model, NCModel.MXNetModel))

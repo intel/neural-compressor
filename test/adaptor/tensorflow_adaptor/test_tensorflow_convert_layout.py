@@ -1,4 +1,5 @@
 import unittest
+from neural_compressor.adaptor.tf_utils.graph_rewriter.generic import convert_layout
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
@@ -21,7 +22,6 @@ class TestConvertLayout(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-        from neural_compressor.adaptor.tf_utils.graph_rewriter.generic import convert_layout
         convert = convert_layout.ConvertLayoutOptimizer(output_graph_def, [out_name])
         convert_graph = convert.do_transformation()
         for node in convert_graph.node:

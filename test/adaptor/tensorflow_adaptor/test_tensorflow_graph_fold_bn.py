@@ -2,16 +2,14 @@
 #  -*- coding: utf-8 -*-
 #
 import unittest
-import tensorflow as tf
-from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import dtypes
-
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
-
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import \
     FoldBatchNormNodesOptimizer
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
+import tensorflow as tf
+from tensorflow.core.framework import graph_pb2
+from tensorflow.python.framework import dtypes
 
 class TestGraphFoldBNWithInvalidParameter(unittest.TestCase):
     @disable_random()

@@ -5,9 +5,10 @@ import os
 from numpy.core.fromnumeric import squeeze
 import yaml
 import numpy as np
+from neural_compressor.adaptor.tf_utils.util import disable_random
+
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from neural_compressor.adaptor.tf_utils.util import disable_random
 
 
 def build_fake_yaml():

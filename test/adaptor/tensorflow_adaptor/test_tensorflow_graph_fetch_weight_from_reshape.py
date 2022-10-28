@@ -2,10 +2,10 @@ import unittest
 import os
 import yaml
 import numpy as np
-import tensorflow as tf
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2

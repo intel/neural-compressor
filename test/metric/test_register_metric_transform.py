@@ -1,6 +1,7 @@
 """Tests for neural_compressor register metric and postprocess """
 import numpy as np
 import unittest
+import platform
 import os
 import yaml
      
@@ -24,11 +25,13 @@ class TestRegisterMetric(unittest.TestCase):
     pb_path = '/tmp/.neural_compressor/resnet101_fp32_pretrained_model.pb'
     #image_path = 'images/1024px-Doll_face_silver_Persian.jpg'
     image_path = 'images/cat.jpg'
-
+    platform = platform.system().lower()
+    if platform == "windows":
+        pb_path = 'C:\\tmp\.neural_compressor\\resnet101_fp32_pretrained_model.pb'
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-        if not os.path.exists(self.pb_path):
+        if not os.path.exists(self.pb_path) and self.platform == "linux":
             os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(self.model_url, self.pb_path))
 
     def test_register_metric_postprocess(self):

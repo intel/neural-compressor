@@ -9,9 +9,9 @@ Note:
     use '-s' to disable pytest capturing the sys.stderr which will be used in quantization process
 """
 import os
+import platform
 import unittest
 import yaml
-import tensorflow as tf
 import numpy as np
 import pickle
 import logging
@@ -53,6 +53,7 @@ def build_fake_yaml():
 
 
 def build_fake_model():
+    import tensorflow as tf
     graph = tf.Graph()
     graph_def = tf.compat.v1.GraphDef()
 
@@ -99,9 +100,13 @@ class TestTensorflowInspectTensortinMSETuning(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-        self.cfg_path = os.path.join(os.getcwd(), './nc_workspace/')
+        if platform.system().lower() == "linux":
+            self.cfg_path = os.path.join(os.getcwd(), './nc_workspace/')
+            self.dumped_tensor_path = os.path.join(os.getcwd(), './nc_workspace/')
+        else:
+            self.cfg_path = os.path.join(os.getcwd(), 'nc_workspace\\')
+            self.dumped_tensor_path = os.path.join(os.getcwd(), 'nc_workspace\\')
         self.cfg_file_path = os.path.join(self.cfg_path, 'cfg.pkl')
-        self.dumped_tensor_path = os.path.join(os.getcwd(), './nc_workspace/')
         self.dumped_tensor_file_path = os.path.join(self.dumped_tensor_path, 'inspect_result.pkl')
 
     @classmethod
@@ -111,8 +116,8 @@ class TestTensorflowInspectTensortinMSETuning(unittest.TestCase):
         shutil.rmtree(self.dumped_tensor_path)
 
     def test_tensorflow_inspect_tensort_in_mse_tuning(self):
-        import tensorflow.compat.v1 as tf
         from neural_compressor.experimental import Quantization, common
+        import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
         model = build_fake_model()
         quantizer = Quantization('fake_yaml.yaml')
