@@ -57,12 +57,12 @@ stages:
     dependsOn: []
     condition: eq('${{ parameters.test_tf }}', 'true')
     jobs:
-      - ${{ each modelItem in parameters.tensorflowModelList }}:
-          - job: ${{ modelItem }}
+      - ${{ each value in parameters.tensorflowModelList }}:
+          - job: ${{ value }}
             steps:
               - template: template/model-template.yml
                 parameters:
-                  modelName: ${{ modelItem }}
+                  modelName: ${{ value }}
                   framework: "tensorflow"
 
   - stage: PyTorchModels
