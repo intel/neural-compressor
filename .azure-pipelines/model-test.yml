@@ -191,7 +191,12 @@ stages:
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
-              patterns: '**'
+              patterns: '**/*_summary.log'
+              path: $(OUT_SCRIPT_PATH)
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: '**/*_tuning_info.log'
               path: $(OUT_SCRIPT_PATH)
           - task: UsePythonVersion@0
             displayName: 'Use Python 3.'
@@ -203,19 +208,18 @@ stages:
               mkdir last_generated
               python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
             displayName: "Collect all logs"
-          # - task: DownloadPipelineArtifact@2
-          #   inputs:
-          #     source: 'specific'
-          #     artifact: 'FinalReport'
-          #     patterns: '**.log'
-          #     path: $(OUT_SCRIPT_PATH)/last_generated
-          #     project: $(System.TeamProject)
-          #     pipeline: 'Baseline'
-          #     runVersion: 'specific'
-          #     runId: $(model_runID)
-          #     retryDownloadCount: 3
-          #   displayName: 'Download last logs'
-          
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              source: 'specific'
+              artifact: 'FinalReport'
+              patterns: '**.log'
+              path: $(OUT_SCRIPT_PATH)/last_generated
+              project: $(System.TeamProject)
+              pipeline: 'Baseline'
+              runVersion: 'specific'
+              runId: $(model_runID)
+              retryDownloadCount: 3
+            displayName: 'Download last logs'
           - script: |
               echo "------ Generating final report.html ------"
               cd ${OUT_SCRIPT_PATH}
