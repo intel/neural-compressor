@@ -1,24 +1,22 @@
 parameters:
-- name: modelName
-  type: string
-  default: 'resnet50v1.5'
-- name: framework
-  type: string
-  default: 'tensorflow'
-- name: modelFailedName
-  type: string  
+  - name: modelName
+    type: string
+    default: "resnet50v1.5"
+  - name: framework
+    type: string
+    default: "tensorflow"
 
-- name: modelContainerName
-  type: string
-  default: 'model'  
+  - name: modelContainerName
+    type: string
+    default: "model"
 
 steps:
   - template: docker-template.yml
     parameters:
-      dockerConfigName: 'commonDockerConfig'
-      repoName: 'neural-compressor'
-      repoTag: 'py38'
-      dockerFileName: 'Dockerfile'
+      dockerConfigName: "commonDockerConfig"
+      repoName: "neural-compressor"
+      repoTag: "py38"
+      dockerFileName: "Dockerfile"
       containerName: ${{ parameters.modelContainerName }}
 
   - script: |
@@ -30,11 +28,11 @@ steps:
     inputs:
       targetPath: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}/
       artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
-      publishLocation: 'pipeline'
+      publishLocation: "pipeline"
 
   - script: |
-      if [ ${{ parameters.modelFailedName }} == 'true' ]; then
+      if [ ${{ parameters.framework }}_${{ parameters.modelName }}_failed == 'true' ]; then
         echo "[Failed] Model ${{ parameters.modelName }} failed, please check artifacts and logs."
         exit 1
       fi
-    displayName: "Check Test Status"      
+    displayName: "Check Test Status"
