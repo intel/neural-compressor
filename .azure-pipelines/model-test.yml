@@ -29,7 +29,7 @@ parameters:
 
   - name: tensorflowModelList
     type: object
-    default: 
+    default:
       - resnet50v1.5
       - ssd_resnet50_v1
       - ssd_mobilenet_v1_ckpt
@@ -42,11 +42,11 @@ parameters:
     type: object
     default:
       - resnet18
-      - resnet18_fx    
+      - resnet18_fx
   - name: MXNetModelList
     type: object
     default:
-      - resnet50v1    
+      - resnet50v1
   - name: onnxrtModelList
     type: object
     default:
@@ -94,7 +94,7 @@ stages:
               - template: template/model-template.yml
                 parameters:
                   modelName: ${{ model }}
-                  framework: "mxnet"                  
+                  framework: "mxnet"
 
   - stage: ONNXModels
     displayName: ONNXrt Model Test
