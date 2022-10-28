@@ -60,7 +60,6 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobil
 ```python
 import tensorflow as tf
 from neural_compressor.experimental import Quantization, common
-tf.compat.v1.disable_eager_execution()
 quantizer = Quantization()
 quantizer.model = './mobilenet_v1_1.0_224_frozen.pb'
 dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
