@@ -1,7 +1,7 @@
 Intel® Neural Compressor Bench
 =======
 
-Intel® Neural Compressor Bench is a web application for easier use of Intel® Neural Compressor. It is only available on Linux based hosts.
+Intel® Neural Compressor Bench is a web application for easier use of Intel® Neural Compressor.
 
 ## Table of Contents
 - [Introduction](#introduction)
