@@ -56,7 +56,7 @@ parameters:
 
 stages:
   - stage: TensorFlowModels
-    displayName: Run Tensorflow model
+    displayName: Run Tensorflow Model
     dependsOn: []
     condition: eq('${{ parameters.TensorFlow_Model }}', 'true')
     jobs:
@@ -70,7 +70,7 @@ stages:
                   framework: "tensorflow"
 
   - stage: PyTorchModels
-    displayName: Run PyTorch model
+    displayName: Run PyTorch Model
     dependsOn: []
     condition: eq('${{ parameters.PyTorch_Model }}', 'true')
     jobs:
@@ -84,7 +84,7 @@ stages:
                   framework: "pytorch"
 
   - stage: ONNXModels
-    displayName: Run ONNX model
+    displayName: Run ONNX Model
     dependsOn: []
     condition: eq('${{ parameters.ONNX_Model }}', 'true')
     jobs:
@@ -98,7 +98,7 @@ stages:
                   framework: "onnxrt"
 
   - stage: MXNetModels
-    displayName: Run MXNet model
+    displayName: Run MXNet Model
     dependsOn: []
     condition: eq('${{ parameters.MXNet_Model }}', 'true')
     jobs:
