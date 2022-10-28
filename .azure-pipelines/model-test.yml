@@ -43,17 +43,13 @@ parameters:
     type: object
     default:
       - modelName: "resnet18"
-        modelFailedName: "pytorch_resnet18_failed"
       - modelName: "resnet18_fx"
-        modelFailedName: "pytorch_resnet18_fx_failed"
 
-  - name: onnxrtJobList
+  - name: onnxrtModelList
     type: object
     default:
       - modelName: "resnet50-v1-12"
-        modelFailedName: "onnxrt_resnet50-v1-12_failed"
       - modelName: "bert_base_MRPC_dynamic"
-        modelFailedName: "onnxrt_bert_base_MRPC_dynamic_failed"
 
 stages:
   - stage: TensorflowModels
@@ -61,7 +57,7 @@ stages:
     dependsOn: []
     condition: eq('${{ parameters.test_tf }}', 'true')
     jobs:
-      - ${{ each modelItem in parameters.tensorflowJobList }}:
+      - ${{ each modelItem in parameters.tensorflowModelList }}:
           - job: ${{ modelItem }}
             steps:
               - template: template/model-template.yml
@@ -74,7 +70,7 @@ stages:
     dependsOn: []
     condition: eq('${{ parameters.test_pt }}', 'true')
     jobs:
-      - ${{ each modelItem in parameters.pyTorchJobList }}:
+      - ${{ each modelItem in parameters.pyTorchModelList }}:
           - job: ${{ modelItem.modelName }}
             steps:
               - template: template/model-template.yml
@@ -100,7 +96,7 @@ stages:
     dependsOn: []
     condition: eq('${{ parameters.test_onnx }}', 'true')
     jobs:
-      - ${{ each modelItem in parameters.onnxrtJobList }}:
+      - ${{ each modelItem in parameters.onnxrtModelList }}:
           - job: ${{ modelItem.modelName }}
             steps:
               - template: template/model-template.yml
