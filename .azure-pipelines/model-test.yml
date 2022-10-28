@@ -231,6 +231,12 @@ stages:
               artifact: FinalReport
               publishLocation: 'pipeline'
             displayName: "Publish report"
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: '**/*_summary.log'
+              path: $(OUT_SCRIPT_PATH)
+            displayName: "Download all logs"            
           - script: |
               if [ $(is_perf_reg) == 'true' ]; then
                 echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."

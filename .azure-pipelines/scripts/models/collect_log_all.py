@@ -18,7 +18,7 @@ def main():
     for root, dirs, files in os.walk(file_dir):
         for name in files:
             file_name = os.path.join(root, name)
-            print(file_name)
+            print('--- 10/28/2022 current file_name', file_name)
             if '_summary.log' in name:
                 for line in open(file_name, "r"):
                     # print(line)
@@ -28,13 +28,16 @@ def main():
                 for line in open(file_name, "r"):
                     # print(line)
                     if 'linux' in line:
-                        tuning_info_content.append(line)
+                        tuning_info_content.append(line)    
     f = open(args.output_dir + '/summary.log', "a")
     for summary in summary_content:
         f.writelines(str(summary))
+        print('--- 10/28/2022 current f', f)
     f2 = open(args.output_dir + '/tuning_info.log', "a")
     for tuning_info in tuning_info_content:
         f2.writelines(str(tuning_info))
+        print('--- 10/28/2022 current f2', f2)
+
 
 
 if __name__ == '__main__':
