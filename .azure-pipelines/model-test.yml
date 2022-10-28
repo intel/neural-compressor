@@ -46,8 +46,7 @@ parameters:
   - name: MXNetModelList
     type: object
     default:
-      - resnet50-v1-12
-      - bert_base_MRPC_dynamic      
+      - resnet50v1    
   - name: onnxrtModelList
     type: object
     default:
@@ -69,105 +68,109 @@ stages:
                   modelName: ${{ model }}
                   framework: "tensorflow"
 
-  # - stage: PyTorchModels
-  #   displayName: PyTorch Model Test
-  #   dependsOn: []
-  #   condition: eq('${{ parameters.test_pt }}', 'true')
-  #   jobs:
-  #     - ${{ each modelItem in parameters.pyTorchModelList }}:
-  #         - job: ${{ modelItem.modelName }}
-  #           steps:
-  #             - template: template/model-template.yml
-  #               parameters:
-  #                 modelName: ${{ modelItem.modelName }}
-  #                 framework: "pytorch"
+  - stage: PyTorchModels
+    displayName: PyTorch Model Test
+    dependsOn: []
+    condition: eq('${{ parameters.test_pt }}', 'true')
+    jobs:
+      - ${{ each model in parameters.pyTorchModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "pytorch"
 
-  # - stage: MXNetModels
-  #   displayName: Mxnet Model Test
-  #   dependsOn: []
-  #   condition: eq('${{ parameters.test_mxnet }}', 'true')
-  #   jobs:
-  #     - job: resnet50v1
-  #       steps:
-  #         - template: template/model-template.yml
-  #           parameters:
-  #             modelName: "resnet50v1"
-  #             framework: "mxnet"
+  - stage: MXNetModels
+    displayName: Mxnet Model Test
+    dependsOn: []
+    condition: eq('${{ parameters.test_mxnet }}', 'true')
+    jobs:
+      - ${{ each model in parameters.MXNetModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "mxnet"                  
 
-  # - stage: ONNXModels
-  #   displayName: ONNXrt Model Test
-  #   dependsOn: []
-  #   condition: eq('${{ parameters.test_onnx }}', 'true')
-  #   jobs:
-  #     - ${{ each modelItem in parameters.onnxrtModelList }}:
-  #         - job: ${{ modelItem.modelName }}
-  #           steps:
-  #             - template: template/model-template.yml
-  #               parameters:
-  #                 modelName: ${{ modelItem.modelName }}
-  #                 framework: "onnxrt"
+  - stage: ONNXModels
+    displayName: ONNXrt Model Test
+    dependsOn: []
+    condition: eq('${{ parameters.test_onnx }}', 'true')
+    jobs:
+      - ${{ each model in parameters.onnxrtModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "onnxrt"
 
-  # - stage: GenerateLogs
-  #   displayName: Generate Report
-  #   dependsOn: [TensorflowModels, PyTorchModels, MXNetModels, ONNXModels]
-  #   condition: always()
-  #   jobs:
-  #     - job: GenerateReport
-  #       steps:
-  #         - script: |
-  #             echo ${BUILD_SOURCESDIRECTORY}
-  #             sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-  #             echo y | docker system prune
-  #           displayName: "Clean workspace"
-  #         - checkout: self
-  #           clean: true
-  #           displayName: "Checkout out Repo"
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             artifact:
-  #             patterns: "**/*_summary.log"
-  #             path: $(OUT_SCRIPT_PATH)
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             artifact:
-  #             patterns: "**/*_tuning_info.log"
-  #             path: $(OUT_SCRIPT_PATH)
-  #         - task: UsePythonVersion@0
-  #           displayName: "Use Python 3."
-  #           inputs:
-  #             versionSpec: "3"
-  #         - script: |
-  #             cd ${OUT_SCRIPT_PATH}
-  #             mkdir generated
-  #             mkdir last_generated
-  #             python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
-  #           displayName: "Collect all logs"
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             source: "specific"
-  #             artifact: "FinalReport"
-  #             patterns: "**.log"
-  #             path: $(OUT_SCRIPT_PATH)/last_generated
-  #             project: $(System.TeamProject)
-  #             pipeline: "Baseline"
-  #             runVersion: "specific"
-  #             runId: $(model_runID)
-  #             retryDownloadCount: 3
-  #           displayName: "Download last logs"
-  #         - script: |
-  #             echo "------ Generating final report.html ------"
-  #             cd ${OUT_SCRIPT_PATH}
-  #             /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
-  #           displayName: "Generate report"
-  #         - task: PublishPipelineArtifact@1
-  #           inputs:
-  #             targetPath: $(OUT_SCRIPT_PATH)/generated
-  #             artifact: FinalReport
-  #             publishLocation: "pipeline"
-  #           displayName: "Publish report"
-  #         - script: |
-  #             if [ $(is_perf_reg) == 'true' ]; then
-  #               echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
-  #               exit 1
-  #             fi
-  #           displayName: "Specify performance regression"
+  - stage: GenerateLogs
+    displayName: Generate Report
+    dependsOn: [TensorflowModels, PyTorchModels, MXNetModels, ONNXModels]
+    condition: always()
+    jobs:
+      - job: GenerateReport
+        steps:
+          - script: |
+              echo ${BUILD_SOURCESDIRECTORY}
+              sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+              echo y | docker system prune
+            displayName: "Clean workspace"
+          - checkout: self
+            clean: true
+            displayName: "Checkout out Repo"
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: "**/*_summary.log"
+              path: $(OUT_SCRIPT_PATH)
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact:
+              patterns: "**/*_tuning_info.log"
+              path: $(OUT_SCRIPT_PATH)
+          - task: UsePythonVersion@0
+            displayName: "Use Python 3."
+            inputs:
+              versionSpec: "3"
+          - script: |
+              cd ${OUT_SCRIPT_PATH}
+              mkdir generated
+              mkdir last_generated
+              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
+            displayName: "Collect all logs"
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              source: "specific"
+              artifact: "FinalReport"
+              patterns: "**.log"
+              path: $(OUT_SCRIPT_PATH)/last_generated
+              project: $(System.TeamProject)
+              pipeline: "Baseline"
+              runVersion: "specific"
+              runId: $(model_runID)
+              retryDownloadCount: 3
+            displayName: "Download last logs"
+          - script: |
+              echo "------ Generating final report.html ------"
+              cd ${OUT_SCRIPT_PATH}
+              /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
+            displayName: "Generate report"
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: $(OUT_SCRIPT_PATH)/generated
+              artifact: FinalReport
+              publishLocation: "pipeline"
+            displayName: "Publish report"
+          - script: |
+              if [ $(is_perf_reg) == 'true' ]; then
+                echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
+                exit 1
+              fi
+            displayName: "Specify performance regression"
