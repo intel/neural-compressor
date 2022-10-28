@@ -56,7 +56,7 @@ parameters:
 
 stages:
   - stage: TensorFlowModels
-    displayName: Run Tensorflow Model
+    displayName: Run TensorFlow Model
     dependsOn: []
     condition: eq('${{ parameters.TensorFlow_Model }}', 'true')
     jobs:
