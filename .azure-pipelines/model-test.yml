@@ -215,6 +215,7 @@ stages:
           #     runId: $(model_runID)
           #     retryDownloadCount: 3
           #   displayName: 'Download last logs'
+          
           - script: |
               echo "------ Generating final report.html ------"
               cd ${OUT_SCRIPT_PATH}
