@@ -59,7 +59,7 @@ stages:
     jobs:
       - ${{ each model in parameters.tensorflowModelList }}:
           - job:
-            displayName: ${{ env }}
+            # displayName: ${{ model }}
             steps:
               - template: template/model-template.yml
                 parameters:
