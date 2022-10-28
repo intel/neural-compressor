@@ -89,7 +89,6 @@ stages:
             parameters:
               modelName: "resnet50v1"
               framework: "mxnet"
-              modelFailedName: "mxnet_resnet50v1_failed"
 
   - stage: ONNXModels
     displayName: ONNXrt Model Test
