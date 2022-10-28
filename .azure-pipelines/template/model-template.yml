@@ -13,10 +13,10 @@ parameters:
 steps:
   - template: docker-template.yml
     parameters:
-      dockerConfigName: "commonDockerConfig"
-      repoName: "neural-compressor"
-      repoTag: "py38"
-      dockerFileName: "Dockerfile"
+      dockerConfigName: 'commonDockerConfig'
+      repoName: 'neural-compressor'
+      repoTag: 'py38'
+      dockerFileName: 'Dockerfile'
       containerName: ${{ parameters.modelContainerName }}
 
   - script: |
