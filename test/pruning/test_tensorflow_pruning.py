@@ -1,19 +1,12 @@
 """Tests for the TensorFlow pruning."""
 from __future__ import print_function
-import tensorflow
-from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
-from  tensorflow.keras.layers import AveragePooling2D, Input, Flatten
-from  tensorflow.keras.callbacks import LearningRateScheduler
-from  tensorflow.keras.callbacks import ReduceLROnPlateau
-from  tensorflow.keras.regularizers import l2
-from  tensorflow.keras.models import Model
-from  tensorflow.keras.datasets import cifar10
 import numpy as np
 import os
 import shutil
 import unittest
 import time
 import hashlib
+import platform
 from neural_compressor.experimental import Pruning, common
 from neural_compressor.utils import logger
 import types
@@ -22,6 +15,15 @@ from neural_compressor.utils.create_obj_from_config import create_train_func
 from neural_compressor.experimental.pruning import TfPruningCallback
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+
+import tensorflow
+from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
+from  tensorflow.keras.layers import AveragePooling2D, Input, Flatten
+from  tensorflow.keras.callbacks import LearningRateScheduler
+from  tensorflow.keras.callbacks import ReduceLROnPlateau
+from  tensorflow.keras.regularizers import l2
+from  tensorflow.keras.models import Model
+from  tensorflow.keras.datasets import cifar10
 
 def build_fake_yaml():
     fake_yaml = """
@@ -347,7 +349,10 @@ class TestTensorflowPruning(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         build_fake_yaml()
-        cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
+        if platform.system().lower() == "windows":
+            cmd = 'cp -r C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2/baseline_model .'
+        elif platform.system().lower() == "linux":
+            cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
         if not os.path.exists(cls.dst_path):
             logger.warning("resnet_v2 baseline_model doesn't exist.")

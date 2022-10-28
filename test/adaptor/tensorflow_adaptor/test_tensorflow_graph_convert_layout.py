@@ -3,9 +3,9 @@
 #
 
 import unittest
-import tensorflow as tf
-
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout import ConvertLayoutOptimizer
+
+import tensorflow as tf
 from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 

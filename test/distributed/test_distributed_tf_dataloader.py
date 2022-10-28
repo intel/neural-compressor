@@ -1,15 +1,16 @@
 """Tests for Distributed TensorFlow Dataloader."""
-from neural_compressor import data
-from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
-from neural_compressor.data.dataloaders.dataloader import DataLoader
-from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
-import tensorflow as tf
 import numpy as np
 import collections
 import json
 import os
 import unittest
 import shutil
+from neural_compressor import data
+from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
+
+import tensorflow as tf
 
 @unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
 class TestDistributedTFDataDataloader(unittest.TestCase):

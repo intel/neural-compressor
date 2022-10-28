@@ -4,9 +4,7 @@
 import os
 import unittest
 import yaml
-import tensorflow as tf
 import numpy as np
-
 np.random.seed(0)
 
 
@@ -81,6 +79,7 @@ def build_fake_yaml_kl():
 
 
 def build_fake_model():
+    import tensorflow as tf
     graph = tf.Graph()
     graph_def = tf.compat.v1.GraphDef()
 
@@ -134,9 +133,9 @@ class TestGraphDumpToDisk(unittest.TestCase):
         os.remove(self.calibration_log_path)
 
     def test_dump_tensor_to_disk(self):
+        from neural_compressor.experimental import Quantization, common
         import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
-        from neural_compressor.experimental import Quantization, common
 
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 30, 30, 1), label=True)

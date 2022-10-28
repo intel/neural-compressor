@@ -4,7 +4,6 @@ import unittest
 import os
 import shutil
 import yaml
-import tensorflow as tf
 
 
 def build_fake_yaml():
@@ -62,6 +61,7 @@ def build_fake_yaml2():
 
 
 def build_fake_model():
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()

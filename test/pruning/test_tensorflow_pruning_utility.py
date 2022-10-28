@@ -1,10 +1,9 @@
 import unittest
 import shutil
-import tensorflow as tf
-from tensorflow import keras
-
 
 def train_func():
+    import tensorflow as tf
+    from tensorflow import keras
     # Load MNIST dataset
     mnist = keras.datasets.mnist
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
@@ -46,7 +45,6 @@ class TestTensorflowPruning(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree('baseline_model',ignore_errors=True)
     
-    @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_pruning_utility(self):
         from neural_compressor.experimental import common
         pruning_model = common.Model("baseline_model")

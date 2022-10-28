@@ -2,12 +2,12 @@
 #  -*- coding: utf-8 -*-
 #
 import unittest
-import tensorflow as tf
 import numpy as np
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul import FuseColumnWiseMulOptimizer
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 
 class TestColumnWiseMulFusion(unittest.TestCase):
 

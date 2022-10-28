@@ -3,10 +3,9 @@ import numpy as np
 import unittest
 import os
 import yaml
-import tensorflow as tf
 import importlib
-import shutil
-     
+import shutil 
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
@@ -64,7 +63,8 @@ def build_fake_yaml2():
         yaml.dump(y,f)
     f.close()
 
-def build_fake_model():
+def build_fake_model(): 
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
@@ -86,6 +86,7 @@ def build_fake_model():
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
     except:
+        import tensorflow as tf
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()
         with tf.compat.v1.Session() as sess:

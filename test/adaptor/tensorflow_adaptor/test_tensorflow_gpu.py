@@ -1,24 +1,31 @@
 #
 #  -*- coding: utf-8 -*-
 #
+import platform
 import unittest
 import os
-import tensorflow as tf
 import neural_compressor
-
-
 from neural_compressor.adaptor.tf_utils.util import read_graph
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter import PostHostConstConverter
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
+
+import tensorflow as tf
 class TestTensorflowGpu(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
     pb_path = '/tmp/.neural_compressor/mobilenet_fp32.pb'
-
+    platforms = platform.system().lower()
+    if platforms == "windows":
+        pb_path = 'C:\\tmp\\.neural_compressor\\mobilenet_fp32.pb'
     @classmethod
     def setUpClass(self):
         if not os.path.exists(self.pb_path):
-            os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
+            if self.platforms == "linux":
+                os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
+            elif self.platforms == "windows":
+                os.system('md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor')
+                from urllib import request
+                request.urlretrieve(self.mb_model_url)
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(neural_compressor.__file__), "adaptor/tensorflow.yaml")).get_eightbit_patterns()
 

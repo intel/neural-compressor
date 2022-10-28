@@ -5,14 +5,14 @@ import unittest
 import os
 import shutil
 import yaml
-import tensorflow as tf
-
+from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.experimental import model_conversion
+
+import tensorflow as tf
 tf.compat.v1.enable_eager_execution()
 from tensorflow import keras
-
 from tensorflow.python.framework import graph_util
-from neural_compressor.adaptor.tf_utils.util import disable_random
+
 
 def build_fake_yaml():
     fake_yaml = '''

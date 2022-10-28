@@ -1,14 +1,18 @@
 import os
+import platform
 import shutil
 import unittest
-import tensorflow as tf
+from unittest import result
 import numpy as np
+from neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
+
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert import BF16Convert
+
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -298,11 +302,19 @@ def create_test_graph(bf16_graph=True):
 class TestBF16Convert(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
     pb_path = '/tmp/.neural_compressor/resnet50_fp32_pretrained_model.pb'
-
+    platform = platform.system().lower()
+    if platform == "windows":
+        pb_path = 'C:\\tmp\.neural_compressor\\resnet50_fp32_pretrained_model.pb'
     @classmethod
     def setUpClass(self):
         if not os.path.exists(self.pb_path):
-            os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+            if self.platform == "linux":
+                os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+            elif self.platform == "windows":
+                os.system('md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor')
+                from urllib import request
+                request.urlretrieve(self.rn50_fp32_pb_url)
+
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())

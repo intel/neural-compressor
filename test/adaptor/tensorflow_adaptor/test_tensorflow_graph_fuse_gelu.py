@@ -2,12 +2,11 @@
 #  -*- coding: utf-8 -*-
 #
 import unittest
-import tensorflow as tf
-
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu import FuseGeluOptimizer
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 @unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.15.up2 and 1.15.up3 and spr-base TF")
 class TestGeluFusion(unittest.TestCase):
     def gelu(self, input_tensor, mul_value=0.5, addv2_value=1.0, sqrt_value=2.0):

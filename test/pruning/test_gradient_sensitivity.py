@@ -1,15 +1,14 @@
 import os
 import shutil
 import unittest
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.data import DATASETS
 
 import torch
 import torchvision
 import torch.nn as nn
-
 import tensorflow as tf
 
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.data import DATASETS
 
 def build_fake_yaml():
     fake_yaml = """

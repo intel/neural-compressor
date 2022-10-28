@@ -3,19 +3,18 @@
 #
 import unittest
 import os
+import platform
 import yaml
 import numpy as np
-import tensorflow as tf
 import neural_compressor
-
-
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -468,6 +467,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 class TestGraphConvFusion(unittest.TestCase):
     rn50_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb'
     pb_path = '/tmp/.neural_compressor/resnet50_fp32_pretrained_model.pb'
+    platform = platform.system().lower()
+    if platform == "windows":
+        pb_path = 'C:\\tmp\.neural_compressor\\resnet50_fp32_pretrained_model.pb'
     inputs = ['input']
     outputs = ['predict']
 
@@ -480,7 +482,12 @@ class TestGraphConvFusion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         if not os.path.exists(self.pb_path):
-            os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+            if self.platform == "linux":
+                os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.rn50_fp32_pb_url, self.pb_path))
+            elif self.platform == "windows":
+                os.system('md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor')
+                from urllib import request
+                request.urlretrieve(self.rn50_fp32_pb_url)
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())

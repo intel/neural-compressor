@@ -5,6 +5,7 @@ import os
 import sys
 import unittest
 import yaml
+import platform
 sys.path.append('..')
 
 import mxnet as mx
@@ -14,6 +15,8 @@ class TestMXNetQuery(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
+        if platform.system().lower() == "windows":
+            self.skipTest(self, "not support mxnet on windows yet")
         self.yaml_path = os.path.join(os.getcwd() + "/../neural_compressor/adaptor/mxnet.yaml")
         self.Queryhandler = neural_compressor.adaptor.mxnet.MXNetQuery(self.yaml_path)
         self.version = mx.__version__

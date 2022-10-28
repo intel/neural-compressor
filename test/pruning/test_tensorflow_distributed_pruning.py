@@ -1,5 +1,6 @@
 """Tests for the TensorFlow pruning with distributed training and inference."""
 import os
+from platform import platform, system
 import signal
 import shutil
 import subprocess
@@ -380,7 +381,10 @@ class TestDistributed(unittest.TestCase):
     def setUpClass(cls):
         build_fake_ut()
         build_fake_yaml()
-        cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
+        if system().lower() == "windows":
+            cmd = 'cp -r C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2/baseline_model .'
+        elif system().lower() == "linux":
+            cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
         os.popen(cmd).readlines()
         if not os.path.exists(cls.dst_path):
             logger.warning("resnet_v2 baseline_model doesn't exist.")
