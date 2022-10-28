@@ -10,24 +10,24 @@ variables:
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
 
 parameters:
-  - name: test_tf
-    displayName: Run tensorflow models?
+  - name: TensorFlow_Model
+    displayName: Run TensorFlow models?
     type: boolean
     default: true
-  - name: test_pt
-    displayName: Run pytorch models?
+  - name: PyTorch_Model
+    displayName: Run PyTorch models?
     type: boolean
     default: true
-  - name: test_onnx
-    displayName: Run onnxrt models?
+  - name: ONNX_Model
+    displayName: Run ONNX models?
     type: boolean
     default: true
-  - name: test_mxnet
-    displayName: Run mxnet models?
+  - name: MXNet_Model
+    displayName: Run MXNet models?
     type: boolean
     default: true
 
-  - name: tensorflowModelList
+  - name: TensorFlowModelList
     type: object
     default:
       - resnet50v1.5
@@ -38,29 +38,29 @@ parameters:
       - darknet19
       - densenet-121
       - resnet-101
-  - name: pyTorchModelList
+  - name: PyTorchModelList
     type: object
     default:
       - resnet18
       - resnet18_fx
-  - name: MXNetModelList
-    type: object
-    default:
-      - resnet50v1
-  - name: onnxrtModelList
+  - name: ONNXModelList
     type: object
     default:
       - resnet50-v1-12
       - bert_base_MRPC_dynamic
+  - name: MXNetModelList
+    type: object
+    default:
+      - resnet50v1
 
 
 stages:
-  - stage: TensorflowModels
-    displayName: Tensorflow Model Test
+  - stage: TensorFlowModels
+    displayName: Run Tensorflow model
     dependsOn: []
-    condition: eq('${{ parameters.test_tf }}', 'true')
+    condition: eq('${{ parameters.TensorFlow_Model }}', 'true')
     jobs:
-      - ${{ each model in parameters.tensorflowModelList }}:
+      - ${{ each model in parameters.TensorFlowModelList }}:
           - job:
             displayName: ${{ model }}
             steps:
@@ -70,11 +70,11 @@ stages:
                   framework: "tensorflow"
 
   - stage: PyTorchModels
-    displayName: PyTorch Model Test
+    displayName: Run PyTorch model
     dependsOn: []
-    condition: eq('${{ parameters.test_pt }}', 'true')
+    condition: eq('${{ parameters.PyTorch_Model }}', 'true')
     jobs:
-      - ${{ each model in parameters.pyTorchModelList }}:
+      - ${{ each model in parameters.PyTorchModelList }}:
           - job:
             displayName: ${{ model }}
             steps:
@@ -83,10 +83,24 @@ stages:
                   modelName: ${{ model }}
                   framework: "pytorch"
 
-  - stage: MXNetModels
-    displayName: Mxnet Model Test
+  - stage: ONNXModels
+    displayName: Run ONNX model
     dependsOn: []
-    condition: eq('${{ parameters.test_mxnet }}', 'true')
+    condition: eq('${{ parameters.ONNX_Model }}', 'true')
+    jobs:
+      - ${{ each model in parameters.ONNXModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "onnxrt"
+
+  - stage: MXNetModels
+    displayName: Run MXNet model
+    dependsOn: []
+    condition: eq('${{ parameters.MXNet_Model }}', 'true')
     jobs:
       - ${{ each model in parameters.MXNetModelList }}:
           - job:
@@ -97,23 +111,10 @@ stages:
                   modelName: ${{ model }}
                   framework: "mxnet"
 
-  - stage: ONNXModels
-    displayName: ONNXrt Model Test
-    dependsOn: []
-    condition: eq('${{ parameters.test_onnx }}', 'true')
-    jobs:
-      - ${{ each model in parameters.onnxrtModelList }}:
-          - job:
-            displayName: ${{ model }}
-            steps:
-              - template: template/model-template.yml
-                parameters:
-                  modelName: ${{ model }}
-                  framework: "onnxrt"
 
   - stage: GenerateLogs
     displayName: Generate Report
-    dependsOn: [TensorflowModels, PyTorchModels, MXNetModels, ONNXModels]
+    dependsOn: [TensorFlowModels, PyTorchModels, MXNetModels, ONNXModels]
     condition: always()
     jobs:
       - job: GenerateReport
