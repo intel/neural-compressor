@@ -91,18 +91,18 @@ stages:
               modelName: "resnet50v1"
               framework: "mxnet"
 
-  - stage: ONNXModels
-    displayName: ONNXrt Model Test
-    dependsOn: []
-    condition: eq('${{ parameters.test_onnx }}', 'true')
-    jobs:
-      - ${{ each modelItem in parameters.onnxrtModelList }}:
-          - job: ${{ modelItem.modelName }}
-            steps:
-              - template: template/model-template.yml
-                parameters:
-                  modelName: ${{ modelItem.modelName }}
-                  framework: "onnxrt"
+  # - stage: ONNXModels
+  #   displayName: ONNXrt Model Test
+  #   dependsOn: []
+  #   condition: eq('${{ parameters.test_onnx }}', 'true')
+  #   jobs:
+  #     - ${{ each modelItem in parameters.onnxrtModelList }}:
+  #         - job: ${{ modelItem.modelName }}
+  #           steps:
+  #             - template: template/model-template.yml
+  #               parameters:
+  #                 modelName: ${{ modelItem.modelName }}
+  #                 framework: "onnxrt"
 
   - stage: GenerateLogs
     displayName: Generate Report
