@@ -66,6 +66,13 @@ dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
 quantizer.calib_dataloader = common.DataLoader(dataset)
 quantizer.fit()
 ```
+### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md) (Experimental)
+Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
+
+<a target="_blank" href="./neural_coder/extensions/screenshots/extmanager.png">
+  <img src="./neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
+</a>
+  
 ### Quantization with [GUI](./docs/bench.md)
 ```shell
 # An ONNX Example
@@ -79,7 +86,7 @@ inc_bench
   <img src="./docs/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
-### Quantization with [Auto-coding API](./neural_coder/docs/AutoQuant.md) (Experimental)
+### Quantization with [Neural Coder](./neural_coder/docs/Quantization.md) (Experimental)
 
 ```python
 from neural_coder import auto_quant

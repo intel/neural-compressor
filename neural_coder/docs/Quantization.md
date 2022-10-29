@@ -1,6 +1,6 @@
-Auto-Quant Feature
+Neural Coder for Quantization
 ===========================
-This feature helps automatically enable quantization features on a PyTorch model script and automatically evaluates for the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a PyTorch model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision.
+This feature helps automatically enable quantization on Deep Learning models and automatically evaluates for the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision.
 
 
 ## Features Supported
