@@ -131,7 +131,7 @@ class TuneStrategy(object):
         self.q_hooks = q_hooks
         self.eval_func = eval_func
         GLOBAL_STATE.STATE = MODE.QUANTIZATION
-        framework, framework_specific_info = self.set_framework_info(q_dataloader)
+        framework, framework_specific_info = self.set_framework_info(q_dataloader, q_func)
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
 
@@ -199,7 +199,7 @@ class TuneStrategy(object):
             tune_config (dict): It's a dict containing the tuning configuration to run.
         """
         raise NotImplementedError
-    
+
 
     def traverse(self):
         """The main traverse logic, which could be override by some concrete strategy which needs
@@ -511,7 +511,7 @@ class TuneStrategy(object):
         path.mkdir(exist_ok=True, parents=True)
         return new_path
 
-    def set_framework_info(self,q_dataloader):
+    def set_framework_info(self, q_dataloader, q_func=None):
         framework_specific_info = {'device': self.cfg.device,
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
@@ -553,6 +553,7 @@ class TuneStrategy(object):
                and 'default_qconfig' in self.cfg['quantization']['op_wise']:
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
+            framework_specific_info.update({"q_func": q_func})
         return framework, framework_specific_info
 
     def set_objectives(self):
