@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
 model:                                               # mandatory. used to specify model specific information.
   name: style_transfer
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.

@@ -13,9 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0
+
 model:                                               # mandatory. used to specify model specific information.
   name: mobilenet_v1
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
@@ -24,7 +28,7 @@ quantization:                                        # optional. tuning constrai
       batch_size: 10
       dataset:
         ImageRecord:
-          root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
+          root: /path/to/evaluation/dataset          # NOTE: modify to calibration dataset location if needed
       transform:
         BilinearImagenet: 
           height: 224

@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow Object Detection models tuning results.
+This document is used to list steps of reproducing TensorFlow Object Detection models tuning results. This example can run on Intel CPUs and GPUs.
 Currently, we've enabled below models.
  * ssd_resnet50_v1
  * ssd_resnet34
@@ -20,11 +20,13 @@ Recommend python 3.6 or higher version.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
+
 ### 2. Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
+
 ### 3. Installation Dependency packages
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
@@ -36,7 +38,24 @@ pip install -r requirements.txt
 `Protocol Buffer Compiler` in version higher than 3.0.0 is necessary ingredient for automatic COCO dataset preparation. To install please follow
 [Protobuf installation instructions](https://grpc.io/docs/protoc-installation/#install-using-a-package-manager).
 
-### 5. Prepare Dataset
+### 5. Install Intel Extension for Tensorflow if needed
+
+#### Tuning the model on Intel GPU(Mandatory)
+Intel Extension for Tensorflow is mandatory to be installed for tuning the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Tuning the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for tuning the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 6. Prepare Dataset
 
 #### Automatic dataset download
 
@@ -56,7 +75,7 @@ tensorflow records using the `https://github.com/tensorflow/models.git` dedicate
 #### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
-### 6. Download Model
+### 7. Download Model
 
 #### Automated approach
 Run the `prepare_model.py` script located in `examples/tensorflow/object_detection/tensorflow_models/quantization/ptq`.
@@ -203,14 +222,16 @@ if input_graph:
 ```
 
 ### Write Yaml config file
-In examples directory, there is a ssd_resnet50_v1.yaml. We could remove most of items and only keep mandatory item for tuning.
+In examples directory, there is a ssd_resnet50_v1.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The ssd_resnet50_v1_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 model:                                               # mandatory. used to specify model specific information.
   name: ssd_resnet50_v1
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, tensorflow_itex, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: image_tensor
   outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
