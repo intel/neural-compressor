@@ -18,7 +18,7 @@ except:
 torch.manual_seed(9527)
 assert TEST_IPEX, "Please install intel extension for pytorch"
 # get torch and IPEX version
-PT_VERSION = nc_torch.get_torch_version()
+PT_VERSION = nc_torch.get_torch_version().release
 
 class M(torch.nn.Module):
     def __init__(self):
@@ -33,7 +33,16 @@ class M(torch.nn.Module):
         return x
 
 
-@unittest.skipIf(PT_VERSION >= Version("1.12.0-rc1") or PT_VERSION < Version("1.10.0-rc1"),
+def calib_func(model):
+    # switch to evaluate mode
+    model.eval()
+    with torch.no_grad():
+        input = torch.randn(1, 3, 224, 224)
+        # compute output
+        output = model(input)
+
+
+@unittest.skipIf(PT_VERSION >= Version("1.12.0").release or PT_VERSION < Version("1.10.0").release,
                  "Please use Intel extension for Pytorch version 1.10 or 1.11")
 class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
     @classmethod
@@ -67,7 +76,7 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
         evaluator.fit('accuracy')
 
 
-@unittest.skipIf(PT_VERSION < Version("1.12.0-rc1"),
+@unittest.skipIf(PT_VERSION < Version("1.12.0").release,
                  "Please use Intel extension for Pytorch version higher or equal to 1.12")
 class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     @classmethod
@@ -89,6 +98,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.calib_func = calib_func
         quantizer.eval_dataloader = common.DataLoader(dataset)
         nc_model = quantizer.fit()
         nc_model.save('./saved')

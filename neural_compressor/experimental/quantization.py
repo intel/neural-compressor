@@ -66,6 +66,7 @@ class Quantization(Component):
         random.seed(seed)
         np.random.seed(seed)
         self._calib_dataloader = None
+        self._calib_func = None
 
     def _create_eval_dataloader(self, cfg):
         # when eval_func is set, will be directly used and eval_dataloader can be None
@@ -93,11 +94,8 @@ class Quantization(Component):
 
     def _create_calib_dataloader(self, cfg):
         approach_cfg = deep_get(cfg, 'quantization.approach')
-        if self._train_func:
-            assert approach_cfg == 'quant_aware_training', 'q_func property should not ' \
-                   'set for {}'.format(approach_cfg)
 
-        if self._calib_dataloader is None and self._train_func is None:
+        if self._calib_dataloader is None and self._calib_func is None:
             if approach_cfg in ['post_training_static_quant', 'post_training_auto_quant']:
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
 
@@ -107,7 +105,7 @@ class Quantization(Component):
                 assert calib_dataloader_cfg is not None, \
                        'dataloader field of calibration field of quantization section ' \
                        'in yaml file should be configured as calib_dataloader property is NOT set!'
-                
+
                 if deep_get(calib_dataloader_cfg, 'shuffle'):
                     logger.warning("Reset `shuffle` field to False when post_training_static_quant"
                                    " is selected.")
@@ -149,7 +147,7 @@ class Quantization(Component):
             self._model,
             self.conf,
             self._calib_dataloader,
-            self._train_func,
+            self._calib_func,
             self._eval_dataloader,
             self._eval_func,
             _resume,
@@ -372,27 +370,24 @@ class Quantization(Component):
 
     # BELOW API TO BE DEPRECATED!
     @property
-    def q_func(self):
+    def q_func(self):  # pragma: no cover
         assert False, 'Should not try to get the value of `q_func` attribute.'
         return None
 
     @q_func.setter
     def q_func(self, user_q_func):
-        """Training function for Quantization-Aware Training.
-           It is optional and only takes effect when user choose
-           "quant_aware_training" approach in yaml.
+        """Calibrate with samples for static quantization or train for quantization-Aware Training.
+           It is optional. if calibration function is defined, then calibration dataloader is
+           invalid.
 
         Args:
             user_q_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If q_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed.
+                         and executes entire inference process or training process with self
+                         contained training hyper-parameters..
         """
-        warn('This method is deprecated. please use `train_func` instead.',
-             DeprecationWarning, stacklevel=2)
-        self._train_func = user_q_func
+        self._calib_func = user_q_func
+
+    calib_func = q_func
 
     def __repr__(self):
         return 'Quantization'

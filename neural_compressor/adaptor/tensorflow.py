@@ -528,7 +528,8 @@ class TensorFlowAdaptor(Adaptor):
 
             return self.convert(common.Model(qat_model), 'QAT', 'default')
 
-        assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        assert q_func is None, \
+            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
