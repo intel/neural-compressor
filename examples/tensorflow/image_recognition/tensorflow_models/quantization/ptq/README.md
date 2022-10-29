@@ -2,6 +2,7 @@ Step-by-Step
 ============
 
 This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via Neural Compressor.
+This example can run on Intel CPUs and GPUs.
 
 > **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
@@ -9,14 +10,42 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
 # Prerequisite
 
 ### 1. Installation
-  Recommend python 3.6 or higher version.
+Recommend python 3.6 or higher version.
 
-  ```shell
-  cd examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq
-  pip install -r requirements.txt
-  ```
+```shell
+# Install Intel® Neural Compressor
+pip install neural-compressor
+```
 
-### 2. Prepare Dataset
+### 2. Install Intel Tensorflow
+```shell
+pip install intel-tensorflow
+```
+> Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
+
+### 3. Installation Dependency packages
+```shell
+cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
+pip install -r requirements.txt
+```
+
+### 4. Install Intel Extension for Tensorflow if needed
+#### Tuning the model on Intel GPU(Mandatory)
+Intel Extension for Tensorflow is mandatory to be installed for tuning the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Tuning the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for tuning the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 5. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
   We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
@@ -36,7 +65,7 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   tar -xvf caffe_ilsvrc12.tar.gz
   ```
 
-### 3. Prepare pre-trained model
+### 6. Prepare pre-trained model
   In this version, Intel® Neural Compressor just support PB file as input for TensorFlow backend, so we need prepared model pre-trained pb files. For some models pre-trained pb can be found in [IntelAI Models](https://github.com/IntelAI/models/tree/v1.6.0/benchmarks#tensorflow-use-cases), we can found the download link in README file of each model. And for others models in Google [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models), we can get the pb files by convert the checkpoint files. We will give a example with Inception_v1 to show how to get the pb file by a checkpoint file.
 
   1. Download the checkpoint file from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models)
@@ -314,7 +343,7 @@ As ResNet50 V1.5 is a typical image recognition model, use Top-K as metric which
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning. 
+In examples directory, there is a resnet50_v1_5.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The resnet50_v1_5_itex.yaml is prepared for the GPU case. We could remove most of the items and only keep mandatory item for tuning.
 
 
 ```yaml
@@ -325,6 +354,8 @@ model:                                               # mandatory. used to specif
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: input_tensor
   outputs: softmax_tensor
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:

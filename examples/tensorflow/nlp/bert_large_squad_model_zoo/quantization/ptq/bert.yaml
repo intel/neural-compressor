@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0
+
 model:
   name: bert
   framework: tensorflow
   inputs: input_ids, input_mask, segment_ids
   outputs: start_logits, end_logits
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 evaluation:
   accuracy:

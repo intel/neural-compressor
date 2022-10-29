@@ -19,6 +19,8 @@ model:
   inputs: input_file, batch_size
   outputs: IteratorGetNext:3, unstack:0, unstack:1
 
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
 evaluation:
   accuracy:
     metric:

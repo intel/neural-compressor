@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer-LT.
+This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer-LT. This example can run on Intel CPUs and GPUs.
 
 ## Prerequisite
 
@@ -17,7 +17,24 @@ pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
-### 3. Prepare Dataset & Pretrained model
+### 3. Install Intel Extension for Tensorflow if needed
+
+#### Tuning the model on Intel GPU(Mandatory)
+Intel Extension for Tensorflow is mandatory to be installed for tuning the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Tuning the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for tuning the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 4. Prepare Dataset & Pretrained model
 
 ```shell
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_2_0/transformer-lt-official-fp32-inference.tar.gz
@@ -76,7 +93,7 @@ class Dataset(object):
 We evaluate the model with BLEU score, its source: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
 
 ### Write Yaml config file
-In examples directory, there is a transformer_lt.yaml. We could remove most of items and only keep mandatory item for tuning.
+In examples directory, there is a transformer_lt.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The transformer_lt_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 model:
@@ -84,6 +101,8 @@ model:
   framework: tensorflow
   inputs: input_tensor
   outputs: model/Transformer/strided_slice_19
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:
   calibration:
