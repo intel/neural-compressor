@@ -162,7 +162,7 @@ stages:
           - script: |
               echo "------ Generating final report.html ------"
               cd ${OUT_SCRIPT_PATH}
-              /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated
+              /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated --ghprbPullId $(System.PullRequest.PullRequestNumber) --MR_source_branch $(System.PullRequest.SourceBranch) --MR_source_repo $(System.PullRequest.SourceRepositoryURI) --MR_target_branch $(System.PullRequest.TargetBranch) --repo_url $(Build.Repository.Uri) --source_commit_id $(Build.SourceVersion) --build_id $(Build.BuildId)
             displayName: "Generate report"
           - task: PublishPipelineArtifact@1
             inputs:
