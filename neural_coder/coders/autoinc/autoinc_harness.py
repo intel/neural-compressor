@@ -25,6 +25,7 @@ import logging
 import yaml
 import sys
 import os
+import re
 
 logging.basicConfig(level=globals.logging_level,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -185,7 +186,7 @@ class AutoInc_Harness(object):
                     if file_path_idx == 0 and domain_ == 'transformers_trainer':
                         for i in range(len(lines)):
                             line = lines[i]
-                            if "trainer = Trainer" in line:
+                            if re.findall("trainer = .*Trainer", line):
                                 if "(" in line and line.count(")") == line.count("("):
                                     trans_insert_location = i + 1
                                 else:
@@ -394,7 +395,7 @@ class AutoInc_Harness(object):
                                         lines_to_insert = lines_to_insert.replace("NUM_BENCHMARK_ITERATION", 
                                                                                     globals.num_benchmark_iteration)
                                         lines_to_insert = lines_to_insert.replace("ACCURACY_MODE", 
-                                                                                    str(globals.eval_accuracy))
+                                                                                    str(False))
                                         lines_to_insert = lines_to_insert.replace("EVAL_FUNC_LINES", 
                                                                                     line.strip())
 
