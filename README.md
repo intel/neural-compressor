@@ -100,14 +100,49 @@ auto_quant(
 
 ## System Requirements
 
-Intel® Neural Compressor supports systems based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64) that are specifically optimized for the following CPUs:
+### Validated Hardware Environment
+#### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
 * Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
 * Future Intel Xeon Scalable processor (code name Sapphire Rapids)
 
-Intel® Neural Compressor supports the following Intel GPUs built on Intel's Xe architecture:
+#### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
 * [Intel® Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/docs/discrete-gpus/data-center-gpu/flex-series/overview.html)
+
+#### Intel® Neural Compressor quantized models are scalable for broad devices:
+
+* Examples of ONNX INT8 model quantized by Intel® Neural Compressor verified with accuracy on INTEL/AMD/ARM CPUs and NV GPU.
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-twlt" rowspan="2">INC quantized models</th>
+    <th class="tg-aldk" rowspan="2">Intel ICX</th>
+    <th class="tg-aldk" rowspan="2">NV A100 CUDA <br>Execution Provider</th>
+    <th class="tg-aldk" rowspan="2">AMD Milan</th>
+    <th class="tg-aldk" rowspan="2">ARM Graviton2</th>
+  </tr>
+</thead>
+<tbody align="center">
+  <tr>
+    <td class="tg-cwad">ResNet50 QDQ</td>
+    <td class="tg-cwad">74%</td>
+    <td class="tg-cwad">74%</td>
+    <td class="tg-cwad">73%</td>
+    <td class="tg-cwad">74%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">BERT-base QDQ</td>
+    <td class="tg-cwad">86%</td>
+    <td class="tg-cwad">85%</td>
+    <td class="tg-cwad">86%</td>
+    <td class="tg-cwad">86%</td>
+  </tr>
+</tbody>
+</table>
+
+> **Note:**
+> More examples validated on [AWS](https://aws.amazon.com/ec2/instance-types/) please check [extension list](./docs/validated_model_list.md#Validated-ONNX-INT8-models-accuracy-on-broad-hardware). 
 
 ### Validated Software Environment
 
@@ -236,13 +271,13 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 </table>
 
 ## Selected Publications
+* [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
+* [PyTorch* Inference Acceleration with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/developer/articles/technical/pytorch-inference-with-intel-neural-compressor.html#gs.gnq0cj) (Oct 2022)
 * Neural Coder, a new plug-in for Intel Neural Compressor was covered by [Twitter](https://intel.sharepoint.com/sites/iLit-MyLearning/Shared%20Documents/My%20Learning/Haihao/MSR/2022/o%09https:/twitter.com/IntelDevTools/status/1583629213697212416?s=20&t=f2dXY_g9-bCO-GQm-S6Btg), [LinkedIn](https://www.linkedin.com/posts/intel-software_oneapi-ai-deeplearning-activity-6989377309917007872-Dbzg?utm_source=share&utm_medium=member_desktop), and [Intel Developer Zone](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA) from Intel, and [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416/retweets) and [LinkedIn](https://www.linkedin.com/feed/update/urn:li:share:6990377841435574272/) from Hugging Face. (Oct 2022)
 * Intel Neural Compressor successfully landed on [GCP](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [AWS](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel) marketplace. (Oct 2022)
 * [Neural Coder (Intel Neural Compressor Plug-in): One-Click, No-Code Solution (Pat's Keynote IntelON 2022)](https://twitter.com/i/status/1574909338203967497) (Sep 2022)
 * [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) (Sep 2022)
 * [Efficient Text Classification with Intel Neural Compressor](https://medium.com/intel-analytics-software/efficient-text-classification-with-intel-neural-compressor-4853296deeac) (Sep 2022)
-* [Dynamic Neural Architecture Search with Intel Neural Compressor](https://medium.com/intel-analytics-software/dynamic-neural-architecture-search-with-intel-neural-compressor-7b05eaf325f3) (Sep 2022)
-* [Easy Quantization in PyTorch Using Fine-Grained FX](https://medium.com/intel-analytics-software/easy-quantization-in-pytorch-using-fine-grained-fx-80be2c4bc2d6) (Sep 2022)
 
 > View our [full publication list](docs/publication_list.md).
 
