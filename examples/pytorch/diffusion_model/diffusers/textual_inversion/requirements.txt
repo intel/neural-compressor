@@ -1,0 +1,8 @@
+diffusers==0.4.1
+accelerate
+torchvision
+transformers>=4.21.0
+ftfy
+tensorboard
+modelcards
+intel_extension_for_pytorch
