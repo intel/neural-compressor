@@ -7,7 +7,7 @@ This document describes the step-by-step instructions for reproducing PyTorch MA
 
 ### 1. Installation
 
-PyTorch 1.8 or higher version is needed with pytorch_fx backend.
+PyTorch >=1.8 and <=1.11 version is needed with pytorch_fx backend.
 
 ```shell
 cd examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx
