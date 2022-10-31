@@ -64,7 +64,7 @@ dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
 quantizer.calib_dataloader = common.DataLoader(dataset)
 quantizer.fit()
 ```
-### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md) (Experimental)
+### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md)
 Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
 
 <a target="_blank" href="./neural_coder/extensions/screenshots/extmanager.png">
@@ -83,20 +83,6 @@ inc_bench
 <a target="_blank" href="./docs/imgs/INC_GUI.gif">
   <img src="./docs/imgs/INC_GUI.gif" alt="Architecture">
 </a>
-
-### Quantization with [Neural Coder](./neural_coder/docs/Quantization.md) (Experimental)
-
-```python
-from neural_coder import auto_quant
-auto_quant(
-    code="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py",
-    args="--model_name_or_path albert-base-v2 \
-          --task_name sst2 \
-          --do_eval \
-          --output_dir result \
-          --overwrite_output_dir",
-)
-```
 
 ## System Requirements
 
@@ -252,7 +238,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
     </tr>
     <tr>
         <td colspan="4" align="center"><a href="docs/distillation_quantization.md">Distillation for Quantization</a></td>
-        <td colspan="5" align="center"><a href="neural_coder">Neural Coder (No-Code Solution)</a></td>
+        <td colspan="5" align="center"><a href="neural_coder">Neural Coder</a></td>
     </tr>    
     
   </tbody>
