@@ -29,9 +29,6 @@ num_benchmark_iteration = 30
 # print info for debugging purpose
 logging_level = logging.INFO
 
-# benchmark accuracy mode
-eval_accuracy = False
-
 # print code line info for debug use
 print_code_line_info = False
 
