@@ -1812,7 +1812,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-## Validated ONNX INT8 models accuracy on broad hardware
+## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
 
 <table class="tg">
 <thead>
