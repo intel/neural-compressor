@@ -56,6 +56,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
             _, normal_inputs = self._get_node_input(node.name)
             original_inputs = normal_inputs[:node.attr['N'].i]
 
+            # the input chain of concatv2 is QuantizedOp -> (req) -> q -> dq -> concat
             for each_input in original_inputs:
                 dq_input = self._get_first_input_from_name(each_input)
                 q_input = self._get_first_input_from_name(dq_input)
@@ -63,6 +64,11 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 if pre_input == '':
                     continue
                 req_input = self._get_node_from_name(pre_input)
+                
+                # the concatv2 with '_QuantizedFusedBatchNorm' as inputs can't be reranged
+                if req_input.op == '_QuantizedFusedBatchNorm':
+                    is_quantizable = False
+                    break
                 if req_input.op == 'Requantize' or req_input.op == 'RequantizePerChannel' \
                     or req_input.op.startswith('Quantized'):
                     is_quantizable = True
@@ -210,10 +216,8 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                             else:
                                 new_inputs.append(each_input)
                         new_inputs.append(cur_node.input[-1])
-                        for i in range(0, cur_node.attr['N'].i+1):
-                            cur_node.input.pop()
-                        for input in new_inputs:
-                            cur_node.input.extend([input])
+                        cur_node.ClearField('input')
+                        cur_node.input.extend(new_inputs)
 
         return None, None
 
