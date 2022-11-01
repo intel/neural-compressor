@@ -99,10 +99,10 @@ import torch
 model_id = "nezha_output"
 
 # use gpu
-pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
+# pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to("cuda")
 
-# use cpu
-# pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float)
+# use cpu with FP32
+pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float)
 
 prompt = "a graffiti in a wall with a nezha on it"
 
