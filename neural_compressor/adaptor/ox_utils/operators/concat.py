@@ -27,6 +27,8 @@ class ConcatOperator(Operator):
 
     def quantize_check(self):
         node = self.node
+        if len(node.input) == 1: # pragma: no cover
+            return False
         inits = [i.name for i in self.quantizer.model.initializer()]
         if all([inp not in self.quantizer.quantized_value_map and inp not in inits \
             for inp in node.input]) or \

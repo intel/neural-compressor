@@ -369,3 +369,19 @@ class ONNXModel(BaseModel):
         nodes.reverse()
         self.model.graph.ClearField('node')
         self.model.graph.node.extend(nodes)
+
+    def get_nodes_chain(self, start_node, stop_node, result_chain=[]):
+        while start_node:
+            node_name = start_node.popleft()
+            if node_name in stop_node:
+                continue
+            if node_name not in result_chain:
+                result_chain.append(node_name)
+            else:
+                continue
+
+            node = ortq.find_by_name(node_name, list(self.model.graph.node))
+            for parent in self.get_parents(node):
+                start_node.append(parent.name)
+
+        return result_chain
