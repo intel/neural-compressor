@@ -58,6 +58,7 @@ steps:
     displayName: Collect log
 
   - task: PublishPipelineArtifact@1
+    condition: always()
     inputs:
       targetPath: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}/
       artifact: ${{ parameters.framework }}_${{ parameters.modelName }}

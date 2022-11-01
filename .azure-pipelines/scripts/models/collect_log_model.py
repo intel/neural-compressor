@@ -1,8 +1,6 @@
-import re
-import os
-import platform
 import argparse
-
+import os
+import re
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--framework", type=str, required=True)
@@ -21,10 +19,98 @@ URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+
 print(args)
 
 
+def get_model_tuning_results():
+    tuning_result_dict = {}
+
+    if os.path.exists(tuning_log):
+        print('tuning log found')
+        tmp = {'fp32_acc': 0, 'int8_acc': 0, 'tuning_trials': 0}
+        with open(tuning_log, "r") as f:
+            for line in f:
+                parse_tuning_line(line, tmp)
+        print(tmp)
+        # set model status failed
+        if tmp['fp32_acc'] == 0 or tmp['int8_acc'] == 0:
+            os.system('echo "##vso[task.setvariable variable=' + args.framework + '_' + args.model + '_failed]true"')
+
+        tuning_result_dict = {
+            "OS": OS,
+            "Platform": PLATFORM,
+            "Framework": args.framework,
+            "Version": args.fwk_ver,
+            "Model": args.model,
+            "Strategy": tmp['strategy'],
+            "Tune_time": tmp['tune_time'],
+        }
+        benchmark_accuracy_result_dict = {
+            'int8': {
+                "OS": OS,
+                "Platform": PLATFORM,
+                "Framework": args.framework,
+                "Version": args.fwk_ver,
+                "Model": args.model,
+                "Mode": "Inference",
+                "Type": "Accuracy",
+                "BS": 1,
+                "Value": tmp['int8_acc'],
+                "Url": URL,
+            },
+            'fp32': {
+                "OS": OS,
+                "Platform": PLATFORM,
+                "Framework": args.framework,
+                "Version": args.fwk_ver,
+                "Model": args.model,
+                "Mode": "Inference",
+                "Type": "Accuracy",
+                "BS": 1,
+                "Value": tmp['fp32_acc'],
+                "Url": URL,
+            }
+        }
+
+    return tuning_result_dict, benchmark_accuracy_result_dict
+
+
+def get_model_benchmark_results():
+    benchmark_performance_result_dict = {'int8': {}, 'fp32': {}}
+    for precision in ['int8', 'fp32']:
+        throughput = 0.0
+        bs = 1
+        for root, dirs, files in os.walk(args.logs_dir):
+            for name in files:
+                file_name = os.path.join(root, name)
+                print(file_name)
+                if 'performance-' + precision in name:
+                    for line in open(file_name, "r"):
+                        result= parse_perf_line(line)
+                        if result.get("throughput"):
+                            throughput += result.get("throughput")
+                        if result.get("batch_size"):
+                            bs = result.get("batch_size")
+
+        # set model status failed
+        if throughput==0.0:
+            os.system('echo "##vso[task.setvariable variable='+args.framework+'_'+args.model+'_failed]true"')
+        benchmark_performance_result_dict[precision] = {
+            "OS": OS,
+            "Platform": PLATFORM,
+            "Framework": args.framework,
+            "Version": args.fwk_ver,
+            "Model": args.model,
+            "Mode": "Inference",
+            "Type": "Performance",
+            "BS": 1,
+            "Value":throughput,
+            "Url":URL,
+        }
+
+    return benchmark_performance_result_dict
+
+
 def main():
     results = []
     tuning_infos = []
-    tuning_log = os.path.join(args.logs_dir, f"{args.framework}-{args.model}-tune.log")
     print("tuning log dir is {}".format(tuning_log))
     # get model tuning results
     if os.path.exists(tuning_log):
@@ -124,4 +210,5 @@ def parse_perf_line(line) -> float:
 
 
 if __name__ == '__main__':
+    tuning_log = os.path.join(args.logs_dir, f"{args.framework}-{args.model}-tune.log")
     main()
