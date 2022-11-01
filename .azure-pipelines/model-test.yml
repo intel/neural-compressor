@@ -10,284 +10,137 @@ variables:
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
 
 parameters:
-- name: test_tf
-  displayName: Run tensorflow models?
-  type: boolean
-  default: true
-- name: test_pt
-  displayName: Run pytorch models?
-  type: boolean
-  default: true
-- name: test_onnx
-  displayName: Run onnxrt models?
-  type: boolean
-  default: true
-- name: test_mxnet
-  displayName: Run mxnet models?
-  type: boolean
-  default: true
+  - name: TensorFlow_Model
+    displayName: Run TensorFlow models?
+    type: boolean
+    default: true
+  - name: PyTorch_Model
+    displayName: Run PyTorch models?
+    type: boolean
+    default: true
+  - name: ONNX_Model
+    displayName: Run ONNX models?
+    type: boolean
+    default: true
+  - name: MXNet_Model
+    displayName: Run MXNet models?
+    type: boolean
+    default: true
+
+  - name: TensorFlowModelList
+    type: object
+    default:
+      - resnet50v1.5
+      - ssd_resnet50_v1
+      - ssd_mobilenet_v1_ckpt
+      - inception_v1
+      - resnet50_fashion
+      - darknet19
+      - densenet-121
+      - resnet-101
+  - name: PyTorchModelList
+    type: object
+    default:
+      - resnet18
+      - resnet18_fx
+  - name: ONNXModelList
+    type: object
+    default:
+      - resnet50-v1-12
+      - bert_base_MRPC_dynamic
+  - name: MXNetModelList
+    type: object
+    default:
+      - resnet50v1
+
 
 stages:
-- ${{ if eq(parameters.test_tf, true) }}:
-  - stage: TensorflowModels
-    displayName: Tensorflow Model Test
+  - stage: TensorFlowModels
+    displayName: Run TensorFlow Model
     dependsOn: []
+    condition: eq('${{ parameters.TensorFlow_Model }}', 'true')
     jobs:
-      - job: resnet50v1_5
-        displayName: resnet50v1.5
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet50v1.5'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_resnet50v1.5_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50v1.5 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+      - ${{ each model in parameters.TensorFlowModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "tensorflow"
 
-      - job: ssd_resnet50_v1
-        displayName: ssd_resnet50_v1
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'ssd_resnet50_v1'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_ssd_resnet50_v1_failed) == 'true' ]; then
-                echo "[Failed] Model ssd_resnet50_v1 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-      - job: ssd_mobilenet_v1_ckpt
-        displayName: ssd_mobilenet_v1_ckpt
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'ssd_mobilenet_v1_ckpt'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_ssd_mobilenet_v1_ckpt_failed) == 'true' ]; then
-                echo "[Failed] Model ssd_mobilenet_v1_ckpt failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-      - job: inception_v1
-        displayName: inception_v1
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'inception_v1'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_inception_v1_failed) == 'true' ]; then
-                echo "[Failed] Model inception_v1 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-      - job: resnet50_fashion
-        displayName: resnet50_fashion
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet50_fashion'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_resnet50_fashion_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50_fashion failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-      - job: darknet19
-        displayName: darknet19
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'darknet19'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_darknet19_failed) == 'true' ]; then
-                echo "[Failed] Model darknet19 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-      - job: densenet121
-        displayName: densenet-121
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'densenet-121'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_densenet-121_failed) == 'true' ]; then
-                echo "[Failed] Model densenet-121 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-      - job: resnet101
-        displayName: resnet-101
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet-101'
-              framework: 'tensorflow'
-               
-          - script: |
-              if [ $(tensorflow_resnet-101_failed) == 'true' ]; then
-                echo "[Failed] Model resnet-101 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-- ${{ if eq(parameters.test_pt, true) }}:
   - stage: PyTorchModels
-    displayName: PyTorch Model Test
+    displayName: Run PyTorch Model
     dependsOn: []
+    condition: eq('${{ parameters.PyTorch_Model }}', 'true')
     jobs:
-      - job: resnet18
-        displayName: resnet18
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet18'
-              framework: 'pytorch'
-               
-          - script: |
-              if [ $(pytorch_resnet18_failed) == 'true' ]; then
-                echo "[Failed] Model resnet18 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+      - ${{ each model in parameters.PyTorchModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "pytorch"
 
-      - job: resnet18_fx
-        displayName: resnet18_fx
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet18_fx'
-              framework: 'pytorch'
-               
-          - script: |
-              if [ $(pytorch_resnet18_fx_failed) == 'true' ]; then
-                echo "[Failed] Model resnet18_fx failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-- ${{ if eq(parameters.test_mxnet, true) }}:
-  - stage: MXNetModels
-    displayName: Mxnet Model Test
-    dependsOn: []
-    jobs:
-      - job: resnet50v1
-        displayName: resnet50v1
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet50v1'
-              framework: 'mxnet'
-               
-          - script: |
-              if [ $(mxnet_resnet50v1_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50v1 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
-
-- ${{ if eq(parameters.test_onnx, true) }}:
   - stage: ONNXModels
-    displayName: ONNXrt Model Test
+    displayName: Run ONNX Model
     dependsOn: []
+    condition: eq('${{ parameters.ONNX_Model }}', 'true')
     jobs:
-      - job: resnet50_v1_12
-        displayName: resnet50-v1-12
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'resnet50-v1-12'
-              framework: 'onnxrt'
-               
-          - script: |
-              if [ $(onnxrt_resnet50-v1-12_failed) == 'true' ]; then
-                echo "[Failed] Model resnet50-v1-12 failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
+      - ${{ each model in parameters.ONNXModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "onnxrt"
 
-#      - job: distilbert_base_MRPC_qdq
-#        displayName: distilbert_base_MRPC_qdq
-#        steps:
-#          - template: template/model-template.yml
-#            parameters:
-#              modelName: 'distilbert_base_MRPC_qdq'
-#              framework: 'onnxrt'
-#
-#          - script: |
-#              if [ $(onnxrt_distilbert_base_MRPC_qdq_failed) == 'true' ]; then
-#                echo "[Failed] Model distilbert_base_MRPC_qdq failed, please check artifacts and logs."
-#                exit 1
-#              fi
-#            displayName: "Check Test Status"
+  - stage: MXNetModels
+    displayName: Run MXNet Model
+    dependsOn: []
+    condition: eq('${{ parameters.MXNet_Model }}', 'true')
+    jobs:
+      - ${{ each model in parameters.MXNetModelList }}:
+          - job:
+            displayName: ${{ model }}
+            steps:
+              - template: template/model-template.yml
+                parameters:
+                  modelName: ${{ model }}
+                  framework: "mxnet"
 
-      - job: bert_base_MRPC_dynamic
-        displayName: bert_base_MRPC_dynamic
-        steps:
-          - template: template/model-template.yml
-            parameters:
-              modelName: 'bert_base_MRPC_dynamic'
-              framework: 'onnxrt'
-               
-          - script: |
-              if [ $(onnxrt_bert_base_MRPC_dynamic_failed) == 'true' ]; then
-                echo "[Failed] Model bert_base_MRPC_dynamic failed, please check artifacts and logs."
-                exit 1
-              fi
-            displayName: "Check Test Status"
 
   - stage: GenerateLogs
     displayName: Generate Report
-    dependsOn: [ TensorflowModels, PyTorchModels, MXNetModels, ONNXModels ]
-    condition: succeededOrFailed()
+    dependsOn: [TensorFlowModels, PyTorchModels, MXNetModels, ONNXModels]
+    condition: always()
     jobs:
       - job: GenerateReport
-        displayName: generate report
         steps:
           - script: |
               echo ${BUILD_SOURCESDIRECTORY}
               sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
               echo y | docker system prune
-            displayName: 'Clean workspace'
+            displayName: "Clean workspace"
           - checkout: self
             clean: true
-            displayName: 'Checkout out Repo'
+            displayName: "Checkout out Repo"
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
-              patterns: '**/*_summary.log'
+              patterns: "**/*_summary.log"
               path: $(OUT_SCRIPT_PATH)
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
-              patterns: '**/*_tuning_info.log'
+              patterns: "**/*_tuning_info.log"
               path: $(OUT_SCRIPT_PATH)
           - task: UsePythonVersion@0
-            displayName: 'Use Python 3.8.0'
+            displayName: "Use Python 3."
             inputs:
-              versionSpec: '3.8.0'
+              versionSpec: "3"
           - script: |
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
@@ -296,26 +149,26 @@ stages:
             displayName: "Collect all logs"
           - task: DownloadPipelineArtifact@2
             inputs:
-              source: 'specific'
-              artifact: 'FinalReport'
-              patterns: '**.log'
+              source: "specific"
+              artifact: "FinalReport"
+              patterns: "**.log"
               path: $(OUT_SCRIPT_PATH)/last_generated
               project: $(System.TeamProject)
-              pipeline: 'Baseline'
-              runVersion: 'specific'
+              pipeline: "Baseline"
+              runVersion: "specific"
               runId: $(model_runID)
               retryDownloadCount: 3
-            displayName: 'Download last logs'
+            displayName: "Download last logs"
           - script: |
               echo "------ Generating final report.html ------"
               cd ${OUT_SCRIPT_PATH}
               /usr/bin/bash generate_report.sh --WORKSPACE generated --output_dir generated --last_logt_dir last_generated --ghprbPullId $(System.PullRequest.PullRequestNumber) --MR_source_branch $(System.PullRequest.SourceBranch) --MR_source_repo $(System.PullRequest.SourceRepositoryURI) --MR_target_branch $(System.PullRequest.TargetBranch) --repo_url $(Build.Repository.Uri) --source_commit_id $(Build.SourceVersion) --build_id $(Build.BuildId)
-            displayName: 'Generate report'
+            displayName: "Generate report"
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: $(OUT_SCRIPT_PATH)/generated
               artifact: FinalReport
-              publishLocation: 'pipeline'
+              publishLocation: "pipeline"
             displayName: "Publish report"
           - script: |
               if [ $(is_perf_reg) == 'true' ]; then
