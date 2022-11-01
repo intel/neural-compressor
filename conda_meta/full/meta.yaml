@@ -42,6 +42,7 @@ requirements:
     - alembic==1.7.7
     - cython
     - pywin32  # [win]
+    - packaging
 test:
   imports:
     - neural_compressor

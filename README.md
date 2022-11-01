@@ -96,39 +96,9 @@ inc_bench
 
 * [Intel® Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/docs/discrete-gpus/data-center-gpu/flex-series/overview.html)
 
-#### Intel® Neural Compressor quantized models are scalable for broad devices:
+#### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
-* Examples of ONNX INT8 model quantized by Intel® Neural Compressor verified with accuracy on INTEL/AMD/ARM CPUs and NV GPU.
-<table class="tg">
-<thead>
-  <tr>
-    <th class="tg-twlt" rowspan="2">INC quantized models</th>
-    <th class="tg-aldk" rowspan="2">Intel ICX</th>
-    <th class="tg-aldk" rowspan="2">NV A100 CUDA <br>Execution Provider</th>
-    <th class="tg-aldk" rowspan="2">AMD Milan</th>
-    <th class="tg-aldk" rowspan="2">ARM Graviton2</th>
-  </tr>
-</thead>
-<tbody align="center">
-  <tr>
-    <td class="tg-cwad">ResNet50 QDQ</td>
-    <td class="tg-cwad">74%</td>
-    <td class="tg-cwad">74%</td>
-    <td class="tg-cwad">73%</td>
-    <td class="tg-cwad">74%</td>
-  </tr>
-  <tr>
-    <td class="tg-cwad">BERT-base QDQ</td>
-    <td class="tg-cwad">86%</td>
-    <td class="tg-cwad">85%</td>
-    <td class="tg-cwad">86%</td>
-    <td class="tg-cwad">86%</td>
-  </tr>
-</tbody>
-</table>
-
-> **Note:**
-> More examples validated on [AWS](https://aws.amazon.com/ec2/instance-types/) please check [extension list](./docs/validated_model_list.md#Validated-ONNX-INT8-models-accuracy-on-broad-hardware). 
+* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/validated_model_list.md#Validated-ONNX-INT8-models-accuracy-on-broad-hardware).
 
 ### Validated Software Environment
 
