@@ -875,14 +875,14 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def input_tensor_names(self):
-        if len(self._input_tensor_names) == 0:
+        if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
         return copy.deepcopy(self._input_tensor_names)
 
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         if len(tensor_names) == 0:
-            logger.warn("Input tensor names should not be empty.")
+            logger.warn("Input tensor names is empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(\

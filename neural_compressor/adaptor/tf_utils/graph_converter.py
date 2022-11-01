@@ -169,6 +169,11 @@ class GraphConverter:
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
+        if len(self.data_loader) == 0:
+            feed_dict = {}
+            _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
+                else iterator_sess_run(sess, iter_op, \
+                    feed_dict, output_tensor, self.calib_iteration)
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
                 feed_dict = {}
