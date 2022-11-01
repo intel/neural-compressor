@@ -127,9 +127,11 @@ def get_model_fwk_name(model):
                         then return 'NA'.
     """
     def _is_onnxruntime(model):
+        from importlib.util import find_spec
         try:
             so = ort.SessionOptions()
-            if sys.version_info < (3,10): # pragma: no cover
+            if sys.version_info < (3,10) and \
+                find_spec('onnxruntime_extensions'): # pragma: no cover
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
@@ -137,7 +139,8 @@ def get_model_fwk_name(model):
             else:
                 ort.InferenceSession(model.SerializeToString(), so)
         except:
-            pass
+            logger.warning("If you use an onnx model with custom_ops to do quantiztaion, "
+                "please ensure onnxruntime-extensions is installed")
         else:
             return 'onnxruntime'
         return 'NA'

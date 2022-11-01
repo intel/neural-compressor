@@ -53,10 +53,6 @@ required_libs = {
     'onnxrt_qoperator': ['onnx', 'onnxruntime'],
     'mxnet': ['mxnet'],
 }
-if sys.version_info < (3,10): # pragma: no cover
-    required_libs['onnxrt_qlinearops'].append('onnxruntime_extensions')
-    required_libs['onnxrt_integerops'].append('onnxruntime_extensions')
-    required_libs['onnxrt_qoperator'].append('onnxruntime_extensions')
 
 def version1_lt_version2(version1, version2):
     return parse_version(version1) < parse_version(version2)

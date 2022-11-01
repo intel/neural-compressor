@@ -32,6 +32,7 @@ import onnxruntime
 import onnx.numpy_helper as numpy_helper
 from onnx import helper, TensorProto, shape_inference
 from packaging.version import Version
+from importlib.util import find_spec
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed
 
@@ -191,7 +192,7 @@ class ONNXRTAugment:
 
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
-        if sys.version_info < (3,10): # pragma: no cover
+        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 
