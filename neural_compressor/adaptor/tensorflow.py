@@ -1472,9 +1472,6 @@ class TensorFlowAdaptor(Adaptor):
         mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
 
     def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
-        def mse(a, b): 
-            pass
-
         partial_dataloader = self._create_partial_dataloader(dataloader, batch_count=3)
         op_cfg = tune_cfg['op']
         mse_result = {}
@@ -1485,8 +1482,8 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = replace_cfgs[op]
             
             q_model = self.quantize(tune_cfg, fp32_model, dataloader)
-            fp32_output = self._inference_model_on_batches(fp32_model, dataloader, "")
-            q_output = self._inference_model_on_batches(q_model, dataloader, "")
+            fp32_output = self._inference_model_on_batches(fp32_model, partial_dataloader, "")
+            q_output = self._inference_model_on_batches(q_model, partial_dataloader, "")
             mse_result[op] = mse(fp32_output, q_output)
             
             # rollback to backuped tune_cfg
@@ -1518,12 +1515,15 @@ class TensorFlowAdaptor(Adaptor):
         output_tensor = model.output_tensor
 
         predictions = []
-        for _, inputs in dataloader:
+        for inputs, _ in dataloader:
             feed_dict = self._feed_dict(input_tensor, inputs)
             pred = model.sess.run(output_tensor, feed_dict)
             predictions.append(pred)
 
         return predictions
+
+    def mse(baseline_output, quantized_output): 
+        pass
 
     def _feed_dict(self, input_tensor, inputs):
         if len(input_tensor) == 1:
@@ -1582,7 +1582,7 @@ class TensorFlowAdaptor(Adaptor):
                         if check_shape(dis_tensor, dis_input):
                             feed_dict.update({dis_tensor: dis_input})    
                             break
-        return feed_dict    
+        return feed_dict
         
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
