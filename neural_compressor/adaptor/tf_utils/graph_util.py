@@ -121,7 +121,7 @@ class GraphAnalyzer():
                         exclude_input_names += i.outputs
                     else:
                         extra_input_names.append(i.node.name)
-            if i.node.op in ['Const', 'HostConst']:
+            if i.node.op in ['Const', 'HostConst', 'Variable', 'VariableV2']:
                 continue
             if not i.node.input and not i.outputs:
                 logger.debug("Skip isolated node {}.".format(i.node.name))
