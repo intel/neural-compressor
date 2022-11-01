@@ -158,6 +158,7 @@ def build_recipe_yaml():
           approach: post_training_static_quant 
           recipes:
             first_conv_or_matmul_quantization: False
+            last_conv_or_matmul_quantization: False
           calibration:
             sampling_size: 1
             dataloader:
@@ -183,6 +184,44 @@ def build_recipe_yaml():
           random_seed: 9527
         """
     with open("recipe.yaml", "w", encoding="utf-8") as f:
+        f.write(fake_yaml)
+
+def build_recipe2_yaml():
+    fake_yaml = """
+        model:
+          name: imagenet
+          framework: onnxrt_qlinearops
+
+        quantization:                                        
+          approach: post_training_static_quant 
+          recipes:
+            last_conv_or_matmul_quantization: False
+            pre_post_process_quantization: False
+          calibration:
+            sampling_size: 1
+            dataloader:
+              dataset:
+                dummy_v2:
+                  input_shape: [100, 4]
+
+        evaluation:
+          accuracy:
+            metric:
+              MSE:
+                compare_label: False
+            dataloader:
+              dataset:
+                dummy_v2:
+                  input_shape: [100, 4]
+
+        tuning:
+          accuracy_criterion:
+            relative:  -0.01
+          exit_policy:
+            timeout: 0
+          random_seed: 9527
+        """
+    with open("recipe2.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 def build_gather_yaml():
@@ -443,6 +482,34 @@ def build_conv_model():
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
 
+def build_conv_model2():
+    input0 = helper.make_tensor_value_info('input0', TensorProto.FLOAT, [1, 3, 1, 3])
+    output = helper.make_tensor_value_info('output', TensorProto.FLOAT, [1, 3, 1, 3])
+    
+    X1_weight = generate_input_initializer([3, 3, 1, 1], np.float32, 'X1_weight')
+    X1_bias = generate_input_initializer([3], np.float32, 'X1_bias')
+    X3_weight = generate_input_initializer([3, 3, 1, 1], np.float32, 'X3_weight')
+    X3_bias = generate_input_initializer([3],np.float32, 'X3_bias')
+    X5_weight = generate_input_initializer([3, 3, 1, 1], np.float32, 'X5_weight')
+    X5_bias = generate_input_initializer([3],np.float32,'X5_bias')
+    
+    relu_node_1 = onnx.helper.make_node('Relu', ['input0'], ['X1'], name='Relu1')
+    conv_node_1 = onnx.helper.make_node('Conv', ['X1', 'X1_weight', 'X1_bias'], ['X2'], name='Conv1')
+    relu_node_2 = onnx.helper.make_node('Relu', ['X2'], ['X3'], name= 'Relu2')
+    conv_node_2 = onnx.helper.make_node('Conv', ['X3', 'X3_weight', 'X3_bias'], ['X4'], name='Conv2')
+    conv_node_3 = onnx.helper.make_node('Conv', ['X1', 'X5_weight', 'X5_bias'], ['X5'], name='Conv3')
+    add_node = onnx.helper.make_node('Add', ['X4', 'X5'], ['output'], name='Add')
+  
+    graph = helper.make_graph([relu_node_1, conv_node_1, relu_node_2, conv_node_2, conv_node_3, add_node], 'test_graph_1', [input0], [output])
+    graph.initializer.add().CopyFrom(X1_weight)
+    graph.initializer.add().CopyFrom(X1_bias)
+    graph.initializer.add().CopyFrom(X3_weight)
+    graph.initializer.add().CopyFrom(X3_bias)
+    graph.initializer.add().CopyFrom(X5_weight)
+    graph.initializer.add().CopyFrom(X5_bias)
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    return model
+
 def build_gemm_model():
     initializers = []
     input_tensor = helper.make_tensor_value_info("input", TensorProto.FLOAT, [-1, 2048])
@@ -542,6 +609,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
     matmul_dataset = MatmulDataset()
     matmul_dataloader = DATALOADERS['onnxrt_qlinearops'](matmul_dataset)
 
+    conv_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(10, 3, 1, 3), label=True)
+    conv_dataloader = DATALOADERS['onnxrt_qlinearops'](conv_dataset)
+
     @classmethod
     def setUpClass(self):
         build_rename_yaml()
@@ -551,6 +621,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         build_non_MSE_yaml()
         build_benchmark_yaml()
         build_recipe_yaml()
+        build_recipe2_yaml()
         export_onnx_model(self.mb_v2_model, self.mb_v2_export_path)
         self.mb_v2_model = onnx.load(self.mb_v2_export_path)
         export_onnx_model(self.rn50_model, self.rn50_export_path, 12)
@@ -563,6 +634,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.rename_model = build_rename_model()
         self.conv_model = build_conv_model()
         self.gemm_model = build_gemm_model()
+        self.conv_model2 = build_conv_model2()
         build_benchmark()
 
     @classmethod
@@ -570,6 +642,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         os.remove("qlinear.yaml")
         os.remove("qdq.yaml")
         os.remove("recipe.yaml")
+        os.remove("recipe2.yaml")
         os.remove("dynamic.yaml")
         os.remove("non_MSE.yaml")
         os.remove("benchmark.yaml")
@@ -886,6 +959,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
         quantizer.eval_dataloader = self.matmul_dataloader
         q_model = quantizer.fit()
         self.assertTrue('Matmul' in [i.name for i in q_model.nodes()])
+
+        quantizer = Quantization('recipe2.yaml')
+        quantizer.model = self.conv_model2
+        quantizer.calib_dataloader = self.conv_dataloader
+        quantizer.eval_dataloader = self.conv_dataloader
+        q_model = quantizer.fit()
+        self.assertNotEqual(q_model, None)
 
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         for fake_yaml in ["non_MSE.yaml"]:
