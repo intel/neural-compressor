@@ -268,7 +268,7 @@ def get_framework_dependency_info() -> Dict[str, Any]:
     sub_dependencies_info: Dict[str, Any] = {}
     framework_dependency_list = {
         "pytorch": ["torchvision"],
-        "onnx": ["onnxruntime", "onnxruntime_extensions", "torch"],
+        "onnx": ["onnxruntime", "torch"],
     }
     for framework, package in framework_dependency_list.items():
         sub_dependencies_info[framework] = {}

@@ -24,6 +24,7 @@ from collections.abc import KeysView
 import yaml
 import numpy as np
 from packaging.version import Version
+from importlib.util import find_spec
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
@@ -36,8 +37,6 @@ import sys
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
-if sys.version_info < (3,10): # pragma: no cover
-    ort_ext = LazyImport("onnxruntime_extensions")
 ONNXRT152_VERSION = Version("1.5.2")
 ONNXRT170_VERSION = Version("1.7.0")
 ONNXRT112_VERSION = Version("1.12.0")
@@ -457,8 +456,9 @@ class ONNXRTAdaptor(Adaptor):
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        if sys.version_info < (3,10): # pragma: no cover 
-            sess_options.register_custom_ops_library(ort_ext.get_library_path())
+        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            sess_options.register_custom_ops_library(get_library_path())
         _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
@@ -793,12 +793,10 @@ class ONNXRTAdaptor(Adaptor):
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
-        try:
-            session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
-        except:
-            if sys.version_info < (3,10): # pragma: no cover 
-                sess_options.register_custom_ops_library(ort_ext.get_library_path())
-            session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
+        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            sess_options.register_custom_ops_library(get_library_path())
+        session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         results = []
         if metrics:
             for metric in metrics:
