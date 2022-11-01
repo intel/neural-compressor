@@ -32,6 +32,7 @@ requirements:
     - prettytable
     - cryptography
     - cython
+    - packaging
 test:
   imports:
     - neural_compressor

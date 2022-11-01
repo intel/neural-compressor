@@ -1813,141 +1813,181 @@ Performance varies by use, configuration and other factors. See [platform config
 </table>
 
 ## Validated ONNX INT8 models accuracy on broad hardware
+
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-twlt">INC quantized models (QDQ)</th>
-    <th class="tg-aldk">c6i.2xlarge/INTEL</th>
-    <th class="tg-aldk">c6a.2xlarge/AMD</th>
-    <th class="tg-aldk">c6g.2xlarge/ARM</th>
+    <th class="tg-y3we">Model (ONNX QDQ)</th>
+    <th class="tg-pm1l">AWS c6i.2xlarge<br>INTEL</th>
+    <th class="tg-pm1l">AWS c6a.2xlarge<br>AMD</th>
+    <th class="tg-pm1l">AWS c6g.2xlarge<br>ARM</th>
+    <th class="tg-8d8j">NV A100 CUDA<br>Execution Provider</th>
   </tr>
 </thead>
 <tbody>
   <tr>
+    <td class="tg-cwad">ResNet50</td>
+    <td class="tg-pm1l">74.76%</td>
+    <td class="tg-pm1l">68.95%</td>
+    <td class="tg-pm1l">74.76%</td>
+    <td class="tg-413a">74%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">BERT-base</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-413a">85%</td>
+  </tr>
+  <tr>
     <td class="tg-cwad">ResNet50 V1.5</td>
-    <td class="tg-cwad">72.20%</td>
-    <td class="tg-cwad">67.70%</td>
-    <td class="tg-cwad">72.20%</td>
+    <td class="tg-pm1l">72.20%</td>
+    <td class="tg-pm1l">67.70%</td>
+    <td class="tg-pm1l">72.20%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V2</td>
-    <td class="tg-cwad">65.82%</td>
-    <td class="tg-cwad">58.56%</td>
-    <td class="tg-cwad">65.83%</td>
+    <td class="tg-pm1l">65.82%</td>
+    <td class="tg-pm1l">58.56%</td>
+    <td class="tg-pm1l">65.83%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">SSD MobileNet V1</td>
-    <td class="tg-cwad">22.45%</td>
-    <td class="tg-cwad">16.53%</td>
-    <td class="tg-cwad">22.45%</td>
+    <td class="tg-pm1l">22.45%</td>
+    <td class="tg-pm1l">16.53%</td>
+    <td class="tg-pm1l">22.45%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">DistilBERT base MRPC</td>
-    <td class="tg-cwad">84.56%</td>
-    <td class="tg-cwad">83.82%</td>
-    <td class="tg-cwad">84.56%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-pm1l">83.82%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">SqueezeNet</td>
-    <td class="tg-cwad">56.54%</td>
-    <td class="tg-cwad">53.52%</td>
-    <td class="tg-cwad">56.54%</td>
+    <td class="tg-pm1l">56.54%</td>
+    <td class="tg-pm1l">53.52%</td>
+    <td class="tg-pm1l">56.54%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">SSD</td>
-    <td class="tg-cwad">18.63%</td>
-    <td class="tg-cwad">18.54%</td>
-    <td class="tg-cwad">18.63%</td>
+    <td class="tg-pm1l">18.63%</td>
+    <td class="tg-pm1l">18.54%</td>
+    <td class="tg-pm1l">18.63%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">AlexNet</td>
-    <td class="tg-cwad">54.71%</td>
-    <td class="tg-cwad">47.06%</td>
-    <td class="tg-cwad">54.71%</td>
+    <td class="tg-pm1l">54.71%</td>
+    <td class="tg-pm1l">47.06%</td>
+    <td class="tg-pm1l">54.71%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">CaffeNet</td>
-    <td class="tg-cwad">56.25%</td>
-    <td class="tg-cwad">52.35%</td>
-    <td class="tg-cwad">56.27%</td>
+    <td class="tg-pm1l">56.25%</td>
+    <td class="tg-pm1l">52.35%</td>
+    <td class="tg-pm1l">56.27%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">GoogleNet</td>
-    <td class="tg-cwad">67.73%</td>
-    <td class="tg-cwad">63.56%</td>
-    <td class="tg-cwad">67.72%</td>
+    <td class="tg-pm1l">67.73%</td>
+    <td class="tg-pm1l">63.56%</td>
+    <td class="tg-pm1l">67.72%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">ZFNet</td>
-    <td class="tg-cwad">55.86%</td>
-    <td class="tg-cwad">45.09%</td>
-    <td class="tg-cwad">55.86%</td>
+    <td class="tg-pm1l">55.86%</td>
+    <td class="tg-pm1l">45.09%</td>
+    <td class="tg-pm1l">55.86%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">Inception V1</td>
-    <td class="tg-cwad">67.21%</td>
-    <td class="tg-cwad">63.03%</td>
-    <td class="tg-cwad">67.20%</td>
+    <td class="tg-pm1l">67.21%</td>
+    <td class="tg-pm1l">63.03%</td>
+    <td class="tg-pm1l">67.20%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">SSD MobileNet V1 (ONNX Model Zoo)</td>
-    <td class="tg-cwad">22.86%</td>
-    <td class="tg-cwad">16.94%</td>
-    <td class="tg-cwad">22.80%</td>
+    <td class="tg-pm1l">22.86%</td>
+    <td class="tg-pm1l">16.94%</td>
+    <td class="tg-pm1l">22.80%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">Mobile bert MRPC</td>
-    <td class="tg-cwad">85.54%</td>
-    <td class="tg-cwad">84.56%</td>
-    <td class="tg-cwad">85.54%</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">Roberta base MRPC</td>
-    <td class="tg-cwad">89.46%</td>
-    <td class="tg-cwad">90.44%</td>
-    <td class="tg-cwad">89.71%</td>
+    <td class="tg-pm1l">89.46%</td>
+    <td class="tg-pm1l">90.44%</td>
+    <td class="tg-pm1l">89.71%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5 MLPerf</td>
-    <td class="tg-cwad">76.14%</td>
-    <td class="tg-cwad">72.80%</td>
-    <td class="tg-cwad">76.14%</td>
+    <td class="tg-pm1l">76.14%</td>
+    <td class="tg-pm1l">72.80%</td>
+    <td class="tg-pm1l">76.14%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16</td>
-    <td class="tg-cwad">66.69%</td>
-    <td class="tg-cwad">64.25%</td>
-    <td class="tg-cwad">66.69%</td>
+    <td class="tg-pm1l">66.69%</td>
+    <td class="tg-pm1l">64.25%</td>
+    <td class="tg-pm1l">66.69%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16 (ONNX Model Zoo)</td>
-    <td class="tg-cwad">72.31%</td>
-    <td class="tg-cwad">69.35%</td>
-    <td class="tg-cwad">72.32%</td>
+    <td class="tg-pm1l">72.31%</td>
+    <td class="tg-pm1l">69.35%</td>
+    <td class="tg-pm1l">72.32%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V3 MLPerf</td>
-    <td class="tg-cwad">75.57%</td>
-    <td class="tg-cwad">70.78%</td>
-    <td class="tg-cwad">75.56%</td>
+    <td class="tg-pm1l">75.57%</td>
+    <td class="tg-pm1l">70.78%</td>
+    <td class="tg-pm1l">75.56%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">EfficientNet</td>
-    <td class="tg-cwad">77.61%</td>
-    <td class="tg-cwad">76.52%</td>
-    <td class="tg-cwad">77.56%</td>
+    <td class="tg-pm1l">77.61%</td>
+    <td class="tg-pm1l">76.52%</td>
+    <td class="tg-pm1l">77.56%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V2 (ONNX Model Zoo)</td>
-    <td class="tg-cwad">68.51%</td>
-    <td class="tg-cwad">62.48%</td>
-    <td class="tg-cwad">68.58%</td>
+    <td class="tg-pm1l">68.51%</td>
+    <td class="tg-pm1l">62.48%</td>
+    <td class="tg-pm1l">68.58%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
   <tr>
-    <td class="tg-cwad">EfficientNet</td>
-    <td class="tg-cwad">66.12%</td>
-    <td class="tg-cwad">58.41%</td>
-    <td class="tg-cwad">66.11%</td>
+    <td class="tg-413a">ShuffleNet V2</td>
+    <td class="tg-pm1l">66.12%</td>
+    <td class="tg-pm1l">58.41%</td>
+    <td class="tg-pm1l">66.11%</td>
+    <td class="tg-8d8j">*</td>
   </tr>
 </tbody>
 </table>
+
+> **Note:**
+> More NVidia A100 cases test in progress.
