@@ -49,12 +49,12 @@ function multiInstance() {
 
     for((j=0;$j<${ncores_per_socket};j=$(($j + ${ncores_per_instance}))));
     do
-    end_core_num=$((j + ncores_per_instance -1))
-    if [ ${end_core_num} -ge ${ncores_per_socket} ]; then
-        end_core_num=$((ncores_per_socket-1))
-    fi
-    numactl -m 0 -C "${j}-${end_core_num}" ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
-    benchmark_pids+=($!)
+        end_core_num=$((j + ncores_per_instance -1))
+        if [ ${end_core_num} -ge ${ncores_per_socket} ]; then
+            end_core_num=$((ncores_per_socket-1))
+        fi
+        numactl -m 0 -C "${j}-${end_core_num}" ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
+        benchmark_pids+=($!)
     done
 
     status="SUCCESS"
