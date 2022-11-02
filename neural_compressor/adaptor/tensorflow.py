@@ -22,8 +22,6 @@ import yaml
 import math
 import numpy as np
 from collections import OrderedDict, UserDict
-
-from .tf_utils import generate_feed_dict
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
@@ -1470,8 +1468,11 @@ class TensorFlowAdaptor(Adaptor):
         
         # Step3. sort
         mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
+        return mse_order
 
     def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
+        from .tf_utils.graph_converter import GraphConverter
+
         partial_dataloader = self._create_partial_dataloader(dataloader, batch_count=3)
         op_cfg = tune_cfg['op']
         mse_result = {}
@@ -1481,11 +1482,36 @@ class TensorFlowAdaptor(Adaptor):
             backup_cfg = op_cfg[op] 
             op_cfg[op] = replace_cfgs[op]
             
-            q_model = self.quantize(tune_cfg, fp32_model, dataloader)
+            # q_model = self.quantize(tune_cfg, fp32_model, dataloader)
+            logger.debug(f"Dump tuning config of {op[0]}")
+            logger.debug(tune_cfg)
+
+            self.tuning_cfg_to_fw(tune_cfg)
+            q_model = GraphConverter(
+                model=fp32_model,
+                qt_config=self.quantize_config,
+                recipes=self.recipes,
+                int8_sequences=self.op_wise_sequences,
+                fp32_ops=self.fp32_ops,
+                bf16_ops=self.bf16_ops,
+                data_loader=dataloader,
+                qdq_enabled=self.qdq_enabled,
+                new_api=self.new_api,
+                performance_only=self.performance_only).convert()
+
+
             fp32_output = self._inference_model_on_batches(fp32_model, partial_dataloader, "")
             q_output = self._inference_model_on_batches(q_model, partial_dataloader, "")
-            mse_result[op] = self._calculate_mse(fp32_output, q_output)
             
+            # TODO: Calculate the MSE between fp32_output and q_output
+            mse = []
+            for i in range(partial_dataloader._batch_count):
+                for j in range(len(fp32_output[i])):
+                    mse.append(np.square(fp32_output[i][0] - q_output[i][0]).mean())
+            
+            mse_result[op] = sum(mse) / len(mse)
+            logger.debug(f"{op[0]} mse result: {mse_result[op]}, {mse}")
+
             # rollback to backuped tune_cfg
             op_cfg[op] = backup_cfg 
         
@@ -1511,6 +1537,8 @@ class TensorFlowAdaptor(Adaptor):
         return PartialDataloader(dataloader, batch_count)
 
     def _inference_model_on_batches(self, model, dataloader, output_op_name):
+        from .tf_utils.util import generate_feed_dict
+
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor
 
@@ -1522,10 +1550,6 @@ class TensorFlowAdaptor(Adaptor):
 
         return predictions
 
-    def _calculate_mse(baseline_output, quantized_output): 
-        pass
-
-    
         
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
