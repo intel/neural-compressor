@@ -56,14 +56,6 @@ else
     mkdir ${model}
 fi
 
-if [ -d "${log_dir}/refer_log" ]; then
-    echo "${log_dir}/refer_log already exists, don't need to mkdir."
-else
-    echo "no log dir ${log_dir}/refer_log, create."
-    cd ${log_dir}
-    mkdir refer_log
-fi
-
 echo "====== install requirements ======"
 /bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh
 
