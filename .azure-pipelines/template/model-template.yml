@@ -52,9 +52,13 @@ steps:
       && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --tune_acc=true --mode='fp32_benchmark'"
     displayName: FP32 Benchmark
 
-  - script: |
-      docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
-      && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --tune_acc=true --mode='collect_log'"
+  - task: Bash@3
+    condition: always()
+    inputs:
+      targetType: "inline"
+      script: |
+        docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
+        && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --tune_acc=true --mode='collect_log'"
     displayName: Collect log
 
   - task: PublishPipelineArtifact@1

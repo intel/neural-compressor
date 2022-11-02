@@ -46,8 +46,8 @@ parameters:
   - name: ONNXModelList
     type: object
     default:
-      # - resnet50-v1-12
-      - bert_base_MRPC_dynamic
+      - resnet50-v1-12
+      # - bert_base_MRPC_dynamic
   - name: MXNetModelList
     type: object
     default:

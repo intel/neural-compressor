@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eo pipefail
+source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
 
@@ -44,9 +45,9 @@ done
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
-echo "processing ${framework}-${fwk_ver}-${model}"
-echo "tuning_cmd is ${tuning_cmd}"
-echo "benchmark_cmd is ${benchmark_cmd}"
+$BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
+$BOLD_YELLOW && echo "tuning_cmd is ${tuning_cmd}" && $RESET
+$BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
 
 if [ "${mode}" == "env_setup" ]; then
     /bin/bash env_setup.sh \
@@ -62,7 +63,7 @@ if [ "${mode}" == "env_setup" ]; then
         --new_benchmark=${new_benchmark}
 elif [ "${mode}" == "tuning" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
-    echo "======== run tuning ========"
+    $BOLD_YELLOW && echo "======== run tuning ========" && $RESET
     /bin/bash ${SCRIPTS_PATH}/run_tuning_common.sh \
         --framework=${framework} \
         --model=${model} \
@@ -73,7 +74,7 @@ elif [ "${mode}" == "tuning" ]; then
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
-    echo "====== run benchmark fp32 ======="
+    $BOLD_YELLOW && echo "====== run benchmark fp32 =======" && $RESET
     /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
         --framework=${framework} \
         --model=${model} \
@@ -85,7 +86,7 @@ elif [ "${mode}" == "int8_benchmark" ]; then
         --precision="fp32"
 elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
-    echo "====== run benchmark int8 ======="
+    $BOLD_YELLOW && echo "====== run benchmark int8 =======" && $RESET
     if [[ "${framework}" == "onnxrt" ]]; then
         model_name="${log_dir}/${model}/${framework}-${model}-tune.onnx"
     elif [[ "${framework}" == "mxnet" ]]; then
@@ -108,7 +109,7 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
         --precision="int8"
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
-    echo "====== collect logs of model ${model} ======="
+    $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
         --framework=${framework} \
         --fwk_ver=${fwk_ver} \
@@ -116,5 +117,5 @@ elif [ "${mode}" == "collect_log" ]; then
         --logs_dir="${log_dir}/${model}" \
         --output_dir="${log_dir}/${model}" \
         --build_id=${BUILD_BUILDID}
-    echo "====== Finish model test ======="
+    $BOLD_YELLOW && echo "====== Finish model test =======" && $RESET
 fi

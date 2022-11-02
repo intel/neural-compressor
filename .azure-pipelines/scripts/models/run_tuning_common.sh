@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eo pipefail
+source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
@@ -35,18 +36,28 @@ else
     output_model=${log_dir}/${framework}-${model}-tune.pb
 fi
 
-echo -e "-------- run_tuning_common --------"
-echo ${tuning_cmd}
-eval "/usr/bin/time -v ${tuning_cmd} --output_model=${output_model}"
+$BOLD_YELLOW && echo -e "-------- run_tuning_common --------" && $RESET
+$BOLD_YELLOW && echo ${tuning_cmd} && $RESET
 
-echo "====== finish tuning. echo information. ======"
-endtime=`date +'%Y-%m-%d %H:%M:%S'`
-start_seconds=$(date --date="$starttime" +%s);
-end_seconds=$(date --date="$endtime" +%s);
-echo "Tuning time spend: "$((end_seconds-start_seconds))"s "
+max_loop=3
+for ((iter=0; iter<${max_loop}; iter++))
+do
+    eval "/usr/bin/time -v ${tuning_cmd} --output_model=${output_model}"
 
-echo "Tuning strategy: ${strategy}"
+    $BOLD_YELLOW && echo "====== finish tuning. echo information. ======" && $RESET
+    endtime=`date +'%Y-%m-%d %H:%M:%S'`
+    start_seconds=$(date --date="$starttime" +%s);
+    end_seconds=$(date --date="$endtime" +%s);
+    $BOLD_GREEN echo "Tuning time spend: "$((end_seconds-start_seconds))"s " && $RESET
+    $BOLD_GREEN echo "Tuning strategy: ${strategy}" && $RESET
+    $BOLD_GREEN && echo "Total resident size (kbytes): $(cat /proc/meminfo |grep 'MemTotal' |sed 's/[^0-9]//g')" && $RESET
 
-echo "Total resident size (kbytes): $(cat /proc/meminfo |grep 'MemTotal' |sed 's/[^0-9]//g')"
+    $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
+    if [ $(grep ${framework}-${model}-tune.log | wc -l) == 0 ];then
+        exit 1
+    fi
+    if [ $(grep ${framework}-${model}-tune.log | grep "Not found" | wc -l) == 0 ];then
+        exit 1
+    fi
+done
 
-exit 1
