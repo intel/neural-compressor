@@ -23,7 +23,7 @@ import math
 import numpy as np
 from collections import OrderedDict, UserDict
 
-from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
+from .tf_utils import generate_feed_dict
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
@@ -1484,7 +1484,7 @@ class TensorFlowAdaptor(Adaptor):
             q_model = self.quantize(tune_cfg, fp32_model, dataloader)
             fp32_output = self._inference_model_on_batches(fp32_model, partial_dataloader, "")
             q_output = self._inference_model_on_batches(q_model, partial_dataloader, "")
-            mse_result[op] = mse(fp32_output, q_output)
+            mse_result[op] = self._calculate_mse(fp32_output, q_output)
             
             # rollback to backuped tune_cfg
             op_cfg[op] = backup_cfg 
@@ -1516,73 +1516,16 @@ class TensorFlowAdaptor(Adaptor):
 
         predictions = []
         for inputs, _ in dataloader:
-            feed_dict = self._feed_dict(input_tensor, inputs)
+            feed_dict = generate_feed_dict(input_tensor, inputs)
             pred = model.sess.run(output_tensor, feed_dict)
             predictions.append(pred)
 
         return predictions
 
-    def mse(baseline_output, quantized_output): 
+    def _calculate_mse(baseline_output, quantized_output): 
         pass
 
-    def _feed_dict(self, input_tensor, inputs):
-        if len(input_tensor) == 1:
-            feed_dict = {}
-            if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                or isinstance(inputs, UserDict):
-                for name in inputs:
-                    for tensor in input_tensor:
-                        pos = tensor.name.rfind(":")
-                        t_name = tensor.name if pos < 0 else tensor.name[:pos]
-                        if name == t_name:
-                            feed_dict[tensor] = inputs[name]
-                            break
-            else:
-                feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-        else:
-            assert len(input_tensor) == len(inputs), \
-                'inputs len must equal with input_tensor'
-            feed_dict = {}
-            if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                or isinstance(inputs, UserDict):
-                for name in inputs:
-                    for tensor in input_tensor:
-                        pos = tensor.name.rfind(":")
-                        t_name = tensor.name if pos < 0 else tensor.name[:pos]
-                        if name == t_name:
-                            feed_dict[tensor] = inputs[name]
-                            break
-            else:
-                # sometimes the input_tensor is not the same order with inputs
-                # we should check and pair them
-                def check_shape(tensor, data):
-                    # scalar or 1 dim default True
-                    if tensor.shape == None or \
-                        len(tensor.shape.dims) == 1 or \
-                        not hasattr(data, 'shape'):
-                        return True
-                    tensor_shape = tuple(tensor.shape)
-                    data_shape = tuple(data.shape)
-                    for tensor_dim, data_dim in zip(tensor_shape, data_shape):
-                        if tensor_dim is not None and tensor_dim != data_dim:
-                            return False
-                    return True
-
-                disorder_tensors = []
-                disorder_inputs = [] 
-                for idx, sort_tensor in enumerate(input_tensor):
-                    sort_input = inputs[idx] 
-                    if check_shape(sort_tensor, sort_input):
-                        feed_dict.update({sort_tensor: sort_input}) 
-                    else:
-                        disorder_tensors.append(sort_tensor)
-                        disorder_inputs.append(sort_input)
-                for i, dis_tensor in enumerate(disorder_tensors):
-                    for j, dis_input in enumerate(disorder_inputs):  
-                        if check_shape(dis_tensor, dis_input):
-                            feed_dict.update({dis_tensor: dis_input})    
-                            break
-        return feed_dict
+    
         
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
