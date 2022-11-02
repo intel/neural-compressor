@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -eo pipefail
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
 
