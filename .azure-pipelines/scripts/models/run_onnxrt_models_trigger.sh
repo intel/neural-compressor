@@ -31,7 +31,7 @@ if [ "${model}" == "resnet50-v1-12" ]; then
     batch_size=1
     new_benchmark=true
     tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml}"
+    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
 elif [ "${model}" == "bert_base_MRPC_static" ]; then
     model_src_dir="language_translation/bert/quantization/ptq"
     dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
@@ -41,7 +41,7 @@ elif [ "${model}" == "bert_base_MRPC_static" ]; then
     batch_size=1
     new_benchmark=true
     tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml}"
+    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
 elif [ "${model}" == "bert_base_MRPC_dynamic" ]; then
     model_src_dir="language_translation/bert/quantization/ptq"
     dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
@@ -51,7 +51,7 @@ elif [ "${model}" == "bert_base_MRPC_dynamic" ]; then
     batch_size=1
     new_benchmark=true
     tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml}"
+    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
 elif [ "${model}" == "distilbert_base_MRPC_qdq" ]; then
     model_src_dir="language_translation/distilbert/quantization/ptq"
     dataset_location="/tf_dataset/pytorch/glue_data/MRPC"
@@ -61,7 +61,7 @@ elif [ "${model}" == "distilbert_base_MRPC_qdq" ]; then
     batch_size=1
     new_benchmark=true
     tuning_cmd="bash run_tuning.sh --input_model=${input_model} --config=${yaml}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml}"
+    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
 fi
 
 
@@ -77,6 +77,6 @@ fi
     --strategy=${strategy} \
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
-    --benchmark_cmd="${benchmark_cmd} --mode=performance" \
+    --benchmark_cmd="${benchmark_cmd}" \
     --tune_acc=${tune_acc} \
     --mode=${mode}

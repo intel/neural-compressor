@@ -76,40 +76,16 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
     $BOLD_YELLOW && echo "====== run benchmark fp32 =======" && $RESET
-    max_loop=3
-    for ((iter=0; iter<${max_loop}; iter++))
-    do
-        /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
-            --framework=${framework} \
-            --model=${model} \
-            --input_model=${input_model} \
-            --benchmark_cmd="${benchmark_cmd}" \
-            --tune_acc=${tune_acc} \
-            --log_dir="${log_dir}/${model}" \
-            --new_benchmark=${new_benchmark} \
-            --precision="fp32"
-        {
-            python -u ${SCRIPTS_PATH}/collect_log_model.py \
-                --framework=${framework} \
-                --fwk_ver=${fwk_ver} \
-                --model=${model} \
-                --logs_dir="${log_dir}/${model}" \
-                --output_dir="${log_dir}/${model}" \
-                --build_id=${BUILD_BUILDID} \
-                --stage=${mode}
-            exit_code=$?
-        } || {
-            echo "====================================="
-        }
 
-        if [ ${exit_code} -ne 0 ] ; then
-            $BOLD_RED && echo "FAILED!!" && $RESET
-        else
-            $BOLD_GREEN && echo "SUCCEED" && $RESET
-            break
-        fi
-    done
-    exit ${exit_code}
+    /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
+        --framework=${framework} \
+        --model=${model} \
+        --input_model=${input_model} \
+        --benchmark_cmd="${benchmark_cmd}" \
+        --tune_acc=${tune_acc} \
+        --log_dir="${log_dir}/${model}" \
+        --new_benchmark=${new_benchmark} \
+        --precision="fp32"
 
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
@@ -126,41 +102,15 @@ elif [ "${mode}" == "int8_benchmark" ]; then
         benchmark_cmd="${benchmark_cmd} --int8=true"
     fi
 
-    max_loop=3
-    for ((iter=0; iter<${max_loop}; iter++))
-    do
-        /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
-            --framework=${framework} \
-            --model=${model} \
-            --input_model="${model_name}" \
-            --benchmark_cmd="${benchmark_cmd}" \
-            --tune_acc=${tune_acc} \
-            --log_dir="${log_dir}/${model}" \
-            --new_benchmark=${new_benchmark} \
-            --precision="int8"
-
-        { 
-            python -u ${SCRIPTS_PATH}/collect_log_model.py \
-                --framework=${framework} \
-                --fwk_ver=${fwk_ver} \
-                --model=${model} \
-                --logs_dir="${log_dir}/${model}" \
-                --output_dir="${log_dir}/${model}" \
-                --build_id=${BUILD_BUILDID} \
-                --stage=${mode}
-            exit_code=$?
-        } || {
-            echo "====================================="
-        }
-
-        if [ ${exit_code} -ne 0 ] ; then
-            $BOLD_RED && echo "FAILED!!" && $RESET
-        else
-            $BOLD_GREEN && echo "SUCCEED" && $RESET
-            break
-        fi
-    done
-    exit ${exit_code}
+    /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
+        --framework=${framework} \
+        --model=${model} \
+        --input_model="${model_name}" \
+        --benchmark_cmd="${benchmark_cmd}" \
+        --tune_acc=${tune_acc} \
+        --log_dir="${log_dir}/${model}" \
+        --new_benchmark=${new_benchmark} \
+        --precision="int8"
 
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
