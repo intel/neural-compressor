@@ -109,6 +109,7 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
             break
         fi
     done
+    exit ${exit_code}
 
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
@@ -159,6 +160,7 @@ elif [ "${mode}" == "int8_benchmark" ]; then
             break
         fi
     done
+    exit ${exit_code}
 
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}

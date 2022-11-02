@@ -235,9 +235,15 @@ if __name__ == '__main__':
         tuning_result_dict, benchmark_accuracy_result_dict = get_model_tuning_dict_results()
     elif args.stage == "int8_benchmark":
         benchmark_performance_result_dict = get_model_benchmark_dict_results()
-        assert abs(benchmark_performance_result_dict.get("int8").get("Value")-refer.get(f"INT8_Performance"))/refer.get(f"INT8_Performance") <= 0.05
+        current_data = benchmark_performance_result_dict.get("int8").get("Value")
+        refer_data = refer.get(f"INT8_Performance")
+        print(f"current_data = {current_data}, refer_data = {refer_data}")
+        assert abs(current_data-refer_data)/refer_data <= 0.05
     elif args.stage == "fp32_benchmark":
         benchmark_performance_result_dict = get_model_benchmark_dict_results()
-        assert abs(benchmark_performance_result_dict.get("fp32").get("Value")-refer.get(f"FP32_Performance"))/refer.get(f"FP32_Performance") <= 0.05
+        current_data = benchmark_performance_result_dict.get("fp32").get("Value")
+        refer_data = refer.get(f"FP32_Performance")
+        print(f"current_data = {current_data}, refer_data = {refer_data}")
+        assert abs(current_data-refer_data)/refer_data <= 0.05
     else:
         raise ValueError(f"{args.stage} does not exist")
