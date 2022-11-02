@@ -10,8 +10,6 @@ do
             model=`echo $i | sed "s/${PATTERN}//"`;;
         --tune_acc=*)
             tune_acc=`echo $i | sed "s/${PATTERN}//"`;;
-        --build_id=*)
-            build_id=`echo $i | sed "s/${PATTERN}//"`;;
         --mode=*)
             mode=`echo $i | sed "s/${PATTERN}//"`;;
         *)
