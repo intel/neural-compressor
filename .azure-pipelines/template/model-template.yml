@@ -27,11 +27,11 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       source: "specific"
-      artifact: "FinalReport"
+      artifact: ${{ parameters.modelName }}
       patterns: "**.log"
-      path: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/refer_log
+      path: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}_refer_log
       project: $(System.TeamProject)
-      pipeline: "Baseline"
+      pipeline: "Model-Test"
       runVersion: "specific"
       runId: $(model_runID)
       retryDownloadCount: 3
