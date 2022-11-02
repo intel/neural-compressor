@@ -28,7 +28,7 @@ steps:
     inputs:
       source: "specific"
       artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
-      patterns: "**.log"
+      patterns: "**_summary.log"
       path: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}_refer_log
       project: $(System.TeamProject)
       pipeline: "Model-Test"
