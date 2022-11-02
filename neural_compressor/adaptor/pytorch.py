@@ -2417,6 +2417,9 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         model_.eval()
         init_model = model_
+        # to record the origin batch_size
+        if isinstance(self.q_dataloader, BaseDataLoader):
+            batch_size = self.q_dataloader.batch_size
         # to fuse
         import torch.fx.experimental.optimization as optimization
         try:
@@ -2452,7 +2455,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.q_func(init_model)
             init_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         if isinstance(self.q_dataloader, BaseDataLoader):
-            batch_size = self.q_dataloader.batch_size
             self.q_dataloader.batch(batch_size)
             logger.info('Recovery `calibration.dataloader.batchsize` {} according to config.yaml'.format(batch_size))
         del init_model
