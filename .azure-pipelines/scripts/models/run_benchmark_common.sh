@@ -1,5 +1,6 @@
 #!/bin/bash
-set -x
+set -eo pipefail
+source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
@@ -28,21 +29,21 @@ do
     esac
 done
 
-echo "-------- run_benchmark_common --------"
+$BOLD_YELLOW && echo "-------- run_benchmark_common --------" && $RESET
 
 # run accuracy
 # tune_acc==true means using accuracy results from tuning log
 if [ "${tune_acc}" == "false" ]; then
-    echo "run tuning accuracy in precision ${precision}"
+    $BOLD_YELLOW && echo "run tuning accuracy in precision ${precision}" && $RESET
     eval "${benchmark_cmd} --input_model=${input_model} --mode=accuracy" 2>&1 | tee ${log_dir}/${framework}-${model}-accuracy-${precision}.log
 fi
 
 
 function multiInstance() {
     ncores_per_socket=${ncores_per_socket:=$( lscpu | grep 'Core(s) per socket' | cut -d: -f2 | xargs echo -n)}
-    echo "Executing multi instance benchmark"
+    $BOLD_YELLOW && echo "Executing multi instance benchmark" && $RESET
     ncores_per_instance=4
-    echo "ncores_per_socket=${ncores_per_socket}, ncores_per_instance=${ncores_per_instance}"
+    $BOLD_YELLOW && echo "ncores_per_socket=${ncores_per_socket}, ncores_per_instance=${ncores_per_instance}" && $RESET
 
     logFile="${log_dir}/${framework}-${model}-performance-${precision}"
     benchmark_pids=()
@@ -61,18 +62,18 @@ function multiInstance() {
     for pid in "${benchmark_pids[@]}"; do
         wait $pid
         exit_code=$?
-        echo "Detected exit code: ${exit_code}"
+        $BOLD_YELLOW && echo "Detected exit code: ${exit_code}" && $RESET
         if [ ${exit_code} == 0 ]; then
-            echo "Process ${pid} succeeded"
+            $BOLD_GREEN && echo "Process ${pid} succeeded" && $RESET
         else
-            echo "Process ${pid} failed"
+            $BOLD_RED && echo "Process ${pid} failed" && $RESET
             status="FAILURE"
         fi
     done
 
-    echo "Benchmark process status: ${status}"
+    $BOLD_YELLOW && echo "Benchmark process status: ${status}" && $RESET
     if [ ${status} == "FAILURE" ]; then
-        echo "Benchmark process returned non-zero exit code."
+        $BOLD_RED && echo "Benchmark process returned non-zero exit code." && $RESET
         exit 1
     fi
 }
@@ -82,9 +83,9 @@ function multiInstance() {
 cmd="${benchmark_cmd} --input_model=${input_model}"
 
 if [ "${new_benchmark}" == "true" ]; then
-    echo "run with internal benchmark..."
+    $BOLD_YELLOW && echo "run with internal benchmark..." && $RESET
     eval ${cmd} 2>&1 | tee ${log_dir}/${framework}-${model}-performance-${precision}.log
 else
-    echo "run with external multiInstance benchmark..."
+    $BOLD_YELLOW && echo "run with external multiInstance benchmark..." && $RESET
     multiInstance
 fi
