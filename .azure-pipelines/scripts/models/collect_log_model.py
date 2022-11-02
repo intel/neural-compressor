@@ -108,7 +108,7 @@ def get_model_benchmark_txt_results():
 
 
 def get_refer_data():
-    refer_log = os.path.join(f"{args.logs_dir}_refer", f"{args.framework}_{args.model}_summary.log")
+    refer_log = os.path.join(f"{args.logs_dir}_refer_log", f"{args.framework}_{args.model}_summary.log")
     result = {}
     if os.path.exists(refer_log):
         with open(refer_log, "r") as f:
@@ -121,7 +121,7 @@ def get_refer_data():
             result[f"{precision}_{Type}"] = float(value[keys.index("Value")])
         return result
     else:
-        print("refer log file not found")
+        print(f"refer log file: {refer_log} not found")
         return 0
 
 
