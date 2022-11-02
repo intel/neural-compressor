@@ -37,7 +37,7 @@ from neural_compressor.experimental.common import Model
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2,version1_lt_version2
+from .util import generate_feed_dict, iterator_sess_run,version1_gt_version2,version1_eq_version2,version1_lt_version2
 from .util import version1_gte_version2,version1_lte_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph_common import QuantizeGraphHelper
@@ -172,62 +172,7 @@ class GraphConverter:
 
         logger.info("Start sampling on calibration dataset.")
         for idx, (inputs, labels) in enumerate(self.data_loader):
-            if len(input_tensor) == 1:
-                feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                  or isinstance(inputs, UserDict):
-                    for name in inputs:
-                        for tensor in input_tensor:
-                            pos = tensor.name.rfind(":")
-                            t_name = tensor.name if pos < 0 else tensor.name[:pos]
-                            if name == t_name:
-                                feed_dict[tensor] = inputs[name]
-                                break
-                else:
-                    feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:
-                assert len(input_tensor) == len(inputs), \
-                    'inputs len must equal with input_tensor'
-                feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
-                  or isinstance(inputs, UserDict):
-                    for name in inputs:
-                        for tensor in input_tensor:
-                            pos = tensor.name.rfind(":")
-                            t_name = tensor.name if pos < 0 else tensor.name[:pos]
-                            if name == t_name:
-                                feed_dict[tensor] = inputs[name]
-                                break
-                else:
-                    # sometimes the input_tensor is not the same order with inputs
-                    # we should check and pair them
-                    def check_shape(tensor, data):
-                        # scalar or 1 dim default True
-                        if tensor.shape == None or \
-                           len(tensor.shape.dims) == 1 or \
-                           not hasattr(data, 'shape'):
-                            return True
-                        tensor_shape = tuple(tensor.shape)
-                        data_shape = tuple(data.shape)
-                        for tensor_dim, data_dim in zip(tensor_shape, data_shape):
-                            if tensor_dim is not None and tensor_dim != data_dim:
-                                return False
-                        return True
-
-                    disorder_tensors = []
-                    disorder_inputs = [] 
-                    for idx, sort_tensor in enumerate(input_tensor):
-                        sort_input = inputs[idx] 
-                        if check_shape(sort_tensor, sort_input):
-                            feed_dict.update({sort_tensor: sort_input}) 
-                        else:
-                            disorder_tensors.append(sort_tensor)
-                            disorder_inputs.append(sort_input)
-                    for i, dis_tensor in enumerate(disorder_tensors):
-                       for j, dis_input in enumerate(disorder_inputs):  
-                           if check_shape(dis_tensor, dis_input):
-                               feed_dict.update({dis_tensor: dis_input})    
-                               break
+            feed_dict = generate_feed_dict(input_tensor, inputs)
             _ = model.sess.run(output_tensor, feed_dict) if model.iter_op==[] \
                 else iterator_sess_run(model.sess, model.iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
