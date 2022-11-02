@@ -88,19 +88,22 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
             --log_dir="${log_dir}/${model}" \
             --new_benchmark=${new_benchmark} \
             --precision="fp32"
+        {
+            python -u ${SCRIPTS_PATH}/collect_log_model.py \
+                --framework=${framework} \
+                --fwk_ver=${fwk_ver} \
+                --model=${model} \
+                --logs_dir="${log_dir}/${model}" \
+                --output_dir="${log_dir}/${model}" \
+                --build_id=${BUILD_BUILDID} \
+                --stage=${mode}
+            exit_code=$?
+        } || {
+            echo "====================================="
+        }
 
-        python -u ${SCRIPTS_PATH}/collect_log_model.py \
-            --framework=${framework} \
-            --fwk_ver=${fwk_ver} \
-            --model=${model} \
-            --logs_dir="${log_dir}/${model}" \
-            --output_dir="${log_dir}/${model}" \
-            --build_id=${BUILD_BUILDID} \
-            --stage=${mode}
-
-        exit_code=$?
         if [ ${exit_code} -ne 0 ] ; then
-            $BOLD_RED && echo "FAILED!! Run again" && $RESET
+            $BOLD_RED && echo "FAILED!!" && $RESET
         else
             $BOLD_GREEN && echo "SUCCEED" && $RESET
             break
@@ -135,18 +138,22 @@ elif [ "${mode}" == "int8_benchmark" ]; then
             --new_benchmark=${new_benchmark} \
             --precision="int8"
 
-        python -u ${SCRIPTS_PATH}/collect_log_model.py \
-            --framework=${framework} \
-            --fwk_ver=${fwk_ver} \
-            --model=${model} \
-            --logs_dir="${log_dir}/${model}" \
-            --output_dir="${log_dir}/${model}" \
-            --build_id=${BUILD_BUILDID} \
-            --stage=${mode}
+        { 
+            python -u ${SCRIPTS_PATH}/collect_log_model.py \
+                --framework=${framework} \
+                --fwk_ver=${fwk_ver} \
+                --model=${model} \
+                --logs_dir="${log_dir}/${model}" \
+                --output_dir="${log_dir}/${model}" \
+                --build_id=${BUILD_BUILDID} \
+                --stage=${mode}
+            exit_code=$?
+        } || {
+            echo "====================================="
+        }
 
-        exit_code=$?
         if [ ${exit_code} -ne 0 ] ; then
-            $BOLD_RED && echo "FAILED!! Run again" && $RESET
+            $BOLD_RED && echo "FAILED!!" && $RESET
         else
             $BOLD_GREEN && echo "SUCCEED" && $RESET
             break
