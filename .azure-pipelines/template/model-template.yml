@@ -27,7 +27,7 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       source: "specific"
-      artifact: ${{ parameters.modelName }}
+      artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
       patterns: "**.log"
       path: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}_refer_log
       project: $(System.TeamProject)
