@@ -71,26 +71,26 @@ def get_model_tuning_dict_results():
     return tuning_result_dict, benchmark_accuracy_result_dict
 
 
-def get_model_benchmark_txt_results():
-    benchmark_performance_result_dict = {'int8': {}, 'fp32': {}}
-    for precision in ['int8', 'fp32']:
+def get_model_benchmark_dict_results():
+    benchmark_performance_result_dict = {"int8": {}, "fp32": {}}
+    for precision in ["int8", "fp32"]:
         throughput = 0.0
         bs = 1
         for root, dirs, files in os.walk(args.logs_dir):
             for name in files:
                 file_name = os.path.join(root, name)
                 print(file_name)
-                if 'performance-' + precision in name:
+                if "performance-" + precision in name:
                     for line in open(file_name, "r"):
-                        result= parse_perf_line(line)
+                        result = parse_perf_line(line)
                         if result.get("throughput"):
                             throughput += result.get("throughput")
                         if result.get("batch_size"):
                             bs = result.get("batch_size")
 
         # set model status failed
-        if throughput==0.0:
-            os.system('echo "##vso[task.setvariable variable='+args.framework+'_'+args.model+'_failed]true"')
+        if throughput == 0.0:
+            os.system('echo "##vso[task.setvariable variable=' + args.framework + '_' + args.model + '_failed]true"')
         benchmark_performance_result_dict[precision] = {
             "OS": OS,
             "Platform": PLATFORM,
@@ -100,8 +100,8 @@ def get_model_benchmark_txt_results():
             "Mode": "Inference",
             "Type": "Performance",
             "BS": 1,
-            "Value":throughput,
-            "Url":URL,
+            "Value": throughput,
+            "Url": URL,
         }
 
     return benchmark_performance_result_dict
@@ -234,10 +234,10 @@ if __name__ == '__main__':
     elif args.stage == "tuning":
         tuning_result_dict, benchmark_accuracy_result_dict = get_model_tuning_dict_results()
     elif args.stage == "int8_benchmark":
-        benchmark_performance_result_dict = get_model_benchmark_txt_results()
-        assert abs(benchmark_performance_result_dict.get("Value")-refer.get(f"INT8_Performance"))/refer.get(f"INT8_Performance") <= 0.05
+        benchmark_performance_result_dict = get_model_benchmark_dict_results()
+        assert abs(benchmark_performance_result_dict.get("int8").get("Value")-refer.get(f"INT8_Performance"))/refer.get(f"INT8_Performance") <= 0.05
     elif args.stage == "fp32_benchmark":
-        benchmark_performance_result_dict = get_model_benchmark_txt_results()
-        assert abs(benchmark_performance_result_dict.get("Value")-refer.get(f"FP32_Performance"))/refer.get(f"FP32_Performance") <= 0.05
+        benchmark_performance_result_dict = get_model_benchmark_dict_results()
+        assert abs(benchmark_performance_result_dict.get("fp32").get("Value")-refer.get(f"FP32_Performance"))/refer.get(f"FP32_Performance") <= 0.05
     else:
         raise ValueError(f"{args.stage} does not exist")
