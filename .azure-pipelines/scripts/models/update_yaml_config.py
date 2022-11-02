@@ -65,8 +65,8 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                 config.write(line)
 
     else:
-        val_dataset = dataset_location + f"\{os.path.sep}" + "val"
-        train_dataset = dataset_location + f"\{os.path.sep}" + "train"
+        val_dataset = dataset_location + f"{os.path.sep}" + "val"
+        train_dataset = dataset_location + f"{os.path.sep}" + "train"
         patterns = {
             "calibration_dataset": {
                 "pattern": r'root:.*/path/to/calibration/dataset/?',
