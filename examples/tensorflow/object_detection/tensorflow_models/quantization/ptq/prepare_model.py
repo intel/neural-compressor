@@ -42,7 +42,26 @@ class SsdMobilenetV1(Model):
         with tarfile.open("ssd_mobilenet_v1_coco_2018_01_28.tar.gz") as tar:
             if not os.path.exists(destination):
                 os.makedirs(destination)
-            tar.extractall(destination)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(tar, destination)
 
 
 class SsdResnet50(Model):
@@ -60,7 +79,26 @@ class SsdResnet50(Model):
         with tarfile.open("ssd_resnet50_v1.tar.gz") as tar:
             if not os.path.exists(destination):
                 os.makedirs(destination)
-            tar.extractall(destination)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(tar, destination)
 
 
 def get_model(model: SupportedModels) -> Model:
