@@ -46,7 +46,6 @@ log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
-$BOLD_YELLOW && echo "tuning_cmd is ${tuning_cmd}" && $RESET
 $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
 
 if [ "${mode}" == "env_setup" ]; then
@@ -63,6 +62,7 @@ if [ "${mode}" == "env_setup" ]; then
         --new_benchmark=${new_benchmark}
 elif [ "${mode}" == "tuning" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "tuning_cmd is ${tuning_cmd}" && $RESET
     $BOLD_YELLOW && echo "======== run tuning ========" && $RESET
     /bin/bash ${SCRIPTS_PATH}/run_tuning_common.sh \
         --framework=${framework} \
@@ -72,20 +72,43 @@ elif [ "${mode}" == "tuning" ]; then
         --input_model=${input_model} \
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
-elif [ "${mode}" == "int8_benchmark" ]; then
-    cd ${WORK_SOURCE_DIR}/${model_src_dir}
-    $BOLD_YELLOW && echo "====== run benchmark fp32 =======" && $RESET
-    /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
-        --framework=${framework} \
-        --model=${model} \
-        --input_model=${input_model} \
-        --benchmark_cmd="${benchmark_cmd}" \
-        --tune_acc=${tune_acc} \
-        --log_dir="${log_dir}/${model}" \
-        --new_benchmark=${new_benchmark} \
-        --precision="fp32"
 elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
+    $BOLD_YELLOW && echo "====== run benchmark fp32 =======" && $RESET
+    max_loop=3
+    for ((iter=0; iter<${max_loop}; iter++))
+    do
+        /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
+            --framework=${framework} \
+            --model=${model} \
+            --input_model=${input_model} \
+            --benchmark_cmd="${benchmark_cmd}" \
+            --tune_acc=${tune_acc} \
+            --log_dir="${log_dir}/${model}" \
+            --new_benchmark=${new_benchmark} \
+            --precision="fp32"
+
+        python -u ${SCRIPTS_PATH}/collect_log_model.py \
+            --framework=${framework} \
+            --fwk_ver=${fwk_ver} \
+            --model=${model} \
+            --logs_dir="${log_dir}/${model}" \
+            --output_dir="${log_dir}/${model}" \
+            --build_id=${BUILD_BUILDID} \
+            --stage=${mode}
+
+        exit_code=$?
+        if [ ${exit_code} -ne 0 ] ; then
+            $BOLD_RED && echo "Error!! Run again" && $RESET
+        else
+            break
+        fi
+    done
+
+elif [ "${mode}" == "int8_benchmark" ]; then
+    cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
     $BOLD_YELLOW && echo "====== run benchmark int8 =======" && $RESET
     if [[ "${framework}" == "onnxrt" ]]; then
         model_name="${log_dir}/${model}/${framework}-${model}-tune.onnx"
@@ -98,15 +121,26 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
         benchmark_cmd="${benchmark_cmd} --int8=true"
     fi
 
-    /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
-        --framework=${framework} \
-        --model=${model} \
-        --input_model="${model_name}" \
-        --benchmark_cmd="${benchmark_cmd}" \
-        --tune_acc=${tune_acc} \
-        --log_dir="${log_dir}/${model}" \
-        --new_benchmark=${new_benchmark} \
-        --precision="int8"
+    max_loop=3
+    for ((iter=0; iter<${max_loop}; iter++))
+    do
+        /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
+            --framework=${framework} \
+            --model=${model} \
+            --input_model="${model_name}" \
+            --benchmark_cmd="${benchmark_cmd}" \
+            --tune_acc=${tune_acc} \
+            --log_dir="${log_dir}/${model}" \
+            --new_benchmark=${new_benchmark} \
+            --precision="int8"
+        exit_code=$?
+        if [ ${exit_code} -ne 0 ] ; then
+            $BOLD_RED && echo "Error!! Run again" && $RESET
+        else
+            break
+        fi
+    done
+
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET
@@ -117,5 +151,5 @@ elif [ "${mode}" == "collect_log" ]; then
         --logs_dir="${log_dir}/${model}" \
         --output_dir="${log_dir}/${model}" \
         --build_id=${BUILD_BUILDID}
-    $BOLD_YELLOW && echo "====== Finish model test =======" && $RESET
+    $BOLD_YELLOW && echo "====== Finish collect logs =======" && $RESET
 fi

@@ -9,6 +9,7 @@ parser.add_argument("--model", type=str, required=True)
 parser.add_argument("--logs_dir", type=str, default=".")
 parser.add_argument("--output_dir", type=str, default=".")
 parser.add_argument("--build_id", type=str, default="3117")
+parser.add_argument("--stage", type=str, default="collect_log")
 args = parser.parse_args()
 print('===== collecting log model =======')
 print('build_id: '+args.build_id)
@@ -16,10 +17,8 @@ OS='linux'
 PLATFORM='icx'
 URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
 
-print(args)
 
-
-def get_model_tuning_results():
+def get_model_tuning_dict_results():
     tuning_result_dict = {}
 
     if os.path.exists(tuning_log):
@@ -72,7 +71,7 @@ def get_model_tuning_results():
     return tuning_result_dict, benchmark_accuracy_result_dict
 
 
-def get_model_benchmark_results():
+def get_model_benchmark_txt_results():
     benchmark_performance_result_dict = {'int8': {}, 'fp32': {}}
     for precision in ['int8', 'fp32']:
         throughput = 0.0
@@ -108,7 +107,25 @@ def get_model_benchmark_results():
     return benchmark_performance_result_dict
 
 
-def main():
+def get_refer_data():
+    refer_log = os.path.join(args.logs_dir, f"{args.framework}_{args.model}_summary.log")
+    result = {}
+    if os.path.exists(refer_log):
+        with open(refer_log, "r") as f:
+            lines = f.readlines()
+            keys = lines[0].split(";")
+            values = [lines[i].split(";") for i in range(1, len(lines))]
+        for value in values:
+            precision = value[keys.index("Precision")]
+            Type = value[keys.index("Type")]
+            result[f"{precision}_{Type}"] = float(value[keys.index("Value")])
+        return result
+    else:
+        print("refer log file not found")
+        return 0
+
+
+def collect_log():
     results = []
     tuning_infos = []
     print("tuning log dir is {}".format(tuning_log))
@@ -211,4 +228,16 @@ def parse_perf_line(line) -> float:
 
 if __name__ == '__main__':
     tuning_log = os.path.join(args.logs_dir, f"{args.framework}-{args.model}-tune.log")
-    main()
+    refer = get_refer_data()
+    if args.stage == "collect_log":
+        collect_log()
+    elif args.stage == "tuning":
+        tuning_result_dict, benchmark_accuracy_result_dict = get_model_tuning_dict_results()
+    elif args.stage == "int8_benchmark":
+        benchmark_performance_result_dict = get_model_benchmark_txt_results()
+        assert abs(benchmark_performance_result_dict.get("Value")-refer.get(f"INT8_Performance"))/refer.get(f"INT8_Performance") <= 0.05
+    elif args.stage == "fp32_benchmark":
+        benchmark_performance_result_dict = get_model_benchmark_txt_results()
+        assert abs(benchmark_performance_result_dict.get("Value")-refer.get(f"FP32_Performance"))/refer.get(f"FP32_Performance") <= 0.05
+    else:
+        raise ValueError(f"{args.stage} does not exist")

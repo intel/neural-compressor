@@ -39,7 +39,7 @@ fi
 $BOLD_YELLOW && echo -e "-------- run_tuning_common --------" && $RESET
 $BOLD_YELLOW && echo ${tuning_cmd} && $RESET
 
-max_loop=3
+max_loop=1
 for ((iter=0; iter<${max_loop}; iter++))
 do
     eval "/usr/bin/time -v ${tuning_cmd} --output_model=${output_model}"

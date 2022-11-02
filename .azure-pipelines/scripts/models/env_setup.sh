@@ -1,5 +1,7 @@
 #!/bin/bash
 set -eo pipefail
+source /neural-compressor/.azure-pipelines/scripts/change_color.sh
+
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
 
@@ -45,18 +47,18 @@ done
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
-echo "processing ${framework}-${fwk_ver}-${model}"
+$BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 
-echo "======= creat log_dir ========="
+$BOLD_YELLOW && echo "======= creat log_dir =========" && $RESET
 if [ -d "${log_dir}/${model}" ]; then
-    echo "${log_dir}/${model} already exists, don't need to mkdir."
+    $BOLD_GREEN && echo "${log_dir}/${model} already exists, don't need to mkdir." && $RESET
 else
-    echo "no log dir ${log_dir}/${model}, create."
+    $BOLD_GREEN && echo "no log dir ${log_dir}/${model}, create." && $RESET
     cd ${log_dir}
     mkdir ${model}
 fi
 
-echo "====== install requirements ======"
+$BOLD_YELLOW && echo "====== install requirements ======" && $RESET
 /bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh
 
 cd ${WORK_SOURCE_DIR}/${model_src_dir}
@@ -104,11 +106,11 @@ if [ -f "requirements.txt" ]; then
     done
     pip list
 else
-    echo "Not found requirements.txt file."
+    $BOLD_RED && echo "Not found requirements.txt file."  && $RESET
 fi
 
-echo "======== update yaml config ========"
-echo -e "\nPrint origin yaml..."
+$BOLD_YELLOW && echo "======== update yaml config ========" && $RESET
+$BOLD_YELLOW && echo -e "\nPrint origin yaml..." && $RESET
 cat ${yaml}
 python ${SCRIPTS_PATH}/update_yaml_config.py \
     --yaml=${yaml} \
@@ -118,5 +120,5 @@ python ${SCRIPTS_PATH}/update_yaml_config.py \
     --strategy=${strategy} \
     --new_benchmark=${new_benchmark} \
     --multi_instance='true'
-echo -e "\nPrint updated yaml... "
+$BOLD_YELLOW && echo -e "\nPrint updated yaml... " && $RESET
 cat ${yaml}
