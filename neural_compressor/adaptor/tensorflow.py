@@ -1473,8 +1473,6 @@ class TensorFlowAdaptor(Adaptor):
         return mse_order
 
     def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
-        from .tf_utils.graph_converter import GraphConverter
-
         partial_dataloader = self._create_partial_dataloader(dataloader, batch_count=3)
         op_cfg = tune_cfg['op']
         mse_result = {}
@@ -1483,19 +1481,19 @@ class TensorFlowAdaptor(Adaptor):
             # backup and set replace tuning config
             backup_cfg = op_cfg[op] 
             op_cfg[op] = replace_cfgs[op]
-            
             logger.debug(f"Dump tuning config of {op[0]}")
             logger.debug(tune_cfg)
-
-            q_model = self.quantize(tune_cfg, fp32_model, dataloader)
-            fp32_output = self._inference_model_on_batches(fp32_model, partial_dataloader, "")
-            q_output = self._inference_model_on_batches(q_model, partial_dataloader, "")
+            q_model, output_tensor_name = self._quantize_and_output(
+                tune_cfg, fp32_model, dataloader)
+            fp32_output = self._inference_model_on_batches(
+                fp32_model, partial_dataloader, output_tensor_name)
+            q_output = self._inference_model_on_batches(
+                q_model, partial_dataloader, output_tensor_name)
             
             mse = []
             for i in range(partial_dataloader._batch_count):
                 for j in range(len(fp32_output[i])):
                     mse.append(np.square(fp32_output[i][0] - q_output[i][0]).mean())
-            
             mse_result[op] = sum(mse) / len(mse)
             logger.debug(f"{op[0]} mse result: {mse_result[op]}, {mse}")
 
@@ -1503,6 +1501,31 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = backup_cfg
         
         return mse_result
+
+    def _quantize_and_output(self, tune_cfg, fp32_model, dataloader):
+        """
+        Quantize the model and get the quantized model and the name of last quantized tensor.
+        Return a tuple of (qmodel, output_tensor_name), in which:
+          qmodel is the quantized model,
+          output_tensor_name is the name of the last quantized tensor.
+        """
+        from .tf_utils.graph_converter import GraphConverter
+
+        self.tuning_cfg_to_fw(tune_cfg)
+        qmodel = GraphConverter(
+            model=fp32_model,
+            qt_config=self.quantize_config,
+            recipes=self.recipes,
+            int8_sequences=self.op_wise_sequences,
+            fp32_ops=self.fp32_ops,
+            bf16_ops=self.bf16_ops,
+            data_loader=dataloader,
+            itex_mode=self.itex_mode,
+            qdq_enabled=self.qdq_enabled,
+            new_api=self.new_api,
+            performance_only=self.performance_only).convert()
+        
+        return qmodel, ""
     
     def _create_partial_dataloader(self, dataloader, batch_count):
         class PartialDataloader():
