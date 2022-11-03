@@ -1465,9 +1465,11 @@ class TensorFlowAdaptor(Adaptor):
         # Step2. compute mse
         mse_result = self._get_mse_order(
             fp32_model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader)
-        
+
         # Step3. sort
-        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
+        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1], reverse=fallback)]
+        logger.debug("Dump MSE order")
+        logger.debug(mse_order)
         return mse_order
 
     def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
@@ -1482,28 +1484,13 @@ class TensorFlowAdaptor(Adaptor):
             backup_cfg = op_cfg[op] 
             op_cfg[op] = replace_cfgs[op]
             
-            # q_model = self.quantize(tune_cfg, fp32_model, dataloader)
             logger.debug(f"Dump tuning config of {op[0]}")
             logger.debug(tune_cfg)
 
-            self.tuning_cfg_to_fw(tune_cfg)
-            q_model = GraphConverter(
-                model=fp32_model,
-                qt_config=self.quantize_config,
-                recipes=self.recipes,
-                int8_sequences=self.op_wise_sequences,
-                fp32_ops=self.fp32_ops,
-                bf16_ops=self.bf16_ops,
-                data_loader=dataloader,
-                qdq_enabled=self.qdq_enabled,
-                new_api=self.new_api,
-                performance_only=self.performance_only).convert()
-
-
+            q_model = self.quantize(tune_cfg, fp32_model, dataloader)
             fp32_output = self._inference_model_on_batches(fp32_model, partial_dataloader, "")
             q_output = self._inference_model_on_batches(q_model, partial_dataloader, "")
             
-            # TODO: Calculate the MSE between fp32_output and q_output
             mse = []
             for i in range(partial_dataloader._batch_count):
                 for j in range(len(fp32_output[i])):
@@ -1512,22 +1499,17 @@ class TensorFlowAdaptor(Adaptor):
             mse_result[op] = sum(mse) / len(mse)
             logger.debug(f"{op[0]} mse result: {mse_result[op]}, {mse}")
 
-            # rollback to backuped tune_cfg
-            op_cfg[op] = backup_cfg 
+            # recover tune_cfg
+            op_cfg[op] = backup_cfg
         
         return mse_result
     
     def _create_partial_dataloader(self, dataloader, batch_count):
         class PartialDataloader():
             def __init__(self, dataloader, batch_count):
-                # state = random.getstate()
-                # random.seed(seed)
-                
                 self._dataloader = dataloader
                 self._batch_count = batch_count
                 self._batch_list = range(self._batch_count)
-
-                # random.setstate(state)
 
             def __iter__(self):
                 for index, batch in enumerate(self._dataloader):
