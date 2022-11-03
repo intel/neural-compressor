@@ -106,7 +106,7 @@ if [ -f "requirements.txt" ]; then
     done
     pip list
 else
-    $BOLD_RED && echo "Not found requirements.txt file."  && $RESET
+    $BOLD_RED && echo "Not found requirements.txt file." && $RESET
 fi
 
 $BOLD_YELLOW && echo "======== update yaml config ========" && $RESET

@@ -8,8 +8,6 @@ do
     case $i in
         --model=*)
             model=`echo $i | sed "s/${PATTERN}//"`;;
-        --tune_acc=*)
-            tune_acc=`echo $i | sed "s/${PATTERN}//"`;;
         --mode=*)
             mode=`echo $i | sed "s/${PATTERN}//"`;;
         *)
@@ -60,5 +58,4 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
-    --tune_acc=${tune_acc} \
     --mode=${mode}

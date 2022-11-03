@@ -33,8 +33,6 @@ do
             tuning_cmd=`echo $i | sed "s/${PATTERN}//"`;;
         --benchmark_cmd=*)
             benchmark_cmd=`echo $i | sed "s/${PATTERN}//"`;;
-        --tune_acc=*)
-            tune_acc=`echo $i | sed "s/${PATTERN}//"`;;
         --mode=*)
             mode=`echo $i | sed "s/${PATTERN}//"`;;
         *)
@@ -76,17 +74,14 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
     $BOLD_YELLOW && echo "====== run benchmark fp32 =======" && $RESET
-
     /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
         --framework=${framework} \
         --model=${model} \
         --input_model=${input_model} \
         --benchmark_cmd="${benchmark_cmd}" \
-        --tune_acc=${tune_acc} \
         --log_dir="${log_dir}/${model}" \
         --new_benchmark=${new_benchmark} \
         --precision="fp32"
-
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
@@ -101,17 +96,14 @@ elif [ "${mode}" == "int8_benchmark" ]; then
         model_name=${input_model}
         benchmark_cmd="${benchmark_cmd} --int8=true"
     fi
-
     /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
         --framework=${framework} \
         --model=${model} \
         --input_model="${model_name}" \
         --benchmark_cmd="${benchmark_cmd}" \
-        --tune_acc=${tune_acc} \
         --log_dir="${log_dir}/${model}" \
         --new_benchmark=${new_benchmark} \
         --precision="int8"
-
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET

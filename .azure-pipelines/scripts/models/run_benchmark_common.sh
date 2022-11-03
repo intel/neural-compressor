@@ -5,8 +5,7 @@ source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
 
-for i in "$@"
-do
+for i in "$@"; do
     case $i in
         --framework=*)
             framework=`echo $i | sed "s/${PATTERN}//"`;;
@@ -16,8 +15,6 @@ do
             input_model=`echo $i | sed "s/${PATTERN}//"`;;
         --benchmark_cmd=*)
             benchmark_cmd=`echo $i | sed "s/${PATTERN}//"`;;
-        --tune_acc=*)
-            tune_acc=`echo $i | sed "s/${PATTERN}//"`;;
         --log_dir=*)
             log_dir=`echo $i | sed "s/${PATTERN}//"`;;
         --new_benchmark=*)
@@ -32,43 +29,44 @@ done
 $BOLD_YELLOW && echo "-------- run_benchmark_common --------" && $RESET
 
 main() {
-
     # run accuracy
-    # tune_acc==true means using accuracy results from tuning log
-    if [ "${tune_acc}" == "false" ]; then
+    # USE_TUNE_ACC==true means using accuracy results from tuning log
+    if [ "${USE_TUNE_ACC}" == "false" ]; then
         run_accuracy
     fi
 
     # run performance
-    max_loop=3
-    for ((iter=0; iter<${max_loop}; iter++))
-    do
+    if [ "${PERF_STABLE_CHECK}" == "false" ]; then
         run_performance
-        {
-            check_perf_gap
-            exit_code=$?
-        } || true
+    else 
+        max_loop=3
+        for ((iter = 0; iter < ${max_loop}; iter++)); do
+            run_performance
+            {
+                check_perf_gap
+                exit_code=$?
+            } || true
 
-        if [ ${exit_code} -ne 0 ] ; then
-            $BOLD_RED && echo "FAILED with performance gap!!" && $RESET
-        else
-            $BOLD_GREEN && echo "SUCCEED!!" && $RESET
-            break
-        fi
-    done
-    exit ${exit_code}
-
+            if [ ${exit_code} -ne 0 ]; then
+                $BOLD_RED && echo "FAILED with performance gap!!" && $RESET
+            else
+                $BOLD_GREEN && echo "SUCCEED!!" && $RESET
+                break
+            fi
+        done
+        exit ${exit_code}
+    fi
 }
 
 function check_perf_gap() {
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
-            --framework=${framework} \
-            --fwk_ver=${fwk_ver} \
-            --model=${model} \
-            --logs_dir="${log_dir}/${model}" \
-            --output_dir="${log_dir}/${model}" \
-            --build_id=${BUILD_BUILDID} \
-            --stage=${mode}
+        --framework=${framework} \
+        --fwk_ver=${fwk_ver} \
+        --model=${model} \
+        --logs_dir="${log_dir}/${model}" \
+        --output_dir="${log_dir}/${model}" \
+        --build_id=${BUILD_BUILDID} \
+        --stage=${mode}
 }
 
 function run_performance() {
@@ -88,8 +86,7 @@ function run_accuracy() {
 }
 
 function multiInstance() {
-    ncores_per_socket=${ncores_per_socket:=$( lscpu | grep 'Core(s) per socket' | cut -d: -f2 | xargs echo -n
-    })}
+    ncores_per_socket=${ncores_per_socket:=$(lscpu | grep 'Core(s) per socket' | cut -d: -f2 | xargs echo -n)}
     $BOLD_YELLOW && echo "Executing multi instance benchmark" && $RESET
     ncores_per_instance=4
     $BOLD_YELLOW && echo "ncores_per_socket=${ncores_per_socket}, ncores_per_instance=${ncores_per_instance}" && $RESET
@@ -97,11 +94,10 @@ function multiInstance() {
     logFile="${log_dir}/${framework}-${model}-performance-${precision}"
     benchmark_pids=()
 
-    for((j=0;$j<${ncores_per_socket};j=$(($j + ${ncores_per_instance}))));
-    do
-        end_core_num=$((j + ncores_per_instance -1))
+    for ((j = 0; $j < ${ncores_per_socket}; j = $(($j + ${ncores_per_instance})))); do
+        end_core_num=$((j + ncores_per_instance - 1))
         if [ ${end_core_num} -ge ${ncores_per_socket} ]; then
-            end_core_num=$((ncores_per_socket-1))
+            end_core_num=$((ncores_per_socket - 1))
         fi
         numactl -m 0 -C "${j}-${end_core_num}" ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
         benchmark_pids+=($!)

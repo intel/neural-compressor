@@ -152,9 +152,9 @@ stages:
               patterns: "**.log"
               path: $(OUT_SCRIPT_PATH)/last_generated
               project: $(System.TeamProject)
-              pipeline: "Baseline"
+              pipeline: "Model-Test"
               runVersion: "specific"
-              runId: $(model_runID)
+              runId: $(refer_buildId)
               retryDownloadCount: 3
             displayName: "Download last logs"
           - script: |
