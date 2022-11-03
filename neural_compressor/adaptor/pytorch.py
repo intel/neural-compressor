@@ -3468,7 +3468,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             logger.info('Module has no forward function')
         return False
 
-    def calcutate_op_sensitivity(self, model, dataloader, tune_cfg, fallback=True):
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, fallback=True, requantize_cfgs=None):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
 
@@ -3482,7 +3482,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             ops_lst (list): sorted op list by sensitivity
         """
         from .torch_utils.util import get_fallback_order
-        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, fallback)
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, fallback, requantize_cfgs)
         return ordered_ops
 
 
