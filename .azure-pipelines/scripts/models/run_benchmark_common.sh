@@ -66,8 +66,8 @@ function check_perf_gap() {
         --framework=${framework} \
         --fwk_ver=${fwk_ver} \
         --model=${model} \
-        --logs_dir="${log_dir}/${model}" \
-        --output_dir="${log_dir}/${model}" \
+        --logs_dir="${log_dir}" \
+        --output_dir="${log_dir}" \
         --build_id=${BUILD_BUILDID} \
         --stage=${stage}
 }
