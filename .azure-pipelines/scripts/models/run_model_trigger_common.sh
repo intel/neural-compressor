@@ -89,7 +89,8 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
         --benchmark_cmd="${benchmark_cmd}" \
         --log_dir="${log_dir}/${model}" \
         --new_benchmark=${new_benchmark} \
-        --precision="fp32"
+        --precision="fp32" \
+        --stage=${mode}
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
@@ -111,7 +112,8 @@ elif [ "${mode}" == "int8_benchmark" ]; then
         --benchmark_cmd="${benchmark_cmd}" \
         --log_dir="${log_dir}/${model}" \
         --new_benchmark=${new_benchmark} \
-        --precision="int8"
+        --precision="int8" \
+        --stage=${mode}
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET

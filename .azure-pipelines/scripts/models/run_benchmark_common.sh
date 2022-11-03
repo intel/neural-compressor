@@ -22,6 +22,8 @@ for i in "$@"; do
             new_benchmark=`echo $i | sed "s/${PATTERN}//"`;;
         --precision=*)
             precision=`echo $i | sed "s/${PATTERN}//"`;;
+        --stage=*)
+            stage=`echo $i | sed "s/${PATTERN}//"`;;
         *)
             echo "Parameter $i not recognized."; exit 1;;
     esac
@@ -67,7 +69,7 @@ function check_perf_gap() {
         --logs_dir="${log_dir}/${model}" \
         --output_dir="${log_dir}/${model}" \
         --build_id=${BUILD_BUILDID} \
-        --stage=${mode}
+        --stage=${stage}
 }
 
 function run_performance() {
