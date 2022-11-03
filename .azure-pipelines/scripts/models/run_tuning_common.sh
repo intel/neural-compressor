@@ -48,3 +48,16 @@ end_seconds=$(date --date="$endtime" +%s);
 $BOLD_GREEN && echo "Tuning time spend: "$((end_seconds-start_seconds))"s " && $RESET
 $BOLD_GREEN && echo "Tuning strategy: ${strategy}" && $RESET
 $BOLD_GREEN && echo "Total resident size (kbytes): $(cat /proc/meminfo | grep 'MemTotal' | sed 's/[^0-9]//g')" && $RESET
+
+$BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
+control_phrase="model which meet accuracy goal."
+if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | wc -l) == 0 ];then
+    $BOLD_RED && echo "====== tuning FAILED!! ======" && $RESET
+    exit 1
+fi
+if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | grep "Not found" | wc -l) == 1 ];then
+    $BOLD_RED && echo "====== tuning FAILED!! ======" && $RESET
+    exit 1
+fi
+
+$BOLD_GREEN && echo "====== tuning SUCCEED!! ======" && $RESET

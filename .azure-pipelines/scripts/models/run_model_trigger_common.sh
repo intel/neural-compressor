@@ -70,14 +70,6 @@ elif [ "${mode}" == "tuning" ]; then
         --input_model=${input_model} \
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
-    $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
-    control_phrase="model which meet accuracy goal."
-    if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | wc -l) == 0 ];then
-        exit 1
-    fi
-    if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | grep "Not found" | wc -l) == 1 ];then
-        exit 1
-    fi
 elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
