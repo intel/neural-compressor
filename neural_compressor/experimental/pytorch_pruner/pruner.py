@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2022 Intel Corporation
@@ -34,12 +34,12 @@ def register_pruners(name):
     return register
 
 
-def get_pruner(moduels, config):
+def get_pruner(modules, config):
     """Get registered pruner class"""
     name = config["prune_type"]
     if name not in PRUNERS.keys():
         assert False, f"does not support {name}, currently only support {PRUNERS.keys()}"
-    return PRUNERS[name](moduels, config)
+    return PRUNERS[name](modules, config)
 
 
 class Pruner:
@@ -122,6 +122,12 @@ class Pruner:
     def on_train_end(self):
         pass
 
+    def on_before_eval(self):
+        pass
+
+    def on_after_eval(self):
+        pass
+
     def check_is_pruned_step(self, step):
         if step < self.start_step or step > self.end_step:
             return False
@@ -131,44 +137,6 @@ class Pruner:
 
     def update_scores(self):
         pass
-
-
-@register_pruners('snip')
-class SnipPruner(Pruner):
-    """
-    please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity 
-    (https://arxiv.org/abs/1810.02340)
-    """
-    def __init__(self, modules, config):
-        super(SnipPruner, self).__init__(modules, config)
-        assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
-        self.scores = {}
-
-    def on_after_optimizer_step(self):
-        with torch.no_grad():
-            for key in self.modules.keys():
-                p = self.modules[key].weight
-                self.scores[key] = torch.abs(p * p.grad)
-        self.mask_weights()
-
-
-@register_pruners('snip_momentum')
-class SnipMomentumPruner(Pruner):
-    def __init__(self, modules, config):
-        super(SnipMomentumPruner, self).__init__(modules, config)
-        assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
-        # self.scores = {}
-        for key in modules.keys():
-            p = modules[key].weight
-            self.scores[key] = torch.zeros(p.shape).to(p.device)
-
-    def on_after_optimizer_step(self):
-        with torch.no_grad():
-            for key in self.modules.keys():
-                p = self.modules[key].weight
-                self.scores[key] *= 0.9  ##magic number
-                self.scores[key] += 1.0 * torch.abs(p * p.grad)
-        self.mask_weights()
 
 
 @register_pruners('magnitude')
@@ -182,3 +150,58 @@ class MagnitudePruner(Pruner):
             for key in self.modules.keys():
                 p = self.modules[key].weight.data
                 self.scores[key] = p
+
+
+@register_pruners('snip')
+class SnipPruner(Pruner):
+    """
+    please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity
+    (https://arxiv.org/abs/1810.02340)
+    """
+
+    def __init__(self, modules, config):
+        super(SnipPruner, self).__init__(modules, config)
+        assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
+        self.scores = {}
+
+    def on_after_optimizer_step(self):
+        self.mask_weights()
+        with torch.no_grad():
+            for key in self.modules.keys():
+                p = self.modules[key].weight
+                self.scores[key] = torch.abs(p * p.grad)
+
+
+@register_pruners('snip_momentum')
+class SnipMomentumPruner(Pruner):
+    def __init__(self, modules, config):
+        super(SnipMomentumPruner, self).__init__(modules, config)
+        assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
+        # self.scores = {}
+        for key in modules.keys():
+            p = modules[key].weight
+            self.scores[key] = torch.zeros(p.shape).to(p.device)
+
+    def on_after_optimizer_step(self):
+        self.mask_weights()
+        with torch.no_grad():
+            for key in self.modules.keys():
+                p = self.modules[key].weight
+                self.scores[key] *= 0.9  ##magic number
+                self.scores[key] += 1.0 * torch.abs(p * p.grad)
+
+
+@register_pruners('pattern_lock')
+class PatternLockPruner(Pruner):
+    def __init__(self, modules, config):
+        super(PatternLockPruner, self).__init__(modules, config)
+        assert self.config.end_step == self.config.start_step, "pattern_lock pruner only supports one shot mode"
+
+    def on_step_begin(self, local_step):
+        self.global_step += 1
+        if not self.check_is_pruned_step(self.global_step):
+            return
+        self.masks = self.pattern.get_pattern_lock_masks(self.modules)
+
+    def on_after_optimizer_step(self):
+        self.mask_weights()
