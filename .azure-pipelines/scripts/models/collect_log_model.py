@@ -244,8 +244,6 @@ if __name__ == '__main__':
     refer = get_refer_data()
     if args.stage == "collect_log":
         collect_log()
-    elif args.stage == "tuning":
-        tuning_result_dict, benchmark_accuracy_result_dict = get_model_tuning_dict_results()
     elif args.stage == "int8_benchmark":
         check_status("int8", "INT8")
     elif args.stage == "fp32_benchmark":
