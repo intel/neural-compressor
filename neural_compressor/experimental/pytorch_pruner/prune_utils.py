@@ -39,14 +39,23 @@ def check_config(prune_config):
         "only support 'global' and 'local' prune domain"
     if "x" in prune_config["pattern"]:
         pattern = prune_config["pattern"].split('_')[-1].split('x')
-        N = int(pattern[0])
-        M = int(pattern[1])
-        assert N > 0, "N should be greater than 0"
-        assert M > 0, "M should be greater than 0"
+        if pattern[0]=="channel" or pattern[1]=="channel":
+            pass
+        else:
+            try:
+                N = int(pattern[0])
+                M = int(pattern[1])
+            except:
+                assert False, "N or M can't convert to int"
+            assert N > 0, "N should be greater than 0"
+            assert M > 0, "M should be greater than 0"
     if ":" in prune_config["pattern"]:
         pattern = prune_config["pattern"].split('_')[-1].split(':')
-        N = int(pattern[0])
-        M = int(pattern[1])
+        try:
+            N = int(pattern[0])
+            M = int(pattern[1])
+        except:
+            assert False, "N or M can't convert to int"
         assert N > 0, "N should be greater than 0"
         assert M > N, "M should be greater than N"
         max_ratio = float(N) / M
@@ -101,8 +110,7 @@ def process_and_check_config(val):
         pruner['extra_excluded_names'] = reset_non_value_to_default(info, 'extra_excluded_names',
                                                   extra_excluded_names)
         pruner['pattern'] = reset_non_value_to_default(info, 'pattern',
-                                            pattern)                                                  
-
+                                            pattern)
         check_config(pruner)
         pruner_info = DotDict(pruner)
         pruners_info.append(pruner_info)
@@ -115,9 +123,10 @@ def process_config(config):
             with open(config, 'r') as f:
                 content = f.read()
                 try:
-                    from ...conf.config import schema
-                except ImportError:
                     from .schema_check import schema
+
+                except ImportError:
+                    from ...conf.config import schema
 
                 val = yaml.safe_load(content)
                 schema.validate(val)
