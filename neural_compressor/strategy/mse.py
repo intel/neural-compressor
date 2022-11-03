@@ -241,6 +241,7 @@ class MSETuneStrategy(TuneStrategy):
                 #     1) calculate the sensitivity of fp32 ops in the current state
                 #     2) re-quantize the op with lower sensitivity accumulatively
                 tune_cfg = deepcopy(self.cur_best_tuning_cfg)
+                requantize_cfg = self._tune_cfg_converter(self.cur_best_tuning_cfg)
                 tune_cfg_backup = deepcopy(tune_cfg)
                 quant_ops_in_tune_cfg = self._collect_ops_by_quant_mode(tune_cfg, 'dynamic') + \
                                         self._collect_ops_by_quant_mode(tune_cfg, 'static')
@@ -282,7 +283,8 @@ class MSETuneStrategy(TuneStrategy):
                     ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
-                                                                    fallback=False)
+                                                                    fallback=False,
+                                                                    requantize_cfgs=requantize_cfg)
                     logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     for select_op_info in ops_lst:
                         #assert select_op_info in tmp_fallback_ops, f"{select_op_info} not in fallback list."

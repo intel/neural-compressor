@@ -424,7 +424,7 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, fallback=False):
+def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, fallback=False, requantize_cfgs=None):
     fp32_model.eval()
     order_dict = {}
     for i in range(0, 3):
