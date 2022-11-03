@@ -97,6 +97,7 @@ def is_eval_func_model_name(model_name: str, line: str) -> str:
         "cuda",
         "contiguous",
         "features",
+        "freeze_feature_encoder",
     ]
     judge_6 = line_[line_.find(".")+1:line_.find("(")] not in exclude_function_list
     judge_7 = "model.config" not in line and "model.features" not in line
