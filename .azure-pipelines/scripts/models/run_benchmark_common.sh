@@ -4,6 +4,7 @@ source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
+SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 
 for i in "$@"; do
     case $i in
