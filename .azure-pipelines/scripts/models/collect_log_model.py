@@ -68,7 +68,9 @@ def get_model_tuning_dict_results():
             }
         }
 
-    return tuning_result_dict, benchmark_accuracy_result_dict
+        return tuning_result_dict, benchmark_accuracy_result_dict
+    else:
+        return {}, {}
 
 
 def get_model_benchmark_dict_results():
@@ -226,17 +228,19 @@ def parse_perf_line(line) -> float:
     return perf_data
 
 
-def check_status(precision, precision_upper):
-    benchmark_performance_result_dict = get_model_benchmark_dict_results()
-    _, benchmark_accuracy_result_dict = get_model_tuning_dict_results()
-    current_performance = benchmark_performance_result_dict.get(precision).get("Value")
-    current_accuracy = benchmark_accuracy_result_dict.get(precision).get("Value")
+def check_status(precision, precision_upper, check_accuracy = False):
+    performance_result = get_model_benchmark_dict_results()
+    current_performance = performance_result.get(precision).get("Value")
     refer_performance = refer.get(f"{precision_upper}_Performance")
-    refer_accuracy = refer.get(f"{precision_upper}_Accuracy")
     print(f"current_performance_data = {current_performance}, refer_performance_data = {refer_performance}")
     assert abs(current_performance - refer_performance) / refer_performance <= 0.05
-    print(f"current_accuracy_data = {current_accuracy}, refer_accuarcy_data = {refer_accuracy}")
-    assert abs(current_accuracy - refer_accuracy) / refer_accuracy <= 0.05
+
+    if check_accuracy:
+        _, accuracy_result = get_model_tuning_dict_results()
+        current_accuracy = accuracy_result.get(precision).get("Value")
+        refer_accuracy = refer.get(f"{precision_upper}_Accuracy")
+        print(f"current_accuracy_data = {current_accuracy}, refer_accuarcy_data = {refer_accuracy}")
+        assert abs(current_accuracy - refer_accuracy) / refer_accuracy <= 0.05
 
 
 if __name__ == '__main__':
