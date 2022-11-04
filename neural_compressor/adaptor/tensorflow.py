@@ -1473,7 +1473,6 @@ class TensorFlowAdaptor(Adaptor):
         return mse_order
 
     def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
-        partial_dataloader = self._create_partial_dataloader(dataloader, batch_count=3)
         op_cfg = tune_cfg['op']
         mse_result = {}
 
@@ -1486,41 +1485,24 @@ class TensorFlowAdaptor(Adaptor):
             q_model, output_tensor_name = self._quantize_and_output(
                 tune_cfg, fp32_model, dataloader)
             fp32_output = self._inference_model_on_batches(
-                fp32_model, partial_dataloader, output_tensor_name)
+                fp32_model, dataloader, output_tensor_name)
             q_output = self._inference_model_on_batches(
-                q_model, partial_dataloader, output_tensor_name)
+                q_model, dataloader, output_tensor_name)
             
-            mse = []
-            for i in range(partial_dataloader._batch_count):
-                for j in range(len(fp32_output[i])):
-                    mse.append(np.square(fp32_output[i][0] - q_output[i][0]).mean())
-            mse_result[op] = sum(mse) / len(mse)
-            logger.debug(f"{op[0]} mse result: {mse_result[op]}, {mse}")
+            mse_result[op] = self._calculate_mse(fp32_output, q_output)
+            logger.debug(f"{op[0]} mse result: {mse_result[op]}, {mse_result[op]}")
 
             # recover tune_cfg
             op_cfg[op] = backup_cfg
         
         return mse_result
-    
-    def _create_partial_dataloader(self, dataloader, batch_count):
-        class PartialDataloader():
-            def __init__(self, dataloader, batch_count):
-                # random selection currently not needed
-                # import random
-                # batch_list = list(range(self._batch_count))
-                # random.shuffle(batch_list)
-                # self._batch_list = batch_list[:batch_count]
 
-                self._dataloader = dataloader
-                self._batch_count = batch_count
-                self._batch_list = range(self._batch_count)
-
-            def __iter__(self):
-                for index, batch in enumerate(self._dataloader):
-                    if index in self._batch_list:
-                        yield batch
-                
-        return PartialDataloader(dataloader, batch_count)
+    def _calculate_mse(self, fp32_output, q_output):
+        mse = []
+        for i in range(3):
+            for j in range(len(fp32_output[i])):
+                mse.append(np.square(fp32_output[i][0] - q_output[i][0]).mean())
+        return sum(mse) / len(mse)
 
     def _quantize_and_output(self, tune_cfg, fp32_model, dataloader):
         """
@@ -1554,7 +1536,8 @@ class TensorFlowAdaptor(Adaptor):
         output_tensor = model.output_tensor
 
         predictions = []
-        for inputs, _ in dataloader:
+        for index, (inputs, _) in enumerate(dataloader):
+            if index > 3: break # select first 3 inputs
             feed_dict = generate_feed_dict(input_tensor, inputs)
             pred = model.sess.run(output_tensor, feed_dict)
             predictions.append(pred)
