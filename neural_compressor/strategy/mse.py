@@ -286,10 +286,13 @@ class MSETuneStrategy(TuneStrategy):
                                                                     fallback=False,
                                                                     requantize_cfgs=requantize_cfg)
                     logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
+                    if not ops_lst: 
+                        logger.warning("No op to be requantized")
+                        break
                     for select_op_info in ops_lst:
                         #assert select_op_info in tmp_fallback_ops, f"{select_op_info} not in fallback list."
                         if select_op_info not in tmp_fallback_ops:
-                            print(f"{select_op_info} not in fallback list.")
+                            logger.debug(f"{select_op_info} not in fallback list.")
                             continue
                         
                         new_fallback_ops = deepcopy(tmp_fallback_ops)
