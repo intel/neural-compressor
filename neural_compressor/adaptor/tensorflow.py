@@ -1501,6 +1501,26 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = backup_cfg
         
         return mse_result
+    
+    def _create_partial_dataloader(self, dataloader, batch_count):
+        class PartialDataloader():
+            def __init__(self, dataloader, batch_count):
+                # random selection currently not needed
+                # import random
+                # batch_list = list(range(self._batch_count))
+                # random.shuffle(batch_list)
+                # self._batch_list = batch_list[:batch_count]
+
+                self._dataloader = dataloader
+                self._batch_count = batch_count
+                self._batch_list = range(self._batch_count)
+
+            def __iter__(self):
+                for index, batch in enumerate(self._dataloader):
+                    if index in self._batch_list:
+                        yield batch
+                
+        return PartialDataloader(dataloader, batch_count)
 
     def _quantize_and_output(self, tune_cfg, fp32_model, dataloader):
         """
@@ -1526,20 +1546,6 @@ class TensorFlowAdaptor(Adaptor):
             performance_only=self.performance_only).convert()
         
         return qmodel, ""
-    
-    def _create_partial_dataloader(self, dataloader, batch_count):
-        class PartialDataloader():
-            def __init__(self, dataloader, batch_count):
-                self._dataloader = dataloader
-                self._batch_count = batch_count
-                self._batch_list = range(self._batch_count)
-
-            def __iter__(self):
-                for index, batch in enumerate(self._dataloader):
-                    if index in self._batch_list:
-                        yield batch
-                
-        return PartialDataloader(dataloader, batch_count)
 
     def _inference_model_on_batches(self, model, dataloader, output_op_name):
         from .tf_utils.util import generate_feed_dict
