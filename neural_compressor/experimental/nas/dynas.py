@@ -103,6 +103,7 @@ class DyNAS(NASBase):
 
         # Randomly sample search space for initial population
         # if number of results in results_csv_path smaller than population.
+        # TODO(macsz) Create empty CSV if it does not exists.
         df = pd.read_csv(self.results_csv_path)
         latest_population = [self.supernet_manager.random_sample() \
             for _ in range(max(self.population - df.shape[0], 0))]
