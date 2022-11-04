@@ -3468,7 +3468,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             logger.info('Module has no forward function')
         return False
 
-    def calcutate_op_sensitivity(self, model, dataloader, tune_cfg, fallback=True):
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, fallback=True):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
 

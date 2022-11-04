@@ -250,7 +250,7 @@ class MSETuneStrategy(TuneStrategy):
                 while not self.objectives.compare(self.last_tune_result, self.baseline):
                     # Record the time of calcutating the sensitivity
                     start = time()
-                    ops_lst = self.adaptor.calcutate_op_sensitivity(self.model, 
+                    ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=True)
@@ -273,13 +273,13 @@ class MSETuneStrategy(TuneStrategy):
                 logger.info(f"*** The accuracy meeting the accuracy requirements, stop fallback ops.")
                 while self.objectives.compare(self.last_tune_result, self.baseline):
                     if len(fallback_records) == 0 or len(fallback_records[-1]) <= 1:
-                        logger.info(f"*** Stop re-quan due to no int8 op or only 1 int8 op left.")
+                        logger.info(f"*** Stop re-quant due to no int8 op or only 1 int8 op left.")
                         break
                     logger.info(f"*** Start to re-quant the fallback op in the previous stage.")
                     # Track the current fallback ops
                     tmp_fallback_ops = fallback_records[-1] if fallback_records else [] 
                     start = time()
-                    ops_lst = self.adaptor.calcutate_op_sensitivity(self.model, 
+                    ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
                                                                     fallback=False)
