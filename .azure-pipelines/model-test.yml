@@ -136,9 +136,9 @@ stages:
               patterns: "**/*_tuning_info.log"
               path: $(OUT_SCRIPT_PATH)
           - task: UsePythonVersion@0
-            displayName: "Use Python 3."
+            displayName: "Use Python 3.8"
             inputs:
-              versionSpec: "3"
+              versionSpec: "3.8"
           - script: |
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
