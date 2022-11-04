@@ -98,7 +98,7 @@ inc_bench
 
 #### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
-* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/validated_model_list.md#Validated-ONNX-INT8-models-accuracy-on-broad-hardware).
+* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/validated_model_list.md#Validated-ONNX-QDQ-INT8-models-on-multiple-hardware-through-ONNX-Runtime).
 
 ### Validated Software Environment
 
