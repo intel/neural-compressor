@@ -14,11 +14,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import copy
 import re
 import numpy as np
+from tqdm import tqdm
 from collections import UserDict
+from ...utils import logger
 from ...utils.utility import LazyImport, CpuInfo
 
 torch = LazyImport("torch")
@@ -472,7 +473,8 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
 
     fx_op_cfgs = {}
     fallback_order = {}
-    for op_name, qconfig in op_cfgs.items():
+    logger.info('Evaluate the sensitivity for each int8 operation')
+    for op_name, qconfig in tqdm(op_cfgs.items()):
         global op_cfg_mapping
         if op_name not in op_cfg_mapping:
             op_cfg_mapping[op_name] = qconfig
@@ -524,7 +526,8 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
     op_cfgs[worst_op_name[0]] = None # fallback worst module first
     new_fallback_order = {}
 
-    for op_name, op_type in double_check_list:
+    logger.info('Evaluate the sensitivity gradient for selected operations')
+    for op_name, op_type in tqdm(double_check_list):
         tmp_model = copy.deepcopy(model)
         qconfig = op_cfgs[op_name]
         op_cfgs[op_name] = None
@@ -582,10 +585,13 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
 
     quant_list = []
     for k, v in tune_cfg['op'].items():
+        if k[1] in ['LayerNorm', 'Dropout', 'InstanceNorm3d']:
+            continue
         if v['weight']['dtype'] == 'fp32':
             quant_list.append(k)
     fallback_order = {}
-    for op_name, op_type in quant_list:
+    logger.info('Evaluate the sensitivity for each fp32 operation')
+    for op_name, op_type in tqdm(quant_list):
         if op_name in op_cfg_mapping:
             tmp_model = copy.deepcopy(fp32_model)
             from ..pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs, PyTorch_FXAdaptor
