@@ -39,7 +39,6 @@ class DyNAS(NASBase):
         self.Predictor = Predictor
         self.ProblemMultiObjective = ProblemMultiObjective
         self.SearchAlgoManager = SearchAlgoManager
-        self.OFARunner = OFARunner
         self.SUPERNET_PARAMETERS = {
                                     'ofa_resnet50':
                                         {'d'  :  {'count' : 5,  'vars' : [0, 1, 2]},
@@ -54,6 +53,12 @@ class DyNAS(NASBase):
                                             'e'   :  {'count' : 20, 'vars' : [3, 4, 6]},
                                             'd'   :  {'count' : 5,  'vars' : [2, 3, 4]} }
                                     }
+        self.RUNNERS = {
+            'ofa_resnet50': OFARunner,
+            'ofa_mbv3_d234_e346_k357_w1.0': OFARunner,
+            'ofa_mbv3_d234_e346_k357_w1.2': OFARunner,
+        }
+
         self.EVALUATION_INTERFACE = {'ofa_resnet50': EvaluationInterfaceResNet50,
                                      'ofa_mbv3_d234_e346_k357_w1.0': EvaluationInterfaceMobileNetV3,
                                      'ofa_mbv3_d234_e346_k357_w1.2': EvaluationInterfaceMobileNetV3}
@@ -78,7 +83,7 @@ class DyNAS(NASBase):
         )
 
         # Validation High-Fidelity Measurement Runner
-        self.runner_validate = self.OFARunner(
+        self.runner_validate = self.RUNNERS[self.supernet](
             supernet=self.supernet,
             acc_predictor=None,
             macs_predictor=None,
@@ -121,7 +126,7 @@ class DyNAS(NASBase):
             self.create_latency_predictor()
 
             # Inner-loop Low-Fidelity Predictor Runner, need to re-instantiate every loop
-            runner_predict = self.OFARunner(
+            runner_predict = self.RUNNERS[self.supernet](
                 supernet=self.supernet,
                 acc_predictor=self.acc_predictor,
                 macs_predictor=self.macs_predictor,
