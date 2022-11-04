@@ -241,7 +241,7 @@ class MSETuneStrategy(TuneStrategy):
                 #     1) calculate the sensitivity of fp32 ops in the current state
                 #     2) re-quantize the op with lower sensitivity accumulatively
                 tune_cfg = deepcopy(self.cur_best_tuning_cfg)
-                requantize_cfg = self._tune_cfg_converter(self.cur_best_tuning_cfg)
+                requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg)['op'])
                 tune_cfg_backup = deepcopy(tune_cfg)
                 quant_ops_in_tune_cfg = self._collect_ops_by_quant_mode(tune_cfg, 'dynamic') + \
                                         self._collect_ops_by_quant_mode(tune_cfg, 'static')
