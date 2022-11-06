@@ -27,6 +27,8 @@ import numpy as np
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
+    exclude_conv_nodes = []
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
@@ -1752,18 +1754,18 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph, []
+                return self.input_graph, self.exclude_conv_nodes
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
 
-            return self.output_graph, []
+            return self.output_graph, self.exclude_conv_nodes
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph, []
+        return self.input_graph, self.exclude_conv_nodes
 
     def _is_match_conv(self, patterns, qdq_inserted=False):
         """Detect the rule matched nodes collections.
@@ -1784,15 +1786,20 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if ((v in ("Conv2D", "DepthwiseConv2dNative")
                      and not self.enable_s8)
                 ) and not self._find_relu_node(cur_node):
+                    self.exclude_conv_nodes.append(cur_node.name)
                     continue
 
-                if qdq_inserted:
-                    _, normal_inputs = self._get_node_input(cur_node.name)
+                _, normal_inputs = self._get_node_input(cur_node.name)
+                if self.node_name_mapping[normal_inputs[1].rsplit(':')[0]].node.op == 'Split':
+                    self.exclude_conv_nodes.append(cur_node.name)
+                    continue
 
                 for sub_rule in patterns:
                     if sub_rule[0] != "Dequantize" or sub_rule[-1] != "QuantizeV2":
+                        self.exclude_conv_nodes.append(cur_node.name)
                         continue
                     if v != sub_rule[1]:
+                        self.exclude_conv_nodes.append(cur_node.name)
                         continue
 
                     if qdq_inserted:
