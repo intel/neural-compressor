@@ -316,7 +316,7 @@ def get_tensor_histogram(tensor_data, bins=2048):
 
 
 def get_all_fp32_data(data):
-    return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip()]
+    return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip() and len(i) < 32]
 
 
 def get_tuning_history(tuning_history_path):
