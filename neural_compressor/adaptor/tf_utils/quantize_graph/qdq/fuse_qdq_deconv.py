@@ -27,6 +27,8 @@ import numpy as np
 
 class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
 
+    exclude_deconv_nodes = []
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
@@ -410,18 +412,18 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph, []
+                return self.input_graph, self.exclude_deconv_nodes
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
 
-            return self.output_graph, []
+            return self.output_graph, self.exclude_deconv_nodes
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph, []
+        return self.input_graph, self.exclude_deconv_nodes
 
     def _is_match_deconv(self, patterns, qdq_inserted=False):
         """Detect the rule matched nodes collections.
@@ -444,8 +446,10 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
 
                 for sub_rule in patterns:
                     if sub_rule[0] != "Dequantize" or sub_rule[-1] != "QuantizeV2":
+                        self.exclude_deconv_nodes.append(cur_node.name)
                         continue
                     if v != sub_rule[1]:
+                        self.exclude_deconv_nodes.append(cur_node.name)
                         continue
 
                     if qdq_inserted:
