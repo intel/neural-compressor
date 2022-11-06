@@ -47,6 +47,7 @@ def enable(
     bench_batch_size=-1,  # only for "self_defined" mode
     test_code_line=False, # print code line info for debug use
     cache_load_transformers=True,
+    optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
 ):
     """enable a feature or a couple of features for the code
 
@@ -96,6 +97,8 @@ def enable(
         "pytorch_inc_static_quant_fx",
         "pytorch_inc_static_quant_ipex",
         "pytorch_inc_bf16",
+        "pytorch_inc_huggingface_optimum_static",
+        "pytorch_inc_huggingface_optimum_dynamic",
         "pytorch_ipex_fp32",
         "pytorch_ipex_bf16",
         "pytorch_ipex_int8_static_quant",
@@ -149,6 +152,7 @@ def enable(
     globals.num_benchmark_iteration = str(num_benchmark_iteration + 10) # 10: warmup iteration number
 
     globals.cache_load_transformers = cache_load_transformers
+    globals.optimum_quant_config = optimum_quant_config
 
     # move "pytorch_benchmark" to the last
     from .utils.common import move_element_to_last
@@ -250,6 +254,8 @@ def enable(
                     "pytorch_inc_dynamic_quant",
                     "pytorch_inc_static_quant_fx",
                     "pytorch_inc_static_quant_ipex",
+                    "pytorch_inc_huggingface_optimum_static",
+                    "pytorch_inc_huggingface_optimum_dynamic",
                     "onnx_inc_static_quant_qlinear"
                 ]:
                 from .coders.autoinc.autoinc_harness import AutoInc_Harness

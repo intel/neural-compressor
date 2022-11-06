@@ -272,6 +272,11 @@ class AutoInc_Harness(object):
                         lines_to_insert = lines_to_insert \
                             .replace("DATALOADER_NAME", dataloader_name)
 
+                    if globals.optimum_quant_config == "":
+                        globals.optimum_quant_config = "quantization/quant_config"
+                    optimum_quant_config_line = \
+                        'IncQuantizationConfig.from_pretrained("' + globals.optimum_quant_config + '")'
+
                     # replace [+] indication with empty
                     lines_to_insert = lines_to_insert.replace(
                         "[+] ", " " * insert_indent_level)
@@ -283,6 +288,7 @@ class AutoInc_Harness(object):
                         .replace("MODEL_NAME", model_name) \
                         .replace("INPUT_NAME", input_name) \
                         .replace("EVAL_FUNC_LINES", "return 1") \
+                        .replace("OPTIMUM_QUANT_CONFIG", optimum_quant_config_line) \
                         .replace("\n", " # [coder-enabled]\n")
                     # add end indicator
                     lines_to_insert += " # [coder-enabled]\n" + \
