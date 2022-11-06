@@ -1818,10 +1818,10 @@ Performance varies by use, configuration and other factors. See [platform config
 <thead>
   <tr>
     <th class="tg-y3we">Model (ONNX QDQ)</th>
-    <th class="tg-pm1l">AWS c6i.2xlarge<br> INTEL</th>
-    <th class="tg-pm1l">AWS c6a.2xlarge<br> AMD</th>
-    <th class="tg-pm1l">AWS c6g.2xlarge<br> ARM</th>
-    <th class="tg-8d8j">NV A100 CUDA<br> Execution Provider</th>
+    <th class="tg-pm1l">AWS c6i.2xlarge (Intel)<br>CPU Execution Provider</th>
+    <th class="tg-pm1l">AWS c6a.2xlarge (AMD)<br>CPU Execution Provider</th>
+    <th class="tg-pm1l">AWS c6g.2xlarge (ARM)<br>CPU Execution Provider</th>
+    <th class="tg-8d8j">NVidia A100<br>CUDA Execution Provider</th>
   </tr>
 </thead>
 <tbody>
@@ -1830,21 +1830,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">74.76%</td>
     <td class="tg-pm1l">68.95%</td>
     <td class="tg-pm1l">74.76%</td>
-    <td class="tg-6q5x">74.41%</td>
+    <td class="tg-6q5x">74.41%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">BERT-base</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-6q5x">84.56%</td>
+    <td class="tg-6q5x">84.56%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5</td>
     <td class="tg-pm1l">72.20%</td>
     <td class="tg-pm1l">67.70%</td>
     <td class="tg-pm1l">72.20%</td>
-    <td class="tg-6q5x">71.84%</td>
+    <td class="tg-6q5x">71.84%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V2</td>
@@ -1865,7 +1865,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">83.82%</td>
     <td class="tg-pm1l">84.56%</td>
-    <td class="tg-6q5x">84.56%</td>
+    <td class="tg-6q5x">84.56%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">SqueezeNet</td>
@@ -1879,21 +1879,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">18.63%</td>
     <td class="tg-pm1l">18.54%</td>
     <td class="tg-pm1l">18.63%</td>
-    <td class="tg-6q5x">18.61%</td>
+    <td class="tg-6q5x">18.61%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">AlexNet</td>
     <td class="tg-pm1l">54.71%</td>
     <td class="tg-pm1l">47.06%</td>
     <td class="tg-pm1l">54.71%</td>
-    <td class="tg-pm1l">54.74%</td>
+    <td class="tg-pm1l">54.74%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">CaffeNet</td>
     <td class="tg-pm1l">56.25%</td>
     <td class="tg-pm1l">52.35%</td>
     <td class="tg-pm1l">56.27%</td>
-    <td class="tg-pm1l">56.12%</td>
+    <td class="tg-pm1l">56.12%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">GoogleNet</td>
@@ -1907,7 +1907,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">55.86%</td>
     <td class="tg-pm1l">45.09%</td>
     <td class="tg-pm1l">55.86%</td>
-    <td class="tg-pm1l">55.75%</td>
+    <td class="tg-pm1l">55.75%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">Inception V1</td>
@@ -1921,42 +1921,42 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">22.86%</td>
     <td class="tg-pm1l">16.94%</td>
     <td class="tg-pm1l">22.80%</td>
-    <td class="tg-pm1l">22.85%</td>
+    <td class="tg-pm1l">22.85%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">Mobile bert MRPC</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-pm1l">86.03%</td>
+    <td class="tg-pm1l">86.03%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">Roberta base MRPC</td>
     <td class="tg-pm1l">89.46%</td>
     <td class="tg-pm1l">90.44%</td>
     <td class="tg-pm1l">89.71%</td>
-    <td class="tg-pm1l">89.71%</td>
+    <td class="tg-pm1l">89.71%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5 MLPerf</td>
     <td class="tg-pm1l">76.14%</td>
     <td class="tg-pm1l">72.80%</td>
     <td class="tg-pm1l">76.14%</td>
-    <td class="tg-6q5x">75.98%</td>
+    <td class="tg-6q5x">75.98%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16</td>
     <td class="tg-pm1l">66.69%</td>
     <td class="tg-pm1l">64.25%</td>
     <td class="tg-pm1l">66.69%</td>
-    <td class="tg-pm1l">66.52%</td>
+    <td class="tg-pm1l">66.52%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16 (ONNX Model Zoo)</td>
     <td class="tg-pm1l">72.31%</td>
     <td class="tg-pm1l">69.35%</td>
     <td class="tg-pm1l">72.32%</td>
-    <td class="tg-pm1l">72.31%</td>
+    <td class="tg-pm1l">72.31%*</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V3 MLPerf</td>
@@ -1988,3 +1988,5 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
 </tbody>
 </table>
+
+> **Note:** The model weights are quantized by pre-channel except the models with '*' which are quantized by per-tensor. 
