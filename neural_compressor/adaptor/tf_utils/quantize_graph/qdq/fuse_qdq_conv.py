@@ -95,7 +95,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DAddV2AddQuantizeV2': self.apply_newly_conv_biasadd_addn_fusion,
                 'DequantizeConv2DBiasAddAddQuantizeV2': self.apply_newly_conv_biasadd_addn_fusion,
                 'DequantizeConv2DAddAddReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
-                'DequantizeConv2DBiasAddAddReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv3DQuantizeV2': self.apply_conv3d_single_fusion,
                 'DequantizeConv3DBiasAddQuantizeV2': self.apply_conv3d_add_fusion,
                 'DequantizeConv3DBiasAddAddQuantizeV2': self.apply_conv3d_add_addn_fusion,
@@ -109,7 +108,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv3DAddV2ReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DBiasAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
-                'DequantizeConv3DAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DBiasAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
@@ -1191,7 +1189,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         # Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
-
         second_node = self.node_name_mapping[match_node_name[2]].node
         need_insert_dummy_biasadd = 1
         add_a_node_name = helper.node_name_from_input(second_node.input[0])
@@ -1244,9 +1241,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
         deq_node = self.node_name_mapping[sum_node_name].node
-        if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+        if (deq_node.op != 'LeakyRelu' and deq_node.op != 'Dequantize') or \
+                   deq_node.op.find("Quantize") != -1:
             return self.apply_newly_conv_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
-    
+
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel)
@@ -1294,7 +1292,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     ] + all_input_names[2:] + control_inputs
 
                 node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_FusedQuantizedDepthwiseConv2D' 
+                        else '_FusedQuantizedDepthwiseConv2D'
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
