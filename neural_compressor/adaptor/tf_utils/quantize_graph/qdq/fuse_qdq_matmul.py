@@ -33,18 +33,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
-        # TODO Remove this when TFDO supports output_quantization_mode 'MIN_FIRST'
-        # Root cause of the transformer_lt_mlperf model accuracy drop:
-        # MatMul + Relu fusion ==> the output quantization mode only can be set to 'SCALED',
-        # if the input_quantization_mode of the next _QuantizedMatMul is set to 'MIN_FIRST'.
-        # the mismatch will cause the accrucy drop.
-        if not self.performance_only:
-            if ['Dequantize', 'MatMul', 'Relu', 'QuantizeV2'] in self.sorted_patterns:
-                self.sorted_patterns.remove(['Dequantize', 'MatMul', 'Relu', 'QuantizeV2'])
-            if ['Dequantize', 'MatMul', 'BiasAdd', 'Relu', 'QuantizeV2'] in self.sorted_patterns:
-                self.sorted_patterns.remove(
-                    ['Dequantize', 'MatMul', 'BiasAdd', 'Relu', 'QuantizeV2'])
-
         self.fusion_op_type = set(fusion[1] for fusion in self.patterns)
 
         self.fusion_mapping = {
@@ -122,9 +110,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
-            if not parent_node.op == 'Const':
-                self.logger.debug(' \
-                    The weight node of matched_node {} is not Const or Const + Enter, skipped')
+            if parent_node.op != 'Const':
+                self.logger.debug( \
+                    'The weight node of matched_node {} is not Const or Const + Enter, skipped')
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
@@ -248,8 +236,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, "Tout", dtypes.qint32)
                 helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
                                        b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
-                # TODO TFDO will extend output quantization mode to MIN_FIRST in future.
-                helper.set_attr_string(quantized_matmul_node, 'output_quant_mode', b'SCALED')
+                helper.set_attr_string(quantized_matmul_node, 'output_quant_mode',
+                                       b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
                 if self.node_name_mapping[relu_node_name].node.op == "Relu":
                     helper.set_attr_string_list(quantized_matmul_node,
                         'fused_ops', [b'BiasAdd', b'Relu'])
@@ -306,8 +294,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 if new_node.name in matmul_node_output:
                     for idx, node_input in enumerate(new_node.input):
                         if helper.node_name_from_input(node_input) == matmul_node.name:
-                            new_node.input[idx] = \
-                                node_input.replace(matmul_node.name, quantized_node_name)
+                            new_node.input[idx] = node_input.replace(
+                                matmul_node.name, quantized_node_name)
                 self.add_output_graph_node(new_node)
         return match_node_name
 
@@ -340,16 +328,15 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
-            if not parent_node.op == 'Const':
-                self.logger.debug(' \
-                    The weight node of matched_node {} is not Const or Const + Enter, skipped')
+            if parent_node.op != 'Const':
+                self.logger.debug(
+                    'The weight node of matched_node {} is not Const or Const + Enter, skipped')
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
-            else:
-                enter_node = weight_node
-                weight_node = parent_node
-                weight_name = weight_node.name
+            enter_node = weight_node
+            weight_node = parent_node
+            weight_name = weight_node.name
         # QDQ inserted for other weight nodes in phase 1
         else:
             _, q_weights_inputs = self._get_node_input(weight_name)
@@ -375,12 +362,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
-
-        # If weight node non const, can't insert dummy biasadd to do matmul fusion.
-        if weight_node.op != 'Const' and len(match_node_name) == 3:
-            self.exclude_matmul_nodes.append(matched_node.node.name)
-            self.output_graph = self.input_graph
-            return []
 
         len_output = len(matched_node.output)
         is_shared_output = False
@@ -408,6 +389,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             if (add_a_node.op != 'Const' and add_b_node.op == 'Const') or\
                (add_a_node.op != 'Const' and add_b_node.op == 'Enter'):
                 single_matmul_fusion = False
+            else:
+                return self.apply_matmul_biasadd_fusion(match_node_name[:2]+[match_node_name[-1]])
 
         sum_node_name = ""
         if len(match_node_name) == 4:
@@ -499,8 +482,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.set_attr_dtype(quantized_matmul_node, 'U', dtypes.float32)
                 helper.set_attr_string(quantized_matmul_node, 'input_quant_mode',
                                        b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
-                # TODO TFDO will extend output quantization mode to MIN_FIRST in future.
-                helper.set_attr_string(quantized_matmul_node, 'output_quant_mode', b'SCALED')
+                helper.set_attr_string(quantized_matmul_node, 'output_quant_mode',
+                                       b'MIN_FIRST' if self.is_asymmetric else b'SCALED')
                 helper.set_attr_dtype(quantized_matmul_node, 'Tbias', dtypes.float32)
                 if sum_node_name:
                     helper.set_attr_string_list(quantized_matmul_node, 'fused_ops',
@@ -583,8 +566,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
-            if not parent_node.op == 'Const':
-                self.logger.debug( \
+            if parent_node.op != 'Const':
+                self.logger.debug(
                     'The weight node of matched_node {} is not Const or Const + Enter, skipped')
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
@@ -680,11 +663,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
                 self.add_output_graph_node(quantized_matmul_node)
                 for i in self.node_name_mapping[node.name].output:
-                    batchmatmul_next_node[i] = quantized_node_name
+                    batchmatmul_next_node[i] = (quantized_node_name, node.name)
             else:
                 new_node = node_def_pb2.NodeDef()
                 if batchmatmul_next_node.get(node.name):
-                    node.input[0] = batchmatmul_next_node[node.name]
+                    for index, name in enumerate(node.input):
+                        if name == batchmatmul_next_node[node.name][1]:
+                            node.input[index] = batchmatmul_next_node[node.name][0]
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
         return match_node_name
@@ -698,6 +683,20 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         # Dequantize + BatchMatMulV2 + Mul + AddV2 + QuantizeV2
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
+        # oneDNN limitation: add tensor ndim must be 4
+        if len(match_node_name) == 4 and \
+           self.node_name_mapping[match_node_name[2]].node.op in ("Add","AddV2"):
+            add_node_input_name = self.node_name_mapping[match_node_name[2]].node.input[1]
+            if add_node_input_name == matched_node.node.name:
+                add_node_input_name = self.node_name_mapping[match_node_name[2]].node.input[0]
+            add_input_node = self.node_name_mapping[add_node_input_name].node
+            if add_input_node.op != 'Const':
+                return self.apply_batchmatmulv2_fusion(match_node_name[:2]+[match_node_name[-1]])
+
+            shape = tensor_util.MakeNdarray(add_input_node.attr["value"].tensor)
+            if shape.ndim != 4:
+                return self.apply_batchmatmulv2_fusion(match_node_name[:2]+[match_node_name[-1]])
+
         control_inputs, normal_inputs = self._get_node_input(
             matched_node.node.name)
 
@@ -713,8 +712,8 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
-            if not parent_node.op == 'Const':
-                self.logger.debug( \
+            if parent_node.op != 'Const':
+                self.logger.debug(
                     'The weight node of matched_node {} is not Const or Const + Enter, skipped')
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
@@ -853,14 +852,16 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                      .decode('UTF-8', 'ignore').strip() if x.isprintable())
                 if "MulAdd" in attr_fused_ops:
                     for i in self.node_name_mapping[match_node_name[3]].output:
-                        batchmatmul_next_node[i] = quantized_node_name
+                        batchmatmul_next_node[i] = (quantized_node_name, match_node_name[3])
                 else:
                     for i in self.node_name_mapping[match_node_name[2]].output:
-                        batchmatmul_next_node[i] = quantized_node_name
+                        batchmatmul_next_node[i] = (quantized_node_name, match_node_name[2])
             else:
                 new_node = node_def_pb2.NodeDef()
                 if batchmatmul_next_node.get(node.name):
-                    node.input[0] = batchmatmul_next_node[node.name]
+                    for index, name in enumerate(node.input):
+                        if name == batchmatmul_next_node[node.name][1]:
+                            node.input[index] = batchmatmul_next_node[node.name][0]
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
         return match_node_name
@@ -885,7 +886,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.logger.debug("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph, []
+                return self.input_graph, self.exclude_matmul_nodes
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
@@ -895,7 +896,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph, []
+        return self.input_graph, self.exclude_matmul_nodes
 
     def _is_match_matmul(self, patterns, qdq_inserted=False):
         """Detect the rule matched nodes collections.
@@ -915,6 +916,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
                 if not self.performance_only and (cur_node.op == 'BatchMatMulV2' or
                    cur_node.op == 'BatchMatMul') and not self.itex_mode:
+                    self.exclude_matmul_nodes.append(cur_node.name)
                     continue
 
                 control_inputs, normal_inputs = self._get_node_input(cur_node.name)
@@ -925,10 +927,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     # This is a workaround for RNN model like LTSM.
                     parent_node = None
                     if cur_node.op == "MatMul" and not self.itex_mode:
+                        if control_inputs:
+                            self.exclude_matmul_nodes.append(cur_node.name)
+                            continue
                         if weight_node.op != 'Const':
-                            if not self.performance_only:
-                                continue
-
                             if weight_node.input:
                                 parent_node = self.node_name_mapping \
                                     [helper.node_name_from_input(weight_node.input[0])].node
