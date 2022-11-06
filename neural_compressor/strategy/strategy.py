@@ -451,7 +451,7 @@ class TuneStrategy(object):
             else:
                 tune_cfg[op_name_type] = op_config
         tune_cfg['calib_sampling_size'] = op_tuning_cfg['calib_sampling_size']
-        if self.calib_dataloader:
+        if self.calib_dataloader is not None:
             tune_cfg['calib_iteration'] =  math.ceil(int(tune_cfg['calib_sampling_size']) / \
                                                     self.calib_dataloader.batch_size) 
         else:
