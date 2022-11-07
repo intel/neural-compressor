@@ -28,17 +28,18 @@ i=0
 def eval_func(model):
     # 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
     # 1, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+    acc_lst = [1, 1, 0, 0, 0, 0, 1, 1.1, 1.5, 1.1]
     
     global i
     i += 1
     if i == 1:
-        return 1
+        return acc_lst[i]
     elif i <= 7:
-        return 0
+        return acc_lst[i]
     elif 10 >= i > 7:
-        return 1
+        return acc_lst[i]
     elif i > 10:
-        return 0
+        return acc_lst[i]
 
 
 class TestMSEStrategy(unittest.TestCase):

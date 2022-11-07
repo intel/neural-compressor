@@ -707,6 +707,13 @@ class TuneStrategy(object):
             self.best_qmodel = self.last_qmodel
         else:
             del self.last_qmodel
+        
+        # track the model with highest acc
+        if self.best_tune_result and self.last_tune_result: # (acc, [perf])
+            if self.objectives.compare(self.last_tune_result, self.best_tune_result):
+                self.best_tune_result = self.last_tune_result
+                self.best_qmodel = self.last_qmodel
+            
 
         if self.last_tune_result:
             last_tune = self.last_tune_result[0] if \
