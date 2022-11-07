@@ -138,9 +138,12 @@ def get_model_fwk_name(model):
                 ort.InferenceSession(model, so)
             else:
                 ort.InferenceSession(model.SerializeToString(), so)
-        except:
-            logger.warning("If you use an onnx model with custom_ops to do quantiztaion, "
-                "please ensure onnxruntime-extensions is installed")
+        except Exception as e:  # pragma: no cover
+            if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
+                logger.warning('Please use model path instead of onnx model object to quantize') 
+            else:
+                logger.warning("If you use an onnx model with custom_ops to do quantiztaion, "
+                    "please ensure onnxruntime-extensions is installed")
         else:
             return 'onnxruntime'
         return 'NA'

@@ -142,7 +142,7 @@ class ONNXRTAdaptor(Adaptor):
                             break
                     tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                     data_loader.batch(calib_batch_size)
-                    quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
                                                                 quantize_config, tmp_iterations)
                 except Exception as e:  # pragma: no cover
                     if 'Got invalid dimensions for input' in str(e):
@@ -153,7 +153,7 @@ class ONNXRTAdaptor(Adaptor):
                         "Fail to forward with batch size={}, set to {} now.".
                         format(batch_size, 1))
                     data_loader.batch(1)
-                    quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
                                                                 quantize_config, calib_sampling_size)
             else:  # pragma: no cover
                 if hasattr(data_loader, 'batch_size') and \
@@ -164,13 +164,13 @@ class ONNXRTAdaptor(Adaptor):
                         "So the real sampling size is {}.".
                         format(calib_sampling_size, data_loader.batch_size,
                                data_loader.batch_size * iterations))
-                quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                quantize_params = self._get_quantize_params(tmp_model, data_loader, \
                                                             quantize_config, iterations)
         else:
             quantize_params = None
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
-        quantizer = Quantizer(tmp_model.model,
+        quantizer = Quantizer(copy.deepcopy(model),
             quantize_config,
             backend,
             self.static,
@@ -459,15 +459,25 @@ class ONNXRTAdaptor(Adaptor):
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
-        _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
-        tmp_model = onnx.load(sess_options.optimized_model_filepath)
+        if not model.large_size:
+            ort.InferenceSession(model.model.SerializeToString(), sess_options)
+        elif model.model_path is not None: # pragma: no cover
+            ort.InferenceSession(model.model_path, sess_options)
+        else: # pragma: no cover 
+            logger.warning('Please use model path instead of onnx model object to quantize')
+
+        tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
+        if model.large_size: # pragma: no cover
+            from onnx.external_data_helper import load_external_data_for_model
+            load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
+        model.model_path = sess_options.optimized_model_filepath
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
             if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
         model = self._revert_fusedconv(model)
         model = split_shared_bias(model)
         model.topological_sort()
-        self.pre_optimized_model = model
+        self.pre_optimized_model = copy.deepcopy(model)
 
     def _revert_fusedconv(self, model):
         from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
@@ -787,6 +797,13 @@ class ONNXRTAdaptor(Adaptor):
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
+        if input_graph.large_size: # pragma: no cover
+            onnx.save_model(input_graph.model,
+                            self.work_space + 'eval.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            location="weights.pb",
+                            convert_attribute=False)
         sess_options = ort.SessionOptions()
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
@@ -796,7 +813,9 @@ class ONNXRTAdaptor(Adaptor):
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
-        session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
+        session = ort.InferenceSession(self.work_space + 'eval.onnx', sess_options) if \
+            input_graph.large_size else \
+            ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         results = []
         if metrics:
             for metric in metrics:
