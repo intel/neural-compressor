@@ -641,7 +641,7 @@ def eval_ssd_r34_mlperf_coco(args):
             config_file = os.path.join(args.tuned_checkpoint, "best_model.pt")
             assert os.path.exists(config_file), "there is no ipex model file, Please tune with Neural Compressor first!"
             from neural_compressor.utils.pytorch import load
-            ssd_r34 = load(args.tuned_checkpoint, ssd_r34)
+            ssd_r34 = load(args.tuned_checkpoint, ssd_r34, dataloader=val_dataloader)
         coco_eval(ssd_r34)
         return
 

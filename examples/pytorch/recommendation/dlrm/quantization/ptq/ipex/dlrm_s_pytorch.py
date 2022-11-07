@@ -407,7 +407,7 @@ def trace_model(args, dlrm, test_ld, inplace=True):
             dlrm = ipex.optimize(dlrm, dtype=torch.bfloat16, inplace=inplace)
         elif args.int8 and not args.tune:
             from neural_compressor.utils.pytorch import load
-            dlrm = load(args.save_model, dlrm)
+            dlrm = load(args.save_model, dlrm, dataloader=DLRM_DataLoader(test_ld))
         elif args.int8 and args.tune:
             dlrm = dlrm
         else:
@@ -704,7 +704,6 @@ def run():
     ### prepare training data ###
     ln_bot = np.fromstring(args.arch_mlp_bot, dtype=int, sep="-")
     # input data
-
     train_data, train_ld, test_data, test_ld = dp.make_criteo_data_and_loaders(args)
     nbatches = args.num_batches if args.num_batches > 0 else len(train_ld)
     nbatches_test = len(test_ld)
