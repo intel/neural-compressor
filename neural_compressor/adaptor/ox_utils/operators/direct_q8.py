@@ -31,7 +31,7 @@ class Direct8BitOperator(Operator):
         
     def quantize(self):
         node = self.node
-        self.quantizer.quantize_inputs(self.node, direct_int8=True)
+        self.quantizer.quantize_inputs(self.node, [0], direct_int8=True)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(self.node, direct_int8=True)
         node.name = node.name + "_quant"

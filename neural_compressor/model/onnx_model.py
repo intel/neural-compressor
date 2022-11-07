@@ -30,6 +30,16 @@ logger = logging.getLogger()
 class ONNXModel(BaseModel):
     def __init__(self, model, **kwargs):
         self._model = model if not isinstance(model, str) else onnx.load(model)
+        self._model_path = None if not isinstance(model, str) else model
+        self._large_size = False
+        try:
+            ort.InferenceSession(self._model.SerializeToString())
+        except Exception as e:  # pragma: no cover
+            if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
+                self._large_size = True
+                if self._model_path is None:
+                    logger.warning('Please use model path instead of onnx model '
+                                   'object to quantize')
         self.node_name_counter = {}
         self._output_name_to_node = {}
         self._input_name_to_nodes = {}
@@ -38,6 +48,18 @@ class ONNXModel(BaseModel):
         self._graph_info = {}
         self._get_graph_info()
         self._q_config = None
+
+    @property
+    def large_size(self):
+        return self._large_size
+
+    @property
+    def model_path(self):
+        return self._model_path
+
+    @model_path.setter
+    def model_path(self, path):
+        self._model_path = path
 
     def framework(self):
         return 'onnxruntime'
@@ -89,6 +111,14 @@ class ONNXModel(BaseModel):
     def save(self, root):
         if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
+        if self.large_size: # pragma: no cover
+            from onnx.external_data_helper import convert_model_to_external_data, \
+                load_external_data_for_model
+            load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
+            convert_model_to_external_data(self._model,
+                                           all_tensors_to_one_file=True,
+                                           location="weights.pb",
+                                           convert_attribute=False)
         onnx.save(self._model, root)
 
     def nodes(self):
@@ -331,6 +361,7 @@ class ONNXModel(BaseModel):
     def topological_sort(self, enable_subgraph=False):
         from collections import deque
         from functools import reduce
+        import copy
         if not enable_subgraph:
             input_name_to_nodes = {}
             output_name_to_node = {}
@@ -347,26 +378,32 @@ class ONNXModel(BaseModel):
             output_name_to_node = self._output_name_to_node
 
         all_nodes = {}
-        q = deque([output_name_to_node[i.name] for i in self.model.graph.output])
+        q = deque()
+        wait = deque()
+        for inp in self.model.graph.input:
+            q.extend(input_name_to_nodes[inp.name])
+        for n in self.model.graph.node:
+            if all([i not in output_name_to_node and i not in self.input() for i in n.input]):
+                q.append(n)
+
         while q:
             n = q.popleft()
-            flag = True
-            for out in n.output:
-                if out in input_name_to_nodes and \
-                    any([i.name not in all_nodes for i in input_name_to_nodes[out]]):
-                    q.extend(filter(lambda x:x.name not in all_nodes and x not in q, \
-                        input_name_to_nodes[out]))
-                    flag = False
-            if not flag:
-                q.append(n)
-            if flag and n.name not in all_nodes:
-                all_nodes[n.name] = n
-                for inp in n.input:
-                    if inp in output_name_to_node:
-                        q.append(output_name_to_node[inp])
+            if not all([output_name_to_node[i].name in all_nodes for \
+                i in n.input if i in output_name_to_node]):
+                if n not in wait:
+                    wait.append(n)
+                continue
 
+            all_nodes[n.name] = n
+            for out in n.output:
+                if out in input_name_to_nodes:
+                    q.extend([i for i in input_name_to_nodes[out] if \
+                        i.name not in all_nodes and i not in q])
+            if len(q) == 0 and len(wait) != 0:
+                q = copy.deepcopy(wait)
+                wait.clear()
         nodes = [i[1] for i in all_nodes.items()]
-        nodes.reverse()
+        assert len(nodes) == len(self.model.graph.node)
         self.model.graph.ClearField('node')
         self.model.graph.node.extend(nodes)
 

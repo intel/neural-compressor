@@ -137,10 +137,12 @@ class ONNXRTAugment:
                 elif activation_only:
                     tensors_to_dump.update(node.output)
 
+        model_inputs = [i.name for i in model.graph.input]
         for tensor in tensors_to_dump:
+            if tensor not in node_outputs and tensor not in initializers and \
+                tensor not in model_inputs:
+                continue
             if self.augment_nodes:
-                if tensor not in node_outputs and tensor not in initializers:
-                    continue
                 for augment_node_type in self.augment_nodes:
                     if augment_node_type in ['DequantizeLinear']:
                         # insert DequantizeLinear node as output
@@ -183,6 +185,13 @@ class ONNXRTAugment:
         model.graph.output.extend(added_outputs) # pylint: disable=no-member
 
         self.augmented_model = model
+        if self.model_wrapper.large_size: # pragma: no cover
+            onnx.save_model(model,
+                            self.model_wrapper.model_path + '_augment.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            location="weights.pb",
+                            convert_attribute=False)
 
     def get_intermediate_outputs(self, calib_mode=None):
         '''
@@ -196,7 +205,9 @@ class ONNXRTAugment:
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 
-        session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so)
+        session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so) if \
+            not self.model_wrapper.large_size else \
+            onnxruntime.InferenceSession(self.model_wrapper.model_path  + '_augment.onnx', so)
 
         intermediate_outputs = []
         len_inputs = len(session.get_inputs())

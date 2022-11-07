@@ -621,6 +621,15 @@
       "batch_size": 1,
       "new_benchmark": true
     },
+    "unet": {
+      "model_src_dir": "image_recognition/unet/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "input_model": "/tf_dataset2/models/onnx/unet/model.onnx",
+      "yaml": "unet.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
+    },
     "BiDAF": {
       "model_src_dir": "language_translation/onnx_model_zoo/BiDAF/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad/dev-v1.1.json",
