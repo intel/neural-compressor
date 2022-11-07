@@ -645,7 +645,7 @@ def main():
         model.eval()
         if model_args.int8:
             from neural_compressor.utils.pytorch import load
-            q_model = load(training_args.output_dir, model)
+            q_model = load(training_args.output_dir, model, dataloader=trainer.get_eval_dataloader())
             trainer.model = q_model
 
         start_time = timeit.default_timer()

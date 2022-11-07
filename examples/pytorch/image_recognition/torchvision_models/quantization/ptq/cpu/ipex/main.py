@@ -304,7 +304,7 @@ def main_worker(gpu, ngpus_per_node, args):
         ipex_config_path = None
         if args.int8:
             from neural_compressor.utils.pytorch import load
-            q_model = load(os.path.expanduser(args.tuned_checkpoint), model)
+            q_model = load(os.path.expanduser(args.tuned_checkpoint), model, dataloader=val_loader)
             model = q_model
         else:
             model = model

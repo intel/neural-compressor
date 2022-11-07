@@ -119,7 +119,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, **kwargs):
             # pylint: disable=E1123
             if version > Version("1.12.1"):  # pragma: no cover
                 from ..adaptor.pytorch import get_example_inputs
-                example_inputs = get_example_inputs(kwargs["dataloader"] if "dataloader" in
+                example_inputs = get_example_inputs(model, kwargs["dataloader"] if "dataloader" in
                                                     kwargs else None)
 
                 model = prepare_qat_fx(
@@ -208,8 +208,17 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
               Only file dir/path or state_dict is acceptable")
 
         if isinstance(stat_dict, torch.jit._script.RecursiveScriptModule):
+            from ..adaptor.pytorch import get_example_inputs
+            example_inputs = get_example_inputs(model, kwargs["dataloader"] if "dataloader" in kwargs else None)
+            assert example_inputs is not None, "Please provide the dataloader to get example_input for quantized model."
             q_model = torch.jit.freeze(stat_dict.eval())
-            logger.info("finish load INC int8 IPEX model.")
+            if isinstance(example_inputs, torch.Tensor):
+                q_model(example_inputs)
+                q_model(example_inputs)
+            else:
+                q_model(*example_inputs)
+                q_model(*example_inputs)
+            logger.info("Finish load the model quantized by INC IPEX backend.")
             return q_model
         else:
             assert 'best_configure' in stat_dict, \
@@ -273,7 +282,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         # pragma: no cover
         if version > Version("1.12.1") and tune_cfg['approach'] != "post_training_dynamic_quant":
             from ..adaptor.pytorch import get_example_inputs
-            example_inputs = get_example_inputs(kwargs["dataloader"] if "dataloader" in
+            example_inputs = get_example_inputs(model, kwargs["dataloader"] if "dataloader" in
                                                 kwargs else None)
         else:
             example_inputs = None

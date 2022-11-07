@@ -55,28 +55,6 @@ def get_torch_version():
     return version
 
 
-def get_example_inputs(dataloader):  # pragma: no cover
-    if dataloader is None:
-        return None
-    it = iter(dataloader)
-    example_inputs = next(it)
-    if isinstance(example_inputs, dict):
-        input_tensor = []
-        if "label" in example_inputs.keys():
-            example_inputs.pop("label")
-        for key, value in example_inputs.items():
-            if key == "start_positions" or key == "end_positions":
-                continue
-            input_tensor.append(value)
-        return input_tensor
-    if isinstance(example_inputs, list) or isinstance(example_inputs, tuple):
-        if len(example_inputs) > 1:
-            return example_inputs[0]
-        return example_inputs
-    if isinstance(example_inputs, torch.Tensor):
-        return example_inputs
-
-
 def get_torch_white_list(approach):
     version = get_torch_version()
     import torch.quantization as tq
@@ -154,6 +132,49 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
             output = model(input)
     return output
 
+
+def get_example_inputs(model, dataloader):  # pragma: no cover
+    # Suggest set dataloader like calib_dataloader
+    if dataloader is None:
+        return None
+    try:
+        for idx, (input, label) in enumerate(dataloader):
+            output = pytorch_forward_wrapper(model,
+                                             input)
+            if isinstance(input, dict):
+                input_tensor = []
+                if "label" in input.keys():
+                    input.pop("label")
+                for key, value in input.items():
+                    if key == "start_positions" or key == "end_positions":
+                        continue
+                    input_tensor.append(value)
+                return input_tensor
+            if isinstance(input, list) or isinstance(input, tuple):
+                return input
+            if isinstance(input, torch.Tensor):
+                return input
+            break
+    except Exception as e:
+        for idx, input in enumerate(dataloader):
+            output = pytorch_forward_wrapper(model,
+                                     input)
+            if isinstance(input, dict):
+                input_tensor = []
+                if "label" in input.keys():
+                    input.pop("label")
+                for key, value in input.items():
+                    if key == "start_positions" or key == "end_positions":
+                        continue
+                    input_tensor.append(value)
+                return input_tensor
+            if isinstance(input, list) or isinstance(input, tuple):
+                return input
+            if isinstance(input, torch.Tensor):
+                return input
+            break
+    if idx == 0:
+        assert False, "Please checkout the example_inputs format."
 
 def get_ops_recursively(model, prefix, ops={}):
     """This is a helper function for `graph_info`,
@@ -2180,7 +2201,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.model_calibration(q_model, dataloader, iterations, ipex_conf,
                                        tune_cfg.get('calib_sampling_size', 1))
                 ipex_conf.save(self.ipex_config_path)
-                example_inputs = get_example_inputs(dataloader)
+                example_inputs = get_example_inputs(q_model, dataloader)
                 ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)   # pylint: disable=E1101
                 q_model = ipex.quantization.convert(q_model, ipex_conf, example_inputs)   # pylint: disable=E1121
             else:
@@ -2190,7 +2211,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                    qscheme=torch.per_channel_symmetric))
 
-                example_inputs = get_example_inputs(dataloader)
+                example_inputs = get_example_inputs(q_model, dataloader)
                 q_model = ipex.quantization.prepare(q_model, static_qconfig, \
                                         example_inputs=example_inputs, inplace=True)
                 q_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
@@ -2201,21 +2222,22 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                            tune_cfg.get('calib_sampling_size', 1))
                 q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
                 q_model = ipex.quantization.convert(q_model)
-            try:
-                q_model = torch.jit.trace(q_model, example_inputs)
-                q_model = torch.jit.freeze(q_model.eval())
-            except:
-                q_model = torch.jit.trace(q_model, example_inputs, strict=False)
-                q_model = torch.jit.freeze(q_model.eval())
-            # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-            # At the 2nd run, the llga pass will be triggered and the model is turned into
-            # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-            if isinstance(example_inputs, torch.Tensor):
-                q_model(example_inputs)
-                q_model(example_inputs)
-            else:
-                q_model(*example_inputs)
-                q_model(*example_inputs)
+            with torch.no_grad():
+                try:
+                    q_model = torch.jit.trace(q_model, example_inputs)
+                    q_model = torch.jit.freeze(q_model.eval())
+                except:
+                    q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                    q_model = torch.jit.freeze(q_model.eval())
+                # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
+                # At the 2nd run, the llga pass will be triggered and the model is turned into
+                # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
+                if isinstance(example_inputs, torch.Tensor):
+                    q_model(example_inputs)
+                    q_model(example_inputs)
+                else:
+                    q_model(*example_inputs)
+                    q_model(*example_inputs)
             
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
@@ -2407,57 +2429,60 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     "The model passed in is not the instance of torch.nn.Module"
 
         if hasattr(model, "save_qconf_summary"):
-            model = torch_utils.util.auto_copy(model)
-        try:
-            model_ = copy.deepcopy(model)
-        except Exception as e:  # pragma: no cover
-            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                repr(e)))
-            model_ = model
-
-        model_.eval()
-        init_model = model_
-        # to record the origin batch_size
-        if isinstance(self.q_dataloader, BaseDataLoader):
-            batch_size = self.q_dataloader.batch_size
-        # to fuse
-        import torch.fx.experimental.optimization as optimization
-        try:
-            init_model = optimization.fuse(init_model)
-        except:
-            init_model = init_model
-        # create a quantization config file for intel pytorch extension model
-        os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
-        if self.version.release < Version("1.12.0").release:
-            assert self.q_func is None, ("IPEX < 1.12.0 didn't support calibration function, "
-                                             "Please use IPEX >= 1.12.0!")
-            ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)   # pylint: disable=E1101
-            self.model_calibration(
-                init_model,
-                self.q_dataloader,
-                conf=ipex_conf,
-            )
-            ipex_conf.save(self.ipex_config_path)
+            os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
+            model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         else:
-            if self.approach == 'post_training_static_quant':
-                assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
-                from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                    qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                               qscheme=torch.per_channel_symmetric))
-                example_inputs = get_example_inputs(self.q_dataloader)
-                init_model = ipex.quantization.prepare(init_model, static_qconfig, \
-                                        example_inputs=example_inputs, inplace=True)
-            if self.q_func is None:
-                self.model_calibration(init_model, self.q_dataloader)
+            try:
+                model_ = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                model_ = model
+
+            model_.eval()
+            init_model = model_
+            # to record the origin batch_size
+            if isinstance(self.q_dataloader, BaseDataLoader):
+                batch_size = self.q_dataloader.batch_size        
+            # to fuse
+            import torch.fx.experimental.optimization as optimization
+            try:
+                init_model = optimization.fuse(init_model)
+            except:
+                init_model = init_model
+            # create a quantization config file for intel pytorch extension model
+            os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
+            if self.version.release < Version("1.12.0").release:
+                assert self.q_func is None, ("IPEX < 1.12.0 didn't support calibration function, "
+                                                 "Please use IPEX >= 1.12.0!")
+                ipex_conf = ipex.quantization.QuantConf(qscheme=torch.per_tensor_symmetric)   # pylint: disable=E1101
+                self.model_calibration(
+                    init_model,
+                    self.q_dataloader,
+                    conf=ipex_conf,
+                )
+                ipex_conf.save(self.ipex_config_path)
             else:
-                self.q_func(init_model)
-            init_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-        if isinstance(self.q_dataloader, BaseDataLoader):
-            self.q_dataloader.batch(batch_size)
-            logger.info('Recovery `calibration.dataloader.batchsize` {} according to config.yaml'.format(batch_size))
-        del init_model
+                if self.approach == 'post_training_static_quant':
+                    assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
+                    from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+                    static_qconfig = QConfig(activation=MinMaxObserver.with_args(
+                        qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
+                                   qscheme=torch.per_channel_symmetric))
+                    example_inputs = get_example_inputs(init_model, self.q_dataloader)
+                    init_model = ipex.quantization.prepare(init_model, static_qconfig, \
+                                            example_inputs=example_inputs, inplace=True)
+                if self.q_func is None:
+                    self.model_calibration(init_model, self.q_dataloader)
+                else:
+                    self.q_func(init_model)
+                init_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+            if isinstance(self.q_dataloader, BaseDataLoader):
+                self.q_dataloader.batch(batch_size)
+                logger.info('Recovery `calibration.dataloader.batchsize` {} according \
+                                to config.yaml'.format(batch_size))
+            del init_model
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:
@@ -2631,7 +2656,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # pragma: no cover
         if self.approach != 'post_training_dynamic_quant' and self.version.release >= Version("1.13.0").release:
             assert dataloader is not None, "Please pass a dataloader to quantizer!"
-            example_inputs = get_example_inputs(dataloader)
+            example_inputs = get_example_inputs(model._model, dataloader)
         else:
             example_inputs = None
         if self.default_qconfig is not None:
@@ -2823,7 +2848,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.model._model.train()
         if self.version.release >= Version("1.13.0").release:  # pragma: no cover
             assert dataloader is not None, "Please pass dataloader to qat hook!"
-            example_inputs = get_example_inputs(dataloader)
+            example_inputs = get_example_inputs(self.model._model, dataloader)
         else:
             example_inputs = None
 
