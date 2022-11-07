@@ -156,8 +156,12 @@ def get_model_fwk_name(model):
 
     def _is_tensorflow(model):
         try:
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
             model_type = get_model_type(model)
         except:
+            os.environ.pop("CUDA_DEVICE_ORDER")
+            os.environ.pop("CUDA_VISIBLE_DEVICES")
             return 'NA'
         else:
             return 'tensorflow'
@@ -1109,6 +1113,8 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
 
 class TensorflowModel(object): 
     def __new__(cls, model_type, root, **kwargs):
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
         model.model_type = model_type
         return model

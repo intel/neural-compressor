@@ -1,5 +1,7 @@
 """Tests for the TensorFlow pruning with distributed training and inference."""
 import os
+import sys
+import cpuinfo
 from platform import platform, system
 import signal
 import shutil
@@ -8,7 +10,9 @@ import unittest
 import re
 import hashlib
 import time
+import tensorflow as tf
 from neural_compressor.utils import logger
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 def build_fake_ut():
     fake_ut = '''
@@ -23,9 +27,13 @@ from  tensorflow.keras.models import Model
 from  tensorflow.keras.datasets import cifar10
 import numpy as np
 import os
+import sys
+import cpuinfo
 import shutil
 import unittest
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import CpuInfo
 
 def lr_schedule(epoch):
     """Learning Rate Schedule
@@ -294,7 +302,13 @@ class EvalDataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 class TestTensorflowPruning(unittest.TestCase):
-    @unittest.skipIf(tensorflow.version.VERSION < '2.3.0' or tensorflow.version.VERSION >= '2.8.0', "keras model need tensorflow version >= 2.3.0,and horovod not support version >= 2.8.0")
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\\n")
+
     def test_tensorflow_pruning(self):
         from neural_compressor.experimental import Pruning, common
         from neural_compressor.utils import logger
@@ -308,9 +322,12 @@ class TestTensorflowPruning(unittest.TestCase):
         stats, sparsity = pruned_model.report_sparsity()
         logger.info(stats)
         logger.info(sparsity)
-        self.assertGreater(sparsity, 10)
-        self.assertGreater(prune.baseline_score, 0.72)
-        self.assertGreater(prune.last_score, 0.73)
+        self.assertGreater(sparsity, 20)
+        self.assertGreater(prune.baseline_score, 0.729)
+        if bool(CpuInfo().bf16):
+            self.assertGreater(prune.last_score, 0.742)
+        else:
+            self.assertGreater(prune.last_score, 0.743)
 
 
 if __name__ == '__main__':
@@ -382,20 +399,18 @@ class TestDistributed(unittest.TestCase):
         build_fake_ut()
         build_fake_yaml()
         if system().lower() == "windows":
-            cmd = 'cp -r C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2/baseline_model .'
+            shutil.copytree("C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2\\", os.getcwd(), dirs_exist_ok=True)
         elif system().lower() == "linux":
-            cmd = 'cp -r /tmp/.neural_compressor/inc_ut/resnet_v2/baseline_model ./'
-        os.popen(cmd).readlines()
+            shutil.copytree("/tmp/.neural_compressor/inc_ut/resnet_v2/", os.getcwd(), dirs_exist_ok=True)
         if not os.path.exists(cls.dst_path):
-            logger.warning("resnet_v2 baseline_model doesn't exist.")
-            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestDistributed)
+            raise FileNotFoundError(f"'{cls.dst_path}' doesn't exist.")
         elif dir_md5_check(cls.dst_path) != \
             ['65625fef42f44e6853d4d6d5e4188a49', 'a783396652bf62db3db4c9f647953175',
             'c7259753419d9fc053df5b2059aef8c0', '77f2a1045cffee9f6a43f2594a5627ba']:
             logger.warning("resnet_v2 baseline_model md5 verification failed.")
-            return unittest.skip("resnet_v2 baseline_model md5 verification failed.")(TestDistributed)
+            raise ValueError(f"'{cls.dst_path}' md5 verification failed.")
         else:
-            logger.info("resnet_v2 baseline_model md5 verification succeeded.")
+            logger.info("resnet_v2 baseline_model for TF distributed pruning md5 verification succeeded.")
 
     @classmethod
     def tearDownClass(cls):
@@ -404,6 +419,14 @@ class TestDistributed(unittest.TestCase):
         shutil.rmtree('nc_workspace', ignore_errors=True)
         shutil.rmtree('baseline_model', ignore_errors=True)
 
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
+
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
     def test_tf_distributed_pruning(self):
         distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
         p = subprocess.Popen(distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE,

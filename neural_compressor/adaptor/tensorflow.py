@@ -55,7 +55,7 @@ class TensorFlowAdaptor(Adaptor):
         super().__init__(framework_specific_info)
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
         self.approach = deep_get(self.framework_specific_info, 'approach', False)

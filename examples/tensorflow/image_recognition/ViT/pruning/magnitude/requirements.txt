@@ -1,5 +1,5 @@
-intel-tensorflow==2.6.0
-keras==2.6.0
-tensorflow-estimator==2.6.0
-tensorflow-addons==0.15.0
-horovod==0.24.0
+tensorflow==2.10.0
+keras==2.10.0
+tensorflow-estimator==2.10.0
+tensorflow-addons==0.18.0
+horovod==0.26.1
