@@ -21,7 +21,6 @@ from neural_compressor.utils import logger
 from .nas import NASBase
 from .nas_utils import nas_registry
 
-
 @nas_registry("DyNAS")
 class DyNAS(NASBase):
     """
@@ -31,10 +30,13 @@ class DyNAS(NASBase):
     """
     def __init__(self, conf_fname_or_obj):
         from .dynast.dynas_manager import ParameterManager
+        from .dynast.dynas_manager import TransformerLTEncoding
         from .dynast.dynas_predictor import Predictor
         from .dynast.dynas_search import ProblemMultiObjective, SearchAlgoManager
         from .dynast.dynas_utils import (EvaluationInterfaceMobileNetV3,
-                                        EvaluationInterfaceResNet50, OFARunner)
+                                        EvaluationInterfaceResNet50, EvaluationInterfaceTransformerLT,
+                                        OFARunner,TransformerLTRunner)
+
         self.ParameterManager = ParameterManager
         self.Predictor = Predictor
         self.ProblemMultiObjective = ProblemMultiObjective
@@ -51,20 +53,44 @@ class DyNAS(NASBase):
                                         'ofa_mbv3_d234_e346_k357_w1.2':
                                         {'ks'  :  {'count' : 20, 'vars' : [3, 5, 7]},
                                             'e'   :  {'count' : 20, 'vars' : [3, 4, 6]},
-                                            'd'   :  {'count' : 5,  'vars' : [2, 3, 4]} }
-                                    }
+                                            'd'   :  {'count' : 5,  'vars' : [2, 3, 4]} },
+
+                                        'transformer_lt_wmt_en_de': 
+                                        {'encoder_embed_dim': {'count':1,'vars':[640, 512]},
+                                        'decoder_embed_dim': {'count':1, 'vars': [640, 512]},
+                                        'encoder_ffn_embed_dim': {'count':6, 'vars':[3072, 2048, 1024]},
+                                        'decoder_ffn_embed_dim' : {'count':6,'vars': [3072, 2048, 1024]},
+                                        'decoder_layer_num': {'count':1,'vars':[6, 5, 4, 3, 2, 1]},
+                                        'encoder_self_attention_heads': {'count':6, 'vars':[8, 4]},
+                                        'decoder_self_attention_heads': {'count':6, 'vars':[8, 4]},
+                                        'decoder_ende_attention_heads': {'count':6, 'vars':[8, 4]},
+                                        'decoder_arbitrary_ende_attn': {'count':6, 'vars':[-1, 1, 2]}}
+        }
         self.RUNNERS = {
             'ofa_resnet50': OFARunner,
             'ofa_mbv3_d234_e346_k357_w1.0': OFARunner,
             'ofa_mbv3_d234_e346_k357_w1.2': OFARunner,
+            'transformer_lt_wmt_en_de': TransformerLTRunner
         }
 
         self.EVALUATION_INTERFACE = {'ofa_resnet50': EvaluationInterfaceResNet50,
                                      'ofa_mbv3_d234_e346_k357_w1.0': EvaluationInterfaceMobileNetV3,
-                                     'ofa_mbv3_d234_e346_k357_w1.2': EvaluationInterfaceMobileNetV3}
+                                     'ofa_mbv3_d234_e346_k357_w1.2': EvaluationInterfaceMobileNetV3,
+                                      'transformer_lt_wmt_en_de': EvaluationInterfaceTransformerLT}
+
         self.LINAS_INNERLOOP_EVALS = {'ofa_resnet50': 5000,
                                       'ofa_mbv3_d234_e346_k357_w1.0': 20000,
-                                      'ofa_mbv3_d234_e346_k357_w1.2': 20000}
+                                      'ofa_mbv3_d234_e346_k357_w1.2': 20000,
+                                      'transformer_lt_wmt_en_de': 10000}
+        
+        self.SUPERNET_ENCODING = {
+        'ofa_resnet50': ParameterManager,
+        'ofa_mbv3_d234_e346_k357_w1.0': ParameterManager,
+        'ofa_mbv3_d234_e346_k357_w1.2': ParameterManager,
+        'ofa_proxyless_d234_e346_k357_w1.3': ParameterManager,
+        'transformer_lt_wmt_en_de': TransformerLTEncoding,
+        }
+
         super().__init__()
         self.acc_predictor = None
         self.macs_predictor = None
@@ -77,10 +103,13 @@ class DyNAS(NASBase):
         self.validation_interface.eval_subnet(individual)
 
     def init_for_search(self):
-        self.supernet_manager = self.ParameterManager(
-            param_dict=self.SUPERNET_PARAMETERS[self.supernet],
-            seed=self.seed
+        self.supernet_manager = self.SUPERNET_ENCODING[self.supernet](
+            param_dict=self.SUPERNET_PARAMETERS[self.supernet], seed=self.seed
         )
+        #self.supernet_manager = self.ParameterManager(
+        #    param_dict=self.SUPERNET_PARAMETERS[self.supernet],
+        #    seed=self.seed
+        #)
 
         # Validation High-Fidelity Measurement Runner
         self.runner_validate = self.RUNNERS[self.supernet](
@@ -88,8 +117,9 @@ class DyNAS(NASBase):
             acc_predictor=None,
             macs_predictor=None,
             latency_predictor=None,
-            imagenetpath=self.dataset_path,
+            datasetpath=self.dataset_path,
             batch_size=self.batch_size,
+            checkpoint_path=self.supernet_ckpt_path
         )
 
         # Setup validation interface
@@ -131,8 +161,9 @@ class DyNAS(NASBase):
                 acc_predictor=self.acc_predictor,
                 macs_predictor=self.macs_predictor,
                 latency_predictor=self.latency_predictor,
-                imagenetpath=self.dataset_path,
+                datasetpath=self.dataset_path,
                 batch_size=self.batch_size,
+                checkpoint_path=self.supernet_ckpt_path
             )
 
             # Setup validation interface
@@ -236,6 +267,7 @@ class DyNAS(NASBase):
         self.num_evals = dynas_config.num_evals
         self.results_csv_path = dynas_config.results_csv_path
         self.dataset_path = dynas_config.dataset_path
+        self.supernet_ckpt_path = dynas_config.supernet_ckpt_path
         self.batch_size = dynas_config.batch_size
         if dynas_config.population < 10: # pragma: no cover
             raise NotImplementedError(

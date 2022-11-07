@@ -33,6 +33,10 @@ from neural_compressor.experimental.nas.dynast.dynas_manager import ParameterMan
 from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
 from neural_compressor.utils.utility import LazyImport, logger
 
+from neural_compressor.experimental.nas.supernetwork.machine_translation.transformer_interface import (
+    compute_bleu,
+    compute_latency
+) 
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
 
@@ -270,6 +274,103 @@ class OFARunner(Runner):
         return self.subnet
 
 
+
+
+class TransformerLTRunner(Runner):
+    """The OFARunner class manages the sub-network selection from the OFA super-network and
+    the validation measurements of the sub-networks. ResNet50, MobileNetV3 w1.0, and MobileNetV3 w1.2
+    are currently supported. Imagenet is required for these super-networks `imagenet-ilsvrc2012`.
+    """
+
+    def __init__(
+        self,
+        supernet: str,
+        acc_predictor: Predictor,
+        macs_predictor: Predictor,
+        latency_predictor: Predictor,
+        datasetpath: str,
+        batch_size: int,
+        checkpoint_path: str
+    ) -> None:
+        self.supernet = supernet
+        self.acc_predictor = acc_predictor
+        self.macs_predictor = macs_predictor
+        self.latency_predictor = latency_predictor
+        self.device = 'cpu'
+        self.test_size = None
+        self.batch_size = batch_size
+        self.dataset_path = datasetpath
+        self.checkpoint_path = checkpoint_path
+
+    def estimate_accuracy_bleu(
+        self,
+        subnet_cfg: dict,
+    ) -> float:
+        top1 = self.acc_predictor.predict(subnet_cfg)
+        return top1
+
+    def estimate_macs(
+        self,
+        subnet_cfg: dict,
+    ) -> int:
+        macs = self.macs_predictor.predict(subnet_cfg)
+        return macs
+
+    def estimate_latency(
+        self,
+        subnet_cfg: dict,
+    ) -> float:
+        latency = self.latency_predictor.predict(subnet_cfg)
+        return latency
+
+    def validate_bleu(
+        self,
+        subnet_cfg: dict,
+    ) -> float: # pragma: no cover
+        
+        bleu = compute_bleu(subnet_cfg,self.dataset_path,self.checkpoint_path)
+        return bleu
+
+    def validate_macs(
+        self,
+        subnet_cfg: dict,
+    ) -> float:
+        """Measure Torch model's FLOPs/MACs as per FVCore calculation
+        Args:
+            subnet_cfg: sub-network Torch model
+        Returns:
+            `macs`
+        """
+
+        #model = self.get_subnet(subnet_cfg)
+        #input_size = (self.batch_size, 3, 224, 224)
+        #macs = get_macs(model=model, input_size=input_size, device=self.device)
+        macs = 0
+        #logger.info('Model\'s macs: {}'.format(macs))
+        return macs
+
+    @torch.no_grad()
+    def measure_latency(
+        self,
+        subnet_cfg: dict,
+        warmup_steps: int = None,
+        measure_steps: int = None,
+    ) -> Tuple[float, float]:
+        """Measure OFA model's latency.
+        Args:
+            subnet_cfg: sub-network Torch model
+        Returns:
+            mean latency; std latency
+        """
+       
+        latency_mean, latency_std = compute_latency(subnet_cfg,self.dataset_path)
+        logger.info('Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
+
+        return latency_mean, latency_std
+
+
+
+
 class EvaluationInterface:
     """
     The interface class update is required to be updated for each unique SuperNetwork
@@ -428,6 +529,76 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
             return sample, lat, -top1
         else:
             return sample, macs, -top1
+
+
+
+class EvaluationInterfaceTransformerLT(EvaluationInterface):
+    def __init__(
+        self,
+        evaluator: Runner,
+        manager: ParameterManager,
+        metrics=['acc', 'macs'],
+        predictor_mode=False,
+        csv_path=None,
+    ) -> None:
+        super().__init__(evaluator, manager, metrics, predictor_mode, csv_path)
+
+    def eval_subnet(
+        self,
+        x: list,
+    ) -> Tuple[dict, float, float]:
+        # PyMoo vector to Elastic Parameter Mapping
+        param_dict = self.manager.translate2param(x)
+
+        sample = {
+            'encoder': {
+                'encoder_embed_dim': param_dict['encoder_embed_dim'][0],
+                'encoder_layer_num': 6,#param_dict['encoder_layer_num'][0],
+                'encoder_ffn_embed_dim': param_dict['encoder_ffn_embed_dim'],
+                'encoder_self_attention_heads': param_dict['encoder_self_attention_heads'],
+            },
+            'decoder': {
+                'decoder_embed_dim': param_dict['decoder_embed_dim'][0],
+                'decoder_layer_num': param_dict['decoder_layer_num'][0],
+                'decoder_ffn_embed_dim': param_dict['decoder_ffn_embed_dim'],
+                'decoder_self_attention_heads': param_dict['decoder_self_attention_heads'],
+                'decoder_ende_attention_heads': param_dict['decoder_ende_attention_heads'],
+                'decoder_arbitrary_ende_attn':param_dict['decoder_arbitrary_ende_attn']
+            }
+            }
+
+        subnet_sample = copy.deepcopy(sample)
+
+        # Always evaluate/predict top1
+        lat, macs = 0, 0
+        if self.predictor_mode == True:
+            bleu = self.evaluator.estimate_accuracy_bleu(self.manager.onehot_custom(param_dict).reshape(1,-1))[0]
+            if 'macs' in self.metrics:
+                macs = self.evaluator.estimate_macs(self.manager.onehot_custom(param_dict).reshape(1,-1))[0]
+            if 'lat' in self.metrics:
+                lat = self.evaluator.estimate_latency(self.manager.onehot_custom(param_dict).reshape(1,-1))[0]
+        else:
+            bleu = self.evaluator.validate_bleu(subnet_sample)
+            macs = self.evaluator.validate_macs(subnet_sample)
+            if 'lat' in self.metrics:
+                lat, _ = self.evaluator.measure_latency(subnet_sample)
+
+        if self.csv_path:
+            with open(self.csv_path, 'a') as f:
+                writer = csv.writer(f)
+                date = str(datetime.now())
+                result = [param_dict, date, lat, macs, bleu,]
+                writer.writerow(result)
+
+        # PyMoo only minimizes objectives, thus accuracy needs to be negative
+        # Requires format: subnetwork, objective x, objective y
+        if 'lat' in self.metrics:
+            return sample, lat, -bleu
+        else:
+            return sample, macs, -bleu
+
+
+
 
 
 def get_torchvision_model(
