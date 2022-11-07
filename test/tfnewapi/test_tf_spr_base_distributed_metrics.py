@@ -1,7 +1,5 @@
 """Tests for the distributed metrics."""
 import os
-import sys
-import cpuinfo
 import signal
 import shutil
 import subprocess
@@ -9,27 +7,24 @@ import unittest
 import re
 import tensorflow as tf
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
-from neural_compressor.utils import logger
 
 def build_fake_ut():
     fake_ut = """
 import numpy as np
 import unittest
-import horovod.tensorflow as hvd
-import os
-import sys
-import cpuinfo
-import json
-import tensorflow as tf
 from neural_compressor.metric import METRICS
 from neural_compressor.experimental.metric.f1 import evaluate
 from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
 from neural_compressor.experimental.metric import bleu
-from neural_compressor.utils import logger
+import horovod.tensorflow as hvd
+import os
+import json
+import tensorflow as tf
 
 tf.compat.v1.enable_eager_execution()
 
 class TestMetrics(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -57,13 +52,6 @@ class TestMetrics(unittest.TestCase):
                 os.remove('anno_1.yaml')
             if os.path.exists('anno_2.yaml'):
                 os.remove('anno_2.yaml')
-
-    def setUp(self):
-        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
-        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
-
-    def tearDown(self):
-        logger.info(f"{self._testMethodName} done.\\n")
 
     def test_mIOU(self):
         metrics = METRICS('tensorflow')
@@ -958,13 +946,6 @@ class TestDistributed(unittest.TestCase):
         os.remove('fake_ut.py')
         shutil.rmtree('./saved', ignore_errors = True)
         shutil.rmtree('runs', ignore_errors = True)
-
-    def setUp(self):
-        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
-        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
-
-    def tearDown(self):
-        logger.info(f"{self._testMethodName} done.\n")
 
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
     def test_distributed(self):

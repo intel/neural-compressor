@@ -1,57 +1,39 @@
-"""Tests for the TensorFlow pruning."""
+"""Tests for the TensorFlow pruning with distributed training and inference."""
+import os
+import sys
+import cpuinfo
+from platform import platform, system
+import signal
+import shutil
+import subprocess
+import unittest
+import re
+import hashlib
+import time
+import tensorflow as tf
+from neural_compressor.utils import logger
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+
+def build_fake_ut():
+    fake_ut = '''
 from __future__ import print_function
+import tensorflow
+from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
+from  tensorflow.keras.layers import AveragePooling2D, Input, Flatten
+from  tensorflow.keras.callbacks import LearningRateScheduler
+from  tensorflow.keras.callbacks import ReduceLROnPlateau
+from  tensorflow.keras.regularizers import l2
+from  tensorflow.keras.models import Model
+from  tensorflow.keras.datasets import cifar10
 import numpy as np
 import os
 import sys
 import cpuinfo
 import shutil
 import unittest
-import hashlib
-import types
-import tensorflow as tf
-from neural_compressor.experimental import Pruning, common
-from neural_compressor.utils import logger
-from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.utils.create_obj_from_config import create_train_func
-from neural_compressor.experimental.pruning import TfPruningCallback
-from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
-from platform import platform, system
-
-def build_fake_yaml():
-    fake_yaml = """
-    model:
-      name: resnet_v2_prune
-      framework: tensorflow
-    pruning:
-      train:
-        epoch: 4
-        optimizer:
-          SGD:
-            learning_rate: 0.001
-            momentum: 0.9
-            nesterov: True
-        criterion:
-          CrossEntropyLoss:
-            reduction: sum_over_batch_size
-      approach:
-        weight_compression:
-          initial_sparsity: 0.0
-          target_sparsity: 0.2
-          start_epoch: 0
-          end_epoch: 4
-          pruners:
-            - !Pruner
-                start_epoch: 1
-                end_epoch: 3
-                prune_type: basic_magnitude
-    evaluation:
-      accuracy:
-        metric:
-          topk: 1
-    """
-    with open('fake_yaml.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import CpuInfo
 
 def lr_schedule(epoch):
     """Learning Rate Schedule
@@ -94,13 +76,13 @@ def resnet_layer(inputs,
     # Returns
         x (tensor): tensor as input to the next layer
     """
-    conv = tf.keras.layers.Conv2D(num_filters,
-                                  kernel_size=kernel_size,
-                                  strides=strides,
-                                  padding='same',
-                                  use_bias=True,
-                                  kernel_initializer='he_normal',
-                                  kernel_regularizer=tf.keras.regularizers.l2(1e-4))
+    conv = Conv2D(num_filters,
+                  kernel_size=kernel_size,
+                  strides=strides,
+                  padding='same',
+                  use_bias=True,
+                  kernel_initializer='he_normal',
+                  kernel_regularizer=l2(1e-4))
 
     x = inputs
     if conv_first:
@@ -108,12 +90,12 @@ def resnet_layer(inputs,
         # if batch_normalization:
         #     x = BatchNormalization()(x)
         if activation is not None:
-            x = tf.keras.layers.Activation(activation)(x)
+            x = Activation(activation)(x)
     else:
         # if batch_normalization:
         #     x = BatchNormalization()(x)
         if activation is not None:
-            x = tf.keras.layers.Activation(activation)(x)
+            x = Activation(activation)(x)
         x = conv(x)
     return x
 
@@ -145,7 +127,7 @@ def resnet_v2(input_shape, depth, num_classes=10):
     num_filters_in = 4
     num_res_blocks = int((depth - 2) / 9)
 
-    inputs = tf.keras.layers.Input(shape=input_shape)
+    inputs = Input(shape=input_shape)
     # v2 performs Conv2D with BN-ReLU on input before splitting into 2 paths
     x = resnet_layer(inputs=inputs,
                      num_filters=num_filters_in,
@@ -192,22 +174,22 @@ def resnet_v2(input_shape, depth, num_classes=10):
                                  strides=strides,
                                  activation=None,
                                  batch_normalization=False)
-            x = tf.keras.layers.add([x, y])
+            x = tensorflow.keras.layers.add([x, y])
 
         num_filters_in = num_filters_out
 
     # Add classifier on top.
     # v2 has BN-ReLU before Pooling
     # x = BatchNormalization()(x)
-    x = tf.keras.layers.Activation('relu')(x)
-    x = tf.keras.layers.AveragePooling2D(pool_size=8)(x)
-    y = tf.keras.layers.Flatten()(x)
-    outputs = tf.keras.layers.Dense(num_classes,
-                                    activation='softmax',
-                                    kernel_initializer='he_normal')(y)
+    x = Activation('relu')(x)
+    x = AveragePooling2D(pool_size=8)(x)
+    y = Flatten()(x)
+    outputs = Dense(num_classes,
+                    activation='softmax',
+                    kernel_initializer='he_normal')(y)
 
     # Instantiate model.
-    model = tf.keras.models.Model(inputs=inputs, outputs=outputs)
+    model = Model(inputs=inputs, outputs=outputs)
     return model
 
 # Training parameters
@@ -221,9 +203,9 @@ subtract_pixel_mean = True
 n = 1
 depth = n * 9 + 2
 
-def train(dst_path):
+def train():
     # Load the CIFAR10 data.
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
     # Input image dimensions.
     input_shape = x_train.shape[1:]
@@ -236,22 +218,22 @@ def train(dst_path):
     x_test -= x_train_mean
 
     # Convert class vectors to binary class matrices.
-    y_train = tf.keras.utils.to_categorical(y_train, num_classes)
-    y_test = tf.keras.utils.to_categorical(y_test, num_classes)
+    y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
 
     model = resnet_v2(input_shape=input_shape, depth=depth)
 
     model.compile(loss='categorical_crossentropy',
-                optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
+                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.01),
                 metrics=['accuracy'])
     model.summary()
 
-    lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
+    lr_scheduler = LearningRateScheduler(lr_schedule)
 
-    lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(factor=np.sqrt(0.1),
-                                                      cooldown=0,
-                                                      patience=5,
-                                                      min_lr=0.5e-6)
+    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+                                cooldown=0,
+                                patience=5,
+                                min_lr=0.5e-6)
 
     callbacks = [lr_reducer, lr_scheduler]
 
@@ -267,7 +249,130 @@ def train(dst_path):
     scores = model.evaluate(x_test, y_test, verbose=1)
     print('Test loss:', scores[0])
     print('Test accuracy:', scores[1])
-    model.save(dst_path)
+    model.save("baseline_model")
+
+class TrainDataset(object):
+    def __init__(self):
+        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        x_train, y_train = x_train[:100], y_train[:100]
+        x_train = x_train.astype('float32') / 255
+        x_test = x_test.astype('float32') / 255
+
+        # If subtract pixel mean is enabled
+        x_train_mean = np.mean(x_train, axis=0)
+        x_train -= x_train_mean
+        x_test -= x_train_mean
+
+        # Convert class vectors to binary class matrices.
+        y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+        y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+        self.test_images = x_test
+        self.test_labels = y_test
+        self.train_images = x_train
+        self.train_labels = y_train
+
+    def __len__(self):
+        return len(self.train_images)
+
+    def __getitem__(self, idx):
+        return self.train_images[idx], self.train_labels[idx]
+
+class EvalDataset(object):
+    def __init__(self):
+        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+
+        x_train = x_train.astype('float32') / 255
+        x_test = x_test.astype('float32') / 255
+
+        # If subtract pixel mean is enabled
+        x_train_mean = np.mean(x_train, axis=0)
+        x_train -= x_train_mean
+        x_test -= x_train_mean
+
+        # Convert class vectors to binary class matrices.
+        y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+        y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+        self.test_images = x_test
+        self.test_labels = y_test
+
+    def __len__(self):
+        return len(self.test_images)
+
+    def __getitem__(self, idx):
+        return self.test_images[idx], self.test_labels[idx]
+
+class TestTensorflowPruning(unittest.TestCase):
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\\n")
+
+    def test_tensorflow_pruning(self):
+        from neural_compressor.experimental import Pruning, common
+        from neural_compressor.utils import logger
+        prune = Pruning("./fake_yaml.yaml")
+        prune.train_distributed = True
+        prune.evaluation_distributed = True
+        prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=16)
+        prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
+        prune.model = './baseline_model'
+        pruned_model = prune()
+        stats, sparsity = pruned_model.report_sparsity()
+        logger.info(stats)
+        logger.info(sparsity)
+        self.assertGreater(sparsity, 20)
+        self.assertGreater(prune.baseline_score, 0.729)
+        if bool(CpuInfo().bf16):
+            self.assertGreater(prune.last_score, 0.742)
+        else:
+            self.assertGreater(prune.last_score, 0.743)
+
+
+if __name__ == '__main__':
+    unittest.main()
+    '''
+    with open('fake_ut.py', 'w', encoding="utf-8") as f:
+        f.write(fake_ut)
+        build_fake_yaml()
+
+
+def build_fake_yaml():
+    fake_yaml = """
+    model:
+      name: resnet_v2_prune
+      framework: tensorflow
+    pruning:
+      train:
+        epoch: 4
+        optimizer:
+          SGD:
+            learning_rate: 0.001
+            momentum: 0.1
+            nesterov: True
+            weight_decay: 0.1
+        criterion:
+          CrossEntropyLoss:
+            reduction: sum
+      approach:
+        weight_compression:
+          initial_sparsity: 0.0
+          target_sparsity: 0.2
+          start_epoch: 0
+          end_epoch: 4
+          pruners:
+            - !Pruner
+                start_epoch: 1
+                end_epoch: 3
+                prune_type: basic_magnitude
+    evaluation:
+      accuracy:
+        metric:
+          topk: 1
+    """
+    with open('fake_yaml.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
 
 def dir_md5_check(dir):
     files_list = []
@@ -287,80 +392,31 @@ def dir_md5_check(dir):
         md5_list.append(file_md5)
     return md5_list
 
-class TrainDataset(object):
-    def __init__(self):
-        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
-        x_train, y_train = x_train[:64], y_train[:64]
-        x_train = x_train.astype('float32') / 255
-        x_test = x_test.astype('float32') / 255
-
-        # If subtract pixel mean is enabled
-        x_train_mean = np.mean(x_train, axis=0)
-        x_train -= x_train_mean
-        x_test -= x_train_mean
-
-        # Convert class vectors to binary class matrices.
-        y_train = tf.keras.utils.to_categorical(y_train, num_classes)
-        y_test = tf.keras.utils.to_categorical(y_test, num_classes)
-        self.test_images = x_test
-        self.test_labels = y_test
-        self.train_images = x_train
-        self.train_labels = y_train
-
-    def __len__(self):
-        return len(self.train_images)
-
-    def __getitem__(self, idx):
-        return self.train_images[idx], self.train_labels[idx]
-
-class EvalDataset(object):
-    def __init__(self):
-        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
-
-        x_train = x_train.astype('float32') / 255
-        x_test = x_test.astype('float32') / 255
-
-        # If subtract pixel mean is enabled
-        x_train_mean = np.mean(x_train, axis=0)
-        x_train -= x_train_mean
-        x_test -= x_train_mean
-
-        # Convert class vectors to binary class matrices.
-        y_train = tf.keras.utils.to_categorical(y_train, num_classes)
-        y_test = tf.keras.utils.to_categorical(y_test, num_classes)
-        self.test_images = x_test
-        self.test_labels = y_test
-
-    def __len__(self):
-        return len(self.test_images)
-
-    def __getitem__(self, idx):
-        return self.test_images[idx], self.test_labels[idx]
-
-class TestTensorflowPruning(unittest.TestCase):
+class TestDistributed(unittest.TestCase):
     dst_path = './baseline_model'
     @classmethod
     def setUpClass(cls):
+        build_fake_ut()
         build_fake_yaml()
         if system().lower() == "windows":
             shutil.copytree("C:\\tmp\\.neural_compressor\\inc_ut\\resnet_v2\\", os.getcwd(), dirs_exist_ok=True)
         elif system().lower() == "linux":
             shutil.copytree("/tmp/.neural_compressor/inc_ut/resnet_v2/", os.getcwd(), dirs_exist_ok=True)
         if not os.path.exists(cls.dst_path):
-            logger.warning("resnet_v2 baseline_model doesn't exist.")
-            return unittest.skip("resnet_v2 baseline_model doesn't exist")(TestTensorflowPruning)
+            raise FileNotFoundError(f"'{cls.dst_path}' doesn't exist.")
         elif dir_md5_check(cls.dst_path) != \
             ['65625fef42f44e6853d4d6d5e4188a49', 'a783396652bf62db3db4c9f647953175',
             'c7259753419d9fc053df5b2059aef8c0', '77f2a1045cffee9f6a43f2594a5627ba']:
             logger.warning("resnet_v2 baseline_model md5 verification failed.")
-            return unittest.skip("resnet_v2 baseline_model md5 verification failed.")(TestTensorflowPruning)
+            raise ValueError(f"'{cls.dst_path}' md5 verification failed.")
         else:
-            logger.info("resnet_v2 baseline_model for TF pruning md5 verification succeeded.")
+            logger.info("resnet_v2 baseline_model for TF-spr-base distributed pruning md5 verification succeeded.")
 
     @classmethod
     def tearDownClass(cls):
+        os.remove('fake_ut.py')
         os.remove('fake_yaml.yaml')
-        shutil.rmtree('nc_workspace',ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
         shutil.rmtree('baseline_model', ignore_errors=True)
 
     def setUp(self):
@@ -370,68 +426,24 @@ class TestTensorflowPruning(unittest.TestCase):
     def tearDown(self):
         logger.info(f"{self._testMethodName} done.\n")
 
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.3.0'), "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
-    def test_create_train_func1(self):
-        framework = 'tensorflow'
-        framework_specific_info = DotDict({'device': 'cpu',
-                                           'random_seed': 1978,
-                                           'workspace_path': './nc_workspace/',
-                                           'q_dataloader': None,
-                                           'inputs': [],
-                                           'outputs': []})
-        adaptor = FRAMEWORKS[framework](framework_specific_info)
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
+    def test_tf_distributed_pruning(self):
+        distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
+        p = subprocess.Popen(distributed_cmd, preexec_fn=os.setsid, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, shell=True)
+        try:
+            out, _ = p.communicate()
+            for line in out.splitlines():
+                print(line.decode().strip())
+            matches = re.findall(r'FAILED', out.decode('utf-8'))
+            self.assertEqual(matches, [])
 
-        dataloader = common.DataLoader(TrainDataset(), batch_size=32)
-        train_cfg = DotDict({'epoch': 1,
-                             'optimizer': {'AdamW': {'learning_rate': 0.001, 'weight_decay': 0.0001}},
-                             'criterion': {'CrossEntropyLoss': {'reduction': 'sum_over_batch_size', 'from_logits': True}},
-                             'execution_mode': 'eager',
-                             'start_epoch': 0})
-        callbacks = TfPruningCallback
-        hooks = {}
-        pruning_func1 = create_train_func(framework, dataloader, adaptor, train_cfg, hooks, callbacks)
-        self.assertTrue(isinstance(pruning_func1, types.FunctionType))
-
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.3.0'), "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
-    def test_create_train_func2(self):
-        framework = 'tensorflow'
-        framework_specific_info = DotDict({'device': 'cpu',
-                                           'random_seed': 1978,
-                                           'workspace_path': './nc_workspace/',
-                                           'q_dataloader': None,
-                                           'inputs': [],
-                                           'outputs': []})
-        adaptor = FRAMEWORKS[framework](framework_specific_info)
-
-        dataloader = common.DataLoader(TrainDataset(), batch_size=32)
-        train_cfg = DotDict({'epoch': 1,
-                             'dataloader': {'distributed': False, 'batch_size': 32,
-                             'dataset': {'ImageRecord': {'root': './ImageNet'}},
-                             'transform': {'ResizeCropImagenet': {'height': 224,
-                             'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
-                             'last_batch': 'rollover', 'shuffle': False},
-                             'postprocess': {'transform': {'LabelShift': 1}},
-                             'optimizer': {'SGD': {'learning_rate': 0.0001,
-                             'momentum': 0.9, 'nesterov': True}},
-                             'criterion': {'SparseCategoricalCrossentropy': {'reduction': 'sum_over_batch_size'}},
-                             'execution_mode': 'eager', 'start_epoch': 0})
-        pruning_func2 = create_train_func(framework, dataloader, adaptor, train_cfg)
-        self.assertTrue(isinstance(pruning_func2, types.FunctionType))
-
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.3.0'), "Keras model need tensorflow version >= 2.3.0, so the case is skipped")
-    def test_tensorflow_pruning(self):
-        prune = Pruning("./fake_yaml.yaml")
-        prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
-        prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
-        prune.model = self.dst_path
-        pruned_model = prune()
-        stats, sparsity = pruned_model.report_sparsity()
-        logger.info(stats)
-        logger.info(sparsity)
-        self.assertGreater(sparsity, 20)
-        self.assertGreater(prune.baseline_score, 0.72)
-        self.assertGreater(prune.last_score, 0.73)
+            matches = re.findall(r'OK', out.decode('utf-8'))
+            self.assertTrue(len(matches) > 0)
+        except KeyboardInterrupt:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            assert 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
