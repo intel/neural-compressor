@@ -835,12 +835,13 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             else:
                 quantizer.calib_func = eval_func
             dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = dataloader
             quantizer.model = common.Model(model_origin,
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
                                     {'preserved_attributes': []}
-                              })
+                              })          
             q_model = quantizer.fit()
             q_model.save('./saved')
             # Load configure and weights with neural_compressor.utils
@@ -849,7 +850,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
                                     {'preserved_attributes': []}, \
-                                'dataloader': dataloader
+                                'dataloader': quantizer.calib_dataloader
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
@@ -860,7 +861,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict':
                                     {'preserved_attributes': []},
-                               'dataloader': dataloader
+                               'dataloader': quantizer.calib_dataloader
                               })
             self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree('./saved', ignore_errors=True)
