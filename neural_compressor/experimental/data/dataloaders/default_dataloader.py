@@ -89,7 +89,7 @@ class DefaultDataLoader(BaseDataLoader):
             dataset_len = 0
             for _ in self.dataset:
                 dataset_len += 1
-        except:
+        except Exception:
             raise ValueError(f"{self.dataset} is invalid, {self.dataset}" \
                 " does not support calculating the length of its dataloader")
         if self.drop_last == False:
