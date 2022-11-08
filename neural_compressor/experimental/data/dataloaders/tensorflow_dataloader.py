@@ -19,6 +19,7 @@ from neural_compressor.experimental.data.datasets import dataset
 from neural_compressor.utils.utility import LazyImport
 from abc import abstractmethod
 import collections
+import sys
 import numpy as np
 from math import ceil, floor
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
@@ -267,10 +268,12 @@ class TensorflowDataLoader(BaseDataLoader):
         try:
             dataset_len = self.dataset.__len__()
         except (AttributeError, TypeError):
-            dataset_len = 0
-            for _ in self.dataset:
-                dataset_len += 1
-        except:
+            try:
+                dataset_len = 0
+                for _ in self.dataset:
+                    dataset_len += 1
+            except RuntimeError: return sum([1 for _ in self])
+        except Exception:
             raise ValueError(f"{self.dataset} is invalid, {self.dataset}" \
                 " does not support calculating the length of its dataloader")
         process_rank = 0 # The default rank is 0, which represents the main process
@@ -294,4 +297,4 @@ class TensorflowDataLoader(BaseDataLoader):
             dataloader_len = ceil(self.dis_dataset_len / self.batch_size)
         else:
             dataloader_len = floor(self.dis_dataset_len / self.batch_size)
-        return dataloader_len
+        return sys.maxsize if dataloader_len > sys.maxsize else dataloader_len

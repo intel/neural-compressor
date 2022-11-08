@@ -326,8 +326,10 @@ class Dataloader(object):
                 batch = sess.run(next_element)
                 yield (batch[0:2], batch[2])
 
+    def __len__(self):
+        return self.n
+
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_classifier_optimized_graph()
     evaluate_opt_graph.run()
-
