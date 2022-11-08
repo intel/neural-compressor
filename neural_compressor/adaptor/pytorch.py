@@ -1072,7 +1072,20 @@ class TemplateAdaptor(Adaptor):
             return True
         else:
             return False
+        
+    def calculate_op_sensitivity(self, model, dataloader, method_args):
+        """Compute the op sensitivity by the specific method.
 
+        Args:
+            model(INC model): The fp32 model. 
+            dataloader: The calibration dataloader.
+            method_args(Dict): The parameters for specifying the method.  
+
+        Returns:
+            ops_sensitivity(Dict[tuple, float]): The key is (op_name, op_type), 
+              the value is the sensitivity under the specified method
+        """
+        pass
 
 unify_op_type_mapping = {
     "ConvReLU2d": "Conv2d",
