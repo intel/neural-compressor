@@ -1,7 +1,7 @@
 Neural Coder as Python API
 ===========================
 
-We currently provide 3 main user-facing APIs for Neural Coder: enable, bench and superbench.
+Neural Coder can be used as Python APIs. We currently provide 3 main user-facing APIs for Neural Coder: enable, bench and superbench.
 
 #### Enable
 Users can use ```enable()``` to enable specific features into DL scripts:
