@@ -24,6 +24,23 @@ if not os.path.exists("neural_coder_workspace"):
     os.makedirs("neural_coder_workspace")
 
 
+def detect_device_(logger):
+    # device detection
+    logger.info(f"Device detection started ...")
+    from .utils.device import detect_device
+    detect_device()
+    if globals.device == "cpu_with_amx":
+        logger.info(f"Device: CPU with AMX")
+    elif globals.device == "cpu_without_amx":
+        logger.info(f"Device: CPU without AMX")
+    elif globals.device == "intel_gpu":
+        logger.info(f"Device: Intel(R) GPU")
+    elif globals.device == "cuda":
+        logger.info(f"Device: CUDA")
+    elif globals.device == "mutli":
+        logger.info(f"Device: Multi-Device")
+
+
 def enable(
     code,
     features,
@@ -80,6 +97,9 @@ def enable(
 
     logger.addHandler(fh)
     logger.addHandler(ch)
+
+    # device detection
+    detect_device_(logger)
 
     # print key inputs
     logger.info(f"Enabling started ...")
@@ -467,6 +487,9 @@ def bench(
     logger.addHandler(ch)
     logger.addHandler(fh)
 
+    # device detection
+    detect_device_(logger)
+
     # print key inputs
     logger.info(f"Benchmarking started ...")
     logger.info(f"code: {code}")
@@ -661,7 +684,6 @@ def superbench(
     num_benchmark_iteration=5,
     iteration_dynamic_adjust=True,
     logging_level="info",
-    cpu_conversion=True,
     cpu_set_env=True,
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
@@ -693,6 +715,9 @@ def superbench(
     logger.addHandler(ch)
     logger.addHandler(fh)
 
+    # device detection
+    detect_device_(logger)
+
     # print key inputs
     if auto_quant:
         logger.info(f"Auto-Quant started ...")
@@ -719,6 +744,10 @@ def superbench(
             logger.error(
                 f"You have to specify an entry_code of your code: [{code}]")
             quit()
+
+    # detect device compatibility of entry code
+    from .utils.device import detect_code_device_compatibility
+    detect_code_device_compatibility(entry_code)
 
     if sweep_objective == "feature":
         list_FPS = []
@@ -803,7 +832,8 @@ def superbench(
                 if "pytorch_inc_dynamic_quant" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
 
-                if cpu_conversion:
+                # device conversion
+                if "cpu" in globals.device and "cpu" not in globals.list_code_device_compatibility:
                     features.append("pytorch_cuda_to_cpu")
 
                 if features[0] == "" and len(features) > 1:
@@ -1179,7 +1209,6 @@ def auto_quant(
     num_benchmark_iteration=30,
     iteration_dynamic_adjust=False,
     logging_level="info",
-    cpu_conversion=True,
     cpu_set_env=True,
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
@@ -1195,7 +1224,6 @@ def auto_quant(
         num_benchmark_iteration=num_benchmark_iteration,
         iteration_dynamic_adjust=iteration_dynamic_adjust,
         logging_level=logging_level,
-        cpu_conversion=cpu_conversion,
         cpu_set_env=cpu_set_env,
         ncore_per_instance=ncore_per_instance,  # only for "self_defined" mode
         ninstances=ninstances,  # only for "self_defined" mode
