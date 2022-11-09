@@ -46,43 +46,37 @@ class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
                 quantizev2_input_map[quantizev2_input_node_name] = [graph_info[i[0]].node]
                 dequantize_map[quantizev2_input_node_name] = [graph_info[i[1]].node]
 
-        for input_map_node_name in quantizev2_input_map.keys():
+        for input_map_node_name, quantizev2_nodes in quantizev2_input_map.items():
             if input_map_node_name not in cur_graph.node_name_details:
                 continue
 
             # the nodes share the the same input and have the same QuantizeV2 op type
-            if len(quantizev2_input_map[input_map_node_name]) > 1:
-                # merge the duplicated QuantizeV2 op and Dequantize op.
-                new_quantize_node = quantizev2_input_map[input_map_node_name][0]
+            if len(quantizev2_nodes) > 1:
+                # merge the duplicated QuantizeV2 op.
+                new_quantize_node = quantizev2_nodes[0]
                 new_dequantize_node = dequantize_map[input_map_node_name][0]
 
                 # set the new QuantizeV2 node as the only output of the parent node
-                for i in quantizev2_input_map[input_map_node_name]:
+                for i in quantizev2_nodes:
                     if i.name != new_quantize_node.name:
                         cur_graph.node_name_details[input_map_node_name].outputs.remove(i.name)
 
-                # set the new Dequantized node as the input of the end nodes
+                # set the new QuantizeV2 node as all the other input of the Dequantize nodes
                 for i in dequantize_map[input_map_node_name]:
                     if i.name != new_dequantize_node.name:
-                        end_node_name = cur_graph.node_name_details[i.name].outputs[0]
-                        cur_graph.node_name_details[end_node_name].node.input.remove(i.name)
-                        cur_graph.node_name_details[end_node_name].node.input.insert(0, new_dequantize_node.name)
-                        cur_graph.node_name_details[new_dequantize_node.name].outputs.append(end_node_name)
+                        cur_graph.node_name_details[i.name].node.ClearField('input')
+                        cur_graph.node_name_details[i.name].node.input.extend([
+                            new_quantize_node.name, new_quantize_node.name + ':1',
+                            new_quantize_node.name + ':2'])
 
                 # remove the duplicated quantized nodes
-                for i in quantizev2_input_map[input_map_node_name]:
+                for i in quantizev2_nodes:
                     if i.name != new_quantize_node.name:
                         # remove quantize min node
                         cur_graph.remove_node(cur_graph.node_name_details[i.name].node.input[1])
                         # remove quantize max node
                         cur_graph.remove_node(cur_graph.node_name_details[i.name].node.input[2])
                         # remove quantize node
-                        cur_graph.remove_node(i.name)
-
-                # remove the duplicated dequantized nodes
-                for i in dequantize_map[input_map_node_name]:
-                    if i.name != new_dequantize_node.name:
-                        # remove dequantize node
                         cur_graph.remove_node(i.name)
 
         return cur_graph.dump_graph()

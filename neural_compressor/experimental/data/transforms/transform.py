@@ -184,8 +184,6 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 TENSORFLOW_ITEX_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-TENSORFLOW_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-TENSORFLOW_ITEX_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}

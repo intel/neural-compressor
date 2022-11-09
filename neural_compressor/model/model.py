@@ -351,7 +351,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex_qdq':
+    if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                     rewriter_config_pb2.RewriterConfig.OFF

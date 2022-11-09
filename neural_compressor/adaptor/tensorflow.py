@@ -852,7 +852,7 @@ class TensorFlowAdaptor(Adaptor):
             return False
 
 
-        if self.new_api and self.performance_only:
+        if (self.new_api and self.performance_only) or self.itex_mode:
             self.filter_unquantizable_concat_performance_only(matched_nodes)
         else:
             self.filter_unquantizable_concat(matched_nodes)
@@ -1496,10 +1496,12 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                     new_api=self.new_api,
                                     performance_only = self.performance_only).convert()
             except Exception: # pragma: no cover
+                from .tf_utils.util import get_model_input_shape
+                batch_size = get_model_input_shape(model)
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, 1))
-                data_loader.batch(1)
+                        format(data_loader.batch_size, batch_size))
+                data_loader.batch(batch_size)
                 self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
                                 qt_config=self.quantize_config,

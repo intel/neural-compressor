@@ -131,17 +131,15 @@ class TestItexEnabling(unittest.TestCase):
             output_graph = quantizer.fit()
 
             dequant_count = 0
+            quantize_count = 0
             for i in output_graph.graph_def.node:
                 if i.op == 'Dequantize':
                     dequant_count += 1
+                if i.op == 'QuantizeV2':
+                    quantize_count += 1
 
-            bf16_enabled = False
-            if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
-                bf16_enabled = True
-            if bf16_enabled:
-                self.assertEqual(dequant_count, 3)
-            else:
-                self.assertEqual(dequant_count, 4)
+            self.assertEqual(dequant_count, 5)
+            self.assertEqual(quantize_count, 4)
 
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
@@ -177,19 +175,47 @@ class TestItexEnabling(unittest.TestCase):
             output_graph = quantizer.fit()
 
             dequant_count = 0
+            quantize_count = 0
             for i in output_graph.graph_def.node:
                 if i.op == 'HostConst':
                     self.assertTrue('min' in i.name or 'max' in i.name)
                 if i.op == 'Dequantize':
                     dequant_count += 1
-            bf16_enabled = False
-            if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
-                bf16_enabled = True
-            if bf16_enabled:
-                self.assertEqual(dequant_count, 3)
-            else:
-                self.assertEqual(dequant_count, 4)
+                if i.op == 'QuantizeV2':
+                    quantize_count += 1
 
+            self.assertEqual(dequant_count, 5)
+            self.assertEqual(quantize_count, 4)
+
+    @disable_random()
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
+    def test_depthwiseconv2d_case(self):
+        x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
+        conv_weights = tf.compat.v1.get_variable("weight", [3, 3, 16, 16],
+                                                 initializer=tf.compat.v1.random_normal_initializer())
+        conv = tf.nn.depthwise_conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
+        out_name = conv.name.split(':')[0]
+
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            output_graph_def = graph_util.convert_variables_to_constants(
+                sess=sess,
+                input_graph_def=sess.graph_def,
+                output_node_names=[out_name])
+
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml_1.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            output_graph = quantizer.fit()
+            reshape_counter = 0
+
+            for i in output_graph.graph_def.node:
+                if i.op == 'Reshape':
+                    reshape_counter += 1
+            self.assertEqual(reshape_counter, 2)
 
 if __name__ == '__main__':
     unittest.main()

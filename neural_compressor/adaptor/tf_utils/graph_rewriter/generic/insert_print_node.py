@@ -118,17 +118,21 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                         self.pre_node_name, each_node_name)
                     min_msg = ';{}_eightbit_min_{}__print__;__min:'.format(
                         self.pre_node_name, each_node_name)
-                    src_dt = graph_info[self.pre_node_name].node.attr["T"]
+                    # workround for swish_f32, attribute T is not in the op definition
+                    if 'swish_f32' in graph_info[self.pre_node_name].node.name:
+                        src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                    else:
+                        src_dt = graph_info[self.pre_node_name].node.attr["T"]
                 else:
                     max_msg = ';{}_eightbit_requant_range__print__;__requant_max:'.format(
                         self.pre_node_name)
                     min_msg = ';{}_eightbit_requant_range__print__;__requant_min:'.format(
                         self.pre_node_name)
-                    src_dt = graph_info[each_node_name].node.attr["T"]
-
-                if src_dt.type==0:
-                    #workround for swish_f32, attribute T is not in the op definition
-                    src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                    # workround for swish_f32, attribute T is not in the op definition
+                    if 'swish_f32' in graph_info[each_node_name].node.op:
+                        src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                    else:
+                        src_dt = graph_info[each_node_name].node.attr["T"]
 
                 reshape_input_node.attr["T"].CopyFrom(src_dt)
                 min_input_node.attr["T"].CopyFrom(src_dt)
