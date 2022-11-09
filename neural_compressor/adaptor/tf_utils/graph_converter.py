@@ -330,9 +330,11 @@ class GraphConverter:
                 model = self.quantize()
 
         if self.itex_mode:
-            self._itex_model.graph_def = \
+            host_const_graph_def = \
                 PostHostConstConverter(self._itex_model.graph_def).do_transformation()
-            self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
+            host_const_graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._itex_model.graph_def = host_const_graph_def
+
             return self._itex_model
 
         if self.exclude_node_names:
@@ -425,7 +427,9 @@ class GraphConverter:
         g.graph = self._fp32_model.graph_def
         g.parse_graph()
         y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2'], ('Relu',)]
+        y_pattern_variant = [['MaxPool', 'AvgPool'], ['Add', 'AddV2'], ('Relu',)]
         target_nodes = g.query_fusion_pattern_nodes(y_pattern)
+        target_nodes_variant = g.query_fusion_pattern_nodes(y_pattern_variant)
 
         res = {}
         for i in target_nodes:
@@ -433,7 +437,13 @@ class GraphConverter:
                 res[i[2]] = 1
             else:
                 res[i[2]] += 1
-        return [(i,) for i in res if res[i] == 2]
+        matched_add_nodes = [(i,) for i in res if res[i] == 2]
+        for i in res:
+            if res[i] == 1:
+                for j in target_nodes_variant:
+                    if j[1] == i:
+                        matched_add_nodes.append((i,))
+        return matched_add_nodes
 
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:
