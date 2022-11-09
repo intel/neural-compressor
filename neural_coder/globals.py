@@ -35,9 +35,16 @@ print_code_line_info = False
 # load transformers class def by a cache file instead of on-the-fly catch
 cache_load_transformers = True
 
+# detected device
+device = "cpu_with_amx"
+
+# device compatibility of the code: e.g. ["cpu", "cuda"], ["cuda"]
+list_code_device_compatibility = ["cuda"]
+
 # quantization config for HuggingFace optimum-intel optimizations
 # it is either "" (None) or "xxx" (a string of config path)
 optimum_quant_config = ""
+
 
 def reset_globals():
     global list_code_path
