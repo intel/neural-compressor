@@ -23,17 +23,17 @@ cd examples/tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq
 pip install -r requirements.txt
 ```
 
-### 4. Install Intel Extension for Tensorflow if needed
-#### Tuning the model on Intel GPU(Mandatory)
-Intel Extension for Tensorflow is mandatory to be installed for tuning the model on Intel GPUs.
+### 4. Install Intel Extension for Tensorflow
+#### Quantizing the model on Intel GPU
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
 
-#### Tuning the model on Intel CPU(Experimental)
-Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for tuning the model on Intel CPUs.
+#### Quantizing the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]

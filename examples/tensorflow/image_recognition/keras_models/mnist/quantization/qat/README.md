@@ -19,18 +19,18 @@ pip install tensorflow_model_optimization==0.5.0
 ```
 > Note: To generate correct qat model with tensorflow_model_optimization 0.5.0, pls use TensorFlow 2.4 or above.
 
-### 3. Install Intel Extension for Tensorflow if needed
+### 3. Install Intel Extension for Tensorflow
 
-#### Tuning the model on Intel GPU(Mandatory)
-Intel Extension for Tensorflow is mandatory to be installed for tuning the model on Intel GPUs.
+#### Quantizing the model on Intel GPU
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
 
-#### Tuning the model on Intel CPU(Experimental)
-Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for tuning the model on Intel CPUs.
+#### Quantizing the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
