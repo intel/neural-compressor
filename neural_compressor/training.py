@@ -16,8 +16,8 @@
 # limitations under the License.
 
 import copy
-from .conf.pythonic_config import Config, DistillationConfig, Options, \
-                                  PruningConfig, QuantizationAwareTrainingConfig
+from .conf.pythonic_config import Config
+from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
 from .experimental.distillation import Distillation
 from .experimental.pruning import Pruning
 from .experimental.quantization import Quantization
@@ -101,15 +101,18 @@ class CompressionManager:
             assert False, "Unsupport export for {} model".format(type(self.model))
 
 
-def prepare_compression(model: Callable, confs: Union[Callable, List], options=None, **kwargs):
+def prepare_compression(
+    model: Callable, confs: Union[Callable, List], teacher_model: Callable = None, **kwargs
+):
     """_summary_
 
     Args:
-        model (Callable, optional):    model to optimize.
+        model (Callable, optional): model to optimize.
         confs (Union[Callable, List]): config of Distillation, Quantization, Pruning,
                                        or list of config for orchestration optimization
-        options (Options, optional):   The configure for random_seed, workspace,
-                                       resume path and tensorboard flag.
+        teacher_model (Callable, optional): teacher model for distillation. Defaults to None.
+        features (optional): teacher features for distillation, features and teacher_model are alternative.
+                                     Defaults to None.
 
     Returns:
         CompressionManager
@@ -135,20 +138,18 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], options=N
             compression_manager.on_train_end()
     """
 
-    if options is None:
-        options = Options()
     if isinstance(confs, List):
         from .experimental.scheduler import Scheduler
         comps = []
         for conf in confs:
             if isinstance(conf, QuantizationAwareTrainingConfig):
-                conf_ = Config(quantization=conf, options=options)
+                conf_ = Config(quantization=conf)
                 com = Quantization(conf_)
             elif isinstance(conf, PruningConfig):
-                conf_ = Config(pruning=conf, options=options)
+                conf_ = Config(pruning=conf)
                 com = Pruning(conf_)
             elif isinstance(conf, DistillationConfig):
-                conf_ = Config(distillation=conf, options=options)
+                conf_ = Config(distillation=conf)
                 com = Distillation(conf_)
                 assert conf.teacher_model is not None, \
                     "Please set teacher_model in DistillationConfig"
@@ -165,13 +166,13 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], options=N
         component = scheduler
     else:
         if isinstance(confs, QuantizationAwareTrainingConfig):
-            conf = Config(quantization=confs, options=options)
+            conf = Config(quantization=confs)
             component = Quantization(conf)
         elif type(confs) == PruningConfig:
-            conf = Config(pruning=confs, options=options)
+            conf = Config(pruning=confs)
             component = Pruning(conf)
         elif type(confs) == DistillationConfig:
-            conf = Config(distillation=confs, options=options)
+            conf = Config(distillation=confs)
             component = Distillation(conf)
             assert confs.teacher_model is not None, \
                     "Please set teacher_model in DistillationConfig"

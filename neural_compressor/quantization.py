@@ -20,7 +20,8 @@ from .utils import logger
 from .data import DATALOADERS, DATASETS
 from .experimental import Quantization as ExpQuantization
 from deprecated import deprecated
-from neural_compressor.conf.pythonic_config import Config, PostTrainingConfig
+from neural_compressor.conf.pythonic_config import Config
+from neural_compressor.config import PostTrainingQuantConfig
 
 class Quantization(object):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -199,7 +200,7 @@ class Quantization(object):
 
 def fit(
     model, conf, calib_dataloader=None, calib_func=None, eval_dataloader=None,
-    eval_func=None, eval_metric=None, options=None, **kwargs
+    eval_func=None, eval_metric=None, **kwargs
 ):
     """Quantize the model with a given configure.
 
@@ -256,16 +257,11 @@ def fit(
                                                    output = model(input)
                                                    accuracy = metric(output, label)
                                                    return accuracy
-        options (Options, optional):          The configure for random_seed, workspace,
-                                              resume path and tensorboard flag.
 
     """
 
-    if isinstance(conf, PostTrainingConfig):
-        if options is None:
-            conf = Config(quantization=conf)
-        else:
-            conf = Config(quantization=conf, options=options)
+    if isinstance(conf, PostTrainingQuantConfig):
+        conf = Config(quantization=conf)
     quantizer = ExpQuantization(conf)
     quantizer.model = model
     if eval_func is not None:

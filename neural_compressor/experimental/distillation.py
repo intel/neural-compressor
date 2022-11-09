@@ -92,6 +92,7 @@ class Distillation(Component):
                     self.best_model = copy.deepcopy(self._model)
                 else:
                     self.best_model = self._model
+
     def _on_step_begin(self, batch_id):
         """Operations called on the beginning of batches."""
         if self.criterion is not None and hasattr(self.criterion, 'clear_features'):
@@ -287,11 +288,7 @@ class Distillation(Component):
         logger.info("Model distillation is done.")
         if self._eval_func is not None:
             logger.info("Start to evaluate the distilled model.")
-            if self.best_model:
-                if self.framework == "pytorch":
-                    self._model._model = self.best_model
-                else:
-                    self._model = self.best_model
+            self._model = self.best_model if self.best_model else self._model
             score = self._eval_func(
                 self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
             )

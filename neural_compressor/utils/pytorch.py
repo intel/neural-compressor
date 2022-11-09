@@ -353,15 +353,15 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         else:
             op_cfgs = _cfg_to_qconfig(tune_cfg)
 
-        _propagate_qconfig(q_model, op_cfgs, approach=tune_cfg['approach'])
-        # sanity check common API misusage
-        if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
-            logger.warn("None of the submodule got qconfig applied. Make sure you "
-                        "passed correct configuration through `qconfig_dict` or "
-                        "by assigning the `.qconfig` attribute directly on submodules")
-        if tune_cfg['approach'] != "post_training_dynamic_quant":
-            add_observer_(q_model)
-        q_model = convert(q_model, mapping=q_mapping, inplace=True)
+            _propagate_qconfig(q_model, op_cfgs, approach=tune_cfg['approach'])
+            # sanity check common API misusage
+            if not any(hasattr(m, 'qconfig') and m.qconfig for m in q_model.modules()):
+                logger.warn("None of the submodule got qconfig applied. Make sure you "
+                            "passed correct configuration through `qconfig_dict` or "
+                            "by assigning the `.qconfig` attribute directly on submodules")
+            if tune_cfg['approach'] != "post_training_dynamic_quant":
+                add_observer_(q_model)
+            q_model = convert(q_model, mapping=q_mapping, inplace=True)
 
     bf16_ops_list = tune_cfg['bf16_ops_list'] if 'bf16_ops_list' in tune_cfg.keys() else []
     if len(bf16_ops_list) > 0 and (version >= Version("1.11.0-rc1")):
