@@ -1473,8 +1473,15 @@ class TensorFlowAdaptor(Adaptor):
         return mse_order
 
     def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
+        from .tf_utils.graph_converter import GraphConverter
+
         op_cfg = tune_cfg['op']
         mse_result = {}
+        # output_op_name = list(op_cfg.keys())[-1][0]
+        output_op_name = fp32_model.output_tensor_names[0]
+
+        fp32_output = self._inference_model_on_batches(
+            fp32_model, dataloader, output_op_name)
 
         for op in ops_lst:
             # backup and set replace tuning config
@@ -1482,15 +1489,27 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = replace_cfgs[op]
             logger.debug(f"Dump tuning config of {op[0]}")
             logger.debug(tune_cfg)
-            q_model, output_tensor_name = self._quantize_and_output(
-                tune_cfg, fp32_model, dataloader)
-            fp32_output = self._inference_model_on_batches(
-                fp32_model, dataloader, output_tensor_name)
+
+            # quantize the model
+            self.tuning_cfg_to_fw(tune_cfg)
+            q_model = GraphConverter(
+                model=fp32_model,
+                qt_config=self.quantize_config,
+                recipes=self.recipes,
+                int8_sequences=self.op_wise_sequences,
+                fp32_ops=self.fp32_ops,
+                bf16_ops=self.bf16_ops,
+                data_loader=dataloader,
+                itex_mode=self.itex_mode,
+                qdq_enabled=self.qdq_enabled,
+                new_api=self.new_api,
+                performance_only=self.performance_only).convert()
+            
             q_output = self._inference_model_on_batches(
-                q_model, dataloader, output_tensor_name)
+                q_model, dataloader, output_op_name)
             
             mse_result[op] = self._calculate_mse(fp32_output, q_output)
-            logger.debug(f"{op[0]} mse result: {mse_result[op]}, {mse_result[op]}")
+            logger.debug(f"mse result of {op}: {mse_result[op]}")
 
             # recover tune_cfg
             op_cfg[op] = backup_cfg
@@ -1498,51 +1517,26 @@ class TensorFlowAdaptor(Adaptor):
         return mse_result
 
     def _calculate_mse(self, fp32_output, q_output):
-        mse = []
-        for i in range(3):
-            for j in range(len(fp32_output[i])):
-                mse.append(np.square(fp32_output[i][0] - q_output[i][0]).mean())
-        return sum(mse) / len(mse)
-
-    def _quantize_and_output(self, tune_cfg, fp32_model, dataloader):
-        """
-        Quantize the model and get the quantized model and the name of last quantized tensor.
-        Return a tuple of (qmodel, output_tensor_name), in which:
-          qmodel is the quantized model,
-          output_tensor_name is the name of the last quantized tensor.
-        """
-        from .tf_utils.graph_converter import GraphConverter
-
-        self.tuning_cfg_to_fw(tune_cfg)
-        qmodel = GraphConverter(
-            model=fp32_model,
-            qt_config=self.quantize_config,
-            recipes=self.recipes,
-            int8_sequences=self.op_wise_sequences,
-            fp32_ops=self.fp32_ops,
-            bf16_ops=self.bf16_ops,
-            data_loader=dataloader,
-            itex_mode=self.itex_mode,
-            qdq_enabled=self.qdq_enabled,
-            new_api=self.new_api,
-            performance_only=self.performance_only).convert()
-        
-        return qmodel, ""
+        return np.square(fp32_output - q_output).mean()
 
     def _inference_model_on_batches(self, model, dataloader, output_op_name):
         from .tf_utils.util import generate_feed_dict
 
-        input_tensor = model.input_tensor
-        output_tensor = model.output_tensor
+        # use requantized for int8 ops
+        if not output_op_name in model.graph_info:
+            output_op_name += "_eightbit_requantize"
+
+        input_tensors = model.input_tensor
+        output_tensors = model.graph.get_operation_by_name(output_op_name).outputs
 
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
             if index > 3: break # select first 3 inputs
-            feed_dict = generate_feed_dict(input_tensor, inputs)
-            pred = model.sess.run(output_tensor, feed_dict)
-            predictions.append(pred)
+            feed_dict = generate_feed_dict(input_tensors, inputs)
+            pred = model.sess.run(output_tensors, feed_dict)
+            predictions.append(*pred)
 
-        return predictions
+        return np.array(predictions)
 
         
 @adaptor_registry
