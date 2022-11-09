@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+"""Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
+
 from .component import Component
 from .quantization import Quantization
 from .pruning import Pruning
