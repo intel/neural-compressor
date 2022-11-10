@@ -1,4 +1,4 @@
-Full Publications (42)
+Full Publications/Events (42)
 ==========
 ## 2022 (24)
 * [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
