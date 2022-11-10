@@ -36,7 +36,7 @@ from importlib.util import find_spec
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
 ORT112_VERSION = Version("1.12.0")
 

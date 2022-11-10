@@ -26,7 +26,7 @@ from .dataset import dataset_registry, Dataset
 torch = LazyImport('torch')
 transformers = LazyImport('transformers')
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
 class PytorchBertDataset(Dataset):

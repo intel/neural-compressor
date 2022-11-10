@@ -25,7 +25,7 @@ onnx = LazyImport('onnx')
 ort = LazyImport("onnxruntime")
 ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 class ONNXModel(BaseModel):
     def __init__(self, model, **kwargs):

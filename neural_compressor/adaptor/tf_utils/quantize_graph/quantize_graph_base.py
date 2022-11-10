@@ -65,7 +65,7 @@ class QuantizeNodeBase():
 
     def __init__(self, **kwargs):
 
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("neural_compressor")
         input_graph = kwargs['input_graph']
 
         assert isinstance(input_graph, graph_pb2.GraphDef)

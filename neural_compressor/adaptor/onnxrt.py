@@ -41,7 +41,7 @@ ONNXRT152_VERSION = Version("1.5.2")
 ONNXRT170_VERSION = Version("1.7.0")
 ONNXRT112_VERSION = Version("1.12.0")
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 class ONNXRTAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.

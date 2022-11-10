@@ -993,7 +993,7 @@ class TuneStrategy(object):
 
     def _diagnosis(self):
         import logging
-        logger = logging.getLogger()
+        logger = logging.getLogger("neural_compressor")
         iteration_list = self.cfg.tuning.diagnosis.iteration_list
         inspect_type = self.cfg.tuning.diagnosis.inspect_type
         save_to_disk = self.cfg.tuning.diagnosis.save_to_disk
