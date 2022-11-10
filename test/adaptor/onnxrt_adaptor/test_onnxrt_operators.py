@@ -518,10 +518,26 @@ class TestAdaptorONNXRT(unittest.TestCase):
         graph = helper.make_graph([node], 'test_graph_1', [A, B, C], [D])
         model = helper.make_model(graph)
         q_config = {"Attention": self.static_q_config}
-        quantize_params = {"A": [np.uint8(10.), np.float32(0)],
-                           "B": [np.uint8(10.), np.float32(0)],
-                           "C": [np.uint8(10.), np.float32(0)],
-                           "D": [np.uint8(10.), np.float32(0)]}
+        quantize_params = {"A": [np.uint8(0), np.float32(0.5)],
+                           "B": [np.uint8(0), np.float32(0.5)],
+                           "C": [np.uint8(0), np.float32(0.5)],
+                           "D": [np.uint8(0), np.float32(0.5)]}
+        quantizable_op_types = ["Attention"]
+        self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
+        q_config = {"Attention": self.dynamic_q_config}
+        self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
+
+        E = helper.make_tensor_value_info('E', TensorProto.INT32, [1, 1, 5, 5])
+        F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [1, 1, 5, 5])
+        node = onnx.helper.make_node('Attention', ['A', 'B', 'C', 'F', 'E'], ['D'], name='Attention')
+        graph = helper.make_graph([node], 'test_graph_1', [A, B, C, F, E], [D])
+        model = helper.make_model(graph)
+        q_config = {"Attention": self.static_q_config}
+        quantize_params = {"A": [np.uint8(0), np.float32(0.5)],
+                           "B": [np.uint8(0), np.float32(0.5)],
+                           "C": [np.uint8(0), np.float32(0.5)],
+                           "D": [np.uint8(0), np.float32(0.5)]}
         quantizable_op_types = ["Attention"]
         self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)

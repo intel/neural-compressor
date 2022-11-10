@@ -27,7 +27,7 @@ class AttentionOperator(Operator):
 
     def quantize(self):
         node = self.node
-        self.quantizer.quantize_inputs(node)
+        self.quantizer.quantize_inputs(node, [0, 1, 2])
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
