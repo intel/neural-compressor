@@ -1477,11 +1477,9 @@ class TensorFlowAdaptor(Adaptor):
 
         op_cfg = tune_cfg['op']
         mse_result = {}
-        # output_op_name = list(op_cfg.keys())[-1][0]
-        output_op_name = fp32_model.output_tensor_names[0]
-
+        
         fp32_output = self._inference_model_on_batches(
-            fp32_model, dataloader, output_op_name)
+            fp32_model, tune_cfg, dataloader)
 
         for op in ops_lst:
             # backup and set replace tuning config
@@ -1504,10 +1502,11 @@ class TensorFlowAdaptor(Adaptor):
                 qdq_enabled=self.qdq_enabled,
                 new_api=self.new_api,
                 performance_only=self.performance_only).convert()
+
             
             q_output = self._inference_model_on_batches(
-                q_model, dataloader, output_op_name)
-            
+                q_model, tune_cfg, dataloader)
+                
             mse_result[op] = self._calculate_mse(fp32_output, q_output)
             logger.debug(f"mse result of {op}: {mse_result[op]}")
 
@@ -1519,19 +1518,32 @@ class TensorFlowAdaptor(Adaptor):
     def _calculate_mse(self, fp32_output, q_output):
         return np.square(fp32_output - q_output).mean()
 
-    def _inference_model_on_batches(self, model, dataloader, output_op_name):
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader, use_lqop=False):
         from .tf_utils.util import generate_feed_dict
 
-        # use requantized for int8 ops
-        if not output_op_name in model.graph_info:
-            output_op_name += "_eightbit_requantize"
+        if use_lqop:
+            lqop_name = list(tune_cfg['op'].keys())[0][0] # name of last quantizable op
+            q_output_dict = self.inspect_tensor(
+                model, 
+                dataloader=dataloader, 
+                op_list=[lqop_name],  
+                iteration_list=[1, 2, 3], 
+                quantization_cfg=tune_cfg)
+            
+            q_output = []
+            for it in q_output_dict['activation']:
+                for _, node in it.items():
+                    for _, output in node.items():
+                        q_output.append(output)
+
+            return np.array(q_output)
 
         input_tensors = model.input_tensor
-        output_tensors = model.graph.get_operation_by_name(output_op_name).outputs
+        output_tensors = model.output_tensor
 
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
-            if index > 3: break # select first 3 inputs
+            if index >= 3: break # select first 3 inputs
             feed_dict = generate_feed_dict(input_tensors, inputs)
             pred = model.sess.run(output_tensors, feed_dict)
             predictions.append(*pred)
