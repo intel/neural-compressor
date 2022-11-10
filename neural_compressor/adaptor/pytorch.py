@@ -30,7 +30,7 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-from neural_compressor.strategy.hawq_metric import Hawq_top
+# from neural_compressor.strategy.hawq_metric import Hawq_top
 try:  # pragma: no cover
     import intel_extension_for_pytorch as ipex
     IPEX = True
