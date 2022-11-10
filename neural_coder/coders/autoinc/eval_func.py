@@ -13,14 +13,14 @@
 # limitations under the License.
 
 from ... import globals
-from . import domain
 from ...utils.line_operation import get_line_indent_level
+
+
 class Eval_Func(object):
     def __init__(self):
         pass
     def register_transformation(self):
-        domain_ = domain.determine_domain(globals.list_code_path[0])
-        if domain_ == 'transformers_trainer':
+        if globals.code_domain == 'transformers_trainer':
             lines = [
                 'trainer.model = model', 
                 'metrics = trainer.evaluate() # check if all tasks do not have parameters in evaluate()', 
@@ -51,9 +51,9 @@ class Eval_Func(object):
                     lines[index] = '[+] ' + ' ' * 8 + line
             lines = '\n'.join(lines)
             globals.list_eval_func_lines.append(lines)
-        elif domain_ == 'transformers_no_trainer':
+        elif globals.code_domain == 'transformers_no_trainer':
             pass
-        elif domain_ == 'torchvision':
+        elif globals.code_domain == 'torchvision':
             # search for 'validate()'
             codes = open(globals.list_code_path[0], 'r').read().split('\n')
             lines = []
@@ -85,7 +85,7 @@ class Eval_Func(object):
                     lines[index] = '[+] ' + ' ' * 8 + line
             lines = '\n'.join(lines)
             globals.list_eval_func_lines.append(lines)
-        elif domain_ == 'onnx':
+        elif globals.code_domain == 'onnx':
             # look for sess = onnxruntime.InferenceSession(MODEL_NAME.SerializeToString(), None)
             codes = open(globals.list_code_path[0], 'r').read().split('\n')
             start = 0
