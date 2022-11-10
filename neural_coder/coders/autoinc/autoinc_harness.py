@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+import os
+import re
+import sys
+import yaml
+
 from ... import globals
 from ...utils.line_operation import (
     get_line_indent_level,
@@ -20,12 +26,6 @@ from ...utils.line_operation import (
     get_line_wo_comment,
     single_line_comment_or_empty_line_detection
 )
-from . import domain
-import logging
-import yaml
-import sys
-import os
-import re
 
 logging.basicConfig(level=globals.logging_level,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -52,7 +52,6 @@ class AutoInc_Harness(object):
         bk_trans_content = backend_dict["transformation"]["content"]  # string
         bk_trans_order = backend_dict["transformation"]["order"]  # list
 
-        domain_ = domain.determine_domain(globals.list_code_path[0])
         list_code = []
         history = set()
         for i in globals.list_code_path:
@@ -64,7 +63,7 @@ class AutoInc_Harness(object):
 
                 for ins in globals.list_model_def_instance:
                     model_name = ins.model_name
-                    if model_name in history and domain_ == 'torchvision':
+                    if model_name in history and globals.code_domain == 'torchvision':
                         continue
                     else:
                         history.add(model_name)
@@ -83,7 +82,7 @@ class AutoInc_Harness(object):
                         if model_name + "(" in line or \
                             (model_name + "." in line and line.find(model_name) < line.find(".") and "(" in line):
                             to_transform = True
-                    if not to_transform and domain_ == 'onnx':
+                    if not to_transform and globals.code_domain == 'onnx':
                         pass
                     elif not to_transform:
                         continue
@@ -144,7 +143,7 @@ class AutoInc_Harness(object):
                     ### check
 
                     bk_trans_content_this = bk_trans_content[bk_trans_location.index(loc)]
-                    if file_path_idx == 0 and (domain_ in ['transformers_trainer', 'torchvision', 'onnx']):
+                    if file_path_idx == 0 and (globals.code_domain in ['transformers_trainer', 'torchvision', 'onnx']):
                         pass
                     elif ("INPUT_NAME" in bk_trans_content_this and input_name == "") \
                             or ("DATALOADER_NAME" in bk_trans_content_this and dataloader_name == "") \
@@ -183,7 +182,7 @@ class AutoInc_Harness(object):
 
                     # location assignment (below model def / dataloader def / input def)
                     torchvision_indent = -1
-                    if file_path_idx == 0 and domain_ == 'transformers_trainer':
+                    if file_path_idx == 0 and globals.code_domain == 'transformers_trainer':
                         for i in range(len(lines)):
                             line = lines[i]
                             if re.findall("trainer = .*Trainer", line):
@@ -200,7 +199,7 @@ class AutoInc_Harness(object):
                                         i_search += 1
                                     trans_insert_location = i + i_search
                         trans_insert_location = min(max(trans_insert_location, put_below_idx), put_above_idx)
-                    elif file_path_idx == 0 and domain_ == 'torchvision':
+                    elif file_path_idx == 0 and globals.code_domain == 'torchvision':
                         trans_insert_location = 1
                         for i in range(len(lines)):
                             line = lines[i]
@@ -254,17 +253,17 @@ class AutoInc_Harness(object):
                     ### content
                     # lines to insert
                     lines_to_insert = bk_trans_content_this
-                    if domain_ == 'transformers_trainer':
+                    if globals.code_domain == 'transformers_trainer':
                         lines_to_insert = lines_to_insert \
                             .replace("EVAL_FUNC_LINES", globals.list_eval_func_lines[0]) \
                             .replace("DATALOADER_NAME", globals.list_calib_dataloader_name[0])
-                    elif domain_ == 'transformers_no_trainer':
+                    elif globals.code_domain == 'transformers_no_trainer':
                         pass
-                    elif domain_ == 'torchvision':
+                    elif globals.code_domain == 'torchvision':
                         lines_to_insert = lines_to_insert \
                             .replace("EVAL_FUNC_LINES", globals.list_eval_func_lines[0]) \
                             .replace("DATALOADER_NAME", globals.list_calib_dataloader_name[0])
-                    elif domain_ =='onnx':
+                    elif globals.code_domain =='onnx':
                         lines_to_insert = lines_to_insert \
                             .replace("EVAL_FUNCTION_NAME", globals.list_eval_func_name[0]) \
                             .replace("DATALOADER_NAME", globals.list_calib_dataloader_name[0])

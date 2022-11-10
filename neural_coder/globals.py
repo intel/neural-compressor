@@ -45,6 +45,8 @@ list_code_device_compatibility = ["cuda"]
 # it is either "" (None) or "xxx" (a string of config path)
 optimum_quant_config = ""
 
+# code domain
+code_domain = ""
 
 def reset_globals():
     global list_code_path

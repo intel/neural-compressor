@@ -278,6 +278,18 @@ def enable(
                     "pytorch_inc_huggingface_optimum_dynamic",
                     "onnx_inc_static_quant_qlinear"
                 ]:
+
+                # determine domain
+                from .coders.autoinc.domain import determine_domain
+                globals.code_domain = determine_domain(globals.list_code_path[0])
+
+                # for transformers code, enable optimum-intel api by default
+                if "transformers" in globals.code_domain:
+                    if "static_quant" in feature:
+                        feature = "pytorch_inc_huggingface_optimum_static"
+                    elif "dynamic_quant" in feature:
+                        feature = "pytorch_inc_huggingface_optimum_dynamic"
+
                 from .coders.autoinc.autoinc_harness import AutoInc_Harness
                 from .coders.autoinc.calib_dataloader import Calib_Dataloader
                 from .coders.autoinc.eval_func import Eval_Func

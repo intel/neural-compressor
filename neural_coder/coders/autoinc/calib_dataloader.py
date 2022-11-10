@@ -13,21 +13,19 @@
 # limitations under the License.
 
 import logging
-from . import domain
 from ... import globals
 
 class Calib_Dataloader(object):
     def __init__(self):
         pass
     def register_transformation(self):
-        domain_ = domain.determine_domain(globals.list_code_path[0])
-        if domain_ == 'transformers_trainer':
+        if globals.code_domain == 'transformers_trainer':
             globals.list_calib_dataloader_name.append('trainer.get_eval_dataloader()')
-        elif domain_ == 'transformers_no_trainer':
+        elif globals.code_domain == 'transformers_no_trainer':
             pass
-        elif domain_ == 'torchvision':
+        elif globals.code_domain == 'torchvision':
             globals.list_calib_dataloader_name.append('val_loader')
-        elif domain_ == 'onnx':
+        elif globals.code_domain == 'onnx':
             codes = open(globals.list_code_path[0], 'r').read().split('\n')
             for line in codes:
                 line  = line.strip()
