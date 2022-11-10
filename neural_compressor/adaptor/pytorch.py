@@ -399,6 +399,11 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     if version <= Version("1.12.1"):  # pragma: no cover
         fx_op_cfgs["module_name"] = op_tuple_cfg_list
 
+    if version.release >= Version("1.13.0").release:  # pragma: no cover
+        from torch.ao.quantization import get_default_qconfig_mapping
+        for name, q_config  in get_default_qconfig_mapping().to_dict()['object_type']:
+            fx_op_cfgs.set_object_type(name, q_config)
+
     return fx_op_cfgs
 
 
@@ -3328,43 +3333,41 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         """
         try:
             tmp_model = copy.deepcopy(model._model)
-            tmp_model.train() if is_qat else tmp_model.eval()
-            from torch.fx import GraphModule
-            from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
-            if model.kwargs is not None:
-                prepare_custom_config_dict = model.kwargs.get('prepare_custom_config_dict', {})
-            else:
-                prepare_custom_config_dict = {}
-            skipped_module_names = prepare_custom_config_dict.get(\
-                                                'non_traceable_module_name', [])
-            skipped_module_classes = prepare_custom_config_dict.get(\
-                                                'non_traceable_module_class', [])
-            try:
-                tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
-                graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-                if self.version > Version("1.12.1"):  # pragma: no cover
-                    # pylint: disable=E1124, E1123
-                    fused_model = _fuse_fx(graph_module,
-                                           is_qat,
-                                           fuse_custom_config=prepare_custom_config_dict)
-                elif self.version.release >= Version("1.11.0").release:  # pragma: no cover
-                    # pylint: disable=E1124
-                    fused_model = _fuse_fx(graph_module,
-                                           is_qat,
-                                           fuse_custom_config_dict=prepare_custom_config_dict)
-                else:
-                    fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
-            except:
-                self.sub_module_list = []
-                module_dict = dict(tmp_model.named_modules())
-                self._fuse_sub_graph(tmp_model, module_dict, prefix='', is_qat=is_qat)
-                fused_model = tmp_model
-        except Exception as e:  # pragma: no cover
-            self.sub_module_list = []
-            fused_model = model._model
-            module_dict = dict(fused_model.named_modules())
-            self._fuse_sub_graph(fused_model, module_dict, prefix='', is_qat=is_qat)
+        except Exception as e:
+            tmp_model = model._model
             logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+
+        tmp_model.train() if is_qat else tmp_model.eval()
+        from torch.fx import GraphModule
+        from torch.quantization.quantize_fx import _fuse_fx, QuantizationTracer
+        if model.kwargs is not None:
+            prepare_custom_config_dict = model.kwargs.get('prepare_custom_config_dict', {})
+        else:
+            prepare_custom_config_dict = {}
+        skipped_module_names = prepare_custom_config_dict.get(\
+                                            'non_traceable_module_name', [])
+        skipped_module_classes = prepare_custom_config_dict.get(\
+                                            'non_traceable_module_class', [])
+        try:
+            tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
+            graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
+            if self.version > Version("1.12.1"):  # pragma: no cover
+                # pylint: disable=E1124, E1123
+                fused_model = _fuse_fx(graph_module,
+                                        is_qat,
+                                        fuse_custom_config=prepare_custom_config_dict)
+            elif self.version.release >= Version("1.11.0").release:  # pragma: no cover
+                # pylint: disable=E1124
+                fused_model = _fuse_fx(graph_module,
+                                        is_qat,
+                                        fuse_custom_config_dict=prepare_custom_config_dict)
+            else:
+                fused_model = _fuse_fx(graph_module, prepare_custom_config_dict)
+        except:
+            self.sub_module_list = []
+            module_dict = dict(tmp_model.named_modules())
+            self._fuse_sub_graph(tmp_model, module_dict, prefix='', is_qat=is_qat)
+            fused_model = tmp_model
         return fused_model
 
     def _fuse_sub_graph(self, model, module_dict, prefix, is_qat):

@@ -1017,6 +1017,36 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree('./saved', ignore_errors=True)
 
+    def test_deepcopy_failure(self):
+        def eval_func(model):
+            return 1
+
+        # To build an object t2, which will fail on deepcopy.
+        class T1():
+            def __init__(self, t1) -> None:
+                self.t1 = t1
+                self.j = 1
+
+            # required for usage with set in T1
+            def __hash__(self):
+                return hash(self.j)
+
+        t1 = set()
+        t2 = T1([t1])
+        t1.add(t2)
+
+        for fake_yaml in ['fx_ptq_yaml.yaml']:
+            model_origin = M()
+            model_origin.tmp = t2
+            # run fx_quant in neural_compressor and save the quantized GraphModule
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
+            quantizer.eval_func = eval_func
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(model_origin)
+            q_model = quantizer.fit()
+            self.assertTrue(isinstance(q_model.model, torch.fx.graph_module.GraphModule))
+
     @unittest.skipIf(PT_VERSION < Version("1.11.0").release,
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_bf16_capability(self):
