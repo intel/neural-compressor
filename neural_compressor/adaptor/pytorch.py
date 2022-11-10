@@ -29,6 +29,7 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from neural_compressor.strategy.hawq_metric import Hawq_top
 
 
 torch = LazyImport("torch")
@@ -1106,6 +1107,10 @@ class TemplateAdaptor(Adaptor):
             ops_sensitivity(Dict[tuple, float]): The key is (op_name, op_type), 
               the value is the sensitivity under the specified method
         """
+        if method_args['name']=='hessian_trace':
+            Hawq_top(model=model,yaml_cpu=None,yaml_trace=None,dataloader=dataloader)
+            hessian_cmp=Hawq_top.get_init_config()
+            return hessian_cmp
         pass
 
 unify_op_type_mapping = {
