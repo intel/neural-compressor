@@ -41,7 +41,7 @@ from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,

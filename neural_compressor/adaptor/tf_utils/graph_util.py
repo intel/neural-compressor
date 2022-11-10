@@ -28,7 +28,7 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from neural_compressor.utils.utility import singleton
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 @singleton
 class GraphAnalyzer():

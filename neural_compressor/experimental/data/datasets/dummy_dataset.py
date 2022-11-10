@@ -23,7 +23,7 @@ import logging
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
                                                    onnxrt_qlinearops, onnxrt_integerops, \

@@ -30,7 +30,7 @@ from copy import deepcopy
 import math
 
 mx = LazyImport("mxnet")
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 
 @adaptor_registry
