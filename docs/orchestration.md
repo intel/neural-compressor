@@ -32,7 +32,7 @@ Of course, besides one-shot, we also support separate execution of each optimiza
     <thead>
         <tr>
             <th>Orchestration</th>
-            <th>Conbinations</th>
+            <th>Combinations</th>
             <th>Supported</th>
         </tr>
     </thead>
@@ -60,7 +60,7 @@ Of course, besides one-shot, we also support separate execution of each optimiza
             <td>&#10004;</td>
         </tr>
         <tr>
-            <td>Distillatio then Quantization</td>
+            <td>Distillation then Quantization</td>
             <td>&#10004;</td>
         </tr>
         <tr>
