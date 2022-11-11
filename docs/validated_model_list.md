@@ -1769,48 +1769,18 @@ Performance varies by use, configuration and other factors. See [platform config
 </table>
 
 ## Validated Knowledge Distillation Examples
-<table class="docutils">
-<thead>
-  <tr>
-    <th rowspan="2">Example Name</th>
-    <th rowspan="2">Dataset</th>
-    <th rowspan="2">Student<br>(Accuracy)</th>
-    <th rowspan="2">Teacher<br>(Accuracy)</th>
-    <th rowspan="2">Student With Distillation<br>(Accuracy Improvement)</th>
-  </tr>
-  <tr>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td rowspan="2">ResNet example</td>
-    <td rowspan="2">ImageNet</td>
-    <td rowspan="2">ResNet18<br>(0.6739)</td>
-    <td rowspan="2">ResNet50<br>(0.7399)</td>
-    <td rowspan="2">0.6845<br>(0.0106)</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td rowspan="2">BlendCNN example</td>
-    <td rowspan="2">MRPC</td>
-    <td rowspan="2">BlendCNN<br>(0.7034)</td>
-    <td rowspan="2">BERT-Base<br>(0.8382)</td>
-    <td rowspan="2">0.7034<br>(0)</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td rowspan="2">BiLSTM example</td>
-    <td rowspan="2">SST-2</td>
-    <td rowspan="2">BiLSTM<br>(0.7913)</td>
-    <td rowspan="2">RoBERTa-Base<br>(0.9404)</td>
-    <td rowspan="2">0.8085<br>(0.0172)</td>
-  </tr>
-  <tr>
-  </tr>
-</tbody>
-</table>
+|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  |
+|---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|
+| MobileNet example   | CIFAR-10  | MobileNetV2-0.35<br>(0.7965 ACC)     | WideResNet40-2<br>(0.9522 ACC)     |   0.8178 ACC<br>(0.0213 ACC)                        |
+| CNN example         | CIFAR-100 | CNN-2<br>(0.5494 ACC)                | CNN-10<br>(0.7153 ACC)             |   0.5540 ACC<br>(0.0046 ACC)                        |
+| VGG example         | CIFAR-100 | VGG-8-BN<br>(0.7022 ACC)             | VGG-13-BN<br>(0.7415 ACC)          |   0.7025 ACC<br>(0.0003 ACC)                        |
+| ResNet example      | ImageNet  | ResNet18<br>(0.6739 ACC)             | ResNet50<br>(0.7399 ACC)           |   0.6845 ACC<br>(0.0106 ACC)                        |
+| BlendCnn example    |   MRPC    | BlendCnn<br>(0.7034 ACC)             | BERT-Base<br>(0.8382 ACC)          |   0.7034 ACC<br>(0 ACC)                             |
+| BiLSTM example      |  SST-2    | BiLSTM<br>(0.8314 ACC)               | RoBERTa-Base<br>(0.9403 ACC)       |   0.9048 ACC<br>(0.0734 ACC)                        |
+|DistilBERT example   |  SQuAD    | DistilBERT<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |
+|TinyBERT example     |  MNLI     | TinyBERT<br>(0.8018/0.8044 m/mm)     | BERT-Base<br>(0.8363/0.8411 m/mm)  |   0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)        |
+|BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |
+|DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |
 
 ## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
 
