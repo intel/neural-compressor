@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Dataset used for style transfer task on multiple framework backends."""
 
 import os
 import numpy as np
@@ -24,23 +26,25 @@ from .dataset import dataset_registry, Dataset
 @dataset_registry(dataset_type="style_transfer", framework="tensorflow, \
                   tensorflow_itex", dataset_format='')
 class StyleTransferDataset(Dataset):
-    """Dataset used for style transfer task.
-       This Dataset is to construct a dataset from two specific image holders representing
-       content image folder and style image folder.
+    """Dataset used for style transfer task on tensorflow/inteltensorflow/tensorflow_itex backend.
 
-    Args: content_folder (str):Root directory of content images.
-          style_folder (str):Root directory of style images.
-          crop_ratio (float, default=0.1):cropped ratio to each side.
-          resize_shape (tuple, default=(256, 256)):target size of image.
-          image_format (str, default='jpg'): target image format.
-          transform (transform object, default=None):  transform to process input data.
-          filter (Filter objects, default=None): filter out examples according 
-                                                 to specific conditions
+    This Dataset is to construct a dataset from two specific image holders representing
+        content image folder and style image folder.
     """
 
     def __init__(self, content_folder, style_folder, crop_ratio=0.1,
                  resize_shape=(256, 256), image_format='jpg', transform=None, filter=None):
+        """Initialize `StyleTransferDataset` class.
 
+        Args:
+            content_folder (str): Root directory of content images.
+            style_folder (str): Root directory of style images.
+            crop_ratio (float, default=0.1): Cropped ratio to each side.
+            resize_shape (tuple, default=(256, 256)): Target size of image.
+            image_format (str, default='jpg'): Target image format.
+            transform (transform object, default=None): Transform to process input data.
+            filter (Filter objects, default=None): Filter out examples according to specific conditions.
+        """
         self.transform = transform
         self.content_folder = content_folder
         self.style_folder = style_folder
@@ -54,9 +58,11 @@ class StyleTransferDataset(Dataset):
                 self.image_list.append((content, style))
 
     def __len__(self):
+        """Return the length of dataset."""
         return len(self.image_list)
 
     def __getitem__(self, index):
+        """Return the item of dataset according to the given index."""
         from PIL import Image
         content_image, style_image = self.image_list[index]
         content_image = Image.open(content_image)
