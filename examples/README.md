@@ -643,37 +643,37 @@ Intel® Neural Compressor validated examples with multiple compression technique
   </tr>
   <tr>
     <td>BlendCNN</td>
-    <td>BERT base</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
     <td><a href="./pytorch/nlp/blendcnn/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>distilbert-base-uncased</td>
-    <td>csarron/bert-base-uncased-squad-v1</td>
+    <td>DistilBERT</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>BiLSTM</td>
-    <td>textattack/roberta-base-SST-2</td>
+    <td>RoBERTa-Base</td>
     <td>Natural Language Processing</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>huawei-noah/TinyBERT_General_4L_312D</td>
-    <td>blackbird/bert-base-uncased-MNLI-v1</td>
+    <td>TinyBERT</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>nreimers</td>
-    <td>textattack/bert-base-uncased-QQP</td>
+    <td>BERT-3</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>distilroberta-base</td>
-    <td>howey/roberta-large-cola</td>
+    <td>DistilRoBERTa</td>
+    <td>RoBERTa-Large</td>
     <td>Natural Language Processing</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
