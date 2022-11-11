@@ -782,3 +782,170 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
 
     def __call__(self, **kwargs):
         return PyTorchIntermediateLayersKnowledgeDistillationLoss, self._param_check()
+
+
+class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0,
+                 add_origin_loss=False, student_model=None, teacher_model=None):
+        super(SelfKnowledgeDistillationLoss, self).__init__(student_model=student_model,
+                                                            teacher_model=teacher_model)
+        self.temperature = temperature
+        self.layer_mappings = []
+        for items in layer_mappings:
+            for value in items:
+                assert len(value) == 2, 'Each item in layer_mappings ' + \
+                    'should be a list or tuple of length 2, with format ' + \
+                    '[student_layer_name, teacher_layer_name].'
+            self.layer_mappings.append(items)
+
+        self.loss_weights = [1.0 / len(self.layer_mappings)] * len(self.layer_mappings) \
+            if loss_weights is None else loss_weights
+        self.loss_types = ['CE'] * len(self.layer_mappings) \
+            if loss_types is None else loss_types
+        self.add_origin_loss = add_origin_loss
+        self.loss_funcs = []
+        self.init_loss_funcs()
+        assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
+            'Wrong length for layer_mappings:{}, loss_weights:{} or loss_types:{}, ' + \
+            'all should be the same.'.format(
+                len(self.layer_mappings), len(
+                    self.loss_weights), len(self.loss_types)
+        )
+
+    def init_loss_funcs(self):
+        raise NotImplementedError('Function init_loss_funcs '
+                                  'should be framework related.')
+
+    def teacher_model_forward(self, input, teacher_model=None):
+        raise NotImplementedError('Function teacher_model_forward '
+                                  'should be framework related.')
+
+    def loss_cal(self, student_outputs):
+        raise NotImplementedError(
+            'Function loss_cal should be framework related.')
+
+    def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        loss = self.loss_cal(student_outputs)
+        if self.add_origin_loss:
+            loss += student_loss
+        return loss
+
+    def __call__(self, student_outputs, targets):
+        return 0
+
+
+class PyTorchSelfKnowledgeDistillationLoss(
+    SelfKnowledgeDistillationLoss
+):
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0,
+                 add_origin_loss=False, student_model=None, teacher_model=None):
+        super(PyTorchSelfKnowledgeDistillationLoss, self).__init__(
+            layer_mappings=layer_mappings,
+            loss_types=loss_types,
+            loss_weights=loss_weights,
+            temperature=temperature,
+            add_origin_loss=add_origin_loss,
+            student_model=student_model,
+            teacher_model=teacher_model)
+
+    def SoftCrossEntropy(self, logits, targets):
+        log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
+        targets_prob = torch.nn.functional.softmax(targets, dim=-1)
+        return (-targets_prob * log_prob).sum(dim=-1).mean()
+
+    def KullbackLeiblerDivergence(self, logits, targets):
+        log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
+        targets_prob = torch.nn.functional.softmax(targets, dim=-1)
+        return torch.nn.functional.kl_div(log_prob, targets_prob)
+
+    def L2Divergence(self, feature1, feature2):
+        return torch.dist(feature1, feature2)
+
+    def init_loss_funcs(self):
+        for loss_type in self.loss_types:
+            if loss_type == 'CE':
+                loss_func = self.SoftCrossEntropy
+            elif loss_type == 'KL':
+                loss_func = self.KullbackLeiblerDivergence
+            elif loss_type == 'L2':
+                loss_func = self.L2Divergence
+            else:
+                raise NotImplementedError('Unsupported loss type {}, supported loss is ' +
+                                          'CE for software CE, KL for Kullback-Leibler divergence and ' +
+                                          'L2 for L2 distance.'.format(loss_type))
+            self.loss_funcs.append(loss_func)
+
+    def loss_cal(self, student_outputs):
+        self.loss = torch.FloatTensor([0.])
+        tmp_loss = 0
+        temperature = self.temperature
+        for loss_idx in range(len(self.layer_mappings)):
+            items = self.layer_mappings[loss_idx]
+            for idx in range(len(items)):
+                student_layer, teacher_layer = items[idx]
+                student_feature = student_outputs[student_layer]
+                teacher_feature = student_outputs[teacher_layer]
+                if loss_idx == 1:  # soft logit
+                    tmp_loss += self.loss_funcs[loss_idx](
+                        student_feature/temperature, teacher_feature/temperature) * self.loss_weights[loss_idx]
+                else:  # feature learning
+                    tmp_loss += self.loss_funcs[loss_idx](
+                        student_feature, teacher_feature) * self.loss_weights[loss_idx]
+            if tmp_loss.device != self.loss.device:
+                self.loss = self.loss.to(tmp_loss.device)
+            self.loss += tmp_loss
+        return self.loss
+
+
+@criterion_registry('SelfKnowledgeDistillationLoss', 'pytorch')
+class PyTorchSelfKnowledgeDistillationLossWrapper(object):
+    def __init__(self, param_dict):
+        self.param_dict = param_dict
+
+    def _param_check(self):
+        param_dict = self.param_dict
+        _params = ['temperature', 'layer_mappings',
+                   'loss_types', 'loss_weights', 'add_origin_loss']
+        layer_mappings = param_dict['layer_mappings']
+        if 'loss_types' not in param_dict:
+            param_dict['loss_types'] = ['CE'] * len(layer_mappings)
+        if 'loss_weights' not in param_dict:
+            param_dict['loss_weights'] = [
+                1.0 / len(layer_mappings)] * len(layer_mappings)
+        if 'add_origin_loss' not in param_dict:
+            param_dict['add_origin_loss'] = False
+        if 'temperature' not in param_dict:
+            param_dict['temperature'] = 1.0
+        assert 'layer_mappings' in param_dict, \
+            'Key layer_mappings must be in input parameters.'
+        assert all(type(param_dict[k]) in [list, tuple]
+                   for k in ['layer_mappings', 'loss_types', 'loss_weights']), \
+            'Type of loss_types and loss_weights must be list or tuple.'
+        assert isinstance(param_dict['add_origin_loss'], bool), \
+            'Type of add_origin_loss should be bool.'
+        assert len(param_dict['layer_mappings']) == \
+            len(param_dict['loss_types']) == len(param_dict['loss_weights']),\
+            'Length of layer_mappings, loss_types and loss_weights must be the same.'
+        assert param_dict['temperature'] > 0.0,\
+            'Value of temperature must be positive.'
+        for items in param_dict['layer_mappings']:
+            assert all(type(it) in [list, tuple] and (len(it) == 2)
+                       for it in items), \
+                'Elements of layer_mappings must be list or tuple and with length of 2.' + \
+                'element looks like [\'resblock.1.feature.output,' + \
+                '\'resblock.deepst.feature.output\'], where ' + \
+                '\'resblock.1.feature.output\' and \'resblock.deepst.feature.output\' ' + \
+                'represent resblock feature output of the student model and feature output of the' + \
+                'teacher model respectively.'
+        assert all(any(isinstance(e, t) for t in [str])
+                   for e in param_dict['loss_types']), \
+            'Type of loss_types element must be str.'
+        assert all(0. <= e <= 1. for e in param_dict['loss_weights']), \
+            'Element of loss_weights must be in interval [0, 1].'
+        new_dict = {}
+        for k in _params:
+            new_dict[k] = param_dict[k]
+        return new_dict
+
+    def __call__(self, **kwargs):
+        return PyTorchSelfKnowledgeDistillationLoss, self._param_check()

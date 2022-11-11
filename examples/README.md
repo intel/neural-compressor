@@ -336,6 +336,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <th>Student Model</th>
     <th>Teacher Model</th>
     <th>Domain</th>
+    <th>Approach </th>
     <th>Examples</th>
   </tr>
 </thead>
@@ -344,6 +345,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>MobileNet</td>
     <td>DenseNet201</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
   </tr>
 </tbody>
@@ -613,6 +615,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <th>Student Model</th>
     <th>Teacher Model</th>
     <th>Domain</th>
+    <th>Approach</th>
     <th>Examples</th>
   </tr>
 </thead>
@@ -621,60 +624,77 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>CNN-2</td>
     <td>CNN-10</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/CNN-2/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>MobileNet V2-0.35</td>
     <td>WideResNet40-2</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/MobileNetV2-0.35/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
     <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/torchvision_models/distillation/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
+    <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
+    <td>Image Recognition</td>
+    <td>Self Distillation</td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/self_distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>VGG-8</td>
     <td>VGG-13</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/VGG-8/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>BlendCNN</td>
     <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/blendcnn/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>DistilBERT</td>
     <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>BiLSTM</td>
     <td>RoBERTa-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>TinyBERT</td>
     <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>BERT-3</td>
     <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>DistilRoBERTa</td>
     <td>RoBERTa-Large</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
 </tbody>

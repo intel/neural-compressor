@@ -652,6 +652,16 @@ criterion_schema = Schema({
         Optional('loss_weights'):
             And(Or(tuple, list), lambda s: all(i >= 0 for i in s)),
         Optional('add_origin_loss'): bool,
+    },
+    Optional('SelfKnowledgeDistillationLoss'): {
+        'layer_mappings':
+            And(Or(tuple, list), lambda s: all(len(i) >= 1 for i in s)),
+        Optional('loss_types'):
+            And(Or(tuple, list), lambda s: all(i in ['L2', 'CE', 'KL'] for i in s)),
+        Optional('loss_weights'):
+            And(Or(tuple, list), lambda s: all(i >= 0.0 and i < 1.0 for i in s)),
+        Optional('add_origin_loss'): bool,
+        Optional('temperature'): And(float, lambda s: s > 0),
     }
 })
 
