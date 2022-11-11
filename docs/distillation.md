@@ -7,6 +7,8 @@ Distillation
 
     1.2. [Intermediate Layer Knowledge Distillation](#intermediate-layer-knowledge-distillation)
 
+    1.3. [Self Distillation](#self-distillation)
+
 2. [Distillation Support Matrix](#distillation-support-matrix)
 3. [Get Started with Distillation API ](#get-started-with-distillation-api)
 4. [Examples](#examples)
@@ -35,12 +37,23 @@ $$L_{KD} = \sum\limits_i D(T_t^{n_i}(F_t^{n_i}), T_s^{m_i}(F_s^{m_i}))$$
 
 Where $D$ is a distance measurement as before, $F_t^{n_i}$ the output feature of the $n_i$'s layer of the teacher model, $F_s^{m_i}$ the output feature of the $m_i$'s layer of the student model. Since the dimensions of $F_t^{n_i}$ and $F_s^{m_i}$ are usually different, the transformations $T_t^{n_i}$ and $T_s^{m_i}$ are needed to match dimensions of the two features. Specifically, the transformation can take the forms like identity, linear transformation, 1X1 convolution etc.
 
+### Self Distillation
+
+Self-distillation ia a one-stage training method where the teacher model and student models can be trained together. It attaches several attention modules and shallow classifiers at different depths of neural networks and distills knowledge from the deepest classifier to the shallower classifiers. Different from the conventional knowledge distillation methods where the knowledge of the teacher model is transferred to another student model, self-distillation can be considered as knowledge transfer in the same model, from the deeper layers to the shallower layers.
+The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.
+<br>
+
+<img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350>
+
+Architecture from paper [Self-Distillation: Towards Efficient and Compact Neural Networks](https://ieeexplore.ieee.org/document/9381661)
+
 ## Distillation Support Matrix
 
 |Distillation Algorithm                          |PyTorch   |TensorFlow |
 |------------------------------------------------|:--------:|:---------:|
 |Knowledge Distillation                          |&#10004;  |&#10004;   |
 |Intermediate Layer Knowledge Distillation       |&#10004;  |Will be supported|
+|Self Distillation                               |&#10004;  |&#10006;   |
 
 ## Get Started with Distillation API 
 
