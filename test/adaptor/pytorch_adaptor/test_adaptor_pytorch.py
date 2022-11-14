@@ -8,15 +8,13 @@ import torch.nn as nn
 import torch.nn.quantized as nnq
 import unittest
 import os
-from neural_compressor import Options, PostTrainingConfig, QuantizationAwareTrainingConfig
-from neural_compressor.conf.config import QuantConf
-from neural_compressor.data import DATASETS, DATALOADERS
+import neural_compressor
+from neural_compressor.data import DATASETS
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.model import MODELS
 from neural_compressor.experimental import Quantization, common
-from neural_compressor.experimental.data.datasets.dataset import DATASETS
-from neural_compressor import quantization
-from neural_compressor.training import prepare_compression
+from neural_compressor.conf.config import QuantConf
+from neural_compressor.training import prepare, fit
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils.utility import recover
 from neural_compressor.utils.utility import LazyImport
@@ -1362,6 +1360,12 @@ class TestPytorchFXAdaptor(unittest.TestCase):
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_mix_precision(self):
         model_origin = DynamicControlModel()
+        model = common.Model(model_origin,
+                             **{'prepare_custom_config_dict': \
+                                   {'non_traceable_module_name': ['a']},
+                              'convert_custom_config_dict': \
+                                   {'preserved_attributes': []}
+                             })
         # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DATALOADERS["pytorch"](dataset)
