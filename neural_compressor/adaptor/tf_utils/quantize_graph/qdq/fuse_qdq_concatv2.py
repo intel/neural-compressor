@@ -16,7 +16,7 @@
 # limitations under the License.
 
 import re
-
+import os
 from tensorflow.python.framework import dtypes
 from tensorflow.core.framework import node_def_pb2
 from ..quantize_graph_base import QuantizeNodeBase
@@ -52,7 +52,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
     def _quantizable_concat(self, node):
         deq_type = []
         is_quantizable = True
-        if self.performance_only:
+        if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
             _, normal_inputs = self._get_node_input(node.name)
             original_inputs = normal_inputs[:node.attr['N'].i]
 
@@ -88,7 +88,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         if len(set(deq_type)) != 1:
             is_quantizable = False
         else:
-            if self.performance_only:
+            if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
                 self.dtype = dtypes.DType(deq_type[0])
 
         if not is_quantizable:
@@ -186,7 +186,8 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                     if v != sub_rule[1]:
                         continue
                 
-                if self.performance_only and not do_transform:
+                if (self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1') \
+                   and not do_transform:
                     matched_node_name.clear()
                     matched_node_name.append(cur_node.name)
                     return sub_rule, matched_node_name
@@ -200,7 +201,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                         matched_node_name.append(sub_rule[-1])
                         return sub_rule, matched_node_name
                 else:
-                    if self.performance_only:
+                    if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
                         new_inputs = []
                         _, normal_inputs = self._get_node_input(cur_node.name)
                         original_inputs = normal_inputs[:cur_node.attr['N'].i]
