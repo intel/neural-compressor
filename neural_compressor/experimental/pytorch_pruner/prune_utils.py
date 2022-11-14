@@ -1,3 +1,4 @@
+"""prune utils."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -26,6 +27,17 @@ from .logger import logger
 
 
 def check_config(prune_config):
+    """Functions that check key-value is valid to run Pruning object.
+
+    Args:
+        prune_config: A config dict object. Contains Pruning parameters and configurations.
+
+    Returns:
+        None if everything is correct.
+
+    Raises:
+        AssertionError.
+    """
     assert prune_config['start_step'] >= 0, "start_step should be greater than 0"
     assert prune_config['end_step'] >= -1, "end_step should be greater than 0"
     assert prune_config['end_step'] >= prune_config['start_step'], \
@@ -64,6 +76,16 @@ def check_config(prune_config):
         prune_config['max_sparsity_ratio_per_layer'] = min(max_ratio, prune_config['max_sparsity_ratio_per_layer'])
 
 def reset_non_value_to_default(obj, key, default):
+     """Functions that add up undefined configurations.
+
+     If some configurations are not defined in the configuration, set it to a default value.
+
+     Args:
+         obj: A dict{key: value}
+         key: A string. Key in obj.
+         default: When the key is not in obj, Add key: default item in original obj.
+     
+     """
      if isinstance(obj, dict):
         if (not key in obj.keys()) or obj[key] == None:
             return default
@@ -76,6 +98,16 @@ def reset_non_value_to_default(obj, key, default):
              return getattr(obj, key)
 
 def process_and_check_config(val):
+    """Functions which converts a initial configuration object to a Pruning configuration.
+
+    Copy parameters and add some non-define parameters to a new Pruning configuration object.
+
+    Args:
+        val: A dict directly read from a config file.
+
+    Returns:
+        A dict whose contents which are regularized for a Pruning obejct.
+    """
     val = val["pruning"]['approach']['weight_compression_pytorch']
     start_step = reset_non_value_to_default(val, "start_step", 0)
     end_step = reset_non_value_to_default(val, "end_step", 0)
@@ -118,6 +150,14 @@ def process_and_check_config(val):
 
 
 def process_config(config):
+    """Obtain a config dict object from a config file.
+
+    Args:
+        config: A string. The path to configuration file.
+
+    Returns:
+        A config dict object.
+    """
     if isinstance(config, str):
         try:
             with open(config, 'r') as f:
@@ -150,7 +190,7 @@ def process_config(config):
 
 
 def parse_to_prune(model, config):
-    """keep target pruned layers"""
+    """Keep target pruned layers."""
     modules = {}
     if config["names"] == None or config["names"] == []:
         config["names"] = [".*"]
@@ -166,7 +206,7 @@ def parse_to_prune(model, config):
 
 
 def parse_not_to_prune(modules, config):
-    """drop non pruned layers"""
+    """Drop non pruned layers."""
     exclude_names = config["extra_excluded_names"]
     exclude_names.extend(config["excluded_names"])
 
