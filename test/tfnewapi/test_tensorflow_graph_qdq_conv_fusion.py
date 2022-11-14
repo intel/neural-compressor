@@ -641,10 +641,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             find_single_qconv = []
             for i in output_graph.graph_def.node:
+                # BatchMatMul Quantization disabled
                 if i.op == '_FusedQuantizedConv2D':
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])
 
-            self.assertEqual(find_single_qconv, [True, False])
+            self.assertEqual(find_single_qconv, [False, False])
 
     @disable_random()
     def test_conv_fusion_with_last_matmul(self):
@@ -665,12 +666,12 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         y_data = np.random.random([3136, 1])
 
         y = tf.constant(y_data, dtype=tf.float32, shape=[3136, 1])
-        z = tf.matmul(reshape, y)
+        z = tf.raw_ops.MatMul(a=reshape, b=y, name='matmul_1')
         relu1 = tf.nn.relu(z)
         y_data_1 = np.random.random([1, 1])
         y_1 = tf.constant(y_data_1, dtype=tf.float32, shape=[1, 1])
 
-        z_2nd_matmul = tf.matmul(relu1, y_1)
+        z_2nd_matmul = tf.raw_ops.MatMul(a=relu1, b=y_1, name='matmul_2')
         relu6 = tf.nn.relu6(z_2nd_matmul, name='op_to_store')
 
         out_name = relu6.name.split(':')[0]

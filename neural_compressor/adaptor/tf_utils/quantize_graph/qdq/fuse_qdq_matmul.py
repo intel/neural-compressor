@@ -544,7 +544,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
         return match_node_name
 
-    def apply_batchmatmulv2_fusion(self, match_node_name):
+    def apply_batchmatmulv2_fusion(self, match_node_name):  # pragma: no cover
         """apply dequantize + batchmatmul/batchmatmulv2 + quantizev2 fusion"""
         # Dequantize + BatchMatMulV2 + QuantizeV2
         skip_node_name = match_node_name[2:]
@@ -674,7 +674,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
         return match_node_name
 
-    def apply_batchmatmulv2_mul_add_fusion(self, match_node_name):
+    def apply_batchmatmulv2_mul_add_fusion(self, match_node_name): # pragma: no cover
         """apply dequantize + batchmatmul/batchmatmulv2 + mul + add + quantizev2 fusion"""
         # Dequantize + BatchMatMulV2 + Mul + QuantizeV2
         # Dequantize + BatchMatMulV2 + Add + QuantizeV2
@@ -914,8 +914,9 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 if cur_node.name != self.start_node_name:
                     continue
 
-                if not self.performance_only and (cur_node.op == 'BatchMatMulV2' or
-                   cur_node.op == 'BatchMatMul') and not self.itex_mode:
+                # Disable BatchMatMul quantization temporarily for its bad performance
+                # Enable it again when the performance issue is fixed.
+                if cur_node.op in ('BatchMatMulV2', 'BatchMatMul'):
                     self.exclude_matmul_nodes.append(cur_node.name)
                     continue
 

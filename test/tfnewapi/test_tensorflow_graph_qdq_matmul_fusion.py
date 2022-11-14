@@ -463,6 +463,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
  
             self.assertEqual(found_quantized_matmul, True)
 
+    # batchmatmul quantization disabled temporarily for its bad performance
+    """
     @disable_random()
     def test_batchmatmulv2_dequantize_fusion(self):
         g = tf.Graph()
@@ -585,6 +587,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     break
 
             self.assertEqual(found_quantized_matmul, True)
+    """
 
     @disable_random()
     def test_matmul_biasadd_relu6_fusion(self):
