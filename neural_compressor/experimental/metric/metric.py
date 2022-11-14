@@ -15,13 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Compressor metrics."""
+
+
+
+import numpy as np
 from abc import abstractmethod
-from collections import Counter
+from ctypes import Union
 from neural_compressor.utils.utility import LazyImport, singleton
 from neural_compressor.utils import logger
 from sklearn.metrics import accuracy_score
-import numpy as np
-import collections
 
 torch = LazyImport('torch')
 tf = LazyImport('tensorflow')
@@ -30,19 +33,42 @@ transformers = LazyImport('transformers')
 
 @singleton
 class TensorflowMetrics(object):
-    def __init__(self):
+    """Tensorflow metrics collection.
+
+    Attributes:
+        metrics: A dict to maintain all metrics for Tensorflow model.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(TENSORFLOW_METRICS)
 
+
 @singleton
 class PyTorchMetrics(object):
-    def __init__(self):
+    """PyTorch metrics collection.
+
+    Attributes:
+        metrics: A dict to maintain all metrics for PyTorch model.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(PYTORCH_METRICS)
 
+
 @singleton
 class MXNetMetrics(object):
-    def __init__(self):
+    """MXNet metrics collection.
+
+    Attributes:
+        metrics: A dict to maintain all metrics for MXNet model.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the metrics collection."""
         from ...adaptor.mxnet_utils.util import check_mx_version
         if check_mx_version('2.0.0'):
             import mxnet.gluon.metric as mx_metrics
@@ -56,17 +82,34 @@ class MXNetMetrics(object):
         }
         self.metrics.update(MXNET_METRICS)
 
+
 @singleton
 class ONNXRTQLMetrics(object):
-    def __init__(self):
+    """ONNXRT QLinear metrics collection.
+
+    Attributes:
+        metrics: A dict to maintain all metrics for ONNXRT QLinear model.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(ONNXRT_QL_METRICS)
 
+
 @singleton
 class ONNXRTITMetrics(object):
-    def __init__(self):
+    """ONNXRT Integer metrics collection.
+
+    Attributes:
+        metrics: A dict to maintain all metrics for ONNXRT Integer model.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the metrics collection."""
         self.metrics = {}
         self.metrics.update(ONNXRT_IT_METRICS)
+
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "tensorflow_itex": TensorflowMetrics,
@@ -101,7 +144,18 @@ registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
 
 
 class METRICS(object):
-    def __init__(self, framework):
+    """Intel Neural Compressor Metrics.
+
+    Attributes:
+        metrics: The collection of registered metrics for the specified framework.
+    """
+    
+    def __init__(self, framework: str):
+        """Initialize the metrics collection based on the framework name.
+
+        Args:
+            framework: The framwork name.
+        """
         assert framework in ("tensorflow", "tensorflow_itex",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
@@ -109,27 +163,44 @@ class METRICS(object):
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.metrics = framework_metrics[framework]().metrics
 
-    def __getitem__(self, metric_type):
+    def __getitem__(self, metric_type: str):
+        """Get the metric based on the specified type.
+
+        Args:
+            metric_type: The metric type.
+
+        Returns:
+             The metric with the specified type.
+        """
         assert metric_type in self.metrics.keys(), "only support metrics in {}".\
             format(self.metrics.keys())
 
         return self.metrics[metric_type]
 
-    def register(self, name, metric_cls):
+    def register(self, name, metric_cls) -> None:
+        """Register a metric.
+
+        Args:
+            name: The name of metric.
+            metric_cls: The metric class.
+        """
         assert name not in self.metrics.keys(), 'registered metric name already exists.'
         self.metrics.update({name: metric_cls})
 
-def metric_registry(metric_type, framework):
-    """The class decorator used to register all Metric subclasses.
-       cross framework metric is supported by add param as framework='tensorflow, \
-                       pytorch, mxnet, onnxrt'
-
+def metric_registry(metric_type: str, framework: str):
+    """Decorate for registering all Metric subclasses.
+    
+    The cross-framework metric is supported by specifying the framework param
+    as one of tensorflow, pytorch, mxnet, onnxrt.
+       
     Args:
-        cls (class): The class of register.
-
+        metric_type: The metric type.
+        framework: The framework name.
+    
     Returns:
-        cls: The class of register.
+        decorator_metric: The function to register metric class.
     """
+    
     def decorator_metric(cls):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
@@ -153,42 +224,100 @@ def metric_registry(metric_type, framework):
 
 
 class BaseMetric(object):
+    """The base class of Metric."""
+    
     def __init__(self, metric, single_output = False, hvd = None):
+        """Initialize the basic metric.
+
+        Args:
+            metric: The metric class.
+            single_output: Whether the output is single or not, defaults to False.
+            hvd: The Horovod class for distributed trainig, defaults to None.
+        """
         self._metric_cls = metric
         self._single_output = single_output
         self._hvd = hvd
 
     def __call__(self, *args, **kwargs):
+        """Evaluate the model predictions, and the reference.
+
+        Returns:
+            The class itself.
+        """
         self._metric = self._metric_cls(*args, **kwargs)
         return self
 
     @abstractmethod
     def update(self, preds, labels=None, sample_weight=None):
+        """Update the state that need to be evaluated.
+
+        Args:
+            preds: The prediction result.
+            labels: The reference. Defaults to None.
+            sample_weight: The sampling weight. Defaults to None.
+
+        Raises:
+            NotImplementedError: The method should be implemented by subclass.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def reset(self):
+        """Clear the predictions and labels.
+
+        Raises:
+            NotImplementedError: The method should be implemented by subclass.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def result(self):
+        """Evaluate the difference between predictions and labels.
+
+        Raises:
+            NotImplementedError: The method should be implemented by subclass.
+        """
         raise NotImplementedError
 
     @property
     def metric(self):
+        """Return its metric class.
+
+        Returns:
+            The metric class.
+        """
         return self._metric
 
     @property
     def hvd(self):
+        """Return its hvd class.
+
+        Returns:
+            The hvd class.
+        """
         return self._hvd
 
     @hvd.setter
     def hvd(self, hvd):
+        """Set its hvd.
+
+        Args:
+            hvd: The Horovod class for distributed trainig.
+        """
         self._hvd = hvd
 
-class WrapPyTorchMetric(BaseMetric):
 
+class WrapPyTorchMetric(BaseMetric):
+    """The wrapper of Metric class for PyTorch."""
+    
     def update(self, preds, labels=None, sample_weight=None):
+        """Convert the prediction to torch.
+        
+        Args:
+            preds: The prediction result.
+            labels: The reference. Defaults to None.
+            sample_weight: The sampling weight. Defaults to None.
+        """
         if self._single_output:
             output = torch.as_tensor(preds)
         else:
@@ -196,37 +325,67 @@ class WrapPyTorchMetric(BaseMetric):
         self._metric.update(output)
 
     def reset(self):
+        """Clear the predictions and labels."""
         self._metric.reset()
 
     def result(self):
+        """Evaluate the difference between predictions and labels."""
         return self._metric.compute()
 
 
 class WrapMXNetMetric(BaseMetric):
-
+    """The wrapper of Metric class for MXNet."""
+    
     def update(self, preds, labels=None, sample_weight=None):
+        """Convert the prediction to MXNet array.
+           
+        Args:
+            preds: The prediction result.
+            labels: The reference. Defaults to None.
+            sample_weight: The sampling weight. Defaults to None.
+        """
         preds = mx.nd.array(preds)
         labels = mx.nd.array(labels)
         self._metric.update(labels=labels, preds=preds)
 
     def reset(self):
+        """Clear the predictions and labels."""
         self._metric.reset()
 
     def result(self):
+        """Evaluate the difference between predictions and labels.
+        
+        Returns:
+            acc: The evaluated result.
+        """
         acc_name, acc = self._metric.get()
         return acc
 
 class WrapONNXRTMetric(BaseMetric):
-
+    """The wrapper of Metric class for ONNXRT."""
+    
     def update(self, preds, labels=None, sample_weight=None):
+        """Convert the prediction to NumPy array.
+           
+        Args:
+            preds: The prediction result.
+            labels: The reference. Defaults to None.
+            sample_weight: The sampling weight. Defaults to None.
+        """
         preds = np.array(preds)
         labels = np.array(labels)
         self._metric.update(labels=labels, preds=preds)
 
     def reset(self):
+        """Clear the predictions and labels."""
         self._metric.reset()
 
     def result(self):
+        """Evaluate the difference between predictions and labels.
+        
+        Returns:
+            acc: The evaluated result.
+        """
         acc_name, acc = self._metric.get()
         return acc
 
@@ -299,16 +458,27 @@ def _shape_validate(preds, labels):
             'Shape mismatch, label shape {} vs pred shape {}'.format(label.shape, pred.shape)
     return preds, labels
 
+
 @metric_registry('F1', 'tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class F1(BaseMetric):
-    """Computes the F1 score of a binary classification problem.
-
+    """F1 score of a binary classification problem.
+    
+    The F1 score is the harmonic mean of the precision and recall. 
+    It can be computed with the equation: 
+    F1 = 2 * (precision * recall) / (precision + recall)
     """
+    
     def __init__(self):
+        """Initialize the F1 score list."""
         self._score_list = []
-
+    
     def update(self, preds, labels):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+        """
         from .f1 import f1_score
         if getattr(self, '_hvd', None) is not None:
             gathered_preds_list = self._hvd.allgather_object(preds)
@@ -323,14 +493,24 @@ class F1(BaseMetric):
         self._score_list.append(result)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Clear the predictions and labels."""
         self._score_list = []
 
     def result(self):
-        """calculate metric"""
+        """Compute the F1 score."""
         return np.array(self._score_list).mean()
 
 def _accuracy_shape_check(preds, labels):
+    """Check and conver the shape of predictions and labels.
+
+    Args:
+        preds: The predictions.
+        labels: The labels corresponding to the predictions.
+
+    Returns:
+        preds: The predictions in the format of NumPy array.
+        labels: The labels in the format of NumPy array.
+    """
     if isinstance(preds, int):
         preds = [preds]
     preds = np.array(preds)
@@ -345,31 +525,56 @@ def _accuracy_shape_check(preds, labels):
     return preds, labels
 
 def _accuracy_type_check(preds, labels):
-   if len(preds.shape) == len(labels.shape)+1:
-       num_classes = preds.shape[1]
-       if num_classes == 1:
-           update_type = 'binary'
-       else:
-           update_type = 'multiclass'
-   elif len(preds.shape) == len(labels.shape):
-       if len(preds.shape) == 1 or preds.shape[1] ==1:
-           update_type = 'binary'
-       else:
-           update_type = 'multilabel'
-   return update_type
+    """Determine the type of prediction.
+
+    Args:
+        preds: The predictions.
+        labels: The labels corresponding to the predictions.
+
+    Returns:
+        update_type: The type of predictions.
+    """
+    if len(preds.shape) == len(labels.shape)+1:
+        num_classes = preds.shape[1]
+        if num_classes == 1:
+            update_type = 'binary'
+        else:
+            update_type = 'multiclass'
+    elif len(preds.shape) == len(labels.shape):
+        if len(preds.shape) == 1 or preds.shape[1] ==1:
+            update_type = 'binary'
+        else:
+            update_type = 'multilabel'
+    return update_type
+
 
 @metric_registry('Accuracy', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Accuracy(BaseMetric):
-    """Computes accuracy classification score.
+    """The Accuracy for the classification tasks.
+    
+    The accuracy score is the proportion of the total number of predictions
+    that were correct classified.
 
+    Attributes:
+        pred_list: List of prediction to score.
+        label_list: List of labels to score.
+        sample: The total number of samples.
     """
+    
     def __init__(self):
+        """Initialize predictions, labels and sample."""
         self.pred_list = []
         self.label_list = []
         self.sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         preds, labels = _accuracy_shape_check(preds, labels)
         update_type = _accuracy_type_check(preds, labels)
         if update_type == 'binary':
@@ -395,13 +600,13 @@ class Accuracy(BaseMetric):
             self.label_list.append(labels)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Clear the predictions and labels."""
         self.pred_list = []
         self.label_list = []
         self.sample = 0
 
     def result(self):
-        """calculate metric"""
+        """Compute the accuracy."""
         correct_num = np.sum(
             np.array(self.pred_list) == np.array(self.label_list))
         if getattr(self, '_hvd', None) is not None:
@@ -410,88 +615,144 @@ class Accuracy(BaseMetric):
             return allghter_correct_num / allgather_sample
         return correct_num / self.sample
 
-class PyTorchLoss():
-    """A dummy metric for directly printing loss, it calculates the average of predictions.
 
+class PyTorchLoss():
+    """A dummy PyTorch Metric.
+    
+    A dummy metric that computes the average of predictions and prints it directly.
     """
+    
     def __init__(self):
+        """Initialize the number of examples, sum of prediction. and device."""
         self._num_examples = 0
         self._device = torch.device('cpu')
         self._sum = torch.tensor(0.0, device=self._device)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the number of samples and total cases to zero."""
         self._num_examples = 0
         self._sum = torch.tensor(0.0, device=self._device)
 
     def update(self, output):
-        """add preds and labels to storage"""
+        """Add the predictions.
+
+        Args:
+            output: The predictions.
+        """
         y_pred, y = output[0].detach(), output[1].detach()
         loss = torch.sum(y_pred)
         self._sum += loss.to(self._device)
         self._num_examples += y.shape[0]
 
     def compute(self):
-        """calculate metric"""
+        """Compute the  average of predictions.
+
+        Raises:
+            ValueError: There must have at least one example.
+
+        Returns:
+            The dummy loss.
+        """
         if self._num_examples == 0:
             raise ValueError("Loss must have at least one example \
                                       before it can be computed.")
         return self._sum.item() / self._num_examples
         
+        
 @metric_registry('Loss', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class Loss(BaseMetric):
-    """A dummy metric for directly printing loss, it calculates the average of predictions.
-
+    """A dummy Metric.
+    
+    A dummy metric that computes the average of predictions and prints it directly.
+    
+    Attributes:
+        sample: The number of samples.
+        sum: The sum of prediction.
     """
+    
     def __init__(self):
+        """Initialize the number of samples, sum of prediction."""
         self.sample = 0
         self.sum = 0
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         preds, labels = _shape_validate(preds, labels)
         self.sample += labels[0].shape[0]
         self.sum += sum([np.sum(pred) for pred in preds])
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the number of samples and total cases to zero."""
         self.sample = 0
         self.sum = 0
 
     def result(self):
-        """calculate metric"""
+        """Compute the  average of predictions.
+        
+        Returns:
+            The dummy loss.
+        """
         if getattr(self, '_hvd', None) is not None:
             allgather_sum = sum(self._hvd.allgather_object(self.sum))
             allgather_sample = sum(self._hvd.allgather_object(self.sample))
             return allgather_sum / allgather_sample
         return self.sum / self.sample
 
+
 @metric_registry('MAE', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MAE(BaseMetric):
     """Computes Mean Absolute Error (MAE) loss.
-
-    Args:
-        compare_label (bool): Whether to compare label. False if there are no labels
-                              and will use FP32 preds as labels.
+    
+    Mean Absolute Error (MAE) is the mean of the magnitude of 
+    difference between the predicted and actual numeric values.
+    
+    Attributes:
+        pred_list: List of prediction to score.
+        label_list: List of references corresponding to the prediction result.
+        compare_label (bool): Whether to compare label. False if there are no 
+          labels and will use FP32 preds as labels.
     """
+    
     def __init__(self, compare_label=True):
+        """Initialize the list of prediction and labels.
+
+        Args:
+            compare_label: Whether to compare label. False if there are no 
+              labels and will use FP32 preds as labels.
+        """
         self.label_list = []
         self.pred_list = []
         self.compare_label = compare_label
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         preds, labels = _shape_validate(preds, labels)
         self.label_list.extend(labels)
         self.pred_list.extend(preds)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Clear the predictions and labels."""
         self.label_list = []
         self.pred_list = []
 
     def result(self):
-        """calculate metric"""
+        """Compute the MAE score.
+
+        Returns:
+            The MAE score.
+        """
         aes = [abs(a-b) for (a,b) in zip(self.label_list, self.pred_list)]
         aes_sum = sum([np.sum(ae) for ae in aes])
         aes_size = sum([ae.size for ae in aes])
@@ -501,57 +762,100 @@ class MAE(BaseMetric):
             aes_size = sum(self._hvd.allgather_object(aes_size))       
         return aes_sum / aes_size
 
+
 @metric_registry('RMSE', 'tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
+    
+    Attributes:
+        mse: The instance of MSE Metric.
 
-    Args:
-        compare_label (bool): Whether to compare label. False if there are no labels
-                              and will use FP32 preds as labels.
     """
+    
     def __init__(self, compare_label=True):
+        """Initialize the mse.
+
+        Args:
+            compare_label (bool): Whether to compare label. False if there are no labels
+              and will use FP32 preds as labels.
+        """
         self.mse = MSE(compare_label)
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         self.mse.update(preds, labels, sample_weight)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Clear the predictions and labels."""
         self.mse.reset()
 
     def result(self):
-        """calculate metric"""
+        """Compute the RMSE score.
+
+        Returns:
+            The RMSE score.
+        """
         if getattr(self, '_hvd', None) is not None:
             self.mse._hvd = self._hvd
         return np.sqrt(self.mse.result())
 
+
+
 @metric_registry('MSE', 'tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops')
 class MSE(BaseMetric):
     """Computes Mean Squared Error (MSE) loss.
-
-    Args:
+    
+    Mean Squared Error(MSE) represents the average of the squares of errors.
+    For example, the average squared difference between the estimated values
+    and the actual values.
+    
+    Attributes:
+        pred_list: List of prediction to score.
+        label_list: List of references corresponding to the prediction result.
         compare_label (bool): Whether to compare label. False if there are no labels
                               and will use FP32 preds as labels.
     """
+    
     def __init__(self, compare_label=True):
+        """Initialize the list of prediction and labels.
+
+        Args:
+            compare_label: Whether to compare label. False if there are no 
+              labels and will use FP32 preds as labels.
+        """
         self.label_list = []
         self.pred_list = []
         self.compare_label = compare_label
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         preds, labels = _shape_validate(preds, labels)
         self.pred_list.extend(preds)
         self.label_list.extend(labels)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Clear the predictions and labels."""
         self.label_list = []
         self.pred_list = []
 
     def result(self):
-        """calculate metric"""
+        """Compute the MSE score.
+
+        Returns:
+            The MSE score.
+        """
         squares = [(a-b)**2.0 for (a,b) in zip(self.label_list, self.pred_list)]
         squares_sum = sum([np.sum(square) for square in squares])
         squares_size = sum([square.size for square in squares])
@@ -561,20 +865,38 @@ class MSE(BaseMetric):
             squares_size = sum(self._hvd.allgather_object(squares_size))       
         return squares_sum / squares_size
 
+
 @metric_registry('topk', 'tensorflow, tensorflow_itex')
 class TensorflowTopK(BaseMetric):
-    """Computes top k predictions accuracy.
-
-    Args:
-        k (int): Number of top elements to look at for computing accuracy.
+    """Compute Top-k Accuracy classification score for Tensorflow model.
+    
+    This metric computes the number of times where the correct label is among
+    the top k labels predicted.
+    
+    Attributes:
+        k (int): The number of most likely outcomes considered to find the correct label.
+        num_correct: The number of predictions that were correct classified.
+        num_sample: The total number of predictions.
     """
+    
     def __init__(self, k=1):
+        """Initialize the k, number of samples and correct predictions.
+
+        Args:
+            k: The number of most likely outcomes considered to find the correct label.
+        """
         self.k = k
         self.num_correct = 0
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         preds, labels = _topk_shape_validate(preds, labels)
 
         labels = labels.reshape([len(labels)])
@@ -591,12 +913,16 @@ class TensorflowTopK(BaseMetric):
         self.num_correct += correct
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the number of samples and correct predictions."""
         self.num_correct = 0
         self.num_sample = 0
 
     def result(self):
-        """calculate metric"""
+        """Compute the top-k score.
+
+        Returns:
+            The top-k score.
+        """
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
@@ -606,20 +932,38 @@ class TensorflowTopK(BaseMetric):
             return allgather_num_correct / allgather_num_sample 
         return self.num_correct / self.num_sample
 
+
 @metric_registry('topk', 'pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops')
 class GeneralTopK(BaseMetric):
-    """Computes top k predictions accuracy.
-
-    Args:
-        k (int): Number of top elements to look at for computing accuracy.
+    """Compute Top-k Accuracy classification score.
+    
+    This metric computes the number of times where the correct label is among
+    the top k labels predicted.
+    
+    Attributes:
+        k (int): The number of most likely outcomes considered to find the correct label.
+        num_correct: The number of predictions that were correct classified.
+        num_sample: The total number of predictions.
     """
+    
     def __init__(self, k=1):
+        """Initialize the k, number of samples and correct predictions.
+
+        Args:
+            k: The number of most likely outcomes considered to find the correct label.
+        """
         self.k = k
         self.num_correct = 0
         self.num_sample = 0
 
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         preds, labels = _topk_shape_validate(preds, labels)
         preds = preds.argsort()[..., -self.k:]
         if self.k == 1:
@@ -637,12 +981,16 @@ class GeneralTopK(BaseMetric):
         self.num_sample += len(labels)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the number of samples and correct predictions."""
         self.num_correct = 0
         self.num_sample = 0
 
     def result(self):
-        """calculate metric"""
+        """Compute the top-k score.
+
+        Returns:
+            The top-k score.
+        """
         if self.num_sample == 0:
             logger.warning("Sample num during evaluation is 0.")
             return 0
@@ -651,22 +999,32 @@ class GeneralTopK(BaseMetric):
             allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
             return allgather_num_correct / allgather_num_sample
         return self.num_correct / self.num_sample
+    
 
 @metric_registry('COCOmAPv2', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
 class COCOmAPv2(BaseMetric):
-    """Computes mean average precision.
-    Args:
-        anno_path (str): Annotation path.
-        iou_thrs (float or str): Minimal value for intersection over union that allows to
-                                 make decision that prediction bounding box is true positive.
-                                 You can specify one float value between 0 to 1 or
-                                 string "05:0.05:0.95" for standard COCO thresholds.
-        map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
-                          11-point interpolated AP, 0 for area under PR curve.
-    """
-    def __init__(self, anno_path=None, iou_thrs='0.5:0.05:0.95', map_points=101, \
-        map_key='DetectionBoxes_Precision/mAP', \
-        output_index_mapping={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}):
+    """Compute mean average precision of the detection task."""
+
+    def __init__(self, 
+                 anno_path=None, 
+                 iou_thrs='0.5:0.05:0.95', 
+                 map_points=101, 
+                 map_key='DetectionBoxes_Precision/mAP', 
+                 output_index_mapping={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}):
+        """Initialize the metric.
+
+        Args:
+            anno_path: The path of annotation file.
+            iou_thrs: Minimal value for intersection over union that allows to make decision
+              that prediction bounding box is true positive. You can specify one float value
+              between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+              11-point interpolated AP, 0 for area under PR curve.
+            map_key: The key that mapping to pycocotools COCOeval. 
+              Defaults to 'DetectionBoxes_Precision/mAP'.
+            output_index_mapping: The output index mapping. 
+              Defaults to {'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}.
+        """
         self.output_index_mapping = output_index_mapping
         from .coco_label_map import category_map
         if anno_path:
@@ -691,7 +1049,13 @@ class COCOmAPv2(BaseMetric):
         self.map_key = map_key
 
     def update(self, predicts, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            predicts: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight. Defaults to None.
+        """
         from .coco_tools import ExportSingleImageGroundtruthToCoco,\
             ExportSingleImageDetectionBoxesToCoco
         detections = []
@@ -757,14 +1121,18 @@ class COCOmAPv2(BaseMetric):
                     detection_classes=detections[idx]['classes']))
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the prediction and labels."""
         self.image_ids = []
         self.ground_truth_list = []
         self.detection_list = []
         self.annotation_id = 1
 
     def result(self):
-        """calculate metric"""
+        """Compute mean average precision.
+
+        Returns:
+            The mean average precision score.
+        """
         from .coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
             logger.warning("Sample num during evaluation is 0.")
@@ -801,19 +1169,25 @@ class COCOmAPv2(BaseMetric):
 
 @metric_registry('mAP', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowMAP(BaseMetric):
-    """Computes mean average precision.
-
-    Args:
-        anno_path (str): Annotation path.
-        iou_thrs (float or str): Minimal value for intersection over union that allows to
-                                 make decision that prediction bounding box is true positive.
-                                 You can specify one float value between 0 to 1 or
-                                 string "05:0.05:0.95" for standard COCO thresholds.
-        map_points (int): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for
-                          11-point interpolated AP, 0 for area under PR curve.
-    """
-    def __init__(self, anno_path=None, iou_thrs=0.5, map_points=0, \
-        map_key='DetectionBoxes_Precision/mAP'):
+    """Computes mean average precision."""
+    
+    def __init__(self, 
+                 anno_path=None, 
+                 iou_thrs=0.5, 
+                 map_points=0, 
+                 map_key='DetectionBoxes_Precision/mAP'):
+        """Initialize the metric.
+        
+        Args:
+            anno_path: The path of annotation file.
+            iou_thrs: Minimal value for intersection over union that allows to make decision
+              that prediction bounding box is true positive. You can specify one float value
+              between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+              11-point interpolated AP, 0 for area under PR curve.
+            map_key: The key that mapping to pycocotools COCOeval. 
+              Defaults to 'DetectionBoxes_Precision/mAP'.
+        """
         from .coco_label_map import category_map
         if anno_path:
             import os
@@ -838,7 +1212,13 @@ class TensorflowMAP(BaseMetric):
 
 
     def update(self, predicts, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            predicts: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         if getattr(self, '_hvd', None) is not None:
             raise NotImplementedError("Metric TensorflowMAP currently do not support distribued inference.")
 
@@ -905,14 +1285,18 @@ class TensorflowMAP(BaseMetric):
                     detection_classes=detections[idx]['classes']))
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the prediction and labels."""
         self.image_ids = []
         self.ground_truth_list = []
         self.detection_list = []
         self.annotation_id = 1
 
     def result(self):
-        """calculate metric"""
+        """Compute mean average precision.
+
+        Returns:
+            The mean average precision score.
+        """
         from .coco_tools import COCOWrapper, COCOEvalWrapper
         if len(self.ground_truth_list) == 0:
             logger.warning("Sample num during evaluation is 0.")
@@ -949,48 +1333,73 @@ class TensorflowMAP(BaseMetric):
 
 @metric_registry('COCOmAP', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowCOCOMAP(TensorflowMAP):
-    """Computes mean average precision using algorithm in COCO
+    """Computes mean average precision using algorithm in COCO."""
+    
+    def __init__(self, 
+                 anno_path=None, 
+                 iou_thrs=None, 
+                 map_points=None, 
+                 map_key='DetectionBoxes_Precision/mAP'):
+        """Initialize the iou threshold and max points.
 
-    Args:
-        anno_path (str): Annotation path.
-        iou_thrs (float or str): Intersection over union threshold.
-                        Set to "0.5:0.05:0.95" for standard COCO thresholds.
-        map_points (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.
-    """
-    def __init__(self, anno_path=None, iou_thrs=None, map_points=None, \
-        map_key='DetectionBoxes_Precision/mAP'):
+        Args:
+            anno_path: The path of annotation file.
+            iou_thrs: Minimal value for intersection over union that allows to make decision
+              that prediction bounding box is true positive. You can specify one float value
+              between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+              11-point interpolated AP, 0 for area under PR curve.
+            map_key: The key that mapping to pycocotools COCOeval. 
+              Defaults to 'DetectionBoxes_Precision/mAP'.
+        """
         super(TensorflowCOCOMAP, self).__init__(anno_path, iou_thrs, map_points, map_key)
         self.iou_thrs = '0.5:0.05:0.95'
         self.map_points = 101
 
 @metric_registry('VOCmAP', 'tensorflow, tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops')
 class TensorflowVOCMAP(TensorflowMAP):
-    """Computes mean average precision using algorithm in VOC
+    """Computes mean average precision using algorithm in VOC."""
+    
+    def __init__(self, 
+                 anno_path=None, 
+                 iou_thrs=None, 
+                 map_points=None, 
+                 map_key='DetectionBoxes_Precision/mAP'):
+        """Initialize the iou threshold and max points.
 
-    Args:
-        anno_path (str): Annotation path.
-        iou_thrs (float or str): Intersection over union threshold. Set to 0.5.
-        map_points (int): The way to calculate mAP. Set to 0 for area under PR curve.
-    """
-    def __init__(self, anno_path=None, iou_thrs=None, map_points=None, \
-        map_key='DetectionBoxes_Precision/mAP'):
+        Args:
+            anno_path: The path of annotation file.
+            iou_thrs: Minimal value for intersection over union that allows to make decision
+              that prediction bounding box is true positive. You can specify one float value
+              between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+              11-point interpolated AP, 0 for area under PR curve.
+            map_key: The key that mapping to pycocotools COCOeval. 
+              Defaults to 'DetectionBoxes_Precision/mAP'.
+        """
         super(TensorflowVOCMAP, self).__init__(anno_path, iou_thrs, map_points, map_key)
         self.iou_thrs = 0.5
         self.map_points = 0
 
+
 @metric_registry('SquadF1', 'tensorflow, tensorflow_itex')
 class SquadF1(BaseMetric):
-    """Evaluate for v1.1 of the SQuAD dataset
-
-    """
+    """Evaluate for v1.1 of the SQuAD dataset."""
+    
     def __init__(self):
-        self._score_list = []
-        # squad metric only work when all data preds collected
-
+        """Initialize the score list."""
+        self._score_list = [] # squad metric only work when all data preds collected
+        
     def update(self, preds, labels, sample_weight=None):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight.
+        """
         if preds:
-            from .evaluate_squad import evaluate
+            from .f1 import evaluate
             if getattr(self, '_hvd', None) is not None:
                 gathered_preds_list = self._hvd.allgather_object(preds)
                 gathered_labels_list = self._hvd.allgather_object(labels)
@@ -1000,28 +1409,39 @@ class SquadF1(BaseMetric):
                     temp_labels_list += gathered_labels_list[i]
                 preds = temp_preds_list
                 labels = temp_labels_list
-            result = evaluate(labels, preds)
-            self._score_list.append(result['f1'])
-
+            f1_score = evaluate(labels, preds)
+            self._score_list.append(f1_score)
+            
     def reset(self):
-        """clear preds and labels storage"""
-        self._score_list = []
-
+         """Reset the score list."""
+         self._score_list = []
+        
     def result(self):
-        """calculate metric"""
+        """Compute F1 score."""
         if len(self._score_list) == 0:
             return 0.
         return np.array(self._score_list).mean()
-
-
+    
 @metric_registry('mIOU', 'tensorflow, tensorflow_itex')
 class mIOU(BaseMetric):
+    """Compute the mean IOU(Intersection over Union) score."""
+    
     def __init__(self, num_classes=21):
+        """Initialize the number of classes.
+
+        Args:
+            num_classes: The number of classes.
+        """
         self.num_classes = num_classes
         self.hist = np.zeros((num_classes, num_classes))
 
     def update(self, preds, labels):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+        """
         preds = preds.flatten()
         labels = labels.flatten()
         p_dtype = preds.dtype
@@ -1041,11 +1461,15 @@ class mIOU(BaseMetric):
             self.num_classes)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the hist."""
         self.hist = np.zeros((self.num_classes, self.num_classes))
 
     def result(self):
-        """calculate metric"""
+        """Compute mean IOU.
+
+        Returns:
+            The mean IOU score.
+        """
         iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) -
         np.diag(self.hist))
         mean_iu = np.nanmean(iu)
@@ -1053,15 +1477,15 @@ class mIOU(BaseMetric):
 
 @metric_registry('GLUE', 'onnxrt_qlinearops, onnxrt_integerops')
 class ONNXRTGLUE(BaseMetric):
-    """Computes GLUE score.
-
-    Args:
-        task (str, default=mrpc): The name of the task.
-                                  Choices include mrpc, qqp, qnli, rte,
-                                  sts-b, cola, mnli, wnli.
-
-    """
+    """Compute the GLUE score."""
+    
     def __init__(self, task='mrpc'):
+        """Initialize the metric.
+
+        Args:
+            task:The name of the task (Choices: mrpc, qqp, qnli, rte,
+              sts-b, cola, mnli, wnli.).
+        """
         assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
             'mnli', 'wnli', 'sst-2'], 'Unsupported task type'
         self.pred_list = None
@@ -1080,7 +1504,12 @@ class ONNXRTGLUE(BaseMetric):
         }
 
     def update(self, preds, labels):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+        """
         if getattr(self, '_hvd', None) is not None:
             raise NotImplementedError("Metric ONNXRTGLUE currently do not support distribued inference.")
         if isinstance(preds, list) and len(preds) == 1:
@@ -1095,12 +1524,12 @@ class ONNXRTGLUE(BaseMetric):
             self.label_list = np.append(self.label_list, labels, axis=0)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the prediction and labels."""
         self.pred_list = None
         self.label_list = None
 
     def result(self):
-        """calculate metric"""
+        """Compute the GLUE score."""
         output_mode = transformers.glue_output_modes[self.task]
 
         if output_mode == "classification":
@@ -1113,14 +1542,14 @@ class ONNXRTGLUE(BaseMetric):
 
 @metric_registry('ROC', 'pytorch')
 class ROC(BaseMetric):
-    """Computes ROC score.
-
-    Args:
-        task (str, default=dlrm): The name of the task.
-                                  Choices include dlrm, dien, wide_deep.
-
-    """
+    """Computes ROC score."""
+    
     def __init__(self, task='dlrm'):
+        """Initialize the metric.
+
+        Args:
+            task:The name of the task (Choices: dlrm, dien, wide_deep.).
+        """
         assert task in ['dlrm', 'dien', 'wide_deep'], 'Unsupported task type'
         self.pred_list = None
         self.label_list = None
@@ -1132,7 +1561,12 @@ class ROC(BaseMetric):
         }
 
     def update(self, preds, labels):
-        """add preds and labels to storage"""
+        """Add the predictions and labels.
+
+        Args:
+            preds: The predictions.
+            labels: The labels corresponding to the predictions.
+        """
         if isinstance(preds, list) and len(preds) == 1:
             preds = preds[0]
         if isinstance(labels, list) and len(labels) == 1:
@@ -1145,11 +1579,12 @@ class ROC(BaseMetric):
             self.label_list = np.append(self.label_list, labels, axis=0)
 
     def reset(self):
-        """clear preds and labels storage"""
+        """Reset the prediction and labels."""
         self.pred_list = None
         self.label_list = None
 
     def result(self):
+        """Compute the ROC score."""
         import sklearn.metrics
         scores = np.squeeze(self.pred_list)
         targets = np.squeeze(self.label_list)
