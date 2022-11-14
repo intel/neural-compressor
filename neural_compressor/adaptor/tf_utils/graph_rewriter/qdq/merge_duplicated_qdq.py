@@ -56,6 +56,16 @@ class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
                 new_quantize_node = quantizev2_nodes[0]
                 new_dequantize_node = dequantize_map[input_map_node_name][0]
 
+                do_merge = True
+                for i in quantizev2_nodes:
+                    if i.name != new_quantize_node.name and \
+                       i.attr['T'].type != new_quantize_node.attr['T'].type:
+                        do_merge = False
+                        break
+
+                if not do_merge:
+                    continue
+
                 # set the new QuantizeV2 node as the only output of the parent node
                 for i in quantizev2_nodes:
                     if i.name != new_quantize_node.name:
