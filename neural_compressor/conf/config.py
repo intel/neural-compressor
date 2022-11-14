@@ -646,7 +646,7 @@ criterion_schema = Schema({
     },
     Optional('IntermediateLayersKnowledgeDistillationLoss'): {
         'layer_mappings':
-            And(Or(tuple, list), lambda s: all(len(i) in [2, 4] for i in s)),
+            And(Or(tuple, list), lambda s: all(len(i) in [1, 2] for i in s)),
         Optional('loss_types'):
             And(Or(tuple, list), lambda s: all(i in ['MSE', 'KL', 'L1'] for i in s)),
         Optional('loss_weights'):
