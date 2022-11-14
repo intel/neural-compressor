@@ -1,3 +1,4 @@
+"""pattern classes."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -21,7 +22,7 @@ import numpy as np
 registry_patterns = {}
 
 def pattern_registry(pattern_type):
-    """The class decorator used to register all Pruning Pattern subclasses.
+    """Class decorator used to register all Pruning Pattern subclasses.
 
     Args:
         cls (class): The class of register.
@@ -38,28 +39,39 @@ def pattern_registry(pattern_type):
     return decorator_pattern
 
 class PATTERNS(object):
+    """Class that contain all registered pattern types.
+    
+    Attributes:
+        patterns: A dict which stores registered Pruning Pattern subclasses.
+    """
+
     patterns = registry_patterns
 
     def __getitem__(self, pattern_type):
+        """Obtain a Pruning Pattern subclass."""
         assert pattern_type in self.patterns, "pattern type only support {}".\
             format(self.patterns.keys())
         return self.patterns[pattern_type]
 
     @classmethod
     def support_pattern(self):
+        """Support patterns."""
         return set(self.patterns.keys())
 
 class PatternBase:
-    """ base class of pruning pattern """
+    """Base class of pruning pattern."""
+
     def __init__(self, mask_shape, is_contiguous=True):
+        """Initialize."""
         self.mask_shape = mask_shape
         self.is_contiguous = is_contiguous
 
     def compute_sparsity(self, tensor):
+        """To be implemented in subclasses."""
         raise NotImplementedError
 
     def reduce(self, tensor, method='abs_sum'):
-        """ reshaped tensor, support 'abs_max', 'abs_sum' """
+        """Reshaped tensor, support 'abs_max', 'abs_sum'."""
         if len(tensor.shape) in [2, 4]:
             reshaped_tensor = self.reshape(tensor)
             dims = list(range(4))
@@ -76,7 +88,7 @@ class PatternBase:
             raise NotImplementedError
 
     def reshape(self, tensor):
-        """ reshape tensor into dims+2 """
+        """Reshape tensor into dims+2."""
         if len(tensor.shape) == 4:
             tensor = tensor.reshape(tensor.shape[0], -1)
         assert tensor.shape[-1] % self.mask_shape[-1] == 0 and \

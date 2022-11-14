@@ -1595,178 +1595,253 @@ Performance varies by use, configuration and other factors. See [platform config
 </table>
 
 ## Validated Pruning Examples
-<table class="docutils">
-<thead>
-  <tr>
-    <th rowspan="2">Tasks</th>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">FP32 Baseline</th>
-    <th colspan="3">Gradient Sensitivity with 20% Sparsity</th>
-    <th colspan="3">+ONNX Dynamic Quantization on Pruned Model</th>
-  </tr>
-  <tr>
-    <td>Accuracy%</td>
-    <td>Drop</td>
-    <td>Perf Gain (sample/s)</td>
-    <td>Accuracy%</td>
-    <td>Drop</td>
-    <td>Perf Gain (sample/s)</td>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>SST-2</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>accuracy = 92.32</td>
-    <td>accuracy = 91.97</td>
-    <td>-0.38</td>
-    <td>1.30x</td>
-    <td>accuracy = 92.20</td>
-    <td>-0.13</td>
-    <td>1.86x</td>
-  </tr>
-  <tr>
-    <td>QQP</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[accuracy, f1] = [91.10, 88.05]</td>
-    <td>[accuracy, f1] = [89.97, 86.54]</td>
-    <td>[-1.24, -1.71]</td>
-    <td>1.32x</td>
-    <td>[accuracy, f1] = [89.75, 86.60]</td>
-    <td>[-1.48, -1.65]</td>
-    <td>1.81x</td>
-  </tr>
-</tbody>
-</table>
 
 <table class="docutils">
 <thead>
   <tr>
-    <th rowspan="2">Tasks</th>
-    <th rowspan="2">Framework</th>
     <th rowspan="2">Model</th>
-    <th rowspan="2">FP32 Baseline</th>
-    <th colspan="2">Pattern Lock on 70% Unstructured Sparsity</th>
-    <th colspan="2">Pattern Lock on 50% 1:2 Structured Sparsity</th>
+    <th rowspan="2">Task</br>Dataset</th>
+    <th rowspan="2">Dense Accuracy<br>Sparse Accuracy</th>
+    <th rowspan="2">Relative Drop</th>
+    <th rowspan="2">Sparsity ratio<br>Sparsity Pattern</th>
+    <th rowspan="2">Comments<br>Balanced or unbalanced ratio</th>
   </tr>
   <tr>
-    <td>Accuracy%</td>
-    <td>Drop</td>
-    <td>Accuracy%</td>
-    <td>Drop</td>
   </tr>
 </thead>
 <tbody>
   <tr>
-    <td>MNLI</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[m, mm] = [84.57, 84.79]</td>
-    <td>[m, mm] = [82.45, 83.27]</td>
-    <td>[-2.51, -1.80]</td>
-    <td>[m, mm] = [83.20, 84.11]</td>
-    <td>[-1.62, -0.80]</td>
+    <td>ResNet18</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 69.76</br>top-1% acc = 69.47</td>
+    <td>-0.42%</td>    
+    <td>30%</td>
+    <td>magnitude</td>
   </tr>
   <tr>
-    <td>SST-2</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>accuracy = 92.32</td>
-    <td>accuracy = 91.51</td>
-    <td>-0.88</td>
-    <td>accuracy = 92.20</td>
-    <td>-0.13</td>
   </tr>
   <tr>
-    <td>QQP</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[accuracy, f1] = [91.10, 88.05]</td>
-    <td>[accuracy, f1] = [90.48, 87.06]</td>
-    <td>[-0.68, -1.12]</td>
-    <td>[accuracy, f1] = [90.92, 87.78]</td>
-    <td>[-0.20, -0.31]</td>
+    <td>ResNet50</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 76.13</br>top-1% acc = 76.11</td>
+    <td>-0.03%</td>    
+    <td>30%</td>
+    <td>magnitude</td>
+  </tr> 
+  <tr>
   </tr>
   <tr>
-    <td>QNLI</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>accuracy = 91.54</td>
-    <td>accuracy = 90.39</td>
-    <td>-1.26</td>
-    <td>accuracy = 90.87</td>
-    <td>-0.73</td>
+    <td>ResNet50</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 76.13</br>top-1% acc = 76.01</td>
+    <td>-0.16%</td>    
+    <td>30%</td>
+    <td>magnitude</br>Post Training Quantization</td>    
   </tr>
   <tr>
-    <td>QnA</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[em, f1] = [79.34, 87.10]</td>
-    <td>[em, f1] = [77.27, 85.75]</td>
-    <td>[-2.61, -1.54]</td>
-    <td>[em, f1] = [78.03, 86.50]</td>
-    <td>[-1.65, -0.69]</td>
+  </tr>  
+  <tr>
+    <td>ResNet50</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 76.13</br>top-1% acc = 75.90</td>
+    <td>-0.30%</td> 
+    <td>30%</td>
+    <td>magnitude</br>Quantization Aware Training</td>   
+  </tr> 
+  <tr>
+  </tr>     
+  <tr>
+    <td>Bert-Large</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=91.34</br>f1=90.7</td>
+    <td>-0.07%</td>
+    <td>80%</br>structured 2x1</td>
+    <td>group lasso</br>unbalanced</td>
   </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>MNLI</td>
+    <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [82.45, 83.27]</td>
+    <td>[-2.51%, -1.80%]</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>    
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>MNLI</td>
+    <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [83.20, 84.11]</td>
+    <td>[-1.62%, -0.80%]</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>    
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy = 92.32</br>accuracy = 91.51</td>
+    <td>-0.88%</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>    
+  </tr>
+  <tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy = 92.32</br>accuracy = 92.20</td>
+    <td>-0.13%</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>       
+  </tr>
+  <tr>  
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy = 92.32</br>accuracy = 91.97</td>
+    <td>-0.38%</td>
+    <td>20%</br>unstructured</td>
+    <td>gradient sensitivity</br>balanced</td>       
+  </tr>
+  <tr>  
+  </tr>  
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QQP</td>
+    <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.48, 87.06]</td>
+    <td>[-0.68%, -1.12%]</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>        
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QQP</td>
+    <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.92, 87.78]</td>
+    <td>[-0.20%, -0.31%]</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>        
+  </tr>
+  <tr>
+  </tr>   
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QNLI</td>
+    <td>accuracy = 91.54</br>accuracy = 90.39</td>
+    <td>-1.26%</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>        
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QNLI</td>
+    <td>accuracy = 91.54</br>accuracy = 90.87</td>
+    <td>-0.73%</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>      
+  </tr>
+  <tr>
+  </tr>   
+  <tr>
+    <td>Bert-Base</td>
+    <td>question answering</td>
+    <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [77.27, 85.75]</td>
+    <td>[-2.61%, -1.54%]</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>   
+  </tr>  
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>question answering</td>
+    <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [78.03, 86.50]</td>
+    <td>[-1.65%, -0.69%]</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>       
+  </tr>  
+  <tr>
+  </tr>     
+  <tr>
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1]=76.87</br>f1=76.2</td>
+    <td>-0.80%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=76.87</br>f1=76.85</td>
+    <td>-0.02%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=87.22</td>
+    <td>-0.36%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=87.33</td>
+    <td>-0.22%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=86.95</td>
+    <td>-0.65%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.92</td>
+    <td>-0.79%</td>
+    <td>90%</br>Structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.93</td>
+    <td>-0.78%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>  
 </tbody>
 </table>
 
-<table class="docutils">
-<thead>
-  <tr>
-    <th>Framework</th>
-    <th>Model</th>
-    <th>FP32 Baseline</th>
-    <th>Compression</th>
-    <th>Dataset</th>
-    <th>Accuracy% (Drop)</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet18</td>
-    <td>69.76</td>
-    <td>30% Sparsity on Magnitude</td>
-    <td>ImageNet</td>
-    <td>69.47(-0.42)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet18</td>
-    <td>69.76</td>
-    <td>30% Sparsity on Gradient Sensitivity</td>
-    <td>ImageNet</td>
-    <td>68.85(-1.30)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet50</td>
-    <td>76.13</td>
-    <td>30% Sparsity on Magnitude</td>
-    <td>ImageNet</td>
-    <td>76.11(-0.03)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet50</td>
-    <td>76.13</td>
-    <td>30% Sparsity on Magnitude and Post Training Quantization</td>
-    <td>ImageNet</td>
-    <td>76.01(-0.16)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet50</td>
-    <td>76.13</td>
-    <td>30% Sparsity on Magnitude and Quantization Aware Training</td>
-    <td>ImageNet</td>
-    <td>75.90(-0.30)</td>
-  </tr>
-</tbody>
-</table>
 
 ## Validated Knowledge Distillation Examples
 |  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  |

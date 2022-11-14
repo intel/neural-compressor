@@ -1,3 +1,4 @@
+"""pattern module."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -24,7 +25,19 @@ PATTERNS = {}
 
 
 def register_pattern(name):
-    """Register a pattern to the registry"""
+    """Class decorator used to register a Pattern subclass to the registry.
+
+    Decorator function used before a Pattern subclasses. 
+    Make sure that this Pattern class can be registered in PATTERNS.
+
+    Args:
+        cls (class): The class of register.
+        name: A string. Define the pattern type which will be included in a pruning process.
+
+    Returns:
+        cls: The class of register.
+    
+    """
 
     def register(pattern):
         PATTERNS[name] = pattern
@@ -34,7 +47,19 @@ def register_pattern(name):
 
 
 def get_pattern(config):
-    """Get registered pattern class"""
+    """Get registered pattern class.
+
+    Get a Pattern object from PATTERNS.
+
+    Args:
+        config: A config dict object. Contains the pattern information.
+
+    Returns:
+        A Pattern object.
+
+    Raises:
+        AssertionError: Currently only support patterns which have been registered in PATTERNS.
+    """
     name = config.pattern
     name = name.split('_')[-1]
     if "x" in name:
@@ -45,20 +70,58 @@ def get_pattern(config):
 
 
 class Pattern:
+    """Pruning Pattern.
+
+    Every Pruner object will contain a Pattern object.
+    It defines the basic pruning unit and how this unit will be pruned during pruning.
+
+    Args:
+        config: A config dict object. Contains the pattern information.
+
+    Attributes:
+        pattern: A config dict object. The pattern related part in args config.
+        is_global: A bool. Whether the pruning take global pruning option.
+            Global pruning means that all pruning layers are gathered to calculate pruning criteria.
+            Local pruning, on the contrast, means that pruning layers are to calculate criteria individually.
+    """
+
     def __init__(self, config):
+        """Initialize."""
         self.pattern = config.pattern
         self.is_global = config.prune_domain == "global"
 
     def get_masks(self, scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer):
+        """Call when new masks for pruning are to be calculated.
+
+        Args:
+            scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
+            target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
+            pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+            max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer can reach.
+
+        Returns:
+            A dict with the identical size as pre_masks. Update the 0/1 values in it. 
+        
+        """
         if self.is_global:
             return self.get_masks_global(scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer)
         else:
             return self.get_masks_local(scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer)
 
     def get_masks_global(self, scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer):
+        """To be implemented in subclasses."""
         raise NotImplementedError
 
     def get_mask_single(self, score, exact_sparsity_ratio):
+        """Obtain a mask for one layer.
+
+        Args:
+            score: A Tensor. Store the pruning scores of one layer.
+            exact_sparsity_ratio: A float. After pruning, the layer's sparsity will reach this value.            
+
+        Returns:
+            A Tensor with the identical size as score. a new mask.
+        """
         flattern_score = torch.flatten(score)
         k = int(exact_sparsity_ratio * flattern_score.numel())
         threshold, _ = torch.kthvalue(flattern_score, k)
@@ -71,9 +134,21 @@ class Pattern:
         return mask
 
     def get_block_size_dict(self, data):
+        """To be implemented in subclasses."""
         raise NotImplementedError
 
     def get_masks_local(self, scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer):
+        """Obtain layers' local masks.
+
+        Args:
+            scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
+            target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
+            pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+            max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer can reach.
+
+        Returns:
+            A dict with the identical size as pre_masks. Update the 0/1 values in it. 
+        """
         masks = {}
         if isinstance(self, PatternNxM) and not isinstance(self.block_size, dict):
             self.block_size = self.get_block_size_dict(pre_masks)
@@ -85,6 +160,14 @@ class Pattern:
         return masks
 
     def get_sparsity_ratio(self, pre_masks):
+        """Calulate the zero elements' ration in pre_masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+        
+        Returns:
+            A float. The zero elements' ratio in pre_masks.
+        """
         zero_cnt = 0
         total_cnt = 0
         for key in pre_masks.keys():
@@ -94,8 +177,13 @@ class Pattern:
         return float(zero_cnt) / total_cnt
 
     def get_pattern_lock_masks(self, modules):
-        """
-        basic way is to simply lock the zero position
+        """Obtain masks from original weight map, by masking where weights' are zero.
+
+        Args:
+            modules: A dict{“layer_name”: Tensor}. Store weights.
+
+        Returns:
+            A dict with the identical size as modules, containing pattern lock masks.
         """
         pattern_lock_masks = {}
         for key in modules.keys():
@@ -109,7 +197,22 @@ class Pattern:
 
 @register_pattern('NxM')
 class PatternNxM(Pattern):
+    """Pruning Pattern.
+
+    A Pattern class derived from Pattern. In this pattern, the weights in a NxM block will be pruned or kept
+    during one pruning step.
+
+    Args:
+        config: A config dict object. Contains the pattern information.
+
+    Attributes:
+        block_size: A list of two Integers. The height and width of the block.
+            Please be aware that the vertical direction of a Linear layer's weight in PyTorch refer to output channel.
+            Because PyTorch's tensor matmul has a hidden transpose operation.
+    """
+
     def __init__(self, config):
+        """Initialize."""
         super(PatternNxM, self).__init__(config)
         pattern = self.pattern.split('_')[-1]
         self.N = pattern.split('x')[0]
@@ -122,6 +225,16 @@ class PatternNxM(Pattern):
             self.block_size = [int(pattern.split('x')[0]), int(pattern.split('x')[1])]
 
     def get_block_size_dict(self, data):
+        """Calulate the zero elements' ration in pre_masks.
+        
+        Args:
+            data: Dict{"layer_name": Tensor}. Store weights or scores.
+        
+        Returns:
+            A dict. Dict{"layer_name": [block_size_1, block_size_2]}.
+                Containing layers' corresponding pruning pattern's block shape.
+                Please be aware that because in channel-wise pruning, different layers can have different pruning patterns. 
+        """
         block_sizes_dict = {}
         if self.N == "channel" or self.M == "channel":
             for key in data.keys():
@@ -139,6 +252,14 @@ class PatternNxM(Pattern):
         return block_sizes_dict
 
     def get_sparsity_ratio(self, pre_masks):
+        """Calulate the zero elements' ration in pre_masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+        
+        Returns:
+            A float. Calculate the zero elements' ratio in pre_masks.
+        """
         zero_cnt = 0
         total_cnt = 0
         if isinstance(self.block_size, list):
@@ -162,6 +283,21 @@ class PatternNxM(Pattern):
 
     def get_masks_global(self, scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer,
                          keep_pre_mask=False):
+        """Generate masks for layers.
+
+        Gather all layer's scores together and calculate a common threshold.
+        This threshold will be applied for all layers.
+
+        Args:
+            scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
+            target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
+            pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+            max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer can reach.
+            keep_pre_masks: A bool. If True, keep the masks unchanged.
+
+        Returns:
+            A dict with the identical size as pre_masks. Update the 0/1 values in it. 
+        """
         if isinstance(self.block_size, list):
             self.block_size = self.get_block_size_dict(scores)
         new_scores = {}
@@ -230,6 +366,14 @@ class PatternNxM(Pattern):
         return masks
 
     def get_pattern_lock_masks(self, modules):
+        """Obtain masks from original weight map, by masking where weights' are zero.
+
+        Args:
+            modules: A dict{“layer_name”: Tensor}. Store weights.
+
+        Returns:
+            A dict with the identical size as modules, containing pattern lock masks.
+        """
         pattern_lock_masks = {}
         if isinstance(self.block_size, list):
             self.block_size = self.get_block_size_dict(modules)
@@ -257,13 +401,36 @@ class PatternNxM(Pattern):
 
 @register_pattern('N:M')
 class PatternNInM(Pattern):
+    """Pruning Pattern.
+
+    A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+    For more info of this pattern, please refer to https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+
+    Args:
+        config: A config dict object. Contains the pattern information.
+
+    Attributes:
+        N: The number of elements to be prune in a weight sequence.
+        M: The size of the weight sequence.
+
+    """
+
     def __init__(self, config):
+        """Initialize."""
         super(PatternNInM, self).__init__(config)
         pattern = self.pattern.split('_')[-1]
         self.N = int(pattern.split(':')[0])
         self.M = int(pattern.split(':')[1])  ##m is bigger
 
     def get_sparsity_ratio(self, pre_masks):
+        """Calulate the zero elements' ration in pre_masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+        
+        Returns:
+            A float. Calculate the zero elements' ratio in pre_masks.
+        """
         ##simply use elemwise sparsity
         non_zero_cnt = 0
         total_cnt = 0
@@ -273,6 +440,20 @@ class PatternNInM(Pattern):
         return 1.0 - float(non_zero_cnt) / total_cnt
 
     def get_masks_global(self, scores, target_sparsity_ratio, pre_masks, max_sparsity_ratio_per_layer):
+        """Generate masks for layers.
+
+        Gather all layer's scores together and calculate a common threshold.
+        This threshold will be applied for all layers.
+
+        Args:
+            scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
+            target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
+            pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+            max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer can reach.
+
+        Returns:
+            A dict with the identical size as pre_masks. Update the 0/1 values in it. 
+        """
         N = self.N
         M = self.M
         target_sparsity_ratio = target_sparsity_ratio / (float(N / M))  ##recover sparsity for block wise
@@ -352,6 +533,14 @@ class PatternNInM(Pattern):
         return masks
 
     def get_pattern_lock_masks(self, modules):
+        """Obtain masks from original weight map, by masking where weights' are zero.
+
+        Args:
+            modules: A dict{“layer_name”: Tensor}. Store weights.
+
+        Returns:
+            A dict with the identical size as modules, containing pattern lock masks.
+        """
         pattern_lock_masks = {}
         N, M = self.N, self.M
         for key in modules.keys():
