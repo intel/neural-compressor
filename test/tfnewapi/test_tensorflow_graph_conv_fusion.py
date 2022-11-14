@@ -96,7 +96,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 if i.op == '_FusedQuantizedConv2D':
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])
 
-            self.assertEqual(find_single_qconv, [True, False])
+            self.assertEqual(find_single_qconv, [False, False])
     @disable_random()
     def test_spacetobatchnd_conv2d_batchtospacend_fusion(self):
         i = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
