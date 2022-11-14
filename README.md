@@ -112,7 +112,7 @@ inc_bench
     <th>TensorFlow</th>
     <th>Intel TensorFlow</th>
     <th>PyTorch</th>
-    <th>IPEX</th>
+    <th>Intel® Extension for PyTorch*</th>
     <th>ONNX Runtime</th>
     <th>MXNet</th>
   </tr>
