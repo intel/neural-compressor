@@ -88,7 +88,7 @@ Pruning criteria defines the rules of which weights are least important to be pr
 
   The algorithm improves original SNIP algorithms and introduces weights' score maps which updates in a momentum way.\
   In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
-  $$Score_{n} = \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
+  $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 ### Pruning Schedule
 
