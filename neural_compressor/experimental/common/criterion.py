@@ -492,24 +492,36 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         self.layer_mappings = []
         self.layer_output_process = []
         for item in layer_mappings:
-            assert len(item) == 4 or len(item) == 2, 'Each item in layer_mappings ' + \
-                'should be a list or tuple of length 2 or 4, with format ' + \
-                '[student_layer_name, teacher_layer_name] or ' + \
-                '[student_layer_name, student_layer_output_process, ' + \
-                'teacher_layer_name, teacher_layer_output_process].' + \
-                'For example, with length of 4, element looks like [\'student_model.layer1' + \
-                '.attention\', \'1\', \'teacher_model.layer1.attention\', \'1\'], where ' + \
-                '\'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
+            assert len(item) == 1 or len(item) == 2, 'Each item in layer_mappings ' + \
+                'should be a list or tuple containing 1 list or 2 lists, with format ' + \
+                '[(layer_name, )] or [(student_layer_name, ), (teacher_layer_name, )], ' + \
+                'first one is the abbreviation for cases that student_layer_name and teacher_layer_name ' + \
+                'are the same. The length of tuples in the list could be either 1 like previous cases, ' + \
+                'or 2, like [(layer_name, layer_output_process)] or ' + \
+                '[(student_layer_name, student_layer_output_process), ' + \
+                '(teacher_layer_name, teacher_layer_output_process)].' + \
+                'For example, with 2 tuples of length 2, element looks like ' + \
+                '[(\'student_model.layer1.attention\', \'1\'), (\'teacher_model.layer1.attention\', \'1\')], ' + \
+                'where \'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
                 'represent attention module on layer 1 of the student model and the ' + \
                 'teacher model respectively, two \'1\' represent the index to retrieve the ' + \
                 'desired output from the defined module\'s outputs, in this case, the above ' + \
                 'two module\'s outputs are lists, with desired output in index 1 of these ' + \
-                'lists, in cases of dict output, retrieving can be done by define the ' + \
+                'lists, in cases of dict output, retrieving can be done by defining the ' + \
                 'corresponding key, in cases of module\'s output is the desired output, ' + \
-                'just adopt an element of length 2 such as [\'student_model.layer1.output' + \
-                '.output\', \'teacher_model.layer1.output\'].'
-            self.layer_mappings.append((item[0], item[2]) if len(item)==4 else item)
-            self.layer_output_process.append((item[1], item[3]) if len(item)==4 else ('', ''))
+                'just adopt the format such as [(\'student_model.layer1.output' + \
+                '.output\', ), (\'teacher_model.layer1.output\', )].'
+            if len(item) == 1:
+                item = [item[0], item[0]]
+            for i in range(len(item)):
+                if not isinstance(item[i], (list, tuple)):
+                    item[i] = [item[i], '']
+                elif len(item[i]) == 1:
+                    item[i] = [item[i][0], '']
+                else:
+                    assert len(item[i]) == 2, "Expect {} to be a tuple of length 1 or 2.".format(item[i])
+            self.layer_mappings.append((item[0][0], item[1][0]))
+            self.layer_output_process.append((item[0][1], item[1][1]))
         for student_layer, teacher_layer in self.layer_mappings:
             self.student_features[student_layer] = []
             self.teacher_features[teacher_layer] = []
@@ -756,20 +768,26 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         assert len(param_dict['layer_mappings']) == \
             len(param_dict['loss_types']) == len(param_dict['loss_weights']),\
             'Length of layer_mappings, loss_types and loss_weights must be the same.'
-        assert all(type(it) in [list, tuple] and (len(it) == 2 or len(it) == 4) \
+        assert all(type(it) in [list, tuple] and (len(it) == 1 or len(it) == 2) \
             for it in param_dict['layer_mappings']), \
-            'Elements of layer_mappings must be list or tuple and with length of 2 or 4.' + \
-            'For example, with length of 4, element looks like [\'student_model.layer1' + \
-            '.attention\', \'1\', \'teacher_model.layer1.attention\', \'1\'], where ' + \
-            '\'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
+            'Each item in layer_mappings should be a list containing 1 tuple or 2 tuples, with format ' + \
+            '[(layer_name, )] or [(student_layer_name, ), (teacher_layer_name, )], ' + \
+            'first one is the abbreviation for cases that student_layer_name and teacher_layer_name ' + \
+            'are the same. The length of tuples in the list could be either 1 like previous cases, ' + \
+            'or 2, like [(layer_name, layer_output_process)] or ' + \
+            '[(student_layer_name, student_layer_output_process), ' + \
+            '(teacher_layer_name, teacher_layer_output_process)].' + \
+            'For example, with 2 tuples of length 2, element looks like ' + \
+            '[(\'student_model.layer1.attention\', \'1\'), (\'teacher_model.layer1.attention\', \'1\')], ' + \
+            'where \'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
             'represent attention module on layer 1 of the student model and the ' + \
             'teacher model respectively, two \'1\' represent the index to retrieve the ' + \
             'desired output from the defined module\'s outputs, in this case, the above ' + \
             'two module\'s outputs are lists, with desired output in index 1 of these ' + \
-            'lists, in cases of dict output, retrieving can be done by define the ' + \
+            'lists, in cases of dict output, retrieving can be done by defining the ' + \
             'corresponding key, in cases of module\'s output is the desired output, ' + \
-            'just adopt an element of length 2 such as [\'student_model.layer1.output' + \
-            '.output\', \'teacher_model.layer1.output\'].'
+            'just adopt the format such as [(\'student_model.layer1.output' + \
+            '.output\', ), (\'teacher_model.layer1.output\', )].'
         assert all(any(isinstance(e, t) for t in [str, torch.nn.Module]) \
             for e in param_dict['loss_types']), \
             'Type of loss_types element must be str or torch Module.'

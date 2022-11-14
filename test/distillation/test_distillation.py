@@ -116,8 +116,8 @@ def build_fake_yaml_2():
             criterion:
                 IntermediateLayersKnowledgeDistillationLoss:
                     layer_mappings: [
-                        ['layer1.0', 'layer1.0'],
-                        ['layer1.1.conv1', '', 'layer1.1.conv1', '0'],
+                        ['layer1.0', ],
+                        [['layer1.1.conv1', ''], ['layer1.1.conv1', '0']],
                                         ]
                     loss_types: ['KL', 'MSE']
                     loss_weights: [0.5, 0.5]
@@ -194,7 +194,7 @@ class TestDistillation(unittest.TestCase):
         from neural_compressor.conf.config import DistillationConf
         conf = DistillationConf('fake_2.yaml')
         conf.usr_cfg.distillation.train.criterion.\
-            IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][-1] = \
+            IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][1][-1] = \
                 lambda x: x[:, :2,...]
         distiller = Distillation(conf)
         distiller.student_model = common.Model(self.student_model)
