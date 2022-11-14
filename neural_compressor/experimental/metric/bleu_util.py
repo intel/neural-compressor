@@ -29,10 +29,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Functions for calculating loss, accuracy, and other model metrics.
+"""Script to compute BLEU score.
 
- BLEU approximation. Source:
-     https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
+Source:
+https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
 """
 
 from __future__ import absolute_import
@@ -43,22 +43,25 @@ import collections
 import math
 
 import numpy as np
-import six
-from six.moves import xrange  # pylint: disable=redefined-builtin
+
 from neural_compressor.utils.utility import LazyImport
+from six.moves import xrange  # pylint: disable=redefined-builtin
+from typing import List, Sequence, Union
+
 tf = LazyImport('tensorflow')
 
-def _get_ngrams_with_counter(segment, max_order):
-    """Extracts all n-grams up to a given maximum order from an input segment.
+def _get_ngrams_with_counter(segment: Sequence[str], 
+                             max_order: List[int]) -> collections.Counter:
+    """Extract all n-grams up to a given maximum order from an input segment.
 
     Args:
-        segment: text segment from which n-grams will be extracted.
-        max_order: maximum length in tokens of the n-grams returned by this
-            methods.
+        segment: The text segment from which n-grams will be extracted.
+        max_order: The maximum length in tokens of the n-grams returned 
+          by this methods.
 
     Returns:
-        The Counter containing all n-grams up to max_order in segment
-        with a count of how many times each n-gram occurred.
+        ngram_counts: The Counter containing all n-grams up to max_order 
+          in segment with a count of how many times each n-gram occurred.
     """
     ngram_counts = collections.Counter()
     for order in xrange(1, max_order + 1):
@@ -68,20 +71,22 @@ def _get_ngrams_with_counter(segment, max_order):
     return ngram_counts
 
 
-def compute_bleu(reference_corpus, translation_corpus, max_order=4,
-                 use_bp=True):
-    """Computes BLEU score of translated segments against one or more references.
+def compute_bleu(reference_corpus: Union[Sequence[str], Sequence[Sequence[str]]], 
+                 translation_corpus: Sequence[str], 
+                 max_order: int = 4,
+                 use_bp: bool = True) -> float:
+    """Compute the BLEU score of translated segments against its references.
 
     Args:
-        reference_corpus: list of references for each translation. Each
-            reference should be tokenized into a list of tokens.
-        translation_corpus: list of translations to score. Each translation
-            should be tokenized into a list of tokens.
+        reference_corpus: List of references for each translation. 
+          Each reference should be tokenized into a list of tokens.
+        translation_corpus: List of translations to score. Each translation
+          should be tokenized into a list of tokens.
         max_order: Maximum n-gram order to use when computing BLEU score.
-        use_bp: boolean, whether to apply brevity penalty.
+        use_bp: The flag to decide whether to apply brevity penalty.
 
     Returns:
-        BLEU score.
+        bleu_score: The approximate BLEU score.
     """
     reference_length = 0
     translation_length = 0
@@ -130,5 +135,5 @@ def compute_bleu(reference_corpus, translation_corpus, max_order=4,
     if use_bp:
         ratio = translation_length / reference_length
         bp = math.exp(1 - 1. / ratio) if ratio < 1.0 else 1.0
-    bleu = geo_mean * bp
-    return np.float32(bleu)
+    bleu_score = np.float32(geo_mean * bp)
+    return bleu_score
