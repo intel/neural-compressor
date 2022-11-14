@@ -17,6 +17,8 @@
 #
 #
 
+"""The dict mapping category IDs to its names of labels."""
+
 category_map = {
     1: 'person',
     2: 'bicycle',
