@@ -58,6 +58,35 @@ python textual_inversion_ipex.py \
   --output_dir="youtooz_candy_model"
 ```
 
+#### Distributed
+
+You need to install [Torch-CCL](https://github.com/intel/torch-ccl) first.
+
+```bash
+oneccl_bindings_for_pytorch_path=$(python -c "from oneccl_bindings_for_pytorch import cwd; print(cwd)")
+source $oneccl_bindings_for_pytorch_path/env/setvars.sh
+export MODEL_NAME="CompVis/stable-diffusion-v1-4"
+export DATA_DIR="./youtooz_candy"
+
+python -m intel_extension_for_pytorch.cpu.launch \
+  --throughput_mode \
+  --distributed \
+    textual_inversion_ipex.py \
+  --pretrained_model_name_or_path=$MODEL_NAME \
+  --train_data_dir=$DATA_DIR \
+  --learnable_property="object" \
+  --placeholder_token="youtooz_candy" --initializer_token="toy" \
+  --resolution=512 \
+  --train_batch_size=1 \
+  --gradient_accumulation_steps=4 \
+  --use_bf16 \
+  --max_train_steps=3000 \
+  --learning_rate=5.0e-04 --scale_lr \
+  --lr_scheduler="constant" \
+  --lr_warmup_steps=0 \
+  --output_dir="youtooz_candy_model"
+```
+
 #### finetune with GPU using accelerate
 
 Initialize an [🤗Accelerate](https://github.com/huggingface/accelerate/) environment with:
