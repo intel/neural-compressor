@@ -88,6 +88,7 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_deconv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_deconv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_deconv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_deconv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -185,6 +186,7 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_deconv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_deconv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_deconv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_deconv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -271,6 +273,7 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_deconv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_deconv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_deconv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_deconv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -354,6 +357,7 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_deconv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_deconv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_deconv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_deconv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])

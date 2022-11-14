@@ -80,7 +80,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.g = GraphAnalyzer()
         self.g.graph = copy.deepcopy(self.model)
         self.graph_info = self.g.parse_graph()
-        
+
         # insert QDQ pattern for op's input
         for op_name in quantizable_op_names:
             if self._ignore_insert_qdq_pattern(op_name):

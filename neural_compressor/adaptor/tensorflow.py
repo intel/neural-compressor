@@ -852,7 +852,8 @@ class TensorFlowAdaptor(Adaptor):
             return False
 
 
-        if (self.new_api and self.performance_only) or self.itex_mode:
+        if (self.new_api and self.performance_only) or self.itex_mode or \
+                    os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
             self.filter_unquantizable_concat_performance_only(matched_nodes)
         else:
             self.filter_unquantizable_concat(matched_nodes)

@@ -70,9 +70,22 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             if conv_name in self.excluded_conv:
                 continue
 
+            padding_tensor = None
             pad_node = graph_info[node_combination[0]].node
-            padding_tensor = tensor_util.MakeNdarray(
-                graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
+            if graph_info[pad_node.input[1]].node.op != 'Const':
+                input_node = graph_info[pad_node.input[1]].node
+                if input_node.op == 'DataFormatVecPermute':
+                    parent_input_node = graph_info[input_node.input[0]].node
+                    if parent_input_node.op == 'Const':
+                        padding_tensor = tensor_util.MakeNdarray( \
+                            parent_input_node.attr["value"].tensor).flatten()
+                    else:
+                        continue
+                else:
+                    continue
+            else:
+                padding_tensor = tensor_util.MakeNdarray(
+                    graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
 
             if self.itex_qdq_mode:
                 enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
@@ -80,11 +93,14 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
             else:
                 enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or self.new_api)
 
-
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
-            cur_graph.remove_node_with_single_input_output(pad_node.name)
-            cur_graph.remove_node(pad_node.input[1])
+            if graph_info[pad_node.input[1]].node.op != 'Const':
+                cur_graph.node_name_details[pad_node.name].node.input.remove(pad_node.input[1])
+                cur_graph.remove_node_with_single_input_output(pad_node.name)
+            else:
+                cur_graph.remove_node_with_single_input_output(pad_node.name)
+                cur_graph.remove_node(pad_node.input[1])
             conv_node = graph_info[node_combination[1]].node
             # Helper.set_attr_int_list(conv_node, "padding_list", padding_tensor)
             # only when padding attr is explicit, the explicit_paddings is not empty
