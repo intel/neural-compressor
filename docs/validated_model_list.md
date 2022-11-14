@@ -805,7 +805,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.11.0+cpu IPEX
+### PyTorch models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
 
 <table class="tg">
 <thead>
