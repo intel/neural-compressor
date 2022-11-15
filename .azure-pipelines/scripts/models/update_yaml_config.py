@@ -64,9 +64,9 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                         line = re.sub(key_patterns["pattern"], key_patterns["replacement"], line)
                 config.write(line)
 
-    if framework == "pytorch":
-        val_dataset = dataset_location + f"\{os.path.sep}" + "val"
-        train_dataset = dataset_location + f"\{os.path.sep}" + "train"
+    else:
+        val_dataset = dataset_location + f"{os.path.sep}" + "val"
+        train_dataset = dataset_location + f"{os.path.sep}" + "train"
         patterns = {
             "calibration_dataset": {
                 "pattern": r'root:.*/path/to/calibration/dataset/?',
@@ -77,14 +77,6 @@ def update_yaml_dataset(yaml, framework, dataset_location):
                 "replacement": f"root: {val_dataset}",
             },
         }
-
-        if topology == "distilbert_base_MRPC":
-            patterns.update({
-                "bert_name": {
-                    "pattern": r'name:/s+bert',
-                    "replacement": "name: distilbert",
-                }
-        })
 
         print("======= update_yaml_dataset =======")
         with open(yaml, "w") as config:

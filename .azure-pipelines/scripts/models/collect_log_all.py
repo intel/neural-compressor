@@ -1,7 +1,5 @@
-import re
-import os
-import platform
 import argparse
+import os
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--logs_dir", type=str, default=".")
