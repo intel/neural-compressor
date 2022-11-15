@@ -119,20 +119,14 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         qconfig = ipex.quantization.default_static_qconfig
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         quantizer = Quantization(config)
-        quantizer.conf.usr_cfg.tuning.exit_policy['timeout'] = 5
+        quantizer.conf.usr_cfg.tuning.exit_policy['max_trials'] = 5
+        quantizer.conf.usr_cfg.tuning.exit_policy['timeout'] = 100
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = torch.utils.data.DataLoader(dataset)
         quantizer.model = prepared_model
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
-        nc_model.save('./saved')
-        q_model = load('./saved', model, dataloader=dataloader)
-        from neural_compressor.experimental import Benchmark
-        evaluator = Benchmark(config)
-        evaluator.model = q_model
-        evaluator.b_dataloader = dataloader
-        evaluator.fit('accuracy')
 
     def test_copy_prepared_model(self):
         model = M()
