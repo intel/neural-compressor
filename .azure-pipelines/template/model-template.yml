@@ -25,6 +25,7 @@ steps:
     displayName: Env setup
 
   - task: DownloadPipelineArtifact@2
+    continueOnError: true
     inputs:
       source: "specific"
       artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
