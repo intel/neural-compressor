@@ -246,23 +246,25 @@ class Hawq_top():
         fix_seed(self.random_seed)
         self.model = model
         self.model.eval()
-        model_tmp = copy.deepcopy(model)
-        model_tmp.eval()
-        self.model_fused = fuse_fx(model_tmp)
-        self.model_fused.eval()
+        if self.enable_op_fuse:
+            self.model = fuse_fx(self.model)
+
+        # model_tmp = copy.deepcopy(model)
+        # model_tmp.eval()
+        # self.model_fused = fuse_fx(model_tmp)
+        # self.model_fused.eval()
 
     def get_init_config(self) -> dict:
         """
         """
         # Load a sample from dataloader to compute graident
-        for inputs, targets in self.dataloader:
-            break
-        # Hessian average trace computation
+        inputs, targets = next(iter(self.dataloader))
+
         with torch.enable_grad():
-            if self.enable_op_fuse:
-                hawq_cmp = Hessian(self.model_fused, criterion=self.criterion, data=(inputs, targets))
-            else:
-                hawq_cmp = Hessian(self.model, criterion=self.criterion, data=(inputs, targets))
+            # if self.enable_op_fuse:
+            #     hawq_cmp = Hessian(self.model_fused, criterion=self.criterion, data=(inputs, targets))
+            # else:
+            hawq_cmp = Hessian(self.model, criterion=self.criterion, data=(inputs, targets))
         avg_traces_lst = hawq_cmp.calculate_trace(max_Iter=self.max_Iteration, tolerance=self.tolerance)
 
         # fiter none weight layer and save weight layer to match perturbation computation
