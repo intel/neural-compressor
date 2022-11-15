@@ -97,7 +97,7 @@ function multiInstance() {
     logFile="${log_dir}/${framework}-${model}-performance-${precision}"
     benchmark_pids=()
 
-    core_list=$(python new_benchmark.py --cores_per_instance=$(expr $ncores_per_socket / $ncores_per_instance) --num_of_instance=${ncores_per_instance})
+    core_list=$(python ${SCRIPTS_PATH}/new_benchmark.py --cores_per_instance=$(expr $ncores_per_socket / $ncores_per_instance) --num_of_instance=${ncores_per_instance})
     core_list=($(echo $core_list | tr ';' ' '))
 
     for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
