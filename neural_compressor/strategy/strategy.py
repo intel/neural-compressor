@@ -180,7 +180,7 @@ class TuneStrategy(object):
         self.algo.origin_model = self.model
         self.algo.adaptor = self.adaptor
 
-        self.optype_statistics = None
+        self._optype_statistics = None
         self.fallback_stats_baseline = None
         self.fallback_stats = None
         self.tuning_times = 0
@@ -285,15 +285,17 @@ class TuneStrategy(object):
         self.fallback_start_point = self.tuning_times
 
     def _update_optype_statistics(self):
-        self.optype_statistics = defaultdict(lambda:defaultdict(int))
+        self._optype_statistics = defaultdict(lambda:defaultdict(int))
 
         for op_name_type, op_tune_cfg in self.tune_cfg['op'].items():
             optype = op_name_type[1]
             quant_mode = op_tune_cfg['activation']['quant_mode']
+            if isinstance(quant_mode, tuple) or isinstance(quant_mode, list):
+                quant_mode = quant_mode[0]
             dtype = 'INT8' if quant_mode in ('static', 'dynamic') \
                     else quant_mode.upper()
-            self.optype_statistics[optype]['Total'] += 1
-            self.optype_statistics[optype][dtype] += 1
+            self._optype_statistics[optype]['Total'] += 1
+            self._optype_statistics[optype][dtype] += 1
         return
 
     def _dump_tuning_process_statistics(self):
@@ -301,12 +303,10 @@ class TuneStrategy(object):
         
         logger.debug("Current tuning process statistics:")
         logger.debug(f"Total Tuning Times: {self.tuning_times}")
-        logger.debug("Fallback started at Tune {}".format(self.fallback_start_point 
-                     if self.fallback_start_point != 0 else 'n/a'))
-        logger.debug("Objective(s) met at Tune {}".format(self.metric_met_point
-                      if self.metric_met_point != 0 else 'n/a'))
+        logger.debug("Fallback started at Tune {}".format(self.fallback_start_point))
+        logger.debug("Objective(s) met at Tune {}".format(self.metric_met_point))
 
-        fallback_stats = self._calculate_fallback_stats()
+        fallback_stats = self._calculate_fallback_op_count()
         if self.fallback_stats_baseline == None: 
             self.fallback_stats_baseline = fallback_stats
         logger.debug(f"Fallbacked ops count: {self.fallback_stats_baseline - fallback_stats}")
@@ -316,14 +316,14 @@ class TuneStrategy(object):
         
         return
 
-    def _calculate_fallback_stats(self):
+    def _calculate_fallback_op_count(self, target_dtype='INT8'):
         fallback_stats = defaultdict(int)
         
-        for optype in self.optype_statistics:
-            for dtype, count in self.optype_statistics[optype].items():
+        for optype in self._optype_statistics:
+            for dtype, count in self._optype_statistics[optype].items():
                 fallback_stats[dtype] += count
 
-        return fallback_stats['INT8']
+        return fallback_stats[target_dtype]
 
     
     def _compare_optype_statistics(self, fields=None, optypes=None,
@@ -353,11 +353,12 @@ class TuneStrategy(object):
         adaptor_data = {
             line[0].lower() : {dtype : count for dtype, count in zip(field_names, line[1:])}
         for line in adaptor_statistics[1]}
-        strategy_data = self.optype_statistics
+        strategy_data = self._optype_statistics
             
         # compare adaptor statistics to strategy statistics
         logger.debug("Statistics difference between adaptor and tuning config:")
         has_difference = False
+        difference_count = 0
         for optype in adaptor_data:
             if optype not in strategy_data or _optype_skipped(optype): continue
             for field in field_names:
@@ -365,12 +366,14 @@ class TuneStrategy(object):
                 adaptor_count = adaptor_data[optype][field]
                 strategy_count = strategy_data[optype][field]
                 if adaptor_count != strategy_count:
-                    has_difference = True                    
+                    has_difference = True 
+                    if field == 'INT8':
+                        difference_count += abs(strategy_count - adaptor_count)                   
                     logger.debug("\t{}: [adaptor: {} | tune_cfg: {}]".format(
                         (optype, field), adaptor_count, strategy_count))
-        
         if not has_difference:
             logger.debug("\tNone")
+        logger.debug(f"\tDifference(s) in total: {difference_count}")
         return
         
     def initial_tuning_cfg(self):
