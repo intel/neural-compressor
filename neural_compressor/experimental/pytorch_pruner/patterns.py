@@ -233,7 +233,8 @@ class PatternNxM(Pattern):
         Returns:
             A dict. Dict{"layer_name": [block_size_1, block_size_2]}.
                 Containing layers' corresponding pruning pattern's block shape.
-                Please be aware that because in channel-wise pruning, different layers can have different pruning patterns. 
+                Please be aware that because in channel-wise pruning, 
+                different layers can have different pruning patterns. 
         """
         block_sizes_dict = {}
         if self.N == "channel" or self.M == "channel":
@@ -404,7 +405,8 @@ class PatternNInM(Pattern):
     """Pruning Pattern.
 
     A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
-    For more info of this pattern, please refer to https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+    For more info of this pattern, please refer to 
+    https://github.com/intel/neural-compressor/blob/master/docs/pruning.md
 
     Args:
         config: A config dict object. Contains the pattern information.
