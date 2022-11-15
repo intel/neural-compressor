@@ -10,7 +10,21 @@ from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor.pytorch import TemplateAdaptor
 from neural_compressor.strategy.hawq_metric import Hawq_top
-
+import random
+import numpy as np
+def fixed_seed(seed):
+    """Fixed rand seed to make sure results are same in different times on different devices.Eg CPU/GPU
+       Args:
+          seed:                              an integer number
+       return:                               None 
+    """
+    np.random.seed(seed)   #random
+    random.seed(seed)
+    torch.manual_seed(seed) #cpu
+    torch.cuda.manual_seed_all(seed)  #parallel cpu
+    torch.backends.cudnn.deterministic = True  #make sure results are same on cpu/gpu
+    torch.backends.cudnn.benchmark = True   #accelerator
+fixed_seed(100)
 def build_hessian_trace():
     hessian_trace_config_yaml='''
     loss:
