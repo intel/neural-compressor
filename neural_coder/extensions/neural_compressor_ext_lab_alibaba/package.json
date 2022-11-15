@@ -59,6 +59,7 @@
     "@jupyterlab/mainmenu": "^3.4.7",
     "@jupyterlab/notebook": "^3.4.7",
     "@phosphor/commands": "^1.7.2",
+    "loader-utils": "^2.0.3",
     "react": "^18.2.0",
     "react-sanitized-html": "^2.0.0"
   },
@@ -104,6 +105,7 @@
     }
   },
   "resolutions": {
-    "got": "^11.8.5"
+    "got": "^11.8.5",
+    "loader-utils": "^2.0.3"
   }
 }
