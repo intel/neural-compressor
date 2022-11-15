@@ -246,12 +246,12 @@ def check_status(precision, precision_upper, check_accuracy = False):
 if __name__ == '__main__':
     tuning_log = os.path.join(args.logs_dir, f"{args.framework}-{args.model}-tune.log")
     refer = get_refer_data()
-    if refer:
-        if args.stage == "collect_log":
-            collect_log()
-        elif args.stage == "int8_benchmark":
-            check_status("int8", "INT8")
-        elif args.stage == "fp32_benchmark":
-            check_status("fp32", "FP32")
-        else:
-            raise ValueError(f"{args.stage} does not exist")
+
+    if args.stage == "collect_log":
+        collect_log()
+    elif args.stage == "int8_benchmark" and refer:
+        check_status("int8", "INT8")
+    elif args.stage == "fp32_benchmark" and refer:
+        check_status("fp32", "FP32")
+    else:
+        raise ValueError(f"{args.stage} does not exist")

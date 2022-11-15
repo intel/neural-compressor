@@ -22,7 +22,7 @@ steps:
     displayName: '${{ parameters.codeScanFileName }} Check'            
 
   - task: PublishPipelineArtifact@1
-    condition: always()
+    condition: succeededOrFailed()
     inputs:
       targetPath: .azure-pipelines/scripts/codeScan/scanLog/${{ parameters.uploadPath }}
       artifact: ${{ parameters.codeScanFileName }}

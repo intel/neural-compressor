@@ -54,7 +54,7 @@ steps:
     displayName: FP32 Benchmark
 
   - task: Bash@3
-    condition: always()
+    condition: succeededOrFailed()
     inputs:
       targetType: "inline"
       script: |
@@ -63,7 +63,7 @@ steps:
     displayName: Collect log
 
   - task: PublishPipelineArtifact@1
-    condition: always()
+    condition: succeededOrFailed()
     inputs:
       targetPath: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models/${{ parameters.modelName }}/
       artifact: ${{ parameters.framework }}_${{ parameters.modelName }}
