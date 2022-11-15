@@ -37,7 +37,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
- prepare_model.py   --output_model=/path/to/model
+python prepare_model.py   --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
