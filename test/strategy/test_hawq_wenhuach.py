@@ -11,7 +11,7 @@ from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import P
 from neural_compressor.adaptor.pytorch import TemplateAdaptor
 from neural_compressor.adaptor import FRAMEWORKS
 import shutil
-from neural_compressor.strategy.hawq import Hawq_top, fix_seed
+from neural_compressor.strategy.hawq_wenhuach import Hawq_top, fix_seed
 
 fix_seed(1)
 
@@ -77,7 +77,8 @@ class TestPytorchAdaptor(unittest.TestCase):
             quantizer()
 
 if __name__ == "__main__":
-    unittest.main()
+    pass
+    # unittest.main()
 
 # def build_hessian_trace():
 #     hessian_trace_config_yaml = '''
