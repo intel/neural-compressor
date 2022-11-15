@@ -16,7 +16,15 @@
 # limitations under the License.
 """Benchmarking: measure the model performance with the objective settings."""
 
+import argparse
 import subprocess
+
+import numpy as np
+
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument("--cores_per_instance", type=int, required=True)
+parser.add_argument("--num_of_instance", type=int, required=True)
+args = parser.parse_args()
 
 
 def get_architecture():
@@ -86,13 +94,30 @@ def get_bounded_threads(core_ids, threads, sockets):
     return res
 
 
-def config_instance():
+def config_instance(cores_per_instance, num_of_instance):
+    """Configure the multi-instance commands and trigger benchmark with sub process."""
+    core = []
+
     if (get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
         raise OSError('Currently no support on AMD with hyperthreads')
     else:
         bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
-    return ",".join([str(i) for i in bounded_threads])
+
+    for i in range(0, num_of_instance):
+        if get_architecture() == 'x86_64':
+            core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
+            core_list = np.array(bounded_threads)[core_list_idx]
+        else:
+            core_list = np.arange(0, cores_per_instance) + i * cores_per_instance
+        core.append(core_list.tolist())
+
+    for i in range(len(core)):
+        core[i] = [str(j) for j in core[i]]
+        core[i] = ','.join(core[i])
+
+    core = ';'.join(core)
+    return core
+
 
 if __name__ == "__main__":
-    print(config_instance())
-    # print(','.join([1,2,3]))
+    print(config_instance(args.cores_per_instance, args.num_of_instance))

@@ -97,14 +97,22 @@ function multiInstance() {
     logFile="${log_dir}/${framework}-${model}-performance-${precision}"
     benchmark_pids=()
 
-    for ((j = 0; $j < ${ncores_per_socket}; j = $(($j + ${ncores_per_instance})))); do
-        end_core_num=$((j + ncores_per_instance - 1))
-        if [ ${end_core_num} -ge ${ncores_per_socket} ]; then
-            end_core_num=$((ncores_per_socket - 1))
-        fi
-        numactl -m 0 -C "${j}-${end_core_num}" ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
+    core_list=$(python new_benchmark.py --cores_per_instance=$(expr $ncores_per_socket / $ncores_per_instance) --num_of_instance=${ncores_per_instance})
+    core_list=($(echo $core_list | tr ';' ' '))
+
+    for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
+        numactl -m 0 -C ${core_list$[{j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
         benchmark_pids+=($!)
     done
+
+    # for ((j = 0; $j < ${ncores_per_socket}; j = $(($j + ${ncores_per_instance})))); do
+    #     end_core_num=$((j + ncores_per_instance - 1))
+    #     if [ ${end_core_num} -ge ${ncores_per_socket} ]; then
+    #         end_core_num=$((ncores_per_socket - 1))
+    #     fi
+    #     numactl -m 0 -C "${j}-${end_core_num}" ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
+    #     benchmark_pids+=($!)
+    # done
 
     status="SUCCESS"
     for pid in "${benchmark_pids[@]}"; do

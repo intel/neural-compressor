@@ -253,5 +253,7 @@ if __name__ == '__main__':
         check_status("int8", "INT8")
     elif args.stage == "fp32_benchmark" and refer:
         check_status("fp32", "FP32")
+    elif not refer:
+        print("skip check status")
     else:
         raise ValueError(f"{args.stage} does not exist")
