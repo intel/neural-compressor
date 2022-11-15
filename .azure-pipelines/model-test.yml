@@ -147,6 +147,7 @@ stages:
               python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
             displayName: "Collect all logs"
           - task: DownloadPipelineArtifact@2
+            continueOnError: true
             inputs:
               source: "specific"
               artifact: "FinalReport"
@@ -156,8 +157,6 @@ stages:
               pipeline: "Model-Test"
               runVersion: "specific"
               runId: $(refer_buildId)
-              retryDownloadCount: 3
-            continueOnError: true
             displayName: "Download last logs"
           - script: |
               echo "------ Generating final report.html ------"
