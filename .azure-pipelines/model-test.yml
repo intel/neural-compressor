@@ -157,6 +157,7 @@ stages:
               runVersion: "specific"
               runId: $(refer_buildId)
               retryDownloadCount: 3
+            continueOnError: true
             displayName: "Download last logs"
           - script: |
               echo "------ Generating final report.html ------"
