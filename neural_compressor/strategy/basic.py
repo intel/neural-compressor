@@ -143,11 +143,11 @@ class BasicTuneStrategy(TuneStrategy):
                 if fallback_items_lst:
                     logger.info(f"Start to fallback op to {target_dtype} one by one.")
                     self._fallback_started()
-                #fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
-                ops_sensitivity = self.adaptor.calculate_op_sensitivity(self._fp32_model, 
-                                                                        self.calib_dataloader, 
-                                                                        method_args = {'name': 'hessian_trace'})
-                fallback_items_name_lst = sorted(ops_sensitivity, key = lambda items: items[1], reverse=True)
+                fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
+                # ops_sensitivity = self.adaptor.calculate_op_sensitivity(self._fp32_model, 
+                #                                                         self.calib_dataloader, 
+                #                                                         method_args = {'name': 'hessian_trace'})
+                #fallback_items_name_lst = sorted(ops_sensitivity, key = lambda items: items[1], reverse=True)
                 
                 op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
                 initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
