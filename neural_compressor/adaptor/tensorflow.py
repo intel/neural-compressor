@@ -85,6 +85,8 @@ class TensorFlowAdaptor(Adaptor):
         self.callbacks = []
         self.new_api = False
 
+        self._last_dequantize_ops = None
+
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
         # Convert to a numpy array
@@ -1427,7 +1429,7 @@ class TensorFlowAdaptor(Adaptor):
         return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
     
     def calculate_op_sensitivity(self, fp32_model, dataloader, tune_cfg, 
-                                 fallback=True, requantize_cfgs=None):
+                                 fallback=True, requantize_cfg=None):
         """Compute the op sensitivity.
         
         The sensitivity metric is the mse between the output of the last quantized op of 
@@ -1459,27 +1461,31 @@ class TensorFlowAdaptor(Adaptor):
             replace_cfgs = {op : fp32_op_cfg for op in tune_cfg['op']}
         else:
             ops_list = [op for op, config in tune_cfg['op'].items() 
-                       if config['activation']['quant_mode'] == 'fp32' and op in requantize_cfgs]
-            replace_cfgs = requantize_cfgs
+                       if config['activation']['quant_mode'] == 'fp32' and op in requantize_cfg]
+            replace_cfgs = requantize_cfg['op']
 
+        if self._last_dequantize_ops == None:
+            if fallback:
+                self._last_dequantize_ops = self._get_last_dequantize_ops(fp32_model, tune_cfg, dataloader)
+            else:
+                self._last_dequantize_ops = self._get_last_dequantize_ops(fp32_model, requantize_cfg, dataloader)
         # Step2. compute mse
         mse_result = self._get_mse_order(
-            fp32_model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader)
+            fp32_model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, self._last_dequantize_ops)
 
         # Step3. sort
         mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1], reverse=fallback)]
-        logger.debug("Dump MSE order")
-        logger.debug(mse_order)
+        logger.debug("Dump MSE order:")
+        for op in mse_order:
+            logger.debug(f"{op}: {mse_result[op]}")
         return mse_order
 
-    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader):
-        from .tf_utils.graph_converter import GraphConverter
-
+    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, dequantize_ops):
         op_cfg = tune_cfg['op']
         mse_result = {}
         
         fp32_output = self._inference_model_on_batches(
-            fp32_model, tune_cfg, dataloader)
+            fp32_model, tune_cfg, dataloader, dequantize_ops)
 
         for op in ops_lst:
             # backup and set replace tuning config
@@ -1488,24 +1494,10 @@ class TensorFlowAdaptor(Adaptor):
             logger.debug(f"Dump tuning config of {op[0]}")
             logger.debug(tune_cfg)
 
-            # quantize the model
-            self.tuning_cfg_to_fw(tune_cfg)
-            q_model = GraphConverter(
-                model=fp32_model,
-                qt_config=self.quantize_config,
-                recipes=self.recipes,
-                int8_sequences=self.op_wise_sequences,
-                fp32_ops=self.fp32_ops,
-                bf16_ops=self.bf16_ops,
-                data_loader=dataloader,
-                itex_mode=self.itex_mode,
-                qdq_enabled=self.qdq_enabled,
-                new_api=self.new_api,
-                performance_only=self.performance_only).convert()
-
-            
+            # quantize and inference the model
+            q_model = self._quantize_model(tune_cfg, fp32_model, dataloader)
             q_output = self._inference_model_on_batches(
-                q_model, tune_cfg, dataloader)
+                q_model, tune_cfg, dataloader, dequantize_ops)
                 
             mse_result[op] = self._calculate_mse(fp32_output, q_output)
             logger.debug(f"mse result of {op}: {mse_result[op]}")
@@ -1515,37 +1507,58 @@ class TensorFlowAdaptor(Adaptor):
         
         return mse_result
 
+    def _get_last_dequantize_ops(self, fp32_model, tune_cfg, dataloader):
+        from .tf_utils.graph_util import GraphAnalyzer
+        qmodel = self._quantize_model(tune_cfg, fp32_model, dataloader)
+        graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
+        result = set()
+
+        def _search(opname):
+            if graph_def[opname].node.op == 'Dequantize':
+                result.add(opname)
+                return
+            
+            for next_opname in graph_def[opname].node.input:
+                _search(next_opname)
+
+        for opname in qmodel.output_node_names:
+            _search(opname)
+
+        return list(result)
+
+    def _quantize_model(self, tune_cfg, fp32_model, dataloader):
+        from .tf_utils.graph_converter import GraphConverter
+        self.tuning_cfg_to_fw(tune_cfg)
+        return GraphConverter(
+            model=fp32_model,
+            qt_config=self.quantize_config,
+            recipes=self.recipes,
+            int8_sequences=self.op_wise_sequences,
+            fp32_ops=self.fp32_ops,
+            bf16_ops=self.bf16_ops,
+            data_loader=dataloader,
+            itex_mode=self.itex_mode,
+            qdq_enabled=self.qdq_enabled,
+            new_api=self.new_api,
+            performance_only=self.performance_only).convert()
+
     def _calculate_mse(self, fp32_output, q_output):
         return np.square(fp32_output - q_output).mean()
 
-    def _inference_model_on_batches(self, model, tune_cfg, dataloader, use_lqop=False):
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader, dequantize_ops):
         from .tf_utils.util import generate_feed_dict
 
-        if use_lqop:
-            lqop_name = list(tune_cfg['op'].keys())[0][0] # name of last quantizable op
-            q_output_dict = self.inspect_tensor(
-                model, 
-                dataloader=dataloader, 
-                op_list=[lqop_name],  
-                iteration_list=[1, 2, 3], 
-                quantization_cfg=tune_cfg)
-            
-            q_output = []
-            for it in q_output_dict['activation']:
-                for _, node in it.items():
-                    for _, output in node.items():
-                        q_output.append(output)
-
-            return np.array(q_output)
-
         input_tensors = model.input_tensor
-        output_tensors = model.output_tensor
 
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
             if index >= 3: break # select first 3 inputs
             feed_dict = generate_feed_dict(input_tensors, inputs)
-            pred = model.sess.run(output_tensors, feed_dict)
+            output_tensor = []
+            for op in dequantize_ops:
+                for tensor in model.graph.get_operation_by_name(op).outputs:
+                    output_tensor.append(tensor)
+            pred = model.sess.run(output_tensor, feed_dict)
             predictions.append(*pred)
 
         return np.array(predictions)
