@@ -132,7 +132,7 @@ function multiInstance() {
     done
     $BOLD_GREEN && echo ${multi_instance_cmd} && $RESET
     eval "${multi_instance_cmd} wait"
-    benchmark_pids+=($!)
+    # benchmark_pids+=($!)
     status="SUCCESS"
     for pid in "${benchmark_pids[@]}"; do
         wait $pid
