@@ -101,18 +101,15 @@ class CompressionManager:
             assert False, "Unsupport export for {} model".format(type(self.model))
 
 
-def prepare_compression(
-    model: Callable, confs: Union[Callable, List], teacher_model: Callable = None, **kwargs
-):
+def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs):
     """_summary_
 
     Args:
-        model (Callable, optional): model to optimize.
+        model (Callable, optional):    model to optimize.
         confs (Union[Callable, List]): config of Distillation, Quantization, Pruning,
                                        or list of config for orchestration optimization
-        teacher_model (Callable, optional): teacher model for distillation. Defaults to None.
-        features (optional): teacher features for distillation, features and teacher_model are alternative.
-                                     Defaults to None.
+        options (Options, optional):   The configure for random_seed, workspace,
+                                       resume path and tensorboard flag.
 
     Returns:
         CompressionManager

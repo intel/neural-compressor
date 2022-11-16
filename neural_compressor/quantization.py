@@ -200,7 +200,7 @@ class Quantization(object):
 
 def fit(
     model, conf, calib_dataloader=None, calib_func=None, eval_dataloader=None,
-    eval_func=None, eval_metric=None, **kwargs
+    eval_func=None, eval_metric=None, options=None, **kwargs
 ):
     """Quantize the model with a given configure.
 
@@ -257,6 +257,8 @@ def fit(
                                                    output = model(input)
                                                    accuracy = metric(output, label)
                                                    return accuracy
+        options (Options, optional):          The configure for random_seed, workspace,
+                                              resume path and tensorboard flag.
 
     """
 
