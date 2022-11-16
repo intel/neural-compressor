@@ -841,7 +841,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
                                     {'preserved_attributes': []}
-                              })          
+                              })
             q_model = quantizer.fit()
             q_model.save('./saved')
             # Load configure and weights with neural_compressor.utils
