@@ -61,6 +61,19 @@ stages:
           uploadPath: $(UPLOAD_PATH)
           utArtifact: 'ut-coverage-ipex'
 
+- stage: ITEX
+  displayName: Unit Test ITEX
+  dependsOn: []
+  jobs:
+    - job:
+      steps:
+        - template: template/ut-basic-template.yml
+          parameters:
+            dockerConfigName: 'commonDockerConfig'
+            utScriptFileName: 'run_basic_itex'
+            uploadPath: $(UPLOAD_PATH)
+            utArtifact: 'ut-coverage-itex'
+
 - stage: Others
   displayName: Unit Test other basic case
   dependsOn: []
@@ -115,6 +128,20 @@ stages:
           uploadPath: $(UPLOAD_PATH)
           utArtifact: 'ut-coverage-ipex-base' 
           repo: $(REPO)
+
+- stage: ITEX_base
+  displayName: Unit Test ITEX baseline
+  dependsOn: []
+  jobs:
+    - job:
+      steps:
+        - template: template/ut-basic-template.yml
+          parameters:
+            dockerConfigName: 'gitCloneDockerConfig'
+            utScriptFileName: 'run_basic_itex'
+            uploadPath: $(UPLOAD_PATH)
+            utArtifact: 'ut-coverage-itex-base'
+            repo: $(REPO)
   
 - stage: Others_base
   displayName: Unit Test other cases baseline

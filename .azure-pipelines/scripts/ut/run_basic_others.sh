@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-echo "run basic"
+echo "run basic others"
 
 echo "specify fwk version..."
 export tensorflow_version='2.9.1'
