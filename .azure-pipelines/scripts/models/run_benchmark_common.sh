@@ -96,7 +96,7 @@ function run_accuracy() {
 function multiInstance() {
     ncores_per_socket=${ncores_per_socket:=$(lscpu | grep 'Core(s) per socket' | cut -d: -f2 | xargs echo -n)}
     $BOLD_YELLOW && echo "Executing multi instance benchmark" && $RESET
-    ncores_per_instance=1
+    ncores_per_instance=4
     $BOLD_YELLOW && echo "ncores_per_socket=${ncores_per_socket}, ncores_per_instance=${ncores_per_instance}" && $RESET
 
     logFile="${log_dir}/${framework}-${model}-performance-${precision}"
@@ -127,8 +127,8 @@ function multiInstance() {
     # core_list=($(echo $core_list | tr ';' ' '))
     multi_instance_cmd=""
     for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
-        $BOLD_GREEN && echo "numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
-        multi_instance_cmd+="( numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
+        $BOLD_GREEN && echo "OMP_NUM_THREADS=${ncores_per_instance} numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
+        multi_instance_cmd+="( OMP_NUM_THREADS=${ncores_per_instance} numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
     done
     $BOLD_GREEN && echo ${multi_instance_cmd} && $RESET
     eval "${multi_instance_cmd} wait"
