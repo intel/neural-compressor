@@ -124,6 +124,7 @@ elif [ "${mode}" == "collect_log" ]; then
         --model=${model} \
         --logs_dir="${log_dir}/${model}" \
         --output_dir="${log_dir}/${model}" \
-        --build_id=${BUILD_BUILDID}
+        --build_id=${BUILD_BUILDID} \
+        --stage=${mode}
     $BOLD_YELLOW && echo "====== Finish collect logs =======" && $RESET
 fi

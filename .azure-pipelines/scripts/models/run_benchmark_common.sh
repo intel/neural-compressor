@@ -34,12 +34,12 @@ $BOLD_YELLOW && echo "-------- run_benchmark_common --------" && $RESET
 main() {
     # run accuracy
     # USE_TUNE_ACC==true means using accuracy results from tuning log
-    if [ "${USE_TUNE_ACC}" == "false" ]; then
+    if [ $(USE_TUNE_ACC) == "false" ]; then
         run_accuracy
     fi
 
     # run performance
-    if [ "${PERF_STABLE_CHECK}" == "false" ]; then
+    if [ $(PERF_STABLE_CHECK) == "false" ]; then
         run_performance
     else 
         max_loop=3
