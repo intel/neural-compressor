@@ -242,6 +242,7 @@ class MSETuneStrategy(TuneStrategy):
                 #     2) re-quantize the op with lower sensitivity accumulatively
                 tune_cfg = deepcopy(self.cur_best_tuning_cfg)
                 requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg))
+                self.output_op_names = self.adaptor.get_output_op_names(self.model, requantize_cfg, self.calib_dataloader)
                 tune_cfg_backup = deepcopy(tune_cfg)
                 quant_ops_in_tune_cfg = self._collect_ops_by_quant_mode(tune_cfg, 'dynamic') + \
                                         self._collect_ops_by_quant_mode(tune_cfg, 'static')
@@ -254,6 +255,7 @@ class MSETuneStrategy(TuneStrategy):
                     ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
                                                                     deepcopy(self._tune_cfg_converter(tune_cfg)), 
+                                                                    self.output_op_names,
                                                                     fallback=True)
                     logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     select_op_info = ops_lst[0]
@@ -282,9 +284,10 @@ class MSETuneStrategy(TuneStrategy):
                     start = time()
                     ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
                                                                     self.calib_dataloader, 
-                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)), 
+                                                                    deepcopy(self._tune_cfg_converter(tune_cfg)),
+                                                                    self.output_op_names, 
                                                                     fallback=False,
-                                                                    requantize_cfgs=requantize_cfg)
+                                                                    requantize_cfgs=requantize_cfg['op'])
                     logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
                     if not ops_lst: 
                         logger.warning("No op to be requantized")
