@@ -11,7 +11,7 @@ from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import P
 from neural_compressor.adaptor.pytorch import TemplateAdaptor
 from neural_compressor.adaptor import FRAMEWORKS
 import shutil
-from neural_compressor.strategy.hawq_wenhuach import Hawq_top, fix_seed
+from neural_compressor.strategy.st_utils.hawq_wenhuach import Hawq_top, fix_seed
 
 fix_seed(1)
 
@@ -19,7 +19,7 @@ def build_ptq_yaml():
     fake_yaml = '''
         model:
           name: imagenet
-          framework: pytorch
+          framework: pytorch_fx
         quantization: 
           calibration:
         evaluation:
@@ -28,12 +28,12 @@ def build_ptq_yaml():
               topk: 1
         tuning:
           strategy:
-            name: mse
+            name: hawq
           accuracy_criterion:
             relative: -0.1
           random_seed: 9527
           exit_policy:
-            max_trials: 1
+            max_trials: 3
           workspace:
             path: saved
         '''
@@ -50,10 +50,17 @@ class TestPytorchAdaptor(unittest.TestCase):
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.resnet18()
 
+    # from collections import OrderedDict
+    # model = torch.nn.Sequential(OrderedDict([
+    #     ('conv1', torch.nn.Conv2d(3, 2, 1, 1)),
+    #     ('conv2', torch.nn.Conv2d(2, 1, 1, 1)),
+    #     ('flat', torch.nn.Flatten()),
+    # ]))
     # model = torch.quantization.QuantWrapper(model)
 
     @classmethod
     def setUpClass(self):
+        self.i = 0
         build_ptq_yaml()
 
 
@@ -63,22 +70,26 @@ class TestPytorchAdaptor(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
+
+
     def test_run_hawq_one_trial(self):
+        def eval_func(model):
+            self.i -= 1
+            return self.i
         from neural_compressor.experimental import Quantization, common
         model = copy.deepcopy(self.model)
-        for fake_yaml in ['ptq_yaml.yaml']:
-            if fake_yaml == 'ptq_yaml.yaml':
-                model.eval()
-            quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
-            quantizer.model = model
-            quantizer()
+
+        quantizer = Quantization('ptq_yaml.yaml')
+        quantizer.eval_func = eval_func
+        dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = model
+        quantizer()
 
 if __name__ == "__main__":
-    pass
-    # unittest.main()
+
+    unittest.main()
 
 # def build_hessian_trace():
 #     hessian_trace_config_yaml = '''
