@@ -10,6 +10,10 @@ do
             model=`echo $i | sed "s/${PATTERN}//"`;;
         --mode=*)
             mode=`echo $i | sed "s/${PATTERN}//"`;;
+        --USE_TUNE_ACC=*)
+            USE_TUNE_ACC=`echo $i | sed "s/${PATTERN}//"`;;
+        --PERF_STABLE_CHECK=*)
+            PERF_STABLE_CHECK=`echo $i | sed "s/${PATTERN}//"`;;
         *)
             echo "Parameter $i not recognized."; exit 1;;
     esac
@@ -125,4 +129,6 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
-    --mode=${mode}
+    --mode=${mode} \
+    --USE_TUNE_ACC=${USE_TUNE_ACC} \
+    --PERF_STABLE_CHECK=${PERF_STABLE_CHECK}

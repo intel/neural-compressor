@@ -35,6 +35,10 @@ do
             benchmark_cmd=`echo $i | sed "s/${PATTERN}//"`;;
         --mode=*)
             mode=`echo $i | sed "s/${PATTERN}//"`;;
+        --USE_TUNE_ACC=*)
+            USE_TUNE_ACC=`echo $i | sed "s/${PATTERN}//"`;;
+        --PERF_STABLE_CHECK=*)
+            PERF_STABLE_CHECK=`echo $i | sed "s/${PATTERN}//"`;;
         *)
             echo "Parameter $i not recognized."; exit 1;;
     esac
@@ -91,7 +95,9 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
         --log_dir="${log_dir}/${model}" \
         --new_benchmark=${new_benchmark} \
         --precision="fp32" \
-        --stage=${mode}
+        --stage=${mode} \
+        --USE_TUNE_ACC=${USE_TUNE_ACC} \
+        --PERF_STABLE_CHECK=${PERF_STABLE_CHECK}
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
@@ -114,7 +120,9 @@ elif [ "${mode}" == "int8_benchmark" ]; then
         --log_dir="${log_dir}/${model}" \
         --new_benchmark=${new_benchmark} \
         --precision="int8" \
-        --stage=${mode}
+        --stage=${mode} \
+        --USE_TUNE_ACC=${USE_TUNE_ACC} \
+        --PERF_STABLE_CHECK=${PERF_STABLE_CHECK}
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET
