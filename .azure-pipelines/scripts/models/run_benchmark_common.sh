@@ -127,8 +127,8 @@ function multiInstance() {
     # core_list=($(echo $core_list | tr ';' ' '))
     multi_instance_cmd=""
     for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
-        $BOLD_GREEN && echo "OMP_NUM_THREADS=${ncores_per_instance} numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
-        multi_instance_cmd+="( OMP_NUM_THREADS=${ncores_per_instance} numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
+        $BOLD_GREEN && echo "numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
+        multi_instance_cmd+="( numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
     done
     $BOLD_GREEN && echo ${multi_instance_cmd} && $RESET
     eval "${multi_instance_cmd} wait"
