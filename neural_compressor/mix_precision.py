@@ -17,7 +17,7 @@
 
 
 from .experimental.mixed_precision import MixedPrecision
-from neural_compressor.conf.pythonic_config import Config, MixedPrecisionConfig
+from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import MixedPrecisionConfig
 
 def fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs):
