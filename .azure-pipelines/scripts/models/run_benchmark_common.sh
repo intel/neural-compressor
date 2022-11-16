@@ -130,8 +130,8 @@ function multiInstance() {
         $BOLD_GREEN && echo "numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
         multi_instance_cmd+="( numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
     done
-
-    eval "${multi_instance_cmd}"
+    $BOLD_GREEN && echo ${multi_instance_cmd} && $RESET
+    eval "${multi_instance_cmd} wait"
     benchmark_pids+=($!)
     status="SUCCESS"
     for pid in "${benchmark_pids[@]}"; do
