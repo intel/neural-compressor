@@ -125,7 +125,7 @@ function multiInstance() {
     #         --num_of_instance=$(expr $ncores_per_socket / $ncores_per_instance)) \
     #         --
     # core_list=($(echo $core_list | tr ';' ' '))
-
+    multi_instance_cmd=""
     for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
         $BOLD_GREEN && echo "numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
         multi_instance_cmd+="( numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
