@@ -194,10 +194,11 @@ class MSETuneStrategy(TuneStrategy):
                 initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
 
             # step3. optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-            early_stop_tuning = False
+            early_stop_tuning = True
             stage1_cnt = 0
             int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
             stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
+            stage1_max=-1
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for op_tuning_cfg in op_wise_tuning_sampler:

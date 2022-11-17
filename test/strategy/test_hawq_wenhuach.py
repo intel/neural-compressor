@@ -12,7 +12,7 @@ from neural_compressor.adaptor.pytorch import TemplateAdaptor
 from neural_compressor.adaptor import FRAMEWORKS
 import shutil
 from neural_compressor.strategy.st_utils.hawq_wenhuach import Hawq_top, fix_seed
-
+from torch.quantization.quantize_fx import fuse_fx
 fix_seed(1)
 
 def build_ptq_yaml():
@@ -41,7 +41,7 @@ def build_ptq_yaml():
         f.write(fake_yaml)
 
 class TestPytorchAdaptor(unittest.TestCase):
-    framework_specific_info = {"device": "cpu",
+    framework_specific_info = {"device": "gpu",
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,
                                "q_dataloader": None,
@@ -49,6 +49,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = torchvision.models.resnet18()
+
 
     # from collections import OrderedDict
     # model = torch.nn.Sequential(OrderedDict([
@@ -78,10 +79,11 @@ class TestPytorchAdaptor(unittest.TestCase):
             return self.i
         from neural_compressor.experimental import Quantization, common
         model = copy.deepcopy(self.model)
-
+        model.eval()
+        model = fuse_fx(model)
         quantizer = Quantization('ptq_yaml.yaml')
         quantizer.eval_func = eval_func
-        dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
+        dataset = quantizer.dataset('dummy', (32, 3, 224, 224), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = model
