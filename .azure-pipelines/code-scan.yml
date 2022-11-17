@@ -1,6 +1,6 @@
 trigger: none
 
-pr: 
+pr:
   - master
 
 pool: ICX-16C
@@ -18,8 +18,8 @@ stages:
         steps:
           - template: template/code-scan-template.yml
             parameters:
-              codeScanFileName: 'bandit'
-              uploadPath: 'lpot-bandit.log'
+              codeScanFileName: "bandit"
+              uploadPath: "lpot-bandit.log"
 
   - stage: PylintCodeScan
     displayName: Pylint Code Scan
@@ -30,8 +30,8 @@ stages:
         steps:
           - template: template/code-scan-template.yml
             parameters:
-              codeScanFileName: 'pylint'
-              uploadPath: 'lpot-pylint.json'
+              codeScanFileName: "pylint"
+              uploadPath: "lpot-pylint.json"
 
   - stage: PyspellingCodeScan
     displayName: Pyspelling Code Scan
@@ -42,8 +42,8 @@ stages:
         steps:
           - template: template/code-scan-template.yml
             parameters:
-              codeScanFileName: 'pyspelling'
-              uploadPath: 'lpot_pyspelling.log'
+              codeScanFileName: "pyspelling"
+              uploadPath: "lpot_pyspelling.log"
 
   - stage: CopyRight
     displayName: CopyRight Code Scan
@@ -53,7 +53,7 @@ stages:
         displayName: CopyRight
         steps:
           - script: |
-              sudo rm -fr $(Build.SourcesDirectory) || true
+              rm -fr $(Build.SourcesDirectory) || true
               echo y | docker system prune
             displayName: "Clean workspace"
           - checkout: self
@@ -92,5 +92,5 @@ stages:
             inputs:
               targetPath: $(Build.SourcesDirectory)/$(CODE_SCAN_LOG_PATH)/copyright_issue_summary.log
               artifact: copyright
-              publishLocation: "pipeline" 
+              publishLocation: "pipeline"
             displayName: "PublishPipelineArtifact"

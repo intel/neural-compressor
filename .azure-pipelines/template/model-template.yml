@@ -75,3 +75,7 @@ steps:
         exit 1
       fi
     displayName: "Check Test Status"
+
+  - script: |
+      docker exec ${{ parameters.modelContainerName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+    displayName: "Docker clean up"
