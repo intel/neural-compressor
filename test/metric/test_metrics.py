@@ -1,6 +1,7 @@
 """Tests for the metrics module."""
 import numpy as np
 import unittest
+import platform
 from neural_compressor.metric import METRICS
 from neural_compressor.experimental.metric.f1 import evaluate
 from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
@@ -138,6 +139,7 @@ class TestMetrics(unittest.TestCase):
         F1.update(preds, labels)
         self.assertEqual(F1.result(), 0.8)
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet_F1(self):
         metrics = METRICS('mxnet')
         F1 = metrics['F1']()
@@ -187,7 +189,7 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(top2.result(), 0.8)
         self.assertEqual(top3.result(), 1)
 
-
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet_topk(self):
         metrics = METRICS('mxnet')
         top1 = metrics['topk']()
@@ -799,6 +801,7 @@ class TestMetrics(unittest.TestCase):
         self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)
         self.assertRaises(ValueError, mAP2.update, detection_2, ground_truth_2)
  
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test__accuracy(self):
         predicts1 = [1, 0, 1, 1]
         labels1 = [0, 1, 1, 1]
@@ -866,6 +869,7 @@ class TestMetrics(unittest.TestCase):
         self.assertRaises(ValueError, acc.update, wrong_predictions, wrong_labels)
  
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet_accuracy(self):
         metrics = METRICS('mxnet')
         acc = metrics['Accuracy']()
@@ -875,6 +879,7 @@ class TestMetrics(unittest.TestCase):
         acc_result = acc.result()
         self.assertEqual(acc_result, 0.5)
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test_mse(self):
         predicts1 = [1, 0, 0, 1]
         labels1 = [0, 1, 0, 0]
@@ -918,6 +923,7 @@ class TestMetrics(unittest.TestCase):
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.625)
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test_mae(self):
         predicts1 = [1, 0, 0, 1]
         labels1 = [0, 1, 0, 0]
@@ -969,6 +975,7 @@ class TestMetrics(unittest.TestCase):
         self.assertRaises(AssertionError, mae.update, [1, 2], [1])
         self.assertRaises(AssertionError, mae.update, 1, np.array([1,2]))
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test_rmse(self):
         predicts1 = [1, 0, 0, 1]
         labels1 = [1, 0, 0, 0]

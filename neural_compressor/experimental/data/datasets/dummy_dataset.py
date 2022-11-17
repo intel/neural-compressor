@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Dummy dataset for dummy data generation on multiple framework backends."""
 
 from .dataset import dataset_registry, Dataset
 import numpy as np
@@ -23,7 +25,7 @@ import logging
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="dummy", framework="tensorflow, tensorflow_itex, \
                                                    onnxrt_qlinearops, onnxrt_integerops, \
@@ -32,33 +34,31 @@ logger = logging.getLogger()
                                                    dataset_format='')
 class DummyDataset(Dataset):
     """Dataset used for dummy data generation.
-       This Dataset is to construct a dataset from a specific shape.
-       the value range is calculated from: low * stand_normal(0, 1) + high
-       (TODO) construct dummy data from real dataset or iteration of data.
 
-    Args: shape (list or tuple):support create multi shape tensors, use list of tuples
-                                for each tuple in the list, will create a such size tensor.
-          low (list or float, default=-128.):low out the tensor value range from [0, 1] 
-                                            to [0, low] or [low, 0] if low < 0, if float, 
-                                            will implement all tensors with same low value.  
-          high (list or float, default=127.):high the tensor value by add all tensor element
-                                            value high. If list, length of list should be 
-                                            same with shape list.
-          dtype (list or str, default='float32'):support multi tensor dtype setting. If list,
-                                                length of list should be same with shape list,
-                                                if str, all tensors will use same dtype. dtype
-                                                support 'float32', 'float16', 'uint8', 'int8',
-                                                'int32', 'int64', 'bool'.
-          label (bool, default=True):whether to return 0 as label.
-          transform (transform object, default=None): dummy dataset does not need transform.
-                                                        If transform is not None, it will ignore
-                                                        it.  
-          filter (Filter objects, default=None): filter out examples according to 
-                                                specific conditions                                         
+    This Dataset is to construct a dataset from a specific shape.
+    The value range is calculated from: low * stand_normal(0, 1) + high.
+    (TODO) construct dummy data from real dataset or iteration of data.
     """
+
     def __init__(self, shape, low=-128., high=127., dtype='float32', label=True, \
         transform=None, filter=None):
+        """Initialize `DummyDataset` class.
 
+        Args:
+            shape (list or tuple): Support create multi shape tensors, use list of tuples
+                for each tuple in the list, will create a such size tensor.
+            low (list or float, default=-128.): Low out the tensor value range from [0, 1]
+                to [0, low] or [low, 0] if low < 0, if float, will implement all tensors with same low value.
+            high (list or float, default=127.): High the tensor value by add all tensor element
+                value high. If list, length of list should be same with shape list.
+            dtype (list or str, default='float32'): Support multi tensor dtype setting.
+                If list, length of list should be same with shape list. If str, all tensors will
+                use same dtype. dtype supports 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool'.
+            label (bool, default=True): Whether to return 0 as label.
+            transform (transform object, default=None): Dummy dataset does not need transform.
+                If transform is not None, it will ignore it.
+            filter (Filter objects, default=None): Filter out examples according to specific conditions.
+        """
         dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
                      'int8': np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':bool,\
                      'string': str}
@@ -128,10 +128,11 @@ class DummyDataset(Dataset):
 
 
     def __len__(self):
+        """Return the length of dataset."""
         return len(self.dataset)
 
     def __getitem__(self, index):
-
+        """Return the item of dataset according to the given index."""
         sample = self.dataset[index]
         if self.transform is not None:
             logger.warning("Dummy dataset does not need transform.")

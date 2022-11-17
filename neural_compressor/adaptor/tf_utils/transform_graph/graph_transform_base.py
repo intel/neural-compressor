@@ -25,7 +25,7 @@ import re
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 class GraphTransformBase(object):
     def __init__(self, input_pb):

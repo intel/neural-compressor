@@ -14,7 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+# ==============================================================================
+"""Class for low precision model generation across multiple framework backends."""
 import os
 import pickle
 import random
@@ -33,17 +34,20 @@ from ..model import BaseModel
 from .graph_optimization import GraphOptimization
 
 class MixedPrecision(GraphOptimization):
-    """MixedPrecision class automatically generates low precision model across various DL
-       frameworks including tensorflow, pytorch and onnxruntime.
+    """Class used for generating low precision model.
 
-    Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            Graph_Optimization_Conf class containing accuracy goal, tuning objective and
-            preferred calibration & quantization tuning space etc.
-
+    MixedPrecision class automatically generates low precision model across various DL
+    frameworks including tensorflow, pytorch and onnxruntime.
     """
 
     def __init__(self, conf_fname_or_obj=None):
+        """Initialize `MixedPrecision` class.
+
+        Args:
+            conf_fname_or_obj (string or obj): The path to the YAML configuration file or
+                Graph_Optimization_Conf class containing accuracy goal, tuning objective and
+                preferred calibration & quantization tuning space etc.
+        """
         self.conf_name = conf_fname_or_obj
         self._model = None
         self._eval_dataloader = None
@@ -68,7 +72,7 @@ class MixedPrecision(GraphOptimization):
         np.random.seed(seed)
 
     def __call__(self):
-        """The main entry point of mixed precision process.
+        """Call `MixedPrecision` class. The main entry point of mixed precision process.
 
            This interface works on all the DL frameworks that neural_compressor supports
            and provides three usages:
@@ -95,7 +99,6 @@ class MixedPrecision(GraphOptimization):
             converted model: best converted model found, otherwise return None
 
         """
-
         assert isinstance(self._model, BaseModel), 'need set your Model for mixed precision....'
         if 'onnx' in self.framework and 'bf16' in self._precisions:
             logger.warning("Mixed precision doesn't support bf16 for ONNX models.")
@@ -196,10 +199,12 @@ class MixedPrecision(GraphOptimization):
 
     @property
     def precisions(self):
+        """Get private member variable `precisions` of `MixedPrecision` class."""
         return self._precisions
 
     @precisions.setter
     def precisions(self, customized_precisions):
+        """Set private member variable `precisions` of `MixedPrecision` class."""
         if isinstance(customized_precisions, list):
             self._precisions = sorted([i.strip() for i in customized_precisions])
         elif isinstance(customized_precisions, str):
@@ -207,6 +212,7 @@ class MixedPrecision(GraphOptimization):
         self.conf.usr_cfg.mixed_precision.precisions = self._precisions
 
     def set_config_by_model(self, model_obj):
+        """Set member variable `conf` by a input model object."""
         self.conf.usr_cfg.model.framework = model_obj.framework()
         if self._input:
             self.conf.usr_cfg.model.inputs = self._input
@@ -217,4 +223,5 @@ class MixedPrecision(GraphOptimization):
                 self.conf.usr_cfg.model.outputs = self._output
 
     def __repr__(self):
+        """Return 'MixedPrecision'."""
         return 'MixedPrecision'

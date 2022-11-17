@@ -30,7 +30,7 @@ class Logger(object):
 
     def _log(self):
         LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
-        self._logger = logging.getLogger()
+        self._logger = logging.getLogger("neural_compressor")
         self._logger.handlers.clear()
         self._logger.setLevel(LOGLEVEL)
         formatter = logging.Formatter(

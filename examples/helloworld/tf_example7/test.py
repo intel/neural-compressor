@@ -2,7 +2,6 @@ import tensorflow as tf
 from argparse import ArgumentParser
 from neural_compressor import conf
 from neural_compressor.experimental import common
-tf.compat.v1.disable_eager_execution()
 
 def main():
     arg_parser = ArgumentParser(description='Parse args')

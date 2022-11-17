@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Initialize the DATASETS class."""
+
 import numpy as np
 from neural_compressor.utils.utility import LazyImport
 from .base_dataloader import BaseDataLoader
@@ -22,9 +24,28 @@ torch = LazyImport('torch')
 hvd = LazyImport('horovod.torch')
 
 class PyTorchDataLoader(BaseDataLoader):
+    """PyTorchDataLoader inherits from BaseDataLoader."""
+
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
                              shuffle, distributed):
+        """Generate PyTorch dataloader.
+
+        Args:
+            dataset: dataset
+            batch_size (int): batch size
+            last_batch (string): rollover last batch or not.
+            collate_fn: collate_fn
+            sampler: sampler
+            batch_sampler: batch_sampler
+            num_workers (int): num_workers
+            pin_memory (bool): pin_memory
+            shuffle (bool): shuffle
+            distributed (bool): distributed
+
+        Returns:
+            _type_: _description_
+        """
         drop_last = False if last_batch == 'rollover' else True
         assert len(dataset) != 0, \
                     "Warning: Dataset is empty, Please check dataset path!"

@@ -20,6 +20,7 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
+import os
 import onnx
 import logging
 import numpy as np
@@ -40,13 +41,14 @@ from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 class Quantizer:
     def __init__(self, model, q_config, mode, static, quantization_params,
                  op_types_to_quantize, fallback_list=['fp32'], reduce_range=None):
-        model = onnx.shape_inference.infer_shapes(model)
-        self.model = ONNXModel(model)
+        self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
+        model = onnx.shape_inference.infer_shapes(self.model.model) if \
+            not self.model.large_size else self.model.model
         self.config = q_config
         self.reduce_range = reduce_range if reduce_range is not None \
             else False if CpuInfo().vnni else True
@@ -500,8 +502,7 @@ class Quantizer:
                             "In static mode quantization params for inputs and outputs \
                             of nodes to be quantized are required.".format(tensor_name))
                     if direct_int8:
-                        parent = self.model.get_parents(node)[0]
-                        if not parent.output[0].endswith('_QuantizeInput'):
+                        if node.input[0] not in self.quantized_value_map:
                             return
                     q_input = tensor_name
                     q_output = tensor_name + "_" + node.name + "_QuantizeLinear" if \
@@ -510,6 +511,8 @@ class Quantizer:
                     dq_output = tensor_name + "_" + node.name + "_dequantized" if \
                         tensor_name not in self.model.input() else tensor_name + "_dequantized"
                     self.replace_input.append([node, tensor_name, dq_output])
+                    if tensor_name in self.model.input() and tensor_name in self.quantized_value_map:
+                        continue
 
                     quant_node_name = tensor_name + "_" + node.name + "_QuantizeLinear"
                     dequant_node_name = tensor_name + "_" + node.name + "_DequantizeLinear"

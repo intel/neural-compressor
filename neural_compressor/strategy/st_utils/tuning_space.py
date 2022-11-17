@@ -55,17 +55,18 @@ class TuningItem:
                 return option
         return None
 
-    def show_details(self, depth=1):
+    def get_details(self, depth=0):
         """
         :return:
         """
-        print(self.name, f",  {self.item_type}")
+
+        details = ['\t' * depth + f"{self.name},  {self.item_type}"]
         for option in self.options:
             if isinstance(option, int) or isinstance(option, str):
-                print("\t" * depth, option)
+                details.append("\t" * depth + str(option))
             else:
-                print("\t" * depth, end="")
-                option.show_details(depth + 1)
+                details.append(option.get_details(depth + 1))
+        return "\n".join(details)
 
 
 class TuningSpace:

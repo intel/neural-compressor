@@ -28,7 +28,6 @@ export class DatasetFormComponent implements OnInit {
   datasetFormGroup: FormGroup;
 
   metrics = [];
-  metricParam: string;
   metricParams = [];
   metricParamsCopy = [];
 
@@ -198,14 +197,12 @@ export class DatasetFormComponent implements OnInit {
   setDefaultMetricParam(event) {
     if (this.metrics.length) {
       this.metricParams = this.metrics.find(x => x.name === event.value)?.params;
-      this.metricParamsCopy = (JSON.parse(JSON.stringify(this.metricParams)));
+      this.metricParamsCopy = this.metricParams ? (JSON.parse(JSON.stringify(this.metricParams))) : undefined;
       if (this.metricParams && this.metricParams.length === 1) {
-        this.metricParam = this.metricParams[0].value;
+        this.metricParamsCopy[0].value = this.metricParams[0].value;
         if (Array.isArray(this.metricParams[0].value)) {
-          this.metricParam = this.metricParams[0].value[0];
+          this.metricParamsCopy[0].value = this.metricParams[0].value[0];
         }
-      } else {
-        this.metricParam = null;
       }
     }
   }
@@ -233,9 +230,7 @@ export class DatasetFormComponent implements OnInit {
 
   getMetricParams(): any {
     const parsedMetricParameter = {};
-    if (this.metricParam) {
-      return this.metricParam;
-    } else {
+    if (Array.isArray(this.metricParamsCopy)) {
       this.metricParamsCopy.forEach(param => {
         if (param.params) {
           parsedMetricParameter[param.name] = {};
@@ -246,6 +241,9 @@ export class DatasetFormComponent implements OnInit {
           parsedMetricParameter[param.name] = param.value;
         }
       });
+      if (this.metricParamsCopy[0].name === 'k') {
+        return this.metricParamsCopy[0].value;
+      }
     }
     return parsedMetricParameter;
   }
@@ -296,7 +294,7 @@ export class DatasetFormComponent implements OnInit {
             if (paramFile === 'dataset') {
               this.dataLoaderParams.find(x => x.name === inputFieldName).value = response.chosenFile;
             } else if (paramFile === 'metric') {
-              this.metricParam = response.chosenFile;
+              this.metricParamsCopy.find(x => x.name === inputFieldName).value = response.chosenFile;
             } else {
               paramFile.find(x => x.name === inputFieldName).value = response.chosenFile;
             }

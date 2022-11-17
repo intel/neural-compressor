@@ -21,10 +21,12 @@ import os
 import math
 import copy
 import pickle
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from pathlib import Path
 import yaml
 import numpy as np
+
+from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
 from ..objective import MultiObjective
 from ..adaptor import FRAMEWORKS
 from ..utils.utility import Statistics, dump_data_to_local
@@ -129,7 +131,7 @@ class TuneStrategy(object):
         self.q_hooks = q_hooks
         self.eval_func = eval_func
         GLOBAL_STATE.STATE = MODE.QUANTIZATION
-        framework, framework_specific_info = self.set_framework_info(q_dataloader)
+        framework, framework_specific_info = self.set_framework_info(q_dataloader, q_func)
         self.adaptor = FRAMEWORKS[framework](framework_specific_info)
         self.framework = framework
 
@@ -177,7 +179,14 @@ class TuneStrategy(object):
         self.algo.dataloader = self.calib_dataloader  # reuse the calibration iteration
         self.algo.origin_model = self.model
         self.algo.adaptor = self.adaptor
-        
+
+        self._optype_statistics = None
+        self.fallback_stats_baseline = None
+        self.fallback_stats = None
+        self.tuning_times = 0
+        self.fallback_start_point = 0
+        self.metric_met_point = 0
+
         if resume is not None: self.setup_resume(resume)
 
 
@@ -190,7 +199,7 @@ class TuneStrategy(object):
             tune_config (dict): It's a dict containing the tuning configuration to run.
         """
         raise NotImplementedError
-    
+
 
     def traverse(self):
         """The main traverse logic, which could be override by some concrete strategy which needs
@@ -216,6 +225,7 @@ class TuneStrategy(object):
         self.show_baseline_info()
 
         trials_count = 0
+
         for op_tuning_cfg in self.next_tune_cfg():
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             trials_count += 1
@@ -227,6 +237,8 @@ class TuneStrategy(object):
                 continue
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
+
+            self.tuning_times += 1
             self.q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             self.algo.calib_iter = tune_cfg['calib_iteration']
@@ -250,6 +262,7 @@ class TuneStrategy(object):
                                     q_config=self.q_model.q_config)
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
+            self._dump_tuning_process_statistics()
             if need_stop:
                 if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
@@ -264,8 +277,105 @@ class TuneStrategy(object):
                             os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
                             best_trail)
                         self.best_tune_result = best_result
+                    self._dump_tuning_process_statistics()
                 break
 
+
+    def _fallback_started(self):
+        self.fallback_start_point = self.tuning_times
+
+    def _update_optype_statistics(self):
+        self._optype_statistics = defaultdict(lambda:defaultdict(int))
+
+        for op_name_type, op_tune_cfg in self.tune_cfg['op'].items():
+            optype = op_name_type[1]
+            quant_mode = op_tune_cfg['activation']['quant_mode']
+            if isinstance(quant_mode, tuple) or isinstance(quant_mode, list):
+                quant_mode = quant_mode[0]
+            dtype = 'INT8' if quant_mode in ('static', 'dynamic') \
+                    else quant_mode.upper()
+            self._optype_statistics[optype]['Total'] += 1
+            self._optype_statistics[optype][dtype] += 1
+        return
+
+    def _dump_tuning_process_statistics(self):
+        self._update_optype_statistics()
+        
+        logger.debug("Current tuning process statistics:")
+        logger.debug(f"Total Tuning Times: {self.tuning_times}")
+        logger.debug("Fallback started at Tune {}".format(self.fallback_start_point))
+        logger.debug("Objective(s) met at Tune {}".format(self.metric_met_point))
+
+        fallback_stats = self._calculate_fallback_op_count()
+        if self.fallback_stats_baseline == None: 
+            self.fallback_stats_baseline = fallback_stats
+        logger.debug(f"Fallbacked ops count: {self.fallback_stats_baseline - fallback_stats}")
+
+        if isinstance(self.adaptor, TensorFlowAdaptor):
+            self._compare_optype_statistics()
+        
+        return
+
+    def _calculate_fallback_op_count(self, target_dtype='INT8'):
+        fallback_stats = defaultdict(int)
+        
+        for optype in self._optype_statistics:
+            for dtype, count in self._optype_statistics[optype].items():
+                fallback_stats[dtype] += count
+
+        return fallback_stats[target_dtype]
+
+    
+    def _compare_optype_statistics(self, fields=None, optypes=None,
+                                   skip_fields=None, skip_optypes=None):
+        assert(fields == None or skip_fields == None)
+        assert(optypes == None or skip_optypes == None)
+        if not isinstance(self.adaptor, TensorFlowAdaptor):
+            logger.debug("OpType statistics comparation is only available for TensorFlow adaptor.")
+            return
+
+        adaptor_statistics = self.adaptor.optype_statistics
+
+        def _field_skipped(field):
+            if fields != None:
+                return field not in fields
+            elif skip_fields != None:
+                return field in skip_fields
+
+        def _optype_skipped(optype):
+            if optypes != None:
+                return optype not in optypes
+            elif skip_optypes != None:
+                return optype in skip_optypes
+        
+
+        field_names = adaptor_statistics[0][1:]
+        adaptor_data = {
+            line[0].lower() : {dtype : count for dtype, count in zip(field_names, line[1:])}
+        for line in adaptor_statistics[1]}
+        strategy_data = self._optype_statistics
+            
+        # compare adaptor statistics to strategy statistics
+        logger.debug("Statistics difference between adaptor and tuning config:")
+        has_difference = False
+        difference_count = 0
+        for optype in adaptor_data:
+            if optype not in strategy_data or _optype_skipped(optype): continue
+            for field in field_names:
+                if _field_skipped(field): continue
+                adaptor_count = adaptor_data[optype][field]
+                strategy_count = strategy_data[optype][field]
+                if adaptor_count != strategy_count:
+                    has_difference = True 
+                    if field == 'INT8':
+                        difference_count += abs(strategy_count - adaptor_count)                   
+                    logger.debug("\t{}: [adaptor: {} | tune_cfg: {}]".format(
+                        (optype, field), adaptor_count, strategy_count))
+        if not has_difference:
+            logger.debug("\tNone")
+        logger.debug(f"\tDifference(s) in total: {difference_count}")
+        return
+        
     def initial_tuning_cfg(self):
         if self.cfg.quantization.approach == 'post_training_auto_quant':
             query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
@@ -344,7 +454,7 @@ class TuneStrategy(object):
             else:
                 tune_cfg[op_name_type] = op_config
         tune_cfg['calib_sampling_size'] = op_tuning_cfg['calib_sampling_size']
-        if self.calib_dataloader:
+        if self.calib_dataloader is not None:
             tune_cfg['calib_iteration'] =  math.ceil(int(tune_cfg['calib_sampling_size']) / \
                                                     self.calib_dataloader.batch_size) 
         else:
@@ -366,8 +476,7 @@ class TuneStrategy(object):
             'op': self.capability['opwise']
         }
         self.tuning_space = TuningSpace(adaptor_cap, conf=conf, framework=self.framework)
-        if logger.level < 20:
-            self.tuning_space.root_item.show_details()
+        logger.debug(self.tuning_space.root_item.get_details())
 
     def setup_resume(self, resume):
         self.__dict__.update(resume)
@@ -405,7 +514,7 @@ class TuneStrategy(object):
         path.mkdir(exist_ok=True, parents=True)
         return new_path
 
-    def set_framework_info(self,q_dataloader):
+    def set_framework_info(self, q_dataloader, q_func=None):
         framework_specific_info = {'device': self.cfg.device,
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
@@ -447,6 +556,7 @@ class TuneStrategy(object):
                and 'default_qconfig' in self.cfg['quantization']['op_wise']:
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
+            framework_specific_info.update({"q_func": q_func})
         return framework, framework_specific_info
 
     def set_objectives(self):
@@ -684,6 +794,8 @@ class TuneStrategy(object):
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
+            if self.metric_met_point == 0:
+                self.metric_met_point = self.tuning_times
         else:
             del self.last_qmodel
 
@@ -884,7 +996,7 @@ class TuneStrategy(object):
 
     def _diagnosis(self):
         import logging
-        logger = logging.getLogger()
+        logger = logging.getLogger("neural_compressor")
         iteration_list = self.cfg.tuning.diagnosis.iteration_list
         inspect_type = self.cfg.tuning.diagnosis.inspect_type
         save_to_disk = self.cfg.tuning.diagnosis.save_to_disk

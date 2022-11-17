@@ -55,7 +55,7 @@ class TensorFlowAdaptor(Adaptor):
         super().__init__(framework_specific_info)
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
         self.approach = deep_get(self.framework_specific_info, 'approach', False)
@@ -88,6 +88,8 @@ class TensorFlowAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.callbacks = []
+
+        self.optype_statistics = None
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -526,7 +528,8 @@ class TensorFlowAdaptor(Adaptor):
 
             return self.convert(common.Model(qat_model), 'QAT', 'default')
 
-        assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        assert q_func is None, \
+            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -661,12 +664,17 @@ class TensorFlowAdaptor(Adaptor):
                         res[i.op]['FP32'] += 1
                 else:
                     res[i.op]['FP32'] += 1
-        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-                        res[op_type]['BF16'], res[op_type]['FP32']] for op_type in fp32_op_list]
+        
+        field_names = ["Op Type", "Total", "INT8", "BF16", "FP32"]
+        output_data = [[
+            op_type, sum(res[op_type].values()), 
+            res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']]
+        for op_type in fp32_op_list]
 
         Statistics(output_data,
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
 
     def _query_bf16_ops(self, matched_nodes):
         self.bf16_op_details = OrderedDict()
@@ -844,7 +852,8 @@ class TensorFlowAdaptor(Adaptor):
             return False
 
 
-        if self.new_api and self.performance_only:
+        if (self.new_api and self.performance_only) or self.itex_mode or \
+                    os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
             self.filter_unquantizable_concat_performance_only(matched_nodes)
         else:
             self.filter_unquantizable_concat(matched_nodes)
@@ -1488,10 +1497,12 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                     new_api=self.new_api,
                                     performance_only = self.performance_only).convert()
             except Exception: # pragma: no cover
+                from .tf_utils.util import get_model_input_shape
+                batch_size = get_model_input_shape(model)
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, 1))
-                data_loader.batch(1)
+                        format(data_loader.batch_size, batch_size))
+                data_loader.batch(batch_size)
                 self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
                                 qt_config=self.quantize_config,

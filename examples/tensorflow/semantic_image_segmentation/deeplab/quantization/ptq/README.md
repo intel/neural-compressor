@@ -2,6 +2,7 @@ Step-by-Step
 ============
 
 This document list steps of reproducing Intel Optimized TensorFlow image recognition models tuning results via Neural Compressor.
+This example can run on Intel CPUs and GPUs.
 
 > **Note**: 
 > Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
@@ -16,14 +17,36 @@ This document list steps of reproducing Intel Optimized TensorFlow image recogni
   pip install -r requirements.txt
   ```
 
-### 2. Prepare Dataset
+### 2. Install Intel Tensorflow
+```shell
+pip install intel-tensorflow
+```
+> Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
+
+### 3. Install Intel Extension for Tensorflow
+#### Quantizing the model on Intel GPU
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Quantizing the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 4. Prepare Dataset
 Please use the script under the folder `datasets` to download and convert PASCAL VOC 2012 semantic segmentation dataset to TFRecord. Refer to [Running DeepLab on PASCAL VOC 2012 Semantic Segmentation Dataset](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/pascal.md#running-deeplab-on-pascal-voc-2012-semantic-segmentation-dataset) for more details.
 ```shell
 # From the examples/tensorflow/semantic_image_segmentation/deeplab/datasets directory.
 sh download_and_convert_voc2012.sh
 ```
 
-### 3. Prepare pre-trained model
+### 5. Prepare pre-trained model
 Refer to [Export trained deeplab model to frozen inference graph](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/export_model.md#export-trained-deeplab-model-to-frozen-inference-graph) for more details.
 
 1. Download the checkpoint file
@@ -80,12 +103,11 @@ We provide Deeplab model pretrained on PASCAL VOC 2012, Using mIOU as metric whi
 
 ### Write Yaml config file
 
-In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning. 
-
+In examples directory, there is a deeplab.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The deeplab_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 # deeplab.yaml
-
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 model:                                               # mandatory. neural_compressor uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: deeplab
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.

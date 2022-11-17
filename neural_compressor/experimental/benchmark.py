@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Benchmarking: measure the model performance with the objective settings."""
+
 import os
 import re
 import sys
@@ -42,15 +44,20 @@ from ..model.model import get_model_fwk_name
 from ..conf.pythonic_config import Config
 
 def set_env_var(env_var, value, overwrite_existing=False):
-    """Sets the specified environment variable. Only set new env in two cases:
-        1. env not exists
-        2. env already exists but overwirte_existing params set True
+    """Set the specified environment variable.
+
+    Only set new env in two cases:
+    1. env not exists
+    2. env already exists but overwrite_existing params set True
     """
     if overwrite_existing or not os.environ.get(env_var):
         os.environ[env_var] = str(value)
 
 def set_all_env_var(conf, overwrite_existing=False):
-    # neural_compressor only use physical cores
+    """Set all the environment variables with the configuration dict.
+
+    Neural Compressor only uses physical cores
+    """
     cpu_counts = psutil.cpu_count(logical=False)
     if not conf:
         conf = {}
@@ -62,24 +69,87 @@ def set_all_env_var(conf, overwrite_existing=False):
     else:
         assert conf['num_of_instance'] <= cpu_counts, 'num_of_instance should <= cpu counts'
         conf['cores_per_instance'] = int(cpu_counts / conf['num_of_instance'])
-    
+
     for var, value in conf.items():
         set_env_var(var.upper(), value, overwrite_existing)
 
+def get_architecture():
+    """Get the architecture name of the system."""
+    p1 = subprocess.Popen("lscpu", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p2 = subprocess.Popen(["grep", "Architecture"], stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
+    res=None
+    for line in iter(p3.stdout.readline, b''):
+        res=line.decode("utf-8").strip()
+    return res
+
+def get_threads_per_core():
+    """Get the threads per core."""
+    p1 = subprocess.Popen("lscpu", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p2 = subprocess.Popen(["grep", "Thread(s) per core"], stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
+    res = None
+    for line in iter(p3.stdout.readline, b''):
+        res=line.decode("utf-8").strip()
+    return res
+
+def get_threads():
+    """Get the list of threads."""
+    p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p2 = subprocess.Popen(["grep", "processor"], stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
+    res = []
+    for line in iter(p3.stdout.readline, b''):
+        res.append(line.decode("utf-8").strip())
+    return res
+
+def get_physical_ids():
+    """Get the list of sockets."""
+    p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p2 = subprocess.Popen(["grep", "physical id"], stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
+    res = []
+    for line in iter(p3.stdout.readline, b''):
+        res.append(line.decode("utf-8").strip())
+    return res
+
+def get_core_ids():
+    """Get the ids list of the cores."""
+    p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p2 = subprocess.Popen(["grep", "core id"], stdin=p1.stdout, stdout=subprocess.PIPE)
+    p3 = subprocess.Popen(["cut", "-d", ":", "-f2"], stdin=p2.stdout, stdout=subprocess.PIPE)
+    res = []
+    for line in iter(p3.stdout.readline, b''):
+        res.append(line.decode("utf-8").strip())
+    return res
+
+def get_bounded_threads(core_ids, threads, sockets):
+    """Return the threads id list that we will bind instances to."""
+    res = []
+    existing_socket_core_list = []
+    for idx, x in enumerate(core_ids):
+        socket_core = sockets[idx] + ":" + x
+        if socket_core not in existing_socket_core_list:
+            res.append(int(threads[idx]))
+            existing_socket_core_list.append(socket_core)
+    return res
+
 class Benchmark(object):
-    """Benchmark class can be used to evaluate the model performance, with the objective
-       setting, user can get the data of what they configured in yaml
-       NOTICE: neural_compressor Benchmark will use the original command to run sub process, this will
-       depend on user's code and has possibility to run unneccessary code
+    """Benchmark class is used to evaluate the model performance with the objective settings.
 
-    Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            BenchmarkConf class containing accuracy goal, tuning objective and preferred
-            calibration & quantization tuning space etc.
-
+    Users can use the data that they configured in YAML
+    NOTICE: neural_compressor Benchmark will use the original command to run sub-process, which
+    depends on the user's code and has the possibility to run unnecessary code
     """
 
     def __init__(self, conf_fname_or_obj=None):
+        """Init a Benchmark object.
+
+        Args:
+            conf_fname_or_obj (string or obj): The path to the YAML configuration file or
+                BenchmarkConf class containing accuracy goal, tuning objective, and preferred
+                calibration & quantization tuning space etc.
+        """
         self.framework = None
         self._model = None
         self._b_dataloader = None
@@ -99,6 +169,14 @@ class Benchmark(object):
             set_backend(self.framework)
 
     def __call__(self, mode='performance'):
+        """Directly call a Benchmark object.
+
+        Args:
+            mode: 'performance' or 'accuracy'
+            'performance' mode runs benchmarking with numactl on specific cores and instances set
+                by user config and returns model performance
+            'accuracy' mode runs benchmarking with full cores and returns model accuracy
+        """
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
@@ -118,6 +196,7 @@ class Benchmark(object):
     fit = __call__
 
     def summary_benchmark(self):
+        """Get the summary of the benchmark."""
         if sys.platform in ['linux']:
             num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
@@ -141,12 +220,23 @@ class Benchmark(object):
             pass
 
     def config_instance(self):
+        """Configure the multi-instance commands and trigger benchmark with sub process."""
         raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
         multi_instance_cmd = ''
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+
+        if(get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
+            raise OSError('Currently no support on AMD with hyperthreads')
+        else:
+            bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
+
         for i in range(0, num_of_instance):
-            core_list = np.arange(0, cores_per_instance) + i * cores_per_instance
+            if get_architecture() == 'x86_64':
+                core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
+                core_list = np.array(bounded_threads)[core_list_idx]
+            else:
+                core_list = np.arange(0, cores_per_instance) + i * cores_per_instance
             # bind cores only allowed in linux/mac os with numactl enabled
             prefix = self.generate_prefix(core_list)
             instance_cmd = '{} {}'.format(prefix, raw_cmd)
@@ -157,7 +247,7 @@ class Benchmark(object):
             else:  # pragma: no cover
                 # (TODO) should also add log to win32 benchmark
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
-        
+
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
         logger.info("Running command is\n{}".format(multi_instance_cmd))
         # each instance will execute single instance
@@ -172,6 +262,11 @@ class Benchmark(object):
             os.killpg(os.getpgid(p.pid), signal.SIGKILL)
 
     def generate_prefix(self, core_list):
+        """Generate the command prefix with numactl.
+
+        Args:
+            core_list: a list of core indexes bound with specific instances
+        """
         if sys.platform in ['linux'] and os.system('numactl --show >/dev/null 2>&1') == 0:
             return 'OMP_NUM_THREADS={} numactl --localalloc --physcpubind={}'.format(\
                 len(core_list), ','.join(core_list.astype(str)))
@@ -191,6 +286,14 @@ class Benchmark(object):
             return ''
 
     def run_instance(self, mode):
+        """Run the instance with the configuration.
+
+        Args:
+            mode: 'performance' or 'accuracy'
+            'performance' mode runs benchmarking with numactl on specific cores and instances set
+                by user config and returns model performance
+            'accuracy' mode runs benchmarking with full cores and returns model accuracy
+        """
         cfg = self.conf.usr_cfg
         GLOBAL_STATE.STATE = MODE.BENCHMARK
         framework_specific_info = {'device': cfg.device, \
@@ -234,7 +337,7 @@ class Benchmark(object):
 
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
-            
+
         if self._b_func is None:
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
@@ -289,44 +392,46 @@ class Benchmark(object):
 
     @property
     def results(self):
+        """Get the results of benchmarking."""
         return self._results
 
     @property
     def b_dataloader(self):
+        """Get the dataloader for the benchmarking."""
         return self._b_dataloader
 
     @b_dataloader.setter
     def b_dataloader(self, dataloader):
-        """Set Data loader for benchmark, It is iterable and the batched data 
-           should consists of a tuple like (input, label) or yield (input, _), 
-           when b_dataloader is set, user can configure postprocess(optional) and metric 
-           in yaml file or set postprocess and metric cls for evaluation.
-           Or just get performance without label in dataloader and configure postprocess/metric.
+        """Set dataloader for benchmarking.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data.
-                                      Another good practice is to use 
-                                      neural_compressor.experimental.common.DataLoader
-                                      to initialize a neural_compressor dataloader object.
-                                      Notice neural_compressor.experimental.common.DataLoader 
-                                      is just a wrapper of the information needed to 
-                                      build a dataloader, it can't yield
-                                      batched data and only in this setter method 
-                                      a 'real' eval_dataloader will be created, 
-                                      the reason is we have to know the framework info
-                                      and only after the Quantization object created then
-                                      framework infomation can be known.
-                                      Future we will support creating iterable dataloader 
-                                      from neural_compressor.experimental.common.DataLoader
+        It is iterable and the batched data should consist of a tuple like (input, label) or yield (input, _).
+        When b_dataloader is set, users can configure postprocess(optional) and metric
+        in yaml file or set postprocess and metric cls for evaluation,
+        or just get performance without a label in dataloader and configure postprocess/metric.
 
+        Args:
+            dataloader(generator): users are supported to set a user-defined dataloader
+                                    which meet the requirements that can yield a tuple of
+                                    (input, label)/(input, _) batched data.
+                                    Another good practice is to use
+                                    neural_compressor.experimental.common.DataLoader
+                                    to initialize a neural_compressor dataloader object.
+                                    Notice neural_compressor.experimental.common.DataLoader
+                                    is just a wrapper of the information needed to
+                                    build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' eval_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object is created then
+                                    framework information can be known.
+                                    Future we will support creating iterable dataloader
+                                    from neural_compressor.experimental.common.DataLoader
         """
         self._b_dataloader = _generate_common_dataloader(dataloader, self.framework)
 
     @property
     def b_func(self):
-        """ not support get b_func """
+        """Not support getting b_func."""
         assert False, 'Should not try to get the value of `b_func` attribute.'
         return None
 
@@ -336,35 +441,35 @@ class Benchmark(object):
 
         Args:
             user_b_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If train_func set,
-                         an evaluation process must be triggered and user should
+                         and executes the entire training process with self
+                         contained training hyper-parameters. If train_func is set,
+                         an evaluation process must be triggered and the user should
                          set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed.
+                         to make an evaluation of the model executed.
         """
         self._b_func = user_b_func
 
     @property
     def model(self):
+        """Get the model."""
         return self._model
 
     @model.setter
     def model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
+        """Set the user model and dispatch to the framework-specific internal model object.
 
         Args:
-           user_model: user are supported to set model from original framework model format
+           user_model: users are supported to set model from the original framework model format
                        (eg, tensorflow frozen_pb or path to a saved model),
-                       but not recommended. Best practice is to set from a initialized
+                       but not recommended. A best practice is to set from an initialized
                        neural_compressor.experimental.common.Model.
-                       If tensorflow model is used, model's inputs/outputs will be 
-                       auto inferenced, but sometimes auto inferenced 
-                       inputs/outputs will not meet your requests,
+                       If tensorflow model is used, the model's inputs/outputs will be
+                       auto inferenced, but sometimes auto inferenced
+                       inputs/outputs will not meet your requests, so it is better to
                        set them manually in config yaml file.
-                       Another corner case is slim model of tensorflow,
-                       be careful of the name of model configured in yaml file,
-                       make sure the name is in supported slim model list.
-        
+                       Another corner case is the slim model of tensorflow,
+                       be careful of the name of the model configured in the yaml file,
+                       make sure the name is in the supported slim model list.
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
@@ -376,7 +481,7 @@ class Benchmark(object):
         if cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
             cfg.model.framework = self.framework
-            set_backend(self.framework)  
+            set_backend(self.framework)
 
         # (TODO) ugly to set these params, but tensorflow need
         if 'tensorflow' in self.framework:
@@ -387,26 +492,26 @@ class Benchmark(object):
 
     @property
     def metric(self):
+        """Not support getting metric."""
         assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
     def metric(self, user_metric):
-        """Set metric class and neural_compressor will initialize this class when evaluation
-           neural_compressor have many built-in metrics, but user can set specific metric through
-           this api. The metric class should take the outputs of the model or 
-           postprocess(if have) as inputs, neural_compressor built-in metric always take 
-           (predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
-           or user defined metric object
+        """Set the metric class and Neural Compressor will initialize this class when evaluation.
+
+        Neural Compressor has many built-in metrics, but users can set specific metrics through
+        this api. The metric class should take the outputs of the model or
+        postprocess (if have) as inputs. Neural Compressor built-in metrics always take
+        (predictions, labels) as inputs for update,
+        and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
+        or user-defined metric object
 
         Args:
-            user_metric(neural_compressor.experimental.common.Metric):
-                user_metric should be object initialized from
-                neural_compressor.experimental.common.Metric, in this method the 
+            user_metric: user_metric should be an object initialized from
+                neural_compressor.experimental.common.Metric, and in this method the
                 user_metric.metric_cls will be registered to
                 specific frameworks and initialized.
-                                              
         """
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
@@ -420,29 +525,29 @@ class Benchmark(object):
             metrics.register(user_metric.name, user_metric.metric_cls)
         else:
             for i in ['reset', 'update', 'result']:
-                assert hasattr(user_metric, i), 'Please realise {} function' \
+                assert hasattr(user_metric, i), 'Please realize {} function' \
                                                 'in user defined metric'.format(i)
             self._metric = user_metric
 
     @property
     def postprocess(self, user_postprocess):
+        """Not support getting postprocess."""
         assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
     def postprocess(self, user_postprocess):
-        """Set postprocess class and neural_compressor will initialize this class when evaluation. 
-           The postprocess class should take the outputs of the model as inputs, and
-           output (predictions, labels) as inputs for metric update.
-           user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
+        """Set postprocess class and neural_compressor will initialize this class when evaluation.
+
+        The postprocess class should take the outputs of the model as inputs, and
+        outputs (predictions, labels) as inputs for metric updates.
+        user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
 
         Args:
-            user_postprocess(neural_compressor.experimental.common.Postprocess): 
-                user_postprocess should be object initialized from
-                neural_compressor.experimental.common.Postprocess,
-                in this method the user_postprocess.postprocess_cls will be 
+            user_postprocess: user_postprocess should be an object initialized from
+                neural_compressor.experimental.common.Postprocess, and
+                in this method the user_postprocess.postprocess_cls will be
                 registered to specific frameworks and initialized.
-
         """
         assert isinstance(user_postprocess, NCPostprocess), \
             'please initialize a neural_compressor.experimental.common.Postprocess and set....'
@@ -455,4 +560,5 @@ class Benchmark(object):
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
 
     def __repr__(self):
+        """Get the object representation in string format."""
         return 'Benchmark'

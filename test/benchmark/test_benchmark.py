@@ -4,10 +4,12 @@ import unittest
 import os
 import yaml
 import numpy as np
-import tensorflow as tf
 import tempfile
 import re
+import platform
 from neural_compressor.adaptor.tf_utils.util import write_graph
+
+import tensorflow as tf
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -195,6 +197,7 @@ class TestObjective(unittest.TestCase):
         build_benchmark()
         build_benchmark2()
         self.cpu_counts = psutil.cpu_count(logical=False)
+        self.platform = platform.system().lower()
 
     @classmethod
     def tearDownClass(self):
@@ -266,7 +269,7 @@ class TestObjective(unittest.TestCase):
                 throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
             self.assertIsNotNone(throughput)
         os.system("rm *.log")
- 
+    
     def test_benchmark_with_custom_metric(self):
         os.system("python fake4.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
         with open('benchmark.log', "r") as f:

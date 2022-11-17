@@ -200,6 +200,8 @@ model:                                               # mandatory. used to specif
   inputs: input
   outputs: InceptionV1/Logits/Predictions/Reshape_1
 
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 5, 10                             # optional. default value is 100. used to set how many samples should be used in calibration.

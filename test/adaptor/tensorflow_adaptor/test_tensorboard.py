@@ -3,8 +3,9 @@ import numpy as np
 import unittest
 import os
 import yaml
-import tensorflow as tf
 import shutil
+
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2

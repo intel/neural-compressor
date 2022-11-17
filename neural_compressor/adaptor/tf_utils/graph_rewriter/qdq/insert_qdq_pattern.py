@@ -18,6 +18,7 @@
 import copy
 import numpy as np
 from collections import namedtuple
+from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -79,7 +80,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.g = GraphAnalyzer()
         self.g.graph = copy.deepcopy(self.model)
         self.graph_info = self.g.parse_graph()
-        
+
         # insert QDQ pattern for op's input
         for op_name in quantizable_op_names:
             if self._ignore_insert_qdq_pattern(op_name):
@@ -91,8 +92,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 op_wise_cfg = self.op_wise_config[op_name]
                 is_asymmetric = op_wise_cfg[2]
             if self.graph_info[op_name].node.op == "ConcatV2":
-                self._insert_qdq_pattern_for_concatv2(self.graph_info[op_name].node,
-                                                      is_asymmetric)
+                if not self.itex_mode:
+                    self._insert_qdq_pattern_for_concatv2(self.graph_info[op_name].node,
+                                                        is_asymmetric)
             else:
                 self._insert_qdq_pattern_for_common_ops(self.graph_info[op_name].node,
                                                         is_asymmetric)
@@ -206,7 +208,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
               ) and ((node.op.find("Relu") == -1 and node.op.find("Elu") == -1) or \
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
-        elif self._check_op_list(node.op):
+        elif self._check_op_list(node.op) or (self.itex_mode and node.op in ('Add', 'AddV2')):
             if node.op == 'ConcatV2':
                 find_relu = False
                 for i in range(0,node.attr['N'].i):
@@ -216,12 +218,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                         input_node = self.node_name_mapping[node.input[i]].node
                     find_relu |= self._find_relu_node(input_node)
                 return find_relu
+            if re.search(r"\w+:\d+", node.input[0]):
+                input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]].node
             else:
-                if re.search(r"\w+:\d+", node.input[0]):
-                    input_node = self.node_name_mapping[node.input[0].rsplit(':', 1)[0]].node
-                else:
-                    input_node = self.node_name_mapping[node.input[0]].node
-                return self._find_relu_node(input_node)
+                input_node = self.node_name_mapping[node.input[0]].node
+            return self._find_relu_node(input_node)
         else:
             return False
 
@@ -426,7 +427,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         range_coefficent = 127 / (2 ** weight_bit - 1)
         min_value = 0
         max_value = 0
-       
+        insert_reshape = False
+        shape_convert = None
+        shape_revert = None
+
         # The weight node of BatchMatMul may have no value
         if 'value' in weight_node.attr and \
            host_op_type in ("Conv2D", "MatMul", "BatchMatMul", "BatchMatMulV2", "Conv3D", \
@@ -447,7 +451,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 ranges[ranges < epsilon] = epsilon
                 min_value[np.abs(min_value) < epsilon] = -epsilon
                 max_value[np.abs(max_value) < epsilon] = epsilon
-                qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
+                # qint8_tensor = (np.around(float_tensor *127.0/ranges)).astype(np.int8)
             else:
                 min_value = np.min(float_tensor)
                 max_value = np.max(float_tensor)
@@ -462,8 +466,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     else:
                         max_value = min_value / 2.0
                 range_value = np.max(np.abs([min_value, max_value]))
-                qint8_tensor = (np.around(float_tensor * 127.0 / range_value)).astype(np.int8)
-                qint8_tensor = np.clip(qint8_tensor, -127, 127).astype(np.int8)
+                # qint8_tensor = (np.around(float_tensor * 127.0 / range_value)).astype(np.int8)
+                # qint8_tensor = np.clip(qint8_tensor, -127, 127).astype(np.int8)
                 min_value = -range_value
                 max_value = range_value
         elif host_op_type == "DepthwiseConv2dNative":
@@ -482,10 +486,14 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             # When divide by range, qint8_tensor needs to be 3 dim
             # where, 3rd dim should be same dim of ranges
             a, b, c, d = float_tensor.shape
-            qint8_tensor = (np.around(float_tensor.reshape(a, b, c * d) * 127.0 /
-                            ranges)).astype(np.int8)
+            # qint8_tensor = (np.around(float_tensor.reshape(a, b, c * d) * 127.0 /
+            #                ranges)).astype(np.int8)
             # get the shape back to 4 dim
-            qint8_tensor = qint8_tensor.reshape(a, b, c, d)
+            # qint8_tensor = qint8_tensor.reshape(a, b, c, d)
+            if self.itex_mode and d != 1:
+                insert_reshape = True
+                shape_convert = [a, b, c * d]
+                shape_revert = [a, b, c, d]
         else:
             min_value = np.min(min_max_values[computational_node.name+'__min'])
             max_value = np.max(min_max_values[computational_node.name+'__max'])
@@ -514,9 +522,23 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     "QuantizeV2", qint8_const_name + '_quant',
                     [quant_const_enter_node.name, min_name, max_name])
         else:
-            quant_node = Helper.create_node(
+            if insert_reshape:
+                reshape_dims_4to3_name = qint8_const_name + "_reshape_dims_4to3_"
+                reshape_dims_4to3_node = Helper.create_constant_node(
+                    reshape_dims_4to3_name, shape_convert, dtypes.int32)
+                reshape_4to3_name = qint8_const_name + "_reshape_4to3_"
+                reshape_4to3_node = Helper.create_node("Reshape", reshape_4to3_name,
+                                                        [weight_node.name, reshape_dims_4to3_name])
+                reshape_4to3_node.attr["T"].CopyFrom(
+                    attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+                quant_node = Helper.create_node(
+                        "QuantizeV2", qint8_const_name + '_quant',
+                        [reshape_4to3_name, min_name, max_name])
+            else:
+                quant_node = Helper.create_node(
                     "QuantizeV2", qint8_const_name + '_quant',
                     [weight_node.name, min_name, max_name])
+
         dequant_node = Helper.create_node(
             "Dequantize", base_name + '_dequant',
             [quant_node.name, quant_node.name + ':1', quant_node.name + ':2'])
@@ -542,44 +564,64 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             Helper.set_attr_int(quant_node, 'axis', 2)
             Helper.set_attr_int(dequant_node, 'axis', 2)
 
-        if enter_node:
-            min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
-            Helper.set_attr_string(min_enter_node,
-                                           'frame_name', enter_node.attr['frame_name'].s)
-            Helper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
-            Helper.set_attr_bool(min_enter_node, 'is_constant', True)
-            Helper.set_attr_int(min_enter_node, 'parallel_iterations', \
-                                             enter_node.attr['parallel_iterations'].i)
-
-            max_enter_node = Helper.create_node('Enter', max_name + '_enter', [max_name])
-            Helper.set_attr_string(max_enter_node,
-                                           'frame_name', enter_node.attr['frame_name'].s)
-            Helper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
-            Helper.set_attr_bool(max_enter_node, 'is_constant', True)
-            Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
-                                             enter_node.attr['parallel_iterations'].i)
-
-            self.g_weight.add_node(quant_const_enter_node, weight_node.name, [quant_node.name])
-            self.g_weight.add_node(quant_node, quant_const_enter_node.name, [])
-            self.g_weight.add_node(min_node, None, [min_enter_node.name])
-            self.g_weight.add_node(max_node, None, [max_enter_node.name])
-            self.g_weight.add_node(min_enter_node, min_node.name, [quant_node.name])
-            self.g_weight.add_node(max_enter_node, max_node.name, [quant_node.name])
-            self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
-            computational_node.input[1] = dequant_node.name
-        else:
-            self.g_weight.add_node(quant_node, weight_node.name, [])
+        if insert_reshape:
+            reshape_dims_3to4_name = qint8_const_name + "_reshape_dims_3to4_"
+            reshape_dims_3to4_node = Helper.create_constant_node(
+                reshape_dims_3to4_name, shape_revert, dtypes.int32)
+            reshape_3to4_name = qint8_const_name + "_reshape_3to4_"
+            reshape_3to4_node = Helper.create_node("Reshape", reshape_3to4_name,
+                                                    [dequant_node.name, reshape_dims_3to4_name])
+            reshape_3to4_node.attr["T"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            self.g_weight.add_node(reshape_dims_4to3_node, None, [reshape_4to3_name])
+            self.g_weight.add_node(reshape_dims_3to4_node, None, [reshape_3to4_name])
+            self.g_weight.add_node(reshape_4to3_node, weight_node.name, [quant_node.name])
+            self.g_weight.add_node(quant_node, reshape_4to3_name, [])
             self.g_weight.add_node(min_node, None, [quant_node.name])
             self.g_weight.add_node(max_node, None, [quant_node.name])
-            self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
-            computational_node.input[1] = dequant_node.name
+            self.g_weight.add_node(dequant_node, quant_node.name, [reshape_3to4_name])
+            self.g_weight.add_node(reshape_3to4_node, dequant_node.name, [computational_node.name])
+            computational_node.input[1] = reshape_3to4_node.name
+        else:
+            if enter_node:
+                min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
+                Helper.set_attr_string(min_enter_node,
+                                            'frame_name', enter_node.attr['frame_name'].s)
+                Helper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(min_enter_node, 'is_constant', True)
+                Helper.set_attr_int(min_enter_node, 'parallel_iterations', \
+                                                enter_node.attr['parallel_iterations'].i)
+
+                max_enter_node = Helper.create_node('Enter', max_name + '_enter', [max_name])
+                Helper.set_attr_string(max_enter_node,
+                                            'frame_name', enter_node.attr['frame_name'].s)
+                Helper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(max_enter_node, 'is_constant', True)
+                Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
+                                                enter_node.attr['parallel_iterations'].i)
+
+                self.g_weight.add_node(quant_const_enter_node, weight_node.name, [quant_node.name])
+                self.g_weight.add_node(quant_node, quant_const_enter_node.name, [])
+                self.g_weight.add_node(min_node, None, [min_enter_node.name])
+                self.g_weight.add_node(max_node, None, [max_enter_node.name])
+                self.g_weight.add_node(min_enter_node, min_node.name, [quant_node.name])
+                self.g_weight.add_node(max_enter_node, max_node.name, [quant_node.name])
+                self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
+                computational_node.input[1] = dequant_node.name
+            else:
+                self.g_weight.add_node(quant_node, weight_node.name, [])
+                self.g_weight.add_node(min_node, None, [quant_node.name])
+                self.g_weight.add_node(max_node, None, [quant_node.name])
+                self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
+                computational_node.input[1] = dequant_node.name
 
     def _ignore_insert_qdq_pattern(self, matched_node_name):
-        if matched_node_name in self.fp32_ops or \
-           matched_node_name in self.bf16_ops:
+        if (matched_node_name in self.fp32_ops or matched_node_name in self.bf16_ops) and \
+           ((matched_node_name,) not in self.quantized_nodes):
             return True
 
-        if matched_node_name not in self.op_wise_config and (matched_node_name, ) not in self.quantized_nodes:
+        if matched_node_name not in self.op_wise_config and \
+           (matched_node_name, ) not in self.quantized_nodes:
             return True
 
         #TODO Remove below two lines once the TF enabled the QuantizedMatMul while

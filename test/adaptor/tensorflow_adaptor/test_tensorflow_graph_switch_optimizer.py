@@ -4,11 +4,11 @@ import unittest
 import os
 import yaml
 import numpy as np
+from neural_compressor.adaptor.tf_utils.util import disable_random
+
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
-from neural_compressor.adaptor.tf_utils.util import disable_random
 from tensorflow.python.ops import control_flow_ops
-
 
 def build_fake_yaml():
     fake_yaml = '''

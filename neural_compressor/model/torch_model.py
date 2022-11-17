@@ -208,6 +208,10 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             total_sparsity (float): total sparsity of model
 
         """
+
+        if isinstance(self._model, torch.jit._script.RecursiveScriptModule):
+            logger.info("INC IPEX don't support compute sparsity for model in TorchScript format now.")
+            return [0.0]
         import pandas as pd
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])

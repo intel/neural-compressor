@@ -10,13 +10,11 @@ Note:
 import os
 import unittest
 import yaml
-import tensorflow as tf
 import numpy as np
 import pickle
 import logging
 import shutil
 from packaging import version
-
 np.random.seed(0)
 
 
@@ -47,6 +45,7 @@ def build_fake_yaml():
 
 
 def build_fake_model():
+    import tensorflow as tf
     graph = tf.Graph()
     graph_def = tf.compat.v1.GraphDef()
 
@@ -179,9 +178,9 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         shutil.rmtree(os.path.join(os.getcwd(), 'save_path_test'))
 
     def test_tensorflow_inspect_tensor(self):
-        import tensorflow.compat.v1 as tf
         from neural_compressor.experimental import Quantization, common
         from neural_compressor.utils.utility import load_data_from_pkl
+        import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(128, 64, 64, 3), label=True)
@@ -232,8 +231,8 @@ class TestTensorflowInspectTensor(unittest.TestCase):
                 self.assertEqual(fp32_iter_data[node_name][node_name].shape, quan_iter_data[node_name][node_name].shape)
 
     def test_tensorflow_diagnosis(self):
-        import tensorflow.compat.v1 as tf
         from neural_compressor.experimental import Quantization, common
+        import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
         quantizer = Quantization('fake_diagnosis_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(128, 64, 64, 3), label=True)
@@ -245,8 +244,8 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         self.assertEqual(os.path.exists(os.path.join(os.getcwd(), './nc_workspace/inspect_saved/quan/inspect_result.pkl')), True)
 
     def test_tensorflow_diagnosis2(self):
-        import tensorflow.compat.v1 as tf
         from neural_compressor.experimental import Quantization, common
+        import tensorflow.compat.v1 as tf
         tf.disable_v2_behavior()
         quantizer = Quantization('fake_diagnosis_yaml2.yaml')
         dataset = quantizer.dataset('dummy', shape=(128, 64, 64, 3), label=True)

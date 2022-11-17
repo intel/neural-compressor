@@ -53,10 +53,6 @@ required_libs = {
     'onnxrt_qoperator': ['onnx', 'onnxruntime'],
     'mxnet': ['mxnet'],
 }
-if sys.version_info < (3,10): # pragma: no cover
-    required_libs['onnxrt_qlinearops'].append('onnxruntime_extensions')
-    required_libs['onnxrt_integerops'].append('onnxruntime_extensions')
-    required_libs['onnxrt_qoperator'].append('onnxruntime_extensions')
 
 def version1_lt_version2(version1, version2):
     return parse_version(version1) < parse_version(version2)
@@ -276,7 +272,7 @@ def dump_elapsed_time(customized_msg=""):
             start = time.time()
             res = func(*args, **kwargs)
             end = time.time()
-            logging.getLogger().info('%s elapsed time: %s ms' %
+            logging.getLogger("neural_compressor").info('%s elapsed time: %s ms' %
                                      (customized_msg if customized_msg else func.__qualname__,
                                       round((end - start) * 1000, 2)))
             return res
@@ -320,7 +316,7 @@ def get_tensor_histogram(tensor_data, bins=2048):
 
 
 def get_all_fp32_data(data):
-    return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip()]
+    return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip() and len(i) < 32]
 
 
 def get_tuning_history(tuning_history_path):
@@ -470,7 +466,7 @@ def load_data_from_pkl(path, filename):
             data = pickle.load(fp)
             return data
     except FileExistsError:
-        logging.getLogger().info('Can not open %s.' % path)
+        logging.getLogger("neural_compressor").info('Can not open %s.' % path)
 
 def dump_data_to_local(data, path, filename):
     """
@@ -490,4 +486,4 @@ def dump_data_to_local(data, path, filename):
     file_path = os.path.join(path, filename)
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
-        logging.getLogger().info("Dumped data to %s" % file_path)
+        logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)

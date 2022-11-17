@@ -19,6 +19,8 @@ model:
   inputs: input_file, batch_size
   outputs: loss/Softmax:0, IteratorGetNext:3
 
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
 evaluation:
   accuracy: {}
   performance:

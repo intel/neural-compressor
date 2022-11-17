@@ -15,7 +15,7 @@
 """Ux Logger module."""
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("neural_compressor")
 log.name = "INC Bench"
 log.setLevel(level=logging.CRITICAL)
 

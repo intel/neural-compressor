@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0
+
 model:
   name: transformer_lt
   framework: tensorflow
   inputs: input_tensor
   outputs: model/Transformer/strided_slice_19
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:
   calibration:

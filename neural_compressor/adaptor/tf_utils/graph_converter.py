@@ -72,7 +72,7 @@ from .graph_util import GraphRewriterHelper as Helper
 TF_SUPPORTED_MAX_VERSION = '2.10.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
 
 class GraphConverter:
@@ -169,6 +169,11 @@ class GraphConverter:
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
+        if len(self.data_loader) == 0:
+            feed_dict = {}
+            _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
+                else iterator_sess_run(sess, iter_op, \
+                    feed_dict, output_tensor, self.calib_iteration)
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
                 feed_dict = {}
@@ -325,9 +330,11 @@ class GraphConverter:
                 model = self.quantize()
 
         if self.itex_mode:
-            self._itex_model.graph_def = \
+            host_const_graph_def = \
                 PostHostConstConverter(self._itex_model.graph_def).do_transformation()
-            self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
+            host_const_graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._itex_model.graph_def = host_const_graph_def
+
             return self._itex_model
 
         if self.exclude_node_names:
@@ -420,7 +427,9 @@ class GraphConverter:
         g.graph = self._fp32_model.graph_def
         g.parse_graph()
         y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2'], ('Relu',)]
+        y_pattern_variant = [['MaxPool', 'AvgPool'], ['Add', 'AddV2'], ('Relu',)]
         target_nodes = g.query_fusion_pattern_nodes(y_pattern)
+        target_nodes_variant = g.query_fusion_pattern_nodes(y_pattern_variant)
 
         res = {}
         for i in target_nodes:
@@ -428,7 +437,13 @@ class GraphConverter:
                 res[i[2]] = 1
             else:
                 res[i[2]] += 1
-        return [(i,) for i in res if res[i] == 2]
+        matched_add_nodes = [(i,) for i in res if res[i] == 2]
+        for i in res:
+            if res[i] == 1:
+                for j in target_nodes_variant:
+                    if j[1] == i:
+                        matched_add_nodes.append((i,))
+        return matched_add_nodes
 
     def quantize(self):
         """Quantize graph only (without optimizing fp32 graph), including:

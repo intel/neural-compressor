@@ -1,7 +1,7 @@
 Benchmarking
 ============
 
-The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings; the user can get the performance of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.
+The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings; the user can get the performance (default) or accuracy of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.
 
 The following examples show how to use benchmarking.
 
@@ -55,11 +55,14 @@ In this case, configure your dataloader and Neural Compressor will construct an 
 dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
 from neural_compressor.experimental import Benchmark, common
 evaluator = Benchmark(config.yaml)
-evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
+evaluator.b_dataloader = common.DataLoader(dataset, batch_size=batch_size)
 # user can also register postprocess and metric, this is optional
 evaluator.postprocess = common.Postprocess(postprocess_cls)
 evaluator.metric = common.Metric(metric_cls)
+# performance
 results = evaluator()
+# accuracy
+results = evaluator(mode='accuracy')
 
 ```
 Benchmark class also support BenchmarkConf class as it's argument:
@@ -69,11 +72,14 @@ from lpot.experimental import Benchmark, common
 from lpot.conf.config import BenchmarkConf
 conf = BenchmarkConf(config.yaml)
 evaluator = Benchmark(conf)
-evaluator.dataloader = common.DataLoader(dataset, batch_size=batch_size)
+evaluator.b_dataloader = common.DataLoader(dataset, batch_size=batch_size)
 # user can also register postprocess and metric, this is optional
 evaluator.postprocess = common.Postprocess(postprocess_cls)
 evaluator.metric = common.Metric(metric_cls)
-results = evaluator()
+# performance
+results = evaluator(mode='performance')
+# accuracy
+results = evaluator(mode='accuracy')
 
 ```
 

@@ -28,10 +28,10 @@ FLAGS = flags.FLAGS
 
 ## Required parameters
 flags.DEFINE_string(
-    'input_model', None, 'Run inference with specified pb graph.')
+    'input_model', None, 'Run inference with specified keras model.')
 
 flags.DEFINE_string(
-    'output_model', None, 'The output model of the quantized model.')
+    'output_model', None, 'The output quantized model.')
 
 flags.DEFINE_string(
     'mode', 'performance', 'define benchmark mode for accuracy or performance')
@@ -71,14 +71,14 @@ if FLAGS.calib_data:
 
 def evaluate(model, measurer=None):
   """
-  Custom Evaluate function to inference the model for specified metric on validation dataset.
-
+  Custom evaluate function to inference the model for specified metric on validation dataset.
+  
   Args:
-      model ([tf.saved_model.load]): The model will be the class of tf.saved_model.load(quantized_model_path).
-      measurer (object, optional): for precise benchmark measurement.
+      model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+      measurer (object, optional): for benchmark measurement of duration.
 
   Returns:
-      [float]: evaluation result, the larger is better.
+      accuracy (float): evaluation result, the larger is better.
   """
   infer = model.signatures["serving_default"]
   output_dict_keys = infer.structured_outputs.keys()

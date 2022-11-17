@@ -1,8 +1,10 @@
 import os
 import shutil
 import unittest
-import tensorflow as tf
 import numpy as np
+from neural_compressor.experimental import Quantization, common
+
+import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -187,7 +189,6 @@ class TestConvAsOutput(unittest.TestCase):
         shutil.rmtree("saved", ignore_errors=True)
 
     def test_do_transform(self):
-        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml.yaml')
         dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         quantizer.eval_dataloader = common.DataLoader(dataset)

@@ -1,8 +1,0 @@
-onnx==1.11.0; python_version < '3.10'
-onnx==1.12.0; python_version == '3.10'
-onnxruntime==1.10.0; python_version < '3.10'
-onnxruntime==1.12.0; python_version == '3.10'
-coloredlogs
-sympy
-onnxruntime-extensions; python_version < '3.10'
-nltk

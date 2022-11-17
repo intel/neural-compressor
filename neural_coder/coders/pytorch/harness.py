@@ -359,7 +359,7 @@ class Harness(object):
                                         lines_to_insert = lines_to_insert.replace("NUM_BENCHMARK_ITERATION", 
                                                                                     globals.num_benchmark_iteration)
                                         lines_to_insert = lines_to_insert.replace("ACCURACY_MODE", 
-                                                                                    str(globals.eval_accuracy))
+                                                                                    str(False))
                                         lines_to_insert = lines_to_insert.replace("INFERENCE_LINE", 
                                                                                     inference_line.strip())
 

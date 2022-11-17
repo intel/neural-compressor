@@ -34,7 +34,8 @@ The following prerequisites and requirements must be satisfied for a successful 
   # install stable basic version from from conda
   conda install neural-compressor -c conda-forge -c intel
   # install stable full version from from conda (including GUI)
-  conda install neural-compressor-full -c conda-forge -c intel  
+  conda install sqlalchemy=1.4.27 alembic=1.7.7 -c conda-forge
+  conda install neural-compressor-full -c conda-forge -c intel
   ```
 
 ### Option 2 Install from source

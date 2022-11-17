@@ -23,16 +23,8 @@ model:                                               # mandatory. used to specif
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant
-  op_wise: {
-    '[5][2-9][0-9]': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[5][1][4-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[1-2][0-5][0-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[3-9]\d{3,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[6-9]\d{2,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[2][7-9]\d{2,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[2][6][2-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-    '[1]\d{3,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-  }
+  recipes:
+    pre_post_process_quantization: False
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.

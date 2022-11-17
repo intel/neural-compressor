@@ -15,6 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Initialize critetion classes.
+
+Classes includes:
+    TensorFlowCrossEntropyLoss, PyTorchCrossEntropyLoss, 
+    TensorflowKnowledgeDistillationLoss, PyTorchKnowledgeDistillationLoss, 
+    PyTorchIntermediateLayersKnowledgeDistillationLoss.
+"""
+
 from abc import abstractmethod
 from collections import UserDict, Counter
 from neural_compressor.utils.utility import LazyImport, singleton
@@ -28,13 +36,19 @@ tf = LazyImport('tensorflow')
 
 @singleton
 class TensorflowCriterions(object):
+    """Record criterions in TensorflowCriterions class."""
+
     def __init__(self):
+        """Initialize the TensorflowCriterions class."""
         self.criterions = {}
         self.criterions.update(TENSORFLOW_CRITERIONS)
 
 @singleton
 class PyTorchCriterions(object):
+    """Record criterions in PyTorchCriterions class."""
+
     def __init__(self):
+        """Initialize the TensorflowCriterions class."""
         self.criterions = {}
         self.criterions.update(PYTORCH_CRITERIONS)
 
@@ -51,23 +65,43 @@ registry_criterions = {"tensorflow": TENSORFLOW_CRITERIONS,
                        "pytorch_fx": PYTORCH_CRITERIONS}
 
 class Criterions(object):
+    """Integrate criterions of different framework."""
+
     def __init__(self, framework):
+        """Initialize the Criterions class.
+
+        Args:
+            framework (string): framework name.
+        """
         assert framework in ("tensorflow", "pytorch", "pytorch_fx"), \
                              "framework support tensorflow pytorch"
         self.criterions = framework_criterions[framework]().criterions
 
     def __getitem__(self, criterion_type):
+        """Fetch criterion result by criterion type.
+
+        Args:
+            criterion_type (string): criterion type.
+        Returns:
+            cls: criterion class.
+        """
         assert criterion_type in self.criterions.keys(), "only support criterions in {}".\
             format(self.criterions.keys())
 
         return self.criterions[criterion_type]
 
     def register(self, name, criterion_cls):
+        """Register criterion name and result in existing criterion class.
+
+        Args:
+            name (string): criterion name/type.
+            criterion_cls (string): criterion class.
+        """
         assert name not in self.criterions.keys(), 'registered criterion name already exists.'
         self.criterions.update({name: criterion_cls})
 
 def criterion_registry(criterion_type, framework):
-    """The class decorator used to register all criterion classes.
+    """Use to register criterion classes in registry_criterions.
 
     Args:
         criterion_type (str): The string of supported criterion.
@@ -76,7 +110,9 @@ def criterion_registry(criterion_type, framework):
     Returns:
         cls: The class of register.
     """
+
     def decorator_criterion(cls):
+        """Decorate criterion class to check framework and criterion name."""
         for fw in [fwk.strip() for fwk in framework.split(',')]:
             assert fw in [
                 "tensorflow",
@@ -90,12 +126,14 @@ def criterion_registry(criterion_type, framework):
 
 @criterion_registry('CrossEntropyLoss', 'tensorflow')
 class TensorFlowCrossEntropyLoss(object):
-    """TensorFlow CrossEntropyLoss criterion.
+    """TensorFlow CrossEntropyLoss criterion."""
 
-    Args:
-        param_dict (dict): The dict of parameters setting by user for CrossEntropyLoss criterion.
-    """
     def __init__(self, param_dict):
+        """Initialize the DATASETS class.
+
+        Args:
+            param_dict (dict): The dict of parameters setting by user for CrossEntropyLoss criterion.
+        """
         assert isinstance(param_dict, dict), 'This criterion constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -111,17 +149,25 @@ class TensorFlowCrossEntropyLoss(object):
                 _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 
-    def __call__(self, **kwargs):
-        return tf.keras.losses.CategoricalCrossentropy, self._mapping(**kwargs)
+    def __call__(self):
+        """Call the TensorFlowCrossEntropyLoss.
+
+        Returns:
+            cls: criterion class.
+            param_dict(dict): param_dict
+        """
+        return tf.keras.losses.CategoricalCrossentropy, self._mapping()
 
 @criterion_registry('SparseCategoricalCrossentropy', 'tensorflow')
 class TensorFlowSparseCategoricalCrossentropy(object):
-    """TensorFlow SparseCategoricalCrossentropyLoss criterion.
+    """TensorFlow SparseCategoricalCrossentropyLoss criterion."""
 
-    Args:
-        param_dict (dict): The dict of parameters setting by user for SparseCategoricalCrossentropy criterion.
-    """
     def __init__(self, param_dict):
+        """Initialize the DATASETS class.
+
+        Args:
+            param_dict (string): param_dict.
+        """
         assert isinstance(param_dict, dict), 'This criterion constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -137,17 +183,25 @@ class TensorFlowSparseCategoricalCrossentropy(object):
                 _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 
-    def __call__(self, **kwargs):
-        return tf.keras.losses.SparseCategoricalCrossentropy, self._mapping(**kwargs)
+    def __call__(self):
+        """Call the TensorFlowSparseCategoricalCrossentropy.
+
+        Returns:
+            cls: criterion class.
+            param_dict(dict): param_dict
+        """
+        return tf.keras.losses.SparseCategoricalCrossentropy, self._mapping()
 
 @criterion_registry('CrossEntropyLoss', 'pytorch')
 class PyTorchCrossEntropyLoss(object):
-    """PyTorch CrossEntropyLoss criterion.
+    """PyTorch CrossEntropyLoss criterion."""
 
-    Args:
-        param_dict (dict): The dict of parameters setting by user for SGD criterion
-    """
     def __init__(self, param_dict):
+        """Initialize the PyTorchCrossEntropyLoss class.
+
+        Args:
+            param_dict (string): param_dict.
+        """
         assert isinstance(param_dict, dict), 'This criterion constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -162,37 +216,63 @@ class PyTorchCrossEntropyLoss(object):
                 _dict.update({_param_map[key]: self._param_dict[key]})
         return _dict
 
-    def __call__(self, **kwargs):
-        return torch.nn.CrossEntropyLoss, self._mapping(**kwargs)
+    def __call__(self):
+        """Call the PyTorchCrossEntropyLoss.
+
+        Returns:
+            cls: criterion class.
+            param_dict(dict): param_dict
+        """
+        return torch.nn.CrossEntropyLoss, self._mapping()
 
 class KnowledgeDistillationFramework(object):
+    """Knowledge Distillation Framework."""
+
     def __init__(self, student_model=None, teacher_model=None):
+        """Initialize the KnowledgeDistillationFramework class.
+
+        Args:
+            student_model: student_model.
+            teacher_model: teacher_model.
+        """
         self._student_model = student_model
         self._teacher_model = teacher_model
 
     @property
     def student_model(self):
-        """ Getter of student model """
+        """Return student model."""
         return self._student_model
 
     @student_model.setter
     def student_model(self, model):
-        """ Setter of teacher model """
+        """Setter of teacher model."""
         self._student_model = model
 
     @property
     def teacher_model(self):
-        """ Getter of teacher model """
+        """Return teacher model."""
         return self._teacher_model
 
     @teacher_model.setter
     def teacher_model(self, model):
-        """ Setter of teacher model """
+        """Setter of teacher model."""
         self._teacher_model = model
 
 class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
+    """Initialize the KnowledgeDistillationLoss class."""
+
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
+        """Initialize Knowledge Distillation Loss class.
+
+        Args:
+            temperature (float, optional): Hyperparameters that control the entropy 
+                                            of probability distributions. Defaults to 1.0.
+            loss_types (list, optional): loss type. Defaults to ['CE', 'CE'].
+            loss_weights (list, optional): loss weights. Defaults to [0.5, 0.5].
+            student_model (model, optional): student model. Defaults to None.
+            teacher_model (model, optional): teacher model. Defaults to None.
+        """
         super(KnowledgeDistillationLoss, self).__init__(student_model=student_model,
                                                         teacher_model=teacher_model)
         self.teacher_outputs = None
@@ -205,21 +285,67 @@ class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
         assert sum(loss_weights) == 1.0, 'Sum of loss_weights should be 1.0.'
 
     def teacher_model_forward(self, input, teacher_model=None):
+        """Define parameters for teacher_model_forward function.
+
+        Args:
+            input (tensor, tuple or dict): input data.
+            teacher_model (model, optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function teacher_model_forward '
                                   'should be framework related.')
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
+        """Define parameters for teacher_student_loss_cal function.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): student outputs
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function teacher_student_loss_cal '
                                   'should be framework related.')
 
     def student_targets_loss_cal(self, student_outputs, targets):
+        """Define parameters for student_targets_loss_cal function.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function student_targets_loss_cal '
                                   'should be framework related.')
 
     def loss_cal(self, student_outputs, targets):
+        """Calculate loss of student model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Returns:
+            tensor: loss
+        """
         return self.student_targets_loss_cal(student_outputs, targets)
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        """Calculate all losses between student model and teacher model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): teacher outputs
+            student_loss (tensor): student loss
+
+        Returns:
+            tensor: loss
+        """
         if self.loss_weights[0] > 0:
             origin_loss = student_loss
         else:
@@ -238,11 +364,36 @@ class KnowledgeDistillationLoss(KnowledgeDistillationFramework):
         return self.loss
 
     def __call__(self, student_outputs, targets):
+        """Call the class to calculate loss.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Returns:
+            tensor: loss
+        """
         return self.loss_cal(student_outputs, targets)
 
 class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
+    """The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
+
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
+        """Initialize PyTorch Knowledge Distillation Loss class.
+
+        Args:
+            temperature (float, optional): Hyperparameters that control the entropy 
+                                            of probability distributions. Defaults to 1.0.
+            loss_types (list, optional): loss types. Defaults to ['CE', 'CE'].
+            loss_weights (list, optional): loss weights. Defaults to [0.5, 0.5].
+            student_model (torch.nn.model, optional): student model. Defaults to None.
+            teacher_model (torch.nn.model, optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+            NotImplementedError: NotImplementedError
+        """
         super(PyTorchKnowledgeDistillationLoss, self).__init__(temperature=temperature, 
                                                                loss_types=loss_types,
                                                                loss_weights=loss_weights,
@@ -272,16 +423,44 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
                                                         self.loss_weights[1]))
 
     def SoftCrossEntropy(self, logits, targets):
+        """Return SoftCrossEntropy.
+
+        Args:
+            logits (tensor): output logits
+            targets (tensor): ground truth label
+
+        Returns:
+            tensor: SoftCrossEntropy
+        """
         log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
         targets_prob = torch.nn.functional.softmax(targets, dim=-1)
         return (- targets_prob * log_prob).sum(dim=-1).mean()
 
     def KullbackLeiblerDivergence(self, logits, targets):
+        """Return KullbackLeiblerDivergence.
+
+        Args:
+            logits (tensor): output logits
+            targets (tensor): ground truth label
+
+        Returns:
+            tensor: KullbackLeiblerDivergence
+        """
         log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
         targets_prob = torch.nn.functional.softmax(targets, dim=-1)
         return torch.nn.functional.kl_div(log_prob, targets_prob)
 
     def teacher_model_forward(self, input, teacher_model=None, device=None):
+        """Teacher model forward.
+
+        Args:
+            input (tensor): input data
+            teacher_model (torch.nn.model, optional): teacher model. Defaults to None.
+            device (torch.device, optional): device. Defaults to None.
+
+        Returns:
+            tensor: output
+        """
         outputs = None
         if self.loss_weights[1] > 0:
             model = self.teacher_model if teacher_model is None else teacher_model
@@ -302,16 +481,41 @@ class PyTorchKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         return outputs
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
+        """Calculate loss between student model and teacher model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): teacher outputs
+
+        Returns:
+            tensor: loss
+        """
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
         return self.teacher_student_loss(student_outputs, teacher_outputs)
 
     def student_targets_loss_cal(self, student_outputs, targets):
+        """Calculate loss of student model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Returns:
+            tensor: loss
+        """
         assert self.student_targets_loss, 'student_targets_loss not specified.'
         return self.student_targets_loss(student_outputs, targets)
 
 @criterion_registry('KnowledgeDistillationLoss', 'pytorch')
 class PyTorchKnowledgeDistillationLossWrapper(object):
+    """PyTorchKnowledgeDistillationLossWrapper wraps PyTorchKnowledgeDistillationLoss."""
+
     def __init__(self, param_dict):
+        """Initialize PyTorch Knowledge Distillation Loss Wrapper.
+
+        Args:
+            param_dict (dict): parameter dict
+        """
         self.param_dict = param_dict
 
     def _param_check(self):
@@ -338,11 +542,33 @@ class PyTorchKnowledgeDistillationLossWrapper(object):
         return new_dict
 
     def __call__(self, **kwargs):
+        """Return PyTorchKnowledgeDistillationLoss, param dict.
+
+        Returns:
+            PyTorchKnowledgeDistillationLoss (class): PyTorchKnowledgeDistillationLoss
+            param dict (dict): param dict
+        """
         return PyTorchKnowledgeDistillationLoss, self._param_check()
 
 class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
+    """The TensorflowKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
+
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
+        """Initialize Tensorflow Knowledge Distillation Loss class.
+
+        Args:
+            temperature (float, optional): Hyperparameters that control the entropy 
+                                            of probability distributions. Defaults to 1.0.
+            loss_types (list, optional): loss types. Defaults to ['CE', 'CE'].
+            loss_weights (list, optional): loss weights. Defaults to [0.5, 0.5].
+            student_model (optional): student model. Defaults to None.
+            teacher_model (optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+            NotImplementedError: NotImplementedError
+        """
         super(TensorflowKnowledgeDistillationLoss, self).__init__(temperature=temperature, 
                                                                   loss_types=loss_types,
                                                                   loss_weights=loss_weights,
@@ -367,11 +593,30 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
             logger.info('teacher_student_loss: {}, {}'.format(self.loss_types[1], \
                                                         self.loss_weights[1]))
     def SoftCrossEntropy(self, targets, logits):
+        """Return SoftCrossEntropy.
+
+        Args:
+            logits (tensor): output logits
+            targets (tensor): ground truth label
+
+        Returns:
+            tensor: SoftCrossEntropy
+        """
         log_prob = tf.math.log(logits)
         targets_prob = targets
         return tf.math.reduce_mean(tf.math.reduce_sum(- targets_prob * log_prob, axis=-1), axis=-1)
 
     def teacher_model_forward(self, input, teacher_model=None):
+        """Teacher model forward.
+
+        Args:
+            input (tensor): input data
+            teacher_model (optional): teacher model. Defaults to None.
+            device (torch.device, optional): device. Defaults to None.
+
+        Returns:
+            tensor: output
+        """
         outputs = None
         if self.loss_weights[1] > 0 and input is not None:
             model = self.teacher_model if teacher_model is None else teacher_model
@@ -385,14 +630,41 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
         return outputs
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
+        """Calculate loss between student model and teacher model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): teacher outputs
+
+        Returns:
+            tensor: loss
+        """
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
         return self.teacher_student_loss(teacher_outputs, student_outputs)
 
     def student_targets_loss_cal(self, student_outputs, targets):
+        """Calculate loss of student model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Returns:
+            tensor: loss
+        """
         assert self.student_targets_loss, 'student_targets_loss not specified.'
         return self.student_targets_loss(targets, student_outputs)
 
     def __call__(self, student_outputs, targets):
+        """Return loss of student model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Returns:
+            tensor: loss
+        """
         tmp = student_outputs
         student_outputs = targets
         targets = tmp
@@ -400,7 +672,14 @@ class TensorflowKnowledgeDistillationLoss(KnowledgeDistillationLoss):
 
 @criterion_registry('KnowledgeDistillationLoss', 'tensorflow')
 class TensorflowKnowledgeDistillationLossWrapper(object):
+    """TensorflowKnowledgeDistillationLossWrapper wraps TensorflowKnowledgeDistillationLoss."""
+
     def __init__(self, param_dict):
+        """Initialize Tensorflow Knowledge Distillation Loss Wrapper.
+
+        Args:
+            param_dict (dict): parameter dict
+        """
         self.param_dict = param_dict
 
     def _param_check(self):
@@ -427,11 +706,33 @@ class TensorflowKnowledgeDistillationLossWrapper(object):
         return new_dict
 
     def __call__(self, **kwargs):
+        """Return TensorflowKnowledgeDistillationLoss, param dict.
+
+        Returns:
+            class: TensorflowKnowledgeDistillationLoss
+            param dict (dict): param dict
+        """
         return TensorflowKnowledgeDistillationLoss, self._param_check()
 
 class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
+    """TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss."""
+
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], 
                  loss_weights=[0.5, 0.5], student_model=None, teacher_model=None):
+        """Initialize Tensorflow Knowledge Distillation Loss class.
+
+        Args:
+            temperature (float, optional): Hyperparameters that control the entropy 
+                                            of probability distributions. Defaults to 1.0.
+            loss_types (list, optional): loss types. Defaults to ['CE', 'CE'].
+            loss_weights (list, optional): loss weights. Defaults to [0.5, 0.5].
+            student_model (optional): student model. Defaults to None.
+            teacher_model (optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+            NotImplementedError: NotImplementedError
+        """
         super(TensorflowKnowledgeDistillationLossExternal, self).__init__(
                                                                 temperature=temperature, 
                                                                 loss_types=loss_types,
@@ -458,6 +759,16 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
                                                         self.loss_weights[1]))
 
     def teacher_model_forward(self, input, teacher_model=None):
+        """Teacher model forward.
+
+        Args:
+            input (tensor): input data
+            teacher_model (optional): teacher model. Defaults to None.
+            device (optional): device. Defaults to None.
+
+        Returns:
+            tensor: output
+        """
         outputs = None
         if self.loss_weights[1] > 0 and input is not None:
             model = self.teacher_model if teacher_model is None else teacher_model
@@ -471,17 +782,51 @@ class TensorflowKnowledgeDistillationLossExternal(KnowledgeDistillationLoss):
         return outputs
 
     def teacher_student_loss_cal(self, student_outputs, teacher_outputs):
+        """Calculate loss between student model and teacher model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): teacher outputs
+
+        Returns:
+            tensor: loss
+        """
         assert self.teacher_student_loss, 'teacher_student_loss not specified.'
         return self.teacher_student_loss(teacher_outputs, student_outputs)
 
     def student_targets_loss_cal(self, student_outputs, targets):
+        """Calculate loss of student model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            targets (tensor): groud truth label
+
+        Returns:
+            tensor: loss
+        """
         assert self.student_targets_loss, 'student_targets_loss not specified.'
         return self.student_targets_loss(targets, student_outputs)
 
 
 class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework):
+    """The IntermediateLayersKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss."""
+
     def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, 
                  add_origin_loss=False, student_model=None, teacher_model=None):
+        """Initialize PyTorch Knowledge Distillation Loss class.
+
+        Args:
+            temperature (float, optional): Hyperparameters that control the entropy 
+                                            of probability distributions. Defaults to 1.0.
+            loss_types (list, optional): loss types. Defaults to ['CE', 'CE'].
+            loss_weights (list, optional): loss weights. Defaults to [0.5, 0.5].
+            student_model (torch.nn.model, optional): student model. Defaults to None.
+            teacher_model (torch.nn.model, optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+            NotImplementedError: NotImplementedError
+        """
         super(IntermediateLayersKnowledgeDistillationLoss, self).__init__(
             student_model=student_model,
             teacher_model=teacher_model
@@ -492,24 +837,36 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
         self.layer_mappings = []
         self.layer_output_process = []
         for item in layer_mappings:
-            assert len(item) == 4 or len(item) == 2, 'Each item in layer_mappings ' + \
-                'should be a list or tuple of length 2 or 4, with format ' + \
-                '[student_layer_name, teacher_layer_name] or ' + \
-                '[student_layer_name, student_layer_output_process, ' + \
-                'teacher_layer_name, teacher_layer_output_process].' + \
-                'For example, with length of 4, element looks like [\'student_model.layer1' + \
-                '.attention\', \'1\', \'teacher_model.layer1.attention\', \'1\'], where ' + \
-                '\'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
+            assert len(item) == 1 or len(item) == 2, 'Each item in layer_mappings ' + \
+                'should be a list or tuple containing 1 list or 2 lists, with format ' + \
+                '[(layer_name, )] or [(student_layer_name, ), (teacher_layer_name, )], ' + \
+                'first one is the abbreviation for cases that student_layer_name and teacher_layer_name ' + \
+                'are the same. The length of tuples in the list could be either 1 like previous cases, ' + \
+                'or 2, like [(layer_name, layer_output_process)] or ' + \
+                '[(student_layer_name, student_layer_output_process), ' + \
+                '(teacher_layer_name, teacher_layer_output_process)].' + \
+                'For example, with 2 tuples of length 2, element looks like ' + \
+                '[(\'student_model.layer1.attention\', \'1\'), (\'teacher_model.layer1.attention\', \'1\')], ' + \
+                'where \'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
                 'represent attention module on layer 1 of the student model and the ' + \
                 'teacher model respectively, two \'1\' represent the index to retrieve the ' + \
                 'desired output from the defined module\'s outputs, in this case, the above ' + \
                 'two module\'s outputs are lists, with desired output in index 1 of these ' + \
-                'lists, in cases of dict output, retrieving can be done by define the ' + \
+                'lists, in cases of dict output, retrieving can be done by defining the ' + \
                 'corresponding key, in cases of module\'s output is the desired output, ' + \
-                'just adopt an element of length 2 such as [\'student_model.layer1.output' + \
-                '.output\', \'teacher_model.layer1.output\'].'
-            self.layer_mappings.append((item[0], item[2]) if len(item)==4 else item)
-            self.layer_output_process.append((item[1], item[3]) if len(item)==4 else ('', ''))
+                'just adopt the format such as [(\'student_model.layer1.output' + \
+                '.output\', ), (\'teacher_model.layer1.output\', )].'
+            if len(item) == 1:
+                item = [item[0], item[0]]
+            for i in range(len(item)):
+                if not isinstance(item[i], (list, tuple)):
+                    item[i] = [item[i], '']
+                elif len(item[i]) == 1:
+                    item[i] = [item[i][0], '']
+                else:
+                    assert len(item[i]) == 2, "Expect {} to be a tuple of length 1 or 2.".format(item[i])
+            self.layer_mappings.append((item[0][0], item[1][0]))
+            self.layer_output_process.append((item[0][1], item[1][1]))
         for student_layer, teacher_layer in self.layer_mappings:
             self.student_features[student_layer] = []
             self.teacher_features[teacher_layer] = []
@@ -529,38 +886,86 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
                 )
 
     def init_loss_funcs(self):
+        """Init loss funcs.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function init_loss_funcs '
                                   'should be framework related.')
 
     def init_feature_matcher(self, student_feature, teacher_feature):
+        """Init feature matcher.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function init_feature_matcher '
                                   'should be framework related.')
 
     def teacher_model_forward(self, input, teacher_model=None):
+        """Teacher model forward.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function teacher_model_forward '
                                   'should be framework related.')
 
     def loss_cal(self):
+        """Calculate loss.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         raise NotImplementedError('Function loss_cal should be framework related.')
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        """Calculate all losses between student model and teacher model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): teacher outputs
+            student_loss (tensor): student loss
+
+        Returns:
+            tensor: loss
+        """
         return self.loss_cal()
 
     def clear_features(self):
+        """Clean features in list."""
         for student_layer in self.student_features:
             self.student_features[student_layer] = []
         for teacher_layer in self.teacher_features:
             self.teacher_features[teacher_layer] = []
 
     def __call__(self, student_outputs, targets):
+        """Return 0."""
         return 0
 
 
 class PyTorchIntermediateLayersKnowledgeDistillationLoss(
                 IntermediateLayersKnowledgeDistillationLoss
                 ):
+    """PyTorch Intermediate Layers Knowledge Distillation Loss."""
+
     def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, 
                  add_origin_loss=False, student_model=None, teacher_model=None):
+        """Initialize PyTorch Knowledge Distillation Loss class.
+
+        Args:
+            temperature (float, optional): Hyperparameters that control the entropy 
+                                            of probability distributions. Defaults to 1.0.
+            loss_types (list, optional): loss types. Defaults to ['CE', 'CE'].
+            loss_weights (list, optional): loss weights. Defaults to [0.5, 0.5].
+            student_model (optional): student model. Defaults to None.
+            teacher_model (optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+            NotImplementedError: NotImplementedError
+        """
         super(PyTorchIntermediateLayersKnowledgeDistillationLoss, self).__init__(
                                                 layer_mappings=layer_mappings, 
                                                 loss_types=loss_types,
@@ -571,6 +976,11 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         self.register_hooks_for_models()
 
     def register_hooks_for_models(self):
+        """Register hooks for models to record module output.
+
+        Raises:
+            AttributeError: AttributeError
+        """
         from neural_compressor.experimental.common import torch_utils
         def register_model_forward_hook(model, path, output_process='', student=False):
             nodes = path.split('.')
@@ -603,10 +1013,12 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             self.hook_handles.extend([st_handle, te_handle])
 
     def remove_all_hooks(self):
+        """Remove all hooks."""
         for hook in self.hook_handles:
             hook.remove()
 
     def init_loss_funcs(self):
+        """Init loss funcs."""
         for loss_type in self.loss_types:
             if loss_type == 'MSE':
                 loss_func = torch.nn.MSELoss()
@@ -621,6 +1033,15 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             self.loss_funcs.append(loss_func)
 
     def init_feature_matcher(self, student_feature, teacher_feature):
+        """Init feature matcher.
+
+        Args:
+            student_feature (tensor): student feature
+            teacher_feature (tensor): teacher feature
+
+        Returns:
+            pytorch_linear_feature_matcher
+        """
         class pytorch_linear_feature_matcher(torch.nn.Module):
             def __init__(self, src_shape, dst_shape):
                 super().__init__()
@@ -654,6 +1075,15 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         return pytorch_linear_feature_matcher(student_feature.shape, teacher_feature.shape)
 
     def teacher_model_forward(self, input, teacher_model=None, device=None):
+        """Define parameters for teacher_model_forward function.
+
+        Args:
+            input (tensor, tuple or dict): input data.
+            teacher_model (model, optional): teacher model. Defaults to None.
+
+        Raises:
+            NotImplementedError: NotImplementedError
+        """
         model = self.teacher_model if teacher_model is None else teacher_model
         assert isinstance(model, torch.nn.Module), \
             'Teacher model should be a torch Module instead of {}'.format(type(model))
@@ -670,12 +1100,27 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             return pytorch_forward_wrapper(model, input, device=device)
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        """Calculate all losses between student model and teacher model.
+
+        Args:
+            student_outputs (tensor): student outputs
+            teacher_outputs (tensor): teacher outputs
+            student_loss (tensor): student loss
+
+        Returns:
+            tensor: loss
+        """
         loss = self.loss_cal()
         if self.add_origin_loss:
             loss += student_loss
         return loss
 
     def loss_cal(self):
+        """Calculate loss of student model.
+
+        Returns:
+            tensor: loss
+        """
         self.loss = 0
         init_feature_matchers = False
         if self.feature_matchers is None:
@@ -733,7 +1178,14 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
 
 @criterion_registry('IntermediateLayersKnowledgeDistillationLoss', 'pytorch')
 class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
+    """PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper."""
+
     def __init__(self, param_dict):
+        """Initialize PyTorchIntermediateLayersKnowledgeDistillationLossWrapper class.
+
+        Args:
+            param_dict (dict): param dict
+        """
         self.param_dict = param_dict
 
     def _param_check(self):
@@ -756,20 +1208,26 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         assert len(param_dict['layer_mappings']) == \
             len(param_dict['loss_types']) == len(param_dict['loss_weights']),\
             'Length of layer_mappings, loss_types and loss_weights must be the same.'
-        assert all(type(it) in [list, tuple] and (len(it) == 2 or len(it) == 4) \
+        assert all(type(it) in [list, tuple] and (len(it) == 1 or len(it) == 2) \
             for it in param_dict['layer_mappings']), \
-            'Elements of layer_mappings must be list or tuple and with length of 2 or 4.' + \
-            'For example, with length of 4, element looks like [\'student_model.layer1' + \
-            '.attention\', \'1\', \'teacher_model.layer1.attention\', \'1\'], where ' + \
-            '\'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
+            'Each item in layer_mappings should be a list containing 1 tuple or 2 tuples, with format ' + \
+            '[(layer_name, )] or [(student_layer_name, ), (teacher_layer_name, )], ' + \
+            'first one is the abbreviation for cases that student_layer_name and teacher_layer_name ' + \
+            'are the same. The length of tuples in the list could be either 1 like previous cases, ' + \
+            'or 2, like [(layer_name, layer_output_process)] or ' + \
+            '[(student_layer_name, student_layer_output_process), ' + \
+            '(teacher_layer_name, teacher_layer_output_process)].' + \
+            'For example, with 2 tuples of length 2, element looks like ' + \
+            '[(\'student_model.layer1.attention\', \'1\'), (\'teacher_model.layer1.attention\', \'1\')], ' + \
+            'where \'student_model.layer1.attention\' and \'teacher_model.layer1.attention\' ' + \
             'represent attention module on layer 1 of the student model and the ' + \
             'teacher model respectively, two \'1\' represent the index to retrieve the ' + \
             'desired output from the defined module\'s outputs, in this case, the above ' + \
             'two module\'s outputs are lists, with desired output in index 1 of these ' + \
-            'lists, in cases of dict output, retrieving can be done by define the ' + \
+            'lists, in cases of dict output, retrieving can be done by defining the ' + \
             'corresponding key, in cases of module\'s output is the desired output, ' + \
-            'just adopt an element of length 2 such as [\'student_model.layer1.output' + \
-            '.output\', \'teacher_model.layer1.output\'].'
+            'just adopt the format such as [(\'student_model.layer1.output' + \
+            '.output\', ), (\'teacher_model.layer1.output\', )].'
         assert all(any(isinstance(e, t) for t in [str, torch.nn.Module]) \
             for e in param_dict['loss_types']), \
             'Type of loss_types element must be str or torch Module.'
@@ -781,4 +1239,177 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         return new_dict
 
     def __call__(self, **kwargs):
+        """Return PyTorchIntermediateLayersKnowledgeDistillationLossWrapper, param dict.
+
+        Returns:
+            class: PyTorchIntermediateLayersKnowledgeDistillationLoss
+            param dict (dict): param dict
+        """
         return PyTorchIntermediateLayersKnowledgeDistillationLoss, self._param_check()
+
+
+class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0,
+                 add_origin_loss=False, student_model=None, teacher_model=None):
+        super(SelfKnowledgeDistillationLoss, self).__init__(student_model=student_model,
+                                                            teacher_model=teacher_model)
+        self.temperature = temperature
+        self.layer_mappings = []
+        for items in layer_mappings:
+            for value in items:
+                assert len(value) == 2, 'Each item in layer_mappings ' + \
+                    'should be a list or tuple of length 2, with format ' + \
+                    '[student_layer_name, teacher_layer_name].'
+            self.layer_mappings.append(items)
+
+        self.loss_weights = [1.0 / len(self.layer_mappings)] * len(self.layer_mappings) \
+            if loss_weights is None else loss_weights
+        self.loss_types = ['CE'] * len(self.layer_mappings) \
+            if loss_types is None else loss_types
+        self.add_origin_loss = add_origin_loss
+        self.loss_funcs = []
+        self.init_loss_funcs()
+        assert len(self.layer_mappings) == len(self.loss_weights) == len(self.loss_types), \
+            'Wrong length for layer_mappings:{}, loss_weights:{} or loss_types:{}, ' + \
+            'all should be the same.'.format(
+                len(self.layer_mappings), len(
+                    self.loss_weights), len(self.loss_types)
+        )
+
+    def init_loss_funcs(self):
+        raise NotImplementedError('Function init_loss_funcs '
+                                  'should be framework related.')
+
+    def teacher_model_forward(self, input, teacher_model=None):
+        raise NotImplementedError('Function teacher_model_forward '
+                                  'should be framework related.')
+
+    def loss_cal(self, student_outputs):
+        raise NotImplementedError(
+            'Function loss_cal should be framework related.')
+
+    def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
+        loss = self.loss_cal(student_outputs)
+        if self.add_origin_loss:
+            loss += student_loss
+        return loss
+
+    def __call__(self, student_outputs, targets):
+        return 0
+
+
+class PyTorchSelfKnowledgeDistillationLoss(
+    SelfKnowledgeDistillationLoss
+):
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0,
+                 add_origin_loss=False, student_model=None, teacher_model=None):
+        super(PyTorchSelfKnowledgeDistillationLoss, self).__init__(
+            layer_mappings=layer_mappings,
+            loss_types=loss_types,
+            loss_weights=loss_weights,
+            temperature=temperature,
+            add_origin_loss=add_origin_loss,
+            student_model=student_model,
+            teacher_model=teacher_model)
+
+    def SoftCrossEntropy(self, logits, targets):
+        log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
+        targets_prob = torch.nn.functional.softmax(targets, dim=-1)
+        return (-targets_prob * log_prob).sum(dim=-1).mean()
+
+    def KullbackLeiblerDivergence(self, logits, targets):
+        log_prob = torch.nn.functional.log_softmax(logits, dim=-1)
+        targets_prob = torch.nn.functional.softmax(targets, dim=-1)
+        return torch.nn.functional.kl_div(log_prob, targets_prob)
+
+    def L2Divergence(self, feature1, feature2):
+        return torch.dist(feature1, feature2)
+
+    def init_loss_funcs(self):
+        for loss_type in self.loss_types:
+            if loss_type == 'CE':
+                loss_func = self.SoftCrossEntropy
+            elif loss_type == 'KL':
+                loss_func = self.KullbackLeiblerDivergence
+            elif loss_type == 'L2':
+                loss_func = self.L2Divergence
+            else:
+                raise NotImplementedError('Unsupported loss type {}, supported loss is ' +
+                                          'CE for software CE, KL for Kullback-Leibler divergence and ' +
+                                          'L2 for L2 distance.'.format(loss_type))
+            self.loss_funcs.append(loss_func)
+
+    def loss_cal(self, student_outputs):
+        self.loss = torch.FloatTensor([0.])
+        tmp_loss = 0
+        temperature = self.temperature
+        for loss_idx in range(len(self.layer_mappings)):
+            items = self.layer_mappings[loss_idx]
+            for idx in range(len(items)):
+                student_layer, teacher_layer = items[idx]
+                student_feature = student_outputs[student_layer]
+                teacher_feature = student_outputs[teacher_layer]
+                if loss_idx == 1:  # soft logit
+                    tmp_loss += self.loss_funcs[loss_idx](
+                        student_feature/temperature, teacher_feature/temperature) * self.loss_weights[loss_idx]
+                else:  # feature learning
+                    tmp_loss += self.loss_funcs[loss_idx](
+                        student_feature, teacher_feature) * self.loss_weights[loss_idx]
+            if tmp_loss.device != self.loss.device:
+                self.loss = self.loss.to(tmp_loss.device)
+            self.loss += tmp_loss
+        return self.loss
+
+
+@criterion_registry('SelfKnowledgeDistillationLoss', 'pytorch')
+class PyTorchSelfKnowledgeDistillationLossWrapper(object):
+    def __init__(self, param_dict):
+        self.param_dict = param_dict
+
+    def _param_check(self):
+        param_dict = self.param_dict
+        _params = ['temperature', 'layer_mappings',
+                   'loss_types', 'loss_weights', 'add_origin_loss']
+        layer_mappings = param_dict['layer_mappings']
+        if 'loss_types' not in param_dict:
+            param_dict['loss_types'] = ['CE'] * len(layer_mappings)
+        if 'loss_weights' not in param_dict:
+            param_dict['loss_weights'] = [
+                1.0 / len(layer_mappings)] * len(layer_mappings)
+        if 'add_origin_loss' not in param_dict:
+            param_dict['add_origin_loss'] = False
+        if 'temperature' not in param_dict:
+            param_dict['temperature'] = 1.0
+        assert 'layer_mappings' in param_dict, \
+            'Key layer_mappings must be in input parameters.'
+        assert all(type(param_dict[k]) in [list, tuple]
+                   for k in ['layer_mappings', 'loss_types', 'loss_weights']), \
+            'Type of loss_types and loss_weights must be list or tuple.'
+        assert isinstance(param_dict['add_origin_loss'], bool), \
+            'Type of add_origin_loss should be bool.'
+        assert len(param_dict['layer_mappings']) == \
+            len(param_dict['loss_types']) == len(param_dict['loss_weights']),\
+            'Length of layer_mappings, loss_types and loss_weights must be the same.'
+        assert param_dict['temperature'] > 0.0,\
+            'Value of temperature must be positive.'
+        for items in param_dict['layer_mappings']:
+            assert all(type(it) in [list, tuple] and (len(it) == 2)
+                       for it in items), \
+                'Elements of layer_mappings must be list or tuple and with length of 2.' + \
+                'element looks like [\'resblock.1.feature.output,' + \
+                '\'resblock.deepst.feature.output\'], where ' + \
+                '\'resblock.1.feature.output\' and \'resblock.deepst.feature.output\' ' + \
+                'represent resblock feature output of the student model and feature output of the' + \
+                'teacher model respectively.'
+        assert all(any(isinstance(e, t) for t in [str])
+                   for e in param_dict['loss_types']), \
+            'Type of loss_types element must be str.'
+        assert all(0. <= e <= 1. for e in param_dict['loss_weights']), \
+            'Element of loss_weights must be in interval [0, 1].'
+        new_dict = {}
+        for k in _params:
+            new_dict[k] = param_dict[k]
+        return new_dict
+
+    def __call__(self, **kwargs):
+        return PyTorchSelfKnowledgeDistillationLoss, self._param_check()

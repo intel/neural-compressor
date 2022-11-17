@@ -29,6 +29,13 @@ def get_all_code_path(user_input: str) -> List:
         import_path = get_imports_path(user_code_path)
     else:
         import_path = []
+
+    # if import_path intersects user_code_path, clear import_path: this is
+    # for cases where there is import of self folder and we only care about 
+    # the main file (user_code_path) itself
+    if len(list(set(user_code_path).intersection(set(import_path)))) > 0:
+        import_path = []
+
     all_code_path = user_code_path + import_path
     logger.debug(f"Number of code files to analyze: {len(all_code_path)}")
 

@@ -3,11 +3,12 @@
 #
 import unittest
 import os
+import platform
 import yaml
-import tensorflow as tf
-
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
+
+import tensorflow as tf
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -109,6 +110,9 @@ class TestGraphInputOutputDetection(unittest.TestCase):
     tf.compat.v1.disable_v2_behavior()
     mb_fp32_pb_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'
     pb_path = '/tmp/.neural_compressor/mobilenet_fp32.pb'
+    platform = platform.system().lower()
+    if platform == "windows":
+        pb_path = 'C:\\tmp\\.neural_compressor\\mobilenet_fp32.pb'
     inputs = ['input']
     outputs = ['MobilenetV1/Predictions/Reshape_1']
 
@@ -117,7 +121,12 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         build_fake_yaml()
         build_fake_yaml_2()
         if not os.path.exists(self.pb_path):
-            os.system('mkdir -p /tmp/.neural_compressor && wget {} -O {} '.format(self.mb_fp32_pb_url, self.pb_path))
+            if self.platform == "linux":
+                os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_fp32_pb_url, self.pb_path))
+            elif self.platform == "windows":
+                os.system('md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor')
+                from urllib import request
+                request.urlretrieve(self.mb_fp32_pb_url)
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:
             self.input_graph.ParseFromString(f.read())

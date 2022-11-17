@@ -27,6 +27,8 @@ import numpy as np
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
+    exclude_conv_nodes = []
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
@@ -55,11 +57,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DBiasAddSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddLeakyReluAddQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DLeakyReluAddQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DAddReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddAddRelu6MulMulQuantizeV2': self.apply_conv_biasadd_hardswish_fusion,
@@ -93,7 +97,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DAddV2AddQuantizeV2': self.apply_newly_conv_biasadd_addn_fusion,
                 'DequantizeConv2DBiasAddAddQuantizeV2': self.apply_newly_conv_biasadd_addn_fusion,
                 'DequantizeConv2DAddAddReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
-                'DequantizeConv2DBiasAddAddReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv3DQuantizeV2': self.apply_conv3d_single_fusion,
                 'DequantizeConv3DBiasAddQuantizeV2': self.apply_conv3d_add_fusion,
                 'DequantizeConv3DBiasAddAddQuantizeV2': self.apply_conv3d_add_addn_fusion,
@@ -107,7 +110,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv3DAddV2ReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DBiasAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
-                'DequantizeConv3DAddReluQuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DBiasAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
                 'DequantizeConv3DAddRelu6QuantizeV2': self.apply_conv3d_add_relu_fusion,
@@ -288,6 +290,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantized_node_input_names)
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                                      node.attr["explicit_paddings"])
@@ -441,6 +444,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantized_node_input_names)
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                                      node.attr["explicit_paddings"])
@@ -570,6 +574,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
                    helper.copy_attr(quantized_conv_node, "alpha",
                    self.node_name_mapping[relu_node_name].node.attr["alpha"])
@@ -706,6 +711,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if node.op != 'DepthwiseConv3dNative' and "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",node.attr["explicit_paddings"])
                 helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
@@ -791,6 +797,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if node.op != 'DepthwiseConv3dNative' and "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                                      node.attr["explicit_paddings"])
@@ -923,6 +930,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
                     helper.copy_attr(quantized_conv_node, "alpha",
                     self.node_name_mapping[relu_node_name].node.attr["alpha"])
@@ -1049,6 +1057,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -1135,6 +1144,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                     node.attr["explicit_paddings"])
@@ -1189,7 +1199,6 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         # Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
-
         second_node = self.node_name_mapping[match_node_name[2]].node
         need_insert_dummy_biasadd = 1
         add_a_node_name = helper.node_name_from_input(second_node.input[0])
@@ -1242,9 +1251,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
         deq_node = self.node_name_mapping[sum_node_name].node
-        if deq_node.op != 'Dequantize' or deq_node.op.find("Quantize") != -1:
+        if (deq_node.op != 'LeakyRelu' and deq_node.op != 'Dequantize') or \
+                   deq_node.op.find("Quantize") != -1:
             return self.apply_newly_conv_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
-    
+
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel)
@@ -1292,12 +1302,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     ] + all_input_names[2:] + control_inputs
 
                 node_op = "_FusedQuantizedConv2D" if node.op == 'Conv2D' \
-                        else '_FusedQuantizedDepthwiseConv2D' 
+                        else '_FusedQuantizedDepthwiseConv2D'
 
                 quantized_conv_node = helper.create_node(node_op, quantized_node_name,
                     quantized_node_input_names)
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                                      node.attr["explicit_paddings"])
@@ -1444,6 +1455,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "alpha" in self.node_name_mapping[relu_node_name].node.attr:
                     helper.copy_attr(quantized_conv_node, "alpha",
                     self.node_name_mapping[relu_node_name].node.attr["alpha"])
@@ -1563,6 +1575,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "alpha" in self.node_name_mapping[swish_node_name].node.attr:
                     helper.copy_attr(quantized_conv_node, "alpha",
                     self.node_name_mapping[swish_node_name].node.attr["alpha"])
@@ -1684,6 +1697,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                     quantized_node_input_names)
                 helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
                 helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "data_format", node.attr["data_format"])
                 if "explicit_paddings" in node.attr:
                     helper.copy_attr(quantized_conv_node, "explicit_paddings",
                                      node.attr["explicit_paddings"])
@@ -1752,18 +1766,18 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.logger.info("Unknown fusion pattern {}.".format(fusion_name))
                 if self.remove_redundant_quant_flag:
                     self.input_graph = self.remove_redundant_quantization(self.input_graph)
-                return self.input_graph, []
+                return self.input_graph, self.exclude_conv_nodes
 
             self.input_graph = self.output_graph
             self._reset_output_node_maps()
             if self.remove_redundant_quant_flag:
                 self.output_graph = self.remove_redundant_quantization(self.output_graph)
 
-            return self.output_graph, []
+            return self.output_graph, self.exclude_conv_nodes
 
         if self.remove_redundant_quant_flag:
             self.input_graph = self.remove_redundant_quantization(self.input_graph)
-        return self.input_graph, []
+        return self.input_graph, self.exclude_conv_nodes
 
     def _is_match_conv(self, patterns, qdq_inserted=False):
         """Detect the rule matched nodes collections.
@@ -1784,15 +1798,20 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if ((v in ("Conv2D", "DepthwiseConv2dNative")
                      and not self.enable_s8)
                 ) and not self._find_relu_node(cur_node):
+                    self.exclude_conv_nodes.append(cur_node.name)
                     continue
 
-                if qdq_inserted:
-                    _, normal_inputs = self._get_node_input(cur_node.name)
+                _, normal_inputs = self._get_node_input(cur_node.name)
+                if self.node_name_mapping[normal_inputs[1].rsplit(':')[0]].node.op == 'Split':
+                    self.exclude_conv_nodes.append(cur_node.name)
+                    continue
 
                 for sub_rule in patterns:
                     if sub_rule[0] != "Dequantize" or sub_rule[-1] != "QuantizeV2":
+                        self.exclude_conv_nodes.append(cur_node.name)
                         continue
                     if v != sub_rule[1]:
+                        self.exclude_conv_nodes.append(cur_node.name)
                         continue
 
                     if qdq_inserted:

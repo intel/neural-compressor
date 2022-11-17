@@ -5,13 +5,12 @@ import os
 import unittest
 import yaml
 import numpy as np
-import tensorflow.compat.v1 as tf
 import neural_compressor
-
-
-from tensorflow.python.framework import dtypes
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
+
+import tensorflow.compat.v1 as tf
+from tensorflow.python.framework import dtypes
 
 def build_fake_yaml():
     fake_yaml = '''

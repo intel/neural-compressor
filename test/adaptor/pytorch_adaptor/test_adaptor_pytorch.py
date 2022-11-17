@@ -26,8 +26,8 @@ except:
 resnet18 = LazyImport("torchvision.models.resnet18")
 q_resnet18 = LazyImport("torchvision.models.quantization.resnet18")
 
-PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= Version("1.8.0-rc1"):
+PT_VERSION = nc_torch.get_torch_version().release
+if PT_VERSION >= Version("1.8.0").release:
     FX_MODE = True
 else:
     FX_MODE = False
@@ -263,7 +263,7 @@ def build_pytorch_yaml():
         f.write(fake_auto_yaml)
 
 def build_pytorch_fx_yaml():
-    if PT_VERSION >= Version("1.9.0-rc1"):
+    if PT_VERSION >= Version("1.9.0").release:
       fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
     else:
       fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
@@ -626,7 +626,7 @@ class TestPytorchAdaptor(unittest.TestCase):
             if fake_yaml == 'qat_yaml.yaml':
                 quantizer.q_func = q_func
             else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
+                quantizer.calib_func = eval_func
             quantizer.eval_func = eval_func
             q_model = quantizer.fit()
             q_model.save('./saved')
@@ -711,7 +711,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
         a = load_array('saved/dump_tensor/activation_iter1.npz')
         w = load_array('saved/dump_tensor/weight.npz')
-        if PT_VERSION >= Version("1.8.0-rc1"):
+        if PT_VERSION >= Version("1.8.0").release:
           self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
                           a['conv1.0'].item()['conv1.0.output0'].shape[1])
         else:
@@ -792,7 +792,7 @@ class TestPytorchAdaptor(unittest.TestCase):
               fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
-        if PT_VERSION >= Version("1.8.0-rc1"):
+        if PT_VERSION >= Version("1.8.0").release:
             model.model.dequant.qconfig = torch.quantization.default_qconfig
         nc_torch._fallback_quantizable_ops_recursively(
             model.model, '', fallback_ops, op_qcfgs={})
@@ -832,7 +832,10 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             quantizer.eval_func = eval_func
             if fake_yaml == 'fx_qat_yaml.yaml':
                 quantizer.q_func = q_func
-            quantizer.calib_dataloader = common.DataLoader(dataset)
+            else:
+                quantizer.calib_func = eval_func
+            dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = dataloader
             quantizer.model = common.Model(model_origin,
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
@@ -890,7 +893,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             shutil.rmtree('./saved', ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
+    @unittest.skipIf(PT_VERSION < Version("1.9.0").release,
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
     def test_fx_dynamic_quant(self):
         model = LSTMModel(
@@ -1014,7 +1017,37 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree('./saved', ignore_errors=True)
 
-    @unittest.skipIf(PT_VERSION < Version("1.11.0-rc1"),
+    def test_deepcopy_failure(self):
+        def eval_func(model):
+            return 1
+
+        # To build an object t2, which will fail on deepcopy.
+        class T1():
+            def __init__(self, t1) -> None:
+                self.t1 = t1
+                self.j = 1
+
+            # required for usage with set in T1
+            def __hash__(self):
+                return hash(self.j)
+
+        t1 = set()
+        t2 = T1([t1])
+        t1.add(t2)
+
+        for fake_yaml in ['fx_ptq_yaml.yaml']:
+            model_origin = M()
+            model_origin.tmp = t2
+            # run fx_quant in neural_compressor and save the quantized GraphModule
+            quantizer = Quantization(fake_yaml)
+            dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
+            quantizer.eval_func = eval_func
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = common.Model(model_origin)
+            q_model = quantizer.fit()
+            self.assertTrue(isinstance(q_model.model, torch.fx.graph_module.GraphModule))
+
+    @unittest.skipIf(PT_VERSION < Version("1.11.0").release,
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_bf16_capability(self):
         model_origin = DynamicControlModel()
@@ -1041,7 +1074,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             [elem['activation']['dtype'] for elem in q_capability['opwise'][('linear', 'Linear')]],
             [['uint8'], 'fp32', 'bf16'])
 
-    @unittest.skipIf(PT_VERSION < Version("1.11.0-rc1"),
+    @unittest.skipIf(PT_VERSION < Version("1.11.0").release,
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_mix_precision(self):
         fake_yaml = 'fx_ptq_yaml.yaml'
@@ -1073,7 +1106,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         from neural_compressor.adaptor.torch_utils.symbolic_trace import symbolic_trace
         model_origin = DynamicControlModel()
         traced_model = symbolic_trace(model_origin, is_qat=False)
-        if PT_VERSION >= Version("1.11.0-rc1"):
+        if PT_VERSION >= Version("1.11.0").release:
             self.assertTrue(isinstance(traced_model.sub, torch.nn.Module))
             self.assertTrue(isinstance(traced_model.conv, torch.fx.graph_module.GraphModule))
         else:

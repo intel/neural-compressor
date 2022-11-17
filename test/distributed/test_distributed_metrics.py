@@ -1,31 +1,39 @@
 """Tests for the distributed metrics."""
 import os
+import sys
+import cpuinfo
 import signal
 import shutil
 import subprocess
 import unittest
 import re
-import tensorflow
-import torch
+import tensorflow as tf
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
+from neural_compressor.utils import logger
 
 def build_fake_ut():
     fake_ut = """
 import numpy as np
 import unittest
+import horovod.tensorflow as hvd
+import os
+import sys
+import cpuinfo
+import json
+import tensorflow as tf
 from neural_compressor.metric import METRICS
 from neural_compressor.experimental.metric.f1 import evaluate
 from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
 from neural_compressor.experimental.metric import bleu
-import horovod.tensorflow as hvd
-import os
-import json
-import tensorflow as tf
+from neural_compressor.utils import logger
+
 tf.compat.v1.enable_eager_execution()
 
 class TestMetrics(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         hvd.init()
         if hvd.rank() == 0:
             if os.path.exists('anno_0.yaml'):
@@ -49,6 +57,13 @@ class TestMetrics(unittest.TestCase):
                 os.remove('anno_1.yaml')
             if os.path.exists('anno_2.yaml'):
                 os.remove('anno_2.yaml')
+
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\\n")
 
     def test_mIOU(self):
         metrics = METRICS('tensorflow')
@@ -77,7 +92,6 @@ class TestMetrics(unittest.TestCase):
         metrics = METRICS('onnxrt_qlinearops')
         glue = metrics['GLUE']('mrpc')
         glue.hvd = hvd
-        hvd.init()
         preds = [np.array(
             [[-3.2443411,  3.0909934],
              [2.0500996, -2.3100944],
@@ -109,7 +123,6 @@ class TestMetrics(unittest.TestCase):
         metrics = METRICS('tensorflow')
         F1 = metrics['F1']()
         F1.hvd = hvd
-        hvd.init()
         if hvd.rank() == 0:
             preds = [1, 1, 1, 1]
             labels = [0, 1, 1, 1]
@@ -122,7 +135,6 @@ class TestMetrics(unittest.TestCase):
 
     def test_squad_evaluate(self):
         evaluate.hvd = hvd
-        hvd.init()
         label = [{'paragraphs':\\
             [{'qas':[{'answers': [{'answer_start': 177, 'text': 'Denver Broncos'}, \\
                                   {'answer_start': 177, 'text': 'Denver Broncos'}, \\
@@ -146,9 +158,7 @@ class TestMetrics(unittest.TestCase):
     def test_pytorch_F1(self):
         metrics = METRICS('pytorch')
         F1 = metrics['F1']()
-        import horovod.torch as hvd
         F1.hvd = hvd
-        hvd.init()
         F1.reset()
         if hvd.rank() == 0:
             preds = [1]
@@ -169,7 +179,6 @@ class TestMetrics(unittest.TestCase):
         top1.hvd = hvd
         top2.hvd = hvd
         top3.hvd = hvd
-        hvd.init()
         
         if hvd.rank() == 0:
             predicts = [[0, 0.2, 0.9, 0.3]]
@@ -743,10 +752,9 @@ class TestMetrics(unittest.TestCase):
             predicts4 = [[0.1, 0.9], [0.3, 0.7], [0.4, 0.6]] 
             labels4 = [1, 0, 0]
 
-        import horovod.tensorflow as hvd_tf
         metrics = METRICS('tensorflow')
         acc = metrics['Accuracy']()
-        acc.hvd = hvd_tf
+        acc.hvd = hvd
         acc.update(predicts1, labels1)
         acc_result = acc.result()
         self.assertEqual(acc_result, 0.5)
@@ -767,11 +775,9 @@ class TestMetrics(unittest.TestCase):
         wrong_labels = [[0, 1, 1]]
         self.assertRaises(ValueError, acc.update, wrong_predictions, wrong_labels)
 
-        import horovod.torch as hvd_torch
-        hvd_torch.init()
         metrics = METRICS('pytorch')
         acc = metrics['Accuracy']()
-        acc.hvd = hvd_torch
+        acc.hvd = hvd
         acc.update(predicts1, labels1)
         acc_result = acc.result()
         self.assertEqual(acc_result, 0.5)
@@ -797,10 +803,9 @@ class TestMetrics(unittest.TestCase):
             predicts2 = [1, 1]
             labels2 = [1, 0]
 
-        import horovod.tensorflow as hvd_tf
         metrics = METRICS('tensorflow')
         mse = metrics['MSE'](compare_label=False)
-        mse.hvd = hvd_tf
+        mse.hvd = hvd
         mse.update(predicts1, labels1)
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.75)
@@ -808,11 +813,9 @@ class TestMetrics(unittest.TestCase):
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.625)
 
-        import horovod.torch as hvd_torch 
-        hvd_torch.init()       
         metrics = METRICS('pytorch')
         mse = metrics['MSE']()
-        mse.hvd = hvd_torch
+        mse.hvd = hvd
         mse.update(predicts1, labels1)
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.75)
@@ -832,10 +835,9 @@ class TestMetrics(unittest.TestCase):
             predicts2 = [1, 1]
             labels2 = [1, 0]
 
-        import horovod.tensorflow as hvd_tf
         metrics = METRICS('tensorflow')
         mae = metrics['MAE']()
-        mae.hvd = hvd_tf
+        mae.hvd = hvd
         mae.update(predicts1, labels1)
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.75)
@@ -848,11 +850,9 @@ class TestMetrics(unittest.TestCase):
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.25)
 
-        import horovod.torch as hvd_torch  
-        hvd_torch.init()
         metrics = METRICS('pytorch')
         mae = metrics['MAE']()
-        mae.hvd = hvd_torch
+        mae.hvd = hvd
         mae.update(predicts1, labels1)
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.75)
@@ -877,10 +877,9 @@ class TestMetrics(unittest.TestCase):
             predicts2 = [1, 1]
             labels2 = [0, 0]
 
-        import horovod.tensorflow as hvd_tf
         metrics = METRICS('tensorflow')
         rmse = metrics['RMSE']()
-        rmse.hvd = hvd_tf
+        rmse.hvd = hvd
         rmse.update(predicts1, labels1)
         rmse_result = rmse.result()
         self.assertEqual(rmse_result, 0.5)
@@ -889,11 +888,9 @@ class TestMetrics(unittest.TestCase):
         rmse_result = rmse.result()
         self.assertAlmostEqual(rmse_result, np.sqrt(0.75))
 
-        import horovod.torch as hvd_torch  
-        hvd_torch.init()
         metrics = METRICS('pytorch')
         rmse = metrics['RMSE']()
-        rmse.hvd = hvd_torch
+        rmse.hvd = hvd
         rmse.update(predicts1, labels1)
         rmse_result = rmse.result()
         self.assertEqual(rmse_result, 0.5)
@@ -917,10 +914,9 @@ class TestMetrics(unittest.TestCase):
             predicts3 = [0, 1]
             labels3 = [0, 0]
         
-        import horovod.tensorflow as hvd_tf
         metrics = METRICS('tensorflow')
         loss = metrics['Loss']()
-        loss.hvd = hvd_tf
+        loss.hvd = hvd
         loss.update(predicts1, labels1)
         loss_result = loss.result()
         self.assertEqual(loss_result, 0.5)
@@ -931,11 +927,9 @@ class TestMetrics(unittest.TestCase):
         loss.update(predicts3, labels3)
         self.assertEqual(loss.result(), 0.5)
 
-        import horovod.torch as hvd_torch  
-        hvd_torch.init()
         metrics = METRICS('pytorch')
         loss = metrics['Loss']()
-        loss.hvd = hvd_torch
+        loss.hvd = hvd
         loss.update(predicts1, labels1)
         loss_result = loss.result()
         self.assertEqual(loss_result, 0.5)
@@ -965,7 +959,14 @@ class TestDistributed(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors = True)
         shutil.rmtree('runs', ignore_errors = True)
 
-    @unittest.skipIf(tensorflow.version.VERSION >= '2.8.0' or torch.version.__version__ >= '1.10.0', "Only supports tf 2.7.0 or below and pytorch 1.9.0 or below")
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
+
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
     def test_distributed(self):
         distributed_cmd = 'horovodrun -np 2 python fake_ut.py'
         p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,

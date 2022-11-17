@@ -143,8 +143,8 @@ export class ProjectFormComponent implements OnInit {
             this.projectFormGroup.get('framework').setValue(result.data.framework);
             ['inputs', 'outputs'].forEach(param => {
               this[param] = result.data[param];
-              this[param].splice(this[param].indexOf('custom'), 1);
               if (Array.isArray(result.data[param])) {
+                this[param].splice(this[param].indexOf('custom'), 1);
                 this.isFieldRequired('projectFormGroup', param, true);
                 if (result.data[param].length === 0) {
                   this.boundaryNodes[param] = 'custom';
@@ -310,6 +310,7 @@ export class ProjectFormComponent implements OnInit {
     if (this.customBoundaryNodes[nodeType]) {
       this.boundaryNodes[nodeType] = 'custom';
       this.isFieldRequired('projectFormGroup', nodeType, true);
+      this.disableFinish = false;
     } else if (this[nodeType].length) {
       this.boundaryNodes[nodeType] = 'select';
       this.isFieldRequired('projectFormGroup', nodeType, false);
@@ -317,6 +318,7 @@ export class ProjectFormComponent implements OnInit {
     } else {
       this.boundaryNodes[nodeType] = 'none';
       this.isFieldRequired('projectFormGroup', nodeType, false);
+      this.disableFinish = false;
     }
   }
 

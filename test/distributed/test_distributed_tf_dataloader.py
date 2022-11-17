@@ -1,22 +1,33 @@
 """Tests for Distributed TensorFlow Dataloader."""
-from neural_compressor import data
-from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
-from neural_compressor.data.dataloaders.dataloader import DataLoader
-from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
-import tensorflow as tf
 import numpy as np
 import collections
 import json
 import os
+import sys
+import cpuinfo
 import unittest
 import shutil
+import tensorflow as tf
+from neural_compressor import data
+from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
+from neural_compressor.utils import logger
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
-@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
+@unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
 class TestDistributedTFDataDataloader(unittest.TestCase):
     def setUp(self):
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         tf.compat.v1.enable_eager_execution()
         self.dataset = tf.data.Dataset.from_tensors((tf.ones([3, 224, 224]), tf.ones([1000]))).repeat(600)
         self.count = 0
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
 
     def check_tf_dataset_with_batch_raise(self, batch_size, last_batch, distributed):
         dataset_with_batch = tf.data.Dataset.from_tensors\
@@ -156,7 +167,7 @@ class TestDistributedTFDataDataloader(unittest.TestCase):
             self.assertIsInstance(x, np.ndarray)
             self.count += 1
 
-@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
+@unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
 class TestDefaultDataLoaderSequentialSampler(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
@@ -165,6 +176,11 @@ class TestDefaultDataLoaderSequentialSampler(unittest.TestCase):
     
     def setUp(self):
         self.count = 0
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
 
     def check_get_len_raise(self, batch_size, last_batch, distributed):
         dataloader_args = {
@@ -349,7 +365,7 @@ class TestDefaultDataLoaderSequentialSampler(unittest.TestCase):
             self.assertIsInstance(x, np.ndarray)
             self.count += 1
 
-@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
+@unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
 class TestDefaultDataLoaderIterableSampler(unittest.TestCase):
     class iter_dataset(object):
         def __iter__(self):
@@ -362,6 +378,11 @@ class TestDefaultDataLoaderIterableSampler(unittest.TestCase):
         self.size = 1 
         self.count = 1
         self.dataset = self.iter_dataset()
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
 
     def check_get_len_raise(self, batch_size, last_batch, distributed):
         dataloader = DATALOADERS['tensorflow']\
@@ -489,7 +510,7 @@ class TestDefaultDataLoaderIterableSampler(unittest.TestCase):
                 break
             self.count += 1
 
-@unittest.skipIf(tf.version.VERSION >= '2.8.0', "Only supports tf 2.7.0 or below")
+@unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.10.0'), "Only test TF 2.10.0 or above")
 class TestTensorflowBertDataLoader(unittest.TestCase):
     label = [{
         "paragraphs0":[
@@ -518,7 +539,14 @@ class TestTensorflowBertDataLoader(unittest.TestCase):
     def tearDownClass(cls):
         os.remove('test.record')
         os.remove('dev.json')
-    
+
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
+
     def check_not_implement(self, batch_size, distributed):
         with tf.io.TFRecordWriter('./test.record') as writer:
             features = collections.OrderedDict()
@@ -592,6 +620,7 @@ class TestTensorflowBertDataLoader(unittest.TestCase):
             self.assertEqual(inputs[0], 'test.record')
             self.assertEqual(inputs[1], batch_size)
             self.assertEqual(len(labels), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

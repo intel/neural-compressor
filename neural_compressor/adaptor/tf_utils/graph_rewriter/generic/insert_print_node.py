@@ -57,10 +57,18 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
             # Check the Conv2D could be fused with previous Pad or not.
             # If so, we need to update the pre-node name correspondingly.
             refresh_pre_node = graph_info[Helper.node_name_from_input(refresh_pre_node_name)].node
-            if refresh_pre_node.op == 'Pad' and( top_node.op == 'Conv2D' or top_node.op == 'Conv3D'):
+            if refresh_pre_node.op == 'Pad' and top_node.op in ('Conv2D', 'Conv3D'):
                 pad_const_node_name = refresh_pre_node.input[1]
                 pad_const_node = graph_info[pad_const_node_name].node
-                padding_tensor = tu.MakeNdarray(pad_const_node.attr["value"].tensor).flatten()
+                padding_tensor = None
+                if graph_info[pad_const_node_name].node.op != 'Const':
+                    if pad_const_node.op == 'DataFormatVecPermute':
+                        parent_input_node = graph_info[pad_const_node.input[0]].node
+                        if parent_input_node.op == 'Const':
+                            padding_tensor = tu.MakeNdarray( \
+                                parent_input_node.attr["value"].tensor).flatten()
+                else:
+                    padding_tensor = tu.MakeNdarray(pad_const_node.attr["value"].tensor).flatten()
                 if not any(padding_tensor) or \
                     (any(padding_tensor) and (tf.version.VERSION == '1.15.0-up3' or self.new_api)):
                     insert_node_pairs.append([refresh_pre_node_name, self.post_node_name])
@@ -118,17 +126,21 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
                         self.pre_node_name, each_node_name)
                     min_msg = ';{}_eightbit_min_{}__print__;__min:'.format(
                         self.pre_node_name, each_node_name)
-                    src_dt = graph_info[self.pre_node_name].node.attr["T"]
+                    # workround for swish_f32, attribute T is not in the op definition
+                    if 'swish_f32' in graph_info[self.pre_node_name].node.name:
+                        src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                    else:
+                        src_dt = graph_info[self.pre_node_name].node.attr["T"]
                 else:
                     max_msg = ';{}_eightbit_requant_range__print__;__requant_max:'.format(
                         self.pre_node_name)
                     min_msg = ';{}_eightbit_requant_range__print__;__requant_min:'.format(
                         self.pre_node_name)
-                    src_dt = graph_info[each_node_name].node.attr["T"]
-
-                if src_dt.type==0:
-                    #workround for swish_f32, attribute T is not in the op definition
-                    src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                    # workround for swish_f32, attribute T is not in the op definition
+                    if 'swish_f32' in graph_info[each_node_name].node.op:
+                        src_dt=attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
+                    else:
+                        src_dt = graph_info[each_node_name].node.attr["T"]
 
                 reshape_input_node.attr["T"].CopyFrom(src_dt)
                 min_input_node.attr["T"].CopyFrom(src_dt)

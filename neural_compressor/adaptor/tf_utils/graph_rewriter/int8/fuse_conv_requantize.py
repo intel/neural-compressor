@@ -162,6 +162,8 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                 new_node.attr["alpha"].CopyFrom(quantized_node.attr['alpha'])
             if 'Tsummand' in quantized_node.attr:
                 new_node.attr["Tsummand"].CopyFrom(quantized_node.attr['Tsummand'])
+            if 'data_format' in quantized_node.attr:
+                new_node.attr["data_format"].CopyFrom(quantized_node.attr['data_format'])
 
             parent_node_name = Helper.node_name_from_input(quantized_node.input[0])
             if new_node.op in ('_FusedQuantizedDeconv2D', '_FusedQuantizedDeconv3D'):

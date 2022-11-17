@@ -805,7 +805,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.11.0+cpu IPEX
+### PyTorch models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
 
 <table class="tg">
 <thead>
@@ -1595,221 +1595,443 @@ Performance varies by use, configuration and other factors. See [platform config
 </table>
 
 ## Validated Pruning Examples
-<table class="docutils">
-<thead>
-  <tr>
-    <th rowspan="2">Tasks</th>
-    <th rowspan="2">Framework</th>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">FP32 Baseline</th>
-    <th colspan="3">Gradient Sensitivity with 20% Sparsity</th>
-    <th colspan="3">+ONNX Dynamic Quantization on Pruned Model</th>
-  </tr>
-  <tr>
-    <td>Accuracy%</td>
-    <td>Drop</td>
-    <td>Perf Gain (sample/s)</td>
-    <td>Accuracy%</td>
-    <td>Drop</td>
-    <td>Perf Gain (sample/s)</td>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>SST-2</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>accuracy = 92.32</td>
-    <td>accuracy = 91.97</td>
-    <td>-0.38</td>
-    <td>1.30x</td>
-    <td>accuracy = 92.20</td>
-    <td>-0.13</td>
-    <td>1.86x</td>
-  </tr>
-  <tr>
-    <td>QQP</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[accuracy, f1] = [91.10, 88.05]</td>
-    <td>[accuracy, f1] = [89.97, 86.54]</td>
-    <td>[-1.24, -1.71]</td>
-    <td>1.32x</td>
-    <td>[accuracy, f1] = [89.75, 86.60]</td>
-    <td>[-1.48, -1.65]</td>
-    <td>1.81x</td>
-  </tr>
-</tbody>
-</table>
 
 <table class="docutils">
 <thead>
   <tr>
-    <th rowspan="2">Tasks</th>
-    <th rowspan="2">Framework</th>
     <th rowspan="2">Model</th>
-    <th rowspan="2">FP32 Baseline</th>
-    <th colspan="2">Pattern Lock on 70% Unstructured Sparsity</th>
-    <th colspan="2">Pattern Lock on 50% 1:2 Structured Sparsity</th>
+    <th rowspan="2">Task</br>Dataset</th>
+    <th rowspan="2">Dense Accuracy<br>Sparse Accuracy</th>
+    <th rowspan="2">Relative Drop</th>
+    <th rowspan="2">Sparsity ratio<br>Sparsity Pattern</th>
+    <th rowspan="2">Comments<br>Balanced or unbalanced ratio</th>
   </tr>
   <tr>
-    <td>Accuracy%</td>
-    <td>Drop</td>
-    <td>Accuracy%</td>
-    <td>Drop</td>
   </tr>
 </thead>
 <tbody>
   <tr>
-    <td>MNLI</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[m, mm] = [84.57, 84.79]</td>
-    <td>[m, mm] = [82.45, 83.27]</td>
-    <td>[-2.51, -1.80]</td>
-    <td>[m, mm] = [83.20, 84.11]</td>
-    <td>[-1.62, -0.80]</td>
+    <td>ResNet18</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 69.76</br>top-1% acc = 69.47</td>
+    <td>-0.42%</td>    
+    <td>30%</td>
+    <td>magnitude</td>
   </tr>
   <tr>
-    <td>SST-2</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>accuracy = 92.32</td>
-    <td>accuracy = 91.51</td>
-    <td>-0.88</td>
-    <td>accuracy = 92.20</td>
-    <td>-0.13</td>
   </tr>
   <tr>
-    <td>QQP</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[accuracy, f1] = [91.10, 88.05]</td>
-    <td>[accuracy, f1] = [90.48, 87.06]</td>
-    <td>[-0.68, -1.12]</td>
-    <td>[accuracy, f1] = [90.92, 87.78]</td>
-    <td>[-0.20, -0.31]</td>
+    <td>ResNet50</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 76.13</br>top-1% acc = 76.11</td>
+    <td>-0.03%</td>    
+    <td>30%</td>
+    <td>magnitude</td>
+  </tr> 
+  <tr>
   </tr>
   <tr>
-    <td>QNLI</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>accuracy = 91.54</td>
-    <td>accuracy = 90.39</td>
-    <td>-1.26</td>
-    <td>accuracy = 90.87</td>
-    <td>-0.73</td>
+    <td>ResNet50</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 76.13</br>top-1% acc = 76.01</td>
+    <td>-0.16%</td>    
+    <td>30%</td>
+    <td>magnitude</br>Post Training Quantization</td>    
   </tr>
   <tr>
-    <td>QnA</td>
-    <td>PyTorch</td>
-    <td>BERT base</td>
-    <td>[em, f1] = [79.34, 87.10]</td>
-    <td>[em, f1] = [77.27, 85.75]</td>
-    <td>[-2.61, -1.54]</td>
-    <td>[em, f1] = [78.03, 86.50]</td>
-    <td>[-1.65, -0.69]</td>
+  </tr>  
+  <tr>
+    <td>ResNet50</td>
+    <td>image classification</br>ImageNet</td>
+    <td>top-1% acc = 76.13</br>top-1% acc = 75.90</td>
+    <td>-0.30%</td> 
+    <td>30%</td>
+    <td>magnitude</br>Quantization Aware Training</td>   
+  </tr> 
+  <tr>
+  </tr>     
+  <tr>
+    <td>Bert-Large</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=91.34</br>f1=90.7</td>
+    <td>-0.07%</td>
+    <td>80%</br>structured 2x1</td>
+    <td>group lasso</br>unbalanced</td>
   </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>MNLI</td>
+    <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [82.45, 83.27]</td>
+    <td>[-2.51%, -1.80%]</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>    
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>MNLI</td>
+    <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [83.20, 84.11]</td>
+    <td>[-1.62%, -0.80%]</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>    
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy = 92.32</br>accuracy = 91.51</td>
+    <td>-0.88%</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>    
+  </tr>
+  <tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy = 92.32</br>accuracy = 92.20</td>
+    <td>-0.13%</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>       
+  </tr>
+  <tr>  
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy = 92.32</br>accuracy = 91.97</td>
+    <td>-0.38%</td>
+    <td>20%</br>unstructured</td>
+    <td>gradient sensitivity</br>balanced</td>       
+  </tr>
+  <tr>  
+  </tr>  
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QQP</td>
+    <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.48, 87.06]</td>
+    <td>[-0.68%, -1.12%]</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>        
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QQP</td>
+    <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.92, 87.78]</td>
+    <td>[-0.20%, -0.31%]</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>        
+  </tr>
+  <tr>
+  </tr>   
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QNLI</td>
+    <td>accuracy = 91.54</br>accuracy = 90.39</td>
+    <td>-1.26%</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>        
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>text classification</br>QNLI</td>
+    <td>accuracy = 91.54</br>accuracy = 90.87</td>
+    <td>-0.73%</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>      
+  </tr>
+  <tr>
+  </tr>   
+  <tr>
+    <td>Bert-Base</td>
+    <td>question answering</td>
+    <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [77.27, 85.75]</td>
+    <td>[-2.61%, -1.54%]</td>
+    <td>70%</br>unstructured</td>
+    <td>pattern lock</br>balanced</td>   
+  </tr>  
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Base</td>
+    <td>question answering</td>
+    <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [78.03, 86.50]</td>
+    <td>[-1.65%, -0.69%]</td>
+    <td>50%</br>structured 1:2</td>
+    <td>pattern lock</br>balanced</td>       
+  </tr>  
+  <tr>
+  </tr>     
+  <tr>
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1]=76.87</br>f1=76.2</td>
+    <td>-0.80%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=76.87</br>f1=76.85</td>
+    <td>-0.02%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=87.22</td>
+    <td>-0.36%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=87.33</td>
+    <td>-0.22%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=86.95</td>
+    <td>-0.65%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.92</td>
+    <td>-0.79%</td>
+    <td>90%</br>Structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.93</td>
+    <td>-0.78%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>  
 </tbody>
 </table>
 
-<table class="docutils">
-<thead>
-  <tr>
-    <th>Framework</th>
-    <th>Model</th>
-    <th>FP32 Baseline</th>
-    <th>Compression</th>
-    <th>Dataset</th>
-    <th>Accuracy% (Drop)</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet18</td>
-    <td>69.76</td>
-    <td>30% Sparsity on Magnitude</td>
-    <td>ImageNet</td>
-    <td>69.47(-0.42)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet18</td>
-    <td>69.76</td>
-    <td>30% Sparsity on Gradient Sensitivity</td>
-    <td>ImageNet</td>
-    <td>68.85(-1.30)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet50</td>
-    <td>76.13</td>
-    <td>30% Sparsity on Magnitude</td>
-    <td>ImageNet</td>
-    <td>76.11(-0.03)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet50</td>
-    <td>76.13</td>
-    <td>30% Sparsity on Magnitude and Post Training Quantization</td>
-    <td>ImageNet</td>
-    <td>76.01(-0.16)</td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>ResNet50</td>
-    <td>76.13</td>
-    <td>30% Sparsity on Magnitude and Quantization Aware Training</td>
-    <td>ImageNet</td>
-    <td>75.90(-0.30)</td>
-  </tr>
-</tbody>
-</table>
 
 ## Validated Knowledge Distillation Examples
-<table class="docutils">
+|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  |
+|---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|
+| MobileNet example   | CIFAR-10  | MobileNetV2-0.35<br>(0.7965 ACC)     | WideResNet40-2<br>(0.9522 ACC)     |   0.8178 ACC<br>(0.0213 ACC)                        |
+| CNN example         | CIFAR-100 | CNN-2<br>(0.5494 ACC)                | CNN-10<br>(0.7153 ACC)             |   0.5540 ACC<br>(0.0046 ACC)                        |
+| VGG example         | CIFAR-100 | VGG-8-BN<br>(0.7022 ACC)             | VGG-13-BN<br>(0.7415 ACC)          |   0.7025 ACC<br>(0.0003 ACC)                        |
+| ResNet example      | ImageNet  | ResNet18<br>(0.6739 ACC)             | ResNet50<br>(0.7399 ACC)           |   0.6845 ACC<br>(0.0106 ACC)                        |
+| BlendCnn example    |   MRPC    | BlendCnn<br>(0.7034 ACC)             | BERT-Base<br>(0.8382 ACC)          |   0.7034 ACC<br>(0 ACC)                             |
+| BiLSTM example      |  SST-2    | BiLSTM<br>(0.8314 ACC)               | RoBERTa-Base<br>(0.9403 ACC)       |   0.9048 ACC<br>(0.0734 ACC)                        |
+|DistilBERT example   |  SQuAD    | DistilBERT<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |
+|TinyBERT example     |  MNLI     | TinyBERT<br>(0.8018/0.8044 m/mm)     | BERT-Base<br>(0.8363/0.8411 m/mm)  |   0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)        |
+|BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |
+|DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |
+
+## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
+
+<table class="tg">
 <thead>
   <tr>
-    <th rowspan="2">Example Name</th>
-    <th rowspan="2">Dataset</th>
-    <th rowspan="2">Student<br>(Accuracy)</th>
-    <th rowspan="2">Teacher<br>(Accuracy)</th>
-    <th rowspan="2">Student With Distillation<br>(Accuracy Improvement)</th>
-  </tr>
-  <tr>
+    <th class="tg-y3we">Model (ONNX QDQ)</th>
+    <th class="tg-pm1l">AWS c6i.2xlarge (Intel)<br>CPU Execution Provider</th>
+    <th class="tg-pm1l">AWS c6a.2xlarge (AMD)<br>CPU Execution Provider</th>
+    <th class="tg-pm1l">AWS c6g.2xlarge (ARM)<br>CPU Execution Provider</th>
+    <th class="tg-8d8j">NVidia A100<br>CUDA Execution Provider</th>
   </tr>
 </thead>
 <tbody>
   <tr>
-    <td rowspan="2">ResNet example</td>
-    <td rowspan="2">ImageNet</td>
-    <td rowspan="2">ResNet18<br>(0.6739)</td>
-    <td rowspan="2">ResNet50<br>(0.7399)</td>
-    <td rowspan="2">0.6845<br>(0.0106)</td>
+    <td class="tg-cwad">ResNet50</td>
+    <td class="tg-pm1l">74.76%</td>
+    <td class="tg-pm1l">68.95%</td>
+    <td class="tg-pm1l">74.76%</td>
+    <td class="tg-6q5x">74.41%*</td>
   </tr>
   <tr>
+    <td class="tg-cwad">BERT-base</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-6q5x">84.56%*</td>
   </tr>
   <tr>
-    <td rowspan="2">BlendCNN example</td>
-    <td rowspan="2">MRPC</td>
-    <td rowspan="2">BlendCNN<br>(0.7034)</td>
-    <td rowspan="2">BERT-Base<br>(0.8382)</td>
-    <td rowspan="2">0.7034<br>(0)</td>
+    <td class="tg-cwad">ResNet50 V1.5</td>
+    <td class="tg-pm1l">72.20%</td>
+    <td class="tg-pm1l">67.70%</td>
+    <td class="tg-pm1l">72.20%</td>
+    <td class="tg-6q5x">71.84%*</td>
   </tr>
   <tr>
+    <td class="tg-cwad">MobileNet V2</td>
+    <td class="tg-pm1l">65.82%</td>
+    <td class="tg-pm1l">58.56%</td>
+    <td class="tg-pm1l">65.83%</td>
+    <td class="tg-pm1l">65.63%</td>
   </tr>
   <tr>
-    <td rowspan="2">BiLSTM example</td>
-    <td rowspan="2">SST-2</td>
-    <td rowspan="2">BiLSTM<br>(0.7913)</td>
-    <td rowspan="2">RoBERTa-Base<br>(0.9404)</td>
-    <td rowspan="2">0.8085<br>(0.0172)</td>
+    <td class="tg-cwad">SSD MobileNet V1</td>
+    <td class="tg-pm1l">22.45%</td>
+    <td class="tg-pm1l">16.53%</td>
+    <td class="tg-pm1l">22.45%</td>
+    <td class="tg-pm1l">22.35%</td>
   </tr>
   <tr>
+    <td class="tg-cwad">DistilBERT base MRPC</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-pm1l">83.82%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-6q5x">84.56%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">SqueezeNet</td>
+    <td class="tg-pm1l">56.54%</td>
+    <td class="tg-pm1l">53.52%</td>
+    <td class="tg-pm1l">56.54%</td>
+    <td class="tg-6q5x">56.55%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">SSD</td>
+    <td class="tg-pm1l">18.63%</td>
+    <td class="tg-pm1l">18.54%</td>
+    <td class="tg-pm1l">18.63%</td>
+    <td class="tg-6q5x">18.61%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">AlexNet</td>
+    <td class="tg-pm1l">54.71%</td>
+    <td class="tg-pm1l">47.06%</td>
+    <td class="tg-pm1l">54.71%</td>
+    <td class="tg-pm1l">54.74%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">CaffeNet</td>
+    <td class="tg-pm1l">56.25%</td>
+    <td class="tg-pm1l">52.35%</td>
+    <td class="tg-pm1l">56.27%</td>
+    <td class="tg-pm1l">56.12%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">GoogleNet</td>
+    <td class="tg-pm1l">67.73%</td>
+    <td class="tg-pm1l">63.56%</td>
+    <td class="tg-pm1l">67.72%</td>
+    <td class="tg-6q5x">67.76%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">ZFNet</td>
+    <td class="tg-pm1l">55.86%</td>
+    <td class="tg-pm1l">45.09%</td>
+    <td class="tg-pm1l">55.86%</td>
+    <td class="tg-pm1l">55.75%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">Inception V1</td>
+    <td class="tg-pm1l">67.21%</td>
+    <td class="tg-pm1l">63.03%</td>
+    <td class="tg-pm1l">67.20%</td>
+    <td class="tg-6q5x">67.21%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">SSD MobileNet V1 (ONNX Model Zoo)</td>
+    <td class="tg-pm1l">22.86%</td>
+    <td class="tg-pm1l">16.94%</td>
+    <td class="tg-pm1l">22.80%</td>
+    <td class="tg-pm1l">22.85%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">Mobile bert MRPC</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-pm1l">84.56%</td>
+    <td class="tg-pm1l">85.54%</td>
+    <td class="tg-pm1l">86.03%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">Roberta base MRPC</td>
+    <td class="tg-pm1l">89.46%</td>
+    <td class="tg-pm1l">90.44%</td>
+    <td class="tg-pm1l">89.71%</td>
+    <td class="tg-pm1l">89.71%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">ResNet50 V1.5 MLPerf</td>
+    <td class="tg-pm1l">76.14%</td>
+    <td class="tg-pm1l">72.80%</td>
+    <td class="tg-pm1l">76.14%</td>
+    <td class="tg-6q5x">75.98%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">VGG16</td>
+    <td class="tg-pm1l">66.69%</td>
+    <td class="tg-pm1l">64.25%</td>
+    <td class="tg-pm1l">66.69%</td>
+    <td class="tg-pm1l">66.52%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">VGG16 (ONNX Model Zoo)</td>
+    <td class="tg-pm1l">72.31%</td>
+    <td class="tg-pm1l">69.35%</td>
+    <td class="tg-pm1l">72.32%</td>
+    <td class="tg-pm1l">72.31%*</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">MobileNet V3 MLPerf</td>
+    <td class="tg-pm1l">75.57%</td>
+    <td class="tg-pm1l">70.78%</td>
+    <td class="tg-pm1l">75.56%</td>
+    <td class="tg-6q5x">75.52%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">EfficientNet</td>
+    <td class="tg-pm1l">77.61%</td>
+    <td class="tg-pm1l">76.52%</td>
+    <td class="tg-pm1l">77.56%</td>
+    <td class="tg-pm1l">77.60%</td>
+  </tr>
+  <tr>
+    <td class="tg-cwad">MobileNet V2 (ONNX Model Zoo)</td>
+    <td class="tg-pm1l">68.51%</td>
+    <td class="tg-pm1l">62.48%</td>
+    <td class="tg-pm1l">68.58%</td>
+    <td class="tg-pm1l">68.48%</td>
+  </tr>
+  <tr>
+    <td class="tg-413a">ShuffleNet V2</td>
+    <td class="tg-pm1l">66.12%</td>
+    <td class="tg-pm1l">58.41%</td>
+    <td class="tg-pm1l">66.11%</td>
+    <td class="tg-pm1l">66.11%</td>
   </tr>
 </tbody>
 </table>
 
-
+> **Note:** The model weights are quantized by pre-channel except the models with '*' which are quantized by per-tensor. 

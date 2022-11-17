@@ -24,6 +24,7 @@ ux_package_data = {
     'neural_compressor.ux': [
     "web/static/*.*",
     "web/static/assets/*.*",
+    "web/static/assets/dark/*.*",
     "web/static/assets/fonts/*.*",
     "components/db_manager/alembic.ini",
     "components/db_manager/alembic/*",

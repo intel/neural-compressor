@@ -3,10 +3,8 @@ import numpy as np
 import unittest
 import os
 import yaml
-import tensorflow as tf
 import importlib
 import shutil
-from tensorflow.python.framework import graph_util
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -159,6 +157,8 @@ def build_fake_yaml6():
 
 
 def build_fake_model():
+    import tensorflow as tf
+    from tensorflow.python.framework import graph_util
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
@@ -300,6 +300,8 @@ class TestQuantization(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_resume(self):
+        import tensorflow as tf
+        from tensorflow.python.framework import graph_util
         tf.compat.v1.disable_eager_execution()
         tf.compat.v1.reset_default_graph()
         tf.compat.v1.set_random_seed(1)

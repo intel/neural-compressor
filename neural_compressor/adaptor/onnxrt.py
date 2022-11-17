@@ -24,6 +24,7 @@ from collections.abc import KeysView
 import yaml
 import numpy as np
 from packaging.version import Version
+from importlib.util import find_spec
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
@@ -36,13 +37,11 @@ import sys
 
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
-if sys.version_info < (3,10): # pragma: no cover
-    ort_ext = LazyImport("onnxruntime_extensions")
 ONNXRT152_VERSION = Version("1.5.2")
 ONNXRT170_VERSION = Version("1.7.0")
 ONNXRT112_VERSION = Version("1.12.0")
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 class ONNXRTAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
@@ -83,6 +82,8 @@ class ONNXRTAdaptor(Adaptor):
         self.quantize_config = {} # adaptor should know current configs at any time
         self.quantize_params = {} # adaptor should know current params at any time
         self.min_max = None
+
+        self.optype_statistics = None
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -141,7 +142,7 @@ class ONNXRTAdaptor(Adaptor):
                             break
                     tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
                     data_loader.batch(calib_batch_size)
-                    quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
                                                                 quantize_config, tmp_iterations)
                 except Exception as e:  # pragma: no cover
                     if 'Got invalid dimensions for input' in str(e):
@@ -152,7 +153,7 @@ class ONNXRTAdaptor(Adaptor):
                         "Fail to forward with batch size={}, set to {} now.".
                         format(batch_size, 1))
                     data_loader.batch(1)
-                    quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                    quantize_params = self._get_quantize_params(tmp_model, data_loader, \
                                                                 quantize_config, calib_sampling_size)
             else:  # pragma: no cover
                 if hasattr(data_loader, 'batch_size') and \
@@ -163,13 +164,13 @@ class ONNXRTAdaptor(Adaptor):
                         "So the real sampling size is {}.".
                         format(calib_sampling_size, data_loader.batch_size,
                                data_loader.batch_size * iterations))
-                quantize_params = self._get_quantize_params(tmp_model.model, data_loader, \
+                quantize_params = self._get_quantize_params(tmp_model, data_loader, \
                                                             quantize_config, iterations)
         else:
             quantize_params = None
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
-        quantizer = Quantizer(tmp_model.model,
+        quantizer = Quantizer(copy.deepcopy(model),
             quantize_config,
             backend,
             self.static,
@@ -316,12 +317,17 @@ class ONNXRTAdaptor(Adaptor):
             elif node.op_type in res:
                 res[node.op_type]['FP32'] += 1
 
-        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-            res[op_type]['BF16'], res[op_type]['FP16'], res[op_type]['FP32']] for \
-            op_type in res.keys()]
+        field_names=["Op Type", "Total", "INT8", "BF16", "FP16", "FP32"]
+        output_data = [[
+            op_type, sum(res[op_type].values()), 
+            res[op_type]['INT8'], res[op_type]['BF16'], 
+            res[op_type]['FP16'], res[op_type]['FP32']]
+        for op_type in res.keys()]
+        
         Statistics(output_data, 
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP16", "FP32"]).print_stat()
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
 
     def _get_quantize_params(self, model, data_loader, quantize_config, iterations):
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
@@ -450,17 +456,28 @@ class ONNXRTAdaptor(Adaptor):
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
-        if sys.version_info < (3,10): # pragma: no cover 
-            sess_options.register_custom_ops_library(ort_ext.get_library_path())
-        _ = ort.InferenceSession(model.model.SerializeToString(), sess_options)
-        tmp_model = onnx.load(sess_options.optimized_model_filepath)
+        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            sess_options.register_custom_ops_library(get_library_path())
+        if not model.large_size:
+            ort.InferenceSession(model.model.SerializeToString(), sess_options)
+        elif model.model_path is not None: # pragma: no cover
+            ort.InferenceSession(model.model_path, sess_options)
+        else: # pragma: no cover 
+            logger.warning('Please use model path instead of onnx model object to quantize')
+
+        tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
+        if model.large_size: # pragma: no cover
+            from onnx.external_data_helper import load_external_data_for_model
+            load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
+        model.model_path = sess_options.optimized_model_filepath
         model.model = self._replace_gemm_with_matmul(tmp_model).model \
             if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
         model = self._revert_fusedconv(model)
         model = split_shared_bias(model)
         model.topological_sort()
-        self.pre_optimized_model = model
+        self.pre_optimized_model = copy.deepcopy(model)
 
     def _revert_fusedconv(self, model):
         from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
@@ -597,6 +614,12 @@ class ONNXRTAdaptor(Adaptor):
         exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
             self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
             else False
+        exclude_last_quantizable_op = True if 'last_conv_or_matmul_quantization' in \
+            self.recipes and not self.recipes['last_conv_or_matmul_quantization'] \
+            else False
+        exclude_pre_post_process = True if 'pre_post_process_quantization' in \
+            self.recipes and not self.recipes['pre_post_process_quantization'] \
+            else False
  
         quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
         optype_wise = OrderedDict()
@@ -645,16 +668,73 @@ class ONNXRTAdaptor(Adaptor):
                     elif op_capability not in optype_wise[op]:
                         optype_wise[op].append(op_capability)
 
+        first_quantizable_node = []
+        last_quantizable_node = []
+        all_conv_matmul = []
+        for _, node in enumerate(self.pre_optimized_model.nodes()):
+            if node.op_type in ['Conv', 'MatMul']:
+                # get first Conv or MatMul node
+                if exclude_first_quantizable_op:
+                    if len(first_quantizable_node) == 0:
+                        first_quantizable_node.append(node.name)
+                
+                # get last Conv or MatMul node
+                if exclude_last_quantizable_op:
+                    if len(last_quantizable_node) != 0:
+                        last_quantizable_node.pop()
+                    last_quantizable_node.append(node.name)
+
+                # get first and last Conv or MatMul node
+                if exclude_pre_post_process:
+                    if len(first_quantizable_node) == 0:
+                        first_quantizable_node.append(node.name)
+                    if len(last_quantizable_node) != 0:
+                        last_quantizable_node.pop()
+                    last_quantizable_node.append(node.name)
+                    all_conv_matmul.append(node)
+
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in optype_wise:
-                if exclude_first_quantizable_op and node.op_type in ['Conv', 'MatMul']:
-                    exclude_first_quantizable_op = False
+                if (exclude_first_quantizable_op and node.name in first_quantizable_node) \
+                     or (exclude_last_quantizable_op and node.name in last_quantizable_node):
                     tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
                     tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
                     op_wise.update({(node.name, node.op_type): tmp_cfg})
                     continue
                 op_wise.update(
                     {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
+        if exclude_pre_post_process:
+            from collections import deque
+            
+            # get nodes between first quantizable node and last quantizable node
+            backbone_queue = deque(last_quantizable_node)
+            backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
+
+            # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
+            backbone_queue_extra = deque()
+            for conv_or_matmul in all_conv_matmul:
+                if conv_or_matmul.name not in backbone_nodes:
+                    backbone_queue_extra.append(conv_or_matmul.name)
+                    backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
+                                                    first_quantizable_node, backbone_nodes)
+            backbone_nodes += [i for i in first_quantizable_node]
+
+            for _, node in enumerate(self.pre_optimized_model.nodes()):
+                if node.op_type in optype_wise:
+                    # nodes not in backbone are not quantized
+                    if node.name not in backbone_nodes:
+                        tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
+                        tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
+                        op_wise.update({(node.name, node.op_type): tmp_cfg})
+                        continue
+                    if (node.name, node.op_type) in op_wise:
+                        op_wise.update(
+                            {(node.name, node.op_type): copy.deepcopy(op_wise[(node.name, node.op_type)])})
+                    else: # pragma: no cover
+                        op_wise.update(
+                            {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _cfg_to_quantize_config(self, tune_cfg):
@@ -717,18 +797,25 @@ class ONNXRTAdaptor(Adaptor):
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
+        if input_graph.large_size: # pragma: no cover
+            onnx.save_model(input_graph.model,
+                            self.work_space + 'eval.onnx',
+                            save_as_external_data=True,
+                            all_tensors_to_one_file=True,
+                            location="weights.pb",
+                            convert_attribute=False)
         sess_options = ort.SessionOptions()
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
             assert cores_per_instance > 0, "benchmark cores_per_instance should greater than 0"
             sess_options.intra_op_num_threads = cores_per_instance
-        try:
-            session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
-        except:
-            if sys.version_info < (3,10): # pragma: no cover 
-                sess_options.register_custom_ops_library(ort_ext.get_library_path())
-            session = ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
+        if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
+            from onnxruntime_extensions import get_library_path
+            sess_options.register_custom_ops_library(get_library_path())
+        session = ort.InferenceSession(self.work_space + 'eval.onnx', sess_options) if \
+            input_graph.large_size else \
+            ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
         results = []
         if metrics:
             for metric in metrics:

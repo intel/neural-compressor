@@ -11,9 +11,9 @@ This document is used to list steps of reproducing Intel® Neural Compressor mag
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow 2.4.0 or above.
+### 2. Install TensorFlow 2.10.0 or above.
 ```shell
-pip install intel-tensorflow==2.4.0
+pip install tensorflow==2.10.0
 ```
 ### 3. Train and save a ResNet-V2 model
 According to the following link [Trains a ResNet on the CIFAR10 dataset.](https://keras.io/zh/examples/cifar10_resnet), set 'version = 2' and train a ResNet-V2 model as the baseline.  Please add a line 'model.save("./ResNetV2_Model")' at the end of the code to save the model to the directory './ResNetV2_Model'.

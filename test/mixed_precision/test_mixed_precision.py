@@ -3,21 +3,20 @@
 #
 import unittest
 import os
-import yaml
-import neural_compressor.adaptor.pytorch as nc_torch
 import numpy as np
+from neural_compressor.utils.utility import LazyImport, CpuInfo
+import neural_compressor.adaptor.pytorch as nc_torch
+from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
 import shutil
+from packaging.version import Version
+
 import tensorflow as tf
-from onnx import helper, TensorProto, numpy_helper
+from onnx import helper, TensorProto
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
-from neural_compressor.utils.utility import LazyImport, CpuInfo
-from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
-from packaging.version import Version
-
 
 PT_VERSION = nc_torch.get_torch_version()
 def build_matmul_model():

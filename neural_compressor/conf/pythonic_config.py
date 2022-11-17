@@ -21,7 +21,7 @@ from schema import Schema, And, Use, Optional, Or
 from .dotdict import DotDict
 from .config import Pruner
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 default_workspace = './nc_workspace/{}/'.format(
     datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))

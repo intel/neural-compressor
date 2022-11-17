@@ -154,18 +154,15 @@ class TestItexEnabling(unittest.TestCase):
             output_graph = quantizer.fit()
 
             dequant_count = 0
+            quantize_count = 0
             for i in output_graph.graph_def.node:
                 if i.op == 'Dequantize':
                     dequant_count += 1
-            bf16_enabled = False
-            if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
-                bf16_enabled = True
+                if i.op == 'Dequantize':
+                    quantize_count += 1
 
-            # MergeDuplicatedQDQOptimizer will merge the duplicated QDQ pattern
-            if bf16_enabled:
-                self.assertEqual(dequant_count, 3)
-            else:
-                self.assertEqual(dequant_count, 4)
+            self.assertEqual(dequant_count, 5)
+            self.assertEqual(quantize_count, 5)
 
     @disable_random()
     def test_itex_qdq_basic_gpu(self):
@@ -200,6 +197,7 @@ class TestItexEnabling(unittest.TestCase):
             output_graph = quantizer.fit()
 
             dequant_count = 0
+            quantize_count = 0
             for i in output_graph.graph_def.node:
                 if 'min' in i.name or 'max' in i.name:
                     self.assertEqual(i.op, 'HostConst')
@@ -207,13 +205,11 @@ class TestItexEnabling(unittest.TestCase):
                     self.assertTrue('min' in i.name or 'max' in i.name)
                 if i.op == 'Dequantize':
                     dequant_count += 1
-            bf16_enabled = False
-            if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
-                bf16_enabled = True
-            if bf16_enabled:
-                self.assertEqual(dequant_count, 3)
-            else:
-                self.assertEqual(dequant_count, 4)
+                if i.op == 'Dequantize':
+                    quantize_count += 1
+
+            self.assertEqual(dequant_count, 5)
+            self.assertEqual(quantize_count, 5)
 
     @disable_random()
     def test_itex_qdq_basic_default_device(self):
@@ -248,6 +244,7 @@ class TestItexEnabling(unittest.TestCase):
             output_graph = quantizer.fit()
 
             dequant_count = 0
+            quantize_count = 0
             for i in output_graph.graph_def.node:
                 if 'min' in i.name or 'max' in i.name:
                     self.assertEqual(i.op, 'HostConst')
@@ -255,13 +252,11 @@ class TestItexEnabling(unittest.TestCase):
                     self.assertTrue('min' in i.name or 'max' in i.name)
                 if i.op == 'Dequantize':
                     dequant_count += 1
-            bf16_enabled = False
-            if CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1':
-                bf16_enabled = True
-            if bf16_enabled:
-                self.assertEqual(dequant_count, 3)
-            else:
-                self.assertEqual(dequant_count, 4)
+                if i.op == 'QuantizeV2':
+                    quantize_count += 1
+
+            self.assertEqual(dequant_count, 5)
+            self.assertEqual(quantize_count, 4)
 
 
 if __name__ == '__main__':

@@ -127,17 +127,23 @@ def get_model_fwk_name(model):
                         then return 'NA'.
     """
     def _is_onnxruntime(model):
+        from importlib.util import find_spec
         try:
             so = ort.SessionOptions()
-            if sys.version_info < (3,10): # pragma: no cover
+            if sys.version_info < (3,10) and \
+                find_spec('onnxruntime_extensions'): # pragma: no cover
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
                 ort.InferenceSession(model, so)
             else:
                 ort.InferenceSession(model.SerializeToString(), so)
-        except:
-            pass
+        except Exception as e:  # pragma: no cover
+            if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
+                logger.warning('Please use model path instead of onnx model object to quantize') 
+            else:
+                logger.warning("If you use an onnx model with custom_ops to do quantiztaion, "
+                    "please ensure onnxruntime-extensions is installed")
         else:
             return 'onnxruntime'
         return 'NA'
@@ -150,8 +156,12 @@ def get_model_fwk_name(model):
 
     def _is_tensorflow(model):
         try:
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
             model_type = get_model_type(model)
         except:
+            os.environ.pop("CUDA_DEVICE_ORDER")
+            os.environ.pop("CUDA_VISIBLE_DEVICES")
             return 'NA'
         else:
             return 'tensorflow'
@@ -341,7 +351,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex_qdq':
+    if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                     rewriter_config_pb2.RewriterConfig.OFF
@@ -872,14 +882,14 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def input_tensor_names(self):
-        if len(self._input_tensor_names) == 0:
+        if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
         return copy.deepcopy(self._input_tensor_names)
 
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         if len(tensor_names) == 0:
-            logger.warn("Input tensor names should not be empty.")
+            logger.warn("Input tensor names is empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(\
@@ -1103,6 +1113,8 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
 
 class TensorflowModel(object): 
     def __new__(cls, model_type, root, **kwargs):
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
         model.model_type = model_type
         return model

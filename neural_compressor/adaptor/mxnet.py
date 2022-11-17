@@ -30,7 +30,7 @@ from copy import deepcopy
 import math
 
 mx = LazyImport("mxnet")
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 
 @adaptor_registry
@@ -56,6 +56,7 @@ class MxNetAdaptor(Adaptor):
 
         self.ctx = mx.cpu() if framework_specific_info['device'] == 'cpu' else None
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
+        self.optype_statistics = None
         assert self.ctx is not None, 'Unsupported device'
 
     @dump_elapsed_time("Pass quantize model")

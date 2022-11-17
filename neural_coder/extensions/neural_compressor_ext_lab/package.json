@@ -88,6 +88,7 @@
     "fs": "^0.0.1-security",
     "has": "^1.0.3",
     "icss-utils": "^5.1.0",
+    "loader-utils": "^2.0.3",
     "react": "^17.0.2",
     "react-sanitized-html": "^2.0.0",
     "sanitize-html": "^2.7.2",
@@ -101,6 +102,7 @@
     "@types/node": "^18.7.15",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
     "@typescript-eslint/parser": "^4.8.1",
+    "bl": "^1.2.3",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
@@ -149,6 +151,7 @@
   "resolutions": {
     "got": "^12.1.0",
     "semver": "^4.3.2",
-    "bl": "^1.2.3"
+    "bl": "^1.2.3",
+    "loader-utils": "^2.0.3"
   }
 }

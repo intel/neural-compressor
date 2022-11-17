@@ -1,4 +1,5 @@
 """Tests for the dataloader module."""
+import platform
 import unittest
 import os
 import numpy as np
@@ -92,7 +93,8 @@ class TestBuiltinDataloader(unittest.TestCase):
             self.assertEqual(len(data[0]), 2)
             self.assertEqual(data[0][0].shape, (24,24))
             break
-
+    
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet_dataset(self):
         dataloader_args = {
             'batch_size': 2,
@@ -340,7 +342,8 @@ class TestImagenetRaw(unittest.TestCase):
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (24,24,3))
             break
-
+    
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet(self):
         import mxnet as mx
         dataloader_args = {
@@ -472,6 +475,7 @@ class TestImageFolder(unittest.TestCase):
             self.assertEqual(data[0][0].shape, (3,24,24))
             break
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet(self):
         dataloader_args = {
             'dataset': {"ImageFolder": {'root': './val'}},
@@ -692,6 +696,7 @@ class TestDataloader(unittest.TestCase):
         tf.compat.v1.disable_eager_execution()
         self.test_coco_record()
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_coco_raw(self):
         import json
         import collections
@@ -821,6 +826,7 @@ class TestDataloader(unittest.TestCase):
         os.remove('test_1.jpg')
         os.remove('anno.json')
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_coco_npy(self):
         import json
         import collections
@@ -1232,6 +1238,7 @@ class TestDataloader(unittest.TestCase):
         data, label = next(iterator)
         self.assertEqual(data[0].shape, (2, 256, 256, 3))
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet_dummy(self):
         datasets = DATASETS('mxnet')
         transform = TRANSFORMS('mxnet', 'preprocess')['Resize'](**{'size':100})

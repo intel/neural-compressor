@@ -29,14 +29,24 @@ num_benchmark_iteration = 30
 # print info for debugging purpose
 logging_level = logging.INFO
 
-# benchmark accuracy mode
-eval_accuracy = False
-
 # print code line info for debug use
 print_code_line_info = False
 
 # load transformers class def by a cache file instead of on-the-fly catch
 cache_load_transformers = True
+
+# detected device
+device = "cpu_with_amx"
+
+# device compatibility of the code: e.g. ["cpu", "cuda"], ["cuda"]
+list_code_device_compatibility = ["cuda"]
+
+# quantization config for HuggingFace optimum-intel optimizations
+# it is either "" (None) or "xxx" (a string of config path)
+optimum_quant_config = ""
+
+# code domain
+code_domain = ""
 
 def reset_globals():
     global list_code_path
