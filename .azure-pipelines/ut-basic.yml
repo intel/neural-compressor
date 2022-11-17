@@ -7,8 +7,11 @@ pr:
   paths:
     include:
     - neural_compressor
+    - test
     exclude:
     - neural_compressor/ux
+    - test/ux
+    - test/neural_coder
 
 pool: ICX-16C
 
