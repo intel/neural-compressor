@@ -18,12 +18,163 @@
 import copy
 import numpy as np
 from collections import OrderedDict
+
+import torch.nn
+
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
 from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
+
+
+class HessianTrace:
+    def __init__(self, model, conf, adaptor, op_cfgs_list, dataloader):
+        self.model = model
+        self.conf = conf  ##config
+        self.op_cfgs_list = op_cfgs_list  ##op to get
+        self.dataloader = dataloader
+        self.adaptor = adaptor
+        self.max_iter = 500
+        self.tolerance = 1e-5
+        self.eps = 1e-6
+        self.index = 0
+
+    # def apply_init(self):
+    #     trace_per_op = self._cal_trace()
+    #     if not trace_per_op:
+    #         raise RuntimeError('Failed to calculate hessian traces!')
+    #
+    #     perturbations = self._calc_quantization_noise()
+    #     configuration_metric = self._calc_hawq_metric_per_configuration(
+    #         perturbations, trace_per_op)
+    #     config_index = self.choose_configuration(configuration_metric)
+    #     chosen_config = self.op_cfgs_list[config_index]
+    #     return chosen_config, trace_per_op
+
+    def get_device(self, model: torch.nn.Module):
+        for n, p in model.named_parameters():
+            return p.data.device
+
+    def get_gradient(self, model, data, criterion, op_list, device="cpu", retrain_graph=False):
+        model.zero_grad()
+        input = data[0]
+        target = data[1]
+        output = model(input)
+        loss = criterion(output, target)
+        loss.backward(retain_graph=retrain_graph)
+        gradients = {}
+        for n, p in model.named_parameters():
+            if n in op_list:
+                continue
+            gradients[n] = 0
+            if p.grad != None:
+                gradients[n] = p.grad
+        return gradients
+
+    def get_avg_trace(self, num_batches=2):
+        """
+                Estimates average hessian trace for each parameter
+                """
+        assert num_batches > 0
+        ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
+        ##num_all_data = num_data_iter * self.dataloader.batch_size
+        op_list = [item.name for item in self.op_cfgs_list]
+        criterion = torch.nn.CrossEntropyLoss()  ##TODO setting this in config
+        device = self.get_device(self.model)
+
+        for step, batch in enumerate(self.dataloader):
+            gradient_dict = self.get_gradient(self.model, batch,criterion, op_list, device=device, retrain_graph=True)
+            tmp = 1
+            if step == num_batches - 1:
+                break
+
+
+        weight_vhp = []
+        w_avg_total_trace = 0.
+        w_avg_traces_per_iter = []
+        mean_avg_traces_per_param = None
+        act_vhp = []
+        a_avg_total_trace = 0.
+        a_avg_traces_per_iter = []
+        mean_avg_traces_per_act = None
+
+        for i in range(max_iter):
+            weight_vhp_list, w_v, \
+            act_vhp_list, a_v, op_act_grad = self.adaptor.get_2order_grad(self.model,
+                                                                          criterion,
+                                                                          self.dataloader,
+                                                                          num_data_iter,
+                                                                          qop_list)
+            if not weight_vhp:
+                weight_vhp = [np.random.randn(*p.shape) for p in w_v]
+            for vhp_curr in weight_vhp_list:
+                weight_vhp = [a + b * float(self.dataloader.batch_size) + 0. \
+                              for a, b in zip(weight_vhp, vhp_curr)]
+            weight_vhp = [a / float(num_all_data) for a in weight_vhp]
+            avg_traces_per_param = [np.sum(a * b) / a.size for (a, b) in zip(weight_vhp, w_v)]
+            w_avg_traces_per_iter.append(avg_traces_per_param)
+            mean_avg_traces_per_param = np.mean(w_avg_traces_per_iter, axis=0)
+            w_mean_avg_total_trace = np.sum(mean_avg_traces_per_param)
+
+            w_diff_avg = abs(w_mean_avg_total_trace - w_avg_total_trace) / \
+                         (w_avg_total_trace + diff_eps)
+            w_avg_total_trace = w_mean_avg_total_trace
+            logger.info(
+                '{}# weights difference_avg={} avg_trace={}'.format(
+                    i, w_diff_avg, w_avg_total_trace))
+
+            if not act_vhp:
+                act_vhp = [np.random.randn(*p.shape) for p in a_v]
+            for vhp_curr in act_vhp_list:
+                act_vhp = [a + b * float(self.dataloader.batch_size) + 0. \
+                           for a, b in zip(act_vhp, vhp_curr)]
+            act_vhp = [a / float(num_all_data) for a in act_vhp]
+            avg_traces_per_act = [np.sum(a * b) / a.size for (a, b) in zip(act_vhp, a_v)]
+            a_avg_traces_per_iter.append(avg_traces_per_act)
+            mean_avg_traces_per_act = np.mean(a_avg_traces_per_iter, axis=0)
+            a_mean_avg_total_trace = np.sum(mean_avg_traces_per_act)
+
+            a_diff_avg = abs(a_mean_avg_total_trace - a_avg_total_trace) / \
+                         (a_avg_total_trace + diff_eps)
+            a_avg_total_trace = a_mean_avg_total_trace
+            logger.info(
+                '{}# activation difference_avg={} avg_trace={}'.format(
+                    i, a_diff_avg, a_avg_total_trace))
+
+            if w_diff_avg < tolerance and a_diff_avg < tolerance:
+                return mean_avg_traces_per_param, mean_avg_traces_per_act, op_act_grad
+
+        return mean_avg_traces_per_param, mean_avg_traces_per_act, op_act_grad
+
+    def _cal_trace(self):
+        """
+        Calculate the trace for both weight and activation per layer
+        """
+        pass
+        # trace_estimator = HessianTraceEstimator(self.model,
+        #                                         self.conf,
+        #                                         self.adaptor,
+        #                                         self.op_cfgs_list,
+        #                                         self.dataloader)
+        # w_avg_trace, a_avg_trace, op_act_grad = trace_estimator.get_avg_trace()
+        #
+        # # mapping trace to op per op_weight_mapping
+        # weights_name = self.adaptor.get_all_weight_names(self.model)
+        # op_weight_mapping = self.get_op_weight_mapping()
+        # trace_per_op = OrderedDict()
+        # w_op_trace_info = np.zeros(len(op_weight_mapping))
+        # for i, (op_name, w_name) in enumerate(op_weight_mapping.items()):
+        #     index = weights_name.index(w_name)
+        #     w_op_trace_info[i] = w_avg_trace[index]
+        #     act_trace = 0.0
+        #     if op_name in op_act_grad:
+        #         a_index = op_act_grad.index(op_name)
+        #         act_trace = a_avg_trace[a_index]
+        #     trace_per_op[op_name] = (w_avg_trace[index], act_trace)
+        # return trace_per_op
+
 
 @strategy_registry
 class HawqTuneStrategy(TuneStrategy):
@@ -91,6 +242,37 @@ class HawqTuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
+        from copy import deepcopy
+        tuning_space = self.tuning_space
+        calib_size = tuning_space.root_item.get_option_by_name('calib_sampling_size').options[0]  ##TODO suppoprt list
+
+        # Initialize the tuning config for each op according to the quantization approach
+        op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
+
+        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
+        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
+
+        target_dtype = "fp32"  ##TODO support bf16
+        target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
+        fp_op_list = [item for item in quant_ops if item in target_type_lst]
+        orig_eval = True
+        if self._fp32_model.training:
+            orig_eval = False
+        self._fp32_model.train()
+        ht = HessianTrace(self._fp32_model, self.cfg, self.adaptor, fp_op_list, self.calib_dataloader)
+        ht.get_avg_trace()
+        # if orig_eval:
+        #     self._fp32_model.eval()
+        # ht.get_avg_trace()
+        # tmp = 1
+        # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
+        # ops_sensitivity = self.adaptor.get_hessian_trace(self._fp32_model,
+        #                                                         self.calib_dataloader,
+        #                                                         self.
+        #                                                         method_args={'name': 'hessian_trace'})
+        # tmp = 1
+
+    def next_tune_cfg_bk(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
            according to last tuning result.
 
@@ -100,84 +282,85 @@ class HawqTuneStrategy(TuneStrategy):
         from copy import deepcopy
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
-        for calib_sampling_size in calib_sampling_size_lst:
-            # Initialize the tuning config for each op according to the quantization approach 
-            op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-            # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-            early_stop_tuning = False
-            stage1_cnt = 0
-            quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
-            quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
-            stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
-                                                             op_item_dtype_dict, initial_op_tuning_cfg)
-            for op_tuning_cfg in op_wise_tuning_sampler:
-                stage1_cnt += 1
-                if early_stop_tuning and stage1_cnt > stage1_max:
-                    logger.info("Early stopping the stage 1.")
-                    break
+
+        calib_sampling_size = calib_sampling_size_lst[0]
+        # Initialize the tuning config for each op according to the quantization approach
+        op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
+        # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
+        early_stop_tuning = False
+        stage1_cnt = 0
+        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
+        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
+        stage1_max = 1e9  # TODO set a more appropriate value
+        op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
+                                                         op_item_dtype_dict, initial_op_tuning_cfg)
+        # for op_tuning_cfg in op_wise_tuning_sampler:
+        #     stage1_cnt += 1
+        #     if early_stop_tuning and stage1_cnt > stage1_max:
+        #         logger.info("Early stopping the stage 1.")
+        #         break
+        #     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        #     yield op_tuning_cfg
+        # Fallback the ops supported both static and dynamic from static to dynamic
+        # Tuning items: None
+        # if self.cfg.quantization.approach == 'post_training_auto_quant':
+        #     static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
+        #                             item in tuning_space.query_items_by_quant_mode('dynamic')]
+        #     if static_dynamic_items:
+        #         logger.info("Fallback all ops that support both dynamic and static to dynamic.")
+        #     else:
+        #         logger.info("Non ops that support both dynamic")
+        #
+        #     new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
+        #     for item in static_dynamic_items:
+        #         new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
+        #                                        new_op_tuning_cfg[item.name])
+        #     new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        #     yield new_op_tuning_cfg
+        best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
+
+        # Fallback
+        for target_dtype in ['bf16', 'fp32']:
+            target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
+            fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
+            if fallback_items_lst:
+                logger.info(f"Start to fallback op to {target_dtype} one by one.")
+                self._fallback_started()
+            # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
+            ops_sensitivity = self.adaptor.calculate_op_sensitivity(self._fp32_model,
+                                                                    self.calib_dataloader,
+                                                                    method_args={'name': 'hessian_trace'})
+
+            fallback_items_name_lst = sorted(ops_sensitivity, key=lambda items: items[1], reverse=True)
+
+            op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
+            initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
+            fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
+                                                     initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                     op_dtypes=op_dtypes, accumulate=False)
+            op_fallback_acc_impact = OrderedDict()
+            for op_index, op_tuning_cfg in enumerate(fallback_sampler):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
-            # Fallback the ops supported both static and dynamic from static to dynamic
-            # Tuning items: None
-            if self.cfg.quantization.approach == 'post_training_auto_quant':
-                static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
-                                        item in tuning_space.query_items_by_quant_mode('dynamic')]
-                if static_dynamic_items:
-                    logger.info("Fallback all ops that support both dynamic and static to dynamic.")
-                else:
-                    logger.info("Non ops that support both dynamic")
+                acc, _ = self.last_tune_result
+                op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
-                new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
-                for item in static_dynamic_items:
-                    new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
-                                                   new_op_tuning_cfg[item.name])
-                new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                yield new_op_tuning_cfg
-            best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
-
-            # Fallback
-            for target_dtype in ['bf16', 'fp32']:
-                target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
-                fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
-                if fallback_items_lst:
-                    logger.info(f"Start to fallback op to {target_dtype} one by one.")
-                    self._fallback_started()
-                #fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
-                ops_sensitivity = self.adaptor.calculate_op_sensitivity(self._fp32_model, 
-                                                                        self.calib_dataloader, 
-                                                                        method_args = {'name': 'hessian_trace'})
-                fallback_items_name_lst = sorted(ops_sensitivity, key = lambda items: items[1], reverse=True)
-                
-                op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
+            # do accumulated fallback according to the order in the previous stage
+            if len(op_fallback_acc_impact) > 0:
+                ordered_ops = sorted(op_fallback_acc_impact.keys(),
+                                     key=lambda key: op_fallback_acc_impact[key],
+                                     reverse=self.higher_is_better)
+                op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
+                logger.info(f"Start to accumulate fallback to {target_dtype}.")
                 initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
                 fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                        initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                        op_dtypes=op_dtypes, accumulate=False)
-                op_fallback_acc_impact = OrderedDict()
-                for op_index, op_tuning_cfg in enumerate(fallback_sampler):
+                                                         initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                         op_dtypes=op_dtypes, accumulate=True)
+                for op_tuning_cfg in fallback_sampler:
                     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                     yield op_tuning_cfg
-                    acc, _ = self.last_tune_result
-                    op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
-
-                # do accumulated fallback according to the order in the previous stage
-                if len(op_fallback_acc_impact) > 0:
-                    ordered_ops = sorted(op_fallback_acc_impact.keys(), 
-                                         key=lambda key: op_fallback_acc_impact[key],
-                                         reverse=self.higher_is_better)
-                    op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
-                    logger.info(f"Start to accumulate fallback to {target_dtype}.")
-                    initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-                    fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                            initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                            op_dtypes=op_dtypes, accumulate=True)
-                    for op_tuning_cfg in fallback_sampler:
-                        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                        yield op_tuning_cfg
-                        
-    def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
+    def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name
         op_type = op_static_cfg.op_type
@@ -198,5 +381,3 @@ class HawqTuneStrategy(TuneStrategy):
                     tuning_item = quant_mode_item.get_option_by_name(att_item)
                     dynamic_state[att_item] = tuning_item.options[0] if tuning_item else None
         return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)
-        
-        
