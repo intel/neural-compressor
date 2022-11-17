@@ -49,7 +49,8 @@ class Predictor:
         # Create lists of regressors and associated hyper-parameters
         regressors = [
             linear_model.Ridge(max_iter=max_iterations),
-            svm.SVR(kernel='rbf', gamma='auto', epsilon=0.0, max_iter=max_iterations),
+            svm.SVR(kernel='rbf', gamma='auto',
+                    epsilon=0.0, max_iter=max_iterations),
         ]
         hyper_parameters = [{'alpha': alphas}, {'C': cost_factors}]
 
@@ -67,7 +68,6 @@ class Predictor:
             )
 
     def train(self, examples, labels):
-
         '''
         Trains the predictor on the specified examples and labels using the underlying regressor.
         Parameters
@@ -82,7 +82,8 @@ class Predictor:
         # Compute normalization factor
         max_label = np.amax(np.abs(labels))
         if max_label > 0.0:
-            self.normalization_factor = 10 ** (np.floor(np.log10(max_label)) - 1.0)
+            self.normalization_factor = 10 ** (
+                np.floor(np.log10(max_label)) - 1.0)
         else:
             self.normalization_factor = 1.0
 

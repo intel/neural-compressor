@@ -39,12 +39,14 @@ def set_incremental_state(module, incremental_state, key, value):
         full_key = _get_full_incremental_state_key(module, key)
         incremental_state[full_key] = value
 
+
 class EmbeddingSuper(nn.Embedding):
     def __init__(self, num_embeddings, super_embed_dim, padding_idx, *args, **kwargs):
         super().__init__(num_embeddings, super_embed_dim, padding_idx, *args, **kwargs)
 
         # the largest embed dim
-        self.super_embed_dim = {'encoder': super_embed_dim, 'decoder': super_embed_dim}
+        self.super_embed_dim = {
+            'encoder': super_embed_dim, 'decoder': super_embed_dim}
 
         # the current sampled embed dim
         self.sample_embed_dim = {'encoder': None, 'decoder': None}
@@ -119,7 +121,8 @@ class LinearSuper(nn.Linear):
         self._sample_parameters()
 
     def _sample_parameters(self):
-        self.samples['weight'] = sample_weight(self.weight, self.sample_in_dim, self.sample_out_dim)
+        self.samples['weight'] = sample_weight(
+            self.weight, self.sample_in_dim, self.sample_out_dim)
         self.samples['bias'] = self.bias
         if self.bias is not None:
             self.samples['bias'] = sample_bias(self.bias, self.sample_out_dim)
@@ -152,6 +155,7 @@ def sample_bias(bias, sample_out_dim):
     sample_bias = bias[:sample_out_dim]
 
     return sample_bias
+
 
 def LayerNorm(normalized_shape, eps=1e-5, elementwise_affine=True, export=False):
     if not export and torch.cuda.is_available():
@@ -203,7 +207,6 @@ class LayerNormSuper(torch.nn.LayerNorm):
         return self.samples['weight'].numel() + self.samples['bias'].numel()
 
 
-
 class MultiheadAttentionSuper(nn.Module):
     """Multi-headed attention.
 
@@ -214,8 +217,6 @@ class MultiheadAttentionSuper(nn.Module):
                  add_bias_kv=False, add_zero_attn=False, self_attention=False,
                  encoder_decoder_attention=False, out_dim=None, qkv_dim=None):
         super().__init__()
-
-
 
         # the configs of super arch
         self.super_q_embed_dim = super_embed_dim
@@ -255,11 +256,15 @@ class MultiheadAttentionSuper(nn.Module):
                                                              'value to be of the same size'
 
         if self.qkv_same_dim:
-            self.in_proj_weight = Parameter(torch.Tensor(3 * self.qkv_dim, self.super_q_embed_dim))
+            self.in_proj_weight = Parameter(torch.Tensor(
+                3 * self.qkv_dim, self.super_q_embed_dim))
         else:
-            self.k_proj_weight = Parameter(torch.Tensor(self.qkv_dim, self.super_kv_embed_dim))
-            self.v_proj_weight = Parameter(torch.Tensor(self.qkv_dim, self.super_kv_embed_dim))
-            self.q_proj_weight = Parameter(torch.Tensor(self.qkv_dim, self.super_q_embed_dim))
+            self.k_proj_weight = Parameter(torch.Tensor(
+                self.qkv_dim, self.super_kv_embed_dim))
+            self.v_proj_weight = Parameter(torch.Tensor(
+                self.qkv_dim, self.super_kv_embed_dim))
+            self.q_proj_weight = Parameter(torch.Tensor(
+                self.qkv_dim, self.super_q_embed_dim))
 
         if bias:
             self.in_proj_bias = Parameter(torch.Tensor(3 * self.qkv_dim))
@@ -268,7 +273,8 @@ class MultiheadAttentionSuper(nn.Module):
 
         if out_dim is None:
             out_dim = self.super_q_embed_dim
-        self.out_proj = LinearSuper(super_in_dim=self.qkv_dim, super_out_dim=out_dim, bias=bias)
+        self.out_proj = LinearSuper(
+            super_in_dim=self.qkv_dim, super_out_dim=out_dim, bias=bias)
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, self.super_q_embed_dim))
@@ -277,7 +283,6 @@ class MultiheadAttentionSuper(nn.Module):
             self.bias_k = self.bias_v = None
 
         self.add_zero_attn = add_zero_attn
-
 
         self.reset_parameters()
 
@@ -302,9 +307,6 @@ class MultiheadAttentionSuper(nn.Module):
 
         return in_proj_q_weight_numel + in_proj_k_weight_numel + in_proj_v_weight_numel + in_proj_bias_numel
 
-
-
-
     def set_sample_config(self, sample_q_embed_dim, sample_attention_heads, sample_kv_embed_dim=None):
         self.sample_q_embed_dim = sample_q_embed_dim
         if sample_kv_embed_dim is None:
@@ -314,11 +316,12 @@ class MultiheadAttentionSuper(nn.Module):
 
         self.num_heads = sample_attention_heads
         self.head_dim = self.qkv_dim // self.num_heads
-        assert self.head_dim * self.num_heads == self.qkv_dim, "qkv_dim must be divisible by sampled num_heads"
+        assert self.head_dim * \
+            self.num_heads == self.qkv_dim, "qkv_dim must be divisible by sampled num_heads"
         self.scaling = self.head_dim ** -0.5
 
-        self.out_proj.set_sample_config(sample_in_dim=self.qkv_dim, sample_out_dim=self.sample_q_embed_dim)
-
+        self.out_proj.set_sample_config(
+            sample_in_dim=self.qkv_dim, sample_out_dim=self.sample_q_embed_dim)
 
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
@@ -340,7 +343,6 @@ class MultiheadAttentionSuper(nn.Module):
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
 
-
     def forward(self, query, key, value, key_padding_mask=None, incremental_state=None,
                 need_weights=True, static_kv=False, attn_mask=None):
         """Input shape: Time x Batch x Channel
@@ -350,7 +352,6 @@ class MultiheadAttentionSuper(nn.Module):
         the key by passing a binary ByteTensor (`key_padding_mask`) with shape:
         batch x src_len, where padding elements are indicated by 1s.
         """
-
 
         tgt_len, bsz, embed_dim = query.size()
 
@@ -390,7 +391,8 @@ class MultiheadAttentionSuper(nn.Module):
             k = torch.cat([k, self.bias_k.repeat(1, bsz, 1)])
             v = torch.cat([v, self.bias_v.repeat(1, bsz, 1)])
             if attn_mask is not None:
-                attn_mask = torch.cat([attn_mask, attn_mask.new_zeros(attn_mask.size(0), 1)], dim=1)
+                attn_mask = torch.cat(
+                    [attn_mask, attn_mask.new_zeros(attn_mask.size(0), 1)], dim=1)
             if key_padding_mask is not None:
                 key_padding_mask = torch.cat(
                     [key_padding_mask, key_padding_mask.new_zeros(key_padding_mask.size(0), 1)], dim=1)
@@ -405,19 +407,23 @@ class MultiheadAttentionSuper(nn.Module):
         if saved_state is not None:
             # saved states are stored with shape (bsz, num_heads, seq_len, head_dim)
             if 'prev_key' in saved_state:
-                prev_key = saved_state['prev_key'].view(bsz * self.num_heads, -1, self.head_dim)
+                prev_key = saved_state['prev_key'].view(
+                    bsz * self.num_heads, -1, self.head_dim)
                 if static_kv:
                     k = prev_key
                 else:
                     k = torch.cat((prev_key, k), dim=1)
             if 'prev_value' in saved_state:
-                prev_value = saved_state['prev_value'].view(bsz * self.num_heads, -1, self.head_dim)
+                prev_value = saved_state['prev_value'].view(
+                    bsz * self.num_heads, -1, self.head_dim)
                 if static_kv:
                     v = prev_value
                 else:
                     v = torch.cat((prev_value, v), dim=1)
-            saved_state['prev_key'] = k.view(bsz, self.num_heads, -1, self.head_dim)
-            saved_state['prev_value'] = v.view(bsz, self.num_heads, -1, self.head_dim)
+            saved_state['prev_key'] = k.view(
+                bsz, self.num_heads, -1, self.head_dim)
+            saved_state['prev_value'] = v.view(
+                bsz, self.num_heads, -1, self.head_dim)
 
             self._set_input_buffer(incremental_state, saved_state)
 
@@ -429,26 +435,31 @@ class MultiheadAttentionSuper(nn.Module):
             key_padding_mask = None
 
         if key_padding_mask is not None:
-            fil = key_padding_mask.new_ones(key_padding_mask.size(0), src_len-key_padding_mask.size(1))
+            fil = key_padding_mask.new_ones(
+                key_padding_mask.size(0), src_len-key_padding_mask.size(1))
             key_padding_mask = torch.cat((key_padding_mask, fil), dim=1)
             assert key_padding_mask.size(0) == bsz
             assert key_padding_mask.size(1) == src_len
 
-
         if self.add_zero_attn:
             src_len += 1
-            k = torch.cat([k, k.new_zeros((k.size(0), 1) + k.size()[2:])], dim=1)
-            v = torch.cat([v, v.new_zeros((v.size(0), 1) + v.size()[2:])], dim=1)
+            k = torch.cat(
+                [k, k.new_zeros((k.size(0), 1) + k.size()[2:])], dim=1)
+            v = torch.cat(
+                [v, v.new_zeros((v.size(0), 1) + v.size()[2:])], dim=1)
             if attn_mask is not None:
-                attn_mask = torch.cat([attn_mask, attn_mask.new_zeros(attn_mask.size(0), 1)], dim=1)
+                attn_mask = torch.cat(
+                    [attn_mask, attn_mask.new_zeros(attn_mask.size(0), 1)], dim=1)
             if key_padding_mask is not None:
                 key_padding_mask = torch.cat(
                     [key_padding_mask, torch.zeros(key_padding_mask.size(0), 1).type_as(key_padding_mask)], dim=1)
 
         attn_weights = torch.bmm(q, k.transpose(1, 2))
-        attn_weights = self.apply_sparse_mask(attn_weights, tgt_len, src_len, bsz)
+        attn_weights = self.apply_sparse_mask(
+            attn_weights, tgt_len, src_len, bsz)
 
-        assert list(attn_weights.size()) == [bsz * self.num_heads, tgt_len, src_len]
+        assert list(attn_weights.size()) == [
+            bsz * self.num_heads, tgt_len, src_len]
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(0)
@@ -457,7 +468,8 @@ class MultiheadAttentionSuper(nn.Module):
             attn_weights += attn_mask
 
         if key_padding_mask is not None:
-            attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
+            attn_weights = attn_weights.view(
+                bsz, self.num_heads, tgt_len, src_len)
             if self.onnx_trace:
                 attn_weights = torch.where(
                     key_padding_mask.unsqueeze(1).unsqueeze(2),
@@ -469,28 +481,33 @@ class MultiheadAttentionSuper(nn.Module):
                     key_padding_mask.unsqueeze(1).unsqueeze(2),
                     float('-inf'),
                 )
-            attn_weights = attn_weights.view(bsz * self.num_heads, tgt_len, src_len)
+            attn_weights = attn_weights.view(
+                bsz * self.num_heads, tgt_len, src_len)
 
         attn_weights = utils.softmax(
             attn_weights, dim=-1, onnx_trace=self.onnx_trace,
         ).type_as(attn_weights)
-        attn_weights = F.dropout(attn_weights, p=self.dropout, training=self.training)
+        attn_weights = F.dropout(
+            attn_weights, p=self.dropout, training=self.training)
 
         attn = torch.bmm(attn_weights, v)
 
-        assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
+        assert list(attn.size()) == [
+            bsz * self.num_heads, tgt_len, self.head_dim]
 
         if (self.onnx_trace and attn.size(1) == 1):
             # when ONNX tracing a single decoder step (sequence length == 1)
             # the transpose is a no-op copy before view, thus unnecessary
             attn = attn.contiguous().view(tgt_len, bsz, self.qkv_dim)
         else:
-            attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, self.qkv_dim)
+            attn = attn.transpose(0, 1).contiguous().view(
+                tgt_len, bsz, self.qkv_dim)
         attn = self.out_proj(attn)
 
         if need_weights:
             # average attention weights over heads
-            attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
+            attn_weights = attn_weights.view(
+                bsz, self.num_heads, tgt_len, src_len)
 
             attn_weights = attn_weights.sum(dim=1) / self.num_heads
         else:
@@ -547,7 +564,7 @@ class MultiheadAttentionSuper(nn.Module):
             self._set_input_buffer(incremental_state, input_buffer)
 
     def _get_input_buffer(self, incremental_state):
-        return get_incremental_state(  #utils.
+        return get_incremental_state(  # utils.
             self,
             incremental_state,
             'attn_state',
@@ -578,7 +595,8 @@ class MultiheadAttentionSuper(nn.Module):
             child_lines.append('(' + key + '): ' + mod_str)
         lines = extra_lines + child_lines
 
-        main_str = self._get_name() + '\tnum_heads:' + str(self.num_heads) + '\t qkv_dim:' + str(self.qkv_dim)
+        main_str = self._get_name() + '\tnum_heads:' + str(self.num_heads) + \
+            '\t qkv_dim:' + str(self.qkv_dim)
         if lines:
             # simple one-liner info, which most builtin Modules will use
             if len(extra_lines) == 1 and not child_lines:

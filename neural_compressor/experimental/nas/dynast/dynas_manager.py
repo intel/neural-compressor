@@ -61,21 +61,25 @@ class ParameterManager:
             for i in range(options['count']):
                 parameter_upperbound.append(len(options['vars']) - 1)
                 index_simple = [x for x in range(len(options['vars']))]
-                parameter_mapper.append(dict(zip(index_simple, options['vars'])))
+                parameter_mapper.append(
+                    dict(zip(index_simple, options['vars'])))
 
-        if self.verbose: # pragma: no cover
+        if self.verbose:  # pragma: no cover
             logger.info(
-                '[DyNAS-T] Problem definition variables: {}'.format(parameter_count)
+                '[DyNAS-T] Problem definition variables: {}'.format(
+                    parameter_count)
             )
             logger.info(
-                '[DyNAS-T] Variable Upper Bound array: {}'.format(parameter_upperbound)
+                '[DyNAS-T] Variable Upper Bound array: {}'.format(
+                    parameter_upperbound)
             )
             logger.info(
                 '[DyNAS-T] Mapping dictionary created of length: {}'.format(
                     len(parameter_mapper)
                 )
             )
-            logger.info('[DyNAS-T] Parameter Bound: {}'.format(parameter_bound))
+            logger.info(
+                '[DyNAS-T] Parameter Bound: {}'.format(parameter_bound))
 
         return parameter_mapper, parameter_upperbound, parameter_count
 
@@ -138,7 +142,8 @@ class ParameterManager:
             trials += 1
 
         if trials >= trial_limit:
-            logger.warning('[DyNAS-T] Unable to create unique list of samples.')
+            logger.warning(
+                '[DyNAS-T] Unable to create unique list of samples.')
 
         return pymoo_vector_list
 
@@ -172,7 +177,8 @@ class ParameterManager:
             param_counter = 0
             for i in range(value['count']):
                 output.append(
-                    self.inv_mapper[mapper_counter][parameters[key][param_counter]]
+                    self.inv_mapper[mapper_counter][parameters[key]
+                                                    [param_counter]]
                 )
                 mapper_counter += 1
                 param_counter += 1
@@ -278,32 +284,28 @@ class ParameterManager:
             return features_train, features_test, labels_train, labels_test
 
 
-
-
-
-
 class TransformerLTEncoding(ParameterManager):
     def __init__(self, param_dict: dict, verbose: bool = False, seed: int = 0):
         super().__init__(param_dict, verbose, seed)
 
-    def onehot_custom(self,subnet_cfg,provide_onehot=True):
+    def onehot_custom(self, subnet_cfg, provide_onehot=True):
 
         features = []
         #import ipdb;ipdb.set_trace()
         features.extend(subnet_cfg['encoder_embed_dim'])
 
         #encoder_layer_num = subnet_cfg['encoder_layer_num']
-        encode_layer_num_int = 6#encoder_layer_num[0]
-        #features.extend(encoder_layer_num)
+        encode_layer_num_int = 6  # encoder_layer_num[0]
+        # features.extend(encoder_layer_num)
 
-        #Encoder FFN Embed Dim
+        # Encoder FFN Embed Dim
         encoder_ffn_embed_dim = subnet_cfg['encoder_ffn_embed_dim']
 
         if encode_layer_num_int < 6:
             encoder_ffn_embed_dim.extend([0]*(6-encode_layer_num_int))
         features.extend(encoder_ffn_embed_dim)
 
-        #Encoder Self-Attn Heads
+        # Encoder Self-Attn Heads
 
         encoder_self_attention_heads = subnet_cfg['encoder_self_attention_heads'][:encode_layer_num_int]
 
@@ -311,34 +313,32 @@ class TransformerLTEncoding(ParameterManager):
             encoder_self_attention_heads.extend([0]*(6-encode_layer_num_int))
         features.extend(encoder_self_attention_heads)
 
-
         features.extend(subnet_cfg['decoder_embed_dim'])
 
         decoder_layer_num = subnet_cfg['decoder_layer_num']
         decoder_layer_num_int = decoder_layer_num[0]
         features.extend(decoder_layer_num)
 
-        #Decoder FFN Embed Dim
+        # Decoder FFN Embed Dim
         decoder_ffn_embed_dim = subnet_cfg['decoder_ffn_embed_dim'][:decoder_layer_num_int]
 
         if decoder_layer_num_int < 6:
             decoder_ffn_embed_dim.extend([0]*(6-decoder_layer_num_int))
         features.extend(decoder_ffn_embed_dim)
 
-
-        #Decoder Attn Heads
+        # Decoder Attn Heads
         decoder_self_attention_heads = subnet_cfg['decoder_self_attention_heads'][:decoder_layer_num_int]
 
         if decoder_layer_num_int < 6:
-                    decoder_self_attention_heads.extend([0]*(6-decoder_layer_num_int))
+            decoder_self_attention_heads.extend([0]*(6-decoder_layer_num_int))
         features.extend(decoder_self_attention_heads)
 
-        #Decoder ENDE HEADS
+        # Decoder ENDE HEADS
 
         decoder_ende_attention_heads = subnet_cfg['decoder_ende_attention_heads'][:decoder_layer_num_int]
 
         if decoder_layer_num_int < 6:
-                    decoder_ende_attention_heads.extend([0]*(6-decoder_layer_num_int))
+            decoder_ende_attention_heads.extend([0]*(6-decoder_layer_num_int))
 
         features.extend(decoder_ende_attention_heads)
 
@@ -352,27 +352,27 @@ class TransformerLTEncoding(ParameterManager):
                 arbitrary_ende_attn_trans.append(3)
 
         if decoder_layer_num_int < 6:
-                    arbitrary_ende_attn_trans.extend([0]*(6-decoder_layer_num_int))
+            arbitrary_ende_attn_trans.extend([0]*(6-decoder_layer_num_int))
         features.extend(arbitrary_ende_attn_trans)
 
-        if provide_onehot==True:
+        if provide_onehot == True:
             examples = np.array([features])
             one_hot_count = 0
             unique_values = self.unique_values
 
-            #uncomment
-            #with open(self.onehot_unique,'rb') as f:
+            # uncomment
+            # with open(self.onehot_unique,'rb') as f:
             #    load_unique_values = pickle.load(f)
             #    unique_values = load_unique_values.tolist()
             for unique in unique_values:
                 one_hot_count += len(unique.tolist())
 
-
             one_hot_examples = np.zeros((examples.shape[0], one_hot_count))
             for e, example in enumerate(examples):
                 offset = 0
                 for f in range(len(example)):
-                    index = np.where(unique_values[f] == example[f])[0] + offset
+                    index = np.where(unique_values[f] == example[f])[
+                        0] + offset
                     one_hot_examples[e, index] = 1.0
                     offset += len(unique_values[f])
             return one_hot_examples
@@ -380,8 +380,7 @@ class TransformerLTEncoding(ParameterManager):
         else:
             return features
 
-        #return np.array(ks_onehot + ex_onehot)
-
+        # return np.array(ks_onehot + ex_onehot)
 
     def import_csv(
         self,
@@ -390,7 +389,7 @@ class TransformerLTEncoding(ParameterManager):
         objective: str,
         column_names: List[str] = None,
         drop_duplicates: bool = True,
-     ) -> pd.DataFrame:
+    ) -> pd.DataFrame:
         '''
         Import a csv file generated from a supernetwork search for the purpose
         of training a predictor.
@@ -427,7 +426,8 @@ class TransformerLTEncoding(ParameterManager):
             config_as_pymoo = self.translate2pymoo(config_as_dict)
             convert_to_pymoo.append(config_as_pymoo)
             # Onehot predictor format
-            config_as_onehot = self.onehot_custom(config_as_dict,provide_onehot=False)
+            config_as_onehot = self.onehot_custom(
+                config_as_dict, provide_onehot=False)
             convert_to_onehot.append(config_as_onehot)
         #import ipdb;ipdb.set_trace()
         df[config] = convert_to_dict
@@ -436,7 +436,7 @@ class TransformerLTEncoding(ParameterManager):
 
         return df
 
-    #@staticmethod
+    # @staticmethod
     def create_training_set(
         self,
         dataframe: pd.DataFrame,
@@ -453,7 +453,8 @@ class TransformerLTEncoding(ParameterManager):
         for i in range(len(dataframe)):
             collect_rows.append(np.asarray(dataframe['config_onehot'].iloc[i]))
         features = np.asarray(collect_rows)
-        labels = dataframe.drop(columns=['config', 'config_pymoo', 'config_onehot']).values
+        labels = dataframe.drop(
+            columns=['config', 'config_pymoo', 'config_onehot']).values
 
         assert len(features) == len(labels)
         one_hot_count = 0
@@ -485,5 +486,3 @@ class TransformerLTEncoding(ParameterManager):
                 )
             )
             return features_train, features_test, labels_train, labels_test
-
-

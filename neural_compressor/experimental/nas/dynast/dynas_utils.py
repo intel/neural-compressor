@@ -36,7 +36,7 @@ from neural_compressor.utils.utility import LazyImport, logger
 from neural_compressor.experimental.nas.supernetwork.machine_translation.transformer_interface import (
     compute_bleu,
     compute_latency
-) 
+)
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
 
@@ -198,7 +198,7 @@ class OFARunner(Runner):
     def validate_top1(
         self,
         subnet_cfg: dict,
-    ) -> float: # pragma: no cover
+    ) -> float:  # pragma: no cover
         subnet = self.get_subnet(subnet_cfg)
         folder_name = '.torch/tmp-{}'.format(uuid.uuid1().hex)
         run_manager = RunManager(
@@ -207,7 +207,8 @@ class OFARunner(Runner):
         run_manager.reset_running_statistics(net=subnet)
 
         # Test sampled subnet
-        self.run_config.data_provider.assign_active_img_size(subnet_cfg['r'][0])
+        self.run_config.data_provider.assign_active_img_size(
+            subnet_cfg['r'][0])
         loss, acc = run_manager.validate(net=subnet, no_logs=False)
         top1 = acc[0]
         return top1
@@ -252,7 +253,8 @@ class OFARunner(Runner):
             measure_steps=measure_steps,
             device=self.device,
         )
-        logger.info('Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
+        logger.info(
+            'Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
 
         return latency_mean, latency_std
 
@@ -272,8 +274,6 @@ class OFARunner(Runner):
         self.subnet = self.ofa_network.get_active_subnet(preserve_weight=True)
         self.subnet.eval()
         return self.subnet
-
-
 
 
 class TransformerLTRunner(Runner):
@@ -326,9 +326,10 @@ class TransformerLTRunner(Runner):
     def validate_bleu(
         self,
         subnet_cfg: dict,
-    ) -> float: # pragma: no cover
-        
-        bleu = compute_bleu(subnet_cfg,self.dataset_path,self.checkpoint_path)
+    ) -> float:  # pragma: no cover
+
+        bleu = compute_bleu(subnet_cfg, self.dataset_path,
+                            self.checkpoint_path)
         return bleu
 
     def validate_macs(
@@ -362,13 +363,13 @@ class TransformerLTRunner(Runner):
         Returns:
             mean latency; std latency
         """
-       
-        latency_mean, latency_std = compute_latency(subnet_cfg,self.dataset_path)
-        logger.info('Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
+
+        latency_mean, latency_std = compute_latency(
+            subnet_cfg, self.dataset_path)
+        logger.info(
+            'Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
 
         return latency_mean, latency_std
-
-
 
 
 class EvaluationInterface:
@@ -409,7 +410,8 @@ class EvaluationInterface:
         if self.csv_path:
             f = open(self.csv_path, "w")
             writer = csv.writer(f)
-            result = ['Sub-network', 'Date', 'Latency (ms)', ' MACs', 'Top-1 Acc (%)']
+            result = ['Sub-network', 'Date',
+                      'Latency (ms)', ' MACs', 'Top-1 Acc (%)']
             writer.writerow(result)
             f.close()
 
@@ -505,11 +507,14 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
         # Always evaluate/predict top1
         lat, macs = 0, 0
         if self.predictor_mode == True:
-            top1 = self.evaluator.estimate_accuracy_top1(self.manager.onehot_generic(x).reshape(1,-1))[0]
+            top1 = self.evaluator.estimate_accuracy_top1(
+                self.manager.onehot_generic(x).reshape(1, -1))[0]
             if 'macs' in self.metrics:
-                macs = self.evaluator.estimate_macs(self.manager.onehot_generic(x).reshape(1,-1))[0]
+                macs = self.evaluator.estimate_macs(
+                    self.manager.onehot_generic(x).reshape(1, -1))[0]
             if 'lat' in self.metrics:
-                lat = self.evaluator.estimate_latency(self.manager.onehot_generic(x).reshape(1,-1))[0]
+                lat = self.evaluator.estimate_latency(
+                    self.manager.onehot_generic(x).reshape(1, -1))[0]
         else:
             top1 = self.evaluator.validate_top1(subnet_sample)
             macs = self.evaluator.validate_macs(subnet_sample)
@@ -529,7 +534,6 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
             return sample, lat, -top1
         else:
             return sample, macs, -top1
-
 
 
 class EvaluationInterfaceTransformerLT(EvaluationInterface):
@@ -553,7 +557,7 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
         sample = {
             'encoder': {
                 'encoder_embed_dim': param_dict['encoder_embed_dim'][0],
-                'encoder_layer_num': 6,#param_dict['encoder_layer_num'][0],
+                'encoder_layer_num': 6,  # param_dict['encoder_layer_num'][0],
                 'encoder_ffn_embed_dim': param_dict['encoder_ffn_embed_dim'],
                 'encoder_self_attention_heads': param_dict['encoder_self_attention_heads'],
             },
@@ -563,20 +567,23 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
                 'decoder_ffn_embed_dim': param_dict['decoder_ffn_embed_dim'],
                 'decoder_self_attention_heads': param_dict['decoder_self_attention_heads'],
                 'decoder_ende_attention_heads': param_dict['decoder_ende_attention_heads'],
-                'decoder_arbitrary_ende_attn':param_dict['decoder_arbitrary_ende_attn']
+                'decoder_arbitrary_ende_attn': param_dict['decoder_arbitrary_ende_attn']
             }
-            }
+        }
 
         subnet_sample = copy.deepcopy(sample)
 
         # Always evaluate/predict top1
         lat, macs = 0, 0
         if self.predictor_mode == True:
-            bleu = self.evaluator.estimate_accuracy_bleu(self.manager.onehot_custom(param_dict).reshape(1,-1))[0]
+            bleu = self.evaluator.estimate_accuracy_bleu(
+                self.manager.onehot_custom(param_dict).reshape(1, -1))[0]
             if 'macs' in self.metrics:
-                macs = self.evaluator.estimate_macs(self.manager.onehot_custom(param_dict).reshape(1,-1))[0]
+                macs = self.evaluator.estimate_macs(
+                    self.manager.onehot_custom(param_dict).reshape(1, -1))[0]
             if 'lat' in self.metrics:
-                lat = self.evaluator.estimate_latency(self.manager.onehot_custom(param_dict).reshape(1,-1))[0]
+                lat = self.evaluator.estimate_latency(
+                    self.manager.onehot_custom(param_dict).reshape(1, -1))[0]
         else:
             bleu = self.evaluator.validate_bleu(subnet_sample)
             macs = self.evaluator.validate_macs(subnet_sample)
@@ -587,7 +594,7 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
             with open(self.csv_path, 'a') as f:
                 writer = csv.writer(f)
                 date = str(datetime.now())
-                result = [param_dict, date, lat, macs, bleu,]
+                result = [param_dict, date, lat, macs, bleu, ]
                 writer.writerow(result)
 
         # PyMoo only minimizes objectives, thus accuracy needs to be negative
@@ -598,9 +605,6 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
             return sample, macs, -bleu
 
 
-
-
-
 def get_torchvision_model(
     model_name: str,
 ) -> torch.nn.Module:
@@ -608,14 +612,15 @@ def get_torchvision_model(
         model = getattr(torchvision.models, model_name)(pretrained=True)
         model.eval()
         return model
-    except AttributeError as ae: # pragma: no cover
+    except AttributeError as ae:  # pragma: no cover
         logger.error(
             'Model {model_name} not available. This can be due to either a typo or the model is not '
             'available in torchvision=={torchvision_version}. \nAvailable models: {available_models}'.format(
                 model_name=model_name,
                 torchvision_version=torchvision.__version__,
                 available_models=', '.join(
-                    [m for m in dir(torchvision.models) if not m.startswith('_')]
+                    [m for m in dir(torchvision.models)
+                     if not m.startswith('_')]
                 ),
             )
         )
@@ -652,7 +657,7 @@ class TorchVisionReference:
         # separately to avoid modifications to the model being passed between calls.
         get_torchvision_model(model_name=self.model_name)
 
-    def validate_top1(self) -> Tuple[float, float, float]: # pragma: no cover
+    def validate_top1(self) -> Tuple[float, float, float]:  # pragma: no cover
         ImagenetDataProvider.DEFAULT_PATH = self.dataset_path
         model = get_torchvision_model(model_name=self.model_name)
         run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
