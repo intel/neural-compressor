@@ -27,19 +27,22 @@ from ..utils import logger
 from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
-
+from torch.quantization.quantize_fx import fuse_fx
+import  torchvision
 
 class HessianTrace:
-    def __init__(self, model, conf, adaptor, op_cfgs_list, dataloader):
+    def __init__(self, model, conf, adaptor, weight_list, dataloader):
         self.model = model
         self.conf = conf  ##config
-        self.op_cfgs_list = op_cfgs_list  ##op to get
+        self.weight_list = weight_list  ##op to get
         self.dataloader = dataloader
         self.adaptor = adaptor
         self.max_iter = 500
         self.tolerance = 1e-5
         self.eps = 1e-6
         self.index = 0
+        self.device = self.get_device(self.model)
+        self.criterion = torch.nn.CrossEntropyLoss().to(self.device)  ##TODO need to set in config
 
     # def apply_init(self):
     #     trace_per_op = self._cal_trace()
@@ -57,21 +60,50 @@ class HessianTrace:
         for n, p in model.named_parameters():
             return p.data.device
 
-    def get_gradient(self, model, data, criterion, op_list, device="cpu", retrain_graph=False):
+    def get_gradients(self, model, data, criterion, create_graph=False):
         model.zero_grad()
-        input = data[0]
-        target = data[1]
+        input = data[0].to(self.device)
+        target = data[1].to(self.device)
         output = model(input)
         loss = criterion(output, target)
-        loss.backward(retain_graph=retrain_graph)
-        gradients = {}
+        loss.backward(create_graph=create_graph)
+        gradients = []
         for n, p in model.named_parameters():
-            if n in op_list:
-                continue
-            gradients[n] = 0
             if p.grad != None:
-                gradients[n] = p.grad
+                gradient = p.grad
+                gradients.append(gradient+0.0) ## add 0 to create a copy
+        model.zero_grad()
         return gradients
+
+    def get_params(self, model):
+        parameters = [p for p in model.parameters() if p.requires_grad]
+        return parameters
+
+    def sample_rademacher(self, params):
+        samples = []
+        for param in params:
+            r = torch.randint_like(param, high=2, device=self.device)
+            r.masked_fill_(r == 0, -1)
+            samples.append(r)
+        return samples
+
+    def hutchinson_one_step(self, params, num_batches):
+        v = self.sample_rademacher(params)
+        H_v = [0] * len(v)
+        cnt = 0
+        for step, batch in enumerate(self.dataloader):
+            batch_size = batch[0].shape[0]
+            cnt += batch_size
+            gradients = self.get_gradients(self.model, batch, self.criterion, create_graph=True)
+            H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
+            H_v = [pre + cur * float(batch_size) + 0.0 for cur, pre in zip(H_v_one, H_v)]
+            if step == num_batches - 1:
+                break
+        if cnt > 0:
+            H_v = [item / cnt for item in H_v]
+        v_t_H_v = [torch.sum(h_v * v_t) / h_v.size().numel() for (h_v, v_t) in zip(H_v, v)]
+        return v_t_H_v
+
 
     def get_avg_trace(self, num_batches=2):
         """
@@ -80,73 +112,75 @@ class HessianTrace:
         assert num_batches > 0
         ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
         ##num_all_data = num_data_iter * self.dataloader.batch_size
-        op_list = [item.name for item in self.op_cfgs_list]
-        criterion = torch.nn.CrossEntropyLoss()  ##TODO setting this in config
-        device = self.get_device(self.model)
+        op_list = self.weight_list
 
-        for step, batch in enumerate(self.dataloader):
-            gradient_dict = self.get_gradient(self.model, batch,criterion, op_list, device=device, retrain_graph=True)
-            tmp = 1
-            if step == num_batches - 1:
-                break
+        ##TODO setting this in config
 
 
-        weight_vhp = []
-        w_avg_total_trace = 0.
-        w_avg_traces_per_iter = []
-        mean_avg_traces_per_param = None
-        act_vhp = []
-        a_avg_total_trace = 0.
-        a_avg_traces_per_iter = []
-        mean_avg_traces_per_act = None
+        params = [p for p in self.model.parameters() if p.requires_grad]
 
-        for i in range(max_iter):
-            weight_vhp_list, w_v, \
-            act_vhp_list, a_v, op_act_grad = self.adaptor.get_2order_grad(self.model,
-                                                                          criterion,
-                                                                          self.dataloader,
-                                                                          num_data_iter,
-                                                                          qop_list)
-            if not weight_vhp:
-                weight_vhp = [np.random.randn(*p.shape) for p in w_v]
-            for vhp_curr in weight_vhp_list:
-                weight_vhp = [a + b * float(self.dataloader.batch_size) + 0. \
-                              for a, b in zip(weight_vhp, vhp_curr)]
-            weight_vhp = [a / float(num_all_data) for a in weight_vhp]
-            avg_traces_per_param = [np.sum(a * b) / a.size for (a, b) in zip(weight_vhp, w_v)]
-            w_avg_traces_per_iter.append(avg_traces_per_param)
-            mean_avg_traces_per_param = np.mean(w_avg_traces_per_iter, axis=0)
-            w_mean_avg_total_trace = np.sum(mean_avg_traces_per_param)
+        for i in range(self.max_iter):
+            trace_estimated = self.hutchinson_one_step(params, num_batches)
 
-            w_diff_avg = abs(w_mean_avg_total_trace - w_avg_total_trace) / \
-                         (w_avg_total_trace + diff_eps)
-            w_avg_total_trace = w_mean_avg_total_trace
-            logger.info(
-                '{}# weights difference_avg={} avg_trace={}'.format(
-                    i, w_diff_avg, w_avg_total_trace))
 
-            if not act_vhp:
-                act_vhp = [np.random.randn(*p.shape) for p in a_v]
-            for vhp_curr in act_vhp_list:
-                act_vhp = [a + b * float(self.dataloader.batch_size) + 0. \
-                           for a, b in zip(act_vhp, vhp_curr)]
-            act_vhp = [a / float(num_all_data) for a in act_vhp]
-            avg_traces_per_act = [np.sum(a * b) / a.size for (a, b) in zip(act_vhp, a_v)]
-            a_avg_traces_per_iter.append(avg_traces_per_act)
-            mean_avg_traces_per_act = np.mean(a_avg_traces_per_iter, axis=0)
-            a_mean_avg_total_trace = np.sum(mean_avg_traces_per_act)
-
-            a_diff_avg = abs(a_mean_avg_total_trace - a_avg_total_trace) / \
-                         (a_avg_total_trace + diff_eps)
-            a_avg_total_trace = a_mean_avg_total_trace
-            logger.info(
-                '{}# activation difference_avg={} avg_trace={}'.format(
-                    i, a_diff_avg, a_avg_total_trace))
-
-            if w_diff_avg < tolerance and a_diff_avg < tolerance:
-                return mean_avg_traces_per_param, mean_avg_traces_per_act, op_act_grad
-
-        return mean_avg_traces_per_param, mean_avg_traces_per_act, op_act_grad
+        tmp = 1
+        #
+        # weight_vhp = []
+        # w_avg_total_trace = 0.
+        # w_avg_traces_per_iter = []
+        # mean_avg_traces_per_param = None
+        # act_vhp = []
+        # a_avg_total_trace = 0.
+        # a_avg_traces_per_iter = []
+        # mean_avg_traces_per_act = None
+        #
+        # for i in range(self.max_iter):
+        #     weight_vhp_list, w_v, \
+        #     act_vhp_list, a_v, op_act_grad = self.adaptor.get_2order_grad(self.model,
+        #                                                                   criterion,
+        #                                                                   self.dataloader,
+        #                                                                   num_data_iter,
+        #                                                                   qop_list)
+        #     if not weight_vhp:
+        #         weight_vhp = [np.random.randn(*p.shape) for p in w_v]
+        #     for vhp_curr in weight_vhp_list:
+        #         weight_vhp = [a + b * float(self.dataloader.batch_size) + 0. \
+        #                       for a, b in zip(weight_vhp, vhp_curr)]
+        #     weight_vhp = [a / float(num_all_data) for a in weight_vhp]
+        #     avg_traces_per_param = [np.sum(a * b) / a.size for (a, b) in zip(weight_vhp, w_v)]
+        #     w_avg_traces_per_iter.append(avg_traces_per_param)
+        #     mean_avg_traces_per_param = np.mean(w_avg_traces_per_iter, axis=0)
+        #     w_mean_avg_total_trace = np.sum(mean_avg_traces_per_param)
+        #
+        #     w_diff_avg = abs(w_mean_avg_total_trace - w_avg_total_trace) / \
+        #                  (w_avg_total_trace + diff_eps)
+        #     w_avg_total_trace = w_mean_avg_total_trace
+        #     logger.info(
+        #         '{}# weights difference_avg={} avg_trace={}'.format(
+        #             i, w_diff_avg, w_avg_total_trace))
+        #
+        #     if not act_vhp:
+        #         act_vhp = [np.random.randn(*p.shape) for p in a_v]
+        #     for vhp_curr in act_vhp_list:
+        #         act_vhp = [a + b * float(self.dataloader.batch_size) + 0. \
+        #                    for a, b in zip(act_vhp, vhp_curr)]
+        #     act_vhp = [a / float(num_all_data) for a in act_vhp]
+        #     avg_traces_per_act = [np.sum(a * b) / a.size for (a, b) in zip(act_vhp, a_v)]
+        #     a_avg_traces_per_iter.append(avg_traces_per_act)
+        #     mean_avg_traces_per_act = np.mean(a_avg_traces_per_iter, axis=0)
+        #     a_mean_avg_total_trace = np.sum(mean_avg_traces_per_act)
+        #
+        #     a_diff_avg = abs(a_mean_avg_total_trace - a_avg_total_trace) / \
+        #                  (a_avg_total_trace + diff_eps)
+        #     a_avg_total_trace = a_mean_avg_total_trace
+        #     logger.info(
+        #         '{}# activation difference_avg={} avg_trace={}'.format(
+        #             i, a_diff_avg, a_avg_total_trace))
+        #
+        #     if w_diff_avg < tolerance and a_diff_avg < tolerance:
+        #         return mean_avg_traces_per_param, mean_avg_traces_per_act, op_act_grad
+        #
+        # return mean_avg_traces_per_param, mean_avg_traces_per_act, op_act_grad
 
     def _cal_trace(self):
         """
@@ -241,6 +275,46 @@ class HawqTuneStrategy(TuneStrategy):
             dicts,
             q_hooks)
 
+    def is_fused_module(self, module):
+        """This is a helper function for `_propagate_qconfig_helper` to detecte
+           if this module is fused.
+        Args:
+            module (object): input module
+        Returns:
+            (bool): is fused or not
+        """
+        op_type = str(type(module))
+        if 'fused' in op_type:
+            return True
+        else:
+            return False
+
+    def get_fused_mapping(self):
+        # tmp = self.model
+        # if isinstance(self._fp32_model, torch.nn.Module):
+        #     fx_model  = self._fp32_model
+        #
+        # model = copy.deepcopy(self._fp32_model) ##orig model
+        # model.eval()
+        # fx_model = fuse_fx(model)
+        model = self._fp32_model
+        weights_info = dict(model.named_parameters())
+        weight_to_op = {}
+
+        module_dict = dict(model.named_modules())
+        for op_name, child in model.named_modules():
+            if self.is_fused_module(child):
+                for name, _ in child.named_children():
+                    if op_name + "." + name + ".weight" in weights_info:  ##TODO check if this is right
+                        weight_to_op[op_name + "." + name + ".weight"] = op_name
+                    # module_prefix = op_name + '.' + name
+                    # if module_prefix in module_dict:
+                    #     module_dict.pop(module_prefix)  # remove sub-modules of fused modules
+            else:
+                if op_name + ".weight" in weights_info:
+                    weight_to_op[op_name + ".weight"] = op_name
+        return weight_to_op
+
     def next_tune_cfg(self):
         from copy import deepcopy
         tuning_space = self.tuning_space
@@ -254,16 +328,21 @@ class HawqTuneStrategy(TuneStrategy):
 
         target_dtype = "fp32"  ##TODO support bf16
         target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
-        fp_op_list = [item for item in quant_ops if item in target_type_lst]
+        fp_op_list = [item.name for item in quant_ops if item in target_type_lst]
+        # for n, p in self._fp32_model.named_modules():
+        #     print(n)
+        # for n, p in self._fp32_model.named_parameters():
+        #     print(n)
+        weight_to_op = self.get_fused_mapping()
         orig_eval = True
         if self._fp32_model.training:
             orig_eval = False
         self._fp32_model.train()
-        ht = HessianTrace(self._fp32_model, self.cfg, self.adaptor, fp_op_list, self.calib_dataloader)
+        ht = HessianTrace(self._fp32_model, self.cfg, self.adaptor, weight_to_op.keys(), self.calib_dataloader)
         ht.get_avg_trace()
-        # if orig_eval:
-        #     self._fp32_model.eval()
-        # ht.get_avg_trace()
+        if orig_eval:
+            self._fp32_model.eval()
+
         # tmp = 1
         # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
         # ops_sensitivity = self.adaptor.get_hessian_trace(self._fp32_model,
@@ -338,6 +417,7 @@ class HawqTuneStrategy(TuneStrategy):
             fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
                                                      initial_op_tuning_cfg=initial_op_tuning_cfg,
                                                      op_dtypes=op_dtypes, accumulate=False)
+
             op_fallback_acc_impact = OrderedDict()
             for op_index, op_tuning_cfg in enumerate(fallback_sampler):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
