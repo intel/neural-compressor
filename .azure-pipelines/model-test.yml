@@ -3,7 +3,7 @@ trigger: none
 pr:
   - master
 
-pool: ICX-16C
+pool: CLX-32C
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
