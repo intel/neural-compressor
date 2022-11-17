@@ -145,7 +145,10 @@ class Distillation(Component):
             if (isinstance(score, list) and all([s > b_s for s, b_s in
                 zip(score, self.best_score)])) or score > self.best_score:
                 self.best_score = score
-                self.best_model = copy.deepcopy(self._model._model)
+                if self.framework == "pytorch":
+                    self.best_model = copy.deepcopy(self._model)
+                else:
+                    self.best_model = self._model
 
     def init_train_cfg(self):
         """Initialize the training configuration."""

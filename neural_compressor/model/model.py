@@ -949,11 +949,6 @@ class TensorflowBaseModel(BaseModel):
         f.write(self.graph_def.SerializeToString())
         logger.info("Save quantized model to {}.".format(pb_file))
 
-    @abstractmethod
-    def convert(self, src_type="QDQ", dst_type="TFDO", *args, **kwargs):
-        ''' abstract method of model saving, Tensorflow model only'''
-        raise NotImplementedError
-
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
     def get_all_weight_names(self):
