@@ -96,7 +96,7 @@ function run_accuracy() {
 function multiInstance() {
     ncores_per_socket=${ncores_per_socket:=$(lscpu | grep 'Core(s) per socket' | cut -d: -f2 | xargs echo -n)}
     $BOLD_YELLOW && echo "Executing multi instance benchmark" && $RESET
-    ncores_per_instance=1
+    ncores_per_instance=4
     $BOLD_YELLOW && echo "ncores_per_socket=${ncores_per_socket}, ncores_per_instance=${ncores_per_instance}" && $RESET
 
     logFile="${log_dir}/${framework}-${model}-performance-${precision}"
@@ -105,34 +105,12 @@ function multiInstance() {
     core_list=$(python ${SCRIPTS_PATH}/new_benchmark.py --cores_per_instance=${ncores_per_instance} --num_of_instance=$(expr $ncores_per_socket / $ncores_per_instance))
     core_list=($(echo $core_list | tr ';' ' '))
 
-    # for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
-    #     $BOLD_GREEN && echo "numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
-    #     numactl -m 0 -C ${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
-    #     benchmark_pids+=($!)
-    # done
-
-    # for ((j = 0; $j < ${ncores_per_socket}; j = $(($j + ${ncores_per_instance})))); do
-    #     end_core_num=$((j + ncores_per_instance - 1))
-    #     if [ ${end_core_num} -ge ${ncores_per_socket} ]; then
-    #         end_core_num=$((ncores_per_socket - 1))
-    #     fi
-    #     numactl -m 0 -C "${j}-${end_core_num}" ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
-    #     benchmark_pids+=($!)
-    # done
-
-    # python -u ${SCRIPTS_PATH}/new_benchmark.py \
-    #         --cores_per_instance=${ncores_per_instance} \
-    #         --num_of_instance=$(expr $ncores_per_socket / $ncores_per_instance)) \
-    #         --
-    # core_list=($(echo $core_list | tr ';' ' '))
-    multi_instance_cmd=""
     for ((j = 0; $j < $(expr $ncores_per_socket / $ncores_per_instance); j = $(($j + 1)))); do
-        $BOLD_GREEN && echo "numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
-        multi_instance_cmd+="( numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log ) & "
+        $BOLD_GREEN && echo "OMP_NUM_THREADS=${ncores_per_instance} numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &" && $RESET
+        OMP_NUM_THREADS=${ncores_per_instance} numactl --localalloc --physcpubind=${core_list[${j}]} ${cmd} 2>&1 | tee ${logFile}-${ncores_per_socket}-${ncores_per_instance}-${j}.log &
+        benchmark_pids+=($!)
     done
-    $BOLD_GREEN && echo ${multi_instance_cmd} && $RESET
-    eval "${multi_instance_cmd} wait"
-    # benchmark_pids+=($!)
+
     status="SUCCESS"
     for pid in "${benchmark_pids[@]}"; do
         wait $pid
