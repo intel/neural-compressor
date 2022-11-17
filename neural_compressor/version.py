@@ -15,5 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # for ut test
+# for [skip ci] test
 
 __version__ = "1.14.1"
