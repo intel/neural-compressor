@@ -30,7 +30,7 @@ from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
-from warnings import warn
+from deprecated import deprecated
 
 class Quantization(Component):
     """This class provides easy use API for quantization.
@@ -390,6 +390,7 @@ class Quantization(Component):
         return None
 
     @q_func.setter
+    @deprecated(version='2.0', reason="please use `train_func` instead")
     def q_func(self, user_q_func):
         """Training function for Quantization-Aware Training.
 

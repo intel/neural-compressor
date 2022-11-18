@@ -35,9 +35,8 @@ class Benchmark(object):
 
     def __call__(self, model, b_dataloader=None, b_func=None):
 
-        logger.warning("This API is going to be deprecated. Please import "
-            "neural_compressor.experimental.Bencharmk, initialize an instance of `Benchmark`,"
-            "set its dataloader and metric attributes, then invoke its __call__ method.")
+        logger.warning("This API is going to be deprecated. Please "
+            "use benchmark(model, config, b_dataloader=None, b_func=None) instead.")
 
         self.exp_benchmarker.model = model
         if b_dataloader is not None:
@@ -66,3 +65,16 @@ class Benchmark(object):
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_benchmarker.postprocess = nc_postprocess
+
+
+def benchmark(
+    model, config=None, b_dataloader=None, b_func=None
+):
+    benchmarker = ExpBenchmark(config)
+    benchmarker.model = model
+    if b_func is not None:
+        benchmarker.b_func = b_func
+    if b_dataloader is not None:
+        benchmarker.b_dataloader = b_dataloader
+    benchmarker()
+    return benchmarker.results

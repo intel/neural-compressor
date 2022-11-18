@@ -19,6 +19,8 @@ import os
 from .utils import logger
 from .data import DATALOADERS, DATASETS
 from .experimental import Quantization as ExpQuantization
+from deprecated import deprecated
+from neural_compressor.conf.pythonic_config import Config, PostTrainingConfig
 
 class Quantization(object):
     """Quantization class automatically searches for optimal quantization recipes for low
@@ -44,6 +46,7 @@ class Quantization(object):
     def __init__(self, conf_fname_or_obj):
         self.exp_quantizer = ExpQuantization(conf_fname_or_obj)
 
+    @deprecated(version='2.0', reason="please use neural_compressor.quantization.fit instead")
     def __call__(self, model, q_dataloader=None, q_func=None, eval_dataloader=None,
                  eval_func=None):
         """The main entry point of automatic quantization tuning.
@@ -167,9 +170,11 @@ class Quantization(object):
 
     fit = __call__
 
+    @deprecated(version='2.0', reason="this function has been deprecated")
     def dataset(self, dataset_type, *args, **kwargs):
         return DATASETS(self.exp_quantizer.framework)[dataset_type](*args, **kwargs)
 
+    @deprecated(version='2.0', reason="this function has been deprecated")
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',
                    sampler=None, batch_sampler=None, num_workers=0, pin_memory=False):
         return DATALOADERS[self.exp_quantizer.framework](
@@ -179,18 +184,96 @@ class Quantization(object):
             pin_memory=pin_memory
         )
 
+    @deprecated(version='2.0', reason="this function has been deprecated")
     def metric(self, name, metric_cls, **kwargs):
         from .experimental.common import Metric as NCMetric
         nc_metric = NCMetric(metric_cls, name, **kwargs)
         self.exp_quantizer.metric = nc_metric
 
+    @deprecated(version='2.0', reason="this function has been deprecated")
     def postprocess(self, name, postprocess_cls, **kwargs):
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_quantizer.postprocess = nc_postprocess
 
 
-def fit(model, conf, calib_dataloader=None, eval_func=None):
-    quantizer = Quantization(conf)
+def fit(
+    model, conf, calib_dataloader=None, calib_func=None, eval_dataloader=None,
+    eval_func=None, eval_metric=None, options=None, **kwargs
+):
+    """Quantize the model with a given configure.
+
+    Args:
+        model (torch.nn.Module):              For Tensorflow model, it could be a path
+                                              to frozen pb,loaded graph_def object or
+                                              a path to ckpt/savedmodel folder.
+                                              For PyTorch model, it's torch.nn.model
+                                              instance.
+                                              For MXNet model, it's mxnet.symbol.Symbol
+                                              or gluon.HybirdBlock instance.
+        conf (string or obj):                 The path to the YAML configuration file or
+                                              QuantConf class containing accuracy goal,
+                                              tuning objective and preferred calibration &
+                                              quantization tuning space etc.
+        calib_dataloader (generator):         Data loader for calibration, mandatory for
+                                              post-training quantization. It is iterable
+                                              and should yield a tuple (input, label) for
+                                              calibration dataset containing label,
+                                              or yield (input, _) for label-free calibration
+                                              dataset. The input could be a object, list,
+                                              tuple or dict, depending on user implementation,
+                                              as well as it can be taken as model input.
+        calib_func (function, optional):      Calibration function for post-training static
+                                              quantization. It is optional.
+                                              This function takes "model" as input parameter
+                                              and executes entire inference process. If this
+                                              parameter specified, calib_dataloader is also needed
+                                              for FX trace if PyTorch >= 1.13.
+        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
+                                              and should yield a tuple of (input, label).
+                                              The input could be a object, list, tuple or
+                                              dict, depending on user implementation,
+                                              as well as it can be taken as model input.
+                                              The label should be able to take as input of
+                                              supported metrics. If this parameter is
+                                              not None, user needs to specify pre-defined
+                                              evaluation metrics through configuration file
+                                              and should set "eval_func" paramter as None.
+                                              Tuner will combine model, eval_dataloader
+                                              and pre-defined metrics to run evaluation
+                                              process.
+        eval_func (function, optional):       The evaluation function provided by user.
+                                              This function takes model as parameter,
+                                              and evaluation dataset and metrics should be
+                                              encapsulated in this function implementation
+                                              and outputs a higher-is-better accuracy scalar
+                                              value.
+
+                                              The pseudo code should be something like:
+
+                                              def eval_func(model):
+                                                   input, label = dataloader()
+                                                   output = model(input)
+                                                   accuracy = metric(output, label)
+                                                   return accuracy
+        options (Options, optional):          The configure for random_seed, workspace,
+                                              resume path and tensorboard flag.
+
+    """
+
+    if isinstance(conf, PostTrainingConfig):
+        if options is None:
+            conf = Config(quantization=conf)
+        else:
+            conf = Config(quantization=conf, options=options)
+    quantizer = ExpQuantization(conf)
     quantizer.model = model
-    quantizer(model, calib_dataloader, eval_func)
+    if eval_func is not None:
+        quantizer.eval_func = eval_func
+    if calib_dataloader is not None:
+        quantizer.calib_dataloader = calib_dataloader
+    if eval_dataloader is not None:
+        quantizer.eval_dataloader = eval_dataloader
+    if eval_metric is not None:
+        quantizer.metric = eval_metric
+    return quantizer()

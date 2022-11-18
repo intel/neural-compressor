@@ -17,14 +17,14 @@
 
 from .quantization import Quantization
 from .pruning import Pruning
-from .benchmark import Benchmark
+from .benchmark import benchmark, Benchmark
 from .version import __version__
 from .contrib import *
-from .model.model import export
 # we need to set a global 'NA' backend, or Model can't be used
 from .utils.utility import set_backend
 from .utils import options
 from .conf.config import conf
-from .conf.pythonic_config import config
+from .conf.pythonic_config import config, DistillationConfig, Options, PostTrainingConfig, \
+                                  PruningConfig, QuantizationAwareTrainingConfig
 
 set_backend('NA')

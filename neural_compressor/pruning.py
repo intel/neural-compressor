@@ -19,6 +19,7 @@
 from .utils import logger
 from .utils.utility import singleton
 from .experimental import Pruning as ExpPruning
+from deprecated import deprecated
 
 @singleton
 class Pruning:
@@ -55,6 +56,7 @@ class Pruning:
         """ called on the end of epochs"""
         self.exp_pruner.on_epoch_end()
 
+    @deprecated(version='2.0', reason="please use neural_compressor.prepare and neural_compressor.fit instead")
     def __call__(self, model, train_dataloader=None, pruning_func=None, eval_dataloader=None,
                  eval_func=None):
         """The main entry point of pruning.

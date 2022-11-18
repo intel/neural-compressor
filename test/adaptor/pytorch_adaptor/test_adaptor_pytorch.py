@@ -7,20 +7,22 @@ import torch
 import torch.nn as nn
 import torch.nn.quantized as nnq
 import unittest
+import os
+from neural_compressor import Options, PostTrainingConfig, QuantizationAwareTrainingConfig
+from neural_compressor.conf.config import QuantConf
+from neural_compressor.data import DATASETS, DATALOADERS
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.model import MODELS
 from neural_compressor.experimental import Quantization, common
-from neural_compressor.conf.config import QuantConf
+from neural_compressor.experimental.data.datasets.dataset import DATASETS
+from neural_compressor import quantization
+from neural_compressor.training import prepare_compression
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils.utility import recover
 from neural_compressor.utils.utility import LazyImport
 from torch.quantization import QuantStub, DeQuantStub
 from packaging.version import Version
-try:
-    import intel_extension_for_pytorch as ipex
-    IPEX = True
-except:
-    IPEX = False
+
 
 # improve lazy import UT coverage
 resnet18 = LazyImport("torchvision.models.resnet18")
@@ -33,7 +35,7 @@ else:
     FX_MODE = False
 
 
-fake_dyn_yaml = '''
+fake_dyn_yaml = """
     model:
       name: imagenet
       framework: pytorch
@@ -41,9 +43,9 @@ fake_dyn_yaml = '''
     quantization:
       approach: post_training_dynamic_quant
       op_wise: {
-              'decoder': {
-                'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "decoder": {
+                "activation":  {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               }
       }
     evaluation:
@@ -62,10 +64,10 @@ fake_dyn_yaml = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
 
 
-fake_ptq_yaml = '''
+fake_ptq_yaml = """
     model:
       name: imagenet
       framework: pytorch
@@ -73,25 +75,25 @@ fake_ptq_yaml = '''
     quantization:
       op_wise: {
 
-              'layer1.0.conv1': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.conv1": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'layer1.0.conv2': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.conv2": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'layer2.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              "layer2.0.conv1": {
+                "activation": {"dtype": ["uint8"], "algorithm": ["minmax"], "granularity": ["per_tensor"], "scheme":["sym"]},
+                "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme":["sym"]}
               },
-              'layer3.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              "layer3.0.conv1": {
+                "activation": {"dtype": ["uint8"], "algorithm": ["kl"], "granularity": ["per_tensor"], "scheme":["sym"]},
+                "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme":["sym"]}
               },
-              'layer1.0.add_relu': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.add_relu": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
       }
     evaluation:
@@ -110,9 +112,9 @@ fake_ptq_yaml = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
 
-fake_auto_yaml = '''
+fake_auto_yaml = """
     model:
       name: imagenet
       framework: pytorch_fx
@@ -136,10 +138,10 @@ fake_auto_yaml = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
 
 
-fake_ptq_yaml_for_fx = '''
+fake_ptq_yaml_for_fx = """
     model:
       name: imagenet
       framework: pytorch_fx
@@ -147,33 +149,33 @@ fake_ptq_yaml_for_fx = '''
     quantization:
       approach: post_training_auto_quant
       op_wise: {
-              'layer1.0.conv1': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.conv1": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'layer1.0.conv2': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.conv2": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'layer2.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              "layer2.0.conv1": {
+                "activation": {"dtype": ["uint8"], "algorithm": ["minmax"], "granularity": ["per_tensor"], "scheme":["sym"]},
+                "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme":["sym"]}
               },
-              'layer3.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              "layer3.0.conv1": {
+                "activation": {"dtype": ["uint8"], "algorithm": ["kl"], "granularity": ["per_tensor"], "scheme":["sym"]},
+                "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme":["sym"]}
               },
-              'layer1.0.add_relu': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.add_relu": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'conv.module': {
-                'weight': {'dtype': ['fp32']},
-                'activation': {'dtype': ['fp32']}
+              "conv.module": {
+                "weight": {"dtype": ["fp32"]},
+                "activation": {"dtype": ["fp32"]}
               },
-              'default_qconfig': {
-                'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "default_qconfig": {
+                "activation":  {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               }
       }
     evaluation:
@@ -192,10 +194,10 @@ fake_ptq_yaml_for_fx = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
 
 
-fake_qat_yaml = '''
+fake_qat_yaml = """
     model:
       name: imagenet
       framework: pytorch
@@ -212,25 +214,25 @@ fake_qat_yaml = '''
           CrossEntropyLoss:
             reduction: mean
       op_wise: {
-              'layer1.0.conv1': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.conv1": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'layer1.0.conv2': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.conv2": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               },
-              'layer2.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['minmax'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              "layer2.0.conv1": {
+                "activation": {"dtype": ["uint8"], "algorithm": ["minmax"], "granularity": ["per_tensor"], "scheme":["sym"]},
+                "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme":["sym"]}
               },
-              'layer3.0.conv1': {
-                'activation': {'dtype': ['uint8'], 'algorithm': ['kl'], 'granularity': ['per_tensor'], 'scheme':['sym']},
-                'weight': {'dtype': ['int8'], 'algorithm': ['minmax'], 'granularity': ['per_channel'], 'scheme':['sym']}
+              "layer3.0.conv1": {
+                "activation": {"dtype": ["uint8"], "algorithm": ["kl"], "granularity": ["per_tensor"], "scheme":["sym"]},
+                "weight": {"dtype": ["int8"], "algorithm": ["minmax"], "granularity": ["per_channel"], "scheme":["sym"]}
               },
-              'layer1.0.add_relu': {
-                'activation': {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}
+              "layer1.0.add_relu": {
+                "activation": {"dtype": ["fp32"]},
+                "weight": {"dtype": ["fp32"]}
               }
       }
     evaluation:
@@ -246,40 +248,223 @@ fake_qat_yaml = '''
       random_seed: 9527
       workspace:
         path: saved
-    '''
+    """
+
+dyn_op_name_list = {"decoder": {"activation": {"dtype": ["fp32"]}, "weight": {"dtype": ["fp32"]}}}
+
+ptq_op_name_list = {
+    "layer1.0.conv1": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer1.0.conv2": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer2.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+    "layer3.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["kl"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+    "layer1.0.add_relu": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+}
+
+ptq_fx_op_name_list = {
+    "layer1.0.conv1": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer1.0.conv2": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer2.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+    "layer3.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["kl"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+    "layer1.0.add_relu": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "conv.module": {
+        "weight": {
+            "dtype": ["fp32"]
+        },
+        "activation": {
+            "dtype": ["fp32"]
+        }
+    },
+    "default_qconfig": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    }
+}
+
+qat_op_name_list = {
+    "layer1.0.conv1": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer1.0.conv2": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    },
+    "layer2.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+    "layer3.0.conv1": {
+        "activation": {
+            "dtype": ["uint8"],
+            "algorithm": ["kl"],
+            "granularity": ["per_tensor"],
+            "scheme": ["sym"]
+        },
+        "weight": {
+            "dtype": ["int8"],
+            "algorithm": ["minmax"],
+            "granularity": ["per_channel"],
+            "scheme": ["sym"]
+        }
+    },
+    "layer1.0.add_relu": {
+        "activation": {
+            "dtype": ["fp32"]
+        },
+        "weight": {
+            "dtype": ["fp32"]
+        }
+    }
+}
 
 
 def build_pytorch_yaml():
-    with open('ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("ptq_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_ptq_yaml)
 
-    with open('dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("dynamic_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_dyn_yaml)
 
-    with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("qat_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_qat_yaml)
 
-    with open('auto_yaml.yaml', 'w', encoding="utf-8") as f:
+    with open("auto_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_auto_yaml)
 
 def build_pytorch_fx_yaml():
     if PT_VERSION >= Version("1.9.0").release:
-      fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
+        fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
     else:
-      fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_ptq_yaml.yaml', 'w', encoding="utf-8") as f:
+        fake_fx_ptq_yaml = fake_ptq_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_ptq_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_fx_ptq_yaml)
 
-    fake_fx_dyn_yaml = fake_dyn_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_dynamic_yaml.yaml', 'w', encoding="utf-8") as f:
+    fake_fx_dyn_yaml = fake_dyn_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_dynamic_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_fx_dyn_yaml)
 
-    fake_fx_qat_yaml = fake_qat_yaml.replace('pytorch', 'pytorch_fx')
-    with open('fx_qat_yaml.yaml', 'w', encoding="utf-8") as f:
+    fake_fx_qat_yaml = fake_qat_yaml.replace("pytorch", "pytorch_fx")
+    with open("fx_qat_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_fx_qat_yaml)
 
 def build_dump_tensors_yaml():
-    fake_yaml = '''
+    fake_yaml = """
         model:
           name: imagenet
           framework: pytorch
@@ -298,8 +483,8 @@ def build_dump_tensors_yaml():
           workspace:
             path: saved
           tensorboard: true
-        '''
-    with open('dump_yaml.yaml', 'w', encoding="utf-8") as f:
+        """
+    with open("dump_yaml.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
@@ -415,7 +600,7 @@ class DynamicControlModel(torch.nn.Module):
 
 
 class LSTMModel(nn.Module):
-    '''Container module with an encoder, a recurrent module, and a decoder.'''
+    """Container module with an encoder, a recurrent module, and a decoder."""
 
     def __init__(self, ntoken=10, ninp=512, nhid=256, nlayers=5, dropout=0.5):
         super(LSTMModel, self).__init__()
@@ -455,6 +640,22 @@ def eval_func(model):
     return 0.0
 
 
+def train_func(compression_manager, model, dataloader=None):
+    compression_manager.callbacks.on_train_begin(dataloader=dataloader)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    # switch to evaluate mode
+    model.train()
+    input = torch.randn(1, 3, 224, 224)
+    # compute output
+    output = model(input)
+    loss = output[0].mean() if isinstance(output, tuple) else output.mean()
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    compression_manager.callbacks.on_train_end()
+    return model
+
+
 def q_func(model):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
     # switch to evaluate mode
@@ -470,6 +671,12 @@ def q_func(model):
 
 
 class TestPytorchAdaptor(unittest.TestCase):
+    # some UT would be affected when IPEX installed.
+    try:
+        import intel_extension_for_pytorch as ipex
+        IPEX = True
+    except:
+        IPEX = False
     framework_specific_info = {"device": "cpu",
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,
@@ -478,7 +685,7 @@ class TestPytorchAdaptor(unittest.TestCase):
     framework = "pytorch"
     adaptor = FRAMEWORKS[framework](framework_specific_info)
     model = q_resnet18()
-    nc_model = MODELS['pytorch'](model)
+    nc_model = MODELS["pytorch"](model)
 
     @classmethod
     def setUpClass(self):
@@ -487,13 +694,13 @@ class TestPytorchAdaptor(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove('ptq_yaml.yaml')
-        os.remove('dynamic_yaml.yaml')
-        os.remove('qat_yaml.yaml')
-        os.remove('dump_yaml.yaml')
-        os.remove('auto_yaml.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("ptq_yaml.yaml")
+        os.remove("dynamic_yaml.yaml")
+        os.remove("qat_yaml.yaml")
+        os.remove("dump_yaml.yaml")
+        os.remove("auto_yaml.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_get_all_weight_name(self):
         assert len(list(self.nc_model.get_all_weight_names())) == 62
@@ -511,27 +718,27 @@ class TestPytorchAdaptor(unittest.TestCase):
             torch.tensor(100.))
 
     def test_get_input(self):
-        model = MODELS['pytorch'](q_resnet18())
+        model = MODELS["pytorch"](q_resnet18())
         model.model.eval().fuse_model()
         model.register_forward_pre_hook()
         rand_input = torch.rand(100, 3, 224, 224).float()
         model.model(rand_input)
-        assert torch.equal(model.get_inputs('x'), rand_input)
+        assert torch.equal(model.get_inputs("x"), rand_input)
         model.remove_hooks()
 
     def test_update_weights(self):
-        self.nc_model.update_weights('fc.bias', torch.zeros([1000]))
+        self.nc_model.update_weights("fc.bias", torch.zeros([1000]))
         assert int(torch.sum(self.nc_model.get_weight("fc.bias"))) == 0
 
     def test_get_gradient(self):
         with self.assertRaises(AssertionError):
-            self.nc_model.get_gradient('fc.bias')
+            self.nc_model.get_gradient("fc.bias")
 
         for name, tensor in self.nc_model._model.named_parameters():
-            if name == 'fc.bias':
+            if name == "fc.bias":
                 tensor.grad = torch.zeros_like(tensor)
                 break
-        assert torch.equal(torch.Tensor(self.nc_model.get_gradient('fc.bias')), torch.zeros_like(tensor))
+        assert torch.equal(torch.Tensor(self.nc_model.get_gradient("fc.bias")), torch.zeros_like(tensor))
 
         rand_input = torch.rand(100, 3, 224, 224).float()
         rand_input.grad = torch.ones_like(rand_input)
@@ -544,95 +751,123 @@ class TestPytorchAdaptor(unittest.TestCase):
         self.assertTrue(len(df) == 22)
 
     def test_quantization_saved(self):
-        for fake_yaml in ['dynamic_yaml.yaml', 'qat_yaml.yaml', 'ptq_yaml.yaml']:
+        for fake_yaml in ["dynamic_yaml.yaml", "qat_yaml.yaml", "ptq_yaml.yaml"]:
             model = M()
             quantizer = Quantization(fake_yaml)
-            quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-            dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+            quantizer.conf.usr_cfg.tuning.exit_policy["performance_only"] = True
+            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), label=True)
             quantizer.model = model
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer.fit()
             eval_func(q_model)
-            q_model.save('./saved')
+            q_model.save("./saved")
             # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
             eval_func(saved_model)
             # recover int8 model from history
-            history_file = './saved/history.snapshot'
+            history_file = "./saved/history.snapshot"
             model_recover = recover(model, history_file, 0)
             eval_func(model_recover)
             self.assertEqual(type(saved_model.conv), \
                              type(model_recover.conv))
-            shutil.rmtree('./saved', ignore_errors=True)
+            shutil.rmtree("./saved", ignore_errors=True)
         from neural_compressor.experimental import Benchmark
-        evaluator = Benchmark('ptq_yaml.yaml')
+        evaluator = Benchmark("ptq_yaml.yaml")
         # Load configure and weights by neural_compressor.model
         evaluator.model = model
         evaluator.b_dataloader = common.DataLoader(dataset)
-        evaluator.fit('accuracy')
+        evaluator.fit("accuracy")
 
-        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
+        for fake_yaml in ["qat_yaml.yaml", "ptq_yaml.yaml"]:
             model = copy.deepcopy(self.model)
-            if fake_yaml == 'ptq_yaml.yaml':
+            if fake_yaml == "ptq_yaml.yaml":
                 model.eval().fuse_model()
             conf = QuantConf(fake_yaml)
             quantizer = Quantization(conf)
-            dataset = quantizer.dataset('dummy', (100, 3, 224, 224))
+            dataset = quantizer.dataset("dummy", (100, 3, 224, 224))
             quantizer.model = model
-            if fake_yaml == 'qat_yaml.yaml':
+            if fake_yaml == "qat_yaml.yaml":
                 quantizer.q_func = q_func
             else:
                 quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_func = eval_func
             q_model = quantizer.fit()
-            q_model.save('./saved')
+            q_model.save("./saved")
             # Load configure and weights by neural_compressor.utils
             saved_model = load("./saved", model)
             eval_func(saved_model)
-            shutil.rmtree('./saved', ignore_errors=True)
+            shutil.rmtree("./saved", ignore_errors=True)
 
     def test_quantization_new_saved(self):
-        for fake_yaml in ['dynamic_yaml.yaml', 'qat_yaml.yaml', 'ptq_yaml.yaml']:
+        for fake_yaml in ["dynamic_yaml.yaml", "qat_yaml.yaml", "ptq_yaml.yaml"]:
             model = M()
             quantizer = Quantization(fake_yaml)
-            quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-            dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+            quantizer.conf.usr_cfg.tuning.exit_policy["performance_only"] = True
+            dataset = quantizer.dataset("dummy", (100, 3, 224, 224), label=True)
             quantizer.model = model
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             q_model = quantizer.fit()
             eval_func(q_model)
-            torch.save(q_model.quantized_state_dict(), './saved/model.pt')
+            torch.save(q_model.quantized_state_dict(), "./saved/model.pt")
             # Load configure and weights by neural_compressor.utils
             from neural_compressor.experimental.common import Model
             common_model = Model(model)
-            common_model.load_quantized_state_dict(torch.load('./saved/model.pt'))
+            common_model.load_quantized_state_dict(torch.load("./saved/model.pt"))
             eval_func(common_model)
             self.assertEqual(type(q_model._model.linear), \
                              type(common_model._model.linear))
-            shutil.rmtree('./saved', ignore_errors=True)
+            shutil.rmtree("./saved", ignore_errors=True)
+
+    def test_quantization_new_API(self):
+        for fake_yaml in ["dynamic", "qat", "static"]:
+            model = M()
+            if fake_yaml == "qat":
+                quant_conf = QuantizationAwareTrainingConfig(op_name_list=qat_op_name_list)
+                compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
+                q_model = train_func(compression_manager, compression_manager.model)
+            else:
+                dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
+                dataloader = DATALOADERS["pytorch"](dataset)
+                if fake_yaml == "dynamic":
+                    quant_conf = PostTrainingConfig(approach="post_training_dynamic_quant",
+                                                    op_name_list=dyn_op_name_list,
+                                                    performance_only=True)
+                elif fake_yaml == "static":
+                    quant_conf = PostTrainingConfig(approach="post_training_static_quant",
+                                                    op_name_list=ptq_op_name_list,
+                                                    performance_only=True)
+                q_model = quantization.fit(
+                    model,
+                    quant_conf,
+                    calib_dataloader=dataloader if fake_yaml == "static" else None,
+                    eval_func=eval_func)
+            q_model.save("./saved")
+            # Load configure and weights by neural_compressor.utils
+            saved_model = load("./saved", model)
+            shutil.rmtree("./saved", ignore_errors=True)
 
     @unittest.skipIf(IPEX, "this function is affected by IPEX, Fixing now.")
     def test_non_quant_module(self):
-        for fake_yaml in ['qat_yaml.yaml', 'ptq_yaml.yaml']:
+        for fake_yaml in ["qat_yaml.yaml", "ptq_yaml.yaml"]:
             model = PartialQuantModel()
             conf = QuantConf(fake_yaml)
             quantizer = Quantization(conf)
-            dataset = quantizer.dataset('dummy', (1, 3, 224, 224))
-            non_quant_dict = {'non_quant_module_name': ['conv', 'conv1', 'sub.conv'], \
-                              'non_quant_module_class': ['BatchNorm2d', 'FP32Model']}
+            dataset = quantizer.dataset("dummy", (1, 3, 224, 224))
+            non_quant_dict = {"non_quant_module_name": ["conv", "conv1", "sub.conv"], \
+                              "non_quant_module_class": ["BatchNorm2d", "FP32Model"]}
             quantizer.model = common.Model(model, **non_quant_dict)
-            if fake_yaml == 'qat_yaml.yaml':
+            if fake_yaml == "qat_yaml.yaml":
                 quantizer.q_func = q_func
             else:
                 quantizer.calib_func = eval_func
             quantizer.eval_func = eval_func
             q_model = quantizer.fit()
-            q_model.save('./saved')
+            q_model.save("./saved")
             saved_model = load("./saved", model, **non_quant_dict)
             eval_func(saved_model)
-            shutil.rmtree('./saved', ignore_errors=True)
+            shutil.rmtree("./saved", ignore_errors=True)
 
     def test_auto_quant(self):
         def eval_func(model):
@@ -645,94 +880,105 @@ class TestPytorchAdaptor(unittest.TestCase):
             nlayers = 2,
         )
         # run fx_quant in neural_compressor and save the quantized GraphModule
-        quantizer = Quantization('auto_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (3, 10), label=True)
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.model = common.Model(model_origin)
-        q_model = quantizer.fit()
+        quant_conf = PostTrainingConfig(approach="post_training_auto_quant")
+        dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
+        dataloader = common.DataLoader(dataset)
+        model = common.Model(model_origin)
+        q_model = quantization.fit(model,
+                                   quant_conf,
+                                   calib_dataloader=dataloader,
+                                   eval_func=eval_func)
         self.assertNotEqual(q_model, None)
 
     def test_workspace_path(self):
         model = M()
-        quantizer = Quantization('ptq_yaml.yaml')
-        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
-        quantizer.model = model
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        q_model = quantizer.fit()
+        quant_conf = PostTrainingConfig(approach="post_training_static_quant",
+                                        op_name_list=ptq_op_name_list,
+                                        performance_only=True)
+        dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
+        dataloader = common.DataLoader(dataset)
+        q_model = quantization.fit(model,
+                                   quant_conf,
+                                   calib_dataloader=dataloader,
+                                   eval_func=eval_func)
         eval_func(q_model)
-        torch.save(q_model.quantized_state_dict(), './saved/best_model.pt')
+        os.makedirs("./saved", exist_ok=True)
+        torch.save(q_model.quantized_state_dict(), "./saved/best_model.pt")
         # Load configure and weights by workspace_path
         from neural_compressor.experimental.common import Model
         common_model = Model(model)
-        common_model.workspace_path = './saved'
+        common_model.workspace_path = "./saved"
         eval_func(common_model)
-        self.assertEqual(type(q_model._model.linear), \
-                          type(common_model._model.linear))
-        shutil.rmtree('./saved', ignore_errors=True)
+        self.assertEqual(type(q_model._model.linear),
+                         type(common_model._model.linear))
+        shutil.rmtree("./saved", ignore_errors=True)
 
     def test_get_graph_info(self):
         from neural_compressor.model.torch_model import PyTorchModel
         model = PyTorchModel(self.model)
         op_map = model.graph_info
-        self.assertTrue(op_map['conv1'] == 'Conv2d')
+        self.assertTrue(op_map["conv1"] == "Conv2d")
 
     def test_tensorboard(self):
         model = copy.deepcopy(self.nc_model)
         model.model.eval().fuse_model()
-        quantizer = Quantization('dump_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
-        quantizer.model = model.model
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_func = eval_func
-        quantizer.fit()
-        self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.eval_func = None
-        quantizer.fit()
-        self.assertTrue(True if os.path.exists('runs/eval/baseline_acc0.0') else False)
+        quant_conf = PostTrainingConfig(approach="post_training_static_quant",
+                                        backend="pytorch",
+                                        performance_only=True)
+        options = Options(tensorboard=True)
+        dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
+        dataloader = common.DataLoader(dataset)
+        quantization.fit(
+          model.model, quant_conf, calib_dataloader=dataloader,
+          eval_func=eval_func, options=options
+        )
+        self.assertTrue(True if os.path.exists("runs/eval/baseline_acc0.0") else False)
+        quantization.fit(model.model,
+                   quant_conf,
+                   calib_dataloader=dataloader,
+                   eval_dataloader=dataloader,
+                   eval_func=None)
+        self.assertTrue(True if os.path.exists("runs/eval/baseline_acc0.0") else False)
 
     def test_tensor_dump_and_set(self):
         model = copy.deepcopy(self.nc_model)
         model.model.eval().fuse_model()
-        quantizer = Quantization('ptq_yaml.yaml')
-        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        quantizer = Quantization("ptq_yaml.yaml")
+        dataset = quantizer.dataset("dummy", (100, 3, 224, 224), label=True)
         dataloader = common.DataLoader(dataset)
-        dataloader = common._generate_common_dataloader(dataloader, 'pytorch')
+        dataloader = common._generate_common_dataloader(dataloader, "pytorch")
         quantizer.eval_dataloader = dataloader
         quantizer.calib_dataloader = dataloader
         quantizer.model = model.model
         q_model = quantizer.fit()
         quantizer.strategy.adaptor.inspect_tensor(
-            model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
-            iteration_list=[1, 2], inspect_type='all', save_to_disk=True)
+            model, dataloader, op_list=["conv1.0", "layer1.0.conv1.0"],
+            iteration_list=[1, 2], inspect_type="all", save_to_disk=True)
         load_array = lambda *a, **k: np.load(*a, allow_pickle=True, **k)
-        a = load_array('saved/dump_tensor/activation_iter1.npz')
-        w = load_array('saved/dump_tensor/weight.npz')
+        a = load_array("saved/dump_tensor/activation_iter1.npz")
+        w = load_array("saved/dump_tensor/weight.npz")
         if PT_VERSION >= Version("1.8.0").release:
-          self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
-                          a['conv1.0'].item()['conv1.0.output0'].shape[1])
+          self.assertTrue(w["conv1.0"].item()["conv1.0.weight"].shape[0] ==
+                          a["conv1.0"].item()["conv1.0.output0"].shape[1])
         else:
-          self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
-                          a['conv1.0'].item()['conv1.1.output0'].shape[1])
-        data = np.random.random(w['conv1.0'].item()['conv1.0.weight'].shape).astype(np.float32)
-        quantizer.strategy.adaptor.set_tensor(q_model, {'conv1.0.weight': data})
-        changed_tensor = q_model.get_weight('conv1.weight')
+          self.assertTrue(w["conv1.0"].item()["conv1.0.weight"].shape[0] ==
+                          a["conv1.0"].item()["conv1.1.output0"].shape[1])
+        data = np.random.random(w["conv1.0"].item()["conv1.0.weight"].shape).astype(np.float32)
+        quantizer.strategy.adaptor.set_tensor(q_model, {"conv1.0.weight": data})
+        changed_tensor = q_model.get_weight("conv1.weight")
         scales = changed_tensor.q_per_channel_scales()
         changed_tensor_fp32 = torch.dequantize(changed_tensor)
         self.assertTrue(np.allclose(data, changed_tensor_fp32.numpy(), atol=2 / np.min(scales.numpy())))
         quantizer.strategy.adaptor.inspect_tensor(
-            q_model, dataloader, op_list=['conv1.0', 'layer1.0.conv1.0'],
-            iteration_list=[1, 2], inspect_type='all', save_to_disk=False)
+            q_model, dataloader, op_list=["conv1.0", "layer1.0.conv1.0"],
+            iteration_list=[1, 2], inspect_type="all", save_to_disk=False)
 
     def test_get_graph_info(self):
         from neural_compressor.adaptor.pytorch import get_ops_recursively
         model = copy.deepcopy(self.model)
         op_map = {}
-        get_ops_recursively(model, '', op_map)
-        self.assertTrue(op_map['conv1'] == 'Conv2d')
+        get_ops_recursively(model, "", op_map)
+        self.assertTrue(op_map["conv1"] == "Conv2d")
 
     def test_forward_wrapper(self):
         vision_model = resnet18()
@@ -743,15 +989,15 @@ class TestPytorchAdaptor(unittest.TestCase):
             def forward(self,input=None):
                 return self._model(input)
 
-        data = [[{'input': torch.rand(3,224,224)}, torch.ones(1,1)], ]
+        data = [[{"input": torch.rand(3,224,224)}, torch.ones(1,1)], ]
         # dataloader.batch_size=100
         dataloader = common.DataLoader(data, batch_size=1)
-        quantizer = Quantization('dynamic_yaml.yaml')
+        quant_conf = QuantConf("dynamic_yaml.yaml")
         model = dummymodel(vision_model)
-        quantizer.model = model
-        quantizer.calib_dataloader = dataloader
-        quantizer.eval_dataloader = dataloader
-        quantizer.fit()
+        q_model = quantization.fit(model,
+                   quant_conf,
+                   calib_dataloader=dataloader,
+                   eval_func=eval_func)
 
     def test_floatfunctions_fallback(self):
         class ModelWithFunctionals(torch.nn.Module):
@@ -782,26 +1028,27 @@ class TestPytorchAdaptor(unittest.TestCase):
                 return w
 
         model = ModelWithFunctionals()
-        model = MODELS['pytorch'](model)
+        model = MODELS["pytorch"](model)
         x = torch.rand(10, 1, dtype=torch.float)
         y = model.model(x)
         fallback_ops = []
         q_capability = self.adaptor.query_fw_capability(model)
         for k, v in q_capability["opwise"].items():
             if k[0] != "quant" and k[0] != "dequant":
-              fallback_ops.append(k[0])
+                fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
         if PT_VERSION >= Version("1.8.0").release:
             model.model.dequant.qconfig = torch.quantization.default_qconfig
         nc_torch._fallback_quantizable_ops_recursively(
-            model.model, '', fallback_ops, op_qcfgs={})
+            model.model, "", fallback_ops, op_qcfgs={})
         torch.quantization.add_observer_(model.model)
         model.model(x)
         torch.quantization.convert(model.model, self.adaptor.q_mapping, inplace=True)
         qy = model.model(x)
-        tol = {'atol': 1e-01, 'rtol': 1e-03}
+        tol = {"atol": 1e-01, "rtol": 1e-03}
         self.assertTrue(np.allclose(y, qy, **tol))
+
 
 @unittest.skipIf(not FX_MODE, "Unsupport Fx Mode with PyTorch Version Below 1.8")
 class TestPytorchFXAdaptor(unittest.TestCase):
@@ -818,204 +1065,241 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fx_ptq_yaml.yaml')
-        os.remove('fx_dynamic_yaml.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
+        os.remove("fx_ptq_yaml.yaml")
+        os.remove("fx_dynamic_yaml.yaml")
+        shutil.rmtree("./saved", ignore_errors=True)
+        shutil.rmtree("runs", ignore_errors=True)
 
     def test_fx_quant(self):
-        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+        for fake_yaml in ["qat", "static"]:
             model_origin = resnet18()
-            # run fx_quant in neural_compressor and save the quantized GraphModule
-            quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
-            quantizer.eval_func = eval_func
-            if fake_yaml == 'fx_qat_yaml.yaml':
-                quantizer.q_func = q_func
+            model = common.Model(model_origin,
+                                 **{"prepare_custom_config_dict": \
+                                         {"non_traceable_module_name": ["a"]},
+                                    "convert_custom_config_dict": \
+                                         {"preserved_attributes": []}
+                                    }
+                                )
+            dataset = DATASETS("pytorch")["dummy"]((10, 3, 224, 224), label=True)
+            dataloader = DATALOADERS["pytorch"](dataset)
+            if fake_yaml == "qat":
+                conf = QuantizationAwareTrainingConfig(
+                  op_name_list=qat_op_name_list, backend="pytorch_fx"
+                )
+                compression_manager = prepare_compression(copy.deepcopy(model), conf)
+                q_model = train_func(compression_manager, compression_manager.model, dataloader)
             else:
-                quantizer.calib_func = eval_func
-            dataloader = common.DataLoader(dataset)
-            quantizer.calib_dataloader = dataloader
-            quantizer.model = common.Model(model_origin,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
-                              })
-            q_model = quantizer.fit()
-            q_model.save('./saved')
+                conf = PostTrainingConfig(
+                  op_name_list=ptq_fx_op_name_list, backend="pytorch_fx", performance_only=True
+                )
+                options = Options(workspace="./saved")
+                q_model = quantization.fit(model,
+                                           conf,
+                                           calib_dataloader=dataloader,
+                                           eval_func=eval_func,
+                                           calib_func=eval_func,
+                                           options=options)
+            q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
-            model_fx = load('./saved', model_origin,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                                'dataloader': quantizer.calib_dataloader
+            model_fx = load("./saved", model_origin,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}, \
+                                "dataloader": torch.utils.data.DataLoader(dataset)
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
-            # recover int8 model with only tune_cfg
-            history_file = './saved/history.snapshot'
-            model_fx_recover = recover(model_origin, history_file, 0,
-                            **{'prepare_custom_config_dict':
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict':
-                                    {'preserved_attributes': []},
-                               'dataloader': quantizer.calib_dataloader
-                              })
-            self.assertEqual(model_fx.code, model_fx_recover.code)
-            shutil.rmtree('./saved', ignore_errors=True)
-
-        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+            if fake_yaml != "qat":
+                # recover int8 model with only tune_cfg
+                history_file = "./saved/history.snapshot"
+                model_fx_recover = recover(model_origin, history_file, 0,
+                                **{"prepare_custom_config_dict":
+                                        {"non_traceable_module_name": ["a"]},
+                                   "convert_custom_config_dict":
+                                        {"preserved_attributes": []},
+                                   "dataloader": dataloader
+                                  })
+                self.assertEqual(model_fx.code, model_fx_recover.code)
+            shutil.rmtree("./saved", ignore_errors=True)
+        for fake_yaml in ["fx_qat_yaml.yaml", "fx_ptq_yaml.yaml"]:
             model_origin = M()
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            quantizer = Quantization(fake_yaml)
-            quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-            dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
-            quantizer.model = common.Model(model_origin,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+            dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224), label=True)
+            dataloader = DATALOADERS["pytorch"](dataset)
+            model = common.Model(model_origin,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}
                               })
-            q_model = quantizer.fit()
-            q_model.save('./saved')
+            if fake_yaml == "fx_qat_yaml.yaml":
+                conf = QuantizationAwareTrainingConfig(
+                  op_name_list=qat_op_name_list, backend="pytorch_fx"
+                )
+                compression_manager = prepare_compression(copy.deepcopy(model), conf)
+                q_model = train_func(compression_manager, compression_manager.model, dataloader)
+                compression_manager.save("./saved")
+            else:
+                conf = PostTrainingConfig(
+                    op_name_list=ptq_fx_op_name_list, backend="pytorch_fx", performance_only=True
+                )
+                q_model = quantization.fit(model,
+                                           conf,
+                                           calib_dataloader=dataloader,
+                                           eval_dataloader=dataloader)
+                q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
-            model_fx = load('./saved', model_origin,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                               'dataloader': quantizer.calib_dataloader
+            model_fx = load("./saved", model_origin,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}, \
+                               "dataloader": torch.utils.data.DataLoader(dataset)
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
-            shutil.rmtree('./saved', ignore_errors=True)
+            shutil.rmtree("./saved", ignore_errors=True)
 
     @unittest.skipIf(PT_VERSION < Version("1.9.0").release,
       "Please use PyTroch 1.9 or higher version for dynamic quantization with pytorch_fx backend")
     def test_fx_dynamic_quant(self):
-        model = LSTMModel(
+        origin_model = LSTMModel(
             ntoken = 10,
             ninp = 512,
             nhid = 256,
             nlayers = 5,
         )
         # run fx_quant in neural_compressor and save the quantized GraphModule
-        model.eval()
-        quantizer = Quantization('fx_dynamic_yaml.yaml')
-        quantizer.model = common.Model(model,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+        origin_model.eval()
+        quant_conf = QuantConf("fx_dynamic_yaml.yaml")
+        model = common.Model(origin_model,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}
                               })
-        q_model = quantizer.fit()
-        q_model.save('./saved')
+        q_model = quantization.fit(model,
+                                   quant_conf
+                                   )
+        q_model.save("./saved")
 
         # Load configure and weights by neural_compressor.utils
-        model_fx = load("./saved", model,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+        model_fx = load("./saved", origin_model,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}
                               })
         self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
         # Test the functionality of older model saving type
         state_dict = torch.load("./saved/best_model.pt")
-        tune_cfg = state_dict.pop('best_configure')
+        tune_cfg = state_dict.pop("best_configure")
         import yaml
-        with open("./saved/best_configure.yaml", 'w') as f:
+        with open("./saved/best_configure.yaml", "w") as f:
             yaml.dump(tune_cfg, f, default_flow_style=False)
         torch.save(state_dict, "./saved/best_model_weights.pt")
-        os.remove('./saved/best_model.pt')
-        model_fx = load("./saved", model,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+        os.remove("./saved/best_model.pt")
+        model_fx = load("./saved", origin_model,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}
                               })
         self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
         # recover int8 model with only tune_cfg
-        history_file = './saved/history.snapshot'
-        model_fx_recover = recover(model, history_file, 0,
-                            **{'prepare_custom_config_dict':
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict':
-                                    {'preserved_attributes': []}
+        history_file = "./saved/history.snapshot"
+        model_fx_recover = recover(origin_model, history_file, 0,
+                            **{"prepare_custom_config_dict":
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict":
+                                    {"preserved_attributes": []}
                               })
         self.assertEqual(model_fx.code, model_fx_recover.code)
-        shutil.rmtree('./saved', ignore_errors=True)
+        shutil.rmtree("./saved", ignore_errors=True)
 
     def test_default_dynamic_quant(self):
         def eval_func(model):
             return 1
 
-        def q_func(model):
-            return model
-
         # Model Definition
-        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml']:
+        for fake_yaml in ["fx_qat_yaml.yaml", "fx_ptq_yaml.yaml"]:
             model_origin = LSTMModel(
                 ntoken = 10,
                 ninp = 512,
                 nhid = 256,
                 nlayers = 2,
             )
+            dataset = DATASETS("pytorch")["dummy"]((3, 10))
+            dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (3, 10), label=True)
-            quantizer.eval_func = eval_func
-            if fake_yaml == 'fx_qat_yaml.yaml':
-                quantizer.q_func = q_func
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.model = common.Model(model_origin)
-            q_model = quantizer.fit()
-            self.assertTrue('quantize' in str(type(q_model.model.encoder)))
-            self.assertTrue('quantize' in str(type(q_model.model.rnn)))
+            if fake_yaml == "fx_qat_yaml.yaml":
+                conf = QuantizationAwareTrainingConfig(
+                    op_name_list=qat_op_name_list, backend="pytorch_fx"
+                )
+                compression_manager = prepare_compression(copy.deepcopy(model_origin), conf)
+                q_model = train_func(compression_manager, compression_manager.model, dataloader=dataloader)
+                self.assertTrue("quantize" in str(type(q_model.model.encoder)))
+                self.assertTrue("quantize" in str(type(q_model.model.rnn)))
+            else:
+                conf = PostTrainingConfig(backend="pytorch_fx", performance_only=True)
+                q_model = quantization.fit(model_origin,
+                                           conf,
+                                           calib_dataloader=dataloader,
+                                           eval_func=eval_func)
+                self.assertTrue("quantize" in str(type(q_model.model.encoder)))
+                self.assertTrue("quantize" in str(type(q_model.model.rnn)))
 
     def test_fx_sub_module_quant(self):
-        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml', 'fx_dynamic_yaml.yaml']:
+        for fake_yaml in ["fx_qat_yaml.yaml", "fx_ptq_yaml.yaml", "fx_dynamic_yaml.yaml"]:
             model_origin = DynamicControlModel()
+            model = common.Model(model_origin,
+                                 **{"prepare_custom_config_dict": \
+                                         {"non_traceable_module_name": ["a"]},
+                                    "convert_custom_config_dict": \
+                                         {"preserved_attributes": []}
+                                    })
+            dataset = DATASETS("pytorch")["dummy"]((1, 3, 224, 224))
+            dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            quantizer = Quantization(fake_yaml)
-            dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
-            quantizer.eval_func = eval_func
-            if fake_yaml == 'fx_qat_yaml.yaml':
-                quantizer.q_func = q_func
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.model = common.Model(model_origin,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
-                              })
-            q_model = quantizer.fit()
-            q_model.save('./saved')
+            if fake_yaml == "fx_qat_yaml.yaml":
+                conf = QuantizationAwareTrainingConfig(
+                    op_name_list=qat_op_name_list, backend="pytorch_fx"
+                )
+                compression_manager = prepare_compression(copy.deepcopy(model), conf)
+                q_model = train_func(compression_manager, compression_manager.model, dataloader)
+            else:
+                options = Options(workspace="./saved")
+                conf = PostTrainingConfig(backend="pytorch_fx", performance_only=True)
+                q_model = quantization.fit(model,
+                                           conf,
+                                           calib_dataloader=dataloader,
+                                           eval_func=eval_func,
+                                           options=options)
+            q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
-            model_fx = load('./saved/best_model.pt', model_origin,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                               'dataloader': quantizer.calib_dataloader
+            model_fx = load("./saved/best_model.pt", model_origin,
+                            **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}, \
+                               "dataloader": torch.utils.data.DataLoader(dataset)
                               })
             self.assertTrue(isinstance(model_fx.sub, torch.fx.graph_module.GraphModule))
 
+            if fake_yaml != "fx_qat_yaml.yaml":
             # recover int8 model with only tune_cfg
-            history_file = './saved/history.snapshot'
-            model_fx_recover = recover(model_origin, history_file, 0,
-                            **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                               'dataloader': quantizer.calib_dataloader
-                              })
-            self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
-            shutil.rmtree('./saved', ignore_errors=True)
+                history_file = "./saved/history.snapshot"
+                model_fx_recover = recover(model_origin, history_file, 0,
+                                **{"prepare_custom_config_dict": \
+                                        {"non_traceable_module_name": ["a"]},
+                                   "convert_custom_config_dict": \
+                                        {"preserved_attributes": []}, \
+                                   "dataloader": torch.utils.data.DataLoader(dataset)
+                                  })
+                self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
+            shutil.rmtree("./saved", ignore_errors=True)
 
     def test_deepcopy_failure(self):
         def eval_func(model):
@@ -1051,51 +1335,55 @@ class TestPytorchFXAdaptor(unittest.TestCase):
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_bf16_capability(self):
         model_origin = DynamicControlModel()
-        os.environ['FORCE_BF16'] = '1'
+        os.environ["FORCE_BF16"] = "1"
         q_capability = self.adaptor._get_quantizable_ops(model_origin)
-        del os.environ['FORCE_BF16']
+        del os.environ["FORCE_BF16"]
 
         self.assertEqual(
-            [elem['weight']['dtype'] for elem in q_capability['optypewise']['Conv2d']],
-            [['int8'], 'fp32'])
+            [elem["weight"]["dtype"] for elem in q_capability["optypewise"]["Conv2d"]],
+            [["int8"], "fp32"])
         self.assertEqual(
-            [elem['activation']['dtype'] for elem in q_capability['optypewise']['Conv2d']],
-            [['uint8'], 'fp32'])
+            [elem["activation"]["dtype"] for elem in q_capability["optypewise"]["Conv2d"]],
+            [["uint8"], "fp32"])
         self.assertEqual(
-            [elem['weight']['dtype'] for elem in q_capability['opwise'][('conv', 'Conv2d')]],
-            [['int8'], 'fp32'])
+            [elem["weight"]["dtype"] for elem in q_capability["opwise"][("conv", "Conv2d")]],
+            [["int8"], "fp32"])
         self.assertEqual(
-            [elem['activation']['dtype'] for elem in q_capability['opwise'][('conv', 'Conv2d')]],
-            [['uint8'], 'fp32'])
+            [elem["activation"]["dtype"] for elem in q_capability["opwise"][("conv", "Conv2d")]],
+            [["uint8"], "fp32"])
         self.assertEqual(
-            [elem['weight']['dtype'] for elem in q_capability['opwise'][('linear', 'Linear')]],
-            [['int8'], 'fp32', 'bf16'])
+            [elem["weight"]["dtype"] for elem in q_capability["opwise"][("linear", "Linear")]],
+            [["int8"], "fp32", "bf16"])
         self.assertEqual(
-            [elem['activation']['dtype'] for elem in q_capability['opwise'][('linear', 'Linear')]],
-            [['uint8'], 'fp32', 'bf16'])
+            [elem["activation"]["dtype"] for elem in q_capability["opwise"][("linear", "Linear")]],
+            [["uint8"], "fp32", "bf16"])
 
     @unittest.skipIf(PT_VERSION < Version("1.11.0").release,
       "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend")
     def test_mix_precision(self):
-        fake_yaml = 'fx_ptq_yaml.yaml'
         model_origin = DynamicControlModel()
         # run fx_quant in neural_compressor and save the quantized GraphModule
-        quantizer = Quantization(fake_yaml)
-        dataset = quantizer.dataset('dummy', (1, 3, 224, 224), label=True)
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.model = common.Model(model_origin,
-                              **{'prepare_custom_config_dict': \
-                                    {'non_traceable_module_name': ['a']},
-                               'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}
+        dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
+        dataloader = DATALOADERS["pytorch"](dataset)
+        model = common.Model(model_origin,
+                              **{"prepare_custom_config_dict": \
+                                    {"non_traceable_module_name": ["a"]},
+                               "convert_custom_config_dict": \
+                                    {"preserved_attributes": []}
                               })
-        q_model = quantizer.fit()
+        options = Options(workspace="./saved")
+        conf = PostTrainingConfig(op_name_list=ptq_fx_op_name_list, backend="pytorch_fx", performance_only=True)
+        q_model = quantization.fit(model_origin,
+                                   conf,
+                                   calib_dataloader=dataloader,
+                                   eval_func=eval_func,
+                                   calib_func = eval_func,
+                                   options=options)
         tune_cfg = q_model.q_config
-        tune_cfg['op'][('conv.module', 'Conv2d')].clear()
-        tune_cfg['op'][('conv.module', 'Conv2d')] = \
-            {'weight': {'dtype': 'bf16'}, 'activation': {'dtype': 'bf16'}}
-        tune_cfg["bf16_ops_list"].append(('conv.module', 'Conv2d'))
+        tune_cfg["op"][("conv.module", "Conv2d")].clear()
+        tune_cfg["op"][("conv.module", "Conv2d")] = \
+            {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
+        tune_cfg["bf16_ops_list"].append(("conv.module", "Conv2d"))
         from neural_compressor.adaptor.torch_utils.bf16_convert import Convert
         q_model._model = Convert(q_model._model, tune_cfg)
 
