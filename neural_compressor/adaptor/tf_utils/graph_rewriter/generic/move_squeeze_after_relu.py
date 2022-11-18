@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from neural_compressor.utils.utility import dump_elapsed_time
 
 from ..graph_base import GraphRewriterBase
@@ -76,11 +77,12 @@ class MoveSqueezeAfterReluOptimizer(GraphRewriterBase):
                 reshape_node = graph_info[node.input[0]].node
                 reshape_input = graph_info[reshape_node.name].node.input[0]
                 x_node = graph_info[reshape_input].node
-                relu_output = graph_info[node.name].outputs
+                relu_output = copy.deepcopy(graph_info[node.name].outputs)
 
                 if len(graph_info[x_node.name].outputs) != 1:
                     continue
-
+                if len(graph_info[reshape_node.name].outputs) > 1:
+                    continue
                 #relu---->reshape
                 for i, input in enumerate(reshape_node.input):
                     if input == reshape_input:
