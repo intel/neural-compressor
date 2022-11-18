@@ -346,9 +346,9 @@ def compute_bleu(config, dataset_path, checkpoint_path):
         "grep ^T translations_out.txt | cut -f2- | perl -ple 's{(\S)-(\S)}{$1 ##AT##-##AT## $2}g' > ref.txt")
     bleu_score = get_bleu_score(args, "ref.txt", "sys.txt")
 
-    os.system("rm ref.txt")
-    os.system("rm sys.txt")
-    os.system("rm translations_out.txt")
+    os.remove("ref.txt")
+    os.remove("sys.txt")
+    os.remove("translations_out.txt")
     return bleu_score
 
 
