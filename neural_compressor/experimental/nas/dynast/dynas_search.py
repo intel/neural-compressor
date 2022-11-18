@@ -20,14 +20,14 @@ import time
 import autograd.numpy as anp
 import numpy as np
 import pymoo
+from neural_compressor.experimental.nas.dynast.dynas_utils import \
+    EvaluationInterface
+from neural_compressor.utils import logger
 from pymoo.algorithms.moo.age import AGEMOEA
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
 from pymoo.factory import get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
-
-from neural_compressor.experimental.nas.dynast.dynas_utils import EvaluationInterface
-from neural_compressor.utils import logger
 
 
 class SearchAlgoManager:

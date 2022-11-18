@@ -25,18 +25,18 @@ from typing import Tuple
 import numpy as np
 import ofa
 from fvcore.nn import FlopCountAnalysis
-from ofa.imagenet_classification.data_providers.imagenet import ImagenetDataProvider
-from ofa.imagenet_classification.run_manager import ImagenetRunConfig, RunManager
+from neural_compressor.experimental.nas.dynast.dynas_manager import \
+    ParameterManager
+from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
+from neural_compressor.experimental.nas.supernetwork.machine_translation.transformer_interface import (
+    compute_bleu, compute_latency)
+from neural_compressor.utils.utility import LazyImport, logger
+from ofa.imagenet_classification.data_providers.imagenet import \
+    ImagenetDataProvider
+from ofa.imagenet_classification.run_manager import (ImagenetRunConfig,
+                                                     RunManager)
 from ofa.tutorial.flops_table import rm_bn_from_net
 
-from neural_compressor.experimental.nas.dynast.dynas_manager import ParameterManager
-from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
-from neural_compressor.utils.utility import LazyImport, logger
-
-from neural_compressor.experimental.nas.supernetwork.machine_translation.transformer_interface import (
-    compute_bleu,
-    compute_latency
-)
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
 

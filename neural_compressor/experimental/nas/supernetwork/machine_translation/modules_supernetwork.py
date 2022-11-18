@@ -1,14 +1,11 @@
+from collections import defaultdict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import numpy as np
-from torch.nn.modules.module import _addindent
-from torch.nn import Parameter
-
 from fairseq import utils
-from collections import defaultdict
-
+from torch.nn import Parameter
+from torch.nn.modules.module import _addindent
 
 INCREMENTAL_STATE_INSTANCE_ID = defaultdict(lambda: 0)
 

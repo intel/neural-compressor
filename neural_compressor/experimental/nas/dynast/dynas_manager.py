@@ -21,9 +21,8 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-
 from neural_compressor.utils import logger
+from sklearn.model_selection import train_test_split
 
 
 class ParameterManager:

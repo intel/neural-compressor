@@ -1,27 +1,15 @@
-import torch
-from torch import nn
-from torch.nn import Parameter
-import torch.nn.functional as F
-
-from fairseq import utils
-from fairseq import options, utils
-from fairseq.models import (
-    FairseqEncoder,
-    FairseqIncrementalDecoder,
-    BaseFairseqModel
-)
-
-from fairseq.modules import (
-    PositionalEmbedding, SinusoidalPositionalEmbedding)
-from .modules_supernetwork import (
-
-    MultiheadAttentionSuper,
-    EmbeddingSuper,
-    LinearSuper,
-    LayerNormSuper
-
-)
 import math
+
+import torch
+import torch.nn.functional as F
+from fairseq import options, utils
+from fairseq.models import (BaseFairseqModel, FairseqEncoder,
+                            FairseqIncrementalDecoder)
+from fairseq.modules import PositionalEmbedding, SinusoidalPositionalEmbedding
+from torch import nn
+
+from .modules_supernetwork import (EmbeddingSuper, LayerNormSuper, LinearSuper,
+                                   MultiheadAttentionSuper)
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024

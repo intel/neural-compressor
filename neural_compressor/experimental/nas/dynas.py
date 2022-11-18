@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import os
-import pandas as pd
 
+import pandas as pd
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.utils import logger
 
@@ -31,12 +31,14 @@ class DyNAS(NASBase):
     """
 
     def __init__(self, conf_fname_or_obj):
-        from .dynast.dynas_manager import ParameterManager
-        from .dynast.dynas_manager import TransformerLTEncoding
+        from .dynast.dynas_manager import (ParameterManager,
+                                           TransformerLTEncoding)
         from .dynast.dynas_predictor import Predictor
-        from .dynast.dynas_search import ProblemMultiObjective, SearchAlgoManager
+        from .dynast.dynas_search import (ProblemMultiObjective,
+                                          SearchAlgoManager)
         from .dynast.dynas_utils import (EvaluationInterfaceMobileNetV3,
-                                         EvaluationInterfaceResNet50, EvaluationInterfaceTransformerLT,
+                                         EvaluationInterfaceResNet50,
+                                         EvaluationInterfaceTransformerLT,
                                          OFARunner, TransformerLTRunner)
 
         self.ParameterManager = ParameterManager

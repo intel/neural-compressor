@@ -1,21 +1,21 @@
 """
 Translate pre-processed data with a trained model.
 """
-import torch
-
-from fairseq import options, progress_bar, tasks, utils
-from fairseq.meters import StopwatchMeter, TimeMeter
-import sys
-import numpy as np
-import os
-from fairseq.data import dictionary
-import warnings
-from .transformer_supernetwork import TransformerSuperNetwork
-
-import sys
-import time
 import ctypes
 import math
+import os
+import sys
+import time
+import warnings
+
+import numpy as np
+import torch
+from fairseq import options, progress_bar, tasks, utils
+from fairseq.data import dictionary
+from fairseq.meters import StopwatchMeter, TimeMeter
+
+from .transformer_supernetwork import TransformerSuperNetwork
+
 warnings.filterwarnings("ignore")
 
 
