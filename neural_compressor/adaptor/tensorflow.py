@@ -1431,16 +1431,41 @@ class TensorFlowAdaptor(Adaptor):
     def get_output_op_names(self, fp32_model, tune_cfg, dataloader):
         from .tf_utils.graph_util import GraphAnalyzer
         qmodel = self._quantize_model(tune_cfg, fp32_model, dataloader)
+        qmodel.save("qmodels/full_qmodel.pb") # TODO: Remove it before merged
         graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
         output_op_names = set()
 
-        def _search(opname):
+        def _search(opname: str):
+            if opname not in graph_def:
+                return
+
             if graph_def[opname].node.op == 'Dequantize':
                 output_op_names.add(opname)
                 return
             
             for next_opname in graph_def[opname].node.input:
                 _search(next_opname)
+
+        # def _search(output_opname: str): # non recursive ver
+        #     op_count = 0
+        #     stack = [output_opname]
+        #     while stack:
+        #         opname = stack.pop()
+        #         while True:
+        #             op_count += 1
+        #             if opname not in graph_def:
+        #                 break
+        #             op = graph_def[opname]
+        #             if op.node.op == 'Dequantize':
+        #                 output_op_names.add(opname)
+        #                 break
+        #             next_opnames = op.node.input
+        #             if not next_opnames:
+        #                 break
+        #             elif len(next_opnames) > 1:
+        #                 stack += next_opnames[1:]
+
+        #             opname = next_opnames[0]
 
         for opname in qmodel.output_node_names:
             _search(opname)
