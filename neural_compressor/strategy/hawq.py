@@ -196,7 +196,8 @@ class HessianTrace:
             prev_avg_model_trace = model_trace
 
         layer_traces = layer_traces_estimate
-        self.unregister_hook()
+        if enable_act:
+            self.unregister_hook()
         return layer_traces
 
 
