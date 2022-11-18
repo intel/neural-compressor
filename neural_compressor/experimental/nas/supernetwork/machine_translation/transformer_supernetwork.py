@@ -8,6 +8,8 @@ from fairseq.models import (BaseFairseqModel, FairseqEncoder,
 from fairseq.modules import PositionalEmbedding, SinusoidalPositionalEmbedding
 from torch import nn
 
+from neural_compressor.utils import logger
+
 from .modules_supernetwork import (EmbeddingSuper, LayerNormSuper, LinearSuper,
                                    MultiheadAttentionSuper)
 
@@ -88,6 +90,7 @@ class TransformerSuperNetwork(BaseFairseqModel):
         return sum(numels)
 
     def set_sample_config(self, config):
+        logger.debug('Setting active configuration to {}'.format(config))
         self.encoder.set_sample_config(config)
         self.decoder.set_sample_config(config)
 
@@ -231,7 +234,6 @@ class TransformerEncoder(FairseqEncoder):
         all_x = []
         # encoder layers
         for layer in self.layers:
-            # print(x.shape)
             x = layer(x, encoder_padding_mask)
             all_x.append(x)
 

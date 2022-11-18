@@ -211,7 +211,5 @@ class ProblemMultiObjective(Problem):
             objective_x_arr.append(objective_x)
             objective_y_arr.append(objective_y)
 
-        print('.', end='', flush=True)
-
         # Update PyMoo with evaluation data
         out["F"] = anp.column_stack([objective_x_arr, objective_y_arr])

@@ -14,6 +14,8 @@ from fairseq import options, progress_bar, tasks, utils
 from fairseq.data import dictionary
 from fairseq.meters import StopwatchMeter, TimeMeter
 
+from neural_compressor.utils import logger
+
 from .transformer_supernetwork import TransformerSuperNetwork
 
 warnings.filterwarnings("ignore")
@@ -23,8 +25,7 @@ try:
     from fairseq import libbleu
 except ImportError as e:
     import sys
-    sys.stderr.write(
-        'ERROR: missing libbleu.so. run `pip install --editable .`\n')
+    logger.error('missing libbleu.so. run `pip install --editable .`')
     raise e
 
 
@@ -120,7 +121,6 @@ class Scorer(object):
 def get_bleu_score(args, ref, sys):
     dict = dictionary.Dictionary()
     order = 4
-    sacrebleu = False
     sentence_bleu = False
     ignore_case = False
 
@@ -140,7 +140,6 @@ def get_bleu_score(args, ref, sys):
                     sys_tok = dict.encode_line(sys_tok)
                     ref_tok = dict.encode_line(ref_tok)
                     scorer.add(ref_tok, sys_tok)
-                    print(i, scorer.result_string(order))
     else:
         def score(fdsys):
             with open(ref) as fdref:
@@ -149,7 +148,6 @@ def get_bleu_score(args, ref, sys):
                     sys_tok = dict.encode_line(sys_tok)
                     ref_tok = dict.encode_line(ref_tok)
                     scorer.add(ref_tok, sys_tok)
-                print(scorer.result_string(order))
                 return(scorer.score(order))
 
     if sys == '-':
@@ -157,6 +155,7 @@ def get_bleu_score(args, ref, sys):
     else:
         with open(sys, 'r') as f:
             score = score(f)
+    logger.debug('Achieved BLEU score: {}'.format(score))
     return score
 
 
@@ -175,7 +174,6 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     args.target_lang = 'de'
     args.batch_size = 128
     utils.import_user_module(args)
-    max_tokens = 12000
 
     use_cuda = torch.cuda.is_available() and not args.cpu
 
@@ -197,7 +195,7 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     tgt_dict = task.target_dictionary
 
     # Load ensemble
-    print('| loading model(s) from {}'.format(args.path))
+    logger.info('Loading model(s) from {}'.format(args.path))
     model = TransformerSuperNetwork(task)
     state = torch.load(checkpoint_path, map_location=torch.device('cpu'))
 
@@ -206,7 +204,6 @@ def compute_bleu(config, dataset_path, checkpoint_path):
 
     if use_cuda:
         model.cuda()
-    print(config)
     model.set_sample_config(config)
     model.make_generation_fast_(
         beamable_mm_beam_size=None if args.no_beamable_mm else args.beam,
@@ -217,7 +214,6 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     if use_cuda:
         model.cuda()
 
-    print(args.path, file=sys.stderr)
 
     # Load alignment dictionary for unknown word replacement
     # (None if no unknown word replacement, empty if no path to align dictionary)
@@ -297,13 +293,11 @@ def compute_bleu(config, dataset_path, checkpoint_path):
 
                     if not args.quiet:
                         if src_dict is not None:
-                            #print('S-{}\t{}'.format(sample_id, src_str))
                             fname_translations.write(
                                 'S-{}\t{}'.format(sample_id, src_str))
                             fname_translations.write('\n')
 
                         if has_target:
-                            #print('T-{}\t{}'.format(sample_id, target_str))
                             fname_translations.write(
                                 'T-{}\t{}'.format(sample_id, target_str))
                             fname_translations.write('\n')
@@ -351,7 +345,6 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     os.system(
         "grep ^T translations_out.txt | cut -f2- | perl -ple 's{(\S)-(\S)}{$1 ##AT##-##AT## $2}g' > ref.txt")
     bleu_score = get_bleu_score(args, "ref.txt", "sys.txt")
-    print(bleu_score)
 
     os.system("rm ref.txt")
     os.system("rm sys.txt")
@@ -373,7 +366,6 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
     args.target_lang = 'de'
     args.batch_size = 128
     utils.import_user_module(args)
-    max_tokens = 12000
     args.latgpu = False
     args.latcpu = True
     args.latiter = 100
@@ -387,15 +379,9 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
     # Load dataset splits
     task = tasks.setup_task(args)
     task.load_dataset(args.gen_subset)
-    # Set dictionaries
-    try:
-        src_dict = getattr(task, 'source_dictionary', None)
-    except NotImplementedError:
-        src_dict = None
-    tgt_dict = task.target_dictionary
 
     # Load ensemble
-    print('| loading model(s) from {}'.format(args.path))
+    logger.info('Loading model(s) from {}'.format(args.path))
     model = TransformerSuperNetwork(task)
 
     # specify the length of the dummy input for profile
@@ -417,13 +403,13 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
                                                      args.beam).view(-1).long()  # .cuda()
     if args.latcpu:
         model.cpu()
-        print('Measuring model latency on CPU for dataset generation...')
+        logger.info('Measuring model latency on CPU for dataset generation...')
     elif args.latgpu:
         model.cuda()
         src_tokens_test = src_tokens_test  # .cuda()
         src_lengths_test = src_lengths_test  # .cuda()
         prev_output_tokens_test_with_beam = prev_output_tokens_test_with_beam  # .cuda()
-        print('Measuring model latency on GPU for dataset generation...')
+        logger.info('Measuring model latency on GPU for dataset generation...')
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
 
@@ -439,10 +425,9 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
                 src_tokens=src_tokens_test, src_lengths=src_lengths_test)
 
         encoder_latencies = []
-        print('Measuring encoder for dataset generation...')
+        logger.info('Measuring encoder for dataset generation...')
         for _ in range(args.latiter):
             if args.latgpu:
-                # start.record()
                 start = time.time()
             elif args.latcpu:
                 start = time.time()
@@ -460,8 +445,8 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
         encoder_latencies.sort()
         encoder_latencies = encoder_latencies[int(
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
-        print(
-            f'Encoder latency for dataset generation: Mean: {np.mean(encoder_latencies)} ms; \t Std: {np.std(encoder_latencies)} ms')
+        logger.info(
+            f'Encoder latency for dataset generation: Mean: {np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms')
 
         encoder_out_test_with_beam = model.encoder.reorder_encoder_out(
             encoder_out_test, new_order)
@@ -475,13 +460,12 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
         decoder_iterations_dict = {'iwslt': 23, 'wmt': 30}
 
         decoder_iterations = decoder_iterations_dict['wmt']
-        print(decoder_iterations)
         decoder_latencies = []
-        print('Measuring decoder for dataset generation...')
+
+        logger.info('Measuring decoder for dataset generation...')
         for _ in range(args.latiter):
             if args.latgpu:
                 start = time.time()
-                # start.record()
             elif args.latcpu:
                 start = time.time()
             incre_states = {}
@@ -501,8 +485,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
         decoder_latencies = decoder_latencies[int(
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
 
-    print(decoder_latencies)
-    print(
+    logger.info(
         f'Decoder latency for dataset generation: Mean: {np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms')
 
     lat_mean = np.mean(encoder_latencies)+np.mean(decoder_latencies)
