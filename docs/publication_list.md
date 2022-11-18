@@ -1,6 +1,7 @@
-Full Publications/Events (42)
+Full Publications/Events (43)
 ==========
-## 2022 (24)
+## 2022 (25)
+* [Personalized Stable Diffusion with Few-Shot Fine-Tuning](https://medium.com/intel-analytics-software/personalized-stable-diffusion-with-few-shot-fine-tuning-on-a-single-cpu-f01a3316b13) (Nov 2022)
 * [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
 * [PyTorch* Inference Acceleration with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/developer/articles/technical/pytorch-inference-with-intel-neural-compressor.html#gs.gnq0cj) (Oct 2022)
 * Neural Coder, a new plug-in for Intel Neural Compressor was covered by [Twitter](https://intel.sharepoint.com/sites/iLit-MyLearning/Shared%20Documents/My%20Learning/Haihao/MSR/2022/o%09https:/twitter.com/IntelDevTools/status/1583629213697212416?s=20&t=f2dXY_g9-bCO-GQm-S6Btg), [LinkedIn](https://www.linkedin.com/posts/intel-software_oneapi-ai-deeplearning-activity-6989377309917007872-Dbzg?utm_source=share&utm_medium=member_desktop), and [Intel Developer Zone](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA) from Intel, and [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416/retweets) and [LinkedIn](https://www.linkedin.com/feed/update/urn:li:share:6990377841435574272/) from Hugging Face. (Oct 2022)
