@@ -1020,20 +1020,3 @@ def Linear(in_features, out_features, bias=True, uniform_=None, non_linear='line
     if bias:
         nn.init.constant_(m.bias, 0.)
     return m
-
-
-def calc_dropout(dropout, sample_embed_dim, super_embed_dim):
-    return dropout * 1.0 * sample_embed_dim / super_embed_dim
-
-
-def Embedding(num_embeddings, embedding_dim, padding_idx):
-    return EmbeddingSuper(num_embeddings, embedding_dim, padding_idx=padding_idx)
-
-
-def Linear(in_features, out_features, bias=True, uniform_=None, non_linear='linear'):
-    m = nn.Linear(in_features, out_features, bias)
-    nn.init.xavier_uniform_(m.weight) if uniform_ is None else uniform_(
-        m.weight, non_linear=non_linear)
-    if bias:
-        nn.init.constant_(m.bias, 0.)
-    return m
