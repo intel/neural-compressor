@@ -24,7 +24,6 @@ warnings.filterwarnings("ignore")
 try:
     from fairseq import libbleu
 except ImportError as e:
-    import sys
     logger.error('missing libbleu.so. run `pip install --editable .`')
     raise e
 
@@ -155,7 +154,7 @@ def get_bleu_score(args, reference_sentences_fpath, translated_sentences_fpath):
     else:
         with open(translated_sentences_fpath, 'r') as f:
             score = score(f)
-    logger.debug('Achieved BLEU score: {}'.format(score))
+    logger.info('Achieved BLEU score: {}'.format(score))
     return score
 
 
@@ -164,7 +163,7 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser, [dataset_path])
-
+    # TODO(macsz) Un-hardcode args
     args.data = dataset_path
     args.beam = 5
     args.remove_bpe = '@@ '
@@ -240,7 +239,6 @@ def compute_bleu(config, dataset_path, checkpoint_path):
 
     num_sentences = 0
     has_target = True
-    decoder_times_all = []
     input_len_all = []
     with open('translations_out.txt', 'a') as fname_translations:
         with progress_bar.build_progress_bar(args, itr) as t:
@@ -356,6 +354,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
 
     args = options.parse_args_and_arch(parser, [dataset_path])
 
+    # TODO(macsz) Un-hardcode args
     args.data = dataset_path
     args.beam = 5
     args.remove_bpe = '@@ '
