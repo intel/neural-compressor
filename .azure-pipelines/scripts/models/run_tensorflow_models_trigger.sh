@@ -20,7 +20,7 @@ do
 done
 
 FRAMEWORK="tensorflow"
-FRAMEWORK_VERSION="2.9.1"
+FRAMEWORK_VERSION="2.10.0"
 
 # ======== set up config for tensorflow models ========
 if [ "${model}" == "resnet50v1.5" ]; then

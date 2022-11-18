@@ -48,7 +48,6 @@ log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
-$BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
 
 if [ "${mode}" == "env_setup" ]; then
     /bin/bash env_setup.sh \
@@ -64,6 +63,7 @@ if [ "${mode}" == "env_setup" ]; then
         --new_benchmark=${new_benchmark}
 elif [ "${mode}" == "tuning" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "tuning_cmd is ${tuning_cmd}" && $RESET
     $BOLD_YELLOW && echo "======== run tuning ========" && $RESET
     /bin/bash ${SCRIPTS_PATH}/run_tuning_common.sh \
@@ -85,6 +85,7 @@ elif [ "${mode}" == "tuning" ]; then
     $BOLD_GREEN && echo "====== tuning SUCCEED!! ======" && $RESET
 elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
     $BOLD_YELLOW && echo "====== run benchmark fp32 =======" && $RESET
     /bin/bash ${SCRIPTS_PATH}/run_benchmark_common.sh \
@@ -100,6 +101,7 @@ elif [ "${mode}" == "fp32_benchmark" ]; then
         --PERF_STABLE_CHECK=${PERF_STABLE_CHECK}
 elif [ "${mode}" == "int8_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "benchmark_cmd is ${benchmark_cmd}" && $RESET
     $BOLD_YELLOW && echo "====== run benchmark int8 =======" && $RESET
     if [[ "${framework}" == "onnxrt" ]]; then
@@ -125,6 +127,7 @@ elif [ "${mode}" == "int8_benchmark" ]; then
         --PERF_STABLE_CHECK=${PERF_STABLE_CHECK}
 elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
         --framework=${framework} \

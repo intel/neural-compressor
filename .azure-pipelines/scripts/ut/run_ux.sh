@@ -4,11 +4,11 @@ python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run ux"
 
 echo "specify fwk version..."
-export tensorflow_version='2.9.1'
-export pytorch_version='1.11.0+cpu'
-export torchvision_version='0.12.0'
-export onnx_version='1.9.0'
-export onnxruntime_version='1.10.0'
+export tensorflow_version='2.10.0'
+export pytorch_version='1.12.0+cpu'
+export torchvision_version='0.13.0+cpu'
+export onnx_version='1.12.0'
+export onnxruntime_version='1.13.1'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh

@@ -20,7 +20,7 @@ do
 done
 
 FRAMEWORK="mxnet"
-FRAMEWORK_VERSION="1.7.0"
+FRAMEWORK_VERSION="1.9.1"
 
 
 # ======== set up config for mxnet models ========
