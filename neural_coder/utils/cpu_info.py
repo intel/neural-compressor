@@ -30,9 +30,15 @@ def get_num_cpu_cores() -> int:
     cmd_cpu_info += 'cores_per_node=$( echo "${phsical_cores_num} / ${numa_nodes_num}" |bc )'
     cmd_cpu_info += ' && '
     cmd_cpu_info += "echo ${cores_per_node}"
+    original_lang_val = os.environ.get('LANG')
+    os.environ['LANG'] = 'C'
     sp_grep_cpu_info = subprocess.Popen(
         cmd_cpu_info, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
     sp_grep_cpu_info.wait()
+    if original_lang_val:
+        os.environ['LANG'] = original_lang_val
+    else:
+        del os.environ['LANG']
 
     log_cpu_info, _ = sp_grep_cpu_info.communicate()
     ncores = int(str(log_cpu_info)[2:-3])

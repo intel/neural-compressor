@@ -41,7 +41,7 @@ class GroupLassoPruner(BasicMagnitudePruner):
                 coeff = self.pattern.repeat_mask(coeff).reshape(weight.shape)
                 weight_grad += coeff * weight
                 self.model.update_gradient(weight_name, weight_grad)
- 
+
             for weight_name in self.weights:
                 weight = self.model.get_weight(weight_name)
                 grad = self.model.get_gradient(weight_name)

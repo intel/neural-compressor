@@ -342,7 +342,7 @@ class TestQuantization(unittest.TestCase):
 
     def test_autodump(self):
         # test auto_dump using old api
-        from neural_compressor import Quantization
+        from neural_compressor.quantization import Quantization
         quantizer = Quantization('fake_yaml3.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
         dataloader = quantizer.dataloader(dataset)

@@ -80,18 +80,36 @@ class TestSelfDistillation(unittest.TestCase):
         shutil.rmtree("runs", ignore_errors=True)
 
     def test_self_distillation(self):
-        from neural_compressor.training import fit, prepare
+        import copy
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.conf.pythonic_config import DistillationConfig, \
+                                                           SelfKnowledgeDistillationLossConfig
 
         datasets = DATASETS("pytorch")
         dummy_dataset = datasets["dummy"](
             shape=(100, 3, 224, 224), low=0.0, high=1.0, label=True
         )
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-
+        distil_loss = SelfKnowledgeDistillationLossConfig(
+            layer_mappings=[
+                [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
+                ['resblock.2.feature.output','resblock.deepst.feature.output']],
+                [['resblock.2.fc','resblock.deepst.fc'],
+                ['resblock.3.fc','resblock.deepst.fc']],
+                [['resblock.1.fc','resblock.deepst.fc'],
+                ['resblock.2.fc','resblock.deepst.fc'],
+                ['resblock.3.fc','resblock.deepst.fc']]
+            ],
+            temperature=3.0,
+            loss_types=['L2', 'KL', 'CE'],
+            loss_weights=[0.5, 0.05, 0.02],
+            add_origin_loss=True,
+        )
+        conf = DistillationConfig(teacher_model=self.model, criterion=distil_loss)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        conf = DistillationConf("fake.yaml")
-        callbacks, model = prepare(conf, model=self.model, teacher_model=self.model)
+        compression_manager = prepare_compression(copy.deepcopy(self.model), conf)
+        model = compression_manager.model
 
         def training_func_for_nc(model):
             epochs = 3
@@ -99,9 +117,9 @@ class TestSelfDistillation(unittest.TestCase):
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
-                callbacks.on_epoch_begin(nepoch)
+                compression_manager.callbacks.on_epoch_begin(nepoch)
                 for image, target in dummy_dataloader:
-                    callbacks.on_step_begin(cnt)
+                    compression_manager.callbacks.on_step_begin(cnt)
                     print(".", end="")
                     cnt += 1
                     output = model(image)
@@ -120,16 +138,16 @@ class TestSelfDistillation(unittest.TestCase):
                     outputs_features["resblock.3.fc"] = torch.randn(128, 100)
                     outputs_features["resblock.2.fc"] = torch.randn(128, 100)
                     outputs_features["resblock.1.fc"] = torch.randn(128, 100)
-                    loss = callbacks.on_after_compute_loss(
+                    loss = compression_manager.callbacks.on_after_compute_loss(
                         image, outputs_features, loss, teacher_output=outputs_features
                     )
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                    callbacks.on_step_end()
+                    compression_manager.callbacks.on_step_end()
                     if cnt >= iters:
                         break
-                callbacks.on_epoch_end()
+                compression_manager.callbacks.on_epoch_end()
             return model
 
         def eval_func(model):
@@ -137,9 +155,8 @@ class TestSelfDistillation(unittest.TestCase):
                 model(image)
             return 1  # metric is 1 here, just for unit test
 
-        model = fit(
-            model, callbacks, train_func=training_func_for_nc, eval_func=eval_func
-        )
+        model = training_func_for_nc(model)
+        eval_func(model)
 
 
 if __name__ == "__main__":

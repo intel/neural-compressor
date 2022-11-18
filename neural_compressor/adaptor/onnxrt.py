@@ -451,7 +451,7 @@ class ONNXRTAdaptor(Adaptor):
                     'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
             assert self.graph_optimization.level in optimization_levels, "the optimization \
                                       choices are {}".format(optimization_levels.keys())
- 
+
             level = optimization_levels[self.graph_optimization.level]
         sess_options.graph_optimization_level = level
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \

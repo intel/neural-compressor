@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Neural Compressor Quantization API."""
 
 import os
 import pickle
@@ -28,17 +30,16 @@ from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
-from warnings import warn
+from deprecated import deprecated
 
 class Quantization(Component):
-    """Quantization class automatically searches for optimal quantization recipes for low
-       precision model inference, achieving best tuning objectives like inference performance
-       within accuracy loss constraints.
+    """This class provides easy use API for quantization.
 
+       It automatically searches for optimal quantization recipes for low precision model inference,
+       achieving best tuning objectives like inference performance within accuracy loss constraints.
        Tuner abstracts out the differences of quantization APIs across various DL frameworks
        and brings a unified API for automatic quantization that works on frameworks including
        tensorflow, pytorch and mxnet.
-
        Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
        (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
        Tuner class provides a flexible configuration interface via YAML for users to specify
@@ -52,6 +53,7 @@ class Quantization(Component):
     """
 
     def __init__(self, conf_fname_or_obj=None):
+        """Quantization constructor."""
         super(Quantization, self).__init__()
         if isinstance(conf_fname_or_obj, QuantConf):
             self.conf = conf_fname_or_obj
@@ -69,6 +71,7 @@ class Quantization(Component):
         self._calib_func = None
 
     def _create_eval_dataloader(self, cfg):
+        """Create default evaluation dataloader if eval_func is not set."""
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:
             if self._eval_dataloader is None:
@@ -93,6 +96,7 @@ class Quantization(Component):
                 " force setting 'tuning.exit_policy.performance_only = True'.".format(performance_only))
 
     def _create_calib_dataloader(self, cfg):
+        """Create default calibration dataloader if train_func is not set."""
         approach_cfg = deep_get(cfg, 'quantization.approach')
 
         if self._calib_dataloader is None and self._calib_func is None:
@@ -122,8 +126,7 @@ class Quantization(Component):
                 self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
 
     def pre_process(self):
-        """Prepare dataloaders, qfuncs for Component
-        """
+        """Prepare dataloaders, qfuncs for Component."""
         cfg = self.conf.usr_cfg
         assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
 
@@ -156,6 +159,7 @@ class Quantization(Component):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
+        """Quantization execute routinue based on strategy design."""
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
@@ -179,7 +183,7 @@ class Quantization(Component):
             return self.strategy.best_qmodel
 
     def __call__(self):
-        """The main entry point of automatic quantization tuning.
+        """Automatic quantization tuning main entry point.
 
            This interface works on all the DL frameworks that neural_compressor supports
            and provides three usages:
@@ -224,39 +228,42 @@ class Quantization(Component):
     fit = __call__
 
     def dataset(self, dataset_type, *args, **kwargs):
+        """Get dataset according to dataset_type."""
         from ..data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def calib_dataloader(self):
+        """Get `calib_dataloader` attribute."""
         return self._calib_dataloader
 
     @calib_dataloader.setter
     def calib_dataloader(self, dataloader):
         """Set Data loader for calibration, mandatory for post-training quantization.
-           It is iterable and the batched data should consists of a tuple like
-           (input, label) if the calibration dataset containing label, or yield (input, _)
-           for label-free calibration dataset, the input in the batched data will be used for
-           model inference, so it should satisfy the input format of specific model.
-           In calibration process, label of data loader will not be used and
-           neither the postprocess and metric. User only need to set
-           calib_dataloader when calib_dataloader can not be configured from yaml file.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data. Another good
-                                      practice is to use neural_compressor.experimental.common.DataLoader
-                                      to initialize a neural_compressor dataloader object. Notice
-                                      neural_compressor.experimental.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' calib_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Quantization object created then
-                                      framework infomation can be known.
-                                      Future we will support creating iterable dataloader
-                                      from neural_compressor.experimental.common.DataLoader
+        It is iterable and the batched data should consists of a tuple like
+        (input, label) if the calibration dataset containing label, or yield (input, _)
+        for label-free calibration dataset, the input in the batched data will be used for
+        model inference, so it should satisfy the input format of specific model.
+        In calibration process, label of data loader will not be used and
+        neither the postprocess and metric. User only need to set
+        calib_dataloader when calib_dataloader can not be configured from yaml file.
+
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                    which meet the requirements that can yield tuple of
+                                    (input, label)/(input, _) batched data. Another good
+                                    practice is to use neural_compressor.experimental.common.DataLoader
+                                    to initialize a neural_compressor dataloader object. Notice
+                                    neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                    information needed to build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' calib_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object created then
+                                    framework infomation can be known.
+                                    Future we will support creating iterable dataloader
+                                    from neural_compressor.experimental.common.DataLoader
         """
         from .common import _generate_common_dataloader
         self._calib_dataloader = _generate_common_dataloader(
@@ -264,26 +271,26 @@ class Quantization(Component):
 
     @property
     def metric(self):
+        """Get `metric` attribute."""
         assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
     def metric(self, user_metric):
-        """Set metric class and neural_compressor will initialize this class when evaluation
-           neural_compressor have many built-in metrics, but user can set specific metric through
-           this api. The metric class should take the outputs of the model or
-           postprocess(if have) as inputs, neural_compressor built-in metric always take
-           (predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
-           or user defined metric object
+        """Set metric class and neural_compressor will initialize this class when evaluation.
 
+        neural_compressor have many built-in metrics, but user can set specific metric through
+        this api. The metric class should take the outputs of the model or
+        postprocess(if have) as inputs, neural_compressor built-in metric always take
+        (predictions, labels) as inputs for update,
+        and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
+        or user defined metric object
         Args:
             user_metric(neural_compressor.experimental.common.Metric):
                 user_metric should be object initialized from
                 neural_compressor.experimental.common.Metric, in this method the
                 user_metric.metric_cls will be registered to
                 specific frameworks and initialized.
-
         """
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
@@ -310,11 +317,16 @@ class Quantization(Component):
 
     @property
     def objective(self):
+        """Get `objective` attribute."""
         assert False, 'Should not try to get the value of `objective` attribute.'
         return None
 
     @objective.setter
     def objective(self, user_objective):
+        """Set objective, neural_compressor supports built-in objectives and user defined objective.
+
+        The built-in objectives include Accuracy, Performance, Footprint and ModelSize.
+        """
         if deep_get(self.conf.usr_cfg, "tuning.multi_objectives.objective") or \
             deep_get(self.conf.usr_cfg, "tuning.objective"):
             logger.warning("Override the value of `objective` field defined in yaml file" \
@@ -332,23 +344,24 @@ class Quantization(Component):
 
     @property
     def postprocess(self, user_postprocess):
+        """Get `postprocess` attribute."""
         assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
     def postprocess(self, user_postprocess):
         """Set postprocess class and neural_compressor will initialize this class when evaluation.
-           The postprocess class should take the outputs of the model as inputs, and
-           output (predictions, labels) as inputs for metric update.
-           user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
+
+        The postprocess class should take the outputs of the model as inputs, and
+        output (predictions, labels) as inputs for metric update.
+        user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
 
         Args:
-            user_postprocess(neural_compressor.experimental.common.Postprocess):
+            user_postprocess: neural_compressor.experimental.common.Postprocess
                 user_postprocess should be object initialized from
                 neural_compressor.experimental.common.Postprocess,
                 in this method the user_postprocess.postprocess_cls will be
                 registered to specific frameworks and initialized.
-
         """
         from .common import Postprocess as NCPostprocess
         assert isinstance(user_postprocess, NCPostprocess), \
@@ -366,19 +379,23 @@ class Quantization(Component):
     # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
     # fake eval func is created to do quantization once without tuning
     def _fake_eval_func(self, model):
+        """Return fake accuracy 1 when no need to run tuning."""
         return 1.
 
     # BELOW API TO BE DEPRECATED!
     @property
-    def q_func(self):  # pragma: no cover
+    def q_func(self):
+        """Get `q_func` attribute."""
         assert False, 'Should not try to get the value of `q_func` attribute.'
         return None
 
     @q_func.setter
+    @deprecated(version='2.0', reason="please use `train_func` instead")
     def q_func(self, user_q_func):
-        """Calibrate with samples for static quantization or train for quantization-Aware Training.
-           It is optional. if calibration function is defined, then calibration dataloader is
-           invalid.
+        """Training function for Quantization-Aware Training.
+
+           It is optional and only takes effect when user choose
+           "quant_aware_training" approach in yaml.
 
         Args:
             user_q_func: This function takes "model" as input parameter
@@ -390,4 +407,5 @@ class Quantization(Component):
     calib_func = q_func
 
     def __repr__(self):
+        """Return the class string."""
         return 'Quantization'

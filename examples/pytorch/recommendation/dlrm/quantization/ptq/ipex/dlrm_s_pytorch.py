@@ -97,6 +97,7 @@ from torch.utils import ThroughputBenchmark
 # For distributed run
 import extend_distributed as ext_dist
 
+
 try:
     import intel_extension_for_pytorch as ipex
 except:
@@ -406,12 +407,19 @@ def trace_model(args, dlrm, test_ld, inplace=True):
                 dlrm.emb_l.bfloat16()
             dlrm = ipex.optimize(dlrm, dtype=torch.bfloat16, inplace=inplace)
         elif args.int8 and not args.tune:
+            if args.num_cpu_cores != 0:
+                torch.set_num_threads(args.num_cpu_cores)
             from neural_compressor.utils.pytorch import load
             dlrm = load(args.save_model, dlrm, dataloader=DLRM_DataLoader(test_ld))
         elif args.int8 and args.tune:
             dlrm = dlrm
         else:
-            dlrm = ipex.optimize(dlrm, dtype=torch.float, inplace=inplace)
+            dlrm = ipex.optimize(dlrm, dtype=torch.float, inplace=True, auto_kernel_selection=True)
+            with torch.cpu.amp.autocast(enabled=args.bf16):
+                dlrm = torch.jit.trace(dlrm, (X, lS_o, lS_i), check_trace=True)
+                dlrm = torch.jit.freeze(dlrm)
+                dlrm(X, lS_o, lS_i)
+                dlrm(X, lS_o, lS_i)
         return dlrm
 
 

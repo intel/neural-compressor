@@ -1,10 +1,27 @@
+### Turn ON Auto Mixed Precision during Quantization
+
+BF16 conversion during quantization is default OFF. To force enable it, users need to turn on use_bf16 by pythonic config:
+
+```python
+from neural_compressor import config
+from neural_compressor.experimental import Quantization
+
+config.quantization.use_bf16 = True
+quantizer = Quantization(config)
+```
+
 ### Tensorflow
 
 Intel has worked with the TensorFlow development team to enhance TensorFlow to include bfloat16 data support for CPUs. For more information about BF16 in TensorFlow, please read [Accelerating AI performance on 3rd Gen Intel® Xeon® Scalable processors with TensorFlow and Bfloat16](https://blog.tensorflow.org/2020/06/accelerating-ai-performance-on-3rd-gen-processors-with-tensorflow-bfloat16.html).
 
 - BF16 conversion during quantization in TensorFlow
 
-![Mixed Precision](imgs/bf16_convert_tf.png "Mixed Precision Graph")
+<a target="_blank" href="./imgs/bf16_convert_tf.png" text-align:center>
+    <center> 
+        <img src="./imgs/bf16_convert_tf.png" alt="Architecture" height=200> 
+    </center>
+</a>
+
 
 - Three steps
 
@@ -26,7 +43,11 @@ Intel has also worked with the PyTorch development team to enhance PyTorch to in
 
 - BF16 conversion during quantization in PyTorch
 
-![Mixed Precision](imgs/bf16_convert_pt.png "Mixed Precision Graph")
+<a target="_blank" href="./imgs/bf16_convert_pt.png" text-align:center>
+    <center> 
+        <img src="./imgs/bf16_convert_pt.png" alt="Architecture" height=200> 
+    </center>
+</a>
 
 - Two steps
 1. Convert to a `FP32 + INT8` mixed precision Graph or Module

@@ -26,7 +26,8 @@ from ..adaptor import FRAMEWORKS
 from ..conf.config import PruningConf
 from ..conf.pythonic_config import Config
 
-from warnings import warn
+from deprecated import deprecated
+
 
 class Pruning(Component):
     """This is base class of pruning object.
@@ -112,6 +113,10 @@ class Pruning(Component):
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
 
+    def prepare(self):
+        self.generate_hooks()
+        self.generate_pruners()
+
     def pre_process(self):
         """Functions called before pruning begins, usually set up pruners."""
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
@@ -128,8 +133,7 @@ class Pruning(Component):
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
 
-        self.generate_hooks()
-        self.generate_pruners()
+        self.prepare()
 
         if self._train_dataloader is None and self._train_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader
@@ -287,6 +291,7 @@ class Pruning(Component):
         return None
 
     @pruning_func.setter
+    @deprecated(version='2.0', reason="please use `train_func` instead")
     def pruning_func(self, user_pruning_func):
         """Training function for pruning.
 
@@ -298,8 +303,6 @@ class Pruning(Component):
                          set eval_dataloader with metric configured or directly eval_func
                          to make evaluation of the model executed.
         """
-        warn('This method is deprecated. please use `train_func` instead.',
-             DeprecationWarning, stacklevel=2)
         self._train_func = user_pruning_func
 
     @property
@@ -365,16 +368,14 @@ class TfPruningCallback(object):
         """Call the same-name function from hooks."""
         self.hooks['on_train_end']()
 
+    @deprecated(version='2.0', reason="please use `on_train_begin` instead")
     def pre_epoch_begin(self, logs=None, dataloader=None):  # pragma: no cover
         """Call the same-name function from hooks."""
-        warn('This method is deprecated. please use `on_train_begin` instead.',
-             DeprecationWarning, stacklevel=2)
         self.on_train_begin(logs, dataloader)
 
+    @deprecated(version='2.0', reason="please use `on_train_end` instead")
     def post_epoch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
-        warn('This method is deprecated. please use `on_train_end` instead.',
-             DeprecationWarning, stacklevel=2)
         self.on_train_end(logs)
 
     def on_epoch_begin(self, epoch, logs=None):
@@ -400,10 +401,9 @@ class TfPruningCallback(object):
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
+    @deprecated(version='2.0', reason="please use `on_step_begin` instead")
     def on_batch_begin(self, batch, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
-        warn('This method is deprecated. please use `on_step_begin` instead.',
-             DeprecationWarning, stacklevel=2)
         self.on_step_begin(batch, logs)
 
     def on_after_compute_loss(self, input, s_outputs, s_loss, t_outputs=None):
@@ -419,8 +419,7 @@ class TfPruningCallback(object):
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
+    @deprecated(version='2.0', reason="please use `on_step_end` instead")
     def on_batch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
-        warn('This method is deprecated. please use `on_step_end` instead.',
-             DeprecationWarning, stacklevel=2)
         self.on_step_end(logs)

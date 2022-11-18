@@ -17,6 +17,7 @@
 
 import logging
 import datetime
+from typing import List
 from schema import Schema, And, Use, Optional, Or
 from .dotdict import DotDict
 from .config import Pruner
@@ -75,7 +76,7 @@ def check_value(name, src, supported_type, supported_value=[]):
             logger.warning("{} is not in supported {}: {}. Skip setting it and" \
                 " use default value.".format(src, name, str(supported_value)))
             return False
- 
+
     return True
 
 class BenchmarkConfig:
@@ -180,7 +181,7 @@ class AccuracyCriterion:
     def higher_is_better(self, higher_is_better):
         if check_value('higher_is_better', higher_is_better, bool):
             self._higher_is_better = higher_is_better
-        
+
     @property
     def relative(self):
         if self._criterion != 'relative':
@@ -208,12 +209,23 @@ class AccuracyCriterion:
 
 accuracy_criterion = AccuracyCriterion()
 
-class QuantizationConfig:
-    def __init__(self, inputs=[], outputs=[], backend='NA', device='cpu', 
-        approach='post_training_static_quant', calibration_sampling_size=[100],
-        op_type_list=None, op_name_list=None, strategy='basic', objective='performance',
-        timeout=0, max_trials=100, performance_only=False, reduce_range=None,
-        use_bf16=True, accuracy_criterion=accuracy_criterion):
+class _BaseQuantizationConfig:
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend='NA',
+                 device='cpu',
+                 calibration_sampling_size=[100],
+                 op_type_list=None,
+                 op_name_list=None,
+                 strategy='basic',
+                 objective='performance',
+                 timeout=0,
+                 max_trials=100,
+                 performance_only=False,
+                 reduce_range=None,
+                 use_bf16=False,
+                 accuracy_criterion=accuracy_criterion):
         self._inputs = inputs
         self._outputs = outputs
         self._backend = backend
@@ -228,9 +240,8 @@ class QuantizationConfig:
         self._reduce_range = reduce_range
         self._use_bf16 = use_bf16
         self._accuracy_criterion = accuracy_criterion
-        self._approach = approach
         self._calibration_sampling_size = calibration_sampling_size
-        
+
     @property
     def accuracy_criterion(self):
         return self._accuracy_criterion
@@ -338,16 +349,6 @@ class QuantizationConfig:
             self._calibration_sampling_size = sampling_size
 
     @property
-    def approach(self):
-        return self._approach
-
-    @approach.setter
-    def approach(self, approach):
-        if check_value('approach', approach, str, ['post_training_static_quant',
-            'post_training_dynamic_quant', 'quant_aware_training']):
-            self._approach = approach
-
-    @property
     def device(self):
         return self._device
 
@@ -362,10 +363,10 @@ class QuantizationConfig:
 
     @backend.setter
     def backend(self, backend):
-        if check_value('backend', backend, str, 
-            ['tensorflow', 'tensorflow_itex', 'pytorch',
-            'pytorch_ipex', 'pytorch_fx', 'onnxrt_qlinearops', 'onnxrt_integerops',
-            'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet']):
+        if check_value('backend', backend, str, [
+                'tensorflow', 'tensorflow_itex', 'pytorch', 'pytorch_ipex', 'pytorch_fx',
+                'onnxrt_qlinearops', 'onnxrt_integerops', 'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet'
+        ]):
             self._backend = backend
 
     @property
@@ -386,9 +387,108 @@ class QuantizationConfig:
         if check_value('inputs', inputs, str):
             self._inputs = inputs
 
+
+class QuantizationConfig(_BaseQuantizationConfig):
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend='NA',
+                 device='cpu',
+                 approach='post_training_static_quant',
+                 calibration_sampling_size=[100],
+                 op_type_list=None,
+                 op_name_list=None,
+                 strategy='basic',
+                 objective='performance',
+                 timeout=0,
+                 max_trials=100,
+                 performance_only=False,
+                 reduce_range=None,
+                 use_bf16=False,
+                 accuracy_criterion=accuracy_criterion):
+        super().__init__(inputs, outputs, backend, device, calibration_sampling_size, op_type_list,
+                         op_name_list, strategy, objective, timeout, max_trials, performance_only,
+                         reduce_range, use_bf16, accuracy_criterion)
+        self._approach = approach
+
+    @property
+    def approach(self):
+        return self._approach
+
+    @approach.setter
+    def approach(self, approach):
+        if check_value(
+            'approach', approach, str,
+            ['post_training_static_quant', 'post_training_dynamic_quant', 'quant_aware_training']
+        ):
+            self._approach = approach
+
+
+class PostTrainingConfig(_BaseQuantizationConfig):
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend='NA',
+                 device='cpu',
+                 approach='post_training_auto_quant',
+                 calibration_sampling_size=[100],
+                 op_type_list=None,
+                 op_name_list=None,
+                 strategy='basic',
+                 objective='performance',
+                 timeout=0,
+                 max_trials=100,
+                 performance_only=False,
+                 reduce_range=None,
+                 use_bf16=False,
+                 accuracy_criterion=accuracy_criterion):
+        super().__init__(inputs, outputs, backend, device, calibration_sampling_size, op_type_list,
+                         op_name_list, strategy, objective, timeout, max_trials, performance_only,
+                         reduce_range, use_bf16, accuracy_criterion)
+        self._approach = approach
+
+    @property
+    def approach(self):
+        return self._approach
+
+    @approach.setter
+    def approach(self, approach):
+        if check_value("approach", approach, str, [
+                "post_training_static_quant", "post_training_dynamic_quant",
+                "post_training_auto_quant"
+        ]):
+            self._approach = approach
+
+
+class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend='NA',
+                 device='cpu',
+                 op_type_list=None,
+                 op_name_list=None,
+                 reduce_range=None,
+                 use_bf16=False):
+        super().__init__(inputs=inputs, outputs=outputs, backend=backend, device=device,
+                         op_type_list=op_type_list, op_name_list=op_name_list,
+                         reduce_range=reduce_range, use_bf16=use_bf16)
+        self._approach = 'quant_aware_training'
+
+    @property
+    def approach(self):
+        return self._approach
+
+    @approach.setter
+    def approach(self, approach):
+        if check_value('approach', approach, str,
+                       ['quant_aware_training']):
+            self._approach = approach
+
+
 class Options:
-    def __init__(self, random_seed=1978, workspace=default_workspace, 
-        resume_from=None, tensorboard=False):
+    def __init__(self, random_seed=1978, workspace=default_workspace,
+                 resume_from=None, tensorboard=False):
         self._random_seed = random_seed
         self._workspace = workspace
         self._resume_from = resume_from
@@ -476,7 +576,7 @@ class WeightConf:
 class ActivationConf(WeightConf):
     def __init__(self, datatype=None, scheme=None, granularity=None, algorithm=None):
         super().__init__(datatype, scheme, granularity, algorithm)
- 
+
 weight = WeightConf()
 activation = ActivationConf()
 
@@ -579,15 +679,17 @@ class PruningConfig:
     def weight_compression(self, weight_compression):
         self._weight_compression = weight_compression
 
+
 class KnowledgeDistillationLossConfig:
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
         self.config = DotDict({
             'KnowledgeDistillationLoss': {
-                'temperature': temperature, 
-                'loss_types': loss_types, 
+                'temperature': temperature,
+                'loss_types': loss_types,
                 'loss_weights': loss_weights
             }
         })
+
 
 class IntermediateLayersKnowledgeDistillationLossConfig:
     def __init__(self, layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False):
@@ -600,12 +702,48 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
             }
         })
 
+
+class SelfKnowledgeDistillationLossConfig:
+    def __init__(self,
+                 layer_mappings=[],
+                 temperature=1.0,
+                 loss_types=[],
+                 loss_weights=[],
+                 add_origin_loss=False):
+        self.config = DotDict({
+            'SelfKnowledgeDistillationLoss': {
+                'layer_mappings': layer_mappings,
+                'temperature': temperature,
+                'loss_types': loss_types,
+                'loss_weights': loss_weights,
+                'add_origin_loss': add_origin_loss,
+            }
+        })
+
+
 criterion = KnowledgeDistillationLossConfig()
 
 class DistillationConfig:
-    def __init__(self, criterion=criterion, optimizer={'SGD':{'learning_rate':0.0001}}):
+    """Config of distillation.
+
+    Args:
+
+        teacher_model (Callable): Teacher model for distillation. Defaults to None.
+        features (optional): Teacher features for distillation, features and teacher_model are alternative.
+                             Defaults to None.
+        criterion (Callable, optional): Distillation loss configure.
+        optimizer (dictionary, optional): Optimizer configure.
+    """
+
+    def __init__(self,
+                 teacher_model,
+                 criterion=criterion,
+                 optimizer={'SGD': {
+                     'learning_rate': 0.0001
+                 }}):
         self._criterion = criterion.config
         self._optimizer = optimizer
+        self._teacher_model = teacher_model
 
     @property
     def criterion(self):
@@ -622,6 +760,15 @@ class DistillationConfig:
     @optimizer.setter
     def optimizer(self, optimizer):
         self._optimizer = optimizer
+
+    @property
+    def teacher_model(self):
+        return self._teacher_model
+
+    @teacher_model.setter
+    def teacher_model(self, teacher_model):
+        self._teacher_model = teacher_model
+
 
 class DyNASConfig:
     def __init__(self, supernet=None, metrics=None, population=50, num_evals=100000,
@@ -668,21 +815,63 @@ class NASConfig:
     def search(self, search):
         self._search = search
 
+
+class MixedPrecisionConfig(PostTrainingConfig):
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 backend='NA',
+                 device='cpu',
+                 op_type_list=None,
+                 op_name_list=None,
+                 strategy='basic',
+                 objective='performance',
+                 timeout=0,
+                 max_trials=100,
+                 performance_only=False,
+                 reduce_range=None,
+                 accuracy_criterion=accuracy_criterion,
+                 precisions=["bf16"]):
+        super().__init__(inputs, outputs, backend, device, op_type_list=op_type_list,
+                         op_name_list=op_name_list, strategy=strategy, objective=objective,
+                         timeout=timeout, max_trials=max_trials, performance_only=performance_only,
+                         reduce_range=reduce_range, accuracy_criterion=accuracy_criterion,
+                         use_bf16=True)
+        self._precisions = precisions if isinstance(precisions, List) else [precisions]
+
+    @property
+    def precisions(self):
+        return self._precisions
+
+    @precisions.setter
+    def precisions(self, precisions):
+        self._precisions = precisions
+
+
 quantization = QuantizationConfig()
 benchmark = BenchmarkConfig()
 options = Options()
 pruning = PruningConfig()
-distillation = DistillationConfig()
+distillation = DistillationConfig(teacher_model=None)
 nas = NASConfig()
 onnxruntime_config = ONNX()
 tensorflow_config = TensorFlow()
 pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
+
 class Config:
-    def __init__(self, quantization=quantization, benchmark=benchmark, options=options,
-        pruning=pruning, distillation=distillation, nas=nas, onnxruntime=onnxruntime_config,
-        tensorflow=tensorflow_config, pytorch=pytorch_config, mxnet=mxnet_config):
+    def __init__(self,
+                 quantization=quantization,
+                 benchmark=benchmark,
+                 options=options,
+                 pruning=pruning,
+                 distillation=distillation,
+                 nas=nas,
+                 onnxruntime=onnxruntime_config,
+                 tensorflow=tensorflow_config,
+                 pytorch=pytorch_config,
+                 mxnet=mxnet_config):
         self._quantization = quantization
         self._benchmark = benchmark
         self._options = options
