@@ -342,12 +342,9 @@ class TransformerLTRunner(Runner):
         Returns:
             `macs`
         """
-
-        #model = self.get_subnet(subnet_cfg)
-        #input_size = (self.batch_size, 3, 224, 224)
-        #macs = get_macs(model=model, input_size=input_size, device=self.device)
+        logger.warning('Transformer LT search space does not currently support MACs metric.')
+        # TODO(macsz) Provide fix for MACs measurement for Transformer LT search space.
         macs = 0
-        #logger.info('Model\'s macs: {}'.format(macs))
         return macs
 
     @torch.no_grad()
