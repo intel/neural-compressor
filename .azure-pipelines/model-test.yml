@@ -1,7 +1,14 @@
 trigger: none
 
 pr:
-  - master
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - neural_compressor
+    exclude:
+      - neural_compressor/ux
 
 pool: MODEL_PERF_TEST
 

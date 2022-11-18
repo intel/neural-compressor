@@ -28,9 +28,6 @@ def get_model_tuning_dict_results():
             for line in f:
                 parse_tuning_line(line, tmp)
         print(tmp)
-        # set model status failed
-        if tmp['fp32_acc'] == 0 or tmp['int8_acc'] == 0:
-            os.system('echo "##vso[task.setvariable variable=' + args.framework + '_' + args.model + '_failed]true"')
 
         tuning_result_dict = {
             "OS": OS,
@@ -90,9 +87,6 @@ def get_model_benchmark_dict_results():
                         if result.get("batch_size"):
                             bs = result.get("batch_size")
 
-        # set model status failed
-        if throughput == 0.0:
-            os.system('echo "##vso[task.setvariable variable=' + args.framework + '_' + args.model + '_failed]true"')
         benchmark_performance_result_dict[precision] = {
             "OS": OS,
             "Platform": PLATFORM,
@@ -139,9 +133,7 @@ def collect_log():
             for line in f:
                 parse_tuning_line(line, tmp)
         print(tmp)
-        # set model status failed
-        if tmp['fp32_acc']==0 or tmp['int8_acc']==0:
-            os.system('echo "##vso[task.setvariable variable='+args.framework+'_'+args.model+'_failed]true"')
+
         results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], URL))
         results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], URL))
         tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['strategy'], str(tmp['tune_time']), str(tmp['tuning_trials']), URL, f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
@@ -160,9 +152,6 @@ def collect_log():
                             throughput += result.get("throughput")
                         if result.get("batch_size"):
                             bs = result.get("batch_size")
-        # set model status failed
-        if throughput==0.0:
-            os.system('echo "##vso[task.setvariable variable='+args.framework+'_'+args.model+'_failed]true"')
         results.append('{};{};{};{};{};{};Inference;Performance;{};{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, precision.upper(), args.model, bs, throughput, URL))
     # write model logs
     f = open(args.output_dir+'/'+args.framework+'_'+args.model+'_summary.log', "a")
@@ -233,7 +222,7 @@ def check_status(precision, precision_upper, check_accuracy = False):
     current_performance = performance_result.get(precision).get("Value")
     refer_performance = refer.get(f"{precision_upper}_Performance")
     print(f"current_performance_data = {current_performance}, refer_performance_data = {refer_performance}")
-    assert abs(current_performance - refer_performance) / refer_performance <= 0.05
+    assert 0.945 <= (current_performance / refer_performance) <= 1.054
 
     if check_accuracy:
         _, accuracy_result = get_model_tuning_dict_results()
