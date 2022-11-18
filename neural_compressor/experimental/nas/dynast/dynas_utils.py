@@ -277,10 +277,6 @@ class OFARunner(Runner):
 
 
 class TransformerLTRunner(Runner):
-    """The OFARunner class manages the sub-network selection from the OFA super-network and
-    the validation measurements of the sub-networks. ResNet50, MobileNetV3 w1.0, and MobileNetV3 w1.2
-    are currently supported. Imagenet is required for these super-networks `imagenet-ilsvrc2012`.
-    """
 
     def __init__(
         self,
@@ -354,7 +350,7 @@ class TransformerLTRunner(Runner):
         warmup_steps: int = None,
         measure_steps: int = None,
     ) -> Tuple[float, float]:
-        """Measure OFA model's latency.
+        """Measure model's latency.
         Args:
             subnet_cfg: sub-network Torch model
         Returns:
@@ -408,7 +404,7 @@ class EvaluationInterface:
             f = open(self.csv_path, "w")
             writer = csv.writer(f)
             result = ['Sub-network', 'Date',
-                      'Latency (ms)', ' MACs', 'Top-1 Acc (%)']
+                      'Latency (ms)', 'MACs', 'Top-1 Acc (%)']
             writer.writerow(result)
             f.close()
 
@@ -600,6 +596,15 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
             return sample, lat, -bleu
         else:
             return sample, macs, -bleu
+
+    def clear_csv(self) -> None:
+        if self.csv_path:
+            f = open(self.csv_path, "w")
+            writer = csv.writer(f)
+            result = ['Sub-network', 'Date',
+                      'Latency (ms)', 'MACs', 'BLEU']
+            writer.writerow(result)
+            f.close()
 
 
 def get_torchvision_model(
