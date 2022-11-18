@@ -3113,7 +3113,15 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             None
         """
 
+        module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
+            if self.is_fused_module(child):
+                for name, _ in child.named_children():
+                    module_prefix = op_name + '.' + name
+                    if module_prefix in module_dict:
+                        module_dict.pop(module_prefix)  # remove sub-modules of fused modules
+
+        for op_name, child in module_dict.items():
             if type(child) in self.white_list \
                and type(child) != torch.nn.Sequential \
                and type(child) != torch.quantization.stubs.DeQuantStub:
