@@ -152,10 +152,11 @@ class DyNAS(NASBase):
         # Start Lightweight Iterative Neural Architecture Search (LINAS)
         num_loops = round(self.num_evals/self.population)
         for loop in range(num_loops):
-            logger.info(
-                '[DyNAS-T] Starting LINAS loop {} of {}.'.format(loop+1, num_loops))
 
-            for individual in latest_population:
+            for i, individual in enumerate(latest_population):
+                logger.info(
+                '[DyNAS-T] Starting eval {} of {} in LINAS loop {} of {}.'.format(
+                    i+1, max(self.population - df.shape[0], 0), loop+1, num_loops))
                 self.validation_interface.eval_subnet(individual)
 
             self.create_acc_predictor()
