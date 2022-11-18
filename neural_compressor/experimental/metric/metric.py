@@ -1399,7 +1399,7 @@ class SquadF1(BaseMetric):
             sample_weight: The sample weight.
         """
         if preds:
-            from .f1 import evaluate
+            from .evaluate_squad import evaluate
             if getattr(self, '_hvd', None) is not None:
                 gathered_preds_list = self._hvd.allgather_object(preds)
                 gathered_labels_list = self._hvd.allgather_object(labels)
@@ -1409,8 +1409,8 @@ class SquadF1(BaseMetric):
                     temp_labels_list += gathered_labels_list[i]
                 preds = temp_preds_list
                 labels = temp_labels_list
-            f1_score = evaluate(labels, preds)
-            self._score_list.append(f1_score)
+            result = evaluate(labels, preds)
+            self._score_list.append(result["f1"])
             
     def reset(self):
          """Reset the score list."""
