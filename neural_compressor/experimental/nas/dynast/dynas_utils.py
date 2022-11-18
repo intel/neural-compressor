@@ -227,7 +227,7 @@ class OFARunner(Runner):
         model = self.get_subnet(subnet_cfg)
         input_size = (self.batch_size, 3, 224, 224)
         macs = get_macs(model=model, input_size=input_size, device=self.device)
-        logger.info('Model\'s macs: {}'.format(macs))
+        logger.info('[DyNAS-T] Model\'s macs: {}'.format(macs))
         return macs
 
     @torch.no_grad()
@@ -254,7 +254,7 @@ class OFARunner(Runner):
             device=self.device,
         )
         logger.info(
-            'Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
+            '[DyNAS-T] Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
 
         return latency_mean, latency_std
 

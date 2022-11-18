@@ -217,7 +217,7 @@ class DyNAS(NASBase):
 
     def create_acc_predictor(self):
         if 'acc' in self.metrics:
-            logger.info('Building Accuracy Predictor')
+            logger.info('[DyNAS-T] Building Accuracy Predictor')
             df = self.supernet_manager.import_csv(self.results_csv_path,
                                                   config='config',
                                                   objective='acc',
@@ -230,7 +230,7 @@ class DyNAS(NASBase):
 
     def create_macs_predictor(self):
         if 'macs' in self.metrics:
-            logger.info('Building MACs Predictor')
+            logger.info('[DyNAS-T] Building MACs Predictor')
             df = self.supernet_manager.import_csv(self.results_csv_path,
                                                   config='config',
                                                   objective='macs',
@@ -243,7 +243,7 @@ class DyNAS(NASBase):
 
     def create_latency_predictor(self):
         if 'lat' in self.metrics:
-            logger.info('Building Latency Predictor')
+            logger.info('[DyNAS-T] Building Latency Predictor')
             df = self.supernet_manager.import_csv(self.results_csv_path,
                                                   config='config',
                                                   objective='lat',

@@ -337,6 +337,7 @@ def compute_bleu(config, dataset_path, checkpoint_path):
                 t.log({'wps': round(wps_meter.avg)})
                 num_sentences += sample['nsentences']
 
+    # TODO(macsz) Try to convert this system call to Python code
     os.system(
         "grep ^H translations_out.txt | cut -f3- | perl -ple 's{(\S)-(\S)}{$1 ##AT##-##AT## $2}g' > sys.txt")
     os.system(
@@ -422,7 +423,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
                 src_tokens=src_tokens_test, src_lengths=src_lengths_test)
 
         encoder_latencies = []
-        logger.info('Measuring encoder for dataset generation...')
+        logger.info('[DyNAS-T] Measuring encoder for dataset generation...')
         for _ in range(args.latiter):
             if args.latgpu:
                 start = time.time()
@@ -443,7 +444,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
         encoder_latencies = encoder_latencies[int(
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
         logger.info(
-            f'Encoder latency for dataset generation: Mean: {np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms')
+            f'[DyNAS-T] Encoder latency for dataset generation: Mean: {np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms')
 
         encoder_out_test_with_beam = model.encoder.reorder_encoder_out(
             encoder_out_test, new_order)
@@ -459,7 +460,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
         decoder_iterations = decoder_iterations_dict['wmt']
         decoder_latencies = []
 
-        logger.info('Measuring decoder for dataset generation...')
+        logger.info('[DyNAS-T] Measuring decoder for dataset generation...')
         for _ in range(args.latiter):
             if args.latgpu:
                 start = time.time()
@@ -483,7 +484,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
 
     logger.info(
-        f'Decoder latency for dataset generation: Mean: {np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms')
+        f'[DyNAS-T] Decoder latency for dataset generation: Mean: {np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms')
 
     lat_mean = np.mean(encoder_latencies)+np.mean(decoder_latencies)
     lat_std = np.std(encoder_latencies)+np.std(decoder_latencies)
