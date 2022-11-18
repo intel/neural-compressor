@@ -118,7 +118,7 @@ class Scorer(object):
                           self.stat.predlen, self.stat.reflen)
 
 
-def get_bleu_score(args, ref, sys):
+def get_bleu_score(args, reference_sentences_fpath, translated_sentences_fpath):
     dict = dictionary.Dictionary()
     order = 4
     sentence_bleu = False
@@ -133,7 +133,7 @@ def get_bleu_score(args, ref, sys):
 
     if sentence_bleu:
         def score(fdsys):
-            with open(ref) as fdref:
+            with open(reference_sentences_fpath) as fdref:
                 scorer = Scorer(dict.pad(), dict.eos(), dict.unk())
                 for i, (sys_tok, ref_tok) in enumerate(zip(readlines(fdsys), readlines(fdref))):
                     scorer.reset(one_init=True)
@@ -142,7 +142,7 @@ def get_bleu_score(args, ref, sys):
                     scorer.add(ref_tok, sys_tok)
     else:
         def score(fdsys):
-            with open(ref) as fdref:
+            with open(reference_sentences_fpath) as fdref:
                 scorer = Scorer(dict.pad(), dict.eos(), dict.unk())
                 for sys_tok, ref_tok in zip(readlines(fdsys), readlines(fdref)):
                     sys_tok = dict.encode_line(sys_tok)
@@ -150,10 +150,10 @@ def get_bleu_score(args, ref, sys):
                     scorer.add(ref_tok, sys_tok)
                 return(scorer.score(order))
 
-    if sys == '-':
+    if translated_sentences_fpath == '-':
         score = score(sys.stdin)
     else:
-        with open(sys, 'r') as f:
+        with open(translated_sentences_fpath, 'r') as f:
             score = score(f)
     logger.debug('Achieved BLEU score: {}'.format(score))
     return score
