@@ -3,25 +3,17 @@ Translate pre-processed data with a trained model.
 """
 import torch
 
-from fairseq import checkpoint_utils, options, progress_bar, tasks, utils
+from fairseq import options, progress_bar, tasks, utils
 from fairseq.meters import StopwatchMeter, TimeMeter
 import sys
-import pdb
 import numpy as np
-import subprocess
 import os
 from fairseq.data import dictionary
-import csv
-import json
 import warnings
 from .transformer_supernetwork import TransformerSuperNetwork
 
 import sys
-import logging
-import tqdm
 import time
-import copy
-from datetime import datetime
 import ctypes
 import math
 warnings.filterwarnings("ignore")

@@ -75,7 +75,7 @@ class DyNAS(NASBase):
             'ofa_resnet50': OFARunner,
             'ofa_mbv3_d234_e346_k357_w1.0': OFARunner,
             'ofa_mbv3_d234_e346_k357_w1.2': OFARunner,
-            'transformer_lt_wmt_en_de': TransformerLTRunner
+            'transformer_lt_wmt_en_de': TransformerLTRunner,
         }
 
         self.EVALUATION_INTERFACE = {'ofa_resnet50': EvaluationInterfaceResNet50,
