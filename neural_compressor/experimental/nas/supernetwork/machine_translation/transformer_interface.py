@@ -195,7 +195,6 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     tgt_dict = task.target_dictionary
 
     # Load ensemble
-    logger.info('Loading model(s) from {}'.format(args.path))
     model = TransformerSuperNetwork(task)
     state = torch.load(checkpoint_path, map_location=torch.device('cpu'))
 
@@ -381,7 +380,6 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
     task.load_dataset(args.gen_subset)
 
     # Load ensemble
-    logger.info('Loading model(s) from {}'.format(args.path))
     model = TransformerSuperNetwork(task)
 
     # specify the length of the dummy input for profile
