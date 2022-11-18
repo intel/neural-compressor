@@ -65,8 +65,8 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                     continue
                 req_input = self._get_node_from_name(pre_input)
                 
-                # the concatv2 with '_QuantizedFusedBatchNorm' as inputs can't be reranged
-                if req_input.op == '_QuantizedFusedBatchNorm':
+                # the concatv2 with these Ops as inputs can't be reranged
+                if req_input.op in ['_QuantizedFusedBatchNorm', '_QuantizedFusedInstanceNorm']:
                     is_quantizable = False
                     break
                 if req_input.op == 'Requantize' or req_input.op == 'RequantizePerChannel' \
