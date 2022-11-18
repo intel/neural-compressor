@@ -7,8 +7,11 @@ pr:
   paths:
     include:
     - neural_compressor
+    - test
     exclude:
     - neural_compressor/ux
+    - test/ux
+    - test/neural_coder
 
 pool: ICX-16C
 
@@ -192,3 +195,11 @@ stages:
           targetPath: $(UPLOAD_PATH)
           artifact: $(ARTIFACT_NAME)
           publishLocation: 'pipeline'
+
+      - task: Bash@3
+        condition: always()
+        inputs:
+          targetType: "inline"
+          script: |
+            docker exec collectLogs bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+        displayName: "Docker clean up"

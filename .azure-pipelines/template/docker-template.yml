@@ -20,7 +20,7 @@ parameters:
 steps:
   - ${{ if eq(parameters.dockerConfigName, 'commonDockerConfig') }}:
       - script: |
-          rm -fr ${BUILD_SOURCESDIRECTORY} || true
+          rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
           echo y | docker system prune
         displayName: "Clean workspace"
 
@@ -30,7 +30,7 @@ steps:
 
   - ${{ if eq(parameters.dockerConfigName, 'gitCloneDockerConfig') }}:
       - script: |
-          rm -fr ${BUILD_SOURCESDIRECTORY} || true
+          rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
           mkdir ${BUILD_SOURCESDIRECTORY}
           chmod 777 ${BUILD_SOURCESDIRECTORY}
         displayName: "Clean workspace"

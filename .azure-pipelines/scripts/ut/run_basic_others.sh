@@ -25,9 +25,7 @@ sed -i '/ tfnewapi\//d' run.sh
 sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
 sed -i '/ ipex\//d' run.sh
-sed -i '/ pruning\//d' run.sh
-sed -i '/ distillation\//d' run.sh
-sed -i '/ nas\//d' run.sh
+sed -i '/ itex\//d' run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

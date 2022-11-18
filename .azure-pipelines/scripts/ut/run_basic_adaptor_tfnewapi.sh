@@ -10,6 +10,10 @@ export tensorflow_version='spr-base'
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
+echo "copy pre-train model..."
+mkdir -p /tmp/.neural_compressor/inc_ut || true
+cp -r /tf_dataset/ut-localfile/resnet_v2 /tmp/.neural_compressor/inc_ut || true
+
 cd /neural-compressor/test || exit 1
 find ./tfnewapi -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
 
