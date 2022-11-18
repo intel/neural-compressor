@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -eo pipefail
 # get parameters
 PATTERN='[-a-zA-Z0-9_]*='
 
@@ -8,17 +8,19 @@ do
     case $i in
         --model=*)
             model=`echo $i | sed "s/${PATTERN}//"`;;
-        --tune_acc=*)
-            tune_acc=`echo $i | sed "s/${PATTERN}//"`;;
-        --build_id=*)
-            build_id=`echo $i | sed "s/${PATTERN}//"`;;
+        --mode=*)
+            mode=`echo $i | sed "s/${PATTERN}//"`;;
+        --USE_TUNE_ACC=*)
+            USE_TUNE_ACC=`echo $i | sed "s/${PATTERN}//"`;;
+        --PERF_STABLE_CHECK=*)
+            PERF_STABLE_CHECK=`echo $i | sed "s/${PATTERN}//"`;;
         *)
             echo "Parameter $i not recognized."; exit 1;;
     esac
 done
 
 FRAMEWORK="mxnet"
-FRAMEWORK_VERSION="1.7.0"
+FRAMEWORK_VERSION="1.9.1"
 
 
 # ======== set up config for mxnet models ========
@@ -35,7 +37,19 @@ if [ "${model}" == "resnet50v1" ]; then
 fi
 
 
-/bin/bash run_model_trigger_common.sh --yaml=${yaml} --framework=${FRAMEWORK} --fwk_ver=${FRAMEWORK_VERSION} \
---model=${model} --model_src_dir=${model_src_dir} --dataset_location=${dataset_location} \
---input_model=${input_model} --batch_size=${batch_size} --strategy=${strategy} --new_benchmark=${new_benchmark} \
---tuning_cmd="${tuning_cmd}" --benchmark_cmd="${benchmark_cmd}" --tune_acc=${tune_acc} --build_id=${build_id}
+/bin/bash run_model_trigger_common.sh \
+    --yaml=${yaml} \
+    --framework=${FRAMEWORK} \
+    --fwk_ver=${FRAMEWORK_VERSION} \
+    --model=${model} \
+    --model_src_dir=${model_src_dir} \
+    --dataset_location=${dataset_location} \
+    --input_model=${input_model} \
+    --batch_size=${batch_size} \
+    --strategy=${strategy} \
+    --new_benchmark=${new_benchmark} \
+    --tuning_cmd="${tuning_cmd}" \
+    --benchmark_cmd="${benchmark_cmd}" \
+    --mode=${mode} \
+    --USE_TUNE_ACC=${USE_TUNE_ACC} \
+    --PERF_STABLE_CHECK=${PERF_STABLE_CHECK}

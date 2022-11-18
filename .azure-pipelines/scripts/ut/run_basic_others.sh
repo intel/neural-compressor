@@ -1,15 +1,15 @@
 #!/bin/bash
 set -x
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-echo "run basic"
+echo "run basic others"
 
 echo "specify fwk version..."
-export tensorflow_version='2.9.1'
+export tensorflow_version='2.10.0'
 export pytorch_version='1.12.0+cpu'
 export torchvision_version='0.13.0+cpu'
-export onnx_version='1.11.0'
-export onnxruntime_version='1.11.0'
-export mxnet_version='1.7.0'
+export onnx_version='1.12.0'
+export onnxruntime_version='1.13.1'
+export mxnet_version='1.9.1'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
@@ -25,9 +25,7 @@ sed -i '/ tfnewapi\//d' run.sh
 sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
 sed -i '/ ipex\//d' run.sh
-sed -i '/ pruning\//d' run.sh
-sed -i '/ distillation\//d' run.sh
-sed -i '/ nas\//d' run.sh
+sed -i '/ itex\//d' run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

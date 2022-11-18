@@ -7,8 +7,11 @@ pr:
   paths:
     include:
     - neural_compressor
+    - test
     exclude:
     - neural_compressor/ux
+    - test/ux
+    - test/neural_coder
 
 pool: ICX-16C
 
@@ -60,6 +63,19 @@ stages:
           utScriptFileName: 'run_basic_ipex'
           uploadPath: $(UPLOAD_PATH)
           utArtifact: 'ut-coverage-ipex'
+
+- stage: ITEX
+  displayName: Unit Test ITEX
+  dependsOn: []
+  jobs:
+    - job:
+      steps:
+        - template: template/ut-basic-template.yml
+          parameters:
+            dockerConfigName: 'commonDockerConfig'
+            utScriptFileName: 'run_basic_itex'
+            uploadPath: $(UPLOAD_PATH)
+            utArtifact: 'ut-coverage-itex'
 
 - stage: Others
   displayName: Unit Test other basic case
@@ -115,6 +131,20 @@ stages:
           uploadPath: $(UPLOAD_PATH)
           utArtifact: 'ut-coverage-ipex-base' 
           repo: $(REPO)
+
+- stage: ITEX_base
+  displayName: Unit Test ITEX baseline
+  dependsOn: []
+  jobs:
+    - job:
+      steps:
+        - template: template/ut-basic-template.yml
+          parameters:
+            dockerConfigName: 'gitCloneDockerConfig'
+            utScriptFileName: 'run_basic_itex'
+            uploadPath: $(UPLOAD_PATH)
+            utArtifact: 'ut-coverage-itex-base'
+            repo: $(REPO)
   
 - stage: Others_base
   displayName: Unit Test other cases baseline
@@ -165,3 +195,11 @@ stages:
           targetPath: $(UPLOAD_PATH)
           artifact: $(ARTIFACT_NAME)
           publishLocation: 'pipeline'
+
+      - task: Bash@3
+        condition: always()
+        inputs:
+          targetType: "inline"
+          script: |
+            docker exec collectLogs bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+        displayName: "Docker clean up"

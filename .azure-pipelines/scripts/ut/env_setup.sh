@@ -20,6 +20,10 @@ elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
 fi
 
+if [[ "${itex_version}" != "" ]]; then
+    pip install --upgrade intel-extension-for-tensorflow[cpu]==${itex_version}
+fi
+
 if [[ "${pytorch_version}" != "" ]]; then
     pip install torch==${pytorch_version} -f https://download.pytorch.org/whl/torch_stable.html
 fi

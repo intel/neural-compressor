@@ -24,52 +24,24 @@ while [[ $# -gt 0 ]];do
   key=${1}
   case ${key} in
     -w|--WORKSPACE)
-      WORKSPACE=${2}
-      shift 2
-      ;;
+        WORKSPACE=${2}
+        shift 2
+        ;;
     --script_path)
-      script_path=${2}
-      shift 2
-      ;;
+        script_path=${2}
+        shift 2
+        ;;
     --output_dir)
-      output_dir=${2}
-      shift 2
-      ;;
+        output_dir=${2}
+        shift 2
+        ;;
     --last_logt_dir)
-      last_logt_dir=${2}
-      shift 2
-      ;;
-    --ghprbPullId)
-      ghprbPullId=${2}
-      shift 2
-      ;;
-    --MR_source_branch)
-      MR_source_branch=${2}
-      shift 2
-      ;;
-    --MR_source_repo)
-      MR_source_repo=${2}
-      shift 2
-      ;;
-    --MR_target_branch)
-      MR_target_branch=${2}
-      shift 2
-      ;;
-    --repo_url)
-      repo_url=${2}
-      shift 2
-      ;;
-    --source_commit_id)
-      source_commit_id=${2}
-      shift 2
-      ;;
-    --build_id)
-      build_id=${2}
-      shift 2
-      ;;
+        last_logt_dir=${2}
+        shift 2
+        ;;
     *)
-      shift
-      ;;
+        shift
+        ;;
   esac
 done
 
@@ -86,11 +58,19 @@ summaryLogLast="${last_logt_dir}/summary.log"
 tuneLogLast="${last_logt_dir}/tuning_info.log"
 echo "summaryLogLast: ${summaryLogLast}"
 echo "tuneLogLast: ${tuneLogLast}"
+ghprbPullId=${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER}
+MR_source_branch=${SYSTEM_PULLREQUEST_SOURCEBRANCH}
+MR_source_repo=${SYSTEM_PULLREQUEST_SOURCEREPOSITORYURI}
+MR_target_branch=${SYSTEM_PULLREQUEST_TARGETBRANCH}
+repo_url=${BUILD_REPOSITORY_URI}
+source_commit_id=${BUILD_SOURCEVERSION}
+build_id=${BUILD_BUILDID}
 echo "MR_source_branch: ${MR_source_branch}"
 echo "MR_source_repo: ${MR_source_repo}"
 echo "MR_target_branch: ${MR_target_branch}"
 echo "repo_url: ${repo_url}"
 echo "commit_id: ${source_commit_id}"
+echo "ghprbPullId: ${ghprbPullId}"
 
 
 function main {
@@ -98,7 +78,6 @@ function main {
     generate_html_body
     generate_results
     generate_html_footer
-
 }
 
 function generate_inference {
@@ -205,33 +184,33 @@ function generate_html_core {
                 if(metric == "acc") {
                     target = (int8_result - fp32_result) / fp32_result;
                     if(target >= -0.01) {
-                       printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f %</td>", target*100);
+                        printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f %</td>", target*100);
                     }else if(target < -0.05) {
-                       printf("<td rowspan=3 style=\"background-color:#FFD2D2\">%.2f %</td>", target*100);
-                       job_status = "fail"
+                        printf("<td rowspan=3 style=\"background-color:#FFD2D2\">%.2f %</td>", target*100);
+                        job_status = "fail"
                     }else{
-                       printf("<td rowspan=3>%.2f %</td>", target*100);
+                        printf("<td rowspan=3>%.2f %</td>", target*100);
                     }
                 }else if(metric == "perf") {
                     target = int8_result / fp32_result;
                     if(target >= 1.5) {
-                       printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f</td>", target);
+                        printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f</td>", target);
                     }else if(target < 1) {
-                       printf("<td  rowspan=3 style=\"background-color:#FFD2D2\">%.2f</td>", target);
-                       job_status = "fail"
+                        printf("<td  rowspan=3 style=\"background-color:#FFD2D2\">%.2f</td>", target);
+                        job_status = "fail"
                     }else{
-                       printf("<td rowspan=3>%.2f</td>", target);
+                        printf("<td rowspan=3>%.2f</td>", target);
                     }
                 }
                 else {
                     target = int8_result / fp32_result;
                     if(target >= 2) {
-                       printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f</td>", target);
+                        printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f</td>", target);
                     }else if(target < 1) {
-                       printf("<td rowspan=3 style=\"background-color:#FFD2D2\">%.2f</td>", target);
-                       job_status = "fail"
+                        printf("<td rowspan=3 style=\"background-color:#FFD2D2\">%.2f</td>", target);
+                        job_status = "fail"
                     }else{
-                       printf("<td rowspan=3>%.2f</td>", target);
+                        printf("<td rowspan=3>%.2f</td>", target);
                     }
                 }
             }else {
@@ -263,14 +242,14 @@ function generate_html_core {
                 }
             } else {
               if(new_result == nan && previous_result == nan){
-                printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
+                    printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
               } else{
                   if(new_result == nan) {
-                    job_status = "fail"
-                    status_png = "background-color:#FFD2D2";
-                    printf("<td style=\"%s\" colspan=2></td>", status_png);
+                        job_status = "fail"
+                        status_png = "background-color:#FFD2D2";
+                        printf("<td style=\"%s\" colspan=2></td>", status_png);
                   } else{
-                    printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
+                        printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
                   }
               }
             }
@@ -367,7 +346,7 @@ function generate_html_core {
             printf("</tr>\n");
 
         } END{
-          printf("\n%s", job_status);
+            printf("\n%s", job_status);
         }
     ' >> ${output_dir}/report.html
     job_state=$(tail -1 ${WORKSPACE}/report.html)
@@ -426,14 +405,14 @@ Test_Info=''
 
 if [ "${qtools_branch}" == "" ];
 then
-  commit_id=$(echo ${ghprbActualCommit} |awk '{print substr($1,1,7)}')
+    commit_id=$(echo ${ghprbActualCommit} |awk '{print substr($1,1,7)}')
 
-  MR_TITLE="[ <a href='${repo_url}/pull/${ghprbPullId}'>PR-${ghprbPullId}</a> ]"
-  Test_Info_Title="<th colspan="2">Source Branch</th> <th colspan="4">Target Branch</th> <th colspan="4">Commit</th> "
-  Test_Info="<td colspan="2"><a href='${MR_source_repo}/tree/${MR_source_branch}'>${MR_source_branch}</a></td> <td colspan="4"><a href='${repo_url}/tree/${MR_target_branch}'>${MR_target_branch}</a></td> <td colspan="4"><a href='${MR_source_repo}/commit/${source_commit_id}'>${source_commit_id:0:6}</a></td>"
+    MR_TITLE="[ <a href='${repo_url}/pull/${ghprbPullId}'>PR-${ghprbPullId}</a> ]"
+    Test_Info_Title="<th colspan="2">Source Branch</th> <th colspan="4">Target Branch</th> <th colspan="4">Commit</th> "
+    Test_Info="<td colspan="2">${MR_source_branch}</td> <td colspan="4"><a href='${repo_url}/tree/${MR_target_branch}'>${MR_target_branch}</a></td> <td colspan="4"><a href='${MR_source_repo}/commit/${source_commit_id}'>${source_commit_id:0:6}</a></td>"
 else
-  Test_Info_Title="<th colspan="4">Test Branch</th> <th colspan="4">Commit ID</th> "
-  Test_Info="<th colspan="4">${qtools_branch}</th> <th colspan="4">${qtools_commit}</th> "
+    Test_Info_Title="<th colspan="4">Test Branch</th> <th colspan="4">Commit ID</th> "
+    Test_Info="<th colspan="4">${qtools_branch}</th> <th colspan="4">${qtools_commit}</th> "
 fi
 
 cat >> ${output_dir}/report.html << eof
@@ -441,18 +420,20 @@ cat >> ${output_dir}/report.html << eof
 <body>
     <div id="main">
         <h1 align="center">Neural Compressor Tuning Tests ${MR_TITLE}
-        [ <a href="https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId=${build_id}">Job-${build_id}</a> ]</h1>
-      <h1 align="center">Test Status: ${Jenkins_job_status}</h1>
+            [ <a
+                href="https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId=${build_id}">Job-${build_id}</a>
+            ]</h1>
+        <h1 align="center">Test Status: ${Jenkins_job_status}</h1>
         <h2>Summary</h2>
         <table class="features-table">
             <tr>
-              <th>Repo</th>
-              ${Test_Info_Title}
-              </tr>
-              <tr>
-                    <td><a href="https://github.com/intel/neural-compressor">neural-compressor</a></td>
-              ${Test_Info}
-                </tr>
+                <th>Repo</th>
+                ${Test_Info_Title}
+            </tr>
+            <tr>
+                <td><a href="https://github.com/intel/neural-compressor">neural-compressor</a></td>
+                ${Test_Info}
+            </tr>
         </table>
 eof
 
@@ -537,68 +518,68 @@ cat > ${output_dir}/report.html << eof
         }
         .features-table
         {
-          width: 100%;
-          margin: 0 auto;
-          border-collapse: separate;
-          border-spacing: 0;
-          text-shadow: 0 1px 0 #fff;
-          color: #2a2a2a;
-          background: #fafafa;
-          background-image: -moz-linear-gradient(top, #fff, #eaeaea, #fff); /* Firefox 3.6 */
-          background-image: -webkit-gradient(linear,center bottom,center top,from(#fff),color-stop(0.5, #eaeaea),to(#fff));
-          font-family: Verdana,Arial,Helvetica
+            width: 100%;
+            margin: 0 auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-shadow: 0 1px 0 #fff;
+            color: #2a2a2a;
+            background: #fafafa;
+            background-image: -moz-linear-gradient(top, #fff, #eaeaea, #fff); /* Firefox 3.6 */
+            background-image: -webkit-gradient(linear,center bottom,center top,from(#fff),color-stop(0.5, #eaeaea),to(#fff));
+            font-family: Verdana,Arial,Helvetica
         }
         .features-table th,td
         {
-          text-align: center;
-          height: 25px;
-          line-height: 25px;
-          padding: 0 8px;
-          border: 1px solid #cdcdcd;
-          box-shadow: 0 1px 0 white;
-          -moz-box-shadow: 0 1px 0 white;
-          -webkit-box-shadow: 0 1px 0 white;
-          white-space: nowrap;
+            text-align: center;
+            height: 25px;
+            line-height: 25px;
+            padding: 0 8px;
+            border: 1px solid #cdcdcd;
+            box-shadow: 0 1px 0 white;
+            -moz-box-shadow: 0 1px 0 white;
+            -webkit-box-shadow: 0 1px 0 white;
+            white-space: nowrap;
         }
         .no-border th
         {
-          box-shadow: none;
-          -moz-box-shadow: none;
-          -webkit-box-shadow: none;
+            box-shadow: none;
+            -moz-box-shadow: none;
+            -webkit-box-shadow: none;
         }
         .col-cell
         {
-          text-align: center;
-          width: 150px;
-          font: normal 1em Verdana, Arial, Helvetica;
+            text-align: center;
+            width: 150px;
+            font: normal 1em Verdana, Arial, Helvetica;
         }
         .col-cell3
         {
-          background: #efefef;
-          background: rgba(144,144,144,0.15);
+            background: #efefef;
+            background: rgba(144,144,144,0.15);
         }
         .col-cell1, .col-cell2
         {
-          background: #B0C4DE;
-          background: rgba(176,196,222,0.3);
+            background: #B0C4DE;
+            background: rgba(176,196,222,0.3);
         }
         .col-cellh
         {
-          font: bold 1.3em 'trebuchet MS', 'Lucida Sans', Arial;
-          -moz-border-radius-topright: 10px;
-          -moz-border-radius-topleft: 10px;
-          border-top-right-radius: 10px;
-          border-top-left-radius: 10px;
-          border-top: 1px solid #eaeaea !important;
+            font: bold 1.3em 'trebuchet MS', 'Lucida Sans', Arial;
+            -moz-border-radius-topright: 10px;
+            -moz-border-radius-topleft: 10px;
+            border-top-right-radius: 10px;
+            border-top-left-radius: 10px;
+            border-top: 1px solid #eaeaea !important;
         }
         .col-cellf
         {
-          font: bold 1.4em Georgia;
-          -moz-border-radius-bottomright: 10px;
-          -moz-border-radius-bottomleft: 10px;
-          border-bottom-right-radius: 10px;
-          border-bottom-left-radius: 10px;
-          border-bottom: 1px solid #dadada !important;
+            font: bold 1.4em Georgia;
+            -moz-border-radius-bottomright: 10px;
+            -moz-border-radius-bottomleft: 10px;
+            border-bottom-right-radius: 10px;
+            border-bottom-left-radius: 10px;
+            border-bottom: 1px solid #dadada !important;
         }
     </style>
 </head>

@@ -1,8 +1,6 @@
-import re
-import os
-import platform
 import argparse
-
+import os
+import re
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--framework", type=str, required=True)
@@ -11,6 +9,7 @@ parser.add_argument("--model", type=str, required=True)
 parser.add_argument("--logs_dir", type=str, default=".")
 parser.add_argument("--output_dir", type=str, default=".")
 parser.add_argument("--build_id", type=str, default="3117")
+parser.add_argument("--stage", type=str, default="collect_log")
 args = parser.parse_args()
 print('===== collecting log model =======')
 print('build_id: '+args.build_id)
@@ -18,13 +17,119 @@ OS='linux'
 PLATFORM='icx'
 URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
 
-print(args)
+
+def get_model_tuning_dict_results():
+    tuning_result_dict = {}
+
+    if os.path.exists(tuning_log):
+        print('tuning log found')
+        tmp = {'fp32_acc': 0, 'int8_acc': 0, 'tuning_trials': 0}
+        with open(tuning_log, "r") as f:
+            for line in f:
+                parse_tuning_line(line, tmp)
+        print(tmp)
+        # set model status failed
+        if tmp['fp32_acc'] == 0 or tmp['int8_acc'] == 0:
+            os.system('echo "##vso[task.setvariable variable=' + args.framework + '_' + args.model + '_failed]true"')
+
+        tuning_result_dict = {
+            "OS": OS,
+            "Platform": PLATFORM,
+            "Framework": args.framework,
+            "Version": args.fwk_ver,
+            "Model": args.model,
+            "Strategy": tmp['strategy'],
+            "Tune_time": tmp['tune_time'],
+        }
+        benchmark_accuracy_result_dict = {
+            'int8': {
+                "OS": OS,
+                "Platform": PLATFORM,
+                "Framework": args.framework,
+                "Version": args.fwk_ver,
+                "Model": args.model,
+                "Mode": "Inference",
+                "Type": "Accuracy",
+                "BS": 1,
+                "Value": tmp['int8_acc'],
+                "Url": URL,
+            },
+            'fp32': {
+                "OS": OS,
+                "Platform": PLATFORM,
+                "Framework": args.framework,
+                "Version": args.fwk_ver,
+                "Model": args.model,
+                "Mode": "Inference",
+                "Type": "Accuracy",
+                "BS": 1,
+                "Value": tmp['fp32_acc'],
+                "Url": URL,
+            }
+        }
+
+        return tuning_result_dict, benchmark_accuracy_result_dict
+    else:
+        return {}, {}
 
 
-def main():
+def get_model_benchmark_dict_results():
+    benchmark_performance_result_dict = {"int8": {}, "fp32": {}}
+    for precision in ["int8", "fp32"]:
+        throughput = 0.0
+        bs = 1
+        for root, dirs, files in os.walk(args.logs_dir):
+            for name in files:
+                file_name = os.path.join(root, name)
+                print(file_name)
+                if "performance-" + precision in name:
+                    for line in open(file_name, "r"):
+                        result = parse_perf_line(line)
+                        if result.get("throughput"):
+                            throughput += result.get("throughput")
+                        if result.get("batch_size"):
+                            bs = result.get("batch_size")
+
+        # set model status failed
+        if throughput == 0.0:
+            os.system('echo "##vso[task.setvariable variable=' + args.framework + '_' + args.model + '_failed]true"')
+        benchmark_performance_result_dict[precision] = {
+            "OS": OS,
+            "Platform": PLATFORM,
+            "Framework": args.framework,
+            "Version": args.fwk_ver,
+            "Model": args.model,
+            "Mode": "Inference",
+            "Type": "Performance",
+            "BS": 1,
+            "Value": throughput,
+            "Url": URL,
+        }
+
+    return benchmark_performance_result_dict
+
+
+def get_refer_data():
+    refer_log = os.path.join(f"{args.logs_dir}_refer_log", f"{args.framework}_{args.model}_summary.log")
+    result = {}
+    if os.path.exists(refer_log):
+        with open(refer_log, "r") as f:
+            lines = f.readlines()
+            keys = lines[0].split(";")
+            values = [lines[i].split(";") for i in range(1, len(lines))]
+        for value in values:
+            precision = value[keys.index("Precision")]
+            Type = value[keys.index("Type")]
+            result[f"{precision}_{Type}"] = float(value[keys.index("Value")])
+        return result
+    else:
+        print(f"refer log file: {refer_log} not found")
+        return 0
+
+
+def collect_log():
     results = []
     tuning_infos = []
-    tuning_log = os.path.join(args.logs_dir, f"{args.framework}-{args.model}-tune.log")
     print("tuning log dir is {}".format(tuning_log))
     # get model tuning results
     if os.path.exists(tuning_log):
@@ -123,5 +228,32 @@ def parse_perf_line(line) -> float:
     return perf_data
 
 
+def check_status(precision, precision_upper, check_accuracy = False):
+    performance_result = get_model_benchmark_dict_results()
+    current_performance = performance_result.get(precision).get("Value")
+    refer_performance = refer.get(f"{precision_upper}_Performance")
+    print(f"current_performance_data = {current_performance}, refer_performance_data = {refer_performance}")
+    assert abs(current_performance - refer_performance) / refer_performance <= 0.05
+
+    if check_accuracy:
+        _, accuracy_result = get_model_tuning_dict_results()
+        current_accuracy = accuracy_result.get(precision).get("Value")
+        refer_accuracy = refer.get(f"{precision_upper}_Accuracy")
+        print(f"current_accuracy_data = {current_accuracy}, refer_accuarcy_data = {refer_accuracy}")
+        assert abs(current_accuracy - refer_accuracy) / refer_accuracy <= 0.05
+
+
 if __name__ == '__main__':
-    main()
+    tuning_log = os.path.join(args.logs_dir, f"{args.framework}-{args.model}-tune.log")
+    refer = get_refer_data()
+
+    if args.stage == "collect_log":
+        collect_log()
+    elif args.stage == "int8_benchmark" and refer:
+        check_status("int8", "INT8")
+    elif args.stage == "fp32_benchmark" and refer:
+        check_status("fp32", "FP32")
+    elif not refer:
+        print("skip check status")
+    else:
+        raise ValueError(f"{args.stage} does not exist")
