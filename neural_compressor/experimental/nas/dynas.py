@@ -152,7 +152,7 @@ class DyNAS(NASBase):
             for i, individual in enumerate(latest_population):
                 logger.info(
                 '[DyNAS-T] Starting eval {} of {} in LINAS loop {} of {}.'.format(
-                    i+1, max(self.population - df.shape[0], 0), loop+1, num_loops))
+                    i+1, len(latest_population), loop+1, num_loops))
                 self.validation_interface.eval_subnet(individual)
 
             self.create_acc_predictor()
