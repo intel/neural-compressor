@@ -96,19 +96,20 @@ class HessianTrace:
             cnt += batch_size
             gradients = self.get_gradients(self.model, batch, self.criterion, create_graph=True)
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
-            H_v = [pre + cur * float(batch_size) + 0.0 for cur, pre in zip(H_v_one, H_v)]
+            H_v = [pre + cur * float(batch_size)  for cur, pre in zip(H_v_one, H_v)]
             if step == num_batches - 1:
                 break
         if cnt > 0:
             H_v = [item / cnt for item in H_v]
-        v_t_H_v = [torch.sum(h_v * v_t) / h_v.size().numel() for (h_v, v_t) in zip(H_v, v)]
+        v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])##maybe sum is better
         return v_t_H_v
 
 
-    def get_avg_trace(self, num_batches=2):
+
+    def get_avg_traces(self, num_batches=2):
         """
-                Estimates average hessian trace for each parameter
-                """
+        Estimates average hessian trace for each parameter
+        """
         assert num_batches > 0
         ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
         ##num_all_data = num_data_iter * self.dataloader.batch_size
@@ -119,8 +120,21 @@ class HessianTrace:
 
         params = [p for p in self.model.parameters() if p.requires_grad]
 
+        layer_traces_per_iter = []
+        prev_avg_model_trace = 0
         for i in range(self.max_iter):
-            trace_estimated = self.hutchinson_one_step(params, num_batches)
+            layer_traces = self.hutchinson_one_step(params, num_batches)
+            layer_traces_per_iter.append(layer_traces)
+            layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
+            model_trace = torch.sum(layer_traces_estimate)
+            diff_ratio = abs(model_trace-prev_avg_model_trace)/(prev_avg_model_trace+self.eps)
+            if diff_ratio < self.tolerance and i > 10:##TODO magic number
+                break
+            prev_avg_model_trace = model_trace
+
+        layer_traces = layer_traces_estimate
+        return layer_traces
+
 
 
         tmp = 1
@@ -339,7 +353,7 @@ class HawqTuneStrategy(TuneStrategy):
             orig_eval = False
         self._fp32_model.train()
         ht = HessianTrace(self._fp32_model, self.cfg, self.adaptor, weight_to_op.keys(), self.calib_dataloader)
-        ht.get_avg_trace()
+        ht.get_avg_traces()
         if orig_eval:
             self._fp32_model.eval()
 
