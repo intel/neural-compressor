@@ -222,7 +222,7 @@ def check_status(precision, precision_upper, check_accuracy = False):
     current_performance = performance_result.get(precision).get("Value")
     refer_performance = refer.get(f"{precision_upper}_Performance")
     print(f"current_performance_data = {current_performance}, refer_performance_data = {refer_performance}")
-    assert 0.945 <= (current_performance / refer_performance) <= 1.054
+    assert 0.95 <= (current_performance / refer_performance) <= 1.05
 
     if check_accuracy:
         _, accuracy_result = get_model_tuning_dict_results()
