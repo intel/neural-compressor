@@ -102,7 +102,7 @@ class HessianTrace:
         for n, p in model.named_parameters():
             if p.grad != None:
                 gradient = p.grad
-                gradients.append(gradient + 0.0)  ## add 0 to create a copy
+                gradients.append(gradient + 0.0) ## add 0 to create a copy
         model.zero_grad()
         return gradients
 
@@ -125,7 +125,7 @@ class HessianTrace:
         for step, data in enumerate(self.dataloader):
             batch_size = data[0].shape[0]
             cnt += batch_size
-            gradients = self.get_gradients(self.model, data, self.criterion, create_graph=True,enable_act=enable_act)
+            gradients = self.get_gradients(self.model, data, self.criterion, create_graph=True, enable_act=enable_act)
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
             H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
             if step == num_batches - 1:
@@ -135,16 +135,16 @@ class HessianTrace:
         v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
         return v_t_H_v
 
-
     def backward_hook(self, name):
         def grad_hook(model, grad_input, grad_output):
             self.layer_acts_grads[name] = [grad_input, grad_output]
+
         return grad_hook
 
     def forward_hook(self, name):
         def enable_input_grad_hook(model, inputs, outputs):
             try:
-                input = inputs[0]##TODO check whether this is right
+                input = inputs[0]  ##TODO check whether this is right
             except:
                 input = inputs
 
@@ -167,7 +167,7 @@ class HessianTrace:
         for handel in self.hook_handlers:
             handel.remove()
 
-    def get_avg_traces(self, enable_act=True, num_batches=2):
+    def get_avg_traces(self, enable_act=False, num_batches=2):
         """
         Estimates average hessian trace for each parameter
         """
@@ -186,7 +186,7 @@ class HessianTrace:
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for i in range(self.max_iter):
-            layer_traces = self.hutchinson_one_step(params, enable_act, num_batches )
+            layer_traces = self.hutchinson_one_step(params, enable_act, num_batches)
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
