@@ -28,7 +28,7 @@ from fvcore.nn import FlopCountAnalysis
 from neural_compressor.experimental.nas.dynast.dynas_manager import \
     ParameterManager
 from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
-from neural_compressor.experimental.nas.supernetwork.machine_translation.transformer_interface import (
+from neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface import (
     compute_bleu, compute_latency)
 from neural_compressor.utils.utility import LazyImport, logger
 from ofa.imagenet_classification.data_providers.imagenet import \

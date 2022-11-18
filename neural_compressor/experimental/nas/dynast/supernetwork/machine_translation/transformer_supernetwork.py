@@ -90,7 +90,7 @@ class TransformerSuperNetwork(BaseFairseqModel):
         return sum(numels)
 
     def set_sample_config(self, config):
-        logger.debug('Setting active configuration to {}'.format(config))
+        logger.info('[DyNAS-T] Setting active configuration to {}'.format(config))
         self.encoder.set_sample_config(config)
         self.decoder.set_sample_config(config)
 

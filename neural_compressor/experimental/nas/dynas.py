@@ -112,10 +112,6 @@ class DyNAS(NASBase):
         self.supernet_manager = self.SUPERNET_ENCODING[self.supernet](
             param_dict=self.SUPERNET_PARAMETERS[self.supernet], seed=self.seed
         )
-        # self.supernet_manager = self.ParameterManager(
-        #    param_dict=self.SUPERNET_PARAMETERS[self.supernet],
-        #    seed=self.seed
-        # )
 
         # Validation High-Fidelity Measurement Runner
         self.runner_validate = self.RUNNERS[self.supernet](
