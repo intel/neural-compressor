@@ -17,6 +17,7 @@ from fairseq.meters import StopwatchMeter, TimeMeter
 from neural_compressor.utils import logger
 
 from .transformer_supernetwork import TransformerSuperNetwork
+from fvcore.nn import FlopCountAnalysis
 
 warnings.filterwarnings("ignore")
 
@@ -489,3 +490,63 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
     lat_mean = np.mean(encoder_latencies)+np.mean(decoder_latencies)
     lat_std = np.std(encoder_latencies)+np.std(decoder_latencies)
     return lat_mean, lat_std
+
+
+def compute_macs(config,dataset_path):
+    parser = options.get_generation_parser()
+
+    args = options.parse_args_and_arch(parser,[dataset_path])
+
+    args.data = dataset_path
+    args.beam = 5
+    args.remove_bpe = '@@ '
+    args.gen_subset = 'test'
+    args.lenpen = 0.6
+    args.source_lang = 'en'
+    args.target_lang = 'de'
+    args.batch_size = 128
+    utils.import_user_module(args)
+    max_tokens = 12000
+    args.latgpu=False
+    args.latcpu=True
+    args.latiter=100
+
+    # Initialize CUDA and distributed training
+    if torch.cuda.is_available() and not args.cpu:
+        torch.cuda.set_device(args.device_id)
+    torch.manual_seed(args.seed)
+
+    #Optimize ensemble for generation
+    # Load dataset splits
+    task = tasks.setup_task(args)
+    task.load_dataset(args.gen_subset)
+    # Set dictionaries
+    try:
+        src_dict = getattr(task, 'source_dictionary', None)
+    except NotImplementedError:
+        src_dict = None
+    tgt_dict = task.target_dictionary
+
+    # Load model
+    print('| loading model(s) from {}'.format(args.path))
+    model = TransformerSuperNetwork(task)
+
+    # specify the length of the dummy input for profile
+    # for iwslt, the average length is 23, for wmt, that is 30
+    dummy_sentence_length_dict = {'iwslt': 23, 'wmt': 30}
+
+    dummy_sentence_length = dummy_sentence_length_dict['wmt']
+
+
+    dummy_src_tokens = [2] + [7] * (dummy_sentence_length - 1)
+    dummy_prev = [7] * (dummy_sentence_length - 1) + [2]
+
+    model.set_sample_config(config)
+
+    model.profile(mode=True)
+    macs = FlopCountAnalysis(model, (torch.tensor([dummy_src_tokens], dtype=torch.long),
+                           torch.tensor([30]), torch.tensor([dummy_prev], dtype=torch.long)))
+    macs_tot =  macs.total()
+    model.profile(mode=False)
+
+    return macs_tot

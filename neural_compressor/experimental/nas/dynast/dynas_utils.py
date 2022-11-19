@@ -29,7 +29,7 @@ from neural_compressor.experimental.nas.dynast.dynas_manager import \
     ParameterManager
 from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
 from neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface import (
-    compute_bleu, compute_latency)
+    compute_bleu, compute_latency, compute_macs)
 from neural_compressor.utils.utility import LazyImport, logger
 from ofa.imagenet_classification.data_providers.imagenet import \
     ImagenetDataProvider
@@ -338,9 +338,10 @@ class TransformerLTRunner(Runner):
         Returns:
             `macs`
         """
-        logger.warning('Transformer LT search space does not currently support MACs metric.')
-        # TODO(macsz) Provide fix for MACs measurement for Transformer LT search space.
-        macs = 0
+        
+        macs = compute_macs(subnet_cfg, self.dataset_path)
+        logger.info('[DyNAS-T] Model\'s macs: {}'.format(macs))
+
         return macs
 
     @torch.no_grad()
@@ -360,7 +361,7 @@ class TransformerLTRunner(Runner):
         latency_mean, latency_std = compute_latency(
             subnet_cfg, self.dataset_path)
         logger.info(
-            'Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
+            '[DyNAS-T] Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
 
         return latency_mean, latency_std
 

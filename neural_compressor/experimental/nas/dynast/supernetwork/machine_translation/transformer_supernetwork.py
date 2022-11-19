@@ -94,6 +94,11 @@ class TransformerSuperNetwork(BaseFairseqModel):
         self.encoder.set_sample_config(config)
         self.decoder.set_sample_config(config)
 
+    def forward(self,src_tokens,src_lengths,prev_output_token):
+         encoder_output = self.encoder.forward(src_tokens,src_lengths)
+         output = self.decoder(prev_output_token,encoder_output)
+         return output
+
 
 class TransformerEncoder(FairseqEncoder):
     """
