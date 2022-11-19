@@ -12,7 +12,6 @@ export onnxruntime_version='1.13.1'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
-
 cd /neural-compressor/test || exit 1
 find ./ux -name "test*.py" | sed 's,\.\/,python ,g' | sed 's/$/ --verbose/' > run.sh
 

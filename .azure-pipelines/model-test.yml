@@ -1,6 +1,8 @@
 trigger: none
 
 pr:
+  autoCancel: true
+  drafts: false
   branches:
     include:
       - master
@@ -65,7 +67,7 @@ stages:
   - stage: TensorFlowModels
     displayName: Run TensorFlow Model
     dependsOn: []
-    condition: eq('${{ parameters.TensorFlow_Model }}', 'true')
+    condition: and(succeeded(), eq('${{ parameters.TensorFlow_Model }}', 'true'))
     jobs:
       - ${{ each model in parameters.TensorFlowModelList }}:
           - job:
@@ -79,7 +81,7 @@ stages:
   - stage: PyTorchModels
     displayName: Run PyTorch Model
     dependsOn: []
-    condition: eq('${{ parameters.PyTorch_Model }}', 'true')
+    condition: and(succeeded(), eq('${{ parameters.PyTorch_Model }}', 'true'))
     jobs:
       - ${{ each model in parameters.PyTorchModelList }}:
           - job:
@@ -93,7 +95,7 @@ stages:
   - stage: ONNXModels
     displayName: Run ONNX Model
     dependsOn: []
-    condition: eq('${{ parameters.ONNX_Model }}', 'true')
+    condition: and(succeeded(), eq('${{ parameters.ONNX_Model }}', 'true'))
     jobs:
       - ${{ each model in parameters.ONNXModelList }}:
           - job:
@@ -107,7 +109,7 @@ stages:
   - stage: MXNetModels
     displayName: Run MXNet Model
     dependsOn: []
-    condition: eq('${{ parameters.MXNet_Model }}', 'true')
+    condition: and(succeeded(), eq('${{ parameters.MXNet_Model }}', 'true'))
     jobs:
       - ${{ each model in parameters.MXNetModelList }}:
           - job:

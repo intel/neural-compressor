@@ -1,6 +1,8 @@
 trigger: none
 
 pr:
+  autoCancel: true
+  drafts: false
   branches:
     include:
     - master
@@ -31,7 +33,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'commonDockerConfig'
           utScriptFileName: 'run_basic_adaptor'
@@ -44,7 +46,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'commonDockerConfig'
           utScriptFileName: 'run_basic_adaptor_tfnewapi'
@@ -57,7 +59,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'commonDockerConfig'
           utScriptFileName: 'run_basic_ipex'
@@ -70,7 +72,7 @@ stages:
   jobs:
     - job:
       steps:
-        - template: template/ut-basic-template.yml
+        - template: template/ut-template.yml
           parameters:
             dockerConfigName: 'commonDockerConfig'
             utScriptFileName: 'run_basic_itex'
@@ -83,7 +85,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'commonDockerConfig'
           utScriptFileName: 'run_basic_others'
@@ -96,7 +98,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'gitCloneDockerConfig'
           utScriptFileName: 'run_basic_adaptor'
@@ -110,7 +112,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'gitCloneDockerConfig'
           utScriptFileName: 'run_basic_adaptor_tfnewapi'
@@ -124,7 +126,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'gitCloneDockerConfig'
           utScriptFileName: 'run_basic_ipex'
@@ -138,7 +140,7 @@ stages:
   jobs:
     - job:
       steps:
-        - template: template/ut-basic-template.yml
+        - template: template/ut-template.yml
           parameters:
             dockerConfigName: 'gitCloneDockerConfig'
             utScriptFileName: 'run_basic_itex'
@@ -152,7 +154,7 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/ut-basic-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'gitCloneDockerConfig'
           utScriptFileName: 'run_basic_others'

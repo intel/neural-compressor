@@ -14,7 +14,7 @@ parameters:
 
   - name: utContainerName
     type: string
-    default: "utBasic"
+    default: "utTest"
 
 steps:
   - template: docker-template.yml
@@ -28,9 +28,9 @@ steps:
 
   - script: |
       docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-      && bash install_nc.sh \
+      && bash install_nc_full.sh \
       && bash ut/${{ parameters.utScriptFileName }}.sh"
-    displayName: "Install Neural Compressor and run UT"
+    displayName: "Run UT"
 
   - task: PublishPipelineArtifact@1
     inputs:

@@ -1,7 +1,11 @@
 trigger: none
 
 pr:
-  - master
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+      - master
 
 pool: ICX-16C
 

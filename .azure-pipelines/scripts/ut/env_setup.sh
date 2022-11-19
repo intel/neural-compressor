@@ -1,6 +1,13 @@
 #!/bin/bash
 set -x
 
+echo "copy pre-train model..."
+mkdir -p /tmp/.neural_compressor/inc_ut || true
+cp -r /tf_dataset/ut-localfile/resnet_v2 /tmp/.neural_compressor/inc_ut || true
+mkdir -p /root/.keras/datasets || true
+cp -r /tf_dataset/ut-localfile/cifar-10-batches-py.tar.gz /root/.keras/datasets || true
+
+echo "install dependencies..."
 echo "tensorflow version is $tensorflow_version"
 echo "pytorch version is $pytorch_version"
 echo "torchvision version is $torchvision_version"
@@ -53,7 +60,6 @@ elif [ "${mxnet_version}" == '1.7.0' ]; then
 elif [ "${mxnet_version}" != '' ]; then
     pip install mxnet==${mxnet_version}
 fi
-
 
 cd /neural-compressor/test
 if [ -f "requirements.txt" ]; then

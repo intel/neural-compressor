@@ -1,6 +1,8 @@
 trigger: none
 
 pr:
+  autoCancel: true
+  drafts: false
   branches:
     include:
     - master
@@ -12,7 +14,7 @@ pr:
 pool: ICX-16C
 
 variables:
-  NCODER_CONTAINER_NAME: 'nCoderContainer'
+  UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
 
 stages:
 - stage:
@@ -20,16 +22,10 @@ stages:
   jobs:
   - job:
     steps:
-      - template: template/docker-template.yml
+      - template: template/ut-template.yml
         parameters:
           dockerConfigName: 'commonDockerConfig'
-          repoName: 'neural-compressor'
-          repoTag: 'py38'
-          dockerFileName: 'Dockerfile'
-          containerName: $(NCODER_CONTAINER_NAME)
+          utScriptFileName: 'run_ncoder'
+          uploadPath: $(UPLOAD_PATH)
+          utArtifact: 'ut-ncoder'
 
-      - script: |
-          docker exec $(NCODER_CONTAINER_NAME) bash -c "cd /neural-compressor/.azure-pipelines/scripts \
-          && bash install_nc_full.sh \
-          && bash ut/run_ncoder.sh"
-        displayName: 'Install Neural Compressor and run UT'
