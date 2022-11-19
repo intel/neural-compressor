@@ -17,7 +17,7 @@ exit_code=$?
 # code-scan close 
 RESET="echo -en \\E[0m \\n"
 
-$BOLD_YELLOW && echo "-------------------  Current log file output start --------------------------"
+$BOLD_YELLOW && echo "-------------------  Current log file output start --------------------------" && $RESET
 cat  $pyspelling_log_dir/lpot_pyspelling.log
 $BOLD_YELLOW && echo "-------------------  Current log file output end ----------------------------" && $RESET
 
