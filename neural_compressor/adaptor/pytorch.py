@@ -2198,7 +2198,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             q_model = optimization.fuse(q_model)
         except:
             q_model = q_model
-        if self.approach == 'post_training_static_quant':
+        if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
             iterations = tune_cfg.get('calib_iteration', 1)
             if self.version.release < Version("1.12.0").release:
                 ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,  # pylint: disable=E1101
@@ -2464,7 +2464,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 )
                 ipex_conf.save(self.ipex_config_path)
             else:
-                if self.approach == 'post_training_static_quant':
+                if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                     assert self.q_dataloader is not None, "IPEX need q_dataloader to prepare the model"
                     from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
                     static_qconfig = QConfig(activation=MinMaxObserver.with_args(
@@ -2745,7 +2745,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     q_model._model,
                                                     prefix='',
                                                     example_inputs=example_inputs)
-            if self.approach == 'post_training_static_quant':
+            if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                 iterations = tune_cfg.get('calib_iteration', 1)
                 if q_func is not None:
                     q_func(q_model._model)
