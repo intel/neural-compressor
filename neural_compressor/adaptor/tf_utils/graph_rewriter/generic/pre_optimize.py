@@ -46,6 +46,7 @@ from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
 from .fuse_decomposed_in import FuseDecomposedINOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
+from .convert_placeholder_to_const import ConvertPlaceholderToConst
 from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 
 class PreOptimization():
@@ -110,6 +111,7 @@ class PreOptimization():
             cur_graph = GraphAnalyzer()
             cur_graph.graph = self.model.graph_def
             graph_info = cur_graph.parse_graph()
+
             if self.device == 'cpu':
                 cpus = tf.config.list_physical_devices("CPU")
                 node_device = cpus[0].name.replace('physical_device:', '')
@@ -141,13 +143,18 @@ class PreOptimization():
                 node.device = ''
             self._tmp_graph_def = cur_graph.dump_graph()
 
-        self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
-
-        self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = ConvertPlaceholderToConst(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = RemoveTrainingNodesOptimizer(
             self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
+
+        self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
+            input_node_names, output_node_names).do_transformation()
+
+        self._tmp_graph_def = GrapplerOptimizer(
+            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -158,9 +165,7 @@ class PreOptimization():
             self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
             self._tmp_graph_def = FuseDecomposedINOptimizer(self._tmp_graph_def).do_transformation()
 
-        # disable fold constant for itex qdq mode
-        if not itex_mode:
-            self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
+        self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
 
         if not self.new_api:
             self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()

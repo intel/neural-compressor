@@ -22,7 +22,8 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 
 
 class RemoveTrainingNodesOptimizer(GraphRewriterBase):
-    def __init__(self, model, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics']):
+    def __init__(self, model, protected_nodes=[], types_to_splice=
+                 ['Identity', 'CheckNumerics', 'StopGradient']):
         super().__init__(model)
         self.protected_nodes = protected_nodes
         self.types_to_splice = types_to_splice
