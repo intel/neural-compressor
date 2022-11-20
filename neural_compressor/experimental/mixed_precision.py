@@ -138,7 +138,7 @@ class MixedPrecision(GraphOptimization):
             if 'bf16' in self._precisions or \
                (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
                (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
-                os.environ['MIX_PRECISION_TEST'] = '1'
+                cfg.use_bf16 = True
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:

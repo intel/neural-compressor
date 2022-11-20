@@ -58,7 +58,8 @@ class GraphConverterWithoutCalib:
                  data_loader=None,
                  recover_config=None,
                  new_api=False,
-                 performance_only=False):
+                 performance_only=False,
+                 use_bf16=False):
         """Convert graph without calibration.
 
         :param model: input tensorflow model.
@@ -91,6 +92,7 @@ class GraphConverterWithoutCalib:
         self._gen_tmp_filenames()
         self.new_api = new_api
         self.performance_only = performance_only
+        self.use_bf16 = use_bf16
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
     def _check_tf_version(self):

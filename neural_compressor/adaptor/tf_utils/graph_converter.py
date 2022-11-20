@@ -88,7 +88,8 @@ class GraphConverter:
                  itex_mode=False,
                  qdq_enabled=False,
                  new_api=False,
-                 performance_only=False):
+                 performance_only=False,
+                 use_bf16=False):
         """Convert graph.
 
         :param model: input tensorflow model.
@@ -150,6 +151,7 @@ class GraphConverter:
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
         self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
         self.performance_only = performance_only
+        self.use_bf16 = use_bf16
         self.exclude_node_names = []
     # pylint: disable=no-member
     def _inference(self, model):
@@ -339,9 +341,8 @@ class GraphConverter:
 
         if self.exclude_node_names:
             self.bf16_ops.extend(self.exclude_node_names)
-       
-        if (len(self.bf16_ops) > 0 and self.performance_only) or \
-           (os.getenv('MIX_PRECISION_TEST') == '1'):
+
+        if len(self.bf16_ops) > 0 and (self.use_bf16 or self.performance_only):
             model = self.bf16_convert()
 
         if self.new_api:

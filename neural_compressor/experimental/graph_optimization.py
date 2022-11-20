@@ -123,7 +123,7 @@ class Graph_Optimization():
             if 'bf16' in self._precisions or \
                (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
                (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
-                os.environ['MIX_PRECISION_TEST'] = '1'
+                cfg.use_bf16 = True
         else:
             logger.warning("Only TensorFlow graph optimization is supported at current stage.")
             sys.exit(0)

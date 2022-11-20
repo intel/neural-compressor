@@ -840,7 +840,7 @@ schema = Schema({
             str: ops_schema
         },
     },
-
+    Optional('use_bf16', default=False): bool,
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1110,7 +1110,7 @@ quantization_default_schema = Schema({
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
                                     }): dict,
-
+    Optional('use_bf16', default=False): bool,
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1130,6 +1130,8 @@ pruning_default_schema = Schema({
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'random_seed': 1978, 'tensorboard': False,
@@ -1160,6 +1162,8 @@ graph_optimization_default_schema = Schema({
                                                     'pre_post_process_quantization': True},
                                     'model_wise': {'weight': {'bit': [7.0]},
                                                     'activation': {}}}): dict,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
@@ -1193,6 +1197,8 @@ mixed_precision_default_schema = Schema({
                                     'model_wise': {'weight': {'bit': [7.0]},
                                                     'activation': {}}}): dict,
 
+    Optional('use_bf16', default=False): bool,
+
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1214,6 +1220,8 @@ benchmark_default_schema = Schema({
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('quantization', default={'approach': 'post_training_static_quant', 
                                     'calibration': {'sampling_size': [100]},
@@ -1244,6 +1252,8 @@ distillation_default_schema = Schema({
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'random_seed': 1978, 'tensorboard': False,

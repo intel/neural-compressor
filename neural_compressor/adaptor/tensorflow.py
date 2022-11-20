@@ -63,6 +63,7 @@ class TensorFlowAdaptor(Adaptor):
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.performance_only = deep_get(self.framework_specific_info, 'performance_only', False)
+        self.use_bf16 = deep_get(self.framework_specific_info, 'use_bf16', False)
         os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
@@ -559,7 +560,8 @@ class TensorFlowAdaptor(Adaptor):
                                         data_loader=data_loader,
                                         qdq_enabled=self.qdq_enabled,
                                         new_api=self.new_api,
-                                        performance_only = self.performance_only).convert()
+                                        performance_only = self.performance_only,
+                                        use_bf16=self.use_bf16).convert()
             except Exception: # pragma: no cover
                 from .tf_utils.util import get_model_input_shape
                 batch_size = get_model_input_shape(model)
@@ -577,7 +579,8 @@ class TensorFlowAdaptor(Adaptor):
                                         data_loader=data_loader,
                                         qdq_enabled=self.qdq_enabled,
                                         new_api=self.new_api,
-                                        performance_only = self.performance_only).convert()
+                                        performance_only = self.performance_only,
+                                        use_bf16=self.use_bf16).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -597,7 +600,8 @@ class TensorFlowAdaptor(Adaptor):
                                 data_loader=data_loader,
                                 qdq_enabled=self.qdq_enabled,
                                 new_api=self.new_api,
-                                performance_only = self.performance_only).convert()
+                                performance_only = self.performance_only,
+                                use_bf16=self.use_bf16).convert()
         #just save framework_specific_info feature for recover
         converted_model.q_config.update({'framework_specific_info': \
                                             self.framework_specific_info})
@@ -1411,7 +1415,8 @@ class TensorFlowAdaptor(Adaptor):
                                    qt_config=quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    fake_quant=True, new_api=self.new_api,
-                                   performance_only = self.performance_only)
+                                   performance_only=self.performance_only,
+                                   use_bf16=self.use_bf16)
 
         return converter.convert()
 
@@ -1436,7 +1441,8 @@ class TensorFlowAdaptor(Adaptor):
         converter = GraphConverterWithoutCalib(model,
                                             recover_config=q_config,
                                             new_api=self.new_api,
-                                            performance_only=self.performance_only)
+                                            performance_only=self.performance_only,
+                                            use_bf16=self.use_bf16)
 
         return converter.convert_without_calib()
     
@@ -1495,7 +1501,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                     itex_mode=self.itex_mode,
                                     qdq_enabled=self.qdq_enabled,
                                     new_api=self.new_api,
-                                    performance_only = self.performance_only).convert()
+                                    performance_only = self.performance_only,
+                                    use_bf16=self.use_bf16).convert()
             except Exception: # pragma: no cover
                 from .tf_utils.util import get_model_input_shape
                 batch_size = get_model_input_shape(model)
@@ -1514,7 +1521,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                 itex_mode=self.itex_mode,
                                 qdq_enabled=self.qdq_enabled,
                                 new_api=self.new_api,
-                                performance_only = self.performance_only).convert()
+                                performance_only = self.performance_only,
+                                use_bf16=self.use_bf16).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -1535,7 +1543,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                    itex_mode=self.itex_mode,
                                    qdq_enabled=self.qdq_enabled,
                                    new_api=self.new_api,
-                                   performance_only = self.performance_only).convert()
+                                   performance_only = self.performance_only,
+                                   use_bf16=self.use_bf16).convert()
 
         self._dump_model_op_stats(converted_model.graph_def)
 

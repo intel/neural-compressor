@@ -18,6 +18,7 @@ def build_fake_yaml():
           framework: tensorflow
           inputs: input
         device: cpu
+        use_bf16: True
         quantization:
           model_wise:
             weight:
@@ -97,7 +98,6 @@ class TestTensorflowNewQdqConvFusion(unittest.TestCase):
     @disable_random()
     def test_resizebilinear_bf16_input(self):
         os.environ['FORCE_BF16'] = '1'
-        os.environ['MIX_PRECISION_TEST'] = '1'
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
         paddings = tf.constant([[0, 0], [1, 1], [1, 1], [0, 0]])

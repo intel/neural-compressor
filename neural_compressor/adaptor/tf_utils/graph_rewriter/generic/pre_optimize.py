@@ -44,6 +44,7 @@ from .expanddims_optimizer import ExpandDimsOptimizer
 from .fetch_weight_from_reshape import FetchWeightFromReshapeOptimizer
 from .fuse_decomposed_bn import FuseDecomposedBNOptimizer
 from .fuse_decomposed_in import FuseDecomposedINOptimizer
+from .fuse_layer_norm import FuseLayerNormOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 from .convert_placeholder_to_const import ConvertPlaceholderToConst
@@ -164,6 +165,7 @@ class PreOptimization():
         if self.new_api:
             self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
             self._tmp_graph_def = FuseDecomposedINOptimizer(self._tmp_graph_def).do_transformation()
+            self._tmp_graph_def = FuseLayerNormOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
 
