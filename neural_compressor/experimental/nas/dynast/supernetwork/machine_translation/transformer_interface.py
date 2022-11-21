@@ -392,21 +392,21 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
     dummy_prev = [7] * (dummy_sentence_length - 1) + [2]
 
     src_tokens_test = torch.tensor(
-        [dummy_src_tokens], dtype=torch.long)  # .cuda()
-    src_lengths_test = torch.tensor([dummy_sentence_length])  # .cuda()
+        [dummy_src_tokens], dtype=torch.long)
+    src_lengths_test = torch.tensor([dummy_sentence_length])
     prev_output_tokens_test_with_beam = torch.tensor(
-        [dummy_prev] * args.beam, dtype=torch.long)  # .cuda()
+        [dummy_prev] * args.beam, dtype=torch.long)
     bsz = 1
     new_order = torch.arange(bsz).view(-1, 1).repeat(1,
-                                                     args.beam).view(-1).long()  # .cuda()
+                                                     args.beam).view(-1).long()
     if args.latcpu:
         model.cpu()
         logger.info('Measuring model latency on CPU for dataset generation...')
     elif args.latgpu:
         model.cuda()
-        src_tokens_test = src_tokens_test  # .cuda()
-        src_lengths_test = src_lengths_test  # .cuda()
-        prev_output_tokens_test_with_beam = prev_output_tokens_test_with_beam  # .cuda()
+        src_tokens_test = src_tokens_test
+        src_lengths_test = src_lengths_test
+        prev_output_tokens_test_with_beam = prev_output_tokens_test_with_beam
         logger.info('Measuring model latency on GPU for dataset generation...')
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
@@ -505,7 +505,6 @@ def compute_macs(config,dataset_path):
     args.target_lang = 'de'
     args.batch_size = 128
     utils.import_user_module(args)
-    max_tokens = 12000
     args.latgpu=False
     args.latcpu=True
     args.latiter=100
@@ -519,15 +518,9 @@ def compute_macs(config,dataset_path):
     # Load dataset splits
     task = tasks.setup_task(args)
     task.load_dataset(args.gen_subset)
-    # Set dictionaries
-    try:
-        src_dict = getattr(task, 'source_dictionary', None)
-    except NotImplementedError:
-        src_dict = None
-    tgt_dict = task.target_dictionary
 
     # Load model
-    print('| loading model(s) from {}'.format(args.path))
+    logger.info('[DyNAS-T] loading model(s) from {}'.format(args.path))
     model = TransformerSuperNetwork(task)
 
     # specify the length of the dummy input for profile
