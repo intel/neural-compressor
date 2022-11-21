@@ -98,6 +98,7 @@ class HessianTrace:
             input.requires_grad = True
         output = model(input)
         loss = criterion(output, target)
+        # torch.autograd.backward(loss, create_graph=create_graph)
         loss.backward(create_graph=create_graph)
         gradients = []
         for n, p in model.named_parameters():
@@ -177,7 +178,7 @@ class HessianTrace:
             if name in self.op_list:
                 hook_handle = module.register_forward_hook(self._get_enable_input_grad_hook(name))
                 self.hook_handles.append(hook_handle)
-                hook_handle = module.register_forward_hook(self._get_input_grad_hook(name))
+                hook_handle = module.register_backward_hook(self._get_input_grad_hook(name))
                 self.hook_handles.append(hook_handle)
 
 

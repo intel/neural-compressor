@@ -143,6 +143,38 @@ class Quantization(Component):
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
+
+        import torchvision.datasets as datasets
+        import torchvision.transforms as transforms
+        data_path = "/mnt/data2/dataset/dataset/imagenet/img_raw"
+        traindir = os.path.join(data_path, 'train')
+        valdir = os.path.join(data_path, 'val')
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
+
+        train_dataset = datasets.ImageFolder(
+            traindir,
+            transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+
+        val_dataset = datasets.ImageFolder(
+            valdir,
+            transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
+            ]))
+
+        from torch.utils.data import DataLoader
+
+        self._calib_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+        self._eval_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+
         self.strategy = STRATEGIES[strategy](
             self._model,
             self.conf,
