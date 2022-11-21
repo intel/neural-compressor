@@ -30,7 +30,8 @@ logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
 class PytorchBertDataset(Dataset):
-    """Dataset used for model Bert.
+    """Not displayed.
+       Dataset used for model Bert.
        This Dataset is to construct from the Bert TensorDataset and not a full implementation
        from yaml config. The original repo link is: https://github.com/huggingface/transformers.
        When you want use this Dataset, you should add it before you initialize your DataLoader.

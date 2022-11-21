@@ -12,12 +12,15 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from os import getenv
+import importlib.util
 import os
 import sys
-sys.path.insert(0, os.path.abspath('.'))
-import importlib.util
+sys.path.insert(0, os.path.abspath('../../'))
 moduleName = 'version'
-modulePath = os.getcwd() + '/neural_compressor/version.py'
+# get version.py
+modulePathNeu = os.path.abspath(os.path.join(os.getcwd(), "../.."))
+modulePath = modulePathNeu + '/neural_compressor/version.py'
 spec = importlib.util.spec_from_file_location(moduleName,modulePath)
 NCversion = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(NCversion)
@@ -44,15 +47,20 @@ release = ''
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["recommonmark","sphinx_markdown_tables","sphinx_md", "sphinx.ext.autodoc"]
-
+extensions = ['recommonmark', 'sphinx_markdown_tables', 'sphinx.ext.coverage', 'sphinx.ext.autosummary',
+              'sphinx_md', 'autoapi.extension', 'sphinx.ext.napoleon']
+autoapi_dirs = ['../../neural_compressor']
+autoapi_add_toctree_entry = False
+autosummary_generate = True
+autoapi_options = ['members',  'show-inheritance',
+                   'show-module-summary', 'imported-members', ]
+autoapi_ignore = []
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
 source_suffix = ['.rst', '.md']
 
 # The master toctree document.
@@ -77,13 +85,13 @@ pygments_style = 'sphinx'
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
+# a list of builtin     themes.
 #
 # html_theme = "asteroid_sphinx_theme"
 # html_theme = "classic"
 # html_theme = "alabaster"
 # html_theme = "sphinx_book_theme"
-html_theme = "sphinx_rtd_theme"
+html_theme = "pytorch_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -96,6 +104,17 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+def skip_util_classes(app, what, name, obj, skip, options):
+    if what == "class" and obj.docstring.startswith("Not displayed") :
+       skip = True
+    return skip
+
+    
+def setup(app):
+    app.add_css_file("custom.css")
+    app.connect("autoapi-skip-member", skip_util_classes)   
+
+html_favicon = '_static/imgs/common/intel.svg'
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
@@ -163,13 +182,9 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-def setup(app):
-   app.add_css_file("custom.css")
-
-from os import getenv
 
 sphinx_md_useGitHubURL = True
-baseBranch = "master"
+baseBranch = "api-docs"
 commitSHA = getenv('GITHUB_SHA')
 githubBaseURL = 'https://github.com/' + (getenv('GITHUB_REPOSITORY') or 'intel/neural-compressor') + '/'
 githubFileURL = githubBaseURL + "blob/"
