@@ -92,6 +92,7 @@ class HessianTrace:
     def get_gradients(self, model, data, criterion, create_graph=False, enable_act=False):
         model.zero_grad()
         input = data[0].to(self.device)
+        ##self._input_shape = input.shape  ## for resetting input activation
         target = data[1].to(self.device)
         if enable_act:
             input.requires_grad = True
@@ -102,7 +103,7 @@ class HessianTrace:
         for n, p in model.named_parameters():
             if p.grad != None:
                 gradient = p.grad
-                gradients.append(gradient + 0.0) ## add 0 to create a copy
+                gradients.append(gradient + 0.0)  ## add 0 to create a copy
         model.zero_grad()
         return gradients
 
@@ -118,7 +119,7 @@ class HessianTrace:
             samples.append(r)
         return samples
 
-    def hutchinson_one_step(self, params, enable_act, num_batches):
+    def get_hv_one_sample(self, params, enable_act, num_batches):
         v = self.sample_rademacher(params)
         H_v = [0] * len(v)
         cnt = 0
@@ -135,19 +136,17 @@ class HessianTrace:
         v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
         return v_t_H_v
 
-    def backward_hook(self, name):
-        def grad_hook(model, grad_input, grad_output):
+    def _get_input_grad_hook(self, name):
+        def input_grad_hook(model, grad_input, grad_output):
             self.layer_acts_grads[name] = [grad_input, grad_output]
+        return input_grad_hook
 
-        return grad_hook
-
-    def forward_hook(self, name):
+    def _get_enable_input_grad_hook(self, name):
         def enable_input_grad_hook(model, inputs, outputs):
             try:
                 input = inputs[0]  ##TODO check whether this is right
             except:
                 input = inputs
-
             if input.is_leaf == False:
                 if input.requires_grad is False:
                     input.requires_grad = True
@@ -155,28 +154,54 @@ class HessianTrace:
 
         return enable_input_grad_hook
 
-    def register_hook(self):
-        for name, module in self.model.named_modules():
-            if name in self.op_list:
-                forward_handle = module.register_forward_hook(self.forward_hook(name))
-                backward_handle = module.register_backward_hook(self.backward_hook(name))
-                self.hook_handlers.append(forward_handle)
-                self.hook_handlers.append(backward_handle)
+    # def _get_disable_input_grad_hook(self, name):
+    #     def disable_input_grad_hook(model, inputs, outputs):
+    #         try:
+    #             input = inputs[0]  ##TODO check whether this is right
+    #         except:
+    #             input = inputs
+    #         if input.is_leaf == False:## you can only change requires_grad flags of leaf variables
+    #             if input.requires_grad is True:
+    #                 input.requires_grad = False
+    #
+    #
+    #     return disable_input_grad_hook
 
-    def unregister_hook(self):
-        for handel in self.hook_handlers:
+
+    def _unregister_hook(self):
+        for handel in self.hook_handles:
             handel.remove()
 
-    def get_avg_traces(self, enable_act=False, num_batches=2):
+    def register_input_grad_hooks(self):
+        for name, module in self.model.named_modules():
+            if name in self.op_list:
+                hook_handle = module.register_forward_hook(self._get_enable_input_grad_hook(name))
+                self.hook_handles.append(hook_handle)
+                hook_handle = module.register_forward_hook(self._get_input_grad_hook(name))
+                self.hook_handles.append(hook_handle)
+
+
+    def reset_input_gradient_and_hooks(self):
+        # tmp_input = torch.zeros(self._input_shape, device=self.device)
+        # for name, module in self.model.named_modules():
+        #     if name in self.op_list:
+        #         hook_handle = module.register_forward_hook(self._get_disable_input_grad_hook(name))
+        #         self.hook_handles.append(hook_handle)
+        # self.model(tmp_input)
+        self._unregister_hook()
+
+
+
+    def get_avg_traces(self, enable_act=True, num_batches=2):
         """
         Estimates average hessian trace for each parameter
         """
         assert num_batches > 0
         if enable_act:
-            self.hook_handlers = []
+            self.hook_handles = []
             self.layer_acts = {}
             self.layer_acts_grads = {}
-            self.register_hook()
+            self.register_input_grad_hooks()
         ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
         ##num_all_data = num_data_iter * self.dataloader.batch_size
         ##op_list = self.op_list
@@ -186,7 +211,7 @@ class HessianTrace:
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for i in range(self.max_iter):
-            layer_traces = self.hutchinson_one_step(params, enable_act, num_batches)
+            layer_traces = self.get_hv_one_sample(params, enable_act, num_batches)
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
@@ -197,7 +222,7 @@ class HessianTrace:
 
         layer_traces = layer_traces_estimate
         if enable_act:
-            self.unregister_hook()
+            self.reset_input_gradient_and_hooks()
         return layer_traces
 
 
