@@ -3468,7 +3468,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             logger.info('Module has no forward function')
         return False
 
-    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, fallback=True, requantize_cfgs=None):
+    def get_output_op_names(self, fp32_model, tune_cfg, dataloader):
+        return [list(tune_cfg['op'].keys())[-1]]
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 fallback=True, requantize_cfgs=None):
         """This is a helper function for `query_fw_capability`,
            and it will get all quantizable ops from model.
 

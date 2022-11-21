@@ -1435,17 +1435,6 @@ class TensorFlowAdaptor(Adaptor):
         graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
         output_op_names = set()
 
-        # def _search(opname: str):
-        #     if opname not in graph_def:
-        #         return
-
-        #     if graph_def[opname].node.op == 'Dequantize':
-        #         output_op_names.add(opname)
-        #         return
-            
-        #     for next_opname in graph_def[opname].node.input:
-        #         _search(next_opname)
-
         def _search(output_opname: str): # non recursive ver
             op_count = 0
             stack = [output_opname]
@@ -1474,8 +1463,8 @@ class TensorFlowAdaptor(Adaptor):
         logger.debug(f"output op names: {output_op_names}")
         return output_op_names
 
-    def calculate_op_sensitivity(self, fp32_model, dataloader, tune_cfg, 
-                                 output_op_names, fallback=True, requantize_cfgs=None):
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 fallback=True, requantize_cfgs=None):
         """Compute the op sensitivity.
         
         The sensitivity metric is the mse between the output of the last quantized op of 
@@ -1512,7 +1501,7 @@ class TensorFlowAdaptor(Adaptor):
 
         # Step2. compute mse
         mse_result = self._get_mse_order(
-            fp32_model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, output_op_names)
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, output_op_names)
 
         # Step3. sort
         mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1], reverse=fallback)]
