@@ -164,7 +164,7 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser, [dataset_path])
-    # TODO(macsz) Un-hardcode args
+
     args.data = dataset_path
     args.beam = 5
     args.remove_bpe = '@@ '
@@ -351,12 +351,11 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     return bleu_score
 
 
-def compute_latency(config, dataset_path, get_model_parameters=False):
+def compute_latency(config, dataset_path, batch_size, get_model_parameters=False):
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser, [dataset_path])
 
-    # TODO(macsz) Un-hardcode args
     args.data = dataset_path
     args.beam = 5
     args.remove_bpe = '@@ '
@@ -364,7 +363,7 @@ def compute_latency(config, dataset_path, get_model_parameters=False):
     args.lenpen = 0.6
     args.source_lang = 'en'
     args.target_lang = 'de'
-    args.batch_size = 128
+    args.batch_size = batch_size
     utils.import_user_module(args)
     args.latgpu = False
     args.latcpu = True

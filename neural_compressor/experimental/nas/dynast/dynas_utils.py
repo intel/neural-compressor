@@ -338,7 +338,7 @@ class TransformerLTRunner(Runner):
         Returns:
             `macs`
         """
-        
+
         macs = compute_macs(subnet_cfg, self.dataset_path)
         logger.info('[DyNAS-T] Model\'s macs: {}'.format(macs))
 
@@ -348,8 +348,6 @@ class TransformerLTRunner(Runner):
     def measure_latency(
         self,
         subnet_cfg: dict,
-        warmup_steps: int = None,
-        measure_steps: int = None,
     ) -> Tuple[float, float]:
         """Measure model's latency.
         Args:
@@ -359,7 +357,7 @@ class TransformerLTRunner(Runner):
         """
 
         latency_mean, latency_std = compute_latency(
-            subnet_cfg, self.dataset_path)
+            subnet_cfg, self.dataset_path, self.batch_size)
         logger.info(
             '[DyNAS-T] Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
 
