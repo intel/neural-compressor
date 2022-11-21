@@ -11,7 +11,7 @@ from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import P
 from neural_compressor.adaptor.pytorch import TemplateAdaptor
 from neural_compressor.adaptor import FRAMEWORKS
 import shutil
-from neural_compressor.strategy.st_utils.hawq_wenhuach import Hawq_top, fix_seed
+from neural_compressor.strategy.st_utils.hawq_wenhuach import fix_seed
 from torch.quantization.quantize_fx import fuse_fx
 fix_seed(1)
 

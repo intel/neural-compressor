@@ -102,15 +102,15 @@ class HessianTrace:
         loss.backward(create_graph=create_graph)
         gradients = []
         for n, p in model.named_parameters():
-            if p.grad != None:
+            if p.grad != None and n in self.weight_names:
                 gradient = p.grad
                 gradients.append(gradient + 0.0)  ## add 0 to create a copy
         model.zero_grad()
         return gradients
 
-    def get_params(self, model):
-        parameters = [p for p in model.parameters() if p.requires_grad]
-        return parameters
+    # def get_params(self, model):
+    #     parameters = [p for p in model.parameters() if p.requires_grad]
+    #     return parameters
 
     def sample_rademacher(self, params):
         samples = []
@@ -191,9 +191,13 @@ class HessianTrace:
         # self.model(tmp_input)
         self._unregister_hook()
 
+    def get_params(self):
+        weight_names = [n for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]  ##remove bias
+        params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]  ##remove bias
+        self.weight_names = weight_names
+        self.params = params
 
-
-    def get_avg_traces(self, enable_act=True, num_batches=2):
+    def get_avg_traces(self, enable_act=False, num_batches=2):
         """
         Estimates average hessian trace for each parameter
         """
@@ -207,17 +211,21 @@ class HessianTrace:
         ##num_all_data = num_data_iter * self.dataloader.batch_size
         ##op_list = self.op_list
         ##TODO setting this in config
-        params = [p for p in self.model.parameters() if p.requires_grad]
+        self.get_params()
+        # names = [n for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
+        # params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
 
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for i in range(self.max_iter):
-            layer_traces = self.get_hv_one_sample(params, enable_act, num_batches)
+            layer_traces = self.get_hv_one_sample(self.params, enable_act, num_batches)
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
             if diff_ratio < self.tolerance and i > 10:  ##TODO magic number
+                break
+            if i==50:##TODO for debug
                 break
             prev_avg_model_trace = model_trace
 
@@ -314,11 +322,25 @@ class HawqTuneStrategy(TuneStrategy):
         orig_eval = True
         if self._fp32_model.training:
             orig_eval = False
-        self._fp32_model.train()
+        self._fp32_model.eval()
         ht = HessianTrace(self._fp32_model, self.calib_dataloader)
-        ht.get_avg_traces()
-        if orig_eval:
-            self._fp32_model.eval()
+        traces = ht.get_avg_traces()
+        if orig_eval==False:
+            self._fp32_model.train()
+
+        ordered_ops = sorted(op_fallback_acc_impact.keys(),
+                             key=lambda key: op_fallback_acc_impact[key],
+                             reverse=self.higher_is_better)
+        op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
+        logger.info(f"Start to accumulate fallback to {target_dtype}.")
+        initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
+        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
+                                                 initial_op_tuning_cfg=initial_op_tuning_cfg,
+                                                 op_dtypes=op_dtypes, accumulate=True)
+        for op_tuning_cfg in fallback_sampler:
+            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+            yield op_tuning_cfg
+
 
         # tmp = 1
         # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up

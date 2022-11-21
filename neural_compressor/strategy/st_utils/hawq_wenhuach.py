@@ -10,7 +10,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
-from ..utils import logger
+from ...utils import logger
 import torch
 import numpy as np
 from torch.autograd import Variable
