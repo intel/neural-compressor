@@ -263,7 +263,7 @@ class FallbackTuningSampler(TuningSampler):
 
     def __iter__(self):
         new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
-        skip_first = True
+        skip_first = False
         for op_name_type, target_dtype in self.op_dtypes.items():
             if not self.accumulate:
                 new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)

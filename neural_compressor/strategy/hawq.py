@@ -333,9 +333,23 @@ class HawqTuneStrategy(TuneStrategy):
             orig_eval = False
         self._fp32_model.eval()
         ht = HessianTrace(self._fp32_model, self.calib_dataloader)
-        traces = ht.get_avg_traces()
+        op_to_traces = ht.get_avg_traces()
         if orig_eval==False:
             self._fp32_model.train()
+
+        ordered_ops = sorted(op_to_traces.keys(),
+                             key=lambda key: op_to_traces[key],
+                             reverse=self.higher_is_better)
+        op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(ordered_ops)))
+        logger.info(f"Start to accumulate fallback to {target_dtype}.")
+
+        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
+                                                 initial_op_tuning_cfg=None,
+                                                 op_dtypes=op_dtypes, accumulate=True)
+        for op_tuning_cfg in fallback_sampler:
+            op_tuning_cfg['calib_sampling_size'] = calib_size
+            yield op_tuning_cfg
+
 
         # ordered_ops = sorted(op_fallback_acc_impact.keys(),
         #                      key=lambda key: op_fallback_acc_impact[key],
