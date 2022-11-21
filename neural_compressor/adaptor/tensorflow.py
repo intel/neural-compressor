@@ -1571,16 +1571,17 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.util import generate_feed_dict
 
         input_tensors = model.input_tensor
+        output_tensors = []
+        for op in dequantize_ops:
+            for tensor in model.graph.get_operation_by_name(op).outputs:
+                output_tensors.append(tensor)
 
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
             if index >= 3: break # select first 3 inputs
             feed_dict = generate_feed_dict(input_tensors, inputs)
-            output_tensor = []
-            for op in dequantize_ops:
-                for tensor in model.graph.get_operation_by_name(op).outputs:
-                    output_tensor.append(tensor)
-            pred = model.sess.run(output_tensor, feed_dict)
+            
+            pred = model.sess.run(output_tensors, feed_dict)
             predictions.append(*pred)
 
         return np.array(predictions)
