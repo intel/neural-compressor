@@ -32,19 +32,10 @@ html:
 	# common svg
 	cp -f "$(CODEIMGDIR)/imgs/common/code.svg" "$(CODEIMGDIR)/images/view-page-source-icon.svg"	
 	cp -f "$(CODEIMGDIR)/imgs/common/right.svg" "$(CODEIMGDIR)/images/chevron-right-orange.svg"	
-	# README.md imgs
-	# README.md link
 
 	cp "../neural_coder/extensions/screenshots/extmanager.png"  "_build/html/_static/imgs/extmanager.png"
-	cp "$(IMGDIR)/INC_GUI.gif" "$(BUILDIMGDIR)/INC_GUI.gif"	
-	cp "$(IMGDIR)/release_data.png" "$(BUILDIMGDIR)/release_data.png"	
-	# cp docs/imgs/architecture.png "$(BUILDDIR)/html/docs/imgs/architecture.png"
-	# cp docs/imgs/workflow.png "$(BUILDDIR)/html/docs/imgs/workflow.png"	
-	# cp docs/imgs/INC_GUI.gif "$(BUILDDIR)/html/docs/imgs/INC_GUI.gif"	
-	# cp docs/imgs/release_data.png "$(BUILDDIR)/html/docs/imgs/release_data.png"	
-	# cp "$(BUILDDIR)/html/README.html" "$(BUILDDIR)/html/README.html.tmp"
-	# sed 's/.md/.html/g' "$(BUILDDIR)/html/README.html.tmp" > "$(BUILDDIR)/html/README.html"
-	# rm -f "$(BUILDDIR)/html/README.html.tmp"
+	cp "$(IMGDIR)/INC_GUI.gif" "$(BUILDIMGDIR)/INC_GUI.gif"
+	cp "$(IMGDIR)/release_data.png" "$(BUILDIMGDIR)/release_data.png"
 
 
 # Catch-all target: route all unknown targets to Sphinx using the new

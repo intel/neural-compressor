@@ -20,6 +20,7 @@ jobs:
     - name: Build the docs
       run: |
         export PATH="$HOME/.local/bin:$PATH/docs"
+        ls
         make html
     - name: Push the docs
       uses: peaceiris/actions-gh-pages@v3
