@@ -422,7 +422,7 @@ class TuningSpace:
         # set the first option as the default if the not support the required quant mode
         quant_mode_item = op_item.options[0]
         for quant_item in op_item.options:
-            if quant_mode == quant_item.name or quant_mode in quant_item.name:
+            if quant_mode == quant_item.name or (isinstance(quant_mode, str) and quant_mode in quant_item.name):
                 quant_mode_item = quant_item
                 break
         # set the first option as the default for each tuning item
@@ -433,5 +433,4 @@ class TuningSpace:
                                           self,
                                           config)
         return op_tuning_config
-
 
