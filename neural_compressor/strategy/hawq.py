@@ -75,11 +75,12 @@ class HessianTrace:
             if self.is_fused_module(child):
                 for name, _ in child.named_children():
                     if op_name + "." + name + ".weight" in weights_info:  ##TODO check if this is right
-                        weight_to_op[op_name + "." + name + ".weight"] = op_name
+                        weight_to_op[op_name + "." + name + ".weight"] = op_name[7:]
                         break
             else:
-                if op_name + ".weight" in weights_info:
-                    weight_to_op[op_name + ".weight"] = op_name
+                name = op_name + ".weight"
+                if name in weights_info and name not in weight_to_op.keys():
+                    weight_to_op[op_name + ".weight"] = op_name[7:]
         op_list = []
         for key in weight_to_op.keys():
             op_list.append(weight_to_op[key])
@@ -232,7 +233,15 @@ class HessianTrace:
         layer_traces = layer_traces_estimate
         if enable_act:
             self.reset_input_gradient_and_hooks()
-        return layer_traces
+        weight_name_to_traces={}
+
+        for weigth_name,trace in zip(self.weight_names, layer_traces):
+            weight_name_to_traces[weigth_name] = trace
+        op_name_to_trace={}
+        for weigth_name in self.weight_names:
+            op_name = self.weight_to_op[weigth_name]
+            op_name_to_trace[op_name] = weight_name_to_traces[weigth_name]
+        return op_name_to_trace
 
 
 @strategy_registry
@@ -328,18 +337,18 @@ class HawqTuneStrategy(TuneStrategy):
         if orig_eval==False:
             self._fp32_model.train()
 
-        ordered_ops = sorted(op_fallback_acc_impact.keys(),
-                             key=lambda key: op_fallback_acc_impact[key],
-                             reverse=self.higher_is_better)
-        op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
-        logger.info(f"Start to accumulate fallback to {target_dtype}.")
-        initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-        fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                 initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                 op_dtypes=op_dtypes, accumulate=True)
-        for op_tuning_cfg in fallback_sampler:
-            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-            yield op_tuning_cfg
+        # ordered_ops = sorted(op_fallback_acc_impact.keys(),
+        #                      key=lambda key: op_fallback_acc_impact[key],
+        #                      reverse=self.higher_is_better)
+        # op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
+        # logger.info(f"Start to accumulate fallback to {target_dtype}.")
+        # initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
+        # fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
+        #                                          initial_op_tuning_cfg=initial_op_tuning_cfg,
+        #                                          op_dtypes=op_dtypes, accumulate=True)
+        # for op_tuning_cfg in fallback_sampler:
+        #     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+        #     yield op_tuning_cfg
 
 
         # tmp = 1

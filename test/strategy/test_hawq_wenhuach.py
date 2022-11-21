@@ -13,7 +13,7 @@ from neural_compressor.adaptor import FRAMEWORKS
 import shutil
 from neural_compressor.strategy.st_utils.hawq_wenhuach import fix_seed
 from torch.quantization.quantize_fx import fuse_fx
-fix_seed(1)
+# fix_seed(1)
 
 def build_ptq_yaml():
     fake_yaml = '''
