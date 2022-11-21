@@ -19,7 +19,7 @@ jobs:
         pip3 install --user -r docs/sphinx-requirements.txt
     - name: Build the docs
       run: |
-        export PATH="$HOME/.local/bin:$PATH/docs"
+        export PATH="$HOME/.local/bin:$PATH"
         ls
         make html
     - name: Push the docs
