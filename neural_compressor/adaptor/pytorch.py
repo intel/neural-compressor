@@ -3469,7 +3469,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         return False
 
     def get_output_op_names(self, fp32_model, tune_cfg, dataloader):
-        return [list(tune_cfg['op'].keys())[-1]]
+        return None
 
     def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
                                  fallback=True, requantize_cfgs=None):
