@@ -1,5 +1,6 @@
 sphinx==3.5.4
-sphinx-rtd-theme
+pytorch_sphinx_theme
 recommonmark
 sphinx-markdown-tables
 sphinx-md
+sphinx-autoapi
