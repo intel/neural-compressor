@@ -1,7 +1,6 @@
-.. _quantization-api
-
 Model
-############
+==============
 
-.. .. automodule:: neural_compressor.quantization
-..    :members:
+.. autoapisummary::
+
+   neural_compressor.experimental.common.model

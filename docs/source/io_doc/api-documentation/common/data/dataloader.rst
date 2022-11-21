@@ -6,7 +6,7 @@ BaseDataLoader
 
 .. autoapisummary::
 
-   neural_compressor.experimental.data.dataloaders.base_dataloader.BaseDataLoader
+   neural_compressor.experimental.data.dataloaders.base_dataloader
 
 dataloaders
 ------------

@@ -1,12 +1,6 @@
-Metric 
-###########
+Metric
+==============
 
-The Metric API information is available:
-
-.. toctree::
-   :maxdepth: 1
-
-     
-   metrics  
-   bleu
-   
+.. autoapisummary::
+   neural_compressor.experimental.metric.metric
+   neural_compressor.experimental.metric.bleu

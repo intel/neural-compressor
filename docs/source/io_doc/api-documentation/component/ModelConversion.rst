@@ -1,13 +1,6 @@
-.. _data-api
-
 ModelConversion
-################
+================
 
-.. .. automodule:: neural_compressor.objective
-..    :members:
+.. autoapisummary::
 
-.. .. autoclass:: neural_compressor.objective.Measurer
-..    :members:
-
-.. .. autoclass:: neural_compressor.objective.FootprintMeasure
-..    :members:
+   neural_compressor.experimental.model_conversion
