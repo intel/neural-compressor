@@ -856,11 +856,13 @@ schema = Schema({
         'diagnosis': False,
         }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
+            'name': And(str, lambda s: s in STRATEGIES), 
+            Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
-            Optional('latency_weight', default=1.0): float
+            Optional('latency_weight', default=1.0): float,
+            Optional('confidence_batches', default=2): int
         } ,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {

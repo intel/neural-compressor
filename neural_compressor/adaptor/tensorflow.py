@@ -1488,7 +1488,7 @@ class TensorFlowAdaptor(Adaptor):
         return output_op_names
 
     def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
-                                 fallback=True, requantize_cfgs=None):
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
         """Compute the op sensitivity.
         
         The sensitivity metric is the mse between the output of the last quantized op of 
@@ -1525,7 +1525,8 @@ class TensorFlowAdaptor(Adaptor):
 
         # Step2. compute mse
         mse_result = self._get_mse_order(
-            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, output_op_names)
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, 
+            output_op_names, confidence_batches)
 
         # Step3. sort
         mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1], reverse=fallback)]
@@ -1534,12 +1535,13 @@ class TensorFlowAdaptor(Adaptor):
             logger.debug(f"{op}: {mse_result[op]}")
         return mse_order
 
-    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, output_op_names):
+    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, 
+                       output_op_names, confidence_batches):
         op_cfg = tune_cfg['op']
         mse_result = {}
         
         fp32_output = self._inference_model_on_batches(
-            fp32_model, tune_cfg, dataloader, output_op_names)
+            fp32_model, tune_cfg, dataloader, output_op_names, confidence_batches)
 
         for op in ops_lst:
             # backup and set replace tuning config
@@ -1551,7 +1553,7 @@ class TensorFlowAdaptor(Adaptor):
             # quantize and inference the model
             q_model = self._quantize_model(tune_cfg, fp32_model, dataloader)
             q_output = self._inference_model_on_batches(
-                q_model, tune_cfg, dataloader, output_op_names)
+                q_model, tune_cfg, dataloader, output_op_names, confidence_batches)
                 
             mse_result[op] = self._calculate_mse(fp32_output, q_output)
             logger.debug(f"mse result of {op}: {mse_result[op]}")
@@ -1580,18 +1582,19 @@ class TensorFlowAdaptor(Adaptor):
     def _calculate_mse(self, fp32_output, q_output):
         return np.square(fp32_output - q_output).mean()
 
-    def _inference_model_on_batches(self, model, tune_cfg, dataloader, dequantize_ops):
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader, 
+                                    output_op_names, confidence_batches):
         from .tf_utils.util import generate_feed_dict
 
         input_tensors = model.input_tensor
         output_tensors = []
-        for op in dequantize_ops:
+        for op in output_op_names:
             for tensor in model.graph.get_operation_by_name(op).outputs:
                 output_tensors.append(tensor)
 
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
-            if index >= 3: break # select first 3 inputs
+            if index >= confidence_batches: break # select first n inputs
             feed_dict = generate_feed_dict(input_tensors, inputs)
             
             pred = model.sess.run(output_tensors, feed_dict)

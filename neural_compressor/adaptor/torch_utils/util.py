@@ -424,10 +424,10 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, fallback=False, requantize_cfgs=None):
+def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, confidence_batches, fallback=False, requantize_cfgs=None):
     fp32_model.eval()
     order_dict = {}
-    for i in range(0, 3):
+    for i in range(0, confidence_batches):
         example_input = get_example_input(dataloader, i)
         if fallback:
             ordered_ops = get_mse_order_per_fp32(adaptor, fp32_model, example_input, tune_cfg)
