@@ -13,7 +13,6 @@ parser.add_argument("--stage", type=str, default="collect_log")
 parser.add_argument("--gap", type=float, default=0.05)
 args = parser.parse_args()
 print('===== collecting log model =======')
-print('build_id: '+args.build_id)
 OS='linux'
 PLATFORM='icx'
 URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
@@ -79,7 +78,6 @@ def get_model_benchmark_dict_results():
         for root, dirs, files in os.walk(args.logs_dir):
             for name in files:
                 file_name = os.path.join(root, name)
-                print(file_name)
                 if "performance-" + precision in name:
                     for line in open(file_name, "r"):
                         result = parse_perf_line(line)
