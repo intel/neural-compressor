@@ -12,7 +12,7 @@ parser.add_argument("--build_id", type=str, default="0")
 parser.add_argument("--stage", type=str, default="collect_log")
 parser.add_argument("--gap", type=float, default=0.05)
 args = parser.parse_args()
-print('===== collecting log model =======')
+print('====== collecting model test log =======')
 OS='linux'
 PLATFORM='icx'
 URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
@@ -220,14 +220,14 @@ def check_status(precision, precision_upper, check_accuracy=False):
     performance_result = get_model_benchmark_dict_results()
     current_performance = performance_result.get(precision).get("Value")
     refer_performance = refer.get(f"{precision_upper}_Performance")
-    print(f"current_performance_data = {current_performance}, refer_performance_data = {refer_performance}")
+    print(f"current_performance_data = {current_performance:.3f}, refer_performance_data = {refer_performance:.3f}")
     assert abs(current_performance - refer_performance) / refer_performance <= args.gap
 
     if check_accuracy:
         _, accuracy_result = get_model_tuning_dict_results()
         current_accuracy = accuracy_result.get(precision).get("Value")
         refer_accuracy = refer.get(f"{precision_upper}_Accuracy")
-        print(f"current_accuracy_data = {current_accuracy}, refer_accuarcy_data = {refer_accuracy}")
+        print(f"current_accuracy_data = {current_accuracy:.3f}, refer_accuarcy_data = {refer_accuracy:.3f}")
         assert abs(current_accuracy - refer_accuracy) / refer_accuracy <= 0.05
 
 
