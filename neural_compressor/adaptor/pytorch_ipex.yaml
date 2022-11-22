@@ -90,6 +90,7 @@
   ops:
     int8: *ops_default_s8
     uint8: *ops_default_s8
+    bf16: []
     fp32: ['*'] # '*' means all op types
   
   capabilities: &1_10_capabilities
