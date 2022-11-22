@@ -4,12 +4,11 @@
 
 import unittest
 import numpy as np
-import tensorflow as tf
-
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_conv_with_math import FuseConvWithMathOptimizer
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 class TestConvWithMath(unittest.TestCase):
     @disable_random()
     def test_convert_conv_with_math(self):

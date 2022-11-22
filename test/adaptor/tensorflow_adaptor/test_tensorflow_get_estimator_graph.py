@@ -3,9 +3,10 @@
 #
 import unittest
 import os
-import tensorflow as tf
+import platform
 from neural_compressor.adaptor.tf_utils.util import get_estimator_graph
 
+import tensorflow as tf
 class TestEstimatorGraphConvert(unittest.TestCase):
 
     @classmethod

@@ -47,13 +47,15 @@ class TensorFlowAdaptor(Adaptor):
         "MatMul": "matmul",
         "BatchMatMul": "matmul",
         "BatchMatMulV2": "matmul",
-        "Pad": "pad"
+        "Pad": "pad",
+        "Conv2DBackpropInput": "deconv2d",
+        "Conv3DBackpropInputV2": "deconv3d"
     }
     def __init__(self, framework_specific_info):
         super().__init__(framework_specific_info)
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         self.quantize_config = {'op_wise_config': {}}
         self.framework_specific_info = framework_specific_info
         self.approach = deep_get(self.framework_specific_info, 'approach', False)
@@ -61,6 +63,7 @@ class TensorFlowAdaptor(Adaptor):
         self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.performance_only = deep_get(self.framework_specific_info, 'performance_only', False)
+        self.use_bf16 = deep_get(self.framework_specific_info, 'use_bf16', False)
         os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
@@ -74,8 +77,11 @@ class TensorFlowAdaptor(Adaptor):
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name), performance_only=self.performance_only)
         self.itex_mode = cfg_yaml_name == 'tensorflow_itex.yaml'
-        self.qdq_enabled = cfg_yaml_name == 'inteltensorflow.yaml' or \
-                                   cfg_yaml_name == 'tensorflow_itex.yaml'
+
+        from pkg_resources import parse_version
+        import tensorflow as tf
+        self.new_api = True if parse_version(tf.version.VERSION) == parse_version('2.11.0202242') else False
+        self.qdq_enabled = cfg_yaml_name == 'tensorflow_itex.yaml' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
@@ -83,7 +89,8 @@ class TensorFlowAdaptor(Adaptor):
         self.fp32_preds_as_label = False
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.callbacks = []
-        self.new_api = False
+
+        self.optype_statistics = None
 
         self._last_dequantize_ops = None
 
@@ -524,7 +531,8 @@ class TensorFlowAdaptor(Adaptor):
 
             return self.convert(common.Model(qat_model), 'QAT', 'default')
 
-        assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        assert q_func is None, \
+            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -554,7 +562,8 @@ class TensorFlowAdaptor(Adaptor):
                                         data_loader=data_loader,
                                         qdq_enabled=self.qdq_enabled,
                                         new_api=self.new_api,
-                                        performance_only = self.performance_only).convert()
+                                        performance_only = self.performance_only,
+                                        use_bf16=self.use_bf16).convert()
             except Exception: # pragma: no cover
                 from .tf_utils.util import get_model_input_shape
                 batch_size = get_model_input_shape(model)
@@ -572,7 +581,8 @@ class TensorFlowAdaptor(Adaptor):
                                         data_loader=data_loader,
                                         qdq_enabled=self.qdq_enabled,
                                         new_api=self.new_api,
-                                        performance_only = self.performance_only).convert()
+                                        performance_only = self.performance_only,
+                                        use_bf16=self.use_bf16).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -592,7 +602,8 @@ class TensorFlowAdaptor(Adaptor):
                                 data_loader=data_loader,
                                 qdq_enabled=self.qdq_enabled,
                                 new_api=self.new_api,
-                                performance_only = self.performance_only).convert()
+                                performance_only = self.performance_only,
+                                use_bf16=self.use_bf16).convert()
         #just save framework_specific_info feature for recover
         converted_model.q_config.update({'framework_specific_info': \
                                             self.framework_specific_info})
@@ -609,11 +620,12 @@ class TensorFlowAdaptor(Adaptor):
         fp32_op_list=list(set(fp32_op_list_uint8).union(set(fp32_op_list_int8)))
 
 
-        int8_op_prefix_list = ['QuantizedConv2D', '_QuantizedConv3D', 'QuantizedDepthwise',
+        int8_op_prefix_list = ['QuantizedConv2D', '_FusedQuantizedConv3D', 'QuantizedDepthwise',
                                'QuantizedMaxPool', 'QuantizedAvgPool',
                                'QuantizedConcatV2', 'QuantizedMatMul',
                                '_QuantizedFusedBatchNorm', '_QuantizedMatMul',
-                               '_QuantizedBatchMatMul', '_QuantizedFusedInstanceNorm']
+                               '_QuantizedBatchMatMul', '_QuantizedFusedInstanceNorm',
+                               '_FusedQuantizedDeconv2D', '_FusedQuantizedDeconv3D']
         from tensorflow.python.framework import dtypes
 
         res = {}
@@ -638,6 +650,10 @@ class TensorFlowAdaptor(Adaptor):
                     origin_op_type = 'DepthwiseConv2dNative'
                 if origin_op_type == 'BatchMatMul':
                     origin_op_type = 'BatchMatMulV2'
+                if origin_op_type == 'Deconv2D':
+                    origin_op_type = 'Conv2DBackpropInput'
+                if origin_op_type == 'Deconv3D':
+                    origin_op_type = 'Conv3DBackpropInputV2'
                 res[origin_op_type]['INT8'] += 1
 
             if i.op in fp32_op_list:
@@ -654,12 +670,17 @@ class TensorFlowAdaptor(Adaptor):
                         res[i.op]['FP32'] += 1
                 else:
                     res[i.op]['FP32'] += 1
-        output_data = [[op_type, sum(res[op_type].values()), res[op_type]['INT8'],
-                        res[op_type]['BF16'], res[op_type]['FP32']] for op_type in fp32_op_list]
+        
+        field_names = ["Op Type", "Total", "INT8", "BF16", "FP32"]
+        output_data = [[
+            op_type, sum(res[op_type].values()), 
+            res[op_type]['INT8'], res[op_type]['BF16'], res[op_type]['FP32']]
+        for op_type in fp32_op_list]
 
         Statistics(output_data,
                    header='Mixed Precision Statistics',
-                   field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]).print_stat()
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
 
     def _query_bf16_ops(self, matched_nodes):
         self.bf16_op_details = OrderedDict()
@@ -816,7 +837,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api, self.device)
 
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
@@ -837,7 +858,8 @@ class TensorFlowAdaptor(Adaptor):
             return False
 
 
-        if self.new_api and self.performance_only:
+        if (self.new_api and self.performance_only) or self.itex_mode or \
+                    os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
             self.filter_unquantizable_concat_performance_only(matched_nodes)
         else:
             self.filter_unquantizable_concat(matched_nodes)
@@ -1395,7 +1417,8 @@ class TensorFlowAdaptor(Adaptor):
                                    qt_config=quantize_config,
                                    int8_sequences=self.op_wise_sequences,
                                    fake_quant=True, new_api=self.new_api,
-                                   performance_only = self.performance_only)
+                                   performance_only=self.performance_only,
+                                   use_bf16=self.use_bf16)
 
         return converter.convert()
 
@@ -1412,7 +1435,7 @@ class TensorFlowAdaptor(Adaptor):
                 tf.compat.v1.GraphDef: the quantized model
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api)
+        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api, self.device)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
@@ -1420,7 +1443,8 @@ class TensorFlowAdaptor(Adaptor):
         converter = GraphConverterWithoutCalib(model,
                                             recover_config=q_config,
                                             new_api=self.new_api,
-                                            performance_only=self.performance_only)
+                                            performance_only=self.performance_only,
+                                            use_bf16=self.use_bf16)
 
         return converter.convert_without_calib()
     
@@ -1580,9 +1604,6 @@ class TensorFlowAdaptor(Adaptor):
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     def __init__(self, framework_specific_info):
         super().__init__(framework_specific_info)
-        from pkg_resources import parse_version
-        import tensorflow as tf
-        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -1629,12 +1650,15 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                     itex_mode=self.itex_mode,
                                     qdq_enabled=self.qdq_enabled,
                                     new_api=self.new_api,
-                                    performance_only = self.performance_only).convert()
+                                    performance_only = self.performance_only,
+                                    use_bf16=self.use_bf16).convert()
             except Exception: # pragma: no cover
+                from .tf_utils.util import get_model_input_shape
+                batch_size = get_model_input_shape(model)
                 logger.warning(
                         "Fail to forward with batch size={}, set to {} now.".
-                        format(batch_size, 1))
-                data_loader.batch(1)
+                        format(data_loader.batch_size, batch_size))
+                data_loader.batch(batch_size)
                 self.quantize_config['calib_iteration'] = calib_sampling_size
                 converted_model = GraphConverter(model,
                                 qt_config=self.quantize_config,
@@ -1646,7 +1670,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                 itex_mode=self.itex_mode,
                                 qdq_enabled=self.qdq_enabled,
                                 new_api=self.new_api,
-                                performance_only = self.performance_only).convert()
+                                performance_only = self.performance_only,
+                                use_bf16=self.use_bf16).convert()
         else: # pragma: no cover
             if hasattr(data_loader, 'batch_size') and \
               calib_sampling_size % data_loader.batch_size != 0:
@@ -1667,7 +1692,8 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                    itex_mode=self.itex_mode,
                                    qdq_enabled=self.qdq_enabled,
                                    new_api=self.new_api,
-                                   performance_only = self.performance_only).convert()
+                                   performance_only = self.performance_only,
+                                   use_bf16=self.use_bf16).convert()
 
         self._dump_model_op_stats(converted_model.graph_def)
 
@@ -1931,16 +1957,3 @@ class TensorflowQuery(QueryBackendCapability):
                 final_out.append(_generate_pattern(similar_sequences))
 
         return final_out
-
-@adaptor_registry
-class IntelTensorFlowAdaptor(TensorFlowAdaptor):
-    def __init__(self, framework_specific_info):
-        super().__init__(framework_specific_info)
-        from pkg_resources import parse_version
-        import tensorflow as tf
-        self.new_api = True if parse_version(tf.version.VERSION) >= parse_version('2.10.0') else False
-        # not enable qdq mode for old api
-        if not self.new_api:
-            self.qdq_enabled = False
-            self.op_wise_sequences = self.query_handler.get_eightbit_patterns()
-

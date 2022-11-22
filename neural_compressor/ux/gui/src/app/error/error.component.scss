@@ -61,22 +61,26 @@ table.rounded {
     font-weight: bold;
   }
 
+  th.header {
+    background: $dark-blue;
+    color: white;
+  }
+
   td.header {
     background: $dark-blue;
     padding: 10px;
     color: white;
     text-align: center;
-    border: 1px solid white;
+    border-bottom: 1px solid #fafafa;
     border-radius: 0px;
   }
 
-
   tr:nth-child(even) {
-    background: #FFF
+    background-color: rgba(182, 182, 182, 0.13);
   }
 
   tr:nth-child(odd) {
-    background: $lighter-gray1
+    background-color: rgba(231, 231, 231, 0.13);
   }
 
   tr.cell,
@@ -128,12 +132,8 @@ table.rounded {
     }
   }
 
-  tr.hover:hover {
-    background-color: #dde6ee;
-  }
-
   tr.active {
-    background-color: #FFE17A;
+    background-color: #ffe07ab6;
   }
 }
 
@@ -161,6 +161,11 @@ table.rounded {
 
 .close-button {
   float: right;
+}
+
+.finish-button:focus {
+  background-color: $blue !important;
+  border: solid 2px $accent-yellow;
 }
 
 .failure {
@@ -218,9 +223,15 @@ table.rounded {
 }
 
 .link {
-  color: -webkit-link;
+  color: $blue;
   cursor: pointer;
   text-decoration: underline;
+  background-color: inherit;
+  border: inherit;
+}
+
+.link:hover {
+  color: $energy-blue;
 }
 
 .right {
@@ -232,7 +243,8 @@ table.rounded {
 }
 
 mat-button-toggle-group {
-  border: 3px solid $energy-blue;
+  border: 3px solid $energy-blue !important;
+  color: black !important;
   border-radius: 0.5rem;
   font-size: 150%;
 }
@@ -242,5 +254,6 @@ mat-button-toggle {
 }
 
 .mat-button-toggle-checked {
-  background-color: $pale-blue;
+  color: black !important;
+  background-color: $pale-blue !important;
 }

@@ -1,6 +1,5 @@
 import tensorflow as tf
 from argparse import ArgumentParser
-tf.compat.v1.disable_eager_execution()
 
 import numpy as np
 def main():

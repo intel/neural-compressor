@@ -29,7 +29,7 @@ img {
 }
 
 button {
-  background-color: $lighter-gray1;
+  background-color: inherit;
   border: none;
   padding-bottom: 10px;
   padding-right: 10px;
@@ -37,12 +37,13 @@ button {
 }
 
 .file-button:hover {
-  background-color: $lighter-gray3;
+  background-color: rgba(182, 182, 182, 0.13);
 }
 
 .chosen,
 .chosen:hover {
-  background-color: $pale-blue;
+  color: $blue !important;
+  font-weight: bold;
 }
 
 .confirm {
@@ -59,7 +60,7 @@ button {
 
 .file-container {
   height: 70%;
-  background-color: $lighter-gray1;
+  background-color: rgba(182, 182, 182, 0.13);
 }
 
 .legend-icon {

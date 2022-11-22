@@ -59,7 +59,8 @@ export class DatasetsComponent implements OnInit {
 
   addDataset() {
     const dialogRef = this.dialog.open(DatasetFormComponent, {
-      width: '60%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       data: {
         projectId: this.activatedRoute.snapshot.params.id,
         index: this.datasets.length,

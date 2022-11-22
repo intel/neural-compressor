@@ -5,9 +5,6 @@ import importlib
 import shutil
 import yaml
 import numpy as np
-import tensorflow as tf
-import onnx
-from onnx import helper, TensorProto
 import random
 
 def build_fake_yaml_footprint():
@@ -91,6 +88,7 @@ def build_fake_yaml():
     f.close()
 
 def build_fake_model():
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
@@ -107,6 +105,7 @@ def build_fake_model():
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
     except:
+        import tensorflow as tf
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()
         with tf.compat.v1.Session(graph=graph) as sess:
@@ -124,6 +123,7 @@ def build_fake_model():
     return graph
 
 def build_fake_model1():
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
@@ -143,6 +143,7 @@ def build_fake_model1():
         with graph.as_default():
             tf.import_graph_def(graph_def, name='')
     except:
+        import tensorflow as tf
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()
         with tf.compat.v1.Session(graph=graph) as sess:
@@ -263,10 +264,11 @@ class TestObjective(unittest.TestCase):
         benchmarker.fit(mode='accuracy')
 
 def build_matmul_model():
+    from onnx import helper, TensorProto
     A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
     B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 1])
     C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
-    matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
+    matmul_node = helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
     graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
     model = helper.make_model(graph)
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})

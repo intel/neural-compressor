@@ -27,6 +27,7 @@ from .fuse_qdq_in import FuseNodeStartWithFusedInstanceNorm
 from .fuse_qdq_concatv2 import FuseNodeStartWithConcatV2
 from .fuse_qdq_matmul import FuseNodeStartWithMatmul
 from .fuse_qdq_pooling import FuseNodeStartWithPooling
+from .fuse_qdq_deconv import FuseNodeStartWithDeconv2d
 
 class OptimizeQDQGraph(QuantizeGraphBase):
     """
@@ -81,6 +82,8 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("MatMul", FuseNodeStartWithMatmul)
         self.register_transformer("BatchMatMul", FuseNodeStartWithMatmul)
         self.register_transformer("BatchMatMulV2", FuseNodeStartWithMatmul)
+        self.register_transformer("Conv2DBackpropInput", FuseNodeStartWithDeconv2d)
+        self.register_transformer("Conv3DBackpropInputV2", FuseNodeStartWithDeconv2d)
 
     def get_quantized_nodes(self):
         count = 0

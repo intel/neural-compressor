@@ -646,18 +646,28 @@ criterion_schema = Schema({
     },
     Optional('IntermediateLayersKnowledgeDistillationLoss'): {
         'layer_mappings':
-            And(Or(tuple, list), lambda s: all(len(i) in [2, 4] for i in s)),
+            And(Or(tuple, list), lambda s: all(len(i) in [1, 2] for i in s)),
         Optional('loss_types'):
             And(Or(tuple, list), lambda s: all(i in ['MSE', 'KL', 'L1'] for i in s)),
         Optional('loss_weights'):
             And(Or(tuple, list), lambda s: all(i >= 0 for i in s)),
         Optional('add_origin_loss'): bool,
+    },
+    Optional('SelfKnowledgeDistillationLoss'): {
+        'layer_mappings':
+            And(Or(tuple, list), lambda s: all(len(i) >= 1 for i in s)),
+        Optional('loss_types'):
+            And(Or(tuple, list), lambda s: all(i in ['L2', 'CE', 'KL'] for i in s)),
+        Optional('loss_weights'):
+            And(Or(tuple, list), lambda s: all(i >= 0.0 and i < 1.0 for i in s)),
+        Optional('add_origin_loss'): bool,
+        Optional('temperature'): And(float, lambda s: s > 0),
     }
 })
 
 train_schema = Schema({
-    'optimizer': optimizer_schema,
     'criterion': criterion_schema,
+    Optional('optimizer', default={'SGD': {'learning_rate': 0.001}}): optimizer_schema,
     Optional('dataloader'): dataloader_schema,
     Optional('epoch', default=1): int,
     Optional('start_epoch', default=0): int,
@@ -731,7 +741,9 @@ schema = Schema({
                                       'calibration': {'sampling_size': [100]}, \
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
-                                                      'first_conv_or_matmul_quantization': True},
+                                                      'first_conv_or_matmul_quantization': True,
+                                                      'last_conv_or_matmul_quantization': True,
+                                                      'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
                                       }): {
@@ -753,12 +765,18 @@ schema = Schema({
         },
         Optional('recipes', default={'scale_propagation_max_pooling': True,
                                          'scale_propagation_concat': True,
-                                         'first_conv_or_matmul_quantization': True}): {
+                                         'first_conv_or_matmul_quantization': True,
+                                         'last_conv_or_matmul_quantization': True,
+                                         'pre_post_process_quantization': True}): {
             Optional('scale_propagation_max_pooling', default=True):
                     And(bool, lambda s: s in [True, False]),
             Optional('scale_propagation_concat', default=True):
                     And(bool, lambda s: s in [True, False]),
             Optional('first_conv_or_matmul_quantization', default=True):
+                    And(bool, lambda s: s in [True, False]),
+            Optional('last_conv_or_matmul_quantization', default=True):
+                    And(bool, lambda s: s in [True, False]),
+            Optional('pre_post_process_quantization', default=True):
                     And(bool, lambda s: s in [True, False]),
             Optional('fast_bias_correction', default=False):
                     And(bool, lambda s: s in [True, False]),
@@ -822,7 +840,7 @@ schema = Schema({
             str: ops_schema
         },
     },
-
+    Optional('use_bf16', default=False): bool,
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1086,11 +1104,13 @@ quantization_default_schema = Schema({
                                       'calibration': {'sampling_size': [100]},
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
-                                                      'first_conv_or_matmul_quantization': True},
+                                                      'first_conv_or_matmul_quantization': True,
+                                                      'last_conv_or_matmul_quantization': True,
+                                                      'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
                                     }): dict,
-
+    Optional('use_bf16', default=False): bool,
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1110,6 +1130,8 @@ pruning_default_schema = Schema({
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'random_seed': 1978, 'tensorboard': False,
@@ -1135,9 +1157,13 @@ graph_optimization_default_schema = Schema({
                                     'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
-                                                    'first_conv_or_matmul_quantization': True},
+                                                    'first_conv_or_matmul_quantization': True,
+                                                    'last_conv_or_matmul_quantization': True,
+                                                    'pre_post_process_quantization': True},
                                     'model_wise': {'weight': {'bit': [7.0]},
                                                     'activation': {}}}): dict,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
@@ -1165,9 +1191,13 @@ mixed_precision_default_schema = Schema({
                                     'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
-                                                    'first_conv_or_matmul_quantization': True},
+                                                    'first_conv_or_matmul_quantization': True,
+                                                    'last_conv_or_matmul_quantization': True,
+                                                    'pre_post_process_quantization': True},
                                     'model_wise': {'weight': {'bit': [7.0]},
                                                     'activation': {}}}): dict,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
@@ -1191,11 +1221,15 @@ benchmark_default_schema = Schema({
 
     Optional('device', default='cpu'): str,
 
+    Optional('use_bf16', default=False): bool,
+
     Optional('quantization', default={'approach': 'post_training_static_quant', 
                                     'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
-                                                    'first_conv_or_matmul_quantization': True},
+                                                    'first_conv_or_matmul_quantization': True,
+                                                    'last_conv_or_matmul_quantization': True,
+                                                    'pre_post_process_quantization': True},
                                     'model_wise': {'weight': {'bit': [7.0]},
                                                     'activation': {}}}): dict,
 
@@ -1218,6 +1252,8 @@ distillation_default_schema = Schema({
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
+
+    Optional('use_bf16', default=False): bool,
 
     Optional('tuning', default={
         'random_seed': 1978, 'tensorboard': False,
@@ -1286,57 +1322,75 @@ class Conf(object):
             )
 
     def map_pyconfig_to_cfg(self, pythonic_config):
-        mapping = {
-            'device': pythonic_config.quantization.device,
-            'model.inputs': pythonic_config.quantization.inputs,
-            'model.outputs': pythonic_config.quantization.outputs,
-            'model.framework': pythonic_config.quantization.backend,
-            'quantization.approach': pythonic_config.quantization.approach,
-            'quantization.calibration.sampling_size': 
-                pythonic_config.quantization.calibration_sampling_size,
-            'quantization.optype_wise': pythonic_config.quantization.op_type_list,
-            'quantization.op_wise': pythonic_config.quantization.op_type_list,
-            'distillation.train.criterion': pythonic_config.distillation.criterion,
-            'distillation.train.optimizer': pythonic_config.distillation.optimizer,
-            'pruning.approach.weight_compression': pythonic_config.pruning.weight_compression,
-            'nas.approach': pythonic_config.nas.approach,
-            'nas.search': pythonic_config.nas.search,
-            'nas.dynas': pythonic_config.nas.dynas,
-            'tuning.strategy.name': pythonic_config.quantization.strategy,
-            'tuning.accuracy_criterion.relative': 
-                pythonic_config.quantization.accuracy_criterion.relative,
-            'tuning.accuracy_criterion.absolute':
-                pythonic_config.quantization.accuracy_criterion.absolute,
-            'tuning.accuracy_criterion.higher_is_better':
-                pythonic_config.quantization.accuracy_criterion.higher_is_better,
-            'tuning.objective': pythonic_config.quantization.objective,
-            'tuning.exit_policy.timeout': pythonic_config.quantization.timeout,
-            'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
-            'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
-            'tuning.random_seed': pythonic_config.options.random_seed,
-            'tuning.workspace.path': pythonic_config.options.workspace,
-            'tuning.workspace.resume': pythonic_config.options.resume_from,
-            'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
-            'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
-            'evaluation.performance.configs.cores_per_instance':
-                pythonic_config.benchmark.cores_per_instance,
-            'evaluation.performance.configs.num_of_instance':
-                pythonic_config.benchmark.num_of_instance,
-            'evaluation.performance.configs.inter_num_of_threads':
-                pythonic_config.benchmark.inter_num_of_threads,
-            'evaluation.performance.configs.intra_num_of_threads':
-                pythonic_config.benchmark.intra_num_of_threads,
-            'evaluation.accuracy.configs.cores_per_instance':
-                pythonic_config.benchmark.cores_per_instance,
-            'evaluation.accuracy.configs.num_of_instance':
-                pythonic_config.benchmark.num_of_instance,
-            'evaluation.accuracy.configs.inter_num_of_threads':
-                pythonic_config.benchmark.inter_num_of_threads,
-            'evaluation.accuracy.configs.intra_num_of_threads':
-                pythonic_config.benchmark.intra_num_of_threads,
-            'use_bf16': pythonic_config.quantization.use_bf16,
-            'reduce_range': pythonic_config.quantization.reduce_range
-        }
+        mapping = {}
+        if pythonic_config.quantization is not None:
+            mapping.update({
+                'device': pythonic_config.quantization.device,
+                'model.inputs': pythonic_config.quantization.inputs,
+                'model.outputs': pythonic_config.quantization.outputs,
+                'model.framework': pythonic_config.quantization.backend,
+                'quantization.approach': pythonic_config.quantization.approach,
+                'quantization.calibration.sampling_size': 
+                    pythonic_config.quantization.calibration_sampling_size,
+                'quantization.optype_wise': pythonic_config.quantization.op_type_list,
+                'quantization.op_wise': pythonic_config.quantization.op_name_list,
+                'tuning.strategy.name': pythonic_config.quantization.strategy,
+                'tuning.accuracy_criterion.relative': 
+                    pythonic_config.quantization.accuracy_criterion.relative,
+                'tuning.accuracy_criterion.absolute':
+                    pythonic_config.quantization.accuracy_criterion.absolute,
+                'tuning.accuracy_criterion.higher_is_better':
+                    pythonic_config.quantization.accuracy_criterion.higher_is_better,
+                'tuning.objective': pythonic_config.quantization.objective,
+                'tuning.exit_policy.timeout': pythonic_config.quantization.timeout,
+                'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
+                'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
+                'use_bf16': pythonic_config.quantization.use_bf16,
+                'reduce_range': pythonic_config.quantization.reduce_range
+            })
+        if pythonic_config.distillation is not None:
+            mapping.update({
+                'distillation.train.criterion': pythonic_config.distillation.criterion,
+                'distillation.train.optimizer': pythonic_config.distillation.optimizer,
+            })
+        if pythonic_config.pruning is not None:
+            mapping.update({
+                'pruning.approach.weight_compression': pythonic_config.pruning.weight_compression,
+            })
+        if pythonic_config.nas is not None:
+            mapping.update({
+                'nas.approach': pythonic_config.nas.approach,
+                'nas.search': pythonic_config.nas.search,
+                'nas.dynas': pythonic_config.nas.dynas,
+            })
+        if pythonic_config.options is not None:
+            mapping.update({
+                'tuning.random_seed': pythonic_config.options.random_seed,
+                'tuning.workspace.path': pythonic_config.options.workspace,
+                'tuning.workspace.resume': pythonic_config.options.resume_from,
+                'tuning.tensorboard': pythonic_config.options.tensorboard,
+            })
+        if pythonic_config.benchmark is not None:
+            mapping.update({
+                'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
+                'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
+                'evaluation.performance.configs.cores_per_instance':
+                    pythonic_config.benchmark.cores_per_instance,
+                'evaluation.performance.configs.num_of_instance':
+                    pythonic_config.benchmark.num_of_instance,
+                'evaluation.performance.configs.inter_num_of_threads':
+                    pythonic_config.benchmark.inter_num_of_threads,
+                'evaluation.performance.configs.intra_num_of_threads':
+                    pythonic_config.benchmark.intra_num_of_threads,
+                'evaluation.accuracy.configs.cores_per_instance':
+                    pythonic_config.benchmark.cores_per_instance,
+                'evaluation.accuracy.configs.num_of_instance':
+                    pythonic_config.benchmark.num_of_instance,
+                'evaluation.accuracy.configs.inter_num_of_threads':
+                    pythonic_config.benchmark.inter_num_of_threads,
+                'evaluation.accuracy.configs.intra_num_of_threads':
+                    pythonic_config.benchmark.intra_num_of_threads,
+            })
 
         for k, v in mapping.items():
             if k in ['tuning.accuracy_criterion.relative', 'tuning.accuracy_criterion.absolute']:

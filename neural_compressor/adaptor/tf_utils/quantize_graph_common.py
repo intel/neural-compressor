@@ -350,9 +350,10 @@ class QuantizeGraphHelper():
         float_tensor = tensor_util.MakeNdarray(input_node.attr["value"].tensor)
         epsilon = 1e-4  # Needs to be set empirically if accuracy is not satisfactory
         range_coefficent = 127 / (2 ** weight_bit - 1)
-        if host_op_type in ("Conv2D", "MatMul", "Conv3D", "BatchMatMulV2"):
+        if host_op_type in ("Conv2D", "MatMul", "Conv3D", "BatchMatMulV2", \
+                            "Conv2DBackpropInput", "Conv3DBackpropInputV2"):
             if per_channel:
-                if host_op_type == 'Conv3D':
+                if host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2, 3))
                 else:
                     ranges = np.abs(float_tensor).max(axis=(0, 1, 2))

@@ -35,7 +35,8 @@ export class HomeComponent {
 
   createNewProject() {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
-      width: '60%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
     });
 
     dialogRef.afterClosed().subscribe(

@@ -448,7 +448,10 @@ class TestUtils(unittest.TestCase):
         "neural_compressor.ux.utils.utils.registry_metrics",
         {"tensorflow": fake_metrics},
     )
-    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
+    @patch(
+        "neural_compressor.ux.utils.utils.WORKSPACE_LOCATION",
+        os.path.join("foo", "bar", "workdir"),
+    )
     def test_get_tensorflow_metrics_dict(self) -> None:
         """Test getting metrics dict."""
         self.maxDiff = None
@@ -473,7 +476,7 @@ class TestUtils(unittest.TestCase):
                         {
                             "name": "anno_path",
                             "help": "annotation path",
-                            "value": "/foo/bar/workdir/label_map.yaml",
+                            "value": os.path.join("foo", "bar", "workdir", "label_map.yaml"),
                             "label": "annotation path",
                         },
                     ],
@@ -533,7 +536,10 @@ class TestUtils(unittest.TestCase):
         "neural_compressor.ux.utils.utils.registry_metrics",
         {"onnxrt_qlinearops": fake_metrics},
     )
-    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
+    @patch(
+        "neural_compressor.ux.utils.utils.WORKSPACE_LOCATION",
+        os.path.join("foo", "bar", "workdir"),
+    )
     def test_get_onnx_metrics_dict(self) -> None:
         """Test getting metrics dict."""
         expected = {
@@ -556,7 +562,7 @@ class TestUtils(unittest.TestCase):
                         {
                             "name": "anno_path",
                             "help": "annotation path",
-                            "value": "/foo/bar/workdir/label_map.yaml",
+                            "value": os.path.join("foo", "bar", "workdir", "label_map.yaml"),
                             "label": "annotation path",
                         },
                     ],
@@ -618,7 +624,10 @@ class TestUtils(unittest.TestCase):
             "tensorflow": {"topk": None, "COCOmAP": None},
         },
     )
-    @patch("neural_compressor.ux.utils.utils.WORKDIR_LOCATION", "/foo/bar/workdir")
+    @patch(
+        "neural_compressor.ux.utils.utils.WORKSPACE_LOCATION",
+        os.path.join("foo", "bar", "workdir"),
+    )
     def test_get_metrics_with_label(self) -> None:
         """Test that get_metrics can correctly set label map file location."""
         expected = {
@@ -641,7 +650,7 @@ class TestUtils(unittest.TestCase):
                         {
                             "name": "anno_path",
                             "help": "annotation path",
-                            "value": "/foo/bar/workdir/label_map.yaml",
+                            "value": os.path.join("foo", "bar", "workdir", "label_map.yaml"),
                             "label": "annotation path",
                         },
                     ],
@@ -656,7 +665,6 @@ class TestUtils(unittest.TestCase):
         }
 
         actual = get_metrics_dict()
-        print(actual)
 
         self.assertEqual(expected, actual)
 

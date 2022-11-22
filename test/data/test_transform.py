@@ -2,6 +2,7 @@
 import numpy as np
 import random
 import unittest
+import platform
 import os
 from neural_compressor.data import TRANSFORMS, DATALOADERS
 from neural_compressor.utils.create_obj_from_config import get_postprocess, create_dataset
@@ -132,7 +133,10 @@ class TestTensorflowImagenetTransform(unittest.TestCase):
         sample = (rand_input, 1001)
         label = transform(sample)[1]
         self.assertEqual(label, 1000)
-        self.assertTrue(isinstance(label, np.int64))
+        if platform.architecture()[0] == "64bit":
+            self.assertTrue(isinstance(label, np.int64) or isinstance(label, np.int32))
+        else:
+            self.assertTrue(isinstance(label, np.int32))
         
         label = transform((rand_input, [(1,2,3)]))[1]
         self.assertTrue(isinstance(label, list))
@@ -167,6 +171,8 @@ class TestTensorflowImagenetTransform(unittest.TestCase):
 class TestDataConversion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if platform.system().lower() == "windows":
+            cls.skipTest(cls, "not support mxnet on windows yet")
         cls.img = np.random.random_sample([10,10,3])*255
         cls.mx_trans = TRANSFORMS('mxnet', 'preprocess')
         cls.pt_trans = TRANSFORMS('pytorch', 'preprocess')
@@ -193,6 +199,8 @@ class TestDataConversion(unittest.TestCase):
 class TestSameTransfoms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if platform.system().lower() == "windows":
+            cls.skipTest(cls, "not support mxnet on windows yet")
         cls.img = np.random.random_sample([10,10,3])*255
         cls.tf_trans = TRANSFORMS('tensorflow', 'preprocess')
         cls.pt_trans = TRANSFORMS('pytorch', 'preprocess')
@@ -796,6 +804,7 @@ class TestAlignImageChannel(unittest.TestCase):
         with self.assertRaises(ValueError):
             transforms['AlignImageChannel'](**{'dim':5})
 
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def testMXNet(self):
         transforms = TRANSFORMS('mxnet', 'preprocess')
         align = transforms['AlignImageChannel'](**{'dim':1})
@@ -818,6 +827,7 @@ class TestAlignImageChannel(unittest.TestCase):
             transforms['AlignImageChannel'](**{'dim':5})
 
 class TestToArray(unittest.TestCase):
+    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def testParse(self):
         random_array = np.random.random_sample([10,10,3]) * 255
         random_array = random_array.astype(np.uint8)
@@ -836,6 +846,8 @@ class TestToArray(unittest.TestCase):
 class TestMXNetTransform(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if platform.system().lower() == "windows":
+            cls.skipTest(cls, "not support mxnet on windows yet")
         array = np.random.random_sample([100,100,3]) * 255
         cls.img = mx.nd.array(array)
         cls.transforms = TRANSFORMS('mxnet', 'preprocess')

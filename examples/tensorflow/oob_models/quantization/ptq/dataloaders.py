@@ -8,10 +8,9 @@ class WidedeepDataloader(DefaultDataLoader):
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, sampler,
                             batch_sampler, num_workers, pin_memory, shuffle, distributed):
 
-        drop_last = False if last_batch == 'rollover' else True
         sampler = self._generate_sampler(dataset, distributed)
-        self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
-        self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, drop_last, distributed)
+        self.batch_sampler = BatchSampler(sampler, batch_size, self.drop_last)
+        self.fetcher = FETCHERS[self.dataset_type](dataset, collate_fn, self.drop_last, distributed)
 
         for batched_indices in self.batch_sampler:
             try:

@@ -16,7 +16,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:
@@ -316,8 +316,8 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D' and \
-                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Requantize']:
+                if i.op == '_FusedQuantizedConv2D' and \
+                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -641,10 +641,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             find_single_qconv = []
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D':
+                # BatchMatMul Quantization disabled
+                if i.op == '_FusedQuantizedConv2D':
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])
 
-            self.assertEqual(find_single_qconv, [True, False])
+            self.assertEqual(find_single_qconv, [False, False])
 
     @disable_random()
     def test_conv_fusion_with_last_matmul(self):
@@ -665,12 +666,12 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         y_data = np.random.random([3136, 1])
 
         y = tf.constant(y_data, dtype=tf.float32, shape=[3136, 1])
-        z = tf.matmul(reshape, y)
+        z = tf.raw_ops.MatMul(a=reshape, b=y, name='matmul_1')
         relu1 = tf.nn.relu(z)
         y_data_1 = np.random.random([1, 1])
         y_1 = tf.constant(y_data_1, dtype=tf.float32, shape=[1, 1])
 
-        z_2nd_matmul = tf.matmul(relu1, y_1)
+        z_2nd_matmul = tf.raw_ops.MatMul(a=relu1, b=y_1, name='matmul_2')
         relu6 = tf.nn.relu6(z_2nd_matmul, name='op_to_store')
 
         out_name = relu6.name.split(':')[0]
@@ -730,7 +731,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             output_graph = quantizer.fit()
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D':
+                if i.op == '_FusedQuantizedConv2D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -808,7 +809,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv2D' and \
+                if i.op == '_FusedQuantizedConv2D' and \
                     i.attr['fused_ops'].list.s == [b'BiasAdd', b'Requantize']:
                     found_conv_fusion = True
                     break

@@ -17,6 +17,7 @@ transformation:
     - insert_below_model_definition_line
   content:
     - |-
+      [+] import torch
       [+] torch.backends.quantized.engine = 'onednn'
       [+] from neural_compressor.experimental import MixedPrecision
       [+] converter = MixedPrecision()

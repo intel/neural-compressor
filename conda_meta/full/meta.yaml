@@ -1,4 +1,4 @@
-{% set version = "1.14.1" %}
+{% set version = "1.14.2" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-compressor-full
@@ -38,9 +38,11 @@ requirements:
     - sigopt
     - prettytable
     - cryptography
-    - sqlalchemy ==1.4.27
-    - alembic ==1.7.7
+    - sqlalchemy==1.4.27
+    - alembic==1.7.7
     - cython
+    - pywin32  # [win]
+    - packaging
 test:
   imports:
     - neural_compressor

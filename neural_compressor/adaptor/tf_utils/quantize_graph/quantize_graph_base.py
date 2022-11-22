@@ -65,7 +65,7 @@ class QuantizeNodeBase():
 
     def __init__(self, **kwargs):
 
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("neural_compressor")
         input_graph = kwargs['input_graph']
 
         assert isinstance(input_graph, graph_pb2.GraphDef)
@@ -281,8 +281,10 @@ class QuantizeNodeBase():
                      or self.node_name_mapping \
                         [helper.node_name_from_input(node.input[0])].node.op.find("FusedBatchNorm") == -1
                      or self.node_name_mapping \
-                        [helper.node_name_from_input(node.input[0])].node.attr['is_training'].b):
-            return True
+                        [helper.node_name_from_input(node.input[0])].node.attr['is_training'].b
+                     or len(self.node_name_mapping \
+                        [helper.node_name_from_input(node.input[0])].output) > 1):
+                        return True
         elif 'T' in node.attr and node.attr['T'].type in (dtypes.quint8, dtypes.uint8):
             return True
         elif (node.op.find("QuantizedConv") != -1
@@ -636,7 +638,7 @@ class QuantizeNodeBase():
                 if self.per_channel or original_node.op == 'DepthwiseConv2dNative' else "RequantizationRange",
                 original_node.name + "_eightbit_requant_range", quantized_outputs)
 
-            if self.per_channel:
+            if self.per_channel or original_node.op == 'DepthwiseConv2dNative':
                 helper.set_attr_dtype(requant_range_node, "T", dtypes.qint32)
                 if is_relu6:
                     helper.set_attr_float(requant_range_node, "clip_value_max",
@@ -671,7 +673,7 @@ class QuantizeNodeBase():
             else "Requantize",
             original_node.name + "_eightbit_requantize",
             quantized_outputs + min_max_inputs)
-        if self.per_channel:
+        if self.per_channel or original_node.op == 'DepthwiseConv2dNative':
             helper.set_attr_dtype(requantize_node, "T", dtypes.qint32)
         else:
             helper.set_attr_dtype(requantize_node, "Tinput", dtypes.qint32)

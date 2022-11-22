@@ -208,6 +208,10 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             total_sparsity (float): total sparsity of model
 
         """
+
+        if isinstance(self._model, torch.jit._script.RecursiveScriptModule):
+            logger.info("INC IPEX don't support compute sparsity for model in TorchScript format now.")
+            return [0.0]
         import pandas as pd
         df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
                                    'Std', 'Mean', 'Abs-Mean'])
@@ -616,6 +620,21 @@ class PyTorchModel(PyTorchBaseModel):
         logger.info(info)
         logger.info("*"*len(info))
 
+    def export(
+        self,
+        save_path: str,
+        input,
+        target_model_type: str = 'ONNX',
+        quant_mode: str = 'QDQ',
+        opset_version: int = 14,
+        *args,
+        **kwargs
+    ):
+        if self.q_config is not None:
+            assert False, "Unsupport convertion from PyTorch to ONNX"
+        else:
+            self.export_to_fp32_onnx(save_path, input, opset_version=opset_version)
+
 
 class PyTorchFXModel(PyTorchModel):
     """Build PyTorchFXModel object
@@ -670,3 +689,7 @@ class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
             logger.info("Save config file of quantized model to {}.".format(root))
         except IOError as e:
             logger.error("Fail to save configure file and weights due to {}.".format(e))
+        
+        if isinstance(self.model, torch.jit._script.RecursiveScriptModule):
+            self.model.save(os.path.join(root, "best_model.pt"))
+            

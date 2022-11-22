@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Intel Neural Compressor built-in Optimizers on multiple framework backends."""
 
 from abc import abstractmethod
 from neural_compressor.utils.utility import LazyImport, singleton
@@ -24,13 +26,19 @@ tfa = LazyImport('tensorflow_addons')
 
 @singleton
 class TensorflowOptimizers(object):
+    """Class to get all registered TensorFlow Optimizers once only."""
+
     def __init__(self):
+        """Initialize `TensorflowOptimizers` class once only."""
         self.optimizers = {}
         self.optimizers.update(TENSORFLOW_OPTIMIZERS)
 
 @singleton
 class PyTorchOptimizers(object):
+    """Class to get all registered PyTorch Optimizers once only."""
+
     def __init__(self):
+        """Initialize `PyTorchOptimizers` class once only."""
         self.optimizers = {}
         self.optimizers.update(PYTORCH_OPTIMIZERS)
 
@@ -47,24 +55,30 @@ registry_optimizers = {"tensorflow": TENSORFLOW_OPTIMIZERS,
                        "pytorch_fx": PYTORCH_OPTIMIZERS}
 
 class Optimizers(object):
+    """Main entry to get the specific type of optimizer."""
+
     def __init__(self, framework):
+        """Initialize `Optimizers` class."""
         assert framework in ("tensorflow", "pytorch", "pytorch_fx"), \
                              "framework support tensorflow pytorch"
         self.optimizers = framework_optimizers[framework]().optimizers
 
     def __getitem__(self, optimizer_type):
+        """Return the specific type of optimizer object according to the given optimizer_type."""
         assert optimizer_type in self.optimizers.keys(), "only support optimizers in {}".\
             format(self.optimizers.keys())
 
         return self.optimizers[optimizer_type]
 
     def register(self, name, optimizer_cls):
+        """Allow registration of non-built-in optimizers."""
         assert name not in self.optimizers.keys(), 'registered optimizer name already exists.'
         self.optimizers.update({name: optimizer_cls})
 
 def optimizer_registry(optimizer_type, framework):
-    """The class decorator used to register all Optimizer subclasses.
-       cross framework optimizer is supported by add param as framework='tensorflow, pytorch'
+    """Class decorator used to register all Optimizer subclasses.
+
+       Cross framework optimizer is supported by add param as framework='tensorflow, pytorch'
 
     Args:
         optimizer_type (str): The string of supported criterion.
@@ -92,7 +106,9 @@ class TensorFlowSGD(object):
     Args:
         param_dict (dict): The dict of parameters setting by user for SGD optimizer
     """
+
     def __init__(self, param_dict):
+        """Initialize `TensorFlowSGD` class."""
         assert isinstance(param_dict, dict), 'This optimizer constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -107,6 +123,7 @@ class TensorFlowSGD(object):
         return _dict
 
     def __call__(self, **kwargs):
+        """Call `TensorFlowSGD` object."""
         return tf.keras.optimizers.SGD, self._mapping(**kwargs)
 
 @optimizer_registry('AdamW', 'tensorflow')
@@ -116,7 +133,9 @@ class TensorFlowAdamW(object):
     Args:
         param_dict (dict): The dict of parameters setting by user for AdamW optimizer
     """
+
     def __init__(self, param_dict):
+        """Initialize `TensorFlowAdamW` class."""
         assert isinstance(param_dict, dict), 'This optimizer constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -134,15 +153,19 @@ class TensorFlowAdamW(object):
         return _dict
 
     def __call__(self, **kwargs):
+        """Call `TensorFlowAdamW` object."""
         return tfa.optimizers.AdamW, self._mapping(**kwargs)
 
 @optimizer_registry('Adam', 'tensorflow')
 class TensorFlowAdam(object):
     """tensorflow Adam optimizer.
+
     Args:
         param_dict (dict): The dict of parameters setting by user for Adam optimizer
     """
+
     def __init__(self, param_dict):
+        """Initialize `TensorFlowAdam` class."""
         assert isinstance(param_dict, dict), 'This optimizer constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -159,6 +182,7 @@ class TensorFlowAdam(object):
         return _dict
 
     def __call__(self, **kwargs):
+        """Call `TensorFlowAdam` object."""
         return tf.keras.optimizers.Adam, self._mapping(**kwargs)
 
 @optimizer_registry('SGD', 'pytorch')
@@ -168,7 +192,9 @@ class PyTorchSGD(object):
     Args:
         param_dict (dict): The dict of parameters setting by user for SGD optimizer
     """
+
     def __init__(self, param_dict):
+        """Initialize `PyTorchSGD` class."""
         assert isinstance(param_dict, dict), 'This optimizer constructor parameter must be a dict'
         self._param_dict = param_dict
 
@@ -184,4 +210,5 @@ class PyTorchSGD(object):
         return _dict
 
     def __call__(self, **kwargs):
+        """Call `PyTorchSGD` object."""
         return torch.optim.SGD, self._mapping(**kwargs)

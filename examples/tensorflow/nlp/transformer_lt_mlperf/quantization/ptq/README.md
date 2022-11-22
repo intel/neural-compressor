@@ -2,6 +2,7 @@ Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer_LT_mlperf. Part of the inference code is based on the transformer mlperf evaluation code. Detailed information on mlperf benchmark can be found in [mlcommons/training](https://github.com/mlperf/training/tree/master/translation/tensorflow/transformer).
+This example can run on Intel CPUs and GPUs.
 
 ## Prerequisite
 
@@ -17,7 +18,24 @@ pip install tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#validated-software-environment).
 
-### 3. Prepare Dataset & Frozen Model
+### 3. Install Intel Extension for Tensorflow
+
+#### Quantizing the model on Intel GPU
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Quantizing the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 4. Prepare Dataset & Frozen Model
 Follow the [instructions](https://github.com/IntelAI/models/blob/master/benchmarks/language_translation/tensorflow/transformer_mlperf/inference/fp32/README.md) on [Model Zoo for Intel® Architecture](https://github.com/IntelAI/models) to download and preprocess the WMT English-German dataset and generate a FP32 frozen model. Please make sure there are the following files in the dataset directory and the input model directory.
 * DATASET_DIR: newstest2014.de, newstest2014.en, vocab.ende.32768
 
@@ -114,14 +132,16 @@ class Dataset(object):
 We evaluate the model with BLEU score, its source: https://github.com/IntelAI/models/blob/master/models/language_translation/tensorflow/transformer_mlperf/inference/fp32/transformer/compute_bleu.py
 
 ### Write Yaml config file
-In examples directory, there is a transformer_lt_mlperf.yaml. We could remove most of items and only keep mandatory item for tuning.
+In examples directory, there is a transformer_lt_mlperf.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The transformer_lt_mlperf_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 model:
   name: transformer_lt_mlperf
-  framework: inteltensorflow
+  framework: tensorflow
   inputs: input_tokens
   outputs: model/Transformer/strided_slice_15
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:
   calibration:

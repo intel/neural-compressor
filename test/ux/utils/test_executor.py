@@ -79,7 +79,10 @@ class TestExecutor(unittest.TestCase):
     def test_process_call(self) -> None:
         """Test if multi command execution is recognized correctly."""
         print_phrase = "Hello world!"
-        proc = self.executor.call(["echo", print_phrase])
+        proc = self.executor.call(
+            ["echo", print_phrase],
+            shell=True,
+        )
         self.assertTrue(proc.is_ok)
 
         logs = self.executor.additional_log_names

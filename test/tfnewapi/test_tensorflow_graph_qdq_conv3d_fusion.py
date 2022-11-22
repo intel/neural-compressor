@@ -21,7 +21,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:
@@ -96,7 +96,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if b'Sum' in i.attr['fused_ops'].list.s:
                         found_conv_sumadd_fusion = True
                     if i.attr['fused_ops'].list.s == [b'BiasAdd', b'Relu', b'Requantize']:
@@ -132,7 +132,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_dequantize_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                 if str(i.attr['fused_ops'].list.s) == str([b'Dequantize']):
                     found_dequantize_fusion = True
@@ -168,7 +168,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_dequantize_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                 if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Dequantize']):
                     found_dequantize_fusion = True
@@ -202,7 +202,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_requantize_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                 if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Relu', b'Requantize']):
                     found_requantize_fusion = True
@@ -239,7 +239,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -323,7 +323,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
@@ -365,7 +365,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu']):
@@ -404,7 +404,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D' and \
+                if i.op == '_FusedQuantizedConv3D' and \
                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sum', b'Requantize']:
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
@@ -445,7 +445,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             found_relu_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D' and \
+                if i.op == '_FusedQuantizedConv3D' and \
                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sum', b'Relu', b'Requantize']:
                     found_relu_fusion = True
             self.assertEqual(found_relu_fusion, True)
@@ -478,7 +478,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D' and \
+                if i.op == '_FusedQuantizedConv3D' and \
                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'LeakyRelu', b'Requantize']:
                     found_conv_fusion = True
                     break
@@ -515,7 +515,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D' and \
+                if i.op == '_FusedQuantizedConv3D' and \
                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sum', b'Requantize']:
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
@@ -555,7 +555,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             found_conv_sumadd_fusion = False
             found_conv_biasadd_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     if str(b'Sum') in str(i.attr['fused_ops'].list.s):
                         found_conv_sumadd_fusion = True
                     if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']):
@@ -596,7 +596,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -629,7 +629,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             output_graph = quantizer.fit()
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -663,7 +663,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             output_graph = quantizer.fit()
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)
@@ -701,7 +701,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             output_graph = quantizer.fit()
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D':
+                if i.op == '_FusedQuantizedConv3D':
                    found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)
 
@@ -740,7 +740,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             found_conv_fusion = False
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedConv3D' and \
+                if i.op == '_FusedQuantizedConv3D' and \
                    str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Sum', b'Requantize']):
                     found_conv_fusion = True
             self.assertEqual(found_conv_fusion, True)

@@ -48,6 +48,7 @@ def get_boundary_nodes(data: Dict[str, Any]) -> None:
         try:
             model = model_repository.get_model(model_path)
         except NotFoundException:
+            log.debug(f"Could not get model instance for {model_path}")
             supported_frameworks = model_repository.get_frameworks()
             raise ClientErrorException(
                 f"Framework for specified model is not yet supported. "

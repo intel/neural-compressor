@@ -18,6 +18,7 @@ transformation:
   content:
     - |-
       [+] if "GraphModule" not in str(type(MODEL_NAME)):
+      [+]     import torch
       [+]     torch.backends.quantized.engine = 'onednn'
       [+]     from neural_compressor.conf.config import QuantConf
       [+]     from neural_compressor.experimental import Quantization, common

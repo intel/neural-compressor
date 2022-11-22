@@ -240,8 +240,8 @@ class Downloader:
             z.extractall(self.download_dir)
 
         elif tarfile.is_tarfile(archive_path):
-            t = tarfile.open(archive_path, "r:gz")
-            t.extractall(self.download_dir)
+            with tarfile.open(archive_path, "r:gz") as t:
+                t.extractall(self.download_dir)
 
         else:
             message = "Could unpack an archive. Supported archive types are zip and tar.gz."

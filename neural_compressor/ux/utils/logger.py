@@ -15,9 +15,13 @@
 """Ux Logger module."""
 import logging
 
-log = logging.getLogger()
+log = logging.getLogger("neural_compressor")
 log.name = "INC Bench"
 log.setLevel(level=logging.CRITICAL)
+
+fh = logging.FileHandler("bench.log")
+fh.setLevel(logging.DEBUG)
+log.addHandler(fh)
 
 
 def change_log_level(log_level: int) -> None:

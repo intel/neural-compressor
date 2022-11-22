@@ -71,6 +71,7 @@ export class BenchmarksComponent implements OnInit {
   showYAxisLabel = true;
   showXAxisLabel = true;
   timeline = true;
+  fontColor = localStorage.getItem('darkMode') === 'darkMode' ? '#fff' : '#000';
 
   customColor = {
     domain: [
@@ -119,6 +120,10 @@ export class BenchmarksComponent implements OnInit {
         this.activeBenchmarkId = -1;
         this.benchmarkDetails = null;
       });
+    this.modelService.colorMode$
+      .subscribe(resp => {
+        this.fontColor = resp === '' ? '#000' : '#fff';
+      });
   }
 
   getBenchmarksList(id?: number) {
@@ -137,7 +142,8 @@ export class BenchmarksComponent implements OnInit {
 
   addBenchmark() {
     const dialogRef = this.dialog.open(BenchmarkFormComponent, {
-      width: '60%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       data:
       {
         projectId: this.activatedRoute.snapshot.params.id,
@@ -153,7 +159,8 @@ export class BenchmarksComponent implements OnInit {
 
   addDataset() {
     const dialogRef = this.dialog.open(DatasetFormComponent, {
-      width: '60%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       restoreFocus: true,
       data: {
         projectId: 1,
@@ -194,7 +201,8 @@ export class BenchmarksComponent implements OnInit {
 
   editBenchmark(id: number) {
     const dialogRef = this.dialog.open(BenchmarkFormComponent, {
-      width: '60%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       data:
       {
         projectId: this.activatedRoute.snapshot.params.id,

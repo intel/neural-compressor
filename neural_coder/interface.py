@@ -24,12 +24,28 @@ if not os.path.exists("neural_coder_workspace"):
     os.makedirs("neural_coder_workspace")
 
 
+def detect_device_(logger):
+    # device detection
+    logger.info(f"Device detection started ...")
+    from .utils.device import detect_device
+    detect_device()
+    if globals.device == "cpu_with_amx":
+        logger.info(f"Device: CPU with AMX")
+    elif globals.device == "cpu_without_amx":
+        logger.info(f"Device: CPU without AMX")
+    elif globals.device == "intel_gpu":
+        logger.info(f"Device: Intel(R) GPU")
+    elif globals.device == "cuda":
+        logger.info(f"Device: CUDA")
+    elif globals.device == "mutli":
+        logger.info(f"Device: Multi-Device")
+
+
 def enable(
     code,
     features,
     target_batch_size=1,  # effective for feature "pytorch_change_batch_size"
     num_benchmark_iteration=10,  # effective for feature "pytorch_benchmark"
-    eval_accuracy=False,
     generate_patch=True,
     overwrite=False,
     save_patch_path="",
@@ -48,6 +64,7 @@ def enable(
     bench_batch_size=-1,  # only for "self_defined" mode
     test_code_line=False, # print code line info for debug use
     cache_load_transformers=True,
+    optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
 ):
     """enable a feature or a couple of features for the code
 
@@ -81,6 +98,9 @@ def enable(
     logger.addHandler(fh)
     logger.addHandler(ch)
 
+    # device detection
+    detect_device_(logger)
+
     # print key inputs
     logger.info(f"Enabling started ...")
     logger.info(f"code: {code}")
@@ -97,6 +117,8 @@ def enable(
         "pytorch_inc_static_quant_fx",
         "pytorch_inc_static_quant_ipex",
         "pytorch_inc_bf16",
+        "pytorch_inc_huggingface_optimum_static",
+        "pytorch_inc_huggingface_optimum_dynamic",
         "pytorch_ipex_fp32",
         "pytorch_ipex_bf16",
         "pytorch_ipex_int8_static_quant",
@@ -149,9 +171,8 @@ def enable(
 
     globals.num_benchmark_iteration = str(num_benchmark_iteration + 10) # 10: warmup iteration number
 
-    globals.eval_accuracy = eval_accuracy
-
     globals.cache_load_transformers = cache_load_transformers
+    globals.optimum_quant_config = optimum_quant_config
 
     # move "pytorch_benchmark" to the last
     from .utils.common import move_element_to_last
@@ -253,8 +274,22 @@ def enable(
                     "pytorch_inc_dynamic_quant",
                     "pytorch_inc_static_quant_fx",
                     "pytorch_inc_static_quant_ipex",
+                    "pytorch_inc_huggingface_optimum_static",
+                    "pytorch_inc_huggingface_optimum_dynamic",
                     "onnx_inc_static_quant_qlinear"
                 ]:
+
+                # determine domain
+                from .coders.autoinc.domain import determine_domain
+                globals.code_domain = determine_domain(globals.list_code_path[0])
+
+                # for transformers code, enable optimum-intel api by default
+                if "transformers" in globals.code_domain:
+                    if "static_quant" in feature:
+                        feature = "pytorch_inc_huggingface_optimum_static"
+                    elif "dynamic_quant" in feature:
+                        feature = "pytorch_inc_huggingface_optimum_dynamic"
+
                 from .coders.autoinc.autoinc_harness import AutoInc_Harness
                 from .coders.autoinc.calib_dataloader import Calib_Dataloader
                 from .coders.autoinc.eval_func import Eval_Func
@@ -464,6 +499,9 @@ def bench(
     logger.addHandler(ch)
     logger.addHandler(fh)
 
+    # device detection
+    detect_device_(logger)
+
     # print key inputs
     logger.info(f"Benchmarking started ...")
     logger.info(f"code: {code}")
@@ -563,7 +601,7 @@ def bench(
     count_P90 = 0
     P99 = 0
     count_P99 = 0
-    acc = 0
+    acc_delta = 0
     for line in bench_log:
         if "Neural_Coder_Bench_IPS" in line:
             try:
@@ -594,9 +632,11 @@ def bench(
                 count_P99 += 1
             except ValueError as ve:
                 pass
-        if "Acc@5" in line:
+        if "Accuracy (int8|fp32)" in line:
             try:
-                acc += float(line[line.find(":")+3:])
+                acc_int8 = float(line[line.find("Accuracy")+22:line.find("Accuracy")+28])
+                acc_fp32 = float(line[line.find("Accuracy")+29:line.find("Accuracy")+35])
+                acc_delta = round((acc_int8 - acc_fp32) / acc_fp32 * 100, 2) # percent of increase/decrease
             except ValueError as ve:
                 pass
 
@@ -634,7 +674,7 @@ def bench(
     logger.info(f"Collected latency_p50 on the code is: [{P50}] (mspi)")
     logger.info(f"Collected latency_p90 on the code is: [{P90}] (mspi)")
     logger.info(f"Collected latency_p99 on the code is: [{P99}] (mspi)")
-    logger.info(f"Collected accuracy on the code is: [{acc}]")
+    logger.info(f"Collected accuracy delta on the code is: [{acc_delta}]")
 
     # unpatch
     if patch_path != "":
@@ -642,7 +682,7 @@ def bench(
             "patch -R -d/ -p0 < " + patch_path, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
         sp_unpatch.wait()
 
-    return [FPS, MSPI, P50, P90, P99, acc], mode, os.path.abspath(ws_path)
+    return [FPS, MSPI, P50, P90, P99, acc_delta], mode, os.path.abspath(ws_path)
 
 
 def superbench(
@@ -656,12 +696,10 @@ def superbench(
     num_benchmark_iteration=5,
     iteration_dynamic_adjust=True,
     logging_level="info",
-    cpu_conversion=True,
     cpu_set_env=True,
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
-    eval_accuracy=False,
     auto_quant=False,
 ):
 
@@ -689,6 +727,9 @@ def superbench(
     logger.addHandler(ch)
     logger.addHandler(fh)
 
+    # device detection
+    detect_device_(logger)
+
     # print key inputs
     if auto_quant:
         logger.info(f"Auto-Quant started ...")
@@ -715,6 +756,10 @@ def superbench(
             logger.error(
                 f"You have to specify an entry_code of your code: [{code}]")
             quit()
+
+    # detect device compatibility of entry code
+    from .utils.device import detect_code_device_compatibility
+    detect_code_device_compatibility(entry_code)
 
     if sweep_objective == "feature":
         list_FPS = []
@@ -799,7 +844,8 @@ def superbench(
                 if "pytorch_inc_dynamic_quant" in features and "pytorch_mixed_precision_cpu" in features:
                     continue
 
-                if cpu_conversion:
+                # device conversion
+                if "cpu" in globals.device and "cpu" not in globals.list_code_device_compatibility:
                     features.append("pytorch_cuda_to_cpu")
 
                 if features[0] == "" and len(features) > 1:
@@ -820,24 +866,7 @@ def superbench(
                     ncore_per_instance=ncore_per_instance,
                     ninstances=ninstances,
                     bench_batch_size=bench_batch_size,
-                    eval_accuracy=False,
                 )
-                if eval_accuracy:
-                    bench_acc, bench_mode, bench_ws_path = enable(
-                        code=code,
-                        entry_code=entry_code,
-                        args=args,
-                        features=features,
-                        mode=mode,
-                        run_bench=True,
-                        num_benchmark_iteration=num_benchmark_iteration,
-                        cpu_set_env=cpu_set_env,
-                        ncore_per_instance=ncore_per_instance,
-                        ninstances=ninstances,
-                        bench_batch_size=bench_batch_size,
-                        eval_accuracy=True,
-                    )
-
 
                 if dry_run:
                     t_end = time.time()
@@ -869,86 +898,54 @@ def superbench(
                     elif features == []:
                         features_display = "The Original Model"
 
-                    if not eval_accuracy:
-                        logger.info(
-                            f"Benchmark result (performance) of {features_display}"
-                            f" is {bench_performance[0]} (FPS)")
-                    else:
-                        logger.info(
-                            f"Benchmark result (performance) of {features_display}"
-                            f" is {bench_performance[0]} (FPS)")
-                        logger.info(
-                            f"Benchmark result (accuracy) of {features_display} is {bench_acc[5]}")
+                    logger.info(
+                        f"Benchmark result (performance) of {features_display}"
+                        f" is {bench_performance[0]} (FPS)")
+                    logger.info(
+                        f"Benchmark result (accuracy delta) of {features_display} is {bench_performance[5]} %")
                 else:
-                    if not eval_accuracy:
-                        logger.info(
-                            f"Benchmark result (performance) of optimization set [{features}]"
-                            f" is [{bench_performance[0]}] (FPS)")
-                    else:
-                        logger.info(
-                            f"Benchmark result (performance) of optimization set [{features}]"
-                            f" is [{bench_performance[0]}] (FPS)")
-                        logger.info(
-                            f"Benchmark result (accuracy) of optimization set [{features}] is [{bench_acc[5]}]")
+                    logger.info(
+                        f"Benchmark result (performance) of optimization set [{features}]"
+                        f" is [{bench_performance[0]}] (FPS)")
+                    logger.info(
+                        f"Benchmark result (accuracy delta) of optimization set [{features}]"
+                        f" is [{bench_performance[5]}] %")
 
                 d = {}  # initialize dict
                 d["features"] = features
                 d["FPS"] = bench_performance[0]
-                if eval_accuracy:
-                    d["accuracy"] = bench_acc[5]
+                d["accuracy"] = bench_performance[5]
                 d["mode"] = bench_mode
                 d["workspace_path"] = bench_ws_path
                 result.append(d)
 
                 list_FPS.append(bench_performance[0])
-                if eval_accuracy:
-                    list_accuracy.append(bench_acc[5])
+                list_accuracy.append(bench_performance[5])
                 list_features.append(features)
                 list_mode.append(bench_mode)
                 list_ws_path.append(bench_ws_path)
 
         # print result
-        if not eval_accuracy:
-            print(f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
-            print("{:<20} {:<20} {:<120}".format(
-                'Numactl Mode', 'Performance (FPS)', 'Features Applied'))
+        print(f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
+        print("{:<20} {:<20} {:<20} {:<120}".format(
+            'Numactl Mode', 'Performance (FPS)', 'Accuracy Delta (%)', 'Features Applied'))
 
-            sort_index = sorted(
-                range(len(list_FPS)),
-                key=lambda k: list_FPS[k],
-                reverse=True,
-            )
+        sort_index = sorted(
+            range(len(list_FPS)),
+            key=lambda k: list_FPS[k],
+            reverse=True,
+        )
 
-            for i in sort_index:
-                if list_FPS[i] != 0:
-                    print(
-                        "{:<20} {:<20} {:<120}".format(
-                            str(list_mode[i]),
-                            str(list_FPS[i]),
-                            str(list_features[i]),
-                        )
+        for i in sort_index:
+            if list_FPS[i] != 0:
+                print(
+                    "{:<20} {:<20} {:<20} {:<120}".format(
+                        str(list_mode[i]),
+                        str(list_FPS[i]),
+                        str(list_accuracy[i]),
+                        str(list_features[i]),
                     )
-        else:
-            print(f"Superbench result of sweeping [{sweep_objective}] printed below with sorted FPS: ")
-            print("{:<20} {:<20} {:<20} {:<120}".format(
-                'Numactl Mode', 'Performance (FPS)', 'Accuracy', 'Features Applied'))
-
-            sort_index = sorted(
-                range(len(list_FPS)),
-                key=lambda k: list_FPS[k],
-                reverse=True,
-            )
-
-            for i in sort_index:
-                if list_FPS[i] != 0:
-                    print(
-                        "{:<20} {:<20} {:<20} {:<120}".format(
-                            str(list_mode[i]),
-                            str(list_FPS[i]),
-                            str(list_accuracy[i]),
-                            str(list_features[i]),
-                        )
-                    )
+                )
 
         # for superbench report generation
         list_optimization_set_top3 = []
@@ -1064,7 +1061,6 @@ def superbench(
                             ncore_per_instance=ncore_per_instance,
                             ninstances=ninstances,
                             bench_batch_size=bench_batch_size,
-                            eval_accuracy=eval_accuracy,
                         )
 
                         if dry_run:
@@ -1145,7 +1141,6 @@ def superbench(
 #     code,
 #     save_path="superbench_report.pdf",
 #     logging_level="info",
-#     eval_accuracy=False,
 #     platform="bare_metal",
 #     bare_metal_machine_type="SPR",
 # ):
@@ -1158,7 +1153,6 @@ def superbench(
 #         sweep_objective="feature",
 #         mode="throughput",
 #         logging_level=logging_level,
-#         eval_accuracy=eval_accuracy,
 #     )
 
 #     res5, res6, res7, res8 = superbench(
@@ -1166,7 +1160,6 @@ def superbench(
 #         sweep_objective="bench_config",
 #         bench_feature=res1[0],
 #         logging_level=logging_level,
-#         eval_accuracy=eval_accuracy,
 #     )
 #     res1[0] = res1[0][0:-2]
 
@@ -1228,12 +1221,10 @@ def auto_quant(
     num_benchmark_iteration=30,
     iteration_dynamic_adjust=False,
     logging_level="info",
-    cpu_conversion=True,
     cpu_set_env=True,
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
-    eval_accuracy=False,
 ):
     return superbench(
         code,
@@ -1245,11 +1236,9 @@ def auto_quant(
         num_benchmark_iteration=num_benchmark_iteration,
         iteration_dynamic_adjust=iteration_dynamic_adjust,
         logging_level=logging_level,
-        cpu_conversion=cpu_conversion,
         cpu_set_env=cpu_set_env,
         ncore_per_instance=ncore_per_instance,  # only for "self_defined" mode
         ninstances=ninstances,  # only for "self_defined" mode
         bench_batch_size=bench_batch_size,  # only for "self_defined" mode
-        eval_accuracy=eval_accuracy,
         auto_quant=True,
     )

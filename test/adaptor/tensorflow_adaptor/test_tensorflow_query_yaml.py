@@ -4,11 +4,10 @@
 import unittest
 import yaml
 import os
-import tensorflow as tf
-
-
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.adaptor.tf_utils.util import disable_random
+
+import tensorflow as tf
 from tensorflow.python.framework import graph_util
 
 

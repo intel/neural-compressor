@@ -24,6 +24,7 @@ from neural_compressor.ux.components.model.tensorflow.keras import KerasModel
 from neural_compressor.ux.components.model.tensorflow.meta_graph import MetaGraphModel
 from neural_compressor.ux.components.model.tensorflow.saved_model import SavedModelModel
 from neural_compressor.ux.utils.exceptions import NotFoundException
+from neural_compressor.ux.utils.logger import log
 
 
 class ModelRepository:
@@ -43,6 +44,8 @@ class ModelRepository:
     def get_model(self, path: str) -> Model:
         """Get Model for given path."""
         for model_type in self.model_types:
+            supports_path = model_type.supports_path(path)
+            log.debug(f"{model_type.__name__}: {supports_path}")
             if model_type.supports_path(path):
                 return model_type(path)
 

@@ -12,6 +12,7 @@ function main {
 function init_params {
   tuned_checkpoint=saved_results
   batch_size=16
+  iters=100
   for var in "$@"
   do
     case $var in
@@ -50,20 +51,20 @@ function init_params {
 # run_benchmark
 function run_benchmark {
 
+    extra_cmd=""
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd="--accuracy-mode "
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd="--benchmark "
+        extra_cmd=$extra_cmd" --iteration ${iters}"
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    extra_cmd=""
     if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd"--int8"
+        extra_cmd=$extra_cmd" --int8"
     fi
-
 
     python infer.py \
         --data ${dataset_location} \

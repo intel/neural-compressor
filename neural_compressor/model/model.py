@@ -19,14 +19,12 @@ import copy
 import os
 import shutil
 import importlib
-from collections import OrderedDict
 from abc import abstractmethod
 import tempfile
 import sys
 from neural_compressor.utils.utility import LazyImport, compute_sparsity, get_backend
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
-from neural_compressor.conf.dotdict import deep_get, deep_set
 from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
@@ -127,17 +125,23 @@ def get_model_fwk_name(model):
                         then return 'NA'.
     """
     def _is_onnxruntime(model):
+        from importlib.util import find_spec
         try:
             so = ort.SessionOptions()
-            if sys.version_info < (3,10): # pragma: no cover
+            if sys.version_info < (3,10) and \
+                find_spec('onnxruntime_extensions'): # pragma: no cover
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
                 ort.InferenceSession(model, so)
             else:
                 ort.InferenceSession(model.SerializeToString(), so)
-        except:
-            pass
+        except Exception as e:  # pragma: no cover
+            if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
+                logger.warning('Please use model path instead of onnx model object to quantize') 
+            else:
+                logger.warning("If you use an onnx model with custom_ops to do quantiztaion, "
+                    "please ensure onnxruntime-extensions is installed")
         else:
             return 'onnxruntime'
         return 'NA'
@@ -150,8 +154,12 @@ def get_model_fwk_name(model):
 
     def _is_tensorflow(model):
         try:
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
             model_type = get_model_type(model)
         except:
+            os.environ.pop("CUDA_DEVICE_ORDER")
+            os.environ.pop("CUDA_VISIBLE_DEVICES")
             return 'NA'
         else:
             return 'tensorflow'
@@ -341,7 +349,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex_qdq':
+    if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                     rewriter_config_pb2.RewriterConfig.OFF
@@ -872,14 +880,14 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def input_tensor_names(self):
-        if len(self._input_tensor_names) == 0:
+        if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
         return copy.deepcopy(self._input_tensor_names)
 
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         if len(tensor_names) == 0:
-            logger.warn("Input tensor names should not be empty.")
+            logger.warn("Input tensor names is empty.")
             return
         if self._sess is not None:
             assert validate_graph_node(\
@@ -940,6 +948,11 @@ class TensorflowBaseModel(BaseModel):
         f = tf.io.gfile.GFile(pb_file, 'wb')
         f.write(self.graph_def.SerializeToString())
         logger.info("Save quantized model to {}.".format(pb_file))
+
+    @abstractmethod
+    def convert(self, src_type="QDQ", dst_type="TFDO", *args, **kwargs):
+        ''' abstract method of model saving, Tensorflow model only'''
+        raise NotImplementedError
 
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
@@ -1103,6 +1116,8 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
 
 class TensorflowModel(object): 
     def __new__(cls, model_type, root, **kwargs):
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
         model.model_type = model_type
         return model
@@ -1151,7 +1166,6 @@ class MXNetModel(BaseModel):
 
 
 MODELS = {'tensorflow': TensorflowModel,
-          'inteltensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel if TORCH else None,
@@ -1159,17 +1173,3 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
           }
-
-
-def export(model: BaseModel, path: str, to_onnx: bool = False):
-    """_summary_
-
-    Args:
-        model (BaseModel): optimized model
-        path (str): path to save model
-        to_onnx (bool, optional): whether to convert to onnx model. Defaults to False.
-    """
-    if to_onnx:
-        assert False, "Not support yet!"
-    else:
-        model.save(path)

@@ -1,5 +1,4 @@
 import unittest
-import tensorflow as tf
 import numpy as np
 import os
 import json
@@ -7,6 +6,8 @@ import shutil
 from PIL import Image
 from neural_compressor.data import FILTERS, TRANSFORMS, DATASETS, DATALOADERS
 from neural_compressor.utils.create_obj_from_config import create_dataset, get_preprocess, create_dataloader
+
+import tensorflow as tf
 
 class TestCOCOFilter(unittest.TestCase):
     def testLabelBalanceCOCORecord(self):

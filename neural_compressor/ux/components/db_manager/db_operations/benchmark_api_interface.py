@@ -16,9 +16,11 @@
 """INC Bench Benchmark API interface."""
 import os
 import shutil
+from sqlite3 import Connection
 from typing import List, Optional, Union
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import event
+from sqlalchemy.orm import Mapper, sessionmaker
 
 from neural_compressor.ux.components.benchmark import Benchmarks
 from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
@@ -27,6 +29,7 @@ from neural_compressor.ux.components.configuration_wizard.configuration_parser i
 from neural_compressor.ux.components.db_manager.db_manager import DBManager
 from neural_compressor.ux.components.db_manager.db_models.benchmark import Benchmark
 from neural_compressor.ux.components.db_manager.db_models.benchmark_result import BenchmarkResult
+from neural_compressor.ux.components.db_manager.db_models.optimization import Optimization
 from neural_compressor.ux.components.db_manager.db_operations.project_api_interface import (
     ProjectAPIInterface,
 )
@@ -63,6 +66,10 @@ class BenchmarkAPIInterface:
             benchmark_details = Benchmark.details(db_session, benchmark_id)
             project_id = benchmark_details["project_id"]
             project_details = ProjectAPIInterface.get_project_details({"id": project_id})
+            Optimization.unpin_benchmark(
+                db_connection=db_session,
+                benchmark_id=benchmark_id,
+            )
             removed_benchmark_id = Benchmark.delete_benchmark(
                 db_session=db_session,
                 benchmark_id=benchmark_id,
@@ -455,3 +462,16 @@ class BenchmarkAPIInterface:
                 status_to_clean=status_to_clean,
             )
         return response
+
+
+@event.listens_for(Benchmark, "before_delete")
+def before_delete_benchmark_entry(
+    mapper: Mapper,
+    connection: Connection,
+    benchmark: Benchmark,
+) -> None:
+    """Clean up benchmark data before remove."""
+    Optimization.unpin_benchmark(
+        db_connection=connection,
+        benchmark_id=benchmark.id,
+    )

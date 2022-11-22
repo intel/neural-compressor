@@ -26,7 +26,7 @@ from .dataset import dataset_registry, Dataset
 torch = LazyImport('torch')
 transformers = LazyImport('transformers')
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
 class PytorchBertDataset(Dataset):
@@ -274,8 +274,7 @@ class InputFeatures:
         """Serializes this instance to a JSON string."""
         return json.dumps(dataclasses.asdict(self)) + "\n"
 
-@dataset_registry(dataset_type="bert", framework="tensorflow, inteltensorflow, \
-                  tensorflow_itex", dataset_format='')
+@dataset_registry(dataset_type="bert", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowBertDataset(Dataset):
     """Configuration for Tensorflow Bert Dataset.
 
@@ -327,8 +326,7 @@ class ParseDecodeBert():
 
         return (input_ids, input_mask, segment_ids)
 
-@dataset_registry(dataset_type="mzbert", framework="tensorflow, inteltensorflow, \
-                  tensorflow_itex", dataset_format='')
+@dataset_registry(dataset_type="mzbert", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowModelZooBertDataset(Dataset):
     """Configuration for three-input Bert dataset in tf record format.
     Root is a full path to tfrecord file, which contains the file name.

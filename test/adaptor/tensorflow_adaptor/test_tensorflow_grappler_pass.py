@@ -1,11 +1,9 @@
 import unittest
 import numpy as np
-
-import tensorflow.compat.v1 as tf
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.grappler_pass import GrapplerOptimizer
 from neural_compressor.adaptor.tf_utils.util import disable_random
 
-
+import tensorflow.compat.v1 as tf
 class TestGrapplerPass(unittest.TestCase):
     @disable_random()
     def test_grappler_pass(self):

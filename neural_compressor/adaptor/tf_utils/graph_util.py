@@ -28,7 +28,7 @@ from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import tensor_util
 from neural_compressor.utils.utility import singleton
 
-logger = logging.getLogger()
+logger = logging.getLogger("neural_compressor")
 
 @singleton
 class GraphAnalyzer():
@@ -121,7 +121,7 @@ class GraphAnalyzer():
                         exclude_input_names += i.outputs
                     else:
                         extra_input_names.append(i.node.name)
-            if i.node.op in ['Const', 'HostConst']:
+            if i.node.op in ['Const', 'HostConst', 'Variable', 'VariableV2']:
                 continue
             if not i.node.input and not i.outputs:
                 logger.debug("Skip isolated node {}.".format(i.node.name))

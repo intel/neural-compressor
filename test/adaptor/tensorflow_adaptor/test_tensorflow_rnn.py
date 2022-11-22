@@ -3,10 +3,11 @@ import unittest
 import os
 import numpy as np
 import yaml
-import tensorflow as tf
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
+
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
 
 def build_fake_yaml():
     fake_yaml = '''

@@ -17,9 +17,11 @@ version: 1.0
 
 model:
   name: transformer_lt_mlperf
-  framework: inteltensorflow
+  framework: tensorflow
   inputs: input_tokens
   outputs: model/Transformer/strided_slice_15
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 quantization:
   calibration:

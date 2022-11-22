@@ -1,6 +1,7 @@
 """Tests for neural_compressor register metric and postprocess """
 import numpy as np
 import unittest
+import platform
 import os
 import yaml
      
@@ -24,11 +25,13 @@ class TestRegisterMetric(unittest.TestCase):
     pb_path = '/tmp/.neural_compressor/resnet101_fp32_pretrained_model.pb'
     #image_path = 'images/1024px-Doll_face_silver_Persian.jpg'
     image_path = 'images/cat.jpg'
-
+    platform = platform.system().lower()
+    if platform == "windows":
+        pb_path = 'C:\\tmp\.neural_compressor\\resnet101_fp32_pretrained_model.pb'
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
-        if not os.path.exists(self.pb_path):
+        if not os.path.exists(self.pb_path) and self.platform == "linux":
             os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {}".format(self.model_url, self.pb_path))
 
     def test_register_metric_postprocess(self):
@@ -42,24 +45,21 @@ class TestRegisterMetric(unittest.TestCase):
         from neural_compressor import Benchmark, Quantization
         from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
         from neural_compressor.experimental.metric.metric import TensorflowTopK
+        os.environ['NC_ENV_CONF'] = 'True'
 
         evaluator = Benchmark('fake_yaml.yaml')
-
         evaluator.postprocess('label_benchmark', LabelShift, label_shift=1) 
         evaluator.metric('topk_benchmark', TensorflowTopK)
-        # as we supported multi instance, the result will print out instead of return
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
         evaluator(self.pb_path, b_dataloader=dataloader)
 
         quantizer = Quantization('fake_yaml.yaml')
         quantizer.postprocess('label_quantize', LabelShift, label_shift=1) 
         quantizer.metric('topk_quantize', TensorflowTopK)
-
         evaluator = Benchmark('fake_yaml.yaml')
         evaluator.metric('topk_second', TensorflowTopK)
-
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        result = evaluator(self.pb_path, b_dataloader=dataloader)
+        evaluator(self.pb_path, b_dataloader=dataloader)
 
 
 if __name__ == "__main__":

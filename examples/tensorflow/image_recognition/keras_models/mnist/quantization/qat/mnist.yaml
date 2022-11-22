@@ -17,6 +17,8 @@ model:                                               # mandatory. used to specif
   name: mnist
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:

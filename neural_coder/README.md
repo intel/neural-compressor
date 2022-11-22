@@ -35,62 +35,13 @@ simultaneously on below PyTorch evaluation code, we generate the optimized code 
 
 ## Getting Started!
 
-### Auto-Quant Feature
-We provide a feature named Auto-Quant that helps automatically enable quantization features on a PyTorch model script and automatically evaluates for the best performance on the model. It is a code-free solution that can help users enable quantization algorithms on a PyTorch model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision. For more details please refer to this [guide](docs/AutoQuant.md).
+There are currently 2 ways to use Neural Coder for automatic quantization enabling and benchmark.
 
-### General Guide
-We currently provide 3 main user-facing APIs: enable, bench and superbench.
-#### Enable
-Users can use ```enable()``` to enable specific features into DL scripts:
-```
-from neural_coder import enable
-enable(
-    code="neural_coder/examples/vision/resnet50.py",
-    features=[
-        "pytorch_jit_script",
-        "pytorch_channels_last",
-    ],
-)
-```
-To run benchmark directly on the optimization together with the enabling:
-```
-from neural_coder import enable
-enable(
-    code="neural_coder/examples/vision/resnet50.py",
-    features=[
-        "pytorch_jit_script",
-        "pytorch_channels_last"
-    ],
-    run_bench=True,
-)
-```
-#### Bench
-To run benchmark on your code with an existing patch:
-```
-from neural_coder import bench
-bench(
-    code="neural_coder/examples/vision/resnet50.py",
-    patch_path="${your_patch_path}",
-)
-```
-#### SuperBench
-To sweep on optimization sets with a fixed benchmark configuration:
-```
-from neural_coder import superbench
-superbench(code="neural_coder/examples/vision/resnet50.py")
-```
-To sweep on benchmark configurations for a fixed optimization set:
-```
-from neural_coder import superbench
-superbench(
-    code="neural_coder/examples/vision/resnet50.py",
-    sweep_objective="bench_config",
-    bench_feature=[
-        "pytorch_jit_script",
-        "pytorch_channels_last",
-    ],
-)
-```
+### Jupyter Lab Extension
+We offer Neural Coder as an extension plugin in Jupyter Lab. This enables users to utilize Neural Coder while writing their Deep Learning models in Jupyter Lab coding platform. Users can simply search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install Neural Coder with one click. For more details, please refer to this [guide](extensions/neural_compressor_ext_lab/README.md)
+
+### Python API
+There are 3 user-facing APIs for Neural Coder: enable, bench and superbench. For more details, please refer to this [guide](docs/PythonAPI.md). We have provided a [list](docs/SupportMatrix.md) of supported Deep Learning optimization features. Specifically for quantization, we provide an auto-quantization API that helps automatically enable quantization on Deep Learning models and automatically evaluates for the best performance on the model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision. For more details, please refer to this [guide](docs/Quantization.md).
 
 ## Contact
 Please contact us at [inc.maintainers@intel.com](mailto:inc.maintainers@intel.com) for any Neural Coder related question.

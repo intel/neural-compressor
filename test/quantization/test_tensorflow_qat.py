@@ -2,9 +2,6 @@ import unittest
 import os
 import yaml
 import shutil
-import tensorflow as tf
-from tensorflow import keras
-
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -55,6 +52,8 @@ def build_fake_yaml_by_train():
 
 
 def train_func():
+    import tensorflow as tf
+    from tensorflow import keras
     # Load MNIST dataset
     mnist = keras.datasets.mnist
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
@@ -93,6 +92,8 @@ def train_func():
 
 
 def q_func(model):
+    import tensorflow as tf
+    from tensorflow import keras
     mnist = keras.datasets.mnist
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
 
@@ -130,6 +131,8 @@ def q_func(model):
 
 class Dataset(object):
     def __init__(self, batch_size=100):
+        import tensorflow as tf
+        from tensorflow import keras
         mnist = keras.datasets.mnist
         (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
 
@@ -147,6 +150,7 @@ class Dataset(object):
 
 
 class TestTensorflowQAT(unittest.TestCase):
+    import tensorflow as tf
     @classmethod
     def setUpClass(self):
         build_fake_yaml()
@@ -159,6 +163,7 @@ class TestTensorflowQAT(unittest.TestCase):
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('trained_qat_model',ignore_errors=True)
         os.remove('fake_yaml_train.yaml')
+        
     @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
     def test_qat_with_external_q_func(self):
         from neural_compressor.experimental import Quantization, common

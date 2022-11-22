@@ -1,15 +1,22 @@
 Optimization Orchestration
 ============
 
+1. [Introduction](#introduction)
+
+    1.1. [One-shot](#one-shot)
+
+    1.2. [Multi-shot](#multi-shot)
+
+2. [Orchestration Support Matrix](#orchestration-support-matrix)
+3. [Get Started with Orchestration API ](#get-started-with-orchestration-api)
+4. [Examples](#examples)
+
 ## Introduction
 
-Intel Neural Compressor supports arbitrary meaningful combinations of supported optimization methods under one-shot or multi-shot, such as pruning during quantization-aware training, or pruning and then post-training quantization,
-pruning and then distillation and then quantization.
-
-## Validated Orchestration Types
+Orchestration is the combination of multiple optimization techniques, either applied simultaneously (one-shot) or sequentially (multi-shot). Intel Neural Compressor supports arbitrary meaningful combinations of supported optimization methods under one-shot or multi-shot, such as pruning during quantization-aware training, or pruning and then post-training quantization, pruning and then distillation and then quantization.
 
 ### One-shot
-Since quantization-aware training, pruning and distillation all have training processes, we can achieve the goal of optimization through one shot training.
+Since quantization-aware training, pruning and distillation all leverage training process for optimization, we can achieve the goal of optimization through one shot training with arbitrary meaningful combinations of these methods, which often gain more benefits in terms of performance and accuracy than just one compression technique applied, and usually are as efficient as applying just one compression technique. The three possible combinations are shown below.
 - Pruning during quantization-aware training
 - Distillation with pattern lock pruning
 - Distillation with pattern lock pruning and quantization-aware training
@@ -20,7 +27,54 @@ Of course, besides one-shot, we also support separate execution of each optimiza
 - Distillation and then post-training quantization
 - Distillation, then pruning and post-training quantization
 
-## Orchestration user facing API
+## Orchestration Support Matrix
+<table>
+    <thead>
+        <tr>
+            <th>Orchestration</th>
+            <th>Combinations</th>
+            <th>Supported</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=4>One-shot</td>
+            <td>Pruning + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Pruning</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Pruning + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td rowspan=4>Multi-shot</td>
+            <td>Pruning then Quantization</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation then Quantization</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation then Pruning</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation then Pruning then Quantization</td>
+            <td>&#10004;</td>
+        </tr>
+    </tbody>
+</table>
+
+## Get Started with Orchestration API 
 
 Neural Compressor defines `Scheduler` class to automatically pipeline execute model optimization with one shot or multiple shots way. 
 
@@ -53,11 +107,6 @@ scheduler.append(combination)
 opt_model = scheduler.fit()
 ```
 
-### Examples
+## Examples
 
-For orchestration one-shot related examples, please refer to [One-shot examples](../examples/pytorch/nlp/huggingface_models/question-answering/optimization_pipeline/prune_once_for_all/fx/README.md).
-
-For orchestration multi-shot related examples, please refer to [Multi-shot examples](../examples/pytorch/image_recognition/torchvision_models/optimization_pipeline/).
-
-### Publications
-All the experiments from [Prune Once for ALL](https://arxiv.org/abs/2111.05754) can be reproduced using [Optimum-Intel](https://github.com/huggingface/optimum-intel) with Intel Neural Compressor.
+[Orchestration Examples](../examples/README.md#orchestration)

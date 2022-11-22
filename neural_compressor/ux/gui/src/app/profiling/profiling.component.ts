@@ -53,6 +53,9 @@ export class ProfilingComponent implements OnInit {
   profilingDataHeaders = [];
   profilingChartData = [{
     name: 'node',
+    style: {
+      text: 'red'
+    },
     series: []
   }];
   showChart = false;
@@ -69,6 +72,7 @@ export class ProfilingComponent implements OnInit {
   showYAxisLabel = true;
   showXAxisLabel = true;
   viewLine: any[] = [900, 300];
+  fontColor = '#000';
 
   customColor = {
     domain: [
@@ -109,6 +113,10 @@ export class ProfilingComponent implements OnInit {
     this.socketService.profilingFinish$
       .subscribe(resp => {
         this.getProfilingList();
+      });
+    this.modelService.colorMode$
+      .subscribe(resp => {
+        this.fontColor = resp === '' ? '#000' : '#fff';
       });
   }
 

@@ -29,6 +29,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Neural Compressor built-in imagenet transforms."""
 
 import numpy as np
 from neural_compressor.utils.utility import LazyImport
@@ -37,7 +38,7 @@ tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')
 
 @transform_registry(transform_type="QuantizedInput", \
-                    process="preprocess", framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    process="preprocess", framework="tensorflow, tensorflow_itex")
 class QuantizedInput(BaseTransform):
     """Convert the dtype of input to quantize it.
 
@@ -50,6 +51,7 @@ class QuantizedInput(BaseTransform):
     """
 
     def __init__(self, dtype, scale=None):
+        """Initialize `QuantizedInput` class."""
         self.dtype_map = {'uint8': tf.uint8, 'int8': tf.int8}
         assert dtype in self.dtype_map.keys(), \
             'only support cast dtype {}'.format(self.dtype_map.keys())
@@ -57,6 +59,7 @@ class QuantizedInput(BaseTransform):
         self.scale = scale
 
     def __call__(self, sample):
+        """Convert the dtype of input."""
         # scale is not know when tuning, in this case this transform
         # do nothing, it's only used when scale is set
         if self.scale == None:
@@ -69,8 +72,8 @@ class QuantizedInput(BaseTransform):
         return image, label
 
 @transform_registry(transform_type="LabelShift", \
-    process="postprocess", framework="pytorch, tensorflow, inteltensorflow, \
-                           tensorflow_itex, onnxrt_qlinearops, onnxrt_integerops")
+    process="postprocess", framework="pytorch, tensorflow, tensorflow_itex,\
+                           onnxrt_qlinearops, onnxrt_integerops")
 class LabelShift(BaseTransform):
     """Convert label to label - label_shift.
 
@@ -82,9 +85,11 @@ class LabelShift(BaseTransform):
     """
 
     def __init__(self, label_shift=0):
+        """Initialize `LabelShift` class."""
         self.label_shift = label_shift
 
     def __call__(self, sample):
+        """Convert label to label_shift."""
         images, labels = sample
         if isinstance(labels, np.ndarray):
             labels = labels - self.label_shift
@@ -108,6 +113,7 @@ class ParseDecodeImagenet():
     """
 
     def __call__(self, sample):
+        """Parse features in example."""
         # Dense features in Example proto.
         feature_map = {
             'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string, default_value=''),

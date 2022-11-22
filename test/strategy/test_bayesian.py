@@ -4,12 +4,6 @@ import unittest
 import os
 import shutil
 import yaml
-import tensorflow as tf
-from tensorflow.core.framework import attr_value_pb2
-from tensorflow.core.framework import graph_pb2
-from tensorflow.core.framework import node_def_pb2
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.framework import dtypes
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -76,6 +70,7 @@ def build_fake_yaml2():
     f.close()
 
 def build_fake_model():
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.GraphDef()
@@ -107,6 +102,11 @@ def build_fake_model():
     return graph
 
 def create_test_graph():
+    from tensorflow.core.framework import attr_value_pb2
+    from tensorflow.core.framework import graph_pb2
+    from tensorflow.core.framework import node_def_pb2
+    from tensorflow.python.framework import tensor_util
+    from tensorflow.python.framework import dtypes
     input_node = node_def_pb2.NodeDef()
     input_node.name = "input"
     input_node.op = "Placeholder"

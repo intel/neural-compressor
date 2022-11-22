@@ -2,13 +2,15 @@
 #  -*- coding: utf-8 -*-
 #
 import unittest
-import tensorflow as tf
-
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu import FuseGeluOptimizer
 from neural_compressor.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
-@unittest.skipIf(tf.version.VERSION.find('up') == -1, "Only supports tf 1.15.up2 and 1.15.up3 and spr-base TF")
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
+
+@unittest.skipIf(tf.version.VERSION.find('up') == -1, 
+        "Only supports tf 1.15.up2 and 1.15.up3 and SprBase")
 class TestGeluFusion(unittest.TestCase):
     def gelu(self, input_tensor, mul_value=0.5, addv2_value=1.0, sqrt_value=2.0):
         cdf = mul_value * (addv2_value + tf.math.erf(input_tensor / tf.sqrt(sqrt_value)))

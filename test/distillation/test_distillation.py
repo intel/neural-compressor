@@ -1,15 +1,15 @@
+import copy
 import os
 import shutil
 import unittest
-
 import torch
 import torchvision
 import torch.nn as nn
 import tensorflow as tf
-
 from neural_compressor.data import DATASETS
-from neural_compressor.conf.config import DistillationConf
+from neural_compressor.conf.pythonic_config import DistillationConfig, KnowledgeDistillationLossConfig
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+
 
 def build_fake_yaml():
     fake_yaml = """
@@ -117,8 +117,8 @@ def build_fake_yaml_2():
             criterion:
                 IntermediateLayersKnowledgeDistillationLoss:
                     layer_mappings: [
-                        ['layer1.0', 'layer1.0'],
-                        ['layer1.1.conv1', '', 'layer1.1.conv1', '0'],
+                        ['layer1.0', ],
+                        [['layer1.1.conv1', ''], ['layer1.1.conv1', '0']],
                                         ]
                     loss_types: ['KL', 'MSE']
                     loss_weights: [0.5, 0.5]
@@ -165,7 +165,7 @@ class TestDistillation(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_distillation(self):
-        from neural_compressor.experimental import Distillation, common
+        from neural_compressor.experimental import Distillation
         from neural_compressor.conf.config import DistillationConf
         conf = DistillationConf('fake.yaml')
         distiller = Distillation(conf)
@@ -195,7 +195,7 @@ class TestDistillation(unittest.TestCase):
         from neural_compressor.conf.config import DistillationConf
         conf = DistillationConf('fake_2.yaml')
         conf.usr_cfg.distillation.train.criterion.\
-            IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][-1] = \
+            IntermediateLayersKnowledgeDistillationLoss.layer_mappings[1][1][-1] = \
                 lambda x: x[:, :2,...]
         distiller = Distillation(conf)
         distiller.student_model = common.Model(self.student_model)
@@ -215,50 +215,42 @@ class TestDistillation(unittest.TestCase):
         criterion.student_targets_loss_cal(y_pred, y_true)
 
     def test_distillation_external_new_API(self):
-        from neural_compressor.training import prepare, fit
+        from neural_compressor.training import prepare_compression
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         criterion = nn.CrossEntropyLoss()
+        distillation_criterion = KnowledgeDistillationLossConfig(loss_types=['CE', 'KL'])
         optimizer = torch.optim.SGD(self.student_model.parameters(), lr=0.0001)
-        conf = DistillationConf('fake.yaml')
-        callbacks, model = prepare(
-            conf, model=self.student_model, teacher_model=self.teacher_model
-        )
+        conf = DistillationConfig(self.teacher_model, distillation_criterion)
+        compression_manager = prepare_compression(copy.deepcopy(self.student_model), conf)
+        model = compression_manager.model
 
-        def training_func_for_nc(model):
-            epochs = 3
-            iters = 10
-            for nepoch in range(epochs):
-                model.train()
-                cnt = 0
-                callbacks.on_epoch_begin(nepoch)
-                for image, target in dummy_dataloader:
-                    callbacks.on_step_begin(cnt)
-                    print('.', end='')
-                    cnt += 1
-                    output = model(image)
-                    loss = criterion(output, target)
-                    loss = callbacks.on_after_compute_loss(image, output, loss)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                    callbacks.on_step_end()
-                    if cnt >= iters:
-                        break
-                callbacks.on_epoch_end()
-            return model
-
-        def eval_func(model):
+        epochs = 3
+        iters = 10
+        for nepoch in range(epochs):
+            model.train()
+            cnt = 0
+            compression_manager.callbacks.on_epoch_begin(nepoch)
             for image, target in dummy_dataloader:
-                model(image)
-            return 1  # metric is 1 here, just for unit test
+                compression_manager.callbacks.on_step_begin(cnt)
+                print('.', end='')
+                cnt += 1
+                output = model(image)
+                loss = criterion(output, target)
+                loss = compression_manager.callbacks.on_after_compute_loss(image, output, loss)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                compression_manager.callbacks.on_step_end()
+                if cnt >= iters:
+                    break
+            compression_manager.callbacks.on_epoch_end()
 
-        model = fit(
-            model, callbacks, train_func=training_func_for_nc,
-            eval_func=eval_func
-        )
+        model.save('./saved')
+        stat = torch.load('./saved/best_model.pt')
+        opt_model = self.student_model.load_state_dict(stat)
 
     @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras requires higher version than tf-2.3.0")
     def test_tf_distillation(self):

@@ -14,7 +14,7 @@
 # limitations under the License.
 """The Model class."""
 import json
-from typing import Any, List
+from typing import Any, List, Optional
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, session
@@ -54,6 +54,17 @@ class Model(Base):
         "Optimization",
         back_populates="optimized_model",
         primaryjoin="Optimization.optimized_model_id == Model.id",
+    )
+
+    benchmarks: Any = relationship(
+        "Benchmark",
+        back_populates="model",
+        cascade="all, delete",
+    )
+
+    profilings: Any = relationship(
+        "Profiling",
+        back_populates="model",
         cascade="all, delete",
     )
 
@@ -146,6 +157,26 @@ class Model(Base):
                 },
             )
         return {"models": models}
+
+    @staticmethod
+    def delete_model(
+        db_session: session.Session,
+        model_id: int,
+        model_name: str,
+    ) -> Optional[int]:
+        """Remove model from database."""
+        model = (
+            db_session.query(Model)
+            .filter(Model.id == model_id)
+            .filter(Model.name == model_name)
+            .one_or_none()
+        )
+        if model is None:
+            return None
+        db_session.delete(model)
+        db_session.flush()
+
+        return int(model.id)
 
     @staticmethod
     def build_info(model: Any) -> dict:

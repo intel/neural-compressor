@@ -14,12 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""TensorFlow Dataloader implementation."""
 
 from neural_compressor.experimental.data.datasets import dataset
 from neural_compressor.utils.utility import LazyImport
 from abc import abstractmethod
 import collections
 import numpy as np
+import sys
 from math import ceil, floor
 from .sampler import IterableSampler, SequentialSampler, BatchSampler
 from .fetcher import FETCHERS
@@ -33,25 +35,32 @@ tf = LazyImport('tensorflow')
 neural_compressor = LazyImport('neural_compressor')
 
 class TFDataDataLoader(BaseDataLoader):
-    """In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
-       method to do session run, this dataloader is designed to satisfy the usage of feed dict
-       in tf1.x. Although it's a general dataloader and can be used in MXNet and PyTorch.
-
+    """Tensorflow dataloader class.
+    
+    In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
+    method to do session run, this dataloader is designed to satisfy the usage of feed dict
+    in tf1.x. Although it's a general dataloader and can be used in MXNet and PyTorch.
+    
+    Args:
+        dataset: obj. wrapper of needed data.
+        batch_size: int. batch size
     """
 
     def __init__(self, dataset, batch_size=1, last_batch='rollover'):
-
+        """Initialize `TFDataDataLoader` class."""
         self.dataset = dataset
         self.last_batch = last_batch
         self._batch_size = batch_size
         dataset = dataset.batch(batch_size)
 
     def batch(self, batch_size, last_batch='rollover'):
+        """Dataset return data per batch."""
         drop_last = False if last_batch == 'rollover' else True
         self._batch_size = batch_size
         self.dataset = self.dataset.batch(batch_size, drop_last)
 
     def __iter__(self):
+        """Iterate dataloader."""
         return self._generate_dataloader(
             self.dataset,
             batch_size=self.batch_size,
@@ -61,6 +70,7 @@ class TFDataDataLoader(BaseDataLoader):
                              collate_fn=None, sampler=None, batch_sampler=None, \
                              num_workers=None, pin_memory=None, shuffle=False, \
                              distributed=False):
+        """Yield data."""
         drop_last = False if last_batch == 'rollover' else True
         if shuffle:
             logging.warning('Shuffle is not supported yet in TFDataLoader, ' \
@@ -144,6 +154,11 @@ class TFDataDataLoader(BaseDataLoader):
                             return
 
 class TensorflowBertDataLoader(DefaultDataLoader):
+    """Subclass of DefaultDataLoader.
+        
+    this dataloader is designed to satisfy the usage of Bert models.
+    """
+
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory, shuffle,
                              distributed):
@@ -168,6 +183,11 @@ class TensorflowBertDataLoader(DefaultDataLoader):
                 return
 
 class TensorflowModelZooBertDataLoader(DefaultDataLoader):
+    """Subclass of DefaultDataLoader.
+        
+    this dataloader is designed to satisfy the usage of Model Zoo Bert models.
+    """
+
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory, shuffle,
                              distributed):
@@ -200,9 +220,10 @@ class TensorflowModelZooBertDataLoader(DefaultDataLoader):
                 return
 
 class TensorflowDataLoader(BaseDataLoader):
-    """DataLoader for framework Tensorflow, if it's a tf.data.Dataset we will directly use
-       the dataloader in the other case will use DefaultDataLoader instead.
-
+    """DataLoader for framework Tensorflow.
+    
+    if it's a tf.data.Dataset we will directly use the dataloader in the other case 
+    will use DefaultDataLoader instead.
     """
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn, \
@@ -259,18 +280,22 @@ class TensorflowDataLoader(BaseDataLoader):
                                      pin_memory, shuffle, distributed)
 
     def __bool__(self):
+        """Judgement if the dataloader exists."""
         # workaround in assert dataloader which will overload __len__() without __bool__()
         # provided. Calling __len__() in asserting is not supposed and may cause issues.
         return True
 
     def __len__(self):
+        """Total number of dataset."""
         try:
             dataset_len = self.dataset.__len__()
         except (AttributeError, TypeError):
-            dataset_len = 0
-            for _ in self.dataset:
-                dataset_len += 1
-        except:
+            try:
+                dataset_len = 0
+                for _ in self.dataset:
+                    dataset_len += 1
+            except RuntimeError: return sum([1 for _ in self])
+        except Exception:
             raise ValueError(f"{self.dataset} is invalid, {self.dataset}" \
                 " does not support calculating the length of its dataloader")
         process_rank = 0 # The default rank is 0, which represents the main process
@@ -294,4 +319,4 @@ class TensorflowDataLoader(BaseDataLoader):
             dataloader_len = ceil(self.dis_dataset_len / self.batch_size)
         else:
             dataloader_len = floor(self.dis_dataset_len / self.batch_size)
-        return dataloader_len
+        return sys.maxsize if dataloader_len > sys.maxsize else dataloader_len

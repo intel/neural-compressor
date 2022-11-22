@@ -6,7 +6,7 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
 > **Note**
 >
 > Please  ensure your PC have >370G memory to run DLRM
-> IPEX version >= 1.10
+> IPEX version >= 1.11
 
 # Prerequisite
 

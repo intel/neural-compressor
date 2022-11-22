@@ -84,6 +84,7 @@ import { ConfigPreviewComponent } from './config-preview/config-preview.componen
 import { PrintJsonPipe } from './pipes/print-json.pipe';
 import { GenerateConfigDialogComponent } from './generate-config-dialog/generate-config-dialog.component';
 import { WarningComponent } from './warning/warning.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefix }}'
   ? '' : document.getElementById('url_prefix').innerText;
@@ -123,6 +124,7 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     GenerateConfigDialogComponent
   ],
   imports: [
+    DragDropModule,
     BrowserModule,
     CommonModule,
     AppRoutingModule,

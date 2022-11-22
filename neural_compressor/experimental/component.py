@@ -22,8 +22,8 @@ from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 from ..model.model import get_model_fwk_name
-from warnings import warn
 import importlib
+from deprecated import deprecated
 
 
 class Component(object):
@@ -88,6 +88,52 @@ class Component(object):
                         logger.error("{}.".format(e))
                         raise RuntimeError("{} is not correctly installed. " \
                             "Please check your environment".format(lib))
+            if self.framework == 'tensorflow' or self.framework == 'inteltensorflow':
+                try:
+                    import tensorflow as tf
+                except Exception as e:
+                    logger.error("{}.".format(e))
+                    raise RuntimeError(
+                        "The TensorFlow framework is not correctly installed. Please check your environment"
+                    )
+
+    def prepare(self):
+        # register Quantization Aware Training hooks
+        if self.combination is not None and 'Quantization' in self.combination:
+            if self.adaptor is None:
+                framework_specific_info = {'device': self.cfg.device,
+                                        'random_seed': self.cfg.tuning.random_seed,
+                                        'workspace_path': self.cfg.tuning.workspace.path,
+                                        'q_dataloader': None}
+                if self.cfg.quantization.approach is not None:
+                    framework_specific_info['approach'] = self.cfg.quantization.approach
+
+                if 'tensorflow' in self.framework:
+                    framework_specific_info.update(
+                        {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+                self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+                self.adaptor.model = self.model
+            self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
+            self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
+
+
+    def prepare_qat(self):
+        # register Quantization Aware Training hooks
+        if self.adaptor is None:
+            framework_specific_info = {'device': self.cfg.device,
+                                    'random_seed': self.cfg.tuning.random_seed,
+                                    'workspace_path': self.cfg.tuning.workspace.path,
+                                    'q_dataloader': None}
+            if self.cfg.quantization.approach is not None:
+                framework_specific_info['approach'] = self.cfg.quantization.approach
+
+            if 'tensorflow' in self.framework:
+                framework_specific_info.update(
+                    {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+            self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+            self.adaptor.model = self.model
+        self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
+        self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
 
     def pre_process(self):
         """ Initialize the dataloader and train/eval functions from yaml config.
@@ -95,20 +141,21 @@ class Component(object):
             from user config. And for derived classes(Pruning, Quantization, etc.), an override
             function is required.
         """
-        # create adaptor
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
-        if self.cfg.quantization.approach is not None:
-            framework_specific_info['approach'] = self.cfg.quantization.approach
+        if self.adaptor is None:
+            # create adaptor
+            framework_specific_info = {'device': self.cfg.device,
+                                       'random_seed': self.cfg.tuning.random_seed,
+                                       'workspace_path': self.cfg.tuning.workspace.path,
+                                       'q_dataloader': None}
+            if self.cfg.quantization.approach is not None:
+                framework_specific_info['approach'] = self.cfg.quantization.approach
 
-        if 'tensorflow' in self.framework:
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+            if 'tensorflow' in self.framework:
+                framework_specific_info.update(
+                    {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
 
-        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
-        self.adaptor.model = self.model
+            self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+            self.adaptor.model = self.model
 
         # create dataloaders
         if self._train_dataloader is None and self._train_func is None:
@@ -143,10 +190,8 @@ class Component(object):
                                                metric,
                                                self.cfg.evaluation.accuracy.postprocess,
                                                fp32_baseline = False)
-        # register Quantization Aware Training hooks
-        if self.combination is not None and 'Quantization' in self.combination:
-            self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
-            self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
+
+        self.prepare()
         # strategy will be considered in future
         if getattr(self.train_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
@@ -184,17 +229,15 @@ class Component(object):
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
 
+    @deprecated(version='2.0', reason="please use `on_train_begin` instead")
     def pre_epoch_begin(self, dataloader=None):
         """ called before the beginning of epochs"""
-        warn('This method is deprecated. please use `on_train_begin` instead.',
-             DeprecationWarning, stacklevel=2)
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
             on_train_begin_hook(dataloader)
 
+    @deprecated(version='2.0', reason="please use `on_train_end` instead")
     def post_epoch_end(self):
         """ called after the end of epochs"""
-        warn('This method is deprecated. please use `on_train_end` instead.',
-             DeprecationWarning, stacklevel=2)
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
 
@@ -210,9 +253,8 @@ class Component(object):
             res_list.append(on_step_begin_hook(batch_id))
         return res_list
 
+    @deprecated(version='2.0', reason="please use `on_step_begin` instead")
     def on_batch_begin(self, batch_id):
-        warn('This method is deprecated. please use `on_step_begin` instead.',
-             DeprecationWarning, stacklevel=2)
         return self.on_step_begin(batch_id)
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
@@ -227,9 +269,8 @@ class Component(object):
         for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
             on_before_optimizer_step_hook()
 
+    @deprecated(version='2.0', reason="please use `on_before_optimizer_step` instead")
     def on_post_grad(self):
-        warn('This method is deprecated. please use `on_before_optimizer_step` instead.',
-             DeprecationWarning, stacklevel=2)
         return self.on_before_optimizer_step()
 
     def on_step_end(self):
@@ -239,9 +280,8 @@ class Component(object):
             res_list.append(on_step_end_hook())
         return res_list
 
+    @deprecated(version='2.0', reason="please use `on_step_end` instead")
     def on_batch_end(self):
-        warn('This method is deprecated. please use `on_step_end` instead.',
-             DeprecationWarning, stacklevel=2)
         return self.on_step_end()
 
     def on_epoch_end(self):

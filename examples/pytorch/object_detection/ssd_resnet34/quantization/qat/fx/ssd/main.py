@@ -399,6 +399,7 @@ def train300_mlperf_coco(args):
         quantizer.model = common.Model(ssd300)
         quantizer.eval_func = eval_func
         quantizer.q_func = training_func_for_nc
+        quantizer.calib_dataloader = val_dataloader
         q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
 

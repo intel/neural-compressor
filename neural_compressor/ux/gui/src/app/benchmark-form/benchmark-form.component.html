@@ -1,78 +1,90 @@
 <mat-horizontal-stepper #stepper>
-  <mat-step *ngIf="!data.editing" [completed]="false">
+  <mat-step *ngIf="!data.editing" [stepControl]="benchmarkFormGroup" [completed]="false">
     <ng-template matStepLabel>Name</ng-template>
     <h2>Name</h2>
     <p>Set the name of the benchmark.</p>
-    <mat-form-field class="form-field long" appearance="outline">
-      <mat-label>benchmark name</mat-label>
-      <input required [(ngModel)]="name" matInput>
-    </mat-form-field>
-    <br>
-    <div class="float-right">
-      <button mat-raised-button matStepperNext>
-        <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
-        Next
-      </button>
-    </div>
+    <form [formGroup]="benchmarkFormGroup">
+      <mat-form-field class="form-field long" appearance="outline">
+        <mat-label>benchmark name</mat-label>
+        <input required formControlName="name" matInput>
+      </mat-form-field>
+      <br>
+      <div class="float-right">
+        <button mat-raised-button matStepperNext type="submit">
+          <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
+          Next
+        </button>
+      </div>
+    </form>
   </mat-step>
-  <mat-step [completed]="false">
+
+  <mat-step [stepControl]="benchmarkFormGroup" [completed]="false">
     <ng-template matStepLabel>Mode</ng-template>
     <h2>Mode</h2>
     <p>Choose benchmark mode to decide if you want to check accuracy or performance.</p>
-    <mat-radio-group [(ngModel)]="mode">
-      <ng-container *ngFor="let mode of modes">
-        <mat-radio-button [value]="mode">{{ mode }}</mat-radio-button><br><br>
-      </ng-container>
-    </mat-radio-group>
-    <p *ngIf="data.framework === 'pytorch'" style="font-size: 70%;">* PyTorch script-based Model only supports the
-      Performance mode. Accuracy mode will be supported in future.</p>
-    <br>
-    <div class="float-right">
-      <button mat-raised-button matStepperNext>
-        <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
-        Next
-      </button>
-    </div>
+    <form [formGroup]="benchmarkFormGroup">
+      <mat-radio-group formControlName="mode">
+        <ng-container *ngFor="let mode of modes">
+          <mat-radio-button [value]="mode">{{ mode }}</mat-radio-button><br><br>
+        </ng-container>
+      </mat-radio-group>
+      <p *ngIf="data.framework === 'pytorch'" style="font-size: 70%;">* PyTorch script-based Model only supports the
+        Performance mode. Accuracy mode will be supported in future.</p>
+      <br>
+      <div class="float-right">
+        <button mat-raised-button matStepperNext type="submit">
+          <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
+          Next
+        </button>
+      </div>
+    </form>
   </mat-step>
-  <mat-step *ngIf="!data.editing" [completed]="false">
+
+  <mat-step *ngIf="!data.editing" [stepControl]="benchmarkFormGroup" [completed]="false">
     <ng-template matStepLabel>Model</ng-template>
     <h2>Model</h2>
     <p>Choose if you want to benchmark input model or one of the optimized models.</p>
-    <mat-form-field class="form-field long" appearance="outline">
-      <mat-label>model</mat-label>
-      <mat-select required [(ngModel)]="modelId">
-        <mat-option *ngFor="let model of models" [value]="model.id">{{ model.name }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <br>
-    <div class="float-right">
-      <button mat-raised-button matStepperNext>
-        <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
-        Next
-      </button>
-    </div>
+    <form [formGroup]="benchmarkFormGroup">
+      <mat-form-field class="form-field long" appearance="outline">
+        <mat-label>model</mat-label>
+        <mat-select required formControlName="modelId">
+          <mat-option *ngFor="let model of models" [value]="model.id">{{ model.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <br>
+      <div class="float-right">
+        <button mat-raised-button matStepperNext type="submit">
+          <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
+          Next
+        </button>
+      </div>
+    </form>
   </mat-step>
-  <mat-step [completed]="false" *ngIf="data.framework !== 'pytorch'">
+
+  <mat-step [stepControl]="benchmarkFormGroup" [completed]="false" *ngIf="data.framework !== 'pytorch'">
     <ng-template matStepLabel>Dataset</ng-template>
     <h2>Dataset</h2>
     <p>Choose the dataset to run the benchmark on. If you want to add another dataset go
       <a class="link" (click)="openDatasetDialog()">here</a>.
     </p>
-    <mat-form-field class="form-field long" appearance="outline">
-      <mat-label>dataset</mat-label>
-      <mat-select required [(ngModel)]="datasetId">
-        <mat-option *ngFor="let dataset of datasets" [value]="dataset.id">{{ dataset.name }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <br>
-    <div class="float-right">
-      <button mat-raised-button matStepperNext>
-        <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
-        Next
-      </button>
-    </div>
+    <form [formGroup]="benchmarkFormGroup">
+      <mat-form-field class="form-field long" appearance="outline">
+        <mat-label>dataset</mat-label>
+        <mat-select required formControlName="datasetId">
+          <mat-option *ngFor="let dataset of datasets" [value]="dataset.id">{{ dataset.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <br>
+      <div class="float-right">
+        <button mat-raised-button matStepperNext type="submit">
+          <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
+          Next
+        </button>
+      </div>
+    </form>
   </mat-step>
-  <mat-step [completed]="false">
+
+  <mat-step [stepControl]="benchmarkFormGroup" [completed]="false">
     <ng-template matStepLabel>Parameters</ng-template>
     <form [formGroup]="benchmarkFormGroup">
       <h3>Batch size</h3>
@@ -115,9 +127,9 @@
       </a>
       <br>
       <div class="float-right">
-        <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent"
-          [disabled]="benchmarkFormGroup.status === 'INVALID' || !coresValidated()" (click)="addBenchmark()"
-          queryParamsHandling="preserve">
+        <button id="finish-adv-btn" class="finish-button" mat-raised-button mat-dialog-close color="accent"
+          type="submit" [disabled]="benchmarkFormGroup.status === 'INVALID' || !coresValidated()"
+          (click)="addBenchmark()" queryParamsHandling="preserve">
           <img class="navigation-icon" src="./../../assets/056a-save-solid-white.svg">
           Finish
         </button>

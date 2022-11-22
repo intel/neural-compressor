@@ -24,7 +24,6 @@ class onnxrt:
                            'DedicatedQDQPair': False})
 
 OPTIONS = {'tensorflow': None,
-           'inteltensorflow': None,
            'tensorflow_itex': None,
            'pytorch': None,
            'pytorch_fx': None,

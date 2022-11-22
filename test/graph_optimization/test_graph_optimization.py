@@ -4,16 +4,18 @@
 import unittest
 import os
 import yaml
-import tensorflow as tf
+import platform
 import numpy as np
-from tensorflow.core.framework import graph_pb2
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import graph_util
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from packaging.version import Version
 
+
+import tensorflow as tf
+from tensorflow.core.framework import graph_pb2
+from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import graph_util
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -235,6 +237,8 @@ class TestGraphOptimization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         os.environ['FORCE_BF16'] = '1'
+        if platform.system().lower() == "windows":
+            self.skipTest(self, "Graph Optimization NOT Support Windows Yet")
         build_fake_yaml()
         build_fake_yaml_2()
         build_fake_yaml_3()

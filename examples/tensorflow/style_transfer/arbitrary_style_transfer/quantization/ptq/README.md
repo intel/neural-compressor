@@ -2,7 +2,7 @@ Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow style transfer Intel® Neural Compressor tuning zoo result.
-
+This example can run on Intel CPUs and GPUs.
 
 ## Prerequisite
 
@@ -23,12 +23,28 @@ cd examples/tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq
 pip install -r requirements.txt
 ```
 
-### 4. Prepare Dataset
+### 4. Install Intel Extension for Tensorflow
+#### Quantizing the model on Intel GPU
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Quantizing the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 5. Prepare Dataset
 There are two folders named style_images and content_images
 you can use these two folders to generated stylized images for test
 you can also prepare your own style_images or content_images
 
-### 5. Prepare Pretrained model
+### 6. Prepare Pretrained model
 
 #### Automated approach
 Run the `prepare_model.py` script located in `LowPrecisionInferenceTool/examples/tensorflow/style_transfer`.
@@ -81,9 +97,11 @@ def eval_func(model):
 ```
 
 ### Write Yaml config file
-In examples directory, there is a conf.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader
+In examples directory, there is a conf.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The conf_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
+device: cpu                                          # NOTE: optional. default value is cpu, other value is gpu.
+
 model:
   name: style_transfer
   framework: tensorflow

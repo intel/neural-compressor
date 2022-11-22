@@ -14,7 +14,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: x
           outputs: op_to_store
         device: cpu
@@ -43,7 +43,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
     def setUpClass(self):
         build_fake_yaml()
         self.op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "../../neural_compressor/adaptor/inteltensorflow.yaml")).get_eightbit_patterns(True)
+        os.path.dirname(__file__), "../../neural_compressor/adaptor/tensorflow.yaml")).get_eightbit_patterns(True)
 
     @classmethod
     def tearDownClass(self):
@@ -463,6 +463,8 @@ class TestGraphMatMulFusion(unittest.TestCase):
  
             self.assertEqual(found_quantized_matmul, True)
 
+    # batchmatmul quantization disabled temporarily for its bad performance
+    """
     @disable_random()
     def test_batchmatmulv2_dequantize_fusion(self):
         g = tf.Graph()
@@ -585,6 +587,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     break
 
             self.assertEqual(found_quantized_matmul, True)
+    """
 
     @disable_random()
     def test_matmul_biasadd_relu6_fusion(self):

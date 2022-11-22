@@ -20,6 +20,7 @@ from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from tensorflow.python.framework import dtypes
+from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
 
 
 class FuseGeluOptimizer(GraphRewriterBase): # pragma: no cover
@@ -27,9 +28,10 @@ class FuseGeluOptimizer(GraphRewriterBase): # pragma: no cover
     """
 
     def do_transformation(self):
-        if tf.version.VERSION not in ('1.15.0-up2','1.15.0-up3'):
+        if not (tf.version.VERSION in ('1.15.0-up2','1.15.0-up3') or \
+           version1_eq_version2(tf.version.VERSION, '2.11.0202242')):
             return self.model
-        
+
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

@@ -43,8 +43,8 @@
           <img class="icon" src="./../../assets/057b-trash-outlined.svg">
         </button>
       </div>
-      <button id="finish-adv-btn" mat-raised-button color="accent" class="browse" (click)="addNewParam(type)"
-        queryParamsHandling="preserve">
+      <button id="finish-adv-btn" class="finish-button" mat-raised-button color="accent" class="browse"
+        (click)="addNewParam(type)" queryParamsHandling="preserve">
         <img src="./../../assets/008a-plus-solid.svg">
         Add parameter
       </button>
@@ -52,7 +52,7 @@
 
     <br />
     <div class="float-right">
-      <button id="finish-adv-btn" mat-raised-button mat-dialog-close color="accent" class="browse"
+      <button id="finish-adv-btn" class="finish-button" mat-raised-button mat-dialog-close color="accent" class="browse"
         (click)="saveModelWise()" queryParamsHandling="preserve">
         <img src="./../../assets/056a-save-solid-white.svg">
         Save changes

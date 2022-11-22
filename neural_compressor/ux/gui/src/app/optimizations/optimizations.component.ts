@@ -45,9 +45,9 @@ export class OptimizationsComponent implements OnInit {
   token = '';
 
   model = {};
-  historyData: {
-    accuracy: any;
-    performance: any;
+  historyData = {
+    accuracy: null,
+    performance: null
   };
   optimizations = [];
   activeOptimizationId = 0;
@@ -67,8 +67,9 @@ export class OptimizationsComponent implements OnInit {
   detailsFormGroup: FormGroup;
 
   hiddenFields = {
+    onnxrt: ['id', 'supports', 'nodes', 'domain'],
+    pytorch: ['id', 'supports', 'nodes', 'domain'],
     tensorflow: ['id', 'supports'],
-    pytorch: ['id', 'supports', 'nodes', 'domain']
   };
 
   xAxis = true;
@@ -81,6 +82,8 @@ export class OptimizationsComponent implements OnInit {
     performance: {}
   };
   chartsReady = false;
+  fontColor = localStorage.getItem('darkMode') === 'darkMode' ? '#fff' : '#000';
+
 
   colorScheme = {
     domain: [
@@ -116,6 +119,10 @@ export class OptimizationsComponent implements OnInit {
         this.getOptimizations(response.id);
         this.optimizationDetails = null;
         this.activeOptimizationId = -1;
+      });
+    this.modelService.colorMode$
+      .subscribe(resp => {
+        this.fontColor = resp === '' ? '#000' : '#fff';
       });
   }
 
@@ -445,13 +452,16 @@ export class OptimizationsComponent implements OnInit {
 
   isParameterVisible(parameter: string): boolean {
     let isVisible = true;
-    this.hiddenFields[this.framework.toLowerCase()]
-      .forEach(field => {
-        if (parameter.includes(field)) {
-          isVisible = false;
-          return;
-        }
-      });
+    let hiddenFields = ['id', 'supports'];
+    if (this.hiddenFields[this.framework.toLowerCase()]) {
+      hiddenFields = this.hiddenFields[this.framework.toLowerCase()];
+    }
+    hiddenFields.forEach(field => {
+      if (parameter.includes(field)) {
+        isVisible = false;
+        return;
+      }
+    });
     return isVisible;
   }
 

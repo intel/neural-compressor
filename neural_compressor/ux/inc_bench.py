@@ -44,7 +44,14 @@ def main() -> None:
 
     change_log_level(configuration.log_level)
 
-    if os.geteuid() == 0:
+    try:
+        is_admin = os.geteuid() == 0
+    except AttributeError:
+        import ctypes
+
+        is_admin = ctypes.windll.shell32.IsUserAnAdmin() == 1  # type: ignore
+
+    if is_admin:
         log.warning("Executing INC Bench as root is not supported. Exiting.")
         exit(0)
 

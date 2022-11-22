@@ -4,7 +4,6 @@ import unittest
 import shutil
 import os
 import yaml
-import tensorflow as tf
 if os.getenv('SIGOPT_API_TOKEN') is None or os.getenv('SIGOPT_PROJECT_ID') is None:
     CONDITION = True
 else:
@@ -69,6 +68,7 @@ def build_fake_yaml2(sigopt_api_token,sigopt_project_id):
     f.close()
 
 def build_fake_model():
+    import tensorflow as tf
     try:
         graph = tf.Graph()
         graph_def = tf.compat.v1.GraphDef()

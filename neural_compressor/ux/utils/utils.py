@@ -18,6 +18,7 @@ import json
 import os
 import re
 import socket
+import sys
 from copy import copy
 from functools import wraps
 from importlib.util import find_spec
@@ -28,7 +29,7 @@ from werkzeug.utils import secure_filename
 
 from neural_compressor.experimental.metric.metric import registry_metrics
 from neural_compressor.ux.components.names_mapper.names_mapper import MappingDirection, NamesMapper
-from neural_compressor.ux.utils.consts import WORKDIR_LOCATION, Domains, Frameworks
+from neural_compressor.ux.utils.consts import WORKSPACE_LOCATION, Domains, Frameworks
 from neural_compressor.ux.utils.exceptions import (
     AccessDeniedException,
     ClientErrorException,
@@ -416,7 +417,7 @@ def _update_metric_parameters(metric: Dict[str, Any]) -> Dict[str, Any]:
     metric_name = updated_metric.get("name")
 
     if isinstance(metric_name, str) and metric_name.startswith("COCOmAP"):
-        annotation_path = os.path.join(WORKDIR_LOCATION, "label_map.yaml")
+        annotation_path = os.path.join(WORKSPACE_LOCATION, "label_map.yaml")
         metric_params = updated_metric.get("params", None)
         if metric_params is None:
             updated_metric.update({"params": []})
@@ -471,9 +472,11 @@ def verify_file_path(path: str) -> None:
         "/var",
     ]
     real_path = os.path.realpath(path)
-    if not os.path.exists(real_path):
+
+    exists = os.path.exists(real_path)
+    if not exists:
         raise NotFoundException("File not found.")
-    if os.stat(real_path).st_uid == 0:
+    if sys.platform != "win32" and os.stat(real_path).st_uid == 0:
         raise AccessDeniedException("Access denied.")
     for path_element in real_path.split(os.sep):
         if path_element.startswith("."):

@@ -4,6 +4,8 @@ model:                                               # mandatory. neural_compres
   inputs: inputs
   outputs: output_boxes
 
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
     sampling_size: 2                  # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.

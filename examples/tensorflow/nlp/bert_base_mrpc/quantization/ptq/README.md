@@ -2,6 +2,7 @@ Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of bert base model on mrpc task.
+This example can run on Intel CPUs and GPUs.
 
 
 ## Prerequisite
@@ -11,13 +12,29 @@ This document is used to list steps of reproducing TensorFlow Intel® Neural Com
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow 1.15 up2
-Check your python version and use pip install 1.15.0 up2 from links below:
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl                
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
+### 2. Install Intel Tensorflow
+```shell
+pip install intel-tensorflow
+```
 
-### 3. Prepare Dataset
+### 3. Install Intel Extension for Tensorflow
+
+#### Quantizing the model on Intel GPU
+Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[gpu]
+```
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+#### Quantizing the model on Intel CPU(Experimental)
+Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
+
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+### 4. Prepare Dataset
 
 #### Automatic dataset download
 Run the `prepare_dataset.sh` script located in `examples/tensorflow/nlp/bert_base_mrpc/quantization/ptq`.
@@ -28,7 +45,7 @@ cd examples/tensorflow/nlp/bert_base_mrpc/quantization/ptq
 python prepare_dataset.py --tasks='MRPC' --output_dir=./data
 ```
 
-### 4. Prepare pretrained model
+### 5. Prepare pretrained model
 
 #### Automatic model download
 Run the `prepare_model.sh` script located in `examples/tensorflow/nlp/bert_base_mrpc/quantization/ptq`.
@@ -93,7 +110,7 @@ This is a tutorial of how to enable bert model with Intel® Neural Compressor.
 For bert, we applied the first one as we  already have write dataset and metric for bert mrpc task. 
 
 ### Write Yaml config file
-In examples directory, there is a mrpc.yaml. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
+In examples directory, there is a mrpc.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The mrpc_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
 
 ```yaml
 model:
@@ -101,6 +118,8 @@ model:
   framework: tensorflow
   inputs: input_file, batch_size
   outputs: loss/Softmax:0, IteratorGetNext:3
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
 
 evaluation:
   accuracy: {}

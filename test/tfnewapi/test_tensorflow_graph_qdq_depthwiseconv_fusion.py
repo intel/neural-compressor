@@ -20,7 +20,7 @@ def build_fake_yaml():
     fake_yaml = '''
         model:
           name: fake_yaml
-          framework: inteltensorflow
+          framework: tensorflow
           inputs: input
         device: cpu
         quantization:
@@ -184,7 +184,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
             found_dequantize_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedDepthwiseConv2D':
+                if i.op == '_FusedQuantizedDepthwiseConv2D':
                     found_conv_fusion = True
                 if str(i.attr['fused_ops'].list.s) == str([b'Dequantize']):
                     found_dequantize_fusion = True
@@ -219,7 +219,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
             found_dequantize_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedDepthwiseConv2D':
+                if i.op == '_FusedQuantizedDepthwiseConv2D':
                     found_conv_fusion = True
                 if str(i.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Dequantize']):
                     found_dequantize_fusion = True
@@ -241,7 +241,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
         found_conv_fusion = False
 
         for i in output_graph.graph_def.node:
-            if i.op == '_QuantizedConv2D':
+            if i.op == '_FusedQuantizedConv2D':
                 found_conv_fusion = True
                 break
         self.assertEqual(found_conv_fusion, True)
@@ -275,7 +275,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
             found_conv_fusion = False
 
             for i in output_graph.graph_def.node:
-                if i.op == '_QuantizedDepthwiseConv2D':
+                if i.op == '_FusedQuantizedDepthwiseConv2D':
                     found_conv_fusion = True
                     break
 

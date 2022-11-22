@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Graph Optimization Entry."""
 
 import os
 import pickle
@@ -31,28 +32,28 @@ from ..utils.utility import CpuInfo, time_limit, set_backend
 from .common import Model as NCModel
 from ..model import BaseModel
 
-class Graph_Optimization():
-    """Graph_Optimization class automatically searches for optimal quantization recipes for low
-       precision model inference, achieving best tuning objectives like inference performance
-       within accuracy loss constraints.
-
-       Tuner abstracts out the differences of quantization APIs across various DL frameworks
-       and brings a unified API for automatic quantization that works on frameworks including
-       tensorflow, pytorch and mxnet.
-
-       Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
-       (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
-       Tuner class provides a flexible configuration interface via YAML for users to specify
-       these parameters.
+class Graph_Optimization(): 
+    """Graph_Optimization class.
+        
+    automatically searches for optimal quantization recipes for low
+    precision model inference, achieving best tuning objectives like inference performance
+    within accuracy loss constraints.
+    Tuner abstracts out the differences of quantization APIs across various DL frameworks
+    and brings a unified API for automatic quantization that works on frameworks including
+    tensorflow, pytorch and mxnet.
+    Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+    (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
+    Tuner class provides a flexible configuration interface via YAML for users to specify
+    these parameters.
 
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
             Graph_Optimization_Conf class containing accuracy goal, tuning objective and
             preferred calibration & quantization tuning space etc.
-
     """
 
     def __init__(self, conf_fname_or_obj=None):
+        """Initialize `Graph Optimization` class."""
         self.conf_name = conf_fname_or_obj
         self._model = None
         self._eval_dataloader = None
@@ -77,47 +78,39 @@ class Graph_Optimization():
         np.random.seed(seed)
 
     def __call__(self):
-        """The main entry point of graph optimization process.
+        """Call graph optimization process.
 
-           This interface works on all the DL frameworks that neural_compressor supports
-           and provides three usages:
-           a) Fully yaml configuration: User specifies all the info through yaml,
-              including dataloaders used in calibration and evaluation phases
-              and quantization tuning settings.
-
-              For this usage, only model parameter is mandatory.
-
-           b) Partial yaml configuration: User specifies dataloaders used in calibration
-              and evaluation phase by code.
-              The tool provides built-in dataloaders and evaluators, user just need provide
-              a dataset implemented __iter__ or __getitem__ methods and invoke dataloader()
-              with dataset as input parameter to create neural_compressor dataloader before calling this
-              function.
-
-              After that, User specifies fp32 "model", calibration dataset "calib_dataloader"
-              and evaluation dataset "eval_dataloader".
-              The calibrated and converted model is evaluated with "eval_dataloader"
-              with evaluation metrics specified in the configuration file. The evaluation tells
-              the tuner whether the converted model meets the accuracy criteria. If not,
-              the tuner starts a new calibration and tuning flow.
-
-              For this usage, model, calib_dataloader and eval_dataloader parameters are mandatory.
-
-           c) Partial yaml configuration: User specifies dataloaders used in calibration phase
-              by code.
-              This usage is quite similar with b), just user specifies a custom "eval_func"
-              which encapsulates the evaluation dataset by itself.
-              The calibrated and converted model is evaluated with "eval_func".
-              The "eval_func" tells the tuner whether the converted model meets
-              the accuracy criteria. If not, the Tuner starts a new calibration and tuning flow.
-
-              For this usage, model, calib_dataloader and eval_func parameters are mandatory.
-
+        This interface works on all the DL frameworks that neural_compressor supports
+        and provides three usages:
+        a) Fully yaml configuration: User specifies all the info through yaml,
+            including dataloaders used in calibration and evaluation phases
+            and quantization tuning settings.
+            For this usage, only model parameter is mandatory.
+        b) Partial yaml configuration: User specifies dataloaders used in calibration
+            and evaluation phase by code.
+            The tool provides built-in dataloaders and evaluators, user just need provide
+            a dataset implemented __iter__ or __getitem__ methods and invoke dataloader()
+            with dataset as input parameter to create neural_compressor dataloader before calling this
+            function.
+            After that, User specifies fp32 "model", calibration dataset "calib_dataloader"
+            and evaluation dataset "eval_dataloader".
+            The calibrated and converted model is evaluated with "eval_dataloader"
+            with evaluation metrics specified in the configuration file. The evaluation tells
+            the tuner whether the converted model meets the accuracy criteria. If not,
+            the tuner starts a new calibration and tuning flow.
+            For this usage, model, calib_dataloader and eval_dataloader parameters are mandatory.
+        c) Partial yaml configuration: User specifies dataloaders used in calibration phase
+            by code.
+            This usage is quite similar with b), just user specifies a custom "eval_func"
+            which encapsulates the evaluation dataset by itself.
+            The calibrated and converted model is evaluated with "eval_func".
+            The "eval_func" tells the tuner whether the converted model meets
+            the accuracy criteria. If not, the Tuner starts a new calibration and tuning flow.
+            For this usage, model, calib_dataloader and eval_func parameters are mandatory.
+        
         Returns:
             converted model: best converted model found, otherwise return None
-
         """
-
         assert isinstance(self._model, BaseModel), 'need set your Model for quantization....'
 
         cfg = self.conf.usr_cfg
@@ -130,7 +123,7 @@ class Graph_Optimization():
             if 'bf16' in self._precisions or \
                (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
                (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
-                os.environ['MIX_PRECISION_TEST'] = '1'
+                cfg.use_bf16 = True
         else:
             logger.warning("Only TensorFlow graph optimization is supported at current stage.")
             sys.exit(0)
@@ -194,10 +187,12 @@ class Graph_Optimization():
     fit = __call__
 
     def dataset(self, dataset_type, *args, **kwargs):
+        """Get dataset."""
         from .data import DATASETS
         return DATASETS(self.framework)[dataset_type](*args, **kwargs)
 
     def set_config_by_model(self, model_obj):
+        """Set model config."""
         if model_obj.framework() != 'tensorflow':
             logger.warning("Only TensorFlow graph optimization is supported at current stage.")
             sys.exit(0)
@@ -222,6 +217,7 @@ class Graph_Optimization():
 
     @property
     def precisions(self):
+        """Get precision."""
         return self._precisions
 
     @precisions.setter
@@ -234,6 +230,7 @@ class Graph_Optimization():
 
     @property
     def input(self):
+        """Get input."""
         return self._input
 
     @input.setter
@@ -242,6 +239,7 @@ class Graph_Optimization():
 
     @property
     def output(self):
+        """Get output."""
         return self._output
 
     @output.setter
@@ -250,31 +248,32 @@ class Graph_Optimization():
 
     @property
     def eval_dataloader(self):
+        """Get eval_dataloader."""
         return self._eval_dataloader
 
     @eval_dataloader.setter
     def eval_dataloader(self, dataloader):
-        """Set Data loader for evaluation, It is iterable and the batched data
-           should consists of a tuple like (input, label), when eval_dataloader is set,
-           user should configure postprocess(optional) and metric in yaml file or set
-           postprocess and metric cls. Notice evaluation dataloader will be used to
-           generate data for model inference, make sure the input data can be feed to model.
+        """Set Data loader for evaluation.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data.
-                                      Another good practice is to use neural_compressor.common.DataLoader
-                                      to initialize a neural_compressor dataloader object.
-                                      Notice neural_compressor.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' eval_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Quantization object created then
-                                      framework infomation can be known. Future we will support
-                                      creating iterable dataloader from neural_compressor.common.DataLoader
-
+        It is iterable and the batched data should consists of a tuple like (input, label), 
+        when eval_dataloader is set, user should configure postprocess(optional) and metric 
+        in yaml file or set postprocess and metric cls. Notice evaluation dataloader will be 
+        used to generate data for model inference, make sure the input data can be feed to model.
+        
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                    which meet the requirements that can yield tuple of
+                                    (input, label)/(input, _) batched data.
+                                    Another good practice is to use neural_compressor.common.DataLoader
+                                    to initialize a neural_compressor dataloader object.
+                                    Notice neural_compressor.common.DataLoader is just a wrapper of the
+                                    information needed to build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' eval_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object created then
+                                    framework infomation can be known. Future we will support
+                                    creating iterable dataloader from neural_compressor.common.DataLoader
         """
         from .common import _generate_common_dataloader
         self._eval_dataloader = _generate_common_dataloader(
@@ -282,12 +281,13 @@ class Graph_Optimization():
 
     @property
     def model(self):
+        """Get model."""
         return self._model
 
     @model.setter
     def model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
-
+        """Set the user model and dispatch to framework specific internal model object.
+        
         Args:
            user_model: user are supported to set model from original framework model format
                        (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
@@ -297,9 +297,7 @@ class Graph_Optimization():
                        set them manually in config yaml file. Another corner case is slim model
                        of tensorflow, be careful of the name of model configured in yaml file,
                        make sure the name is in supported slim model list.
-
         """
-
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             self._model = NCModel(user_model)
@@ -313,25 +311,27 @@ class Graph_Optimization():
 
     @property
     def metric(self):
+        """Get metric."""
         assert False, 'Should not try to get the value of `metric` attribute.'
         return None
 
     @metric.setter
     def metric(self, user_metric):
-        """Set metric class and neural_compressor will initialize this class when evaluation
-           neural_compressor have many built-in metrics, but user can set specific metric through
-           this api. The metric class should take the outputs of the model or
-           postprocess(if have) as inputs, neural_compressor built-in metric always take
-           (predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
-           or user defined metric object
-
+        """Set metric class.
+        
+        neural_compressor will initialize this class when evaluation
+        neural_compressor have many built-in metrics, but user can set specific metric through
+        this api. The metric class should take the outputs of the model or
+        postprocess(if have) as inputs, neural_compressor built-in metric always take
+        (predictions, labels) as inputs for update,
+        and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
+        or user defined metric object
+        
         Args:
             user_metric(neural_compressor.common.Metric): user_metric should be object initialized from
                                              neural_compressor.common.Metric, in this method the
                                              user_metric.metric_cls will be registered to
                                              specific frameworks and initialized.
-
         """
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
@@ -359,22 +359,23 @@ class Graph_Optimization():
 
     @property
     def postprocess(self, user_postprocess):
+        """Get postprocess."""
         assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
 
     @postprocess.setter
     def postprocess(self, user_postprocess):
-        """Set postprocess class and neural_compressor will initialize this class when evaluation.
-           The postprocess class should take the outputs of the model as inputs, and
-           output (predictions, labels) as inputs for metric update.
-           user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
+        """Set postprocess class.
 
+        neural_compressor will initialize this class when evaluation.
+        The postprocess class should take the outputs of the model as inputs, and
+        output (predictions, labels) as inputs for metric update.
+        user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
+        
         Args:
-            user_postprocess(neural_compressor.common.Postprocess):
-                user_postprocess should be object initialized from neural_compressor.common.Postprocess,
-                in this method the user_postprocess.postprocess_cls will be
-                registered to specific frameworks and initialized.
-
+            user_postprocess(neural_compressor.common.Postprocess): user_postprocess should be object 
+                initialized from neural_compressor.common.Postprocess, in this method the 
+                user_postprocess.postprocess_cls will be registered to specific frameworks and initialized.
         """
         from .common import Postprocess as NCPostprocess
         assert isinstance(user_postprocess, NCPostprocess), \
@@ -390,22 +391,21 @@ class Graph_Optimization():
 
     @property
     def eval_func(self):
+        """Get evaluation function."""
         assert False, 'Should not try to get the value of `eval_func` attribute.'
         return None
 
     @eval_func.setter
     def eval_func(self, user_eval_func):
-        """ The evaluation function provided by user.
-
+        """Set evaluation function provided by user.
+        
         Args:
             user_eval_func: This function takes model as parameter,
                             and evaluation dataset and metrics should be
                             encapsulated in this function implementation
                             and outputs a higher-is-better accuracy scalar
                             value.
-
                             The pseudo code should be something like:
-
                             def eval_func(model):
                                  input, label = dataloader()
                                  output = model(input)
@@ -415,6 +415,7 @@ class Graph_Optimization():
         self._eval_func = user_eval_func
 
     def __repr__(self):
+        """Return name."""
         return 'GraphOptimization'
 
 GraphOptimization = Graph_Optimization

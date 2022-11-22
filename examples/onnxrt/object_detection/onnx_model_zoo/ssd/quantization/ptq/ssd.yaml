@@ -23,6 +23,8 @@ model:                                               # mandatory. used to specif
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant
+  recipes:
+    pre_post_process_quantization: False
   calibration:
     dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
       batch_size: 1
@@ -40,32 +42,6 @@ quantization:                                        # optional. tuning constrai
           perm: [2, 0, 1]
         Cast:
           dtype: float32
-
-  # these ops are used to postprocess
-  op_wise: {
-    'Mul_507': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_514': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_653': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Add_654': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_618': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_583': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_548': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Add_619': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_490': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Mul_509': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-    'Add_511': {'activation':  {'dtype': ['fp32']},
-                'weight': {'dtype': ['fp32']}},
-  }
 
 evaluation:                                          # optional. used to config evaluation process.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.

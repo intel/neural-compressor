@@ -66,7 +66,7 @@ class BiasCorrection(GraphTransformBase):
             node = self.node_mapping[node_name]
             node_op = node.op
             if self.new_api:
-                if '_QuantizedConv2D' not in node_op:
+                if '_FusedQuantizedConv2D' not in node_op:
                     continue
             else:
                 if 'QuantizedConv2D' not in node_op:

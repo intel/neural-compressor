@@ -60,7 +60,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a>  / <a href="./tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a>  / <a href="./tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>MobileNet V3</td>
@@ -114,13 +114,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet V2 50</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 152</td>
@@ -171,12 +171,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/keras_models/resnet50_fashion/quantization/ptq">keras</a></td>
   </tr>
   <tr>
-    <td>ResNet50 V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
     <td>ResNet101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
@@ -193,18 +187,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/keras_models/inception_resnet_v2/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>ResNet101 V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>MobileNet V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>Xception</td>
@@ -354,6 +336,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <th>Student Model</th>
     <th>Teacher Model</th>
     <th>Domain</th>
+    <th>Approach </th>
     <th>Examples</th>
   </tr>
 </thead>
@@ -362,6 +345,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>MobileNet</td>
     <td>DenseNet201</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
   </tr>
 </tbody>
@@ -479,7 +463,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>RNN-T</td>
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> / <a href="./pytorch/speech_recognition/rnnt/quantization/ptq_static/ipex">ipex</a></td>
+    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> </td>
   </tr>
   <tr>
     <td>Wav2Vec2</td>
@@ -631,6 +615,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <th>Student Model</th>
     <th>Teacher Model</th>
     <th>Domain</th>
+    <th>Approach</th>
     <th>Examples</th>
   </tr>
 </thead>
@@ -639,60 +624,77 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>CNN-2</td>
     <td>CNN-10</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/CNN-2/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>MobileNet V2-0.35</td>
     <td>WideResNet40-2</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/MobileNetV2-0.35/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
     <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/torchvision_models/distillation/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
+    <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
+    <td>Image Recognition</td>
+    <td>Self Distillation</td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/self_distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>VGG-8</td>
     <td>VGG-13</td>
     <td>Image Recognition</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/image_recognition/VGG-8/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>BlendCNN</td>
-    <td>BERT base</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/blendcnn/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>distilbert-base-uncased</td>
-    <td>csarron/bert-base-uncased-squad-v1</td>
+    <td>DistilBERT</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>BiLSTM</td>
-    <td>textattack/roberta-base-SST-2</td>
+    <td>RoBERTa-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>huawei-noah/TinyBERT_General_4L_312D</td>
-    <td>blackbird/bert-base-uncased-MNLI-v1</td>
+    <td>TinyBERT</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>nreimers</td>
-    <td>textattack/bert-base-uncased-QQP</td>
+    <td>BERT-3</td>
+    <td>BERT-Base</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
   <tr>
-    <td>distilroberta-base</td>
-    <td>howey/roberta-large-cola</td>
+    <td>DistilRoBERTa</td>
+    <td>RoBERTa-Large</td>
     <td>Natural Language Processing</td>
+    <td>Knowledge Distillation</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/distillation/eager">eager</a></td>
   </tr>
 </tbody>
@@ -873,55 +875,115 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/bert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/bert/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/bert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/bert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./onnxrt/language_translation/bert/quantization/ptq">integerops</a></td>
+    <td><a href="./onnxrt/nlp/bert/quantization/ptq">integerops</a></td>
   </tr>
   <tr>
     <td>DistilBERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/distilbert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/distilbert/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/distilbert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/distilbert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Mobile bert MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/mobilebert/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Roberta base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/roberta/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/roberta/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/roberta/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/roberta/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BERT SQuAD</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/bert-squad/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/bert-squad/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/bert-squad/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/bert-squad/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>GPT2 lm head WikiText</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./onnxrt/language_translation/gpb2/quantization/ptq">integerops</a></td>
+    <td><a href="./onnxrt/nlp/gpb2/quantization/ptq">integerops</a></td>
   </tr>
   <tr>
     <td>MobileBERT SQuAD MLPerf</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/language_translation/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/language_translation/mobilebert/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BiDAF</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./onnxrt/language_translation/onnx_model_zoo/BiDAF/quantization/ptq">integerops</a></td>
+    <td><a href="./onnxrt/nlp/onnx_model_zoo/BiDAF/quantization/ptq">integerops</a></td>
+  </tr>
+  <tr>
+    <td>BERT base uncased MRPC (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Roberta base MRPC (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>XLM Roberta base MRPC (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Camembert base MRPC (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>MiniLM L12 H384 uncased MRPC (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Distilbert base uncased SST-2 (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Albert base v2 SST-2 (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Spanbert SQuAD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq">qdq</a></td>
+  </tr>
+  <tr>
+    <td>Bert base multilingual cased SQuAD (HuggingFace)</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>SSD MobileNet V1</td>

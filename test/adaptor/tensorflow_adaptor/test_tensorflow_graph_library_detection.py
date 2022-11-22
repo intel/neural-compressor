@@ -3,21 +3,22 @@
 #
 import unittest
 import os
-import tensorflow as tf
+import platform
 import neural_compressor
-
-
 from neural_compressor.adaptor.tf_utils.util import read_graph
 from neural_compressor.adaptor.tf_utils.graph_converter import GraphConverter
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
 from neural_compressor.experimental.common.model import Model
+
+import tensorflow as tf
 class TestGraphLibraryDetection(unittest.TestCase):
     efficientnet_b0_model_url = 'https://raw.githubusercontent.com/SkyAI/inference_benchmark/435c7ca2577830025ca5f6cbce8480db16f76a61/efficientnet-b0.pb'
     pb_path = '/tmp/.neural_compressor/efficientnet-b0.pb'
-
+    if platform.system().lower() == "windows":
+        pb_path = 'C:\\tmp\\.neural_compressor\\efficientnet-b0.pb'
     @classmethod
     def setUpClass(self):
-        if not os.path.exists(self.pb_path):
+        if not os.path.exists(self.pb_path) and platform.system().lower() == "linux":
             os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.efficientnet_b0_model_url, self.pb_path))
 
     def test_tensorflow_graph_library_detection(self):

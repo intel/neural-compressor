@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // Custom Theming for Angular Material
-// For more information: https://material.angular.io/guide/theming
-@import '@angular/material/theming';
-// Plus imports for other components in your app.
+// For more information: https://material.angular.io/guide/themin
 
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
+@use '@angular/material'as mat;
+
+@import '@angular/material/theming';
+
+@import './variables.scss';
+
 @include mat-core();
 
 $mat-intel-dark-blue: (50 : #005B85,
@@ -51,6 +52,35 @@ $mat-intel-dark-blue: (50 : #005B85,
     A700 : #ffffff,
   ));
 
+$mat-intel-mid-blue: (50 : #0095CA,
+  100 : #0095CA,
+  200 : #0095CA,
+  300 : #0095CA,
+  400 : #0095CA,
+  500 : #0095CA,
+  600 : #0095CA,
+  700 : #0095CA,
+  800 : #0095CA,
+  900 : #0095CA,
+  A100 : #095CA5,
+  A200 : #0095CA,
+  A400 : #0095CA,
+  A700 : #0095CA,
+  contrast: (50 : #000000,
+    100 : #000000,
+    200 : #000000,
+    300 : #ffffff,
+    400 : #ffffff,
+    500 : #ffffff,
+    600 : #ffffff,
+    700 : #ffffff,
+    800 : #ffffff,
+    900 : #ffffff,
+    A100 : #000000,
+    A200 : #ffffff,
+    A400 : #ffffff,
+    A700 : #ffffff,
+  ));
 
 $mat-intel-light-blue: (50 : #e0f3fc,
   100 : #00C7FD,
@@ -88,7 +118,7 @@ $custom-typography: mat-typography-config($font-family: IntelClearRg);
 
 @mixin custom-tabs-theme() {
   .mat-tab-label-active {
-    background-color: #005b8523;
+    background-color: #00C7FD80;
   }
 
   .mat-tab-label {
@@ -101,14 +131,49 @@ $custom-typography: mat-typography-config($font-family: IntelClearRg);
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
 // hue. Available color palettes: https://material.io/design/color/
-$gui-primary: mat-palette($mat-intel-dark-blue);
+$gui-primary-light: mat-palette($mat-intel-dark-blue);
+$gui-primary-dark: mat-palette($mat-intel-mid-blue);
 $gui-accent: mat-palette($mat-intel-light-blue);
 
 // The warn palette is optional (defaults to red).
 $gui-warn: mat-palette($mat-red);
 
 // Create the theme object (a Sass map containing all of the palettes).
-$gui-theme: mat-light-theme($gui-primary, $gui-accent, $gui-warn);
+$gui-theme: mat-light-theme($gui-primary-light, $gui-accent, $gui-warn);
+$gui-dark-theme: mat-dark-theme($gui-primary-dark, $gui-accent, $gui-warn);
+
+.darkMode {
+  @include mat.all-component-colors($gui-dark-theme);
+
+  h1,
+  h2,
+  h3 {
+    color: white;
+  }
+
+  .create-new-btn {
+    background-color: $accent-yellow;
+    color: black;
+  }
+
+  .compare-btn {
+    background-color: $blue;
+  }
+
+  .header,
+  td.header {
+    border-bottom: 1px solid #303030 !important;
+  }
+
+  .item {
+    background-color: #252525;
+  }
+
+  .label,
+  .info {
+    color: $lighter-gray;
+  }
+}
 
 // Include theme styles for core and each component used in your app.
 // Alternatively, you can import and @include the theme mixins for each component
@@ -121,7 +186,7 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: IntelOneBd;
+  font-family: IntelOneLt;
 }
 
 button {

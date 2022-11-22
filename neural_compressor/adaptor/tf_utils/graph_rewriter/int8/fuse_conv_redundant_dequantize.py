@@ -23,12 +23,14 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
-    """Fuse _QuantizedConv with the successor Dequantize Op.
-       _QuantizedConv2D only supports quantizedtype out_type currently
+    """Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
     """
     fuse_patterns = [[
-        "_QuantizedConv3D",
-        "_QuantizedDepthwiseConv2D"
+        "_FusedQuantizedConv3D",
+        "_FusedQuantizedConv2D",
+        "_FusedQuantizedDepthwiseConv2D",
+        "_FusedQuantizedDeconv2D",
+        "_FusedQuantizedDeconv3D"
     ], ['Dequantize']]
 
     def __init__(self, model, device='cpu'):

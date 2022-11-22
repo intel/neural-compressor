@@ -1,4 +1,4 @@
-{% set version = "1.14.1" %}
+{% set version = "1.14.2" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-compressor
@@ -32,6 +32,7 @@ requirements:
     - prettytable
     - cryptography
     - cython
+    - packaging
 test:
   imports:
     - neural_compressor

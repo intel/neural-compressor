@@ -1,3 +1,4 @@
+"""Tile pattern classes."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -19,15 +20,19 @@ import numpy as np
 from .pattern import PatternBase, pattern_registry
 
 class TilePatternBase(PatternBase):
+    """Parent class for all NxM tile patterns."""
+
     def __init__(self, mask_shape):
-        """ magnitude mask should be contiguous """
+        """Magnitude mask should be contiguous."""
         super(TilePatternBase, self).__init__(mask_shape, True)
 
     def compute_sparsity(self, tensor):
+        """Calculate the sparsity of a tensor (weight matrix)."""
         reduced_tensor = self.reduce(tensor)
         return 1 - np.count_nonzero(reduced_tensor) / reduced_tensor.size
 
     def repeat_mask(self, mask, ori_shape=None):
+        """Repeat mask in 2 dimensions."""
         flatten_mask = np.repeat(np.repeat(mask, self.mask_shape[0], axis=-2), \
                        self.mask_shape[1], axis=-1)
         if ori_shape:
@@ -37,29 +42,40 @@ class TilePatternBase(PatternBase):
 
 @pattern_registry(pattern_type='tile_pattern_1x1')
 class TilePattern_1x1(TilePatternBase):
+    """1x1 tile pattern (unstructured)."""
+
     def __init__(self):
-        """ element wise sparsity """
+        """Element wise sparsity."""
         super(TilePattern_1x1, self).__init__([1, 1])
 
 @pattern_registry(pattern_type='tile_pattern_2x2')
 class TilePattern_2x2(TilePatternBase):
+    """2x2 tile pattern (unstructured)."""
+
     def __init__(self):
-        """ 2x2 tile wise sparsity """
+        """2x2 tile wise sparsity."""
         super(TilePattern_2x2, self).__init__([2, 2])
 
 @pattern_registry(pattern_type='tile_pattern_1x16')
 class TilePattern_1x16(TilePatternBase):
+    """1x16 tile pattern (unstructured)."""
+
     def __init__(self):
-        """ 1x16 tile wise sparsity """
+        """1x16 tile wise sparsity."""
         super(TilePattern_1x16, self).__init__([1, 16])
 
 @pattern_registry(pattern_type='tile_pattern_4x1')
 class TilePattern_4x1(TilePatternBase):
+    """4x1 tile pattern (unstructured)."""
+
     def __init__(self):
-        """ 4x1 tile wise vnni-aware sparsity """
+        """4x1 tile wise vnni-aware sparsity."""
         super(TilePattern_4x1, self).__init__([4, 1])
+        
 @pattern_registry(pattern_type='tile_pattern_1x2')
 class TilePattern_1x2(TilePatternBase):
+    """1x2 tile pattern (unstructured)."""
+
     def __init__(self):
-        """ 1x2 tile wise vnni-aware sparsity """
+        """1x2 tile wise vnni-aware sparsity."""
         super(TilePattern_1x2, self).__init__([1, 2])

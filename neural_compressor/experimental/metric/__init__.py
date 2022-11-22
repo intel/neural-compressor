@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+"""Intel Neural Compressor Metric."""
+
 from .metric import METRICS, BaseMetric, metric_registry
 from os.path import dirname, basename, isfile, join
 import glob

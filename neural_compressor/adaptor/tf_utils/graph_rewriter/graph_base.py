@@ -29,7 +29,7 @@ class GraphRewriterBase():
     """
     def __init__(self, model):
         self.model = model
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("neural_compressor")
 
     @abstractmethod
     def do_transformation(self):

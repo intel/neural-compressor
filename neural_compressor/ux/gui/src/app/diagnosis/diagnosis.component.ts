@@ -46,6 +46,7 @@ export class DiagnosisComponent implements OnInit {
   updatedValues = {};
   modelWise = {};
   precision: 'int8' | 'float32';
+  supportedPrecisions = ['int8', 'float32'];
   granularity: 'per_channel' | 'per_tensor';
   showOps = true;
   showSpinner = false;
@@ -133,6 +134,11 @@ export class DiagnosisComponent implements OnInit {
             this.opDetails = response;
             this.precision = response.Pattern.precision;
             this.granularity = response.Weights.granularity;
+            if (this.modelService.systemInfo.systeminfo.bf16_support) {
+              this.supportedPrecisions = ['int8', 'fp32', 'bf16'];
+            } else {
+              this.supportedPrecisions = ['int8', 'fp32'];
+            }
           }
         },
         error => {

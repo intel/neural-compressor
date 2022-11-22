@@ -14,13 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Common Postprocess."""
 
 class Postprocess(object):
 # class Transform(object):
-    """common Postprocess just collect the infos to construct a Postprocess
-    """
+    """Just collect the infos to construct a Postprocess."""
+
     def __init__(self, postprocess_cls, name='user_postprocess', **kwargs):
+        """Initialize `Postprocess` class."""
         self.postprocess_cls = postprocess_cls
         self.name = name
         self.kwargs = kwargs
-

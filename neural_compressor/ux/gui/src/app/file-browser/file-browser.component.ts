@@ -28,6 +28,8 @@ export class FileBrowserComponent implements OnInit {
   chosenFile: string;
   filter: FileBrowserFilter;
   showSpinner = false;
+  isWindows = false;
+  slash = '/';
 
   constructor(
     private modelService: ModelService,
@@ -43,7 +45,9 @@ export class FileBrowserComponent implements OnInit {
 
   getFileSystem(path: string) {
     this.showSpinner = true;
-    if (path[0] !== '/') {
+    this.isWindows = this.modelService.systemInfo.systeminfo.system.toLowerCase().includes('windows');
+    this.slash = this.isWindows ? '\\' : '/';
+    if (path[0] !== '/' && !this.isWindows) {
       path = '/' + path;
     }
     this.modelService.getFileSystem(path, this.filter)
@@ -96,9 +100,9 @@ export class FileBrowserComponent implements OnInit {
   }
 
   goToParentDirectory() {
-    const pathArray = this.currentPath.split('/');
+    const pathArray = this.currentPath.split(this.slash);
     pathArray.pop();
-    this.getFileSystem(pathArray.join('/'));
+    this.getFileSystem(pathArray.join(this.slash));
   }
 
 }

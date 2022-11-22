@@ -1,3 +1,4 @@
+"""pruning module."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -25,7 +26,8 @@ from ..adaptor import FRAMEWORKS
 from ..conf.config import PruningConf
 from ..conf.pythonic_config import Config
 
-from warnings import warn
+from deprecated import deprecated
+
 
 class Pruning(Component):
     """This is base class of pruning object.
@@ -40,9 +42,14 @@ class Pruning(Component):
             PruningConf class containing accuracy goal, pruning objective and related
             dataloaders etc.
 
+    Attributes:
+        conf: A config dict object. Contains pruning setting parameters.
+        pruners: A list of Pruner object.
+
     """
 
     def __init__(self, conf_fname_or_obj=None):
+        """Initiailize."""
         super(Pruning, self).__init__()
         if isinstance(conf_fname_or_obj, PruningConf):
             self.conf = conf_fname_or_obj
@@ -57,37 +64,36 @@ class Pruning(Component):
         self.callbacks = dict(tf_pruning=TfPruningCallback)
 
     def _on_train_begin(self, dataloader=None):
-        """ called before training """
+        """Functions called before training."""
         for pruner in self.pruners:
             pruner.on_train_begin(dataloader)
 
     def _on_epoch_begin(self, epoch):
-        """ called on the beginning of epochs"""
+        """Functions called on the beginning of epochs."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
     def _on_step_begin(self, batch_id):
-        """ called on the beginning of batches"""
+        """Functions called on the beginning of batches."""
         res = []
         for pruner in self.pruners:
             res.append(pruner.on_step_begin(batch_id))
         return res
 
     def _on_before_optimizer_step(self):
-        """ called after gradient computed """
-        """ usually for getting gradients """
+        """Functions called after gradient computed, usually for getting gradients."""
         for pruner in self.pruners:
             pruner.on_before_optimizer_step()
 
     def _on_step_end(self):
-        """ called on the end of batches"""
+        """Functions called on the end of batches."""
         res = []
         for pruner in self.pruners:
             res.append(pruner.on_step_end())
         return res
 
     def _on_epoch_end(self):
-        """ called on the end of epochs"""
+        """Functions called on the end of epochs."""
         res = []
         for pruner in self.pruners:
             res.append(pruner.on_epoch_end())
@@ -98,16 +104,21 @@ class Pruning(Component):
         return res
 
     def _on_train_end(self):
-        """ called after training """
+        """Functions called after training."""
         for pruner in self.pruners:
             pruner.on_train_end()
 
     def _on_after_optimizer_step(self):
-        """ called after optimzier step """
+        """Functions called after optimzier step."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
 
+    def prepare(self):
+        self.generate_hooks()
+        self.generate_pruners()
+
     def pre_process(self):
+        """Functions called before pruning begins, usually set up pruners."""
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
 
         GLOBAL_STATE.STATE = MODE.PRUNING
@@ -122,8 +133,7 @@ class Pruning(Component):
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
 
-        self.generate_hooks()
-        self.generate_pruners()
+        self.prepare()
 
         if self._train_dataloader is None and self._train_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader
@@ -167,6 +177,10 @@ class Pruning(Component):
             self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
+        """Functions that execute the pruning process.
+
+        Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
+        """
         logger.info("Start to get the baseline model's score before pruning.")
         self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
                         else self._model.model)
@@ -181,7 +195,7 @@ class Pruning(Component):
         return self._model
 
     def generate_hooks(self):
-        # register hooks for pruning
+        """Register hooks for pruning."""
         self.register_hook('on_train_begin', self._on_train_begin)
         self.register_hook('on_train_end', self._on_train_end)
         self.register_hook('on_epoch_begin', self._on_epoch_begin)
@@ -191,6 +205,7 @@ class Pruning(Component):
         self.register_hook('on_before_optimizer_step', self._on_before_optimizer_step)
 
     def generate_pruners(self):
+        """Functions that generate pruners and set up self.pruners."""
         for name in self.cfg.pruning.approach:
             assert name == 'weight_compression' or name == "weight_compression_pytorch", \
                 'now we only support weight_compression and weight_compression_pytorch'
@@ -228,7 +243,7 @@ class Pruning(Component):
                         assert False, 'now only support {}'.format(PRUNERS.keys())
 
     def __call__(self):
-        """The main entry point of pruning.
+        """Entry point of pruning.
 
            This interface currently only works on pytorch
            and provides three usages:
@@ -266,15 +281,17 @@ class Pruning(Component):
         """
         return super(Pruning, self).__call__()
 
+    """This makes pruning.fit() equals to pruning()."""
     fit = __call__
 
     @property
     def pruning_func(self):
-        """ not support get pruning_func """
+        """Not support get pruning_func."""
         assert False, 'Should not try to get the value of `pruning_func` attribute.'
         return None
 
     @pruning_func.setter
+    @deprecated(version='2.0', reason="please use `train_func` instead")
     def pruning_func(self, user_pruning_func):
         """Training function for pruning.
 
@@ -286,46 +303,57 @@ class Pruning(Component):
                          set eval_dataloader with metric configured or directly eval_func
                          to make evaluation of the model executed.
         """
-        warn('This method is deprecated. please use `train_func` instead.',
-             DeprecationWarning, stacklevel=2)
         self._train_func = user_pruning_func
 
     @property
     def evaluation_distributed(self):
-        """ Getter to know whether need distributed evaluation dataloader"""
+        """Getter to know whether need distributed evaluation dataloader."""
         eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
         yaml_distributed = eval_dataloader_cfg.get('distributed', False)
         return self._evaluation_distributed or yaml_distributed
 
     @evaluation_distributed.setter
     def evaluation_distributed(self, distributed):
+        """Work with the former function."""
         self._evaluation_distributed = distributed
 
     @property
     def train_distributed(self):
-        """ Getter to know whether need distributed training dataloader"""
+        """Getter to know whether need distributed training dataloader."""
         train_dataloader_cfg = self.cfg.pruning.train.dataloader
         yaml_distributed = train_dataloader_cfg.get('distributed', False)
         return self._train_distributed or yaml_distributed
 
     @train_distributed.setter
     def train_distributed(self, distributed):
+        """Work with the former function."""
         self._train_distributed = distributed
 
     def __repr__(self):
+        """Return the class's string representation."""
         return 'Pruning'
 
 
 class TfPruningCallback(object):
+    """Class that contains callback functions.
+
+    Args:
+        nc_model: A neural compression model object.
+        hooks: A dict. Contains pure-defined hooks.
+    """
+
     def __init__(self, nc_model, input_model, hooks):
+        """Initialize."""
         self.hooks = hooks
         self.nc_model = nc_model
         self.model = input_model
 
     def __getitem__(self, func):
+        """Get the class's function."""
         return getattr(self, func)
 
     def _set_weights(self):
+        """Copy the input model's weight to the nc_model."""
         res = {}
         for index, layer in enumerate(self.model.layers):
             if len(layer.weights):
@@ -333,26 +361,30 @@ class TfPruningCallback(object):
         self.nc_model.weights = res
 
     def on_train_begin(self, logs=None, dataloader=None):
+        """Call the same-name function from hooks."""
         self.hooks['on_train_begin'](dataloader)
 
     def on_train_end(self, logs=None):
+        """Call the same-name function from hooks."""
         self.hooks['on_train_end']()
 
+    @deprecated(version='2.0', reason="please use `on_train_begin` instead")
     def pre_epoch_begin(self, logs=None, dataloader=None):  # pragma: no cover
-        warn('This method is deprecated. please use `on_train_begin` instead.',
-             DeprecationWarning, stacklevel=2)
+        """Call the same-name function from hooks."""
         self.on_train_begin(logs, dataloader)
 
+    @deprecated(version='2.0', reason="please use `on_train_end` instead")
     def post_epoch_end(self, logs=None):  # pragma: no cover
-        warn('This method is deprecated. please use `on_train_end` instead.',
-             DeprecationWarning, stacklevel=2)
+        """Call the same-name function from hooks."""
         self.on_train_end(logs)
 
     def on_epoch_begin(self, epoch, logs=None):
+        """Call the same-name function from hooks."""
         self._set_weights()
         self.hooks['on_epoch_begin'](epoch)
 
     def on_epoch_end(self, logs=None):
+        """Call the same-name function from hooks."""
         self._set_weights()
         res = self.hooks['on_epoch_end']()
         for layer_index, weights in res[0][0].items():
@@ -361,6 +393,7 @@ class TfPruningCallback(object):
             self.model.layers[layer_index].set_weights(get_weights)
 
     def on_step_begin(self, batch, logs=None):
+        """Call the same-name function from hooks."""
         self._set_weights()
         res = self.hooks['on_step_begin'](batch)
         for layer_index, weights in res[0][0].items():
@@ -368,15 +401,17 @@ class TfPruningCallback(object):
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
+    @deprecated(version='2.0', reason="please use `on_step_begin` instead")
     def on_batch_begin(self, batch, logs=None):  # pragma: no cover
-        warn('This method is deprecated. please use `on_step_begin` instead.',
-             DeprecationWarning, stacklevel=2)
+        """Call the same-name function from hooks."""
         self.on_step_begin(batch, logs)
 
     def on_after_compute_loss(self, input, s_outputs, s_loss, t_outputs=None):
+        """Call the same-name function from hooks."""
         return self.hooks['on_after_compute_loss'](input, s_outputs, s_loss, t_outputs)
 
     def on_step_end(self, logs=None):
+        """Call the same-name function from hooks."""
         self._set_weights()
         res = self.hooks['on_step_end']()
         for layer_index, weights in res[0][0].items():
@@ -384,7 +419,7 @@ class TfPruningCallback(object):
             get_weights[0] = weights
             self.model.layers[layer_index].set_weights(get_weights)
 
+    @deprecated(version='2.0', reason="please use `on_step_end` instead")
     def on_batch_end(self, logs=None):  # pragma: no cover
-        warn('This method is deprecated. please use `on_step_end` instead.',
-             DeprecationWarning, stacklevel=2)
+        """Call the same-name function from hooks."""
         self.on_step_end(logs)

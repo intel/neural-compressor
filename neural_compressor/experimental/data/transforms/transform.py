@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Neural Compressor built-in Transforms on multiple framework backends."""
 
 import numpy as np
 import collections
@@ -28,31 +30,52 @@ mx = LazyImport('mxnet')
 cv2 = LazyImport('cv2')
 
 class Transforms(object):
+    """INC supports built-in preprocessing, postprocessing and general methods on different framework backends.
+
+    Transforms base class provides the abstract methods.
+    Users can also register their own Transforms classes by inheriting this base class.
+    """
+
     def __init__(self, process, concat_general=True):
+        """Initialize `Transforms` class.
+
+        Args:
+            process (str): processing type, the value can be preprocess, postprocess or general
+            concat_general (Boolean): users can use general transform in both preprocess
+                            or postprocess if set True
+        """
         transform_map = {"preprocess": self._get_preprocess,
                          "postprocess": self._get_postprocess,
                          "general": self._get_general, }
         self.transforms = transform_map[process]()
-        # if set True users can use general transform in both preprocess or postprocess
         if concat_general:
             self.transforms.update(transform_map['general']())
 
     @abstractmethod
     def _get_preprocess(self):
+        """Abstract method to get preprocessing method."""
         raise NotImplementedError
 
     @abstractmethod
     def _get_postprocess(self):
+        """Abstract method to get postprocess method."""
         raise NotImplementedError
 
     @abstractmethod
     def _get_general(self):
+        """Abstract method to get general method."""
         raise NotImplementedError
 
 
 class TensorflowTransforms(Transforms):
+    """Tensorflow Transforms subclass."""
 
     def _get_preprocess(self):
+        """Tensorflow get preprocess method.
+
+        Returns:
+            preprocess: a dict including all the registered preprocess methods
+        """
         preprocess = {
             "DecodeImage": TensorflowWrapFunction(tf.io.decode_jpeg),
             "EncodeJpeg": TensorflowWrapFunction(tf.io.encode_jpeg),
@@ -62,18 +85,35 @@ class TensorflowTransforms(Transforms):
         return preprocess
 
     def _get_postprocess(self):
+        """Tensorflow get postprocess method.
+
+        Returns:
+            postprocess: a dict including all the registered postprocess methods
+        """
         postprocess = {}
         postprocess.update(TENSORFLOW_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
+        """Tensorflow get general method.
+
+        Returns:
+            general: a dict including all the registered general methods
+        """
         general = {}
         general.update(TENSORFLOW_TRANSFORMS["general"])
         return general
 
 
 class MXNetTransforms(Transforms):
+    """Mxnet Transforms subclass."""
+
     def _get_preprocess(self):
+        """Mxnet get preprocess method.
+
+        Returns:
+            preprocess: a dict including all the registered preprocess methods
+        """
         preprocess = {
             'ToTensor': PytorchMxnetWrapFunction(
                 mx.gluon.data.vision.transforms.ToTensor),
@@ -88,11 +128,21 @@ class MXNetTransforms(Transforms):
         return preprocess
 
     def _get_postprocess(self):
+        """Mxnet get postprocess method.
+
+        Returns:
+            postprocess: a dict including all the registered postprocess methods
+        """
         postprocess = {}
         postprocess.update(MXNET_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
+        """Mxnet get general method.
+
+        Returns:
+            general: a dict including all the registered general methods
+        """
         general = {
             'Compose': mx.gluon.data.vision.transforms.Compose,
             'Cast': PytorchMxnetWrapFunction(
@@ -103,7 +153,14 @@ class MXNetTransforms(Transforms):
 
 
 class PyTorchTransforms(Transforms):
+    """Pytorch Transforms subclass."""
+
     def _get_preprocess(self):
+        """Pytorch get preprocessing method.
+
+        Returns:
+            preprocess: a dict including all the registered preprocess methods
+        """
         preprocess = {
             "ToTensor": PytorchMxnetWrapFunction(
                 torchvision.transforms.ToTensor),
@@ -126,11 +183,21 @@ class PyTorchTransforms(Transforms):
         return preprocess
 
     def _get_postprocess(self):
+        """Pytorch get postprocess method.
+
+        Returns:
+            postprocess: a dict including all the registered postprocess methods
+        """
         postprocess = {}
         postprocess.update(PYTORCH_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
+        """Pytorch get general method.
+
+        Returns:
+            general: a dict including all the registered general methods
+        """
         general = {
             "Compose": torchvision.transforms.Compose,
         }
@@ -138,40 +205,73 @@ class PyTorchTransforms(Transforms):
         return general
 
 class ONNXRTQLTransforms(Transforms):
+    """Onnxrt_qlinearops Transforms subclass."""
+
     def _get_preprocess(self):
+        """Onnxrt_qlinearops get preprocessing method.
+
+        Returns:
+            preprocess: a dict including all the registered preprocess methods
+        """
         preprocess = {}
         preprocess.update(ONNXRT_QL_TRANSFORMS["preprocess"])
         return preprocess
 
     def _get_postprocess(self):
+        """Onnxrt_qlinearops get postprocess method.
+
+        Returns:
+            postprocess: a dict including all the registered postprocess methods
+        """
         postprocess = {}
         postprocess.update(ONNXRT_QL_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
+        """Onnxrt_qlinearops get general method.
+
+        Returns:
+            general: a dict including all the registered general methods
+        """
         general = {}
         general.update(ONNXRT_QL_TRANSFORMS["general"])
         return general
 
 class ONNXRTITTransforms(Transforms):
+    """Onnxrt_integerops Transforms subclass."""
+
     def _get_preprocess(self):
+        """Onnxrt_integerops get preprocessing method.
+
+        Returns:
+            preprocess: a dict including all the registered preprocess methods
+        """
         preprocess = {}
         preprocess.update(ONNXRT_IT_TRANSFORMS["preprocess"])
         return preprocess
 
     def _get_postprocess(self):
+        """Onnxrt_integerops get postprocess method.
+
+        Returns:
+            postprocess: a dict including all the registered postprocess methods
+        """
         postprocess = {}
         postprocess.update(ONNXRT_IT_TRANSFORMS["postprocess"])
         return postprocess
 
     def _get_general(self):
+        """Onnxrt_integerops get general method.
+
+        Returns:
+            general: a dict including all the registered general methods
+        """
         general = {}
         general.update(ONNXRT_IT_TRANSFORMS["general"])
         return general
 
 
 framework_transforms = {"tensorflow": TensorflowTransforms,
-                        "inteltensorflow": TensorflowTransforms,
                         "tensorflow_itex": TensorflowTransforms,
                         "mxnet": MXNetTransforms,
                         "pytorch": PyTorchTransforms,
@@ -185,16 +285,12 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
 # transform registry will register transforms into these dicts
 TENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 TENSORFLOW_ITEX_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-INTELTENSORFLOW_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-TENSORFLOW_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
-TENSORFLOW_ITEX_QDQ_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 MXNET_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 PYTORCH_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_QL_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 ONNXRT_IT_TRANSFORMS = {"preprocess": {}, "postprocess": {}, "general": {}}
 
 registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
-                       "inteltensorflow": INTELTENSORFLOW_TRANSFORMS,
                        "tensorflow_itex": TENSORFLOW_ITEX_TRANSFORMS,
                        "mxnet": MXNET_TRANSFORMS,
                        "pytorch": PYTORCH_TRANSFORMS,
@@ -207,10 +303,21 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        }
 
 class TRANSFORMS(object):
+    """Transforms collection class.
+
+    Provide register method to register new Transforms
+    and provide __getitem__ method to get Transforms according to Transforms type.
+    """
+
     def __init__(self, framework, process):
-        assert framework in ("tensorflow", "inteltensorflow", "tensorflow_itex", \
-                             "onnxrt_qoperator", \
-                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
+        """Initialize `TRANSFORMS` class.
+
+        Args:
+            framework (str): different framework type like tensorflow, pytorch and so on
+            process (str): process type, the value can be preprocess, postprocess or general
+        """
+        assert framework in ("tensorflow", "tensorflow_itex", "onnxrt_qoperator", \
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq", \
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt"
         assert process in ("preprocess", "postprocess",
@@ -220,19 +327,32 @@ class TRANSFORMS(object):
         self.process = process
 
     def __getitem__(self, transform_type):
+        """Get Transform according to Transforms type.
+
+        Args:
+            transform_type (str): the value can be preprocess, postprocess or general
+
+        Returns:
+            Transforms: the registered Transforms
+        """
         assert transform_type in self.transforms.keys(), "transform support {}".\
             format(self.transforms.keys())
         return self.transforms[transform_type]
 
     def register(self, name, transform_cls):
+        """Register new Transform according to Transforms type.
+
+        Args:
+            name (str): process name
+            transform_cls (class): process function wrapper class
+        """
         assert name not in registry_transforms[self.framework][self.process].keys(), \
             'register transform name already exists.'
         registry_transforms[self.framework][self.process].update({name: transform_cls})
 
 
 def transform_registry(transform_type, process, framework):
-    """The class decorator used to register all transform subclasses.
-
+    """Class decorator used to register all transform subclasses.
 
     Args:
         transform_type (str): Transform registration name
@@ -247,7 +367,6 @@ def transform_registry(transform_type, process, framework):
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow",
-                "inteltensorflow",
                 "tensorflow_itex",
                 "mxnet",
                 "pytorch",
@@ -266,43 +385,91 @@ def transform_registry(transform_type, process, framework):
 
 
 class BaseTransform(object):
-    """The base class for transform. __call__ method is needed when write user specific transform
+    """The base class for transform."""
 
-    """
     @abstractmethod
     def __call__(self, *args, **kwargs):
+        """__call__ method is needed when write user specific transform."""
         raise NotImplementedError
 
 
 class TensorflowWrapFunction(object):
+    """Tensorflow wrapper function class."""
+
     def __init__(self, transform_func):
+        """Initialize `TensorflowWrapFunction` class.
+
+        Args:
+            transform_func (function): tensorflow tranform function
+        """
         self.transform_func = transform_func
 
     def __call__(self, **kwargs):
+        """__call__ method.
+
+        Returns:
+            TensorflowTransform class
+        """
         return TensorflowTransform(self.transform_func, **kwargs)
 
 class TensorflowTransform(BaseTransform):
+    """Tensorflow transform class, the subclass of BaseTransform."""
+
     def __init__(self, transform_func, **kwargs):
+        """Initialize `TensorflowTransform` class.
+
+        Args:
+            transform_func (function): tensorflow tranform function
+        """
         self.kwargs = kwargs
         self.transform_func = transform_func
 
     def __call__(self, sample):
+        """__call__ method.
+
+        Returns:
+            a tuple of image and lable which get from tensorflow tranform processing
+        """
         image, label = sample
         image = self.transform_func(image, **self.kwargs)
         return (image, label)
 
 class PytorchMxnetWrapFunction(object):
+    """Pytorch and MXNet wrapper function class."""
+
     def __init__(self, transform_func):
+        """Initialize `PytorchMxnetWrapFunction` class.
+
+        Args:
+            transform_func (function): pytorch or mxnet tranform function
+        """
         self.transform_func = transform_func
 
     def __call__(self, **args):
+        """__call__ method.
+
+        Returns:
+            PytorchMxnetTransform class
+        """
         return PytorchMxnetTransform(self.transform_func(**args))
 
 class PytorchMxnetTransform(BaseTransform):
+    """Pytorch and Mxnet transform class, the subclass of BaseTransform."""
+
     def __init__(self, transform_func):
+        """Initialize `PytorchMxnetTransform` class.
+
+        Args:
+            transform_func (function): pytorch or mxnet tranform function
+        """
         self.transform_func = transform_func
 
     def __call__(self, sample):
+        """__call__ method.
+
+        Returns:
+            a tuple of image and lable which get from pytorch or mxnet tranform processing
+        """
         image, label = sample
         image = self.transform_func(image)
         return (image, label)
@@ -326,6 +493,7 @@ interpolation_mxnet_map = {
 }
 
 def get_torchvision_map(interpolation):
+    """Get torchvision interpolation map."""
     try:
         from torchvision.transforms.functional import InterpolationMode
         interpolation_torchvision_map = {
@@ -339,7 +507,7 @@ def get_torchvision_map(interpolation):
 
 @transform_registry(transform_type="Compose", process="general", \
                     framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
-                    inteltensorflow, tensorflow_itex")
+                    tensorflow_itex")
 class ComposeTransform(BaseTransform):
     """Composes several transforms together.
 
@@ -351,9 +519,11 @@ class ComposeTransform(BaseTransform):
     """
 
     def __init__(self, transform_list):
+        """Initialize `ComposeTransform` class."""
         self.transform_list = transform_list
 
     def __call__(self, sample):
+        """Call transforms in transform_list."""
         for transform in self.transform_list:
             sample = transform(sample)
         return sample
@@ -374,12 +544,14 @@ class CropToBoundingBox(BaseTransform):
     """
 
     def __init__(self, offset_height, offset_width, target_height, target_width):
+        """Initialize `CropToBoundingBox` class."""
         self.offset_height = offset_height
         self.offset_width = offset_width
         self.target_height = target_height
         self.target_width = target_width
 
     def __call__(self, sample):
+        """Call torchvision.transforms.functional.crop."""
         image, label = sample
         image = torchvision.transforms.functional.crop(
                     image,
@@ -405,6 +577,7 @@ class MXNetCropToBoundingBox(CropToBoundingBox):
     """
 
     def __call__(self, sample):
+        """Call mx.image.fixed_crop."""
         image, label = sample
         image = mx.image.fixed_crop(
                     image,
@@ -430,13 +603,14 @@ class ONNXRTCropToBoundingBox(CropToBoundingBox):
     """
 
     def __call__(self, sample):
+        """Crop the image in sample."""
         image, label = sample
         image = image[self.offset_height : self.offset_height+self.target_height,
                       self.offset_width : self.offset_width+self.target_width, :]
         return (image, label)
 
 @transform_registry(transform_type="CropToBoundingBox", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class TensorflowCropToBoundingBox(CropToBoundingBox):
     """Crops an image to a specified bounding box.
 
@@ -451,6 +625,7 @@ class TensorflowCropToBoundingBox(CropToBoundingBox):
     """
 
     def __call__(self, sample):
+        """Crop the image in sample."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.crop_to_bounding_box(image, self.offset_height,
@@ -464,8 +639,9 @@ class TensorflowCropToBoundingBox(CropToBoundingBox):
                 framework="onnxrt_qlinearops, onnxrt_integerops, pytorch, mxnet")
 class ResizeWithRatio(BaseTransform):
     """Resize image with aspect ratio and pad it to max shape(optional).
-       If the image is padded, the label will be processed at the same time.
-       The input image should be np.array.
+
+    If the image is padded, the label will be processed at the same time.
+    The input image should be np.array.
 
     Args:
         min_dim (int, default=800):
@@ -480,12 +656,14 @@ class ResizeWithRatio(BaseTransform):
     """
 
     def __init__(self, min_dim=800, max_dim=1365, padding=False, constant_value=0):
+        """Initialize `ResizeWithRatio` class."""
         self.min_dim = min_dim
         self.max_dim = max_dim
         self.padding = padding
         self.constant_value = constant_value
 
     def __call__(self, sample):
+        """Resize the image with ratio in sample."""
         image, label = sample
         height, width = image.shape[:2]
         scale = 1
@@ -515,11 +693,12 @@ class ResizeWithRatio(BaseTransform):
         return image, (bbox, str_label, int_label, image_id)
 
 @transform_registry(transform_type="ResizeWithRatio", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class TensorflowResizeWithRatio(BaseTransform):
     """Resize image with aspect ratio and pad it to max shape(optional).
-       If the image is padded, the label will be processed at the same time.
-       The input image should be np.array or tf.Tensor.
+
+    If the image is padded, the label will be processed at the same time.
+    The input image should be np.array or tf.Tensor.
 
     Args:
         min_dim (int, default=800):
@@ -534,12 +713,14 @@ class TensorflowResizeWithRatio(BaseTransform):
     """
 
     def __init__(self, min_dim=800, max_dim=1365, padding=False, constant_value=0):
+        """Initialize `TensorflowResizeWithRatio` class."""
         self.min_dim = min_dim
         self.max_dim = max_dim
         self.padding = padding
         self.constant_value = constant_value
 
     def __call__(self, sample):
+        """Resize the image with ratio in sample."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             shape = tf.shape(input=image)
@@ -588,16 +769,18 @@ class Transpose(BaseTransform):
     """
 
     def __init__(self, perm):
+        """Initialize `Transpose` class."""
         self.perm = perm
 
     def __call__(self, sample):
+        """Transpose the image according to perm in sample."""
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
         image = np.transpose(image, axes=self.perm)
         return (image, label)
 
 @transform_registry(transform_type="Transpose", process="preprocess", \
-                    framework="tensorflow, tensorflow_itex, inteltensorflow")
+                    framework="tensorflow, tensorflow_itex")
 class TensorflowTranspose(Transpose):
     """Transpose image according to perm.
 
@@ -609,6 +792,7 @@ class TensorflowTranspose(Transpose):
     """
 
     def __call__(self, sample):
+        """Transpose the image according to perm in sample."""
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
         if isinstance(image, tf.Tensor):
@@ -629,6 +813,7 @@ class MXNetTranspose(Transpose):
     """
 
     def __call__(self, sample):
+        """Transpose the image according to perm in sample."""
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
         image = mx.ndarray.transpose(image, self.perm)
@@ -646,6 +831,7 @@ class PyTorchTranspose(Transpose):
     """
 
     def __call__(self, sample):
+        """Transpose the image according to perm in sample."""
         image, label = sample
         assert len(image.shape) == len(self.perm), "Image rank doesn't match Perm rank"
         image = image.permute(self.perm)
@@ -661,13 +847,14 @@ class RandomVerticalFlip(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Vertically flip the image in sample."""
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
             image = np.flipud(image)
         return (image, label)
 
 @transform_registry(transform_type="RandomVerticalFlip", process="preprocess", \
-                    framework="tensorflow, tensorflow_itex, inteltensorflow")
+                    framework="tensorflow, tensorflow_itex")
 class TensorflowRandomVerticalFlip(BaseTransform):
     """Vertically flip the given image randomly.
 
@@ -676,6 +863,7 @@ class TensorflowRandomVerticalFlip(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Vertically flip the image in sample."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.random_flip_up_down(image)
@@ -694,13 +882,14 @@ class RandomHorizontalFlip(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Horizontally flip the image in sample."""
         image, label = sample
         if np.random.rand(1)[0] > 0.5:
             image = np.fliplr(image)
         return (image, label)
 
 @transform_registry(transform_type="RandomHorizontalFlip", process="preprocess", \
-                    framework="tensorflow, tensorflow_itex, inteltensorflow")
+                    framework="tensorflow, tensorflow_itex")
 class TensorflowRandomHorizontalFlip(BaseTransform):
     """Horizontally flip the given image randomly.
 
@@ -709,6 +898,7 @@ class TensorflowRandomHorizontalFlip(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Horizontally flip the image in sample."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.random_flip_left_right(image)
@@ -719,7 +909,7 @@ class TensorflowRandomHorizontalFlip(BaseTransform):
 
 @transform_registry(transform_type="ToArray", process="preprocess", \
                     framework="onnxrt_qlinearops, onnxrt_integerops, tensorflow, \
-                    tensorflow_itex, inteltensorflow, pytorch, mxnet")
+                    tensorflow_itex, pytorch, mxnet")
 class ToArray(BaseTransform):
     """Convert PIL Image or NDArray to numpy array.
 
@@ -728,6 +918,7 @@ class ToArray(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Convert image in sample to numpy array."""
         from PIL import Image
         image, label = sample
         if isinstance(image, Image.Image):
@@ -741,11 +932,11 @@ class ToArray(BaseTransform):
 np_dtype_map = {'int8': np.int8, 'uint8': np.uint8, 'complex64': np.complex64,
            'uint16': np.uint16, 'int32': np.int32, 'uint32': np.uint32,
            'int64': np.int64, 'uint64': np.uint64, 'float32': np.float32,
-           'float16': np.float16, 'float64': np.float64, 'bool': np.bool,
-           'string': np.str, 'complex128': np.complex128, 'int16': np.int16}
+           'float16': np.float16, 'float64': np.float64, 'bool': bool,
+           'string': str, 'complex128': np.complex128, 'int16': np.int16}
 
 @transform_registry(transform_type="Cast", process="general", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class CastTFTransform(BaseTransform):
     """Convert image to given dtype.
 
@@ -757,6 +948,7 @@ class CastTFTransform(BaseTransform):
     """
 
     def __init__(self, dtype='float32'):
+        """Initialize `CastTFTransform` class."""
         self.tf_dtype_map = {'int16': tf.int16, 'uint8': tf.uint8, 'uint16': tf.uint16,
                         'uint32':tf.uint32, 'uint64': tf.uint64, 'complex64': tf.complex64,
                         'int32': tf.int32, 'int64':tf.int64, 'float32': tf.float32,
@@ -767,6 +959,7 @@ class CastTFTransform(BaseTransform):
         self.dtype = dtype
 
     def __call__(self, sample):
+        """Convert image in sample to given dtype."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.convert_image_dtype(image, dtype=self.tf_dtype_map[self.dtype])
@@ -787,10 +980,12 @@ class CastONNXTransform(BaseTransform):
     """
 
     def __init__(self, dtype='float32'):
+        """Initialize `CastONNXTransform` class."""
         assert dtype in np_dtype_map.keys(), 'Unknown dtype'
         self.dtype = dtype
 
     def __call__(self, sample):
+        """Convert image in sample to given dtype."""
         image, label = sample
         image = image.astype(np_dtype_map[self.dtype])
         return (image, label)
@@ -807,6 +1002,7 @@ class CastPyTorchTransform(BaseTransform):
     """
 
     def __init__(self, dtype='float32'):
+        """Initialize `CastPyTorchTransform` class."""
         dtype_map = {'int8': torch.int8, 'uint8': torch.uint8, 'complex128': torch.complex128,
                      'int32':torch.int32, 'int64':torch.int64, 'complex64': torch.complex64,
                      'bfloat16':torch.bfloat16, 'float64':torch.float64, 'bool': torch.bool,
@@ -815,12 +1011,13 @@ class CastPyTorchTransform(BaseTransform):
         self.dtype = dtype_map[dtype]
 
     def __call__(self, sample):
+        """Convert image in sample to given dtype."""
         image, label = sample
         image = image.type(self.dtype)
         return (image, label)
 
 @transform_registry(transform_type="CenterCrop", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class CenterCropTFTransform(BaseTransform):
     """Crops the given image at the center to the given size.
 
@@ -832,6 +1029,7 @@ class CenterCropTFTransform(BaseTransform):
     """
 
     def __init__(self, size):
+        """Initialize `CenterCropTFTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -841,6 +1039,7 @@ class CenterCropTFTransform(BaseTransform):
                 self.size = size[0], size[1]
 
     def __call__(self, sample):
+        """Crops image in sample to the given size."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             if len(image.shape) == 3:
@@ -860,9 +1059,20 @@ class CenterCropTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="PaddedCenterCrop", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class PaddedCenterCropTransform(BaseTransform):
+    """Crops the given image at the center to the given size with padding.
+
+    Args:
+        size (list or int): Size of the result
+        crop_padding (int): crop padding number
+
+    Returns:
+        tuple of processed image and label
+    """
+
     def __init__(self, size, crop_padding=0):
+        """Initialize `PaddedCenterCropTransform` class."""
         if isinstance(size, int):
             self.image_size = size
         elif isinstance(size, list):
@@ -875,6 +1085,7 @@ class PaddedCenterCropTransform(BaseTransform):
         self.crop_padding = crop_padding
 
     def __call__(self, sample):
+        """Crops image in sample to the given size with padding."""
         image, label = sample
         h, w = image.shape[0], image.shape[1]
 
@@ -887,7 +1098,7 @@ class PaddedCenterCropTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="Resize", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class ResizeTFTransform(BaseTransform):
     """Resize the input image to the given size.
 
@@ -899,7 +1110,9 @@ class ResizeTFTransform(BaseTransform):
     Returns:
         tuple of processed image and label
     """
+
     def __init__(self, size, interpolation='bilinear'):
+        """Initialize `ResizeTFTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -913,6 +1126,7 @@ class ResizeTFTransform(BaseTransform):
             raise ValueError('Unsupported interpolation type!')
 
     def __call__(self, sample):
+        """Resize the input image in sample to the given size."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.resize(image, self.size, method=self.interpolation)
@@ -936,6 +1150,7 @@ class ResizePytorchTransform(BaseTransform):
     """
 
     def __init__(self, size, interpolation='bilinear'):
+        """Initialize `ResizePytorchTransform` class."""
         self.size = size
         if interpolation in interpolation_pytorch_map.keys():
             self.interpolation = get_torchvision_map(interpolation_pytorch_map[interpolation])
@@ -943,13 +1158,14 @@ class ResizePytorchTransform(BaseTransform):
             raise ValueError("Undefined interpolation type")
 
     def __call__(self, sample):
+        """Resize the input image in sample to the given size."""
         image, label = sample
         transformer = torchvision.transforms.Resize(size=self.size,
                                         interpolation=self.interpolation)
         return (transformer(image), label)
 
 @transform_registry(transform_type="RandomCrop", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class RandomCropTFTransform(BaseTransform):
     """Crop the image at a random location to the given size.
 
@@ -961,6 +1177,7 @@ class RandomCropTFTransform(BaseTransform):
     """
 
     def __init__(self, size):
+        """Initialize `RandomCropTFTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list) or isinstance(size, tuple):
@@ -970,6 +1187,7 @@ class RandomCropTFTransform(BaseTransform):
                 self.size = size[0], size[1]
 
     def __call__(self, sample):
+        """Crop the image in sample to the given size."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             if len(image.shape) == 3:
@@ -1018,6 +1236,7 @@ class RandomResizedCropPytorchTransform(BaseTransform):
 
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                         interpolation='bilinear'):
+        """Initialize `RandomResizedCropPytorchTransform` class."""
         self.size = size
         self.scale = scale
         self.ratio = ratio
@@ -1031,6 +1250,7 @@ class RandomResizedCropPytorchTransform(BaseTransform):
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def __call__(self, sample):
+        """Crop the image in sample to the random size."""
         image, label = sample
         transformer = torchvision.transforms.RandomResizedCrop(size=self.size,
             scale=self.scale, ratio=self.ratio, interpolation=self.interpolation)
@@ -1057,6 +1277,7 @@ class RandomResizedCropMXNetTransform(BaseTransform):
 
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                         interpolation='bilinear'):
+        """Initialize `RandomResizedCropMXNetTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -1076,6 +1297,7 @@ class RandomResizedCropMXNetTransform(BaseTransform):
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def __call__(self, sample):
+        """Crop the image in sample to the random size."""
         image, label = sample
         transformer = mx.gluon.data.vision.transforms.RandomResizedCrop(size=self.size,
                     scale=self.scale, ratio=self.ratio, interpolation=self.interpolation)
@@ -1083,7 +1305,7 @@ class RandomResizedCropMXNetTransform(BaseTransform):
 
 
 @transform_registry(transform_type="RandomResizedCrop", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class RandomResizedCropTFTransform(BaseTransform):
     """Crop the given image to random size and aspect ratio.
 
@@ -1103,6 +1325,7 @@ class RandomResizedCropTFTransform(BaseTransform):
 
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
+        """Initialize `RandomResizedCropTFTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -1120,6 +1343,7 @@ class RandomResizedCropTFTransform(BaseTransform):
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def get_params(self, image, scale, ratio):
+        """Get the image prameters: position, height and width."""
         shape = image.shape
         height = tf.cast(shape[0], dtype=tf.float32)
         width = tf.cast(shape[1], dtype=tf.float32)
@@ -1159,6 +1383,7 @@ class RandomResizedCropTFTransform(BaseTransform):
         return y0, x0, new_h, new_w
 
     def __call__(self, sample):
+        """Crop the image in sample to the random size."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             y0, x0, h, w = self.get_params(image, self.scale, self.ratio)
@@ -1183,7 +1408,7 @@ class RandomResizedCropTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="Normalize", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class NormalizeTFTransform(BaseTransform):
     """Normalize a image with mean and standard deviation.
 
@@ -1200,6 +1425,7 @@ class NormalizeTFTransform(BaseTransform):
     """
 
     def __init__(self, mean=[0.0], std=[1.0], rescale=None):
+        """Initialize `NormalizeTFTransform` class."""
         self.mean = mean
         self.std = std
         self.rescale = rescale
@@ -1208,6 +1434,7 @@ class NormalizeTFTransform(BaseTransform):
                 raise ValueError("Std should be greater than 0")
 
     def __call__(self, sample):
+        """Normalize the image in sample."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             orig_dtype = image.dtype
@@ -1226,17 +1453,20 @@ class NormalizeTFTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='KerasRescale', process="preprocess", \
-                    framework='tensorflow, inteltensorflow, tensorflow_itex')
+                    framework='tensorflow, tensorflow_itex')
 class RescaleKerasPretrainTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
     Returns:
         tuple of processed image and label
     """
+
     def __init__(self, rescale=None):
+        """Initialize `RescaleKerasPretrainTransform` class."""
         self.rescale = rescale
 
     def __call__(self, sample):
+        """Scale the values of the image in sample."""
         image, label = sample
         if self.rescale:
             image /= self.rescale[0]
@@ -1244,7 +1474,7 @@ class RescaleKerasPretrainTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \
-                    framework='tensorflow, inteltensorflow, tensorflow_itex')
+                    framework='tensorflow, tensorflow_itex')
 class RescaleTFTransform(BaseTransform):
     """Scale the values of image to [0,1].
 
@@ -1253,6 +1483,7 @@ class RescaleTFTransform(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Scale the values of the image in sample."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.cast(image, tf.float32) / 255.
@@ -1270,30 +1501,33 @@ class RescaleTransform(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Scale the values of the image in sample."""
         image, label = sample
         if isinstance(image, np.ndarray):
             image = image.astype('float32') / 255.
         return (image, label)
 
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
-                    framework='tensorflow, inteltensorflow, tensorflow_itex, \
+                    framework='tensorflow, tensorflow_itex, \
                                onnxrt_qlinearops, onnxrt_integerops, mxnet')
 class AlignImageChannelTransform(BaseTransform):
-    """ Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and
-        [H,W,3]->[H,W].
-        Input image must be np.ndarray.
+    """Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and [H,W,3]->[H,W].
+
+    Input image must be np.ndarray.
 
     Returns:
         tuple of processed image and label
     """
 
     def __init__(self, dim=3):
+        """Initialize `AlignImageChannelTransform` class."""
         logger.warning("This transform is going to be deprecated")
         if dim < 1 or dim > 4:
             raise ValueError('Unsupport image dim!')
         self.dim = dim
 
     def __call__(self, sample):
+        """Align channel of the image in sample."""
         image, label = sample
         if len(image.shape) == 2:
             image = np.dstack([image]*self.dim)
@@ -1310,21 +1544,23 @@ class AlignImageChannelTransform(BaseTransform):
 @transform_registry(transform_type='AlignImageChannel', process="preprocess", \
     framework='pytorch')
 class PyTorchAlignImageChannel(BaseTransform):
-    """ Align image channel, now just support [H,W,4]->[H,W,3] and
-        [H,W,3]->[H,W].
-        Input image must be PIL Image.
+    """Align image channel, now just support [H,W,4]->[H,W,3] and [H,W,3]->[H,W].
+
+    Input image must be PIL Image.
 
     Returns:
         tuple of processed image and label
     """
 
     def __init__(self, dim=3):
+        """Initialize `PyTorchAlignImageChannel` class."""
         logger.warning("This transform is going to be deprecated")
         if dim != 1 and dim != 3:
             raise ValueError('Unsupport image dim!')
         self.dim = dim
 
     def __call__(self, sample):
+        """Align channel of the image in sample."""
         from PIL import Image
         image, label = sample
         assert isinstance(image, Image.Image), 'Input image must be PIL Image'
@@ -1346,6 +1582,7 @@ class ToNDArrayTransform(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Convert np.array of the image in sample."""
         image, label = sample
         image = mx.nd.array(image)
         return image, label
@@ -1364,6 +1601,7 @@ class ResizeMXNetTransform(BaseTransform):
     """
 
     def __init__(self, size, interpolation='bilinear'):
+        """Initialize `ResizeMXNetTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -1378,6 +1616,7 @@ class ResizeMXNetTransform(BaseTransform):
             raise ValueError("Undefined interpolation type")
 
     def __call__(self, sample):
+        """Resize the input image in sample to the given size."""
         image, label = sample
         transformer = mx.gluon.data.vision.transforms.Resize(size=self.size,
                                 interpolation=self.interpolation)
@@ -1392,13 +1631,14 @@ class ResizeTransform(BaseTransform):
     Args:
         size (list or int): Size of the result
         interpolation (str, default='bilinear'):Desired interpolation type,
-                                                support 'bilinear', 'nearest', 'bicubic'
+        support 'bilinear', 'nearest', 'bicubic'.
 
     Returns:
         tuple of processed image and label
     """
 
     def __init__(self, size, interpolation='bilinear'):
+        """Initialize `ResizeTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list):
@@ -1413,6 +1653,7 @@ class ResizeTransform(BaseTransform):
             raise ValueError("Undefined interpolation type")
 
     def __call__(self, sample):
+        """Resize the input image in sample to the given size."""
         image, label = sample
         image = cv2.resize(image, self.size, interpolation=self.interpolation)
         if len(image.shape) == 2:
@@ -1420,7 +1661,7 @@ class ResizeTransform(BaseTransform):
         return (image, label)
 
 @transform_registry(transform_type="CropResize", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class CropResizeTFTransform(BaseTransform):
     """Crop the input image with given location and resize it.
 
@@ -1438,6 +1679,7 @@ class CropResizeTFTransform(BaseTransform):
     """
 
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        """Initialize `CropResizeTFTransform` class."""
         if interpolation not in ['bilinear', 'nearest', 'bicubic']:
             raise ValueError('Unsupported interpolation type!')
         self.interpolation = interpolation
@@ -1454,6 +1696,7 @@ class CropResizeTFTransform(BaseTransform):
                 self.size = size[0], size[1]
 
     def __call__(self, sample):
+        """Resize the input image in sample with given location."""
         image, label = sample
         if isinstance(image, tf.Tensor):
             image = tf.image.crop_to_bounding_box(
@@ -1483,6 +1726,7 @@ class PyTorchCropResizeTransform(BaseTransform):
     """
 
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        """Initialize `PyTorchCropResizeTransform` class."""
         if interpolation in interpolation_pytorch_map.keys():
             self.interpolation = get_torchvision_map(interpolation_pytorch_map[interpolation])
         else:
@@ -1494,6 +1738,7 @@ class PyTorchCropResizeTransform(BaseTransform):
         self.size = size
 
     def __call__(self, sample):
+        """Resize the input image in sample with given location."""
         image, label = sample
         image = image.crop((self.x, self.y, self.x + self.width, self.y + self.height))
         transformer = torchvision.transforms.Resize(size=self.size,
@@ -1518,6 +1763,7 @@ class MXNetCropResizeTransform(BaseTransform):
     """
 
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        """Initialize `MXNetCropResizeTransform` class."""
         if interpolation in interpolation_mxnet_map.keys():
             self.interpolation = interpolation_mxnet_map[interpolation]
         else:
@@ -1529,6 +1775,7 @@ class MXNetCropResizeTransform(BaseTransform):
         self.size = size
 
     def __call__(self, sample):
+        """Resize the input image in sample with given location."""
         image, label = sample
         transformer = mx.gluon.data.vision.transforms.CropResize(self.x, self.y, self.width,
                                 self.height, self.size, self.interpolation)
@@ -1553,6 +1800,7 @@ class CropResizeTransform(BaseTransform):
     """
 
     def __init__(self, x, y, width, height, size, interpolation='bilinear'):
+        """Initialize `CropResizeTransform` class."""
         if interpolation in interpolation_map.keys():
             self.interpolation = interpolation_map[interpolation]
         else:
@@ -1570,6 +1818,7 @@ class CropResizeTransform(BaseTransform):
                 self.size = size[0], size[1]
 
     def __call__(self, sample):
+        """Crop the input image in sample with given location."""
         image, label = sample
         image = image[self.y:self.y+self.height, self.x:self.x+self.width, :]
         image = cv2.resize(image, self.size, interpolation=self.interpolation)
@@ -1588,6 +1837,7 @@ class CenterCropTransform(BaseTransform):
     """
 
     def __init__(self, size):
+        """Initialize `CenterCropTransform` class."""
         if isinstance(size, int):
             self.height, self.width = size, size
         elif isinstance(size, list) or isinstance(size, tuple):
@@ -1597,6 +1847,7 @@ class CenterCropTransform(BaseTransform):
                 self.height, self.width = size[0], size[1]
 
     def __call__(self, sample):
+        """Crop the input image in sample at the center to the given size."""
         image, label = sample
         h, w = image.shape[0], image.shape[1]
         if h + 1 < self.height or w + 1 < self.width:
@@ -1629,6 +1880,7 @@ class MXNetNormalizeTransform(BaseTransform):
     """
 
     def __init__(self, mean=[0.0], std=[1.0]):
+        """Initialize `MXNetNormalizeTransform` class."""
         self.mean = mean
         self.std = std
         for item in self.std:
@@ -1636,6 +1888,7 @@ class MXNetNormalizeTransform(BaseTransform):
                 raise ValueError("Std should be greater than 0")
 
     def __call__(self, sample):
+        """Normalize the image in sample."""
         image, label = sample
         axes = [len(image.shape) - 1]
         axes.extend(list(np.arange(len(image.shape)-1)))
@@ -1665,6 +1918,7 @@ class PyTorchNormalizeTransform(MXNetNormalizeTransform):
     """
 
     def __call__(self, sample):
+        """Normalize the image in sample."""
         image, label = sample
         transformer = torchvision.transforms.Normalize(self.mean, self.std)
         image = transformer(image)
@@ -1688,6 +1942,7 @@ class NormalizeTransform(BaseTransform):
     """
 
     def __init__(self, mean=[0.0], std=[1.0]):
+        """Initialize `NormalizeTransform` class."""
         self.mean = mean
         self.std = std
         for item in self.std:
@@ -1695,6 +1950,7 @@ class NormalizeTransform(BaseTransform):
                 raise ValueError("Std should be greater than 0")
 
     def __call__(self, sample):
+        """Normalize the image in sample."""
         image, label = sample
         assert len(self.mean) == image.shape[-1], 'Mean channel must match image channel'
         image = (image - self.mean) / self.std
@@ -1713,6 +1969,7 @@ class RandomCropTransform(BaseTransform):
     """
 
     def __init__(self, size):
+        """Initialize `RandomCropTransform` class."""
         if isinstance(size, int):
             self.height, self.width = size, size
         elif isinstance(size, list) or isinstance(size, tuple):
@@ -1722,6 +1979,7 @@ class RandomCropTransform(BaseTransform):
                 self.height, self.width = size[0], size[1]
 
     def __call__(self, sample):
+        """Crop the image in sample to the given size."""
         image, label = sample
         h, w = image.shape[0], image.shape[1]
         if h + 1 < self.height or w + 1 < self.width:
@@ -1761,6 +2019,7 @@ class RandomResizedCropTransform(BaseTransform):
 
     def __init__(self, size, scale=(0.08, 1.0), ratio=(
             3. / 4., 4. / 3.), interpolation='bilinear'):
+        """Initialize `RandomResizedCropTransform` class."""
         if isinstance(size, int):
             self.size = size, size
         elif isinstance(size, list) or isinstance(size, tuple):
@@ -1781,6 +2040,7 @@ class RandomResizedCropTransform(BaseTransform):
             raise ValueError("Scale and ratio should be of kind (min, max)")
 
     def get_params(self, image, scale, ratio):
+        """Get the image prameters: position, height and width."""
         h, w = image.shape[0], image.shape[1]
         src_area = h * w
 
@@ -1812,6 +2072,7 @@ class RandomResizedCropTransform(BaseTransform):
         return y0, x0, new_h, new_w
 
     def __call__(self, sample):
+        """Crop the image in sample to random size."""
         image, label = sample
         y0, x0, h, w = self.get_params(image, self.scale, self.ratio)
         crop_img = image[y0:y0 + h, x0:x0 + w, :]
@@ -1908,7 +2169,7 @@ def get_final_text(pred_text, orig_text, do_lower_case):
 class SquadExample(object):
     """A single training/test example for simple sequence classification.
 
-       For examples without an answer, the start and end position are -1.
+    For examples without an answer, the start and end position are -1.
     """
 
     def __init__(self,
@@ -1919,6 +2180,7 @@ class SquadExample(object):
         start_position=None,
         end_position=None,
         is_impossible=False):
+        """Initialize `SquadExample` class."""
         self.qas_id = qas_id
         self.question_text = question_text
         self.doc_tokens = doc_tokens
@@ -1929,6 +2191,7 @@ class SquadExample(object):
 
 class InputFeatures(object):
     """A single set of features of data."""
+
     def __init__(self,
                  unique_id,
                  example_index,
@@ -1942,6 +2205,7 @@ class InputFeatures(object):
                  start_position=None,
                  end_position=None,
                  is_impossible=None):
+        """Initialize `InputFeatures` class."""
         self.unique_id = unique_id
         self.example_index = example_index
         self.doc_span_index = doc_span_index
@@ -2023,7 +2287,7 @@ def _check_is_max_context(doc_spans, cur_span_index, position):
 
 def convert_examples_to_features(examples, tokenizer, max_seq_length,
                                  doc_stride, max_query_length, output_fn):
-    """Loads a data file into a list of `InputBatch`s."""
+    """Load a data file into a list of `InputBatch`s."""
     unique_id = 1000000000
     for (example_index, example) in enumerate(examples):
         query_tokens = tokenizer.tokenize(example.question_text)
@@ -2125,7 +2389,10 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
 @transform_registry(transform_type="Collect", \
                 process="postprocess", framework="tensorflow")
 class CollectTransform(BaseTransform):
+    """Postprocess the predictions, collect data."""
+
     def __init__(self, length=10833):
+        """Initialize `CollectTransform` class."""
         self.length = length
         self.unique_id = []
         self.start_logits = []
@@ -2134,6 +2401,7 @@ class CollectTransform(BaseTransform):
         self.idx = 1000000000
 
     def __call__(self, sample):
+        """Collect postprocess data."""
         all_results, label = sample
         result_list = [np.expand_dims(result, 0) for result in all_results]
         for result in result_list:
@@ -2148,7 +2416,7 @@ class CollectTransform(BaseTransform):
         return self.all_sample
 
 @transform_registry(transform_type="SquadV1", process="postprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class TFSquadV1PostTransform(BaseTransform):
     """Postprocess the predictions of bert on SQuAD.
 
@@ -2179,7 +2447,7 @@ class TFSquadV1PostTransform(BaseTransform):
 
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
-
+        """Initialize `TFSquadV1PostTransform` class."""
         from . import tokenization
         self.eval_examples = read_squad_examples(label_file)
         tokenizer = tokenization.FullTokenizer(
@@ -2204,6 +2472,7 @@ class TFSquadV1PostTransform(BaseTransform):
             ["unique_id", "start_logits", "end_logits"])
 
     def process_result(self, results):
+        """Get the processed results."""
         processed_results = []
         # notice the result list sequence
         for unique_id, start_logits, end_logits in zip(*results):
@@ -2214,8 +2483,9 @@ class TFSquadV1PostTransform(BaseTransform):
                     end_logits=[float(x) for x in end_logits.flat]))
 
         return processed_results
-    
+
     def get_postprocess_result(self, sample):
+        """Get the post processed results."""
         if sample == (None, None):
             return (None, None)
         all_results, label = sample
@@ -2354,13 +2624,17 @@ class TFSquadV1PostTransform(BaseTransform):
         return (all_predictions, label)
 
     def __call__(self, sample):
-        return self.get_postprocess_result(sample)   
+        """Call the get_postprocess_result."""
+        return self.get_postprocess_result(sample)
 
 
 @transform_registry(transform_type="ModelZooCollect", \
-                process="postprocess", framework="tensorflow")
+                process="postprocess", framework="tensorflow, tensorflow_itex")
 class TFModelZooCollectTransform(CollectTransform):
+    """Postprocess the predictions of model zoo, collect data."""
+
     def __call__(self, sample):
+        """Collect postprocess data."""
         all_results, label = sample
         all_results = zip(all_results[0], all_results[1])
         for start_logits, end_logits in all_results:
@@ -2374,24 +2648,29 @@ class TFModelZooCollectTransform(CollectTransform):
         return self.all_sample
 
 @transform_registry(transform_type="SquadV1ModelZoo", \
-                    process="postprocess", framework="tensorflow, inteltensorflow, \
+                    process="postprocess", framework="tensorflow, \
                               tensorflow_itex")
 class TFSquadV1ModelZooPostTransform(TFSquadV1PostTransform):
-    """ Postprocess the predictions of bert on SQuADV1.1
-        See class TFSquadV1PostTransform for more details """
+    """Postprocess the predictions of bert on SQuADV1.1.
+
+    See class TFSquadV1PostTransform for more details
+    """
+
     def __init__(self, label_file, vocab_file, n_best_size=20, max_seq_length=384, \
         max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128):
+        """Initialize `TFSquadV1ModelZooPostTransform` class."""
         super().__init__(label_file, vocab_file, n_best_size, max_seq_length, \
                 max_query_length, max_answer_length, do_lower_case, doc_stride)
         self.length = len(self.eval_features)
         self.collect_data = TFModelZooCollectTransform(length=self.length)
 
     def __call__(self, sample):
+        """Collect data and get postprocess results."""
         sample = self.collect_data(sample)
         return self.get_postprocess_result(sample)
 
 @transform_registry(transform_type="ParseDecodeVoc", process="preprocess", \
-                    framework="tensorflow, inteltensorflow, tensorflow_itex")
+                    framework="tensorflow, tensorflow_itex")
 class ParseDecodeVocTransform(BaseTransform):
     """Parse features in Example proto.
 
@@ -2400,11 +2679,13 @@ class ParseDecodeVocTransform(BaseTransform):
     """
 
     def __call__(self, sample):
+        """Parse decode voc."""
         # Currently only supports jpeg and png.
         # Need to use this logic because the shape is not known for
         # tf.image.decode_image and we rely on this info to
         # extend label if necessary.
         def _decode_image(content, channels):
+            """Decode the image with content."""
             return tf.cond(
                 tf.image.is_jpeg(content),
                 lambda: tf.image.decode_jpeg(content, channels),

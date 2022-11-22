@@ -97,6 +97,25 @@ class ModelAPIInterface:
         return models_list
 
     @staticmethod
+    def delete_model(data: dict) -> dict:
+        """Delete model from database."""
+        try:
+            model_id: int = int(data.get("id", None))
+            model_name: str = str(data.get("name", None))
+        except ValueError:
+            raise ClientErrorException("Could not parse value.")
+        except TypeError:
+            raise ClientErrorException("Missing model id or model name.")
+        with Session.begin() as db_session:
+            removed_model_id = Model.delete_model(
+                db_session=db_session,
+                model_id=model_id,
+                model_name=model_name,
+            )
+
+        return {"id": removed_model_id}
+
+    @staticmethod
     def parse_model_data(data: dict) -> ModelAddParamsInterface:
         """Parse input data for model."""
         model_parameters = ModelAddParamsInterface()
