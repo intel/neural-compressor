@@ -1,3 +1,9 @@
+"""Common classes for different NAS approaches.
+
+NAS class for creating object of different NAS approaches.
+NASBase class defines the common methods of different NAS approaches.
+"""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -30,7 +36,18 @@ torch = LazyImport('torch')
 
 
 class NAS(object):
+    """Create object of different NAS approaches.
+
+    Args:
+        conf_fname_or_obj (string or obj):
+            The path to the YAML configuration file or the object of NASConfig.
+
+    Returns:
+        An object of specified NAS approach.
+    """
+
     def __new__(self, conf_fname_or_obj, *args, **kwargs):
+        """Create an object of specified NAS approach."""
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
                 self.conf = Conf(conf_fname_or_obj)
@@ -58,16 +75,16 @@ class NAS(object):
 
 
 class NASBase(object):
-    """
+    """Base class for defining the common methods of different NAS approaches.
 
     Args:
         search_space (dict): A dictionary for defining the search space.
         model_builder (function obj): A function to build model instance with the specified
             model architecture parameters.
-
     """
 
     def __init__(self, search_space=None, model_builder=None):
+        """Initialize the attributes."""
         super().__init__()
         self._search_space = search_space
         self._model_builder = model_builder
@@ -163,12 +180,18 @@ class NASBase(object):
         raise NotImplementedError("Depends on specific NAS algorithm.")
 
     def count_model_parameters(self, model):
+        """Count number of model parameters.
+
+        Returns:
+            Number of model parameters.
+        """
         if isinstance(model, torch.nn.Module):
             return sum(p.numel() for p in model.parameters())
         else:
             raise NotImplementedError("Only support torch model now.") # pragma: no cover
 
     def load_search_results(self, path):
+        """Load previous search results if exist."""
         self.resumed_search_results = {}
         lastest_results_record = os.path.join(path, 'lastest_results.npy')
         if not os.path.exists(path) or not os.path.exists(lastest_results_record):
@@ -181,6 +204,7 @@ class NASBase(object):
         logger.info("Loaded previous results.")
 
     def dump_search_results(self, path):
+        """Save search results."""
         lastest_results_record = os.path.join(os.path.dirname(path), 'lastest_results.npy')
         np.save(lastest_results_record, self.search_results, allow_pickle=True)
         write_contents = '=' * 30 + ' All Search Results ' + '=' * 30 + '\n\n'
@@ -206,11 +230,22 @@ class NASBase(object):
             f.write(write_contents)
 
     def params_vec2params_dict(self, paras_vec):
+        """Convert the parameters vector to parameters dictionary.
+
+        Where parameters vector and parameters dictionary both define the model architecture.
+
+        Returns:
+            Parameters dictionary defining the model architecture.
+        """
         assert len(paras_vec) == len(self.search_space_keys), \
             "Length of paras_vec and search_space_keys should be the same."
         return {k:v for k, v in zip(self.search_space_keys, paras_vec)}
 
     def find_best_model_archs(self):
+        """Find the best model architectures.
+
+        Find the best model architectures which lie on the pareto front.
+        """
         assert len(self.search_results) > 0, "Zero result in search_results."
         model_arches = list(self.search_results.keys())
         metrics = [self.metrics_conversion(self.search_results[ma]) for ma in model_arches]
@@ -219,6 +254,11 @@ class NASBase(object):
             for i in pareto_front_indices]
 
     def metrics_conversion(self, metrics):
+        """Convert the metrics to specific format.
+
+        Returns:
+            Converted metrics.
+        """
         if not isinstance(metrics, Iterable):
             metrics = [metrics]
         if isinstance(metrics, dict):
@@ -236,6 +276,7 @@ class NASBase(object):
         return converted_metrics
 
     def init_search_cfg(self, config):
+        """Initialize the search configuration."""
         self.search_cfg = config.search
 
         if not self._search_space:
@@ -280,27 +321,46 @@ class NASBase(object):
 
     @property
     def search_space(self):
+        """Getter of the search space.
+        
+        Returns:
+            The search space.
+        """
         return self._search_space
 
     @search_space.setter
     def search_space(self, search_space):
+        """Setter of the search space."""
         self._search_space = search_space
 
     @property
     def search_algorithm(self):
+        """Getter of the search algorithm.
+        
+        Returns:
+            The search algorithm.
+        """
         return self._search_algorithm
 
     @search_algorithm.setter
     def search_algorithm(self, search_algorithm):
+        """Setter of the search algorithm."""
         self._search_algorithm = search_algorithm
 
     @property
     def model_builder(self):
+        """Getter of the model builder.
+        
+        Returns:
+            The model builder.
+        """
         return self._model_builder
 
     @model_builder.setter
     def model_builder(self, model_builder):
+        """Setter of the model builder."""
         self._model_builder = model_builder
 
     def __repr__(self):
+        """Class representation."""
         return 'Base Class of NAS' # pragma: no cover

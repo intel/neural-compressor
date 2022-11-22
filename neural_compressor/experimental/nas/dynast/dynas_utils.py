@@ -1,3 +1,5 @@
+"""Common methods for DyNAS."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -42,6 +44,16 @@ def get_macs(
     input_size: Tuple[int, int, int, int] = (1, 3, 224, 224),
     device: str = 'cpu',
 ) -> int:
+    """Get the MACs of the model.
+
+    Args:
+        model (torch.nn.Module): The torch model.
+        input_size (Tuple): The input dimension.
+        device (str): The device on which the model runs.
+
+    Returns:
+        The MACs of the model.
+    """
     model = model.to(device)
     rm_bn_from_net(model)
     model.eval()
@@ -57,7 +69,7 @@ def _auto_steps(
     min_steps: int = 25,
     min_samples: int = 500,
 ) -> int:
-    """Simple scaling of number of steps w.r.t batch_size
+    """Scaling of number of steps w.r.t batch_size.
 
     Example:
     1. `_auto_steps(1, True), _auto_steps(1, False)` -> 100, 500
@@ -66,16 +78,15 @@ def _auto_steps(
     4. `_auto_steps(32, True), _auto_steps(8, False)` -> 5, 25
 
     Args:
-    - batch_size
-    - is_warmup: if set to True, will scale down the number of steps by `warmup_scale`.
-    - warmup_scale: scale by which number of steps should be decreased if `is_warmup` is True.
-    - min_steps: minimum number of steps to return
-    - min_samples: returned steps multiplied by `batch_size` should be at least this much.
+        batch_size (int): size of a batch input data.
+        is_warmup (bool): if set to True, will scale down the number of steps by `warmup_scale`.
+        warmup_scale (float): scale by which number of steps should be decreased if `is_warmup` is True.
+        min_steps (int): minimum number of steps to return.
+        min_samples (int): returned steps multiplied by `batch_size` should be at least this much.
 
     Returns:
-        number of steps
+        number of steps.
     """
-
     if not is_warmup:
         warmup_scale = 1.0
 
@@ -93,16 +104,16 @@ def measure_latency(
     """Measure Torch model's latency.
 
     Args:
-    - model: Torch model
-    - input_size: a tuple (batch size, channels, resolution, resolution).
-    - warmup_steps - how many data batches to use to warm up the device.
-        If 'None' it will be adjusted automatically w.r.t batch size.
-    - measure_steps - how many data batches to use for latency measurement.
-        If 'None' it will be adjusted automatically w.r.t batch size.
-    - device: which device is being used for latency measurement.
+        model (torch.nn.Module): Torch model.
+        input_size (Tuple): a tuple (batch size, channels, resolution, resolution).
+        warmup_steps (int): how many data batches to use to warm up the device.
+          If 'None' it will be adjusted automatically w.r.t batch size.
+        measure_steps (int): how many data batches to use for latency measurement.
+          If 'None' it will be adjusted automatically w.r.t batch size.
+        device (str): which device is being used for latency measurement.
 
     Returns:
-        mean latency; std latency
+        mean latency; std latency.
     """
     if not warmup_steps:
         warmup_steps = _auto_steps(input_size[0], is_warmup=True)
@@ -141,11 +152,15 @@ def measure_latency(
 
 
 class Runner:
+    """The Runner base class."""
+
     pass
 
 
 class OFARunner(Runner):
-    """The OFARunner class manages the sub-network selection from the OFA super-network and
+    """The OFARunner class.
+
+    The OFARunner class manages the sub-network selection from the OFA super-network and
     the validation measurements of the sub-networks. ResNet50, MobileNetV3 w1.0, and MobileNetV3 w1.2
     are currently supported. Imagenet is required for these super-networks `imagenet-ilsvrc2012`.
     """
@@ -159,6 +174,7 @@ class OFARunner(Runner):
         imagenetpath: str,
         batch_size: int,
     ) -> None:
+        """Initialize the attributes."""
         self.supernet = supernet
         self.acc_predictor = acc_predictor
         self.macs_predictor = macs_predictor
@@ -174,6 +190,14 @@ class OFARunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> float:
+        """Estimate the top1 accuracy of the subnet with the predictor.
+
+        Args:
+            subnet_cfg (dict): The dictionary describing the subnet.
+
+        Returns:
+            Top1 accuracy of the subnet.
+        """
         top1 = self.acc_predictor.predict(subnet_cfg)
         return top1
 
@@ -181,6 +205,14 @@ class OFARunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> int:
+        """Estimate the MACs of the subnet with the predictor.
+
+        Args:
+            subnet_cfg (dict): The dictionary describing the subnet.
+
+        Returns:
+            MACs of the subnet.
+        """
         macs = self.macs_predictor.predict(subnet_cfg)
         return macs
 
@@ -188,6 +220,14 @@ class OFARunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> float:
+        """Estimate the latency of the subnet with the predictor.
+
+        Args:
+            subnet_cfg (dict): The dictionary describing the subnet.
+
+        Returns:
+            Latency of the subnet.
+        """
         latency = self.latency_predictor.predict(subnet_cfg)
         return latency
 
@@ -195,6 +235,14 @@ class OFARunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> float: # pragma: no cover
+        """Validate the top1 accuracy of the subnet on the dataset.
+
+        Args:
+            subnet_cfg (dict): The dictionary describing the subnet.
+
+        Returns:
+            Top1 accuracy of the subnet.
+        """
         subnet = self.get_subnet(subnet_cfg)
         folder_name = '.torch/tmp-{}'.format(uuid.uuid1().hex)
         run_manager = RunManager(
@@ -212,13 +260,14 @@ class OFARunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> float:
-        """Measure Torch model's FLOPs/MACs as per FVCore calculation
-        Args:
-            subnet_cfg: sub-network Torch model
-        Returns:
-            `macs`
-        """
+        """Measure subnet's FLOPs/MACs as per FVCore calculation.
 
+        Args:
+            subnet_cfg (dict): The dictionary describing the subnet.
+
+        Returns:
+            MACs of the subnet.
+        """
         model = self.get_subnet(subnet_cfg)
         input_size = (self.batch_size, 3, 224, 224)
         macs = get_macs(model=model, input_size=input_size, device=self.device)
@@ -232,11 +281,13 @@ class OFARunner(Runner):
         warmup_steps: int = None,
         measure_steps: int = None,
     ) -> Tuple[float, float]:
-        """Measure OFA model's latency.
+        """Measure subnet's latency.
+
         Args:
-            subnet_cfg: sub-network Torch model
+            subnet_cfg (dict): The dictionary describing the subnet.
+
         Returns:
-            mean latency; std latency
+            mean latency; std latency.
         """
         model = self.get_subnet(subnet_cfg)
         input_size = (self.batch_size, 3, 224, 224)
@@ -256,6 +307,14 @@ class OFARunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> torch.nn.Module:
+        """Get subnet.
+
+        Args:
+            subnet_cfg (dict): The dictionary describing the subnet.
+
+        Returns:
+            The subnet.
+        """
         if self.supernet == 'ofa_resnet50':
             self.ofa_network.set_active_subnet(
                 ks=subnet_cfg['d'], e=subnet_cfg['e'], d=subnet_cfg['w']
@@ -271,17 +330,15 @@ class OFARunner(Runner):
 
 
 class EvaluationInterface:
-    """
+    """Evaluation Interface class.
+
     The interface class update is required to be updated for each unique SuperNetwork
-    framework as it controls how evaluation calls are made from DyNAS-T
+    framework as it controls how evaluation calls are made from DyNAS-T.
 
     Args:
-        evaluator : class
-            The 'runner' that performs the validation or prediction
-        manager : class
-            The DyNAS-T manager that translates between PyMoo and the parameter dict
-        csv_path : string
-            (Optional) The csv file that get written to during the subnetwork search
+        evaluator (class): The 'runner' that performs the validation or prediction.
+        manager (class): The DyNAS-T manager that translates between PyMoo and the parameter dict.
+        csv_path (str, Optional): The csv file that get written to during the subnetwork search.
     """
 
     def __init__(
@@ -292,6 +349,7 @@ class EvaluationInterface:
         predictor_mode: bool = False,
         csv_path: str = None,
     ) -> None:
+        """Initialize the attributes."""
         self.evaluator = evaluator
         self.manager = manager
         self.metrics = metrics
@@ -302,9 +360,11 @@ class EvaluationInterface:
         self,
         x: list,
     ) -> Tuple[dict, float, float]:
+        """Evaluate the subnet."""
         pass
 
     def clear_csv(self) -> None:
+        """Clear the csv file."""
         if self.csv_path:
             f = open(self.csv_path, "w")
             writer = csv.writer(f)
@@ -314,6 +374,14 @@ class EvaluationInterface:
 
 
 class EvaluationInterfaceResNet50(EvaluationInterface):
+    """Evaluation Interface class for ResNet50.
+
+    Args:
+        evaluator (class): The 'runner' that performs the validation or prediction.
+        manager (class): The DyNAS-T manager that translates between PyMoo and the parameter dict.
+        csv_path (str, Optional): The csv file that get written to during the subnetwork search.
+    """
+
     def __init__(
         self,
         evaluator: Runner,
@@ -322,12 +390,14 @@ class EvaluationInterfaceResNet50(EvaluationInterface):
         predictor_mode: bool = False,
         csv_path: str = None,
     ) -> None:
+        """Initialize the attributes."""
         super().__init__(evaluator, manager, metrics, predictor_mode, csv_path)
 
     def eval_subnet(
         self,
         x: list,
     ) -> Tuple[dict, float, float]:
+        """Evaluate the subnet."""
         # PyMoo vector to Elastic Parameter Mapping
         param_dict = self.manager.translate2param(x)
 
@@ -375,6 +445,14 @@ class EvaluationInterfaceResNet50(EvaluationInterface):
 
 
 class EvaluationInterfaceMobileNetV3(EvaluationInterface):
+    """Evaluation Interface class for MobileNetV3.
+
+    Args:
+        evaluator (class): The 'runner' that performs the validation or prediction.
+        manager (class): The DyNAS-T manager that translates between PyMoo and the parameter dict.
+        csv_path (str, Optional): The csv file that get written to during the subnetwork search.
+    """
+
     def __init__(
         self,
         evaluator: Runner,
@@ -383,12 +461,14 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
         predictor_mode=False,
         csv_path=None,
     ) -> None:
+        """Initialize the attributes."""
         super().__init__(evaluator, manager, metrics, predictor_mode, csv_path)
 
     def eval_subnet(
         self,
         x: list,
     ) -> Tuple[dict, float, float]:
+        """Evaluate the subnet."""
         # PyMoo vector to Elastic Parameter Mapping
         param_dict = self.manager.translate2param(x)
 
@@ -433,6 +513,14 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
 def get_torchvision_model(
     model_name: str,
 ) -> torch.nn.Module:
+    """Get the torchvision model.
+
+    Args:
+        model_name (str): The name of the torchvision model.
+
+    Returns:
+        The specified torch model.
+    """
     try:
         model = getattr(torchvision.models, model_name)(pretrained=True)
         model.eval()
@@ -452,6 +540,15 @@ def get_torchvision_model(
 
 
 class TorchVisionReference:
+    """Baseline of the torchvision model.
+
+    Args:
+        model_name (str): The name of the torchvision model.
+        dataset_path (str): The path to the dataset.
+        batch_size (int): Batch size of the input.
+        input_size (int): Input image's width and height.
+    """
+
     def __init__(
         self,
         model_name: str,
@@ -459,6 +556,7 @@ class TorchVisionReference:
         batch_size: int,
         input_size: int = 224,
     ) -> None:
+        """Initialize the attributes."""
         if 'ofa_resnet50' in model_name:
             model_name = 'resnet50'
         if 'ofa_mbv3' in model_name:
@@ -482,6 +580,11 @@ class TorchVisionReference:
         get_torchvision_model(model_name=self.model_name)
 
     def validate_top1(self) -> Tuple[float, float, float]: # pragma: no cover
+        """Get the top1 accuracy of the model on the dataset.
+
+        Returns:
+            Top1 accuracy of the model.
+        """
         ImagenetDataProvider.DEFAULT_PATH = self.dataset_path
         model = get_torchvision_model(model_name=self.model_name)
         run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
@@ -498,6 +601,11 @@ class TorchVisionReference:
         self,
         device: str = 'cpu',
     ) -> int:
+        """Get the MACs of the model.
+
+        Returns:
+            MACs of the model.
+        """
         model = get_torchvision_model(model_name=self.model_name)
         input_size = (self.batch_size, 3, self.input_size, self.input_size)
 
@@ -516,6 +624,11 @@ class TorchVisionReference:
         warmup_steps: int = None,
         measure_steps: int = None,
     ) -> Tuple[float, float]:
+        """Measure the latency of the model.
+
+        Returns:
+            Latency of the model.
+        """
         model = get_torchvision_model(model_name=self.model_name)
         input_size = (self.batch_size, 3, self.input_size, self.input_size)
 

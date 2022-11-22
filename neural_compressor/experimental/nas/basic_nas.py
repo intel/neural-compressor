@@ -1,3 +1,5 @@
+"""Basic NAS approach class."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -27,26 +29,35 @@ from neural_compressor.utils.create_obj_from_config import \
 
 @nas_registry("Basic")
 class BasicNAS(NASBase, Component):
-    """
+    """Basic NAS approach.
+
+    Defining the pipeline for basic NAS approach.
 
     Args:
         conf_fname (string): The path to the YAML configuration file.
         search_space (dict): A dictionary for defining the search space.
         model_builder (function obj): A function to build model instance with the specified
             model architecture parameters.
-
     """
+
     def __init__(self, conf_fname_or_obj, search_space=None, model_builder=None):
+        """Initialize the attributes."""
         NASBase.__init__(self, search_space=search_space, model_builder=model_builder)
         Component.__init__(self)
         self.init_by_cfg(conf_fname_or_obj)
 
     def execute(self):
+        """Execute the search process.
+
+        Returns:
+            Best model architectures found in the search process.
+        """
         return self.search()
 
     def estimate(self, model):
         """Estimate performance of the model.
-           Depends on specific NAS algorithm. Here we use train and evaluate.
+
+        Depends on specific NAS algorithm. Here we use train and evaluate.
 
         Returns:
             Evaluated metrics of the model.
@@ -57,6 +68,7 @@ class BasicNAS(NASBase, Component):
         return self._eval_func(model)
 
     def init_by_cfg(self, conf_fname_or_obj):
+        """Initialize the configuration."""
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
                 self.conf = Conf(conf_fname_or_obj)
@@ -79,6 +91,7 @@ class BasicNAS(NASBase, Component):
         self.init_search_cfg(self.cfg.nas)
 
     def pre_process(self):
+        """Initialize the train and evaluation settings."""
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
@@ -124,4 +137,5 @@ class BasicNAS(NASBase, Component):
                                                fp32_baseline = False)
 
     def __repr__(self):
+        """Class representation."""
         return 'BasicNAS' # pragma: no cover
