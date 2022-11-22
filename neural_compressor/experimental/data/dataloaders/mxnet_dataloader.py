@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""MXNet Dataloader implementation."""
 
 from neural_compressor.utils.utility import LazyImport
 from .base_dataloader import BaseDataLoader
@@ -21,9 +23,11 @@ import logging
 mx = LazyImport('mxnet')
 
 class MXNetDataLoader(BaseDataLoader):
+    """Subclass of BaseDataLoader."""
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
                              shuffle, distributed):
+        """Overwrite _generate_dataloader function."""
         if shuffle:
             logging.warning('Shuffle is not supported yet in MXNetDataLoader, ' \
                             'ignoring shuffle keyword.')
