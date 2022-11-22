@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Built-in filter."""
+
 from .filter import FILTERS, Filter, filter_registry
 from os.path import dirname, basename, isfile, join
 import glob
