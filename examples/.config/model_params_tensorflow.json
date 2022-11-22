@@ -2467,6 +2467,15 @@
       "batch_size": 64,
       "new_benchmark": false
     },
+    "distilbert_base": {
+      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
+      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
+      "yaml": "distilbert_base.yaml",
+      "strategy": "basic",
+      "batch_size": 128,
+      "new_benchmark": false
+    },
     "xception": {
       "model_src_dir": "image_recognition/keras_models/xception/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",

@@ -225,6 +225,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/nlp/bert_large_squad/quantization/ptq">pb</a></td>
   </tr>
   <tr>
+    <td>DistilBERT base</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/nlp/distilbert_base/quantization/ptq">pb</a></td>
+  </tr>
+  <tr>
     <td>Transformer LT</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -956,7 +962,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
-    <td>Distilbert base uncased SST-2 (HuggingFace)</td>
+    <td>DistilBERT base uncased SST-2 (HuggingFace)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
