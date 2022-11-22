@@ -7,7 +7,7 @@ SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = _build
 IMGDIR        = source/_static/imgs
-BUILDIMGDIR   = _build/html/io_doc/imgs
+BUILDIMGDIR   = _build/html/imgs
 CODEIMGDIR   = _build/html/_static
 
 # Put it first so that "make" without argument is like "make help".
@@ -19,10 +19,10 @@ help:
 
 html:
 	# cp README.md to docs, modify response-link
-	cp -f "../README.md" "./source/io_doc/README.md"
-	cp -f "./source/io_doc/README.md" "./source/io_doc/README.md.tmp"
-	sed 's/.md/.html/g; s/.\/docs\/source\/io_doc/./g; s/.\/examples/..\/..\/..\/..\/examples/g; s/.\/neural_coder/..\/..\/..\/..\/neural_coder/g; s/.\/docs\/source\/_static/..\/\/_static/g;' "./source/io_doc/README.md.tmp" > "./source/io_doc/README.md"
-	rm -f "./source/io_doc/README.md.tmp"
+	cp -f "../README.md" "./source/README.md"
+	cp -f "./source/README.md" "./source/README.md.tmp"
+	sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g;' "./source/README.md.tmp" > "./source/README.md"
+	rm -f "./source/README.md.tmp"
 	
 	# make sure other png can display normal
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)
@@ -33,7 +33,7 @@ html:
 	cp -f "$(CODEIMGDIR)/imgs/common/code.svg" "$(CODEIMGDIR)/images/view-page-source-icon.svg"	
 	cp -f "$(CODEIMGDIR)/imgs/common/right.svg" "$(CODEIMGDIR)/images/chevron-right-orange.svg"	
 
-	cp "../neural_coder/extensions/screenshots/extmanager.png"  "_build/html/_static/imgs/extmanager.png"
+	cp "../neural_coder/extensions/screenshots/extmanager.png"  "$(BUILDIMGDIR)/extmanager.png"
 	cp "$(IMGDIR)/INC_GUI.gif" "$(BUILDIMGDIR)/INC_GUI.gif"
 	cp "$(IMGDIR)/release_data.png" "$(BUILDIMGDIR)/release_data.png"
 

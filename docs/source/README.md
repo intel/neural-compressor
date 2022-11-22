@@ -64,11 +64,11 @@ dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
 quantizer.calib_dataloader = common.DataLoader(dataset)
 quantizer.fit()
 ```
-### Quantization with [JupyterLab Extension](../../../../neural_coder/extensions/neural_compressor_ext_lab/README.html)
+### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.html)
 Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
 
-<a target="_blank" href="../../../../neural_coder/extensions/screenshots/extmanager.png">
-  <img src="../../../../neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
+<a target="_blank" href="imgs/extmanager.png">
+  <img src="imgs/extmanager.png" alt="Extension" width="35%" height="35%">
 </a>
   
 ### Quantization with [GUI](./bench.html)
@@ -80,8 +80,8 @@ wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/
 # Start GUI
 inc_bench
 ```
-<a target="_blank" href="..//_static/imgs/INC_GUI.gif">
-  <img src="..//_static/imgs/INC_GUI.gif" alt="Architecture">
+<a target="_blank" href="./_static/imgs/INC_GUI.gif">
+  <img src="./_static/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
 ## System Requirements
@@ -146,11 +146,11 @@ inc_bench
 > Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
 
 ### Validated Models
-Intel® Neural Compressor validated 420+ [examples](../../../../examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](./validated_model_list.html).
+Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](./validated_model_list.html).
 
 <div style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="..//_static/imgs/release_data.png">
-    <img src="..//_static/imgs/release_data.png" alt="Architecture" width=800 height=500>
+  <a target="_blank" href="./_static/imgs/release_data.png">
+    <img src="./_static/imgs/release_data.png" alt="Architecture" width=800 height=500>
   </a>
 </div>
 
@@ -165,7 +165,7 @@ Intel® Neural Compressor validated 420+ [examples](../../../../examples) for qu
   <tbody>
     <tr>
       <td colspan="3" align="center"><a href="./design.html">Architecture</a></td>
-      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/maste../../../../examples">Examples</a></td>
+      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
       <td colspan="2" align="center"><a href="./bench.html">GUI</a></td>
       <td colspan="2" align="center"><a href="./api-introduction.html">APIs</a></td>
     </tr>

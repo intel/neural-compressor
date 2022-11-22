@@ -17,7 +17,7 @@ Each strategy generates the next quantization configuration according to its
 logic and the last quantization result. The function of strategies is shown
 below:
 
-![Tuning Strategy](imgs/strategy.png "Strategy Framework")
+![Tuning Strategy](./_static/imgs/strategy.png "Strategy Framework")
 
 Strategies begin with an adaptor layer (Framework Adaptor) where the user
 passes a framework-specific model to initialize an instance of the

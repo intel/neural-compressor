@@ -62,15 +62,15 @@ Quantization methods include the following three types:
 
 
 ### [Post-Training Static Quantization](./PTQ.md) performs quantization on already trained models, it requires an additional pass over the dataset to work, only activations do calibration.
-<img src="../docs/imgs/PTQ.png" width=256 height=129 alt="PTQ">
+<img src="./_static/imgs/PTQ.png" width=256 height=129 alt="PTQ">
 <br>
 
 ### [Post-Training Dynamic Quantization](./dynamic_quantization.md) simply multiplies input values by a scaling factor, then rounds the result to the nearest, it determines the scale factor for activations dynamically based on the data range observed at runtime. Weights are quantized ahead of time but the activations are dynamically quantized during inference.
-<img src="../docs/imgs/dynamic_quantization.png" width=270 height=124 alt="Dynamic Quantization">
+<img src="./_static/imgs/dynamic_quantization.png" width=270 height=124 alt="Dynamic Quantization">
 <br>
 
 ### [Quantization-aware Training (QAT)](./QAT.md) quantizes models during training and typically provides higher accuracy comparing with post-training quantization, but QAT may require additional hyper-parameter tuning and it may take more time to deployment.
-<img src="../docs/imgs/QAT.png" width=244 height=147 alt="QAT">
+<img src="./_static/imgs/QAT.png" width=244 height=147 alt="QAT">
 
 ## Examples of Quantization
 

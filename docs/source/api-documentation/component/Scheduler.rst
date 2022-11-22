@@ -1,4 +1,4 @@
-scheduler
+Scheduler
 ==============
 
 .. autoapisummary::

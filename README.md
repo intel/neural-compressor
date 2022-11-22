@@ -44,7 +44,7 @@ Python version: 3.7, 3.8, 3.9, 3.10
   # Or install nightly full version from pip (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
   ```
-More installation methods can be found at [Installation Guide](./docs/source/io_doc/installation_guide.md). Please check out our [FAQ](./docs/source/io_doc/faq.md) for more details.
+More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
 ### Quantization with Python API    
@@ -71,7 +71,7 @@ Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in Jupyt
   <img src="./neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
 </a>
   
-### Quantization with [GUI](./docs/source/io_doc/bench.md)
+### Quantization with [GUI](./docs/source/bench.md)
 ```shell
 # An ONNX Example
 pip install onnx==1.12.0 onnxruntime==1.12.1 onnxruntime-extensions
@@ -98,7 +98,7 @@ inc_bench
 
 #### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
-* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/source/io_doc/validated_model_list.md#Validated-ONNX-QDQ-INT8-models-on-multiple-hardware-through-ONNX-Runtime).
+* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/source/validated_model_list.md#Validated-ONNX-QDQ-INT8-models-on-multiple-hardware-through-ONNX-Runtime).
 
 ### Validated Software Environment
 
@@ -146,7 +146,7 @@ inc_bench
 > Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
 
 ### Validated Models
-Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](./docs/source/io_doc/validated_model_list.md).
+Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](./docs/source/validated_model_list.md).
 
 <div style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="./docs/source/_static/imgs/release_data.png">
@@ -164,10 +164,10 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
     <tr>
-      <td colspan="3" align="center"><a href="./docs/source/io_doc/design.md">Architecture</a></td>
+      <td colspan="3" align="center"><a href="./docs/source/design.md">Architecture</a></td>
       <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/io_doc/bench.md">GUI</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/io_doc/api-introduction.md">APIs</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/bench.md">GUI</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/api-introduction.md">APIs</a></td>
     </tr>
     <tr>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
@@ -181,10 +181,10 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
     <tr>
-      <td colspan="2" align="center"><a href="./docs/source/io_doc/transform.md">Transform</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/io_doc/dataset.md">Dataset</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/io_doc/metric.md">Metric</a></td>
-      <td colspan="3" align="center"><a href="./docs/source/io_doc/objective.md">Objective</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/transform.md">Transform</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/dataset.md">Dataset</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/metric.md">Metric</a></td>
+      <td colspan="3" align="center"><a href="./docs/source/objective.md">Objective</a></td>
     </tr>
   </tbody>
   <thead>
@@ -194,20 +194,20 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/Quantization.md">Quantization</a></td>
-        <td colspan="1" align="center"><a href="./docs/source/io_doc/pruning.md">Pruning(Sparsity)</a></td> 
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/distillation.md">Knowledge Distillation</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/mixed_precision.md">Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/orchestration.md">Orchestration</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/Quantization.md">Quantization</a></td>
+        <td colspan="1" align="center"><a href="./docs/source/pruning.md">Pruning(Sparsity)</a></td> 
+        <td colspan="2" align="center"><a href="./docs/source/distillation.md">Knowledge Distillation</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/mixed_precision.md">Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/benchmark.md">Benchmarking</a></td>
-        <td colspan="3" align="center"><a href="./docs/source/io_doc/distributed.md">Distributed Training</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/model_conversion.md">Model Conversion</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/io_doc/tensorboard.md">TensorBoard</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/distributed.md">Distributed Training</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/model_conversion.md">Model Conversion</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
     </tr>
     <tr>
-        <td colspan="4" align="center"><a href="./docs/source/io_doc/distillation_quantization.md">Distillation for Quantization</a></td>
+        <td colspan="4" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
         <td colspan="5" align="center"><a href="neural_coder">Neural Coder</a></td>
     </tr>    
     
@@ -219,9 +219,9 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="./docs/source/io_doc/adaptor.md">Adaptor</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/io_doc/tuning_strategies.md">Strategy</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/io_doc/reference_examples.md">Reference Example</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/reference_examples.md">Reference Example</a></td>
       </tr>
   </tbody>
 </table>
@@ -237,13 +237,13 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 * [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) (Sep 2022)
 * [Efficient Text Classification with Intel Neural Compressor](https://medium.com/intel-analytics-software/efficient-text-classification-with-intel-neural-compressor-4853296deeac) (Sep 2022)
 
-> View our [full publication list](./docs/source/io_doc/publication_list.md).
+> View our [full publication list](./docs/source/publication_list.md).
 
 ## Additional Content
 
-* [Release Information](./docs/source/io_doc/releases_info.md)
-* [Contribution Guidelines](./docs/source/io_doc/contributions.md)
-* [Legal Information](./docs/source/io_doc/legal_information.md)
+* [Release Information](./docs/source/releases_info.md)
+* [Contribution Guidelines](./docs/source/contributions.md)
+* [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
