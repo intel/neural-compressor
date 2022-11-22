@@ -25,6 +25,7 @@ from ..utils import logger
 from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
+from .st_utils.st_helper import OP_TYPE_PRIORITY
 
 @strategy_registry
 class ConservativeTuneStrategy(TuneStrategy):
@@ -64,48 +65,58 @@ class ConservativeTuneStrategy(TuneStrategy):
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         calib_sampling_size = calib_sampling_size_lst[0]
-        tune_cfg, quant_queue = self._initialize_tune_cfg()
+        tune_cfg = self._initialize_tune_cfg()
         tune_cfg['calib_sampling_size'] = calib_sampling_size
+        quant_queue = self._quant_queue()
         # Try to add quantized ops.
         import pdb
         pdb.set_trace()
-        logger.debug(f"*** Quantized op list: {[(pair[0].name, pair[1]) for pair in quant_queue]}")
+        logger.info(f"*** Quantized op list: {[(pair[0].name, pair[1]) for pair in quant_queue]}")
         while quant_queue:
-            op_item, target_dtype = quant_queue.pop()
+            op_item, target_dtype = quant_queue.popleft()
             op_info = op_item.name
             op_name, op_type = op_info
             op_config = tuning_space.set_deafult_config(op_info, target_dtype)
             tmp_tune_cfg = deepcopy(tune_cfg)
             tmp_tune_cfg[op_info] = op_config
             yield tmp_tune_cfg
-            acc, _ = self.last_tune_result
-            acc_meet_flag = self.acc_meet(acc)
+            acc_meet_flag = self.objectives.accuracy_compare(self.baseline)
             if acc_meet_flag:
-                logger.info(f"*** Quantized op {op_name} and accuracy still meet the requiments")
+                logger.info(f"*** Convert op {op_name} to {target_dtype} and accuracy still meet the requiments")
                 tune_cfg[op_info] = op_config
             else:
                 logger.info(f"*** Skip quantize op {op_name}.")
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
-        
-    def acc_meet(self, acc):
-        return True
             
     def _sorted_item_by_op_type(self, items_lst, op_type_priority):
-        priority_val_lst = range(len(op_type_priority))
-        max_priority_val = len(op_type_priority) + 1
+        """ Socring the tuning items according to its op type.
+        Args:
+            items_lst: The tuning item list.
+            op_type_priority: The op type list with the order.
+
+        Returns:
+            The tuning items list that sorted according to its op type.
+        """
+        priority_val_lst = range(len(op_type_priority), 0, -1)
+        # For items whose op type does not exist in the priority list, give it the lowest priority.
+        min_priority_val = 0
         priority_map = dict(zip(op_type_priority, priority_val_lst))
-        item_priority = []
-        for item in items_lst:
+        def _map_priority(item):
             item_op_type = item[0].name[0]
-            priority_val =  op_type_priority[item_op_type] if item_op_type in op_type_priority else max_priority_val
-            item_priority.append((item, priority_val))
-        sorted_item_priority = sorted(item_priority, key=lambda x: x[1])
+            priority_val =  priority_map[item_op_type] if item_op_type in op_type_priority else min_priority_val
+            return (item, priority_val)
+        item_priority_lst = list(map(_map_priority, items_lst))
+        # Quantized the element with higher priority value first.
+        sorted_item_priority = sorted(item_priority_lst, key=lambda x: x[1], reverse=True)  
         sorted_items_lst = [item[0] for item in sorted_item_priority]
-        import pdb
-        pdb.set_trace()
         return sorted_items_lst
             
     def _initialize_tune_cfg(self):
+        """Initialize the tuning config with fp32 AMAP.
+
+        Returns:
+            The intialized tuning config.
+        """
         tuning_space = self.tuning_space
         quant_mode_wise_items = tuning_space.quant_mode_wise_items
         # Initialize the tuning config
@@ -125,18 +136,28 @@ class ConservativeTuneStrategy(TuneStrategy):
             if tmp_non_fp32_ops:
                 for op_info in tmp_non_fp32_ops:
                     non_fp32_ops_dtype[op_info] = quant_mode
-
         for op_info in fp32_ops:
             initial_tuning_cfg[op_info] = tuning_space.set_deafult_config(op_info, "fp32")
         for op_info, quant_mode in non_fp32_ops_dtype.items():
             initial_tuning_cfg[op_info] = tuning_space.set_deafult_config(op_info, quant_mode)
+        return initial_tuning_cfg
+            
+    def _quant_queue(self):
+        """Create the op queue to be quantized.
+        --------------------------------------------------------------------------
+        | Level 1 |         bf16       |         fp16       |  static/dynamic    |
+        | Level 2 | conv2d, linear, ...| conv2d, linear, ...| conv2d, linear, ...|
         
+        Returns:
+            The op queue to be quantized.
+        """
+        quant_mode_wise_items = self.tuning_space.quant_mode_wise_items
         # Add all quantized pair into queue
         quant_ops_queue = deque([])
         for quant_mode in  ['bf16', 'fp16']:
             if quant_mode in quant_mode_wise_items:
                 op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
-                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, ['conv2d', 'linear'])
+                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, OP_TYPE_PRIORITY)
                 quant_ops_queue.extend(op_item_pairs)
         op_item_pairs = []
         quant_ops_name_set = set()
@@ -144,9 +165,9 @@ class ConservativeTuneStrategy(TuneStrategy):
             if "static" in quant_mode or 'dynamic' in quant_mode:
                 op_item_pairs += [(item, quant_mode) for item in items_lst if item.name not in quant_ops_name_set]
                 quant_ops_name_set = quant_ops_name_set.union([item.name for item in items_lst])
-                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, ['conv2d', 'linear'])
+                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, OP_TYPE_PRIORITY)
                 quant_ops_queue.extend(op_item_pairs)
-        return initial_tuning_cfg, quant_ops_queue
+        return quant_ops_queue
         
         
             

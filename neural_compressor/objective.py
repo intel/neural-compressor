@@ -18,6 +18,7 @@
 from abc import abstractmethod
 import time
 import numpy as np
+from copy import deepcopy
 
 import tracemalloc
 from .utils.utility import get_size
@@ -248,6 +249,27 @@ class MultiObjective:
                             zip(acc, acc_target, self.metric_criterion)])
         else:
             return False
+    
+    def accuracy_compare(self, baseline):
+        import pdb
+        pdb.set_trace()
+        base_acc, _ = baseline
+        last_acc, _ = deepcopy(self.val)
+        got_better_result = False
+        if not isinstance(base_acc, list):
+            last_acc = [last_acc]
+            base_acc = [base_acc]
+        if self.metric_weight is not None and len(base_acc) > 1:
+            base_acc = [np.mean(np.array(base_acc) * self.metric_weight)]
+            last_acc = [np.mean(np.array(last_acc) * self.metric_weight)]
+        all_higher = all([_last > _base for _last, _base in zip(last_acc, base_acc) ]) 
+        all_lower = all([_last < _base for _last, _base in zip(last_acc, base_acc) ]) 
+        got_better_result = (all_higher and self.higher_is_better) or (all_lower and not self.higher_is_better)
+        import pdb
+        pdb.set_trace()
+        return got_better_result
+        
+        
 
     def evaluate(self, eval_func, model):
         """The interface of calculating the objective.
