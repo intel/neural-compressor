@@ -169,6 +169,8 @@ def main():
     if args.tune:
         from neural_compressor.experimental import Quantization, common
         model.eval()
+        from torch.quantization.quantize_fx import fuse_fx
+        model = fuse_fx(model)
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer.fit()
