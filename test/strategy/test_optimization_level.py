@@ -42,11 +42,10 @@ def build_fake_yaml2():
           accuracy:
             metric:
               topk: 1
+        use_bf16: True
         tuning:
           strategy:
             name: conservative
-          exit_policy:
-            max_trials: 3
           accuracy_criterion:
             absolute: -1
           workspace:
