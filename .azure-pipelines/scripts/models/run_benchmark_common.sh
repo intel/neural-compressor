@@ -48,12 +48,13 @@ main() {
     # run performance
     if [ ${PERF_STABLE_CHECK} == "false" ]; then
         run_performance
-    else 
+    else
         max_loop=3
+        gap=(0.05 0.05 0.1)
         for ((iter = 0; iter < ${max_loop}; iter++)); do
             run_performance
             {
-                check_perf_gap
+                check_perf_gap ${gap[${iter}]}
                 exit_code=$?
             } || true
 
@@ -76,7 +77,8 @@ function check_perf_gap() {
         --logs_dir="${log_dir}" \
         --output_dir="${log_dir}" \
         --build_id=${BUILD_BUILDID} \
-        --stage=${stage}
+        --stage=${stage} \
+        --gap=$1
 }
 
 function run_performance() {
