@@ -18,7 +18,7 @@ help:
 
 
 html:
-	# cp README.md to docs, modify response-link
+	# cp README.md to docs, modify link
 	cp -f "../README.md" "./source/README.md"
 	cp -f "./source/README.md" "./source/README.md.tmp"
 	sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g;' "./source/README.md.tmp" > "./source/README.md"
