@@ -316,7 +316,22 @@ class HawqTuneStrategy(TuneStrategy):
 
         # Initialize the tuning config for each op according to the quantization approach
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-
+        # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
+        early_stop_tuning = True
+        stage1_cnt = 0
+        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
+        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
+        stage1_max = 2  # TODO set a more appropriate value
+        op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
+                                                            op_item_dtype_dict, initial_op_tuning_cfg)
+        for op_tuning_cfg in op_wise_tuning_sampler:
+            stage1_cnt += 1
+            if early_stop_tuning and stage1_cnt > stage1_max:
+                logger.info("Early stopping the stage 1.")
+                break
+            op_tuning_cfg['calib_sampling_size'] = calib_size
+            yield op_tuning_cfg
+        # Fallback the ops supported both static and dynamic from static to dynamic
         quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
         quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
 
@@ -340,11 +355,16 @@ class HawqTuneStrategy(TuneStrategy):
         ordered_ops = sorted(op_to_traces.keys(),
                              key=lambda key: op_to_traces[key],
                              reverse=self.higher_is_better)
-        op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(ordered_ops)))
+        # WA for add op type
+        op_info_map = {}
+        for op_info in list(initial_op_tuning_cfg.keys()):
+            op_info_map[op_info[0]] = op_info # op_name: (op_name, op_type)
+        tmp_ordered_ops = [op_info_map[op_name] for op_name in ordered_ops]
+        op_dtypes = OrderedDict(zip(tmp_ordered_ops, [target_dtype] * len(ordered_ops)))
         logger.info(f"Start to accumulate fallback to {target_dtype}.")
 
         fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                 initial_op_tuning_cfg=None,
+                                                 initial_op_tuning_cfg=op_tuning_cfg,
                                                  op_dtypes=op_dtypes, accumulate=True)
         for op_tuning_cfg in fallback_sampler:
             op_tuning_cfg['calib_sampling_size'] = calib_size
