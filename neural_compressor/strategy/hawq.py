@@ -321,7 +321,7 @@ class HawqTuneStrategy(TuneStrategy):
         stage1_cnt = 0
         quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
         quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
-        stage1_max = 2  # TODO set a more appropriate value
+        stage1_max = -1  # TODO set a more appropriate value
         op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                             op_item_dtype_dict, initial_op_tuning_cfg)
         for op_tuning_cfg in op_wise_tuning_sampler:
