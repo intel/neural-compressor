@@ -37,15 +37,6 @@ quantization:                                        # optional. tuning constrai
     weight:
       granularity: per_channel
 
-  op_wise: {
-             'MobilenetV2/expanded_conv/depthwise/depthwise': {
-               'activation':  {'dtype': ['fp32']},
-             },
-             'MobilenetV2/Conv_1/Conv2D': {
-               'activation':  {'dtype': ['fp32']},
-             }
-           }
-
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
