@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Built-in BERT datasets class for multiple framework backends."""
+
 import os
 import logging
 import json
@@ -30,8 +32,7 @@ logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
 class PytorchBertDataset(Dataset):
-    """Not displayed in API Docs.
-       Dataset used for model Bert.
+    """PyTorch dataset used for model Bert.
        This Dataset is to construct from the Bert TensorDataset and not a full implementation
        from yaml config. The original repo link is: https://github.com/huggingface/transformers.
        When you want use this Dataset, you should add it before you initialize your DataLoader.
@@ -45,9 +46,26 @@ class PytorchBertDataset(Dataset):
           transform (transform object, default=None):  transform to process input data.
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
+
+    Examples:
+        dataset = [[
+           [101,2043,2001],
+           [1,1,1],
+           [[0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0]],
+           [1,1,1],
+           [1,1,1],
+           [[0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0]]
+        ]]
+        dataset = PytorchBertDataset(dataset=dataset, task='classifier', model_type='bert',
+                                     transform=preprocess, filter=filter)
     """
 
     def __init__(self, dataset, task, model_type='bert', transform=None, filter=None):
+        """Initialize the attributes of class."""
         self.dataset = dataset
         assert task in ("classifier", "squad"), "Bert task support only classifier squad"
         self.task = task
@@ -55,9 +73,14 @@ class PytorchBertDataset(Dataset):
         self.model_type = model_type
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.dataset)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.dataset[index]
         if self.transform is not None:
             sample = self.transform(sample)
@@ -87,10 +110,11 @@ class PytorchBertDataset(Dataset):
             sample = (inputs, example_indices)
         return sample
 
+
 @dataset_registry(dataset_type="GLUE", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class ONNXRTBertDataset(Dataset):
-    """Dataset used for model Bert.
+    """ONNXRT dataset used for model Bert.
 
     Args: data_dir (str): The input data dir.
           model_name_or_path (str): Path to pre-trained student model or shortcut name,
@@ -109,16 +133,22 @@ class ONNXRTBertDataset(Dataset):
           transform (transform object, default=None):  transform to process input data.
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
+
+    Examples:
+        dataset = ONNXRTBertDataset(data_dir=data_dir, model_name_or_path='bert-base-uncase',
+                                     transform=preprocess, filter=filter)
     """
     def __init__(self, data_dir, model_name_or_path, max_seq_length=128,\
                 do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False,\
                 evaluate=True, transform=None, filter=None):
+        """Initialize the attributes of class."""
         task = task.lower()
         model_type = model_type.lower()
         assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
             'mnli', 'wnli'], 'Unsupported task type'
         assert model_type in ['distilbert', 'bert', 'mobilebert', 'roberta'], 'Unsupported \
             model type'
+
         self.dynamic_length = dynamic_length
         self.model_type = model_type
         self.max_seq_length = max_seq_length
@@ -128,13 +158,23 @@ class ONNXRTBertDataset(Dataset):
             max_seq_length, task, model_type, tokenizer, evaluate)
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.dataset)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         return self.dataset[index]
+
 
 def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, \
     model_type, tokenizer, evaluate):
+    """Load and cache the examples.
+
+    Helper Function for ONNXRTBertDataset.
+    """
     from torch.utils.data import TensorDataset
 
     processor = transformers.glue_processors[task]()
@@ -180,6 +220,7 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
         all_seq_lengths, all_labels)
     return dataset
 
+
 def convert_examples_to_features(
     examples,
     tokenizer,
@@ -191,6 +232,10 @@ def convert_examples_to_features(
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
 ):
+    """Convert examples to features.
+
+    Helper function for load_and_cache_examples.
+    """
     processor = transformers.glue_processors[task]()
     if label_list is None:
         label_list = processor.get_labels()
@@ -248,11 +293,13 @@ def convert_examples_to_features(
         features.append(feats)
     return features
 
+
 @dataclass(frozen=True)
 class InputFeatures:
-    """
-    A single set of features of data.
+    """Single set of features of data.
+
     Property names are the same names as the corresponding inputs to a model.
+
     Args:
         input_ids: Indices of input sequence tokens in the vocabulary.
         attention_mask: Mask to avoid performing attention on padding token indices.
@@ -272,12 +319,13 @@ class InputFeatures:
     seq_length: Optional[List[int]] = None
 
     def to_json_string(self):
-        """Serializes this instance to a JSON string."""
+        """Serialize this instance to a JSON string."""
         return json.dumps(dataclasses.asdict(self)) + "\n"
+
 
 @dataset_registry(dataset_type="bert", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowBertDataset(Dataset):
-    """Configuration for Tensorflow Bert Dataset.
+    """Tensorflow dataset used for model Bert.
 
     This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.
 
@@ -289,8 +337,10 @@ class TensorflowBertDataset(Dataset):
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions
     """
+
     def __init__(self, root, label_file, task='squad',
             model_type='bert', transform=None, filter=None):
+        """Initialize the attributes of class."""
         import json
         with open(label_file) as lf:
             label_json = json.load(lf)
@@ -301,13 +351,29 @@ class TensorflowBertDataset(Dataset):
         self.filter = filter
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index).
+        """
         return self.root, self.label
 
     def __len__(self):
+        """Length of the dataset."""
         return 1
 
+
 class ParseDecodeBert():
-    def __call__(self, sample):    
+    """Helper function for TensorflowModelZooBertDataset.
+
+    Parse the features from sample.
+    """
+
+    def __call__(self, sample):
+        """Parse the sample data.
+
+        Args:
+            sample: Data to be parsed.
+        """
         import tensorflow as tf
         # Dense features in Example proto.
         feature_map = {
@@ -329,7 +395,8 @@ class ParseDecodeBert():
 
 @dataset_registry(dataset_type="mzbert", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowModelZooBertDataset(Dataset):
-    """Configuration for three-input Bert dataset in tf record format.
+    """Tensorflow dataset for three-input Bert in tf record format.
+
     Root is a full path to tfrecord file, which contains the file name.
     Please use Resize transform when batch_size > 1
     Args: root (str): path of dataset.
@@ -337,10 +404,12 @@ class TensorflowModelZooBertDataset(Dataset):
           task (str, default='squad'): task type of model.
           model_type (str, default='bert'): model type, support 'bert'.
           transform (transform object, default=None):  transform to process input data.
-          filter (Filter objects, default=None): filter out examples according
+          filter (Filter objects, default=None): filter out examples according.
     """
+
     def __init__(self, root, label_file, task='squad',
             model_type='bert', transform=None, filter=None, num_cores=28):
+        """Initialize the attributes of class."""
         import json
         with open(label_file) as lf:
             label_json = json.load(lf)
@@ -386,7 +455,12 @@ class TensorflowModelZooBertDataset(Dataset):
         self.filter = filter
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         return self.root[index], self.label
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.root)

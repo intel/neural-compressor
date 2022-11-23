@@ -15,15 +15,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""This is an utility file for PyTorch distillation."""
+
 from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport('torch')
 
 STUDENT_FEATURES = {}
 TEACHER_FEATURES = {}
+
+
 # for adapting fx model
 @torch.fx.wrap
 def record_output(output, name, output_process, student=False):
+    """Record layers output.
+
+    It is a help function.
+    """
     recorded_output = output
     if output_process != '':
         if isinstance(output, dict) and output_process in output:
@@ -43,7 +51,9 @@ def record_output(output, name, output_process, student=False):
         TEACHER_FEATURES[name].append(recorded_output)
     return output
 
+
 def get_activation(name, output_process='', student=False):
+    """Get a hook for getting activation."""
     def hook(model, input, output):
         return record_output(output, name, output_process, student=student)
     return hook
