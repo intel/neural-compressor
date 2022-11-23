@@ -16,6 +16,18 @@ variables:
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
 
 stages:
+  - stage: DocStyleCodeScan
+    displayName: DocStyle Code Scan
+    dependsOn: []
+    jobs:
+      - job: DocStyle
+        displayName: DocStyle
+        steps:
+          - template: template/code-scan-template.yml
+            parameters:
+              codeScanFileName: "pydocstyle"
+              uploadPath: "pydocstyle.log"
+
   - stage: BanditCodeScan
     displayName: Bandit Code Scan
     dependsOn: []
@@ -26,7 +38,7 @@ stages:
           - template: template/code-scan-template.yml
             parameters:
               codeScanFileName: "bandit"
-              uploadPath: "lpot-bandit.log"
+              uploadPath: "bandit.log"
 
   - stage: PylintCodeScan
     displayName: Pylint Code Scan
@@ -38,7 +50,7 @@ stages:
           - template: template/code-scan-template.yml
             parameters:
               codeScanFileName: "pylint"
-              uploadPath: "lpot-pylint.json"
+              uploadPath: "pylint.json"
 
   - stage: CopyRight
     displayName: CopyRight Code Scan

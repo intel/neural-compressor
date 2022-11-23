@@ -1,17 +1,21 @@
 #!/bin/bash
 
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
-mkdir -p /neural-compressor/.azure-pipelines/scripts/codeScan/scanLog
-bandit_log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
+RESET="echo -en \\E[0m \\n" # close color
 
-python -m bandit -r -lll -iii  /neural-compressor/neural_compressor >  $bandit_log_dir/lpot-bandit.log
+log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
+mkdir -p $log_dir
+
+python -m bandit -r -lll -iii  /neural-compressor/neural_compressor > $log_dir/bandit.log
 exit_code=$?
 
-# code-scan close 
-RESET="echo -en \\E[0m \\n"
+
+$BOLD_YELLOW && echo " -----------------  Current bandit cmd start --------------------------" && $RESET
+echo "python -m bandit -r -lll -iii  /neural-compressor/neural_compressor > $log_dir/bandit.log"
+$BOLD_YELLOW && echo " -----------------  Current bandit cmd end --------------------------" && $RESET
 
 $BOLD_YELLOW && echo " -----------------  Current log file output start --------------------------"
-cat  $bandit_log_dir/lpot-bandit.log
+cat  $log_dir/bandit.log
 $BOLD_YELLOW && echo " -----------------  Current log file output end --------------------------" && $RESET
 
 
