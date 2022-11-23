@@ -611,7 +611,8 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
                     continue
                 min_input_node = min_input_parent_node
                 max_input_node = max_input_parent_node
-            if max_filter_node and min_filter_node and max_filter_node.op == 'Enter': # pragma: no cover
+            if max_filter_node and min_filter_node and min_filter_node.input and \
+               max_filter_node.input and max_filter_node.op == 'Enter': # pragma: no cover
                 min_filter_parent_name = Helper.node_name_from_input(min_filter_node.input[0])
                 max_filter_parent_name = Helper.node_name_from_input(max_filter_node.input[0])
                 min_filter_parent_node = self.graph_info[min_filter_parent_name].node

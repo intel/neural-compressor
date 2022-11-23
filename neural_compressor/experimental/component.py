@@ -14,6 +14,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""This is a module for Component class.
+
+The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+"""
+
 from ..conf.config import Conf
 from ..utils import logger
 from ..utils.utility import set_backend, required_libs
@@ -27,9 +33,20 @@ from deprecated import deprecated
 
 
 class Component(object):
-    """This is base class of Neural Compressor Component
+    """This is base class of Neural Compressor Component.
+
+    This class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+    This design is mainly for one-shot optimization for pruning/distillation/quantization-aware training.
+    In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
     """
+
     def __init__(self, conf_fname_or_obj=None, combination=None):
+        """Construct all the necessary attributes for the Component object.
+
+        Args:
+            conf_fname_or_obj: A YAML configuration file path or a Config object which definds the compressor behavior.
+            combination: What components to be combined in this object.
+        """
         self.conf = None
         self.cfg = None
         self.combination = combination
@@ -74,8 +91,8 @@ class Component(object):
                     Conf class to Component"
             self._init_with_conf()
 
-
     def _init_with_conf(self):
+        """Initialize some attributers."""
         self.cfg = self.conf.usr_cfg
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
@@ -98,7 +115,7 @@ class Component(object):
                     )
 
     def prepare(self):
-        # register Quantization Aware Training hooks
+        """Register Quantization Aware Training hooks."""
         if self.combination is not None and 'Quantization' in self.combination:
             if self.adaptor is None:
                 framework_specific_info = {'device': self.cfg.device,
@@ -118,7 +135,7 @@ class Component(object):
 
 
     def prepare_qat(self):
-        # register Quantization Aware Training hooks
+        """Register Quantization Aware Training hooks."""
         if self.adaptor is None:
             framework_specific_info = {'device': self.cfg.device,
                                     'random_seed': self.cfg.tuning.random_seed,
@@ -136,10 +153,11 @@ class Component(object):
         self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
 
     def pre_process(self):
-        """ Initialize the dataloader and train/eval functions from yaml config.
-            Component base class provides default function to initialize dataloaders and functions
-            from user config. And for derived classes(Pruning, Quantization, etc.), an override
-            function is required.
+        """Initialize some attributes, such as the adaptor, the dataloader and train/eval functions from yaml config.
+
+        Component base class provides default function to initialize dataloaders and functions
+        from user config. And for derived classes(Pruning, Quantization, etc.), an override
+        function is required.
         """
         if self.adaptor is None:
             # create adaptor
@@ -197,10 +215,10 @@ class Component(object):
             self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
 
     def execute(self):
-        """ Initialize the dataloader and train/eval functions from yaml config.
-            Component base class provides default function to initialize dataloaders and functions
-            from user config. And for derived classes(Pruning, Quantization, etc.), an override
-            function is required.
+        """Execute the processing of this compressor.
+
+        Component base class provides compressing processing. And for derived classes(Pruning, Quantization, etc.),
+        an override function is required.
         """
         # TODO: consider strategy sync during combination
         if self._train_func is not None:
@@ -217,37 +235,41 @@ class Component(object):
         return self._model
 
     def post_process(self):
+        """Post process after execution.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
         pass
 
     def on_train_begin(self, dataloader=None):
-        """ called before the beginning of epochs"""
+        """Be called before the beginning of epochs."""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
             on_train_begin_hook(dataloader)
 
     def on_train_end(self):
-        """ called after the end of epochs"""
+        """Be called after the end of epochs."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
 
     @deprecated(version='2.0', reason="please use `on_train_begin` instead")
     def pre_epoch_begin(self, dataloader=None):
-        """ called before the beginning of epochs"""
+        """Be called before the beginning of epochs."""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
             on_train_begin_hook(dataloader)
 
     @deprecated(version='2.0', reason="please use `on_train_end` instead")
     def post_epoch_end(self):
-        """ called after the end of epochs"""
+        """Be called after the end of epochs."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
 
     def on_epoch_begin(self, epoch):
-        """ called on the beginning of epochs"""
+        """Be called on the beginning of epochs."""
         for on_epoch_begin_hook in self.hooks_dict['on_epoch_begin']:
             on_epoch_begin_hook(epoch)
 
     def on_step_begin(self, batch_id):
-        """ called on the beginning of batches"""
+        """Be called on the beginning of batches."""
         res_list = []
         for on_step_begin_hook in self.hooks_dict['on_step_begin']:
             res_list.append(on_step_begin_hook(batch_id))
@@ -255,26 +277,28 @@ class Component(object):
 
     @deprecated(version='2.0', reason="please use `on_step_begin` instead")
     def on_batch_begin(self, batch_id):
+        """Be called on the beginning of batches."""
         return self.on_step_begin(batch_id)
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
-        """ called on the end of loss computation"""
+        """Be called on the end of loss computation."""
         loss = student_loss
         for on_after_compute_loss_hook in self.hooks_dict['on_after_compute_loss']:
             loss = on_after_compute_loss_hook(input, student_output, loss, teacher_output)
         return loss
 
     def on_before_optimizer_step(self):
-        """ called on the end of backward"""
+        """Be called before optimizer step."""
         for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
             on_before_optimizer_step_hook()
 
     @deprecated(version='2.0', reason="please use `on_before_optimizer_step` instead")
     def on_post_grad(self):
+        """Be called before optimizer step."""
         return self.on_before_optimizer_step()
 
     def on_step_end(self):
-        """ called on the end of batches"""
+        """Be called on the end of batches."""
         res_list = []
         for on_step_end_hook in self.hooks_dict['on_step_end']:
             res_list.append(on_step_end_hook())
@@ -282,10 +306,11 @@ class Component(object):
 
     @deprecated(version='2.0', reason="please use `on_step_end` instead")
     def on_batch_end(self):
+        """Be called on the end of batches."""
         return self.on_step_end()
 
     def on_epoch_end(self):
-        """ called on the end of epochs"""
+        """Be called on the end of epochs."""
         res_list = []
 
         for on_epoch_end_hook in self.hooks_dict['on_epoch_end']:
@@ -294,18 +319,25 @@ class Component(object):
         return res_list
 
     def register_hook(self, scope, hook, input_args=None, input_kwargs=None):
-        """ register hook for component. input_args and input_kwargs are reserved for user
-            registered hooks."""
+        """Register hook for component.
+
+        Input_args and input_kwargs are reserved for user registered hooks.
+        """
         if hook not in self.hooks_dict[scope]:
             self.hooks_dict[scope].append(hook)
 
     def __call__(self):
+        """Execute this class.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
         self.pre_process()
         results = self.execute()
         self.post_process()
         return results
 
     def __repr__(self):
+        """Represent this class."""
         if self.combination:
             return 'Combination of ' + ','.join(self.combination)
         else:
@@ -313,7 +345,7 @@ class Component(object):
 
     @property
     def train_func(self):
-        """ not support get train_func """
+        """Not support get train_func."""
         assert False, 'Should not try to get the value of `train_func` attribute.'
         return None
 
@@ -322,7 +354,7 @@ class Component(object):
         """Training function.
 
         Args:
-            user_training_func: This function takes "model" as input parameter
+            user_train_func: This function takes "model" as input parameter
                          and executes entire training process with self
                          contained training hyper-parameters. If training_func set,
                          an evaluation process must be triggered and user should
@@ -334,7 +366,7 @@ class Component(object):
 
     @property
     def eval_func(self):
-        """ not support get eval_func """
+        """Not support get eval_func."""
         assert False, 'Should not try to get the value of `eval_func` attribute.'
         return None
 
@@ -346,42 +378,43 @@ class Component(object):
             user_eval_func: This function takes "model" as input parameter
                          and executes entire evaluation process with self
                          contained metrics. If eval_func set,
-                         an evaluation process must be triggered 
+                         an evaluation process must be triggered
                          to make evaluation of the model executed.
         """
         self._eval_func = user_eval_func
 
     @property
     def train_dataloader(self):
-        """ Getter to train dataloader """
+        """Getter to train dataloader."""
         return self._train_dataloader
 
     @train_dataloader.setter
     def train_dataloader(self, dataloader):
         """Set Data loader for training for Component.
-           It is iterable and the batched data should consists of a tuple like
-           (input, label) if the training dataset containing label, or yield (input, _)
-           for label-free train dataset, the input in the batched data will be used for
-           model inference, so it should satisfy the input format of specific model.
-           In train process, label of data loader will not be used and
-           neither the postprocess and metric. User only need to set
-           train_dataloader when train_dataloader can not be configured from yaml file.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data. Another good
-                                      practice is to use neural_compressor.experimental.common.DataLoader
-                                      to initialize a neural_compressor dataloader object. Notice
-                                      neural_compressor.experimental.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' train_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Component object created then
-                                      framework information can be known.
-                                      Future we will support creating iterable dataloader
-                                      from neural_compressor.experimental.common.DataLoader
+        It is iterable and the batched data should consists of a tuple like
+        (input, label) if the training dataset containing label, or yield (input, _)
+        for label-free train dataset, the input in the batched data will be used for
+        model inference, so it should satisfy the input format of specific model.
+        In train process, label of data loader will not be used and
+        neither the postprocess and metric. User only need to set
+        train_dataloader when train_dataloader can not be configured from yaml file.
+
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                   which meet the requirements that can yield tuple of
+                                   (input, label)/(input, _) batched data. Another good
+                                   practice is to use neural_compressor.experimental.common.DataLoader
+                                   to initialize a neural_compressor dataloader object. Notice
+                                   neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                   information needed to build a dataloader, it can't yield
+                                   batched data and only in this setter method
+                                   a 'real' train_dataloader will be created,
+                                   the reason is we have to know the framework info
+                                   and only after the Component object created then
+                                   framework information can be known.
+                                   Future we will support creating iterable dataloader
+                                   from neural_compressor.experimental.common.DataLoader.
         """
         from .common import _generate_common_dataloader
         self._train_dataloader = _generate_common_dataloader(
@@ -389,33 +422,34 @@ class Component(object):
 
     @property
     def eval_dataloader(self):
-        """ Getter to eval dataloader """
+        """Getter to eval dataloader."""
         return self._eval_dataloader
 
     @eval_dataloader.setter
     def eval_dataloader(self, dataloader):
         """Set Data loader for evaluation of component.
-           It is iterable and the batched data should consists of yield (input, _).
-           the input in the batched data will be used for model inference, so it
-           should satisfy the input format of specific model.
-           User only need to set eval_dataloader when eval_dataloader can not be
-           configured from yaml file.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data. Another good
-                                      practice is to use neural_compressor.experimental.common.DataLoader
-                                      to initialize a neural_compressor dataloader object. Notice
-                                      neural_compressor.experimental.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' train_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Component object created then
-                                      framework information can be known.
-                                      Future we will support creating iterable dataloader
-                                      from neural_compressor.experimental.common.DataLoader
+        It is iterable and the batched data should consists of yield (input, _).
+        the input in the batched data will be used for model inference, so it
+        should satisfy the input format of specific model.
+        User only need to set eval_dataloader when eval_dataloader can not be
+        configured from yaml file.
+
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                   which meet the requirements that can yield tuple of
+                                   (input, label)/(input, _) batched data. Another good
+                                   practice is to use neural_compressor.experimental.common.DataLoader
+                                   to initialize a neural_compressor dataloader object. Notice
+                                   neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                   information needed to build a dataloader, it can't yield
+                                   batched data and only in this setter method
+                                   a 'real' train_dataloader will be created,
+                                   the reason is we have to know the framework info
+                                   and only after the Component object created then
+                                   framework information can be known.
+                                   Future we will support creating iterable dataloader
+                                   from neural_compressor.experimental.common.DataLoader.
         """
         from .common import _generate_common_dataloader
         self._eval_dataloader = _generate_common_dataloader(
@@ -423,25 +457,25 @@ class Component(object):
 
     @property
     def model(self):
-        """ Getter of model in neural_compressor.model  """
+        """Getter of model in neural_compressor.model."""
         return self._model
 
     @model.setter
     def model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
+        """Set the user model and dispatch to framework specific internal model object.
 
         Args:
-           user_model: user are supported to set model from original framework model format
-                       (eg, tensorflow frozen_pb or path to a saved model),
-                       but not recommended. Best practice is to set from a initialized
-                       neural_compressor.experimental.common.Model.
-                       If tensorflow model is used, model's inputs/outputs will be
-                       auto inferenced, but sometimes auto inferenced
-                       inputs/outputs will not meet your requests,
-                       set them manually in config yaml file.
-                       Another corner case is slim model of tensorflow,
-                       be careful of the name of model configured in yaml file,
-                       make sure the name is in supported slim model list.
+            user_model: user are supported to set model from original framework model format
+                        (eg, tensorflow frozen_pb or path to a saved model),
+                        but not recommended. Best practice is to set from a initialized
+                        neural_compressor.experimental.common.Model.
+                        If tensorflow model is used, model's inputs/outputs will be
+                        auto inferenced, but sometimes auto inferenced
+                        inputs/outputs will not meet your requests,
+                        set them manually in config yaml file.
+                        Another corner case is slim model of tensorflow,
+                        be careful of the name of model configured in yaml file,
+                        make sure the name is in supported slim model list.
 
         """
         if not isinstance(user_model, BaseModel):

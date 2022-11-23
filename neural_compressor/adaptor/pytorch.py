@@ -29,17 +29,13 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-try:  # pragma: no cover
-    import intel_extension_for_pytorch as ipex
-    IPEX = True
-except:  # pragma: no cover
-    IPEX = False
 
 
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
 torch_utils = LazyImport("neural_compressor.adaptor.torch_utils")
+ipex = LazyImport("intel_extension_for_pytorch")
 
 REDUCE_RANGE = False if CpuInfo().vnni else True
 logger.debug("Reduce range is {}".format(str(REDUCE_RANGE)))
@@ -1033,7 +1029,7 @@ class TemplateAdaptor(Adaptor):
 
 
         # get bf16 capability
-        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+        if (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -2148,8 +2144,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
     """
     def __init__(self, framework_specific_info):
         super(PyTorch_IPEXAdaptor, self).__init__(framework_specific_info)
-
-        assert IPEX, "Please install intel-extension-for-pytorch."
         self.version = get_torch_version()
         query_config_file = "pytorch_ipex.yaml"
         self.query_handler = PyTorchQuery(
@@ -2226,20 +2220,30 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     self.model_calibration(q_model, dataloader, iterations, None,
                                            tune_cfg.get('calib_sampling_size', 1))
                 q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                q_model = ipex.quantization.convert(q_model)
-            with torch.no_grad():
-                try:
-                    q_model = torch.jit.trace(q_model, example_inputs)
-                    q_model = torch.jit.freeze(q_model.eval())
-                except:
-                    q_model = torch.jit.trace(q_model, example_inputs, strict=False)
-                    q_model = torch.jit.freeze(q_model.eval())
+                if self.use_bf16:
+                    with torch.no_grad():
+                        with torch.cpu.amp.autocast():
+                            q_model = ipex.quantization.convert(q_model)
+                            try:
+                                q_model = torch.jit.trace(q_model, example_inputs)
+                                q_model = torch.jit.freeze(q_model.eval())
+                            except:
+                                q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                                q_model = torch.jit.freeze(q_model.eval())
+                else:
+                    with torch.no_grad():
+                        try:
+                            q_model = torch.jit.trace(q_model, example_inputs)
+                            q_model = torch.jit.freeze(q_model.eval())
+                        except:
+                            q_model = torch.jit.trace(q_model, example_inputs, strict=False)
+                            q_model = torch.jit.freeze(q_model.eval())
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
                 q_model(*example_inputs)
                 q_model(*example_inputs)
-            
+
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
         model_._model = q_model

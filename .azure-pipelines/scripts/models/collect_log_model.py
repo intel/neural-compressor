@@ -8,11 +8,11 @@ parser.add_argument("--fwk_ver", type=str, required=True)
 parser.add_argument("--model", type=str, required=True)
 parser.add_argument("--logs_dir", type=str, default=".")
 parser.add_argument("--output_dir", type=str, default=".")
-parser.add_argument("--build_id", type=str, default="3117")
+parser.add_argument("--build_id", type=str, default="0")
 parser.add_argument("--stage", type=str, default="collect_log")
+parser.add_argument("--gap", type=float, default=0.05)
 args = parser.parse_args()
-print('===== collecting log model =======')
-print('build_id: '+args.build_id)
+print('====== collecting model test log =======')
 OS='linux'
 PLATFORM='icx'
 URL ='https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
@@ -78,7 +78,6 @@ def get_model_benchmark_dict_results():
         for root, dirs, files in os.walk(args.logs_dir):
             for name in files:
                 file_name = os.path.join(root, name)
-                print(file_name)
                 if "performance-" + precision in name:
                     for line in open(file_name, "r"):
                         result = parse_perf_line(line)
@@ -203,7 +202,7 @@ def parse_tuning_line(line, tmp):
         tmp['max_mem_size'] = float(max_mem_size.group(1))
 
 
-def parse_perf_line(line) -> float:
+def parse_perf_line(line):
     perf_data = {}
 
     throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?)", line)
@@ -217,18 +216,18 @@ def parse_perf_line(line) -> float:
     return perf_data
 
 
-def check_status(precision, precision_upper, check_accuracy = False):
+def check_status(precision, precision_upper, check_accuracy=False):
     performance_result = get_model_benchmark_dict_results()
     current_performance = performance_result.get(precision).get("Value")
     refer_performance = refer.get(f"{precision_upper}_Performance")
-    print(f"current_performance_data = {current_performance}, refer_performance_data = {refer_performance}")
-    assert 0.95 <= (current_performance / refer_performance) <= 1.05
+    print(f"current_performance_data = {current_performance:.3f}, refer_performance_data = {refer_performance:.3f}")
+    assert abs(current_performance - refer_performance) / refer_performance <= args.gap
 
     if check_accuracy:
         _, accuracy_result = get_model_tuning_dict_results()
         current_accuracy = accuracy_result.get(precision).get("Value")
         refer_accuracy = refer.get(f"{precision_upper}_Accuracy")
-        print(f"current_accuracy_data = {current_accuracy}, refer_accuarcy_data = {refer_accuracy}")
+        print(f"current_accuracy_data = {current_accuracy:.3f}, refer_accuarcy_data = {refer_accuracy:.3f}")
         assert abs(current_accuracy - refer_accuracy) / refer_accuracy <= 0.05
 
 

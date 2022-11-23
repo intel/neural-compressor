@@ -519,7 +519,7 @@ def generate_feed_dict(input_tensor, inputs):
                 for tensor in input_tensor:
                     pos = tensor.name.rfind(":")
                     t_name = tensor.name if pos < 0 else tensor.name[:pos]
-                    if name == t_name:
+                    if name in [tensor.name, t_name]:
                         feed_dict[tensor] = inputs[name]
                         break
         else:
