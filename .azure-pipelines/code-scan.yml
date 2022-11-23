@@ -10,35 +10,13 @@ pr:
     include:
     - neural_compressor
 
-pool: ICX-16C
+pool:
+  vmImage: "ubuntu-latest"
 
 variables:
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
 
 stages:
-  - stage: BanditCodeScan
-    displayName: Bandit Code Scan
-    dependsOn: []
-    jobs:
-      - job: Bandit
-        displayName: Bandit
-        steps:
-          - template: template/code-scan-template.yml
-            parameters:
-              codeScanFileName: "bandit"
-              uploadPath: "lpot-bandit.log"
-
-  - stage: PylintCodeScan
-    displayName: Pylint Code Scan
-    dependsOn: []
-    jobs:
-      - job: Pylint
-        displayName: Pylint
-        steps:
-          - template: template/code-scan-template.yml
-            parameters:
-              codeScanFileName: "pylint"
-              uploadPath: "lpot-pylint.json"
 
   - stage: CopyRight
     displayName: CopyRight Code Scan
