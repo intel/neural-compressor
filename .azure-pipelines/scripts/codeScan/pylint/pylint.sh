@@ -20,7 +20,7 @@ echo "python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --ma
 $BOLD_YELLOW && echo " -----------------  Current pylint cmd end --------------------------" && $RESET
 
 $BOLD_YELLOW && echo " -----------------  Current log file output start --------------------------" && $RESET
-cat  $pylint_log_dir/pylint.json
+cat  $log_dir/pylint.json
 $BOLD_YELLOW && echo " -----------------  Current log file output end --------------------------" && $RESET
 
 
