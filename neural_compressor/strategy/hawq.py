@@ -527,8 +527,16 @@ class HawqTuneStrategy(TuneStrategy):
             q_model_state_dict[new_key] = self.q_model.state_dict()[key]
 
         weight_quant_loss = compare_weights(ht.model.state_dict(), q_model_state_dict)
-
+        pertur_lst={}
+        for key in weight_quant_loss:
+            op_float_tensor=weight_quant_loss[key]['float']
+            op_qnt_tensor=weight_quant_loss[key]['quantized'].dequantize()
+            diff_l2=(torch.norm(op_float_tensor-op_qnt_tensor,p=2)**2) #Formula: L2=||Q(w)-w||p^2
+            pertur_lst[key]=diff_l2
+        # for i in pertur_lst:
+        #     print(pertur_lst[i])
         op_to_traces = ht.get_avg_traces()
+        print(op_to_traces)
         if orig_eval == False:
             self._fp32_model.train()
 
