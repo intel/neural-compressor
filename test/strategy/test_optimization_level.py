@@ -4,31 +4,7 @@ import unittest
 import shutil
 import os
 import yaml
-
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op2_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: basic
-            accuracy_criterion:
-              relative: 0.01
-            workspace:
-              path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
-    f.close()
+from neural_compressor.utils import logger
 
 def build_fake_yaml2():
     fake_yaml = '''
@@ -47,73 +23,12 @@ def build_fake_yaml2():
           strategy:
             name: conservative
           accuracy_criterion:
-            absolute: -1
+            relative: -0.01
           workspace:
             path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
-    f.close()
-
-def build_fake_yaml3():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op2_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            multi_metrics:
-              topk: 1
-              MSE:
-                compare_label: False
-        tuning:
-          strategy:
-            name: basic
-          exit_policy:
-            max_trials: 3
-            timeout: 50
-          accuracy_criterion:
-            relative: -0.01
-          workspace:
-            path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml3.yaml',"w",encoding="utf-8") as f:
-        yaml.dump(y,f)
-    f.close()
-
-def build_fake_yaml4():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op2_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            multi_metrics:
-              topk: 1
-              MSE:
-                compare_label: False
-              weight: [1, 0]
-        tuning:
-          strategy:
-            name: basic
-          exit_policy:
-            max_trials: 3
-            timeout: 50
-          accuracy_criterion:
-            relative: -0.01
-          workspace:
-            path: saved
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml4.yaml',"w",encoding="utf-8") as f:
         yaml.dump(y,f)
     f.close()
 
@@ -159,32 +74,101 @@ class TestQuantization(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
-        build_fake_yaml()
         build_fake_yaml2()
-        build_fake_yaml3()
-        build_fake_yaml4()
+        self.test1_index = -1
+        self.test2_index = -1
+        self.test3_index = -1
+        self.test4_index = -1
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
         os.remove('fake_yaml2.yaml')
-        os.remove('fake_yaml3.yaml')
-        os.remove('fake_yaml4.yaml')
         shutil.rmtree('saved', ignore_errors=True)
 
 
-
-    def test_run_basic_max_trials(self):
+    def test_conservative_strategy1(self):
+        import time
         from neural_compressor.experimental import Quantization, common
-
+        # accuracy increase and performance decrease 
+        logger.info("*** Test: accuracy increase and performance decrease.")
+        acc_lst =  [1.0, 2.0, 2.1, 3.0, 4.0]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        def _eval(fake_model):
+            self.test1_index += 1
+            perf = perf_lst[self.test1_index]
+            time.sleep(perf)
+            return acc_lst[self.test1_index]
+            
         quantizer = Quantization('fake_yaml2.yaml')
+        quantizer.eval_func = _eval
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.fit()
+        
+    def test_conservative_strategy2(self):
+        import time
+        from neural_compressor.experimental import Quantization, common
+        # accuracy meets and performance disturbance 
+        logger.info("*** Test: accuracy meets and performance disturbance.")
+        acc_lst =  [5.0, 6.0, 6.0, 6.0, 6.0, 6.0]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1, 0.5]
+        def _eval(fake_model):
+            self.test2_index += 1
+            perf = perf_lst[self.test2_index]
+            time.sleep(perf)
+            return acc_lst[self.test2_index]
+            
+        quantizer = Quantization('fake_yaml2.yaml')
+        quantizer.eval_func = _eval
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
         quantizer.fit()
 
+    def test_conservative_strategy3(self):
+        import time
+        from neural_compressor.experimental import Quantization, common
+        # accuracy disturbance and performance disturbance.
+        logger.info("*** Test: accuracy disturbance and performance disturbance.")
+        acc_lst =  [5.0, 6.0, 6.0, 4.0, 6.0, 6.0]
+        perf_lst = [2.0, 1.5, 1.0, 0.1, 0.5, 1]
+        def _eval(fake_model):
+            self.test3_index += 1
+            perf = perf_lst[self.test3_index]
+            time.sleep(perf)
+            return acc_lst[self.test3_index]
+            
+        quantizer = Quantization('fake_yaml2.yaml')
+        quantizer.eval_func = _eval
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.fit()
 
+    def test_conservative_strategy4(self):
+        import time
+        from neural_compressor.experimental import Quantization, common
+        # accuracy not meet 
+        logger.info("*** Test: accuracy not meet.")
+        acc_lst =  [5.0, 4.0, 4.0, 4.0]
+        perf_lst = [2.0, 1.5, 1.0, 0.1]
+        def _eval(fake_model):
+            self.test4_index += 1
+            perf = perf_lst[self.test4_index]
+            time.sleep(perf)
+            return acc_lst[self.test4_index]
+            
+        quantizer = Quantization('fake_yaml2.yaml')
+        quantizer.eval_func = _eval
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        quantizer.fit()
 
 if __name__ == "__main__":
     unittest.main()
