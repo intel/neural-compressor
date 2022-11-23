@@ -29,6 +29,7 @@ from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
 from torch.quantization.quantize_fx import fuse_fx
 import torchvision
+from typing import Dict, List, Optional, Any, Union, Callable, Set
 
 
 class HessianTrace:
@@ -54,6 +55,22 @@ class HessianTrace:
             self.criterion = torch.nn.CrossEntropyLoss().to(self.device)  ##TODO need to set in config
         self.criterion = self.criterion.to(self.device)
         self.weight_to_op, self.op_list = self.get_fused_mapping()
+
+    def get_qnt_weight_loss(self, weights_name):
+
+        fp32_model = self.fp32model
+
+        qnt_model = self.q_model
+
+        # print(self.model.state_dict())
+        for n, p in self.model.named_parameters():
+            print(n)
+
+        print("*" * 20)
+
+        for n, p in self.q_model._model.named_parameters():
+            print(n)
+        pass
 
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -100,7 +117,7 @@ class HessianTrace:
         for n, p in model.named_parameters():
             return p.data.device
 
-    def get_gradients(self, model, data, criterion, create_graph=False, enable_act=False):
+    def get_gradients(self, model, data, criterion, create_graph=False):
         model.zero_grad()
         input = data[0].to(self.device)
         ##self._input_shape = input.shape  ## for resetting input activation
@@ -131,14 +148,15 @@ class HessianTrace:
             samples.append(r)
         return samples
 
-    def get_hv_one_sample(self, params, enable_act, num_batches):
+    def get_vtHv_weight(self, params, num_samples):
+        num_batches = (num_samples + self.dataloader.batchsize - 1) // self.dataloader
         v = self.sample_rademacher(params)
         H_v = [0] * len(v)
         cnt = 0
         for step, data in enumerate(self.dataloader):
             batch_size = data[0].shape[0]
             cnt += batch_size
-            gradients = self.get_gradients(self.model, data, self.criterion, create_graph=True, enable_act=enable_act)
+            gradients = self.get_gradients(self.model, data, self.criterion, create_graph=True)
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
             H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
             if step == num_batches - 1:
@@ -147,6 +165,25 @@ class HessianTrace:
             H_v = [item / cnt for item in H_v]
         v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
         return v_t_H_v
+
+    def get_vtHv_act(self, params, num_samples):
+        v = self.sample_rademacher(params)
+        H_v = [0] * len(v)
+        cnt = 0
+        for step, data in enumerate(self.dataloader):
+            if cnt >= num_samples:
+                break
+            for i in range(self.dataloader.batchsize):  ##force to batchsize to be 1
+                input = data[0][i:i + 1]
+                target = data[1][i:i + 1]
+
+                self.get_gradients(self.model, (input, target), self.criterion, create_graph=True)
+                layer_acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
+                layer_act_gradients = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]
+                hv_one = torch.autograd.grad(layer_act_gradients, layer_acts, v, only_inputs=True, retain_graph=False)
+                cnt += 1
+                if cnt >= num_samples:
+                    break
 
     def _get_act_grad_hook(self, name):
         def act_grad_hook(model, grad_input, grad_output):
@@ -208,28 +245,12 @@ class HessianTrace:
         self.weight_names = weight_names
         self.params = params
 
-    def get_avg_traces(self, enable_act=True, num_batches=2):
-        """
-        Estimates average hessian trace for each parameter
-        """
-        assert num_batches > 0
-        if enable_act:
-            self.hook_handles = []
-            self.layer_acts = {}
-            self.layer_acts_grads = {}
-            self.register_act_grad_hooks()
-        ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
-        ##num_all_data = num_data_iter * self.dataloader.batch_size
-        ##op_list = self.op_list
-        ##TODO setting this in config
-        self.get_params()
-        # names = [n for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
-        # params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
+    def get_weight_traces(self, num_samples):
 
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for i in range(self.max_iter):
-            layer_traces = self.get_hv_one_sample(self.params, enable_act, num_batches)
+            layer_traces = self.get_vtHv_weight(self.params, num_samples)
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
@@ -239,19 +260,152 @@ class HessianTrace:
             if i == 50:  ##TODO for debug
                 break
             prev_avg_model_trace = model_trace
-
-        layer_traces = layer_traces_estimate
-        if enable_act:
-            self.reset_act_gradient_and_hooks()
         weight_name_to_traces = {}
 
-        for weigth_name, trace in zip(self.weight_names, layer_traces):
-            weight_name_to_traces[weigth_name] = trace
+        for weight_name, trace in zip(self.weight_names, layer_traces):
+            weight_name_to_traces[weight_name] = trace
         op_name_to_trace = {}
-        for weigth_name in self.weight_names:
-            op_name = self.weight_to_op[weigth_name]
-            op_name_to_trace[op_name] = weight_name_to_traces[weigth_name]
+        for weight_name in self.weight_names:
+            op_name = self.weight_to_op[weight_name]
+            op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
         return op_name_to_trace
+        return layer_traces_estimate
+
+    def get_act_traces(self, num_samples):
+        self.hook_handles = []
+        self.layer_acts = {}
+        self.layer_acts_grads = {}
+        self.register_act_grad_hooks()
+        for i in range(self.max_iter):
+            pass
+
+    def get_avg_traces(self, enable_act=True, num_samples=100):
+        """
+        Estimates average hessian trace for each parameter
+        """
+
+        assert num_samples > 0
+
+        ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
+        ##num_all_data = num_data_iter * self.dataloader.batch_size
+        ##op_list = self.op_list
+        ##TODO setting this in config
+        self.get_params()
+        # names = [n for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
+        # params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
+
+        ## handle activation
+        if enable_act:
+            self.get_act_traces(num_samples)
+            ##change batchsize to 1
+
+        #
+        # layer_traces = layer_traces_estimate
+        # if enable_act:
+        #     self.reset_act_gradient_and_hooks()
+
+
+##copy from torch.quantization._numeric_suite
+def _find_match(
+        str_list: Union[Dict[str, Any], List[str]], key_str: str,
+        postfix: str,
+) -> Optional[str]:
+    split_str = key_str.split(".")
+    if split_str[-1] == postfix:
+        match_string = "".join(key_str.split(".")[0:-1])
+        for s2 in str_list:
+            pattern1 = "".join(s2.split(".")[0:-1])
+            pattern2 = "".join(s2.split(".")[0:-2])
+            if match_string == pattern1:
+                return s2
+            if match_string == pattern2:
+                return s2
+
+        # For matching "fc.weight" and "fc._packed_params._packed_params"
+        if postfix == "_packed_params":
+            match_string = "".join(key_str.split(".")[0:-2])
+            if len(match_string) == 0:
+                return None
+            for s2 in str_list:
+                pattern1 = "".join(s2.split(".")[0:-1])
+                pattern2 = "".join(s2.split(".")[0:-2])
+                if match_string == pattern1:
+                    return s2
+                if match_string == pattern2:
+                    return s2
+        return None
+    else:
+        return None
+
+
+##copy form torch.quantization._numeric_suite
+def compare_weights(
+        float_dict: Dict[str, Any], quantized_dict: Dict[str, Any]
+) -> Dict[str, Dict[str, torch.Tensor]]:
+    r"""Compare the weights of the float module with its corresponding quantized
+    module. Return a dict with key corresponding to module names and each entry being
+    a dictionary with two keys 'float' and 'quantized', containing the float and
+    quantized weights. This dict can be used to compare and compute the quantization
+    error of the weights of float and quantized models.
+
+    Example usage::
+
+        wt_compare_dict = compare_weights(
+            float_model.state_dict(), qmodel.state_dict())
+        for key in wt_compare_dict:
+            print(
+                key,
+                compute_error(
+                    wt_compare_dict[key]['float'],
+                    wt_compare_dict[key]['quantized'].dequantize()
+                )
+            )
+
+    Args:
+        float_dict: state dict of the float model
+        quantized_dict: state dict of the quantized model
+
+    Return:
+        weight_dict: dict with key corresponding to module names and each entry being
+        a dictionary with two keys 'float' and 'quantized', containing the float and
+        quantized weights
+    """
+
+    weight_dict: Dict[str, Dict] = {}
+    for key in quantized_dict:
+        match_key = _find_match(float_dict, key, "weight")
+        if match_key is not None:
+            weight_dict[key] = {}
+            weight_dict[key]["float"] = float_dict[match_key]
+            weight_dict[key]["quantized"] = quantized_dict[key]
+            continue
+
+        # For matching "fc.weight" and "fc._packed_params._packed_params"
+        match_key = _find_match(float_dict, key, "_packed_params")
+        if match_key is not None:
+            weight_dict[key] = {}
+            weight_dict[key]["float"] = float_dict[match_key]
+            weight_dict[key]["quantized"] = quantized_dict[key][0]
+
+        # For LSTM
+        split_str = key.split(".")
+        if split_str[-1] == "param" and split_str[-3] == "_all_weight_values":
+            layer = split_str[-2]
+            module_name = ".".join(split_str[:-3])
+            float_weight_ih_key = module_name + ".weight_ih_l" + layer
+            float_weight_hh_key = module_name + ".weight_hh_l" + layer
+            if float_weight_ih_key in float_dict and float_weight_hh_key in float_dict:
+                weight_dict[key] = {}
+                weight_dict[key]["float"] = float_dict[float_weight_ih_key]
+                weight_dict[key]["quantized"] = (
+                    quantized_dict[key].__getstate__()[0][4][0].__getstate__()[0][0]
+                )
+                weight_dict[key]["float"] = float_dict[float_weight_hh_key]
+                weight_dict[key]["quantized"] = (
+                    quantized_dict[key].__getstate__()[0][4][1].__getstate__()[0][0]
+                )
+
+    return weight_dict
 
 
 @strategy_registry
@@ -331,7 +485,7 @@ class HawqTuneStrategy(TuneStrategy):
         stage1_cnt = 0
         quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
         quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
-        stage1_max = -1  # TODO set a more appropriate value
+        stage1_max = 1  # TODO set a more appropriate value
         op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                          op_item_dtype_dict, initial_op_tuning_cfg)
         for op_tuning_cfg in op_wise_tuning_sampler:
@@ -341,6 +495,12 @@ class HawqTuneStrategy(TuneStrategy):
                 break
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
+
+        # import torch.quantization._numeric_suite as ns
+        # self.model.eval()
+        # fused_model = fuse_fx(self.model.model)
+        # res = compare_weights(fused_model.state_dict(), self.q_model.state_dict())
+
         # Fallback the ops supported both static and dynamic from static to dynamic
         quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
         quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
@@ -358,6 +518,16 @@ class HawqTuneStrategy(TuneStrategy):
             orig_eval = False
         self._fp32_model.eval()
         ht = HessianTrace(self._fp32_model, self.calib_dataloader)
+
+        q_model_state_dict = {
+        }
+        for key in self.q_model.state_dict().keys():
+            length = len("_model.")
+            new_key = key[length:]
+            q_model_state_dict[new_key] = self.q_model.state_dict()[key]
+
+        weight_quant_loss = compare_weights(ht.model.state_dict(), q_model_state_dict)
+
         op_to_traces = ht.get_avg_traces()
         if orig_eval == False:
             self._fp32_model.train()
@@ -379,116 +549,6 @@ class HawqTuneStrategy(TuneStrategy):
         for op_tuning_cfg in fallback_sampler:
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
-
-        # ordered_ops = sorted(op_fallback_acc_impact.keys(),
-        #                      key=lambda key: op_fallback_acc_impact[key],
-        #                      reverse=self.higher_is_better)
-        # op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
-        # logger.info(f"Start to accumulate fallback to {target_dtype}.")
-        # initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-        # fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-        #                                          initial_op_tuning_cfg=initial_op_tuning_cfg,
-        #                                          op_dtypes=op_dtypes, accumulate=True)
-        # for op_tuning_cfg in fallback_sampler:
-        #     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-        #     yield op_tuning_cfg
-
-        # tmp = 1
-        # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
-        # ops_sensitivity = self.adaptor.get_hessian_trace(self._fp32_model,
-        #                                                         self.calib_dataloader,
-        #                                                         self.
-        #                                                         method_args={'name': 'hessian_trace'})
-        # tmp = 1
-
-    def next_tune_cfg_bk(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
-
-        Yields:
-            tune_config (dict): It's a dict containing the tuning configuration to run.
-        """
-        from copy import deepcopy
-        tuning_space = self.tuning_space
-        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
-
-        calib_sampling_size = calib_sampling_size_lst[0]
-        # Initialize the tuning config for each op according to the quantization approach
-        op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
-        # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-        early_stop_tuning = False
-        stage1_cnt = 0
-        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
-        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
-        stage1_max = 1e9  # TODO set a more appropriate value
-        op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
-                                                         op_item_dtype_dict, initial_op_tuning_cfg)
-        # for op_tuning_cfg in op_wise_tuning_sampler:
-        #     stage1_cnt += 1
-        #     if early_stop_tuning and stage1_cnt > stage1_max:
-        #         logger.info("Early stopping the stage 1.")
-        #         break
-        #     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-        #     yield op_tuning_cfg
-        # Fallback the ops supported both static and dynamic from static to dynamic
-        # Tuning items: None
-        # if self.cfg.quantization.approach == 'post_training_auto_quant':
-        #     static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
-        #                             item in tuning_space.query_items_by_quant_mode('dynamic')]
-        #     if static_dynamic_items:
-        #         logger.info("Fallback all ops that support both dynamic and static to dynamic.")
-        #     else:
-        #         logger.info("Non ops that support both dynamic")
-        #
-        #     new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
-        #     for item in static_dynamic_items:
-        #         new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
-        #                                        new_op_tuning_cfg[item.name])
-        #     new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-        #     yield new_op_tuning_cfg
-        best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
-
-        # Fallback
-        for target_dtype in ['bf16', 'fp32']:
-            target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
-            fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
-            if fallback_items_lst:
-                logger.info(f"Start to fallback op to {target_dtype} one by one.")
-                self._fallback_started()
-            # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
-            ops_sensitivity = self.adaptor.calculate_op_sensitivity(self._fp32_model,
-                                                                    self.calib_dataloader,
-                                                                    method_args={'name': 'hessian_trace'})
-
-            fallback_items_name_lst = sorted(ops_sensitivity, key=lambda items: items[1], reverse=True)
-
-            op_dtypes = OrderedDict(zip(fallback_items_name_lst, [target_dtype] * len(fallback_items_name_lst)))
-            initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-            fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                     initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                     op_dtypes=op_dtypes, accumulate=False)
-
-            op_fallback_acc_impact = OrderedDict()
-            for op_index, op_tuning_cfg in enumerate(fallback_sampler):
-                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                yield op_tuning_cfg
-                acc, _ = self.last_tune_result
-                op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
-
-            # do accumulated fallback according to the order in the previous stage
-            if len(op_fallback_acc_impact) > 0:
-                ordered_ops = sorted(op_fallback_acc_impact.keys(),
-                                     key=lambda key: op_fallback_acc_impact[key],
-                                     reverse=self.higher_is_better)
-                op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
-                logger.info(f"Start to accumulate fallback to {target_dtype}.")
-                initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-                fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                         initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                         op_dtypes=op_dtypes, accumulate=True)
-                for op_tuning_cfg in fallback_sampler:
-                    op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                    yield op_tuning_cfg
 
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
         op_state = op_static_cfg.get_state()
