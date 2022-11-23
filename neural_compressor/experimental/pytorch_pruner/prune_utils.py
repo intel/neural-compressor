@@ -1,5 +1,5 @@
 """prune utils."""
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2022 Intel Corporation
@@ -28,13 +28,13 @@ from .logger import logger
 
 def check_config(prune_config):
     """Functions that check key-value is valid to run Pruning object.
-
+    
     Args:
         prune_config: A config dict object. Contains Pruning parameters and configurations.
-
+        
     Returns:
         None if everything is correct.
-
+        
     Raises:
         AssertionError.
     """
@@ -49,9 +49,13 @@ def check_config(prune_config):
         "update_frequency_on_step should be greater than 0"
     assert prune_config['prune_domain'] == "global" or prune_config['prune_domain'] == "local", \
         "only support 'global' and 'local' prune domain"
+    try:
+        prune_config['lock_init_sparsity'] = bool(prune_config['lock_init_sparsity'])
+    except:
+        assert False, "lock_init_sparsity should be bool value"
     if "x" in prune_config["pattern"]:
         pattern = prune_config["pattern"].split('_')[-1].split('x')
-        if pattern[0]=="channel" or pattern[1]=="channel":
+        if pattern[0] == "channel" or pattern[1] == "channel":
             pass
         else:
             try:
@@ -74,9 +78,16 @@ def check_config(prune_config):
         assert prune_config['target_sparsity'] <= max_ratio, \
             "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
         prune_config['max_sparsity_ratio_per_layer'] = min(max_ratio, prune_config['max_sparsity_ratio_per_layer'])
+    if prune_config['reg_coeff'] != None:
+        prune_config['reg_coeff'] = float(prune_config['reg_coeff'])
+        assert prune_config['reg_coeff'] >= 0, "only support positive reg_type"
+    assert prune_config["min_sparsity_ratio_per_layer"] >= 0 and prune_config["min_sparsity_ratio_per_layer"] <= \
+           prune_config[
+               'max_sparsity_ratio_per_layer'], "min_sparsity_ratio_per_layer should in[0, max_sparsity_ratio_per_layer]"
+
 
 def reset_non_value_to_default(obj, key, default):
-     """Functions that add up undefined configurations.
+    """Functions that add up undefined configurations.
 
      If some configurations are not defined in the configuration, set it to a default value.
 
@@ -84,27 +95,28 @@ def reset_non_value_to_default(obj, key, default):
          obj: A dict{key: value}
          key: A string. Key in obj.
          default: When the key is not in obj, Add key: default item in original obj.
-     
-     """
-     if isinstance(obj, dict):
+
+    """
+    if isinstance(obj, dict):
         if (not key in obj.keys()) or obj[key] == None:
             return default
         else:
             return obj[key]
-     else:
-         if not hasattr(obj, key) or getattr(obj, key) == None:
-             return default
-         else:
-             return getattr(obj, key)
+    else:
+        if not hasattr(obj, key) or getattr(obj, key) == None:
+            return default
+        else:
+            return getattr(obj, key)
+
 
 def process_and_check_config(val):
     """Functions which converts a initial configuration object to a Pruning configuration.
-
+    
     Copy parameters and add some non-define parameters to a new Pruning configuration object.
-
+    
     Args:
         val: A dict directly read from a config file.
-
+        
     Returns:
         A dict whose contents which are regularized for a Pruning obejct.
     """
@@ -118,10 +130,16 @@ def process_and_check_config(val):
     prune_domain = reset_non_value_to_default(val, "prune_domain", "global")
     prune_type = reset_non_value_to_default(val, "prune_type", "snip_momentum")
     sparsity_decay_type = reset_non_value_to_default(val, "sparsity_decay_type", "exp")
-    max_sparsity_ratio_per_layer = reset_non_value_to_default(val, "max_sparsity_ratio_per_layer", 0.98)
+
     names = reset_non_value_to_default(val, "names", [])
     extra_excluded_names = reset_non_value_to_default(val, "extra_excluded_names", [])
     pattern = reset_non_value_to_default(val, "pattern", "tile_pattern_4x1")
+    lock_init_sparsity = reset_non_value_to_default(val, "pattern", False)
+    reg_type = reset_non_value_to_default(val, "reg_type", None)
+    reg_coeff = reset_non_value_to_default(val, "reg_coeff", None)
+    max_sparsity_ratio_per_layer = reset_non_value_to_default(val, "max_sparsity_ratio_per_layer", 0.98)
+    min_sparsity_ratio_per_layer = reset_non_value_to_default(val, "min_sparsity_ratio_per_layer", 0.0)
+    reduce_type = reset_non_value_to_default(val, "reduce_type", "mean")
 
     pruners_info = []
     for info in val['pruners']:
@@ -132,17 +150,31 @@ def process_and_check_config(val):
         pruner['prune_layer_type'] = reset_non_value_to_default(info, 'prune_layer_type', prune_layer_type)
         pruner['target_sparsity'] = reset_non_value_to_default(info, 'target_sparsity', target_sparsity)
         pruner['update_frequency_on_step'] = reset_non_value_to_default(info, 'update_frequency_on_step', \
-                                                                 update_frequency_on_step)
+                                                                        update_frequency_on_step)
         pruner['prune_domain'] = reset_non_value_to_default(info, 'prune_domain', prune_domain)
         pruner['prune_type'] = reset_non_value_to_default(info, 'prune_type', prune_type)
         pruner['sparsity_decay_type'] = reset_non_value_to_default(info, 'sparsity_decay_type', sparsity_decay_type)
         pruner['max_sparsity_ratio_per_layer'] = reset_non_value_to_default(info, 'max_sparsity_ratio_per_layer', \
-                                                                 max_sparsity_ratio_per_layer)
+                                                                            max_sparsity_ratio_per_layer)
         pruner['names'] = reset_non_value_to_default(info, 'names', names)
         pruner['extra_excluded_names'] = reset_non_value_to_default(info, 'extra_excluded_names',
-                                                  extra_excluded_names)
+                                                                    extra_excluded_names)
         pruner['pattern'] = reset_non_value_to_default(info, 'pattern',
-                                            pattern)
+                                                       pattern)
+
+        pruner['lock_init_sparsity'] = reset_non_value_to_default(info, 'lock_init_sparsity',
+                                                                  lock_init_sparsity)
+
+        ##ugly design
+        pruner['reg_type'] = reset_non_value_to_default(info, 'reg_type', reg_type)
+        pruner['reg_coeff'] = reset_non_value_to_default(info, 'reg_coeff', reg_coeff)
+        pruner['max_sparsity_ratio_per_layer'] = reset_non_value_to_default(info, 'max_sparsity_ratio_per_layer', \
+                                                                            max_sparsity_ratio_per_layer)
+
+        pruner['min_sparsity_ratio_per_layer'] = reset_non_value_to_default(info, 'min_sparsity_ratio_per_layer',
+                                                                            min_sparsity_ratio_per_layer)
+        pruner['reduce_type'] = reset_non_value_to_default(info, 'reduce_type', reduce_type)
+
         check_config(pruner)
         pruner_info = DotDict(pruner)
         pruners_info.append(pruner_info)
@@ -151,10 +183,10 @@ def process_and_check_config(val):
 
 def process_config(config):
     """Obtain a config dict object from a config file.
-
+    
     Args:
         config: A string. The path to configuration file.
-
+        
     Returns:
         A config dict object.
     """
@@ -189,7 +221,7 @@ def process_config(config):
     return process_and_check_config(val)
 
 
-def parse_to_prune(model, config):
+def parse_to_prune(config, model):
     """Keep target pruned layers."""
     modules = {}
     if config["names"] == None or config["names"] == []:
@@ -205,7 +237,7 @@ def parse_to_prune(model, config):
     return modules
 
 
-def parse_not_to_prune(modules, config):
+def parse_not_to_prune(config, modules):
     """Drop non pruned layers."""
     exclude_names = config["extra_excluded_names"]
     exclude_names.extend(config["excluded_names"])

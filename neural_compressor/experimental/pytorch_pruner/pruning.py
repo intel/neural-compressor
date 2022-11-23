@@ -1,4 +1,3 @@
-"""pruning module."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -25,10 +24,10 @@ from .logger import logger
 
 class Pruning:
     """Pruning.
-
+    
     The main class that users will used in codes to do pruning.
     Contain at least one Pruner object.
-
+    
     Args:
         config: a string. The path to a config file. For config file template, please refer to
             https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
@@ -41,7 +40,6 @@ class Pruning:
     """
     
     def __init__(self, config):
-        """Initialize."""
         self.model = None
         self.config_file_path = config
         self.pruners = []
@@ -49,7 +47,7 @@ class Pruning:
 
     def update_items_for_all_pruners(self, **kwargs):
         """Functions which add User-defined arguments to the original configurations.
-
+        
         The original config of pruning is read from a file. 
         However, users can still modify configurations by passing key-value arguments in this function.
         Please note that the key-value arguments' keys are analysable in current configuration.
@@ -59,9 +57,26 @@ class Pruning:
                 if key in item.keys():
                     item[key] = kwargs[key]
 
+    # def _call_pruners(self, func):
+    #     """Function which decorates the Pruning class's functions.
+    #     
+    #     It can simplify codes by calling same-name functions in Pruning's Pruner objects.
+    #     For example, when it decorates on_step_begin function of Pruning, 
+    #         it automatically calls its Pruners' on_step_begin functions without a "for" code.
+    #     However, when this trick is enabled, the pylint validation on INC cannot passed, therefore commented out.
+    #     """
+    #    def warpper(self, *args, **kw):
+    #        func_name = f"{func.__name__}"
+    #        func(self, *args, **kw)
+    #        for prune in self.pruners:
+    #            prun_func = getattr(prune, func_name)
+    #            prun_func(*args, **kw)
+    #
+    #    return warpper
+
     def get_sparsity_ratio(self):
         """Functions that calculate a modules/layers sparsity.
-
+        
         Returns:
             Three floats.
             elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
@@ -96,68 +111,65 @@ class Pruning:
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
     def _generate_pruners(self):
-        """Functions that obtain Pruner objects."""
         assert isinstance(self.model, torch.nn.Module)
 
         for info in self.pruner_info:
-            modules = parse_to_prune(self.model, info)
-            modules = parse_not_to_prune(modules, info)
+            modules = parse_to_prune(info, self.model)
+            modules = parse_not_to_prune(info, modules)
             if modules == {}:
                 logger.warning("one pruner hooks no layers, please have a check")
 
-            self.pruners.append(get_pruner(modules, info))
+            self.pruners.append(get_pruner(info, modules))
             info['modules'] = [key for key in modules.keys()]
             info['len_of_modules'] = len(info['modules'])
             logger.info(info)
 
+    # @_call_pruners
     def on_train_begin(self):
-        """Functions called in the beginning of training process.
-
-        Before training, ensure that pruners are generated.
-        """
         self._generate_pruners()  ##TODO is there better place to place
-    
+
+    # @_call_pruners
     def on_epoch_begin(self, epoch):
-        """Functions called in the beginning of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
+
+    # @_call_pruners
     def on_step_begin(self, local_step):
-        """Functions called in the beginning of every step."""
         for pruner in self.pruners:
             pruner.on_step_begin(local_step)
 
+    # @_call_pruners
     def on_before_optimizer_step(self):
-        """Functions called before optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_before_optimizer_step()
 
+    # @_call_pruners
     def on_step_end(self):
-        """Functions called in the end of every step."""
         for pruner in self.pruners:
             pruner.on_step_end()
 
+    # @_call_pruners
     def on_epoch_end(self):
-        """Functions called in the end of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_end()
 
+    # @_call_pruners
     def on_train_end(self):
-        """Functions called in the end of training."""
         for pruner in self.pruners:
             pruner.on_train_end()
 
+        # @_call_pruners
+
     def on_before_eval(self):
-        """Functions called in the beginning of evaluation."""
         for pruner in self.pruners:
             pruner.on_before_eval()
 
     def on_after_eval(self):
-        """Functions called in the end of evaluation."""
         for pruner in self.pruners:
             pruner.on_after_eval()
 
+    # @_call_pruners
     def on_after_optimizer_step(self):
-        """Functions called after optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
