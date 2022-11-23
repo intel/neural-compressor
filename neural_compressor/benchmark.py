@@ -18,6 +18,8 @@
 from .utils import logger
 from .data import DATALOADERS
 from .experimental import Benchmark as ExpBenchmark
+from .conf.pythonic_config import Config
+from .config import BenchmarkConfig
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance, with the objective
@@ -70,6 +72,10 @@ class Benchmark(object):
 def fit(
     model, config=None, b_dataloader=None, b_func=None
 ):
+    if config is None:
+        config = Config()
+    elif isinstance(config, BenchmarkConfig):
+        config = Config(benchmark=config)
     benchmarker = ExpBenchmark(config)
     benchmarker.model = model
     if b_func is not None:
