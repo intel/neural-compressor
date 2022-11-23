@@ -42,7 +42,6 @@ class BaseModel:
     def export(
         self,
         save_path: str,
-        input,
         target_model_type: str = 'ONNX',
         quant_format: str = 'QDQ',
         opset_version: int = 14,

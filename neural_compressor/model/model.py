@@ -954,6 +954,33 @@ class TensorflowBaseModel(BaseModel):
         ''' abstract method of model saving, Tensorflow model only'''
         raise NotImplementedError
 
+    def export(
+        self,
+        save_path: str,
+        target_model_type: str = 'ONNX',
+        quant_format: str = 'QDQ',
+        opset_version: int = 14,
+        *args,
+        **kwargs
+    ):
+        if target_model_type != 'ONNX':
+            logger.warning("We only support target model type ONNX currently.")
+            sys.exit(0)
+
+        if quant_format == 'QDQ' and opset_version < 13:   # pragma: no cover 
+            opset_version = 13
+            logger.warning("QDQ format requires opset_version >= 13, " + 
+                            "we reset opset_version={} here".format(opset_version))
+
+        from neural_compressor.adaptor.tf_utils.tf2onnx_converter import TensorflowQDQToOnnxQDQConverter
+        TensorflowQDQToOnnxQDQConverter(self.graph_def, self.input_tensor_names, \
+                            self.output_tensor_names, opset_version).convert(save_path)
+
+        info = "The QDQ ONNX Model is exported to path: {0}".format(save_path)
+        logger.info("*"*len(info))
+        logger.info(info)
+        logger.info("*"*len(info))
+
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
     def get_all_weight_names(self):
