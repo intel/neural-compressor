@@ -23,4 +23,4 @@ stages:
           - template: template/code-scan-template.yml
             parameters:
               codeScanFileName: "pyspelling"
-              uploadPath: "lpot_pyspelling.log"
+              uploadPath: "pyspelling.log"

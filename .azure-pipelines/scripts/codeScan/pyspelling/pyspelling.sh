@@ -3,20 +3,20 @@
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 RESET="echo -en \\E[0m \\n" # close color
 
-pyspelling_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/pyspelling"
-pyspelling_log_dir="$pyspelling_dir/scanLog"
-mkdir -p $pyspelling_log_dir
+work_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/pyspelling"
+log_dir="$work_dir/../scanLog"
+mkdir -p $log_dir
 
 pip install -r /neural-compressor/requirements.txt
 
-sed -i "s|\${DICT_DIR}|$pyspelling_dir|g" $pyspelling_dir/pyspelling_conf.yaml
-sed -i "s|\${REPO_DIR}|/neural-compressor|g" $pyspelling_dir/pyspelling_conf.yaml
+sed -i "s|\${DICT_DIR}|$work_dir|g" $work_dir/pyspelling_conf.yaml
+sed -i "s|\${REPO_DIR}|/neural-compressor|g" $work_dir/pyspelling_conf.yaml
 
-pyspelling -c $pyspelling_dir/pyspelling_conf.yaml > $pyspelling_log_dir/lpot_pyspelling.log
+pyspelling -c $work_dir/pyspelling_conf.yaml > $log_dir/pyspelling.log
 exit_code=$?
 
 $BOLD_YELLOW && echo "-------------------  Current log file output start --------------------------" && $RESET
-cat  $pyspelling_log_dir/lpot_pyspelling.log
+cat  $log_dir/pyspelling.log
 $BOLD_YELLOW && echo "-------------------  Current log file output end ----------------------------" && $RESET
 
 
