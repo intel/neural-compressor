@@ -6,7 +6,7 @@ RESET="echo -en \\E[0m \\n" # close color
 log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 mkdir -p $log_dir
 
-python pydocstyle --convention=google /neural-compressor/neural_compressor/experimental > $log_dir/pydocstyle.log
+pydocstyle --convention=google /neural-compressor/neural_compressor/experimental > $log_dir/pydocstyle.log
 exit_code=$?
 
 
