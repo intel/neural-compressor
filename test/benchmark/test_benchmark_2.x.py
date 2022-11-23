@@ -4,12 +4,10 @@ import unittest
 import os
 import yaml
 import numpy as np
+import tensorflow as tf
 import tempfile
 import re
-import platform
 from neural_compressor.adaptor.tf_utils.util import write_graph
-
-import tensorflow as tf
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -45,14 +43,12 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
+from neural_compressor.benchmark import fit
 from neural_compressor.data import DATASETS
+from neural_compressor.experimental import common
 dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
-from neural_compressor.experimental import Benchmark, common
-from neural_compressor.conf.config import BenchmarkConf
-benchmarker = Benchmark('fake_yaml.yaml')
-benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
-benchmarker.model = args.input_model
-benchmarker.fit()
+b_dataloader = common.DataLoader(dataset, batch_size=10)
+fit(args.input_model, 'fake_yaml.yaml', b_dataloader=b_dataloader)
     '''
 
     seq1 = '''
@@ -60,15 +56,14 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
+from neural_compressor.benchmark import fit
 from neural_compressor.data import DATASETS
 dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
-from neural_compressor.experimental import Benchmark, common
+from neural_compressor.experimental import common
 from neural_compressor.conf.config import BenchmarkConf
 conf = BenchmarkConf('fake_yaml.yaml')
-benchmarker = Benchmark(conf)
-benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
-benchmarker.model = args.input_model
-benchmarker.fit()
+b_dataloader = common.DataLoader(dataset, batch_size=10)
+fit(args.input_model, conf, b_dataloader=b_dataloader)
     '''
 
     # test normal case
@@ -93,15 +88,13 @@ def build_benchmark2():
         "arg_parser = ArgumentParser(description='Parse args')\n",
         "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
         "args = arg_parser.parse_args()\n",
-
+        "from neural_compressor.benchmark import fit\n"
         "from neural_compressor.data import DATASETS\n",
         "dataset = DATASETS('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
 
-        "from neural_compressor.experimental import Benchmark, common\n",
-        "benchmarker = Benchmark()\n",
-        "benchmarker.model = args.input_model\n",
-        "benchmarker.b_dataloader = common.DataLoader(dataset)\n",
-        "benchmarker.fit()\n"
+        "from neural_compressor.experimental import common\n",
+        "b_dataloader = common.DataLoader(dataset)\n",
+        "fit(args.input_model, b_dataloader=b_dataloader)\n"
     ]
 
     seq1 = '''
@@ -109,46 +102,17 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-
+from neural_compressor.benchmark import fit
 from neural_compressor import conf
-from neural_compressor.experimental import Benchmark, common
+from neural_compressor.experimental import common
 conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': [100,32,32,1], 'label':True}}
-benchmarker = Benchmark(conf)
-benchmarker.model = args.input_model
-benchmarker.fit()
-    '''
-
-    seq2 = '''
-from argparse import ArgumentParser
-arg_parser = ArgumentParser(description='Parse args')
-arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')
-args = arg_parser.parse_args()
-
-class Metric:
-    def update(self, pred, label):
-        pass
-
-    def reset(self):
-        pass
-
-    def result(self):
-        return 1.
-
-from neural_compressor import conf
-from neural_compressor.experimental import Benchmark, common
-conf.evaluation.accuracy.dataloader.dataset = {'dummy': {'shape': [100,32,32,1], 'label':True}}
-benchmarker = Benchmark(conf)
-benchmarker.model = args.input_model
-benchmarker.metric = Metric()
-benchmarker.fit('accuracy')
+fit(args.input_model, conf)
     '''
 
     with open('fake2.py', "w", encoding="utf-8") as f:
         f.writelines(seq)
     with open('fake3.py', "w", encoding="utf-8") as f:
         f.writelines(seq1)
-    with open('fake4.py', "w", encoding="utf-8") as f:
-        f.writelines(seq2)
 
 
 def build_fake_model():
@@ -197,7 +161,6 @@ class TestObjective(unittest.TestCase):
         build_benchmark()
         build_benchmark2()
         self.cpu_counts = psutil.cpu_count(logical=False)
-        self.platform = platform.system().lower()
 
     @classmethod
     def tearDownClass(self):
@@ -258,8 +221,8 @@ class TestObjective(unittest.TestCase):
         os.system("python fake2.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
         with open('benchmark.log', "r") as f:
             for line in f:
-                throughput = re.search(r"Throughput sum: (\d+(\.\d+)?)", line)
-            self.assertIsNotNone(throughput)
+                accuracy = re.search(r"Accuracy is\s+(\d+(\.\d+)?)", line)
+            self.assertIsNotNone(accuracy)
         os.system("rm *.log")
 
     def test_benchmark_with_conf(self):
@@ -269,7 +232,7 @@ class TestObjective(unittest.TestCase):
                 throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
             self.assertIsNotNone(throughput)
         os.system("rm *.log")
-    
+ 
     def test_benchmark_with_custom_metric(self):
         os.system("python fake4.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
         with open('benchmark.log', "r") as f:

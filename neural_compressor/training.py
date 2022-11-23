@@ -54,8 +54,7 @@ class CompressionManager:
         compression_manager.save("path_to_save")
     """
     def __init__(self, component):
-        self.callbacks = \
-            component.components[0] if isinstance(component, Scheduler) else component
+        self.callbacks = self.CallBacks(component)
         self.model = component.model
         try:
             # TODO: export to ONNX model need original fp32 model now, will remove it
@@ -64,6 +63,46 @@ class CompressionManager:
         except Exception as e:  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}.".format(repr(e)))
             self.fp32_model = None
+
+    class CallBacks:
+        def __init__(self, component):
+            self.callbacks = \
+                component.components[0] if isinstance(component, Scheduler) else component
+
+        def on_train_begin(self, dataloader=None):
+            """ called before the beginning of epochs"""
+            self.callbacks.on_train_begin(dataloader)
+
+        def on_train_end(self):
+            """ called after the end of epochs"""
+            self.callbacks.on_train_end()
+
+        def on_epoch_begin(self, epoch):
+            """ called on the beginning of epochs"""
+            self.callbacks.on_epoch_begin(epoch)
+
+        def on_step_begin(self, batch_id):
+            """ called on the beginning of batches"""
+            self.callbacks.on_step_begin(batch_id)
+
+        def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
+            """ called on the end of loss computation"""
+            return self.callbacks.on_after_compute_loss(
+                input, student_output, student_loss, teacher_output=None
+            )
+
+        def on_before_optimizer_step(self):
+            """ called on the end of backward"""
+            self.callbacks.on_before_optimizer_step()
+
+
+        def on_step_end(self):
+            """ called on the end of batches"""
+            return self.callbacks.on_step_end()
+
+        def on_epoch_end(self):
+            """ called on the end of epochs"""
+            return self.callbacks.on_epoch_end()
 
     def save(self, root=None):
         """Save compressed model.

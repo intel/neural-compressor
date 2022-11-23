@@ -156,7 +156,7 @@ class Quantization(object):
             self.exp_quantizer.q_func = q_func
 
         if eval_func is not None:
-            self.exp_quantizer.eval_func = eval_func 
+            self.exp_quantizer.eval_func = eval_func
         elif eval_dataloader is not None:
             self.exp_quantizer.eval_dataloader = eval_dataloader
 
@@ -198,10 +198,14 @@ class Quantization(object):
         self.exp_quantizer.postprocess = nc_postprocess
 
 
-def fit(
-    model, conf, calib_dataloader=None, calib_func=None, eval_dataloader=None,
-    eval_func=None, eval_metric=None, options=None, **kwargs
-):
+def fit(model,
+        conf,
+        calib_dataloader=None,
+        calib_func=None,
+        eval_dataloader=None,
+        eval_func=None,
+        eval_metric=None,
+        **kwargs):
     """Quantize the model with a given configure.
 
     Args:
@@ -257,12 +261,12 @@ def fit(
                                                    output = model(input)
                                                    accuracy = metric(output, label)
                                                    return accuracy
-        options (Options, optional):          The configure for random_seed, workspace,
-                                              resume path and tensorboard flag.
 
     """
 
     if isinstance(conf, PostTrainingQuantConfig):
+        if eval_func is None and eval_dataloader is None:
+            conf.performance_only = True
         conf = Config(quantization=conf)
     quantizer = ExpQuantization(conf)
     quantizer.model = model
@@ -270,6 +274,8 @@ def fit(
         quantizer.eval_func = eval_func
     if calib_dataloader is not None:
         quantizer.calib_dataloader = calib_dataloader
+    if calib_func is not None:
+        quantizer.calib_func = calib_func
     if eval_dataloader is not None:
         quantizer.eval_dataloader = eval_dataloader
     if eval_metric is not None:

@@ -67,7 +67,7 @@ class Benchmark(object):
         self.exp_benchmarker.postprocess = nc_postprocess
 
 
-def benchmark(
+def fit(
     model, config=None, b_dataloader=None, b_func=None
 ):
     benchmarker = ExpBenchmark(config)

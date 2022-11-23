@@ -6,7 +6,7 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from neural_compressor.conf.pythonic_config import Pruner, PruningConfig
+from neural_compressor.config import Pruner, PruningConfig
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.training import prepare_compression
