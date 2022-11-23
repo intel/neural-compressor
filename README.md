@@ -194,7 +194,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="docs/Quantization.md">Quantization</a></td>
+        <td colspan="2" align="center"><a href="docs/quantization.md">Quantization</a></td>
         <td colspan="1" align="center"><a href="docs/pruning.md">Pruning(Sparsity)</a></td> 
         <td colspan="2" align="center"><a href="docs/distillation.md">Knowledge Distillation</a></td>
         <td colspan="2" align="center"><a href="docs/mixed_precision.md">Mixed Precision</a></td>
