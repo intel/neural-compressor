@@ -205,11 +205,11 @@ class TestObjective(unittest.TestCase):
             os.remove('fake_yaml.yaml')
         if os.path.exists('fake.py'):
             os.remove('fake.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake2.py'):
             os.remove('fake2.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake3.py'):
             os.remove('fake3.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake4.py'):
             os.remove('fake4.py')
         if os.path.exists('fake_data_5.py'):
             os.remove('fake_data_5.py')

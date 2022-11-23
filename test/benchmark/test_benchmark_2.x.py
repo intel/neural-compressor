@@ -9,33 +9,6 @@ import tempfile
 import re
 from neural_compressor.adaptor.tf_utils.util import write_graph
 
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-          inputs: x
-          outputs: op_to_store
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-          performance:
-            warmup: 5
-            iteration: 10
-            configs:
-               cores_per_instance: 4
-               num_of_instance: 2 
-        tuning:
-          accuracy_criterion:
-            relative: 0.01
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
 
 def build_benchmark():
     seq = '''
@@ -44,11 +17,13 @@ arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
+from neural_compressor.config import BenchmarkConfig
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental import common
 dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 b_dataloader = common.DataLoader(dataset, batch_size=10)
-fit(args.input_model, 'fake_yaml.yaml', b_dataloader=b_dataloader)
+conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
+fit(args.input_model, conf, b_dataloader=b_dataloader)
     '''
 
     seq1 = '''
@@ -57,11 +32,11 @@ arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
+from neural_compressor.config import BenchmarkConfig
 from neural_compressor.data import DATASETS
 dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 from neural_compressor.experimental import common
-from neural_compressor.conf.config import BenchmarkConf
-conf = BenchmarkConf('fake_yaml.yaml')
+conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
 b_dataloader = common.DataLoader(dataset, batch_size=10)
 fit(args.input_model, conf, b_dataloader=b_dataloader)
     '''
@@ -97,22 +72,8 @@ def build_benchmark2():
         "fit(args.input_model, b_dataloader=b_dataloader)\n"
     ]
 
-    seq1 = '''
-from argparse import ArgumentParser
-arg_parser = ArgumentParser(description='Parse args')
-arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
-args = arg_parser.parse_args()
-from neural_compressor.benchmark import fit
-from neural_compressor import conf
-from neural_compressor.experimental import common
-conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': [100,32,32,1], 'label':True}}
-fit(args.input_model, conf)
-    '''
-
     with open('fake2.py', "w", encoding="utf-8") as f:
         f.writelines(seq)
-    with open('fake3.py', "w", encoding="utf-8") as f:
-        f.writelines(seq1)
 
 
 def build_fake_model():
@@ -157,23 +118,16 @@ class TestObjective(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.graph_path = build_fake_model()
-        build_fake_yaml()
         build_benchmark()
         build_benchmark2()
         self.cpu_counts = psutil.cpu_count(logical=False)
 
     @classmethod
     def tearDownClass(self):
-        if os.path.exists('fake_yaml.yaml'):
-            os.remove('fake_yaml.yaml')
         if os.path.exists('fake.py'):
             os.remove('fake.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake2.py'):
             os.remove('fake2.py')
-        if os.path.exists('fake.py'):
-            os.remove('fake3.py')
-        if os.path.exists('fake.py'):
-            os.remove('fake4.py')
         if os.path.exists('fake_data_5.py'):
             os.remove('fake_data_5.py')
         if os.path.exists('fake_data_15.py'):
@@ -217,29 +171,6 @@ class TestObjective(unittest.TestCase):
                 self.assertIsNotNone(throughput)
         os.system("rm *.log")
 
-    def test_benchmark_without_yaml(self):
-        os.system("python fake2.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
-        with open('benchmark.log', "r") as f:
-            for line in f:
-                accuracy = re.search(r"Accuracy is\s+(\d+(\.\d+)?)", line)
-            self.assertIsNotNone(accuracy)
-        os.system("rm *.log")
 
-    def test_benchmark_with_conf(self):
-        os.system("python fake3.py --input_model={}".format(self.graph_path))
-        with open(f'1_{self.cpu_counts}_0.log', "r") as f:
-            for line in f:
-                throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
-            self.assertIsNotNone(throughput)
-        os.system("rm *.log")
- 
-    def test_benchmark_with_custom_metric(self):
-        os.system("python fake4.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
-        with open('benchmark.log', "r") as f:
-            for line in f:
-                accuracy = re.search(r"Accuracy is\s+(\d+(\.\d+)?)", line)
-            self.assertIsNotNone(accuracy)
-        os.system("rm *.log")
- 
 if __name__ == "__main__":
     unittest.main()
