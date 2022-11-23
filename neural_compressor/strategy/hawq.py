@@ -40,7 +40,9 @@ class HessianTrace:
     """
 
     def __init__(self, model, dataloader, criterion=None):
-        self.model = model  ##TODO need to check fused or not
+        from torch.quantization.quantize_fx import fuse_fx
+        self.model = fuse_fx(model.model)
+
         self.dataloader = dataloader
         self.max_iter = 500
         self.tolerance = 1e-5
@@ -68,11 +70,11 @@ class HessianTrace:
             return False
 
     def mapping_module_to_op(self, name):
-        length = len("_model.")
-        if len(name) < length:
-            return name
-        else:
-            return name[length:]
+        # length = len("_model.")
+        # if len(name) < length:
+        #     return name
+        # else:
+        return name
 
     def get_fused_mapping(self):
         model = self.model
@@ -88,7 +90,7 @@ class HessianTrace:
             else:
                 name = op_name + ".weight"
                 if name in weights_info and name not in weight_to_op.keys():
-                    weight_to_op[op_name + ".weight"] = op_name[7:]
+                    weight_to_op[op_name + ".weight"] = op_name
         op_list = []
         for key in weight_to_op.keys():
             op_list.append(weight_to_op[key])
@@ -240,7 +242,7 @@ class HessianTrace:
 
         layer_traces = layer_traces_estimate
         if enable_act:
-            self.reset_input_gradient_and_hooks()
+            self.reset_act_gradient_and_hooks()
         weight_name_to_traces = {}
 
         for weigth_name, trace in zip(self.weight_names, layer_traces):
