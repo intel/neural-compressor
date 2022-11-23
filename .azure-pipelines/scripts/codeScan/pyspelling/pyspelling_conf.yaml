@@ -11,3 +11,5 @@ matrix:
   - ${REPO_DIR}/*.md
   - ${REPO_DIR}/examples/**/*.md|!${REPO_DIR}/examples/pytorch/**/huggingface_models/**/*.md
   - ${REPO_DIR}/neural_compressor/**/*.md
+  - ${REPO_DIR}/neural_coder/**/*.md
+  - ${REPO_DIR}/neural_coder/*.md
