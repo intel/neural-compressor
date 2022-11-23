@@ -2367,3 +2367,10 @@ dicoo
 snowly
 syncedreview
 ww
+EmbedLayerNormalization
+FusedConv
+GlobalAveragePool
+LeakyRelu
+ONNXRTAdaptor
+QLinearOpsAdaptor
+onnxrtadaptor
