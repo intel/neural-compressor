@@ -67,6 +67,13 @@ class HessianTrace:
         else:
             return False
 
+    def mapping_module_to_op(self, name):
+        length = len("_model.")
+        if len(name) < length:
+            return name
+        else:
+            return name[length:]
+
     def get_fused_mapping(self):
         model = self.model
         weights_info = dict(model.named_parameters())
@@ -75,7 +82,8 @@ class HessianTrace:
             if self.is_fused_module(child):
                 for name, _ in child.named_children():
                     if op_name + "." + name + ".weight" in weights_info:  ##TODO check if this is right
-                        weight_to_op[op_name + "." + name + ".weight"] = op_name[7:]
+
+                        weight_to_op[op_name + "." + name + ".weight"] = self.mapping_module_to_op(op_name)
                         break
             else:
                 name = op_name + ".weight"
@@ -95,8 +103,8 @@ class HessianTrace:
         input = data[0].to(self.device)
         ##self._input_shape = input.shape  ## for resetting input activation
         target = data[1].to(self.device)
-        if enable_act:
-            input.requires_grad = True
+        # if enable_act:
+        #     input.requires_grad = True
         output = model(input)
         loss = criterion(output, target)
         # torch.autograd.backward(loss, create_graph=create_graph)
@@ -138,23 +146,24 @@ class HessianTrace:
         v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
         return v_t_H_v
 
-    def _get_input_grad_hook(self, name):
-        def input_grad_hook(model, grad_input, grad_output):
+    def _get_act_grad_hook(self, name):
+        def act_grad_hook(model, grad_input, grad_output):
             self.layer_acts_grads[name] = [grad_input, grad_output]
-        return input_grad_hook
 
-    def _get_enable_input_grad_hook(self, name):
-        def enable_input_grad_hook(model, inputs, outputs):
+        return act_grad_hook
+
+    def _get_enable_act_grad_hook(self, name):
+        def enable_act_grad_hook(model, inputs, outputs):
             try:
                 input = inputs[0]  ##TODO check whether this is right
             except:
                 input = inputs
-            if input.is_leaf == False:
-                if input.requires_grad is False:
-                    input.requires_grad = True
-                    self.layer_acts[name] = input
 
-        return enable_input_grad_hook
+            if input.requires_grad is False:
+                input.requires_grad = True
+            self.layer_acts[name] = input
+
+        return enable_act_grad_hook
 
     # def _get_disable_input_grad_hook(self, name):
     #     def disable_input_grad_hook(model, inputs, outputs):
@@ -169,21 +178,19 @@ class HessianTrace:
     #
     #     return disable_input_grad_hook
 
-
     def _unregister_hook(self):
         for handel in self.hook_handles:
             handel.remove()
 
-    def register_input_grad_hooks(self):
+    def register_act_grad_hooks(self):
         for name, module in self.model.named_modules():
-            if name in self.op_list:
-                hook_handle = module.register_forward_hook(self._get_enable_input_grad_hook(name))
+            if self.mapping_module_to_op(name) in self.op_list:
+                hook_handle = module.register_forward_hook(self._get_enable_act_grad_hook(name))
                 self.hook_handles.append(hook_handle)
-                hook_handle = module.register_backward_hook(self._get_input_grad_hook(name))
+                hook_handle = module.register_backward_hook(self._get_act_grad_hook(name))
                 self.hook_handles.append(hook_handle)
 
-
-    def reset_input_gradient_and_hooks(self):
+    def reset_act_gradient_and_hooks(self):
         # tmp_input = torch.zeros(self._input_shape, device=self.device)
         # for name, module in self.model.named_modules():
         #     if name in self.op_list:
@@ -193,12 +200,13 @@ class HessianTrace:
         self._unregister_hook()
 
     def get_params(self):
-        weight_names = [n for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]  ##remove bias
+        weight_names = [n for n, p in self.model.named_parameters() if
+                        p.requires_grad and "bias" not in n]  ##remove bias
         params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]  ##remove bias
         self.weight_names = weight_names
         self.params = params
 
-    def get_avg_traces(self, enable_act=False, num_batches=2):
+    def get_avg_traces(self, enable_act=True, num_batches=2):
         """
         Estimates average hessian trace for each parameter
         """
@@ -207,7 +215,7 @@ class HessianTrace:
             self.hook_handles = []
             self.layer_acts = {}
             self.layer_acts_grads = {}
-            self.register_input_grad_hooks()
+            self.register_act_grad_hooks()
         ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
         ##num_all_data = num_data_iter * self.dataloader.batch_size
         ##op_list = self.op_list
@@ -226,18 +234,18 @@ class HessianTrace:
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
             if diff_ratio < self.tolerance and i > 10:  ##TODO magic number
                 break
-            if i==50:##TODO for debug
+            if i == 50:  ##TODO for debug
                 break
             prev_avg_model_trace = model_trace
 
         layer_traces = layer_traces_estimate
         if enable_act:
             self.reset_input_gradient_and_hooks()
-        weight_name_to_traces={}
+        weight_name_to_traces = {}
 
-        for weigth_name,trace in zip(self.weight_names, layer_traces):
+        for weigth_name, trace in zip(self.weight_names, layer_traces):
             weight_name_to_traces[weigth_name] = trace
-        op_name_to_trace={}
+        op_name_to_trace = {}
         for weigth_name in self.weight_names:
             op_name = self.weight_to_op[weigth_name]
             op_name_to_trace[op_name] = weight_name_to_traces[weigth_name]
@@ -322,8 +330,8 @@ class HawqTuneStrategy(TuneStrategy):
         quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
         quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
         stage1_max = -1  # TODO set a more appropriate value
-        op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
-                                                            op_item_dtype_dict, initial_op_tuning_cfg)
+        op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
+                                                         op_item_dtype_dict, initial_op_tuning_cfg)
         for op_tuning_cfg in op_wise_tuning_sampler:
             stage1_cnt += 1
             if early_stop_tuning and stage1_cnt > stage1_max:
@@ -349,7 +357,7 @@ class HawqTuneStrategy(TuneStrategy):
         self._fp32_model.eval()
         ht = HessianTrace(self._fp32_model, self.calib_dataloader)
         op_to_traces = ht.get_avg_traces()
-        if orig_eval==False:
+        if orig_eval == False:
             self._fp32_model.train()
 
         ordered_ops = sorted(op_to_traces.keys(),
@@ -358,7 +366,7 @@ class HawqTuneStrategy(TuneStrategy):
         # WA for add op type
         op_info_map = {}
         for op_info in list(initial_op_tuning_cfg.keys()):
-            op_info_map[op_info[0]] = op_info # op_name: (op_name, op_type)
+            op_info_map[op_info[0]] = op_info  # op_name: (op_name, op_type)
         tmp_ordered_ops = [op_info_map[op_name] for op_name in ordered_ops]
         op_dtypes = OrderedDict(zip(tmp_ordered_ops, [target_dtype] * len(ordered_ops)))
         logger.info(f"Start to accumulate fallback to {target_dtype}.")
@@ -369,7 +377,6 @@ class HawqTuneStrategy(TuneStrategy):
         for op_tuning_cfg in fallback_sampler:
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
-
 
         # ordered_ops = sorted(op_fallback_acc_impact.keys(),
         #                      key=lambda key: op_fallback_acc_impact[key],
@@ -383,7 +390,6 @@ class HawqTuneStrategy(TuneStrategy):
         # for op_tuning_cfg in fallback_sampler:
         #     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
         #     yield op_tuning_cfg
-
 
         # tmp = 1
         # fallback_items_name_lst = [item.name for item in fallback_items_lst][::-1] # from bottom to up
