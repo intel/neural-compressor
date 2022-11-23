@@ -1,11 +1,11 @@
 Quantization
 ===============
 
-1. [Quantization introduction](#quantization-introduction)
-2. [Quantization fundamentals](#quantization-fundamentals)
-3. [Accuracy aware tuning](#accuracy-aware-tuning)
-4. [Supported feature matrix](#supported-feature-matrix)
-5. [Get started](#get-started)
+1. [Quantization Introduction](#quantization-introduction)
+2. [Quantization Fundamentals](#quantization-fundamentals)
+3. [Accuracy Aware Tuning](#accuracy-aware-tuning)
+4. [Supported Feature Matrix](#supported-feature-matrix)
+5. [Get Started](#get-started)
 6. [Examples](#examples)
 
 ## Quantization Introduction
