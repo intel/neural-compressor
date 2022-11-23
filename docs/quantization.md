@@ -8,11 +8,11 @@ Quantization
 5. [Get started](#get-started)
 6. [Examples](#examples)
 
-## Quantization introduction
+## Quantization Introduction
 
 Quantization is a very popular deep learning model optimization technique invented for improving the speed of inference. It minimizes the number of bits required by converting a set of real-valued numbers into the lower bit data representation, such as int8 and int4, mainly on inference phase with minimal to no loss in accuracy. This way reduces the memory requirement, cache miss rate, and computational cost of using neural networks and finally achieve the goal of higher inference performance. On Intel 3rd generation Xeon Scalable processor, user could expect up to 4x theoretical performance speedup. On Nvidia GPU, it could also bring significant inference performance speedup.
 
-## Quantization fundamentals
+## Quantization Fundamentals
 
 `Affine quantization` and `Scale quantization` are two common range mapping techniques used in tensor conversion between different data types.
 
@@ -48,33 +48,33 @@ If UINT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 255$ a
 
 Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 data bits) to represent int8 range, may be needed on some early Xeon platforms, it's because those platforms may have overflow issues due to fp16 intermediate calculation result when executing int8 dot product operation. After AVX512_VNNI instruction is introduced, this issue gets solved by supporting fp32 intermediate data.
 
-### Quantization approaches
+### Quantization Approaches
 
 Quantization has three different approaches: 1) post training dynamic quantization 2) post training static  quantization 3) quantization aware training. The first two approaches belong to optimization on inference. The last belongs to optimization during training.
 
-#### Post training dynamic quantization
+#### Post Training Dynamic Quantization
 
 The weights of the neural network get quantized into int8 format from float32 format offline. The activations of the neural network is quantized as well with the min/max range collected during inference runtime.
 
 This approach is widely used in dynamic length neural networks, like NLP model.
 
-#### Post training static quantization
+#### Post Training Static Quantization
 
 Compared with `post training dynamic quantization`, the min/max range in weights and activations are collected offline on a so-called `calibration` dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The `calibration` process runs on the original fp32 model and dumps out all the tensor distributions for `Scale` and `ZeroPoint` calculations. Usually preparing 100 samples are enough for calibration.
 
 This approach is major quantization approach people should try because it could provide the better performance comparing with `post training dynamic quantization`.
 
-#### Quantization aware training
+#### Quantization Aware Training
 
 Quantization aware training emulates inference-time quantization in the forward pass of the training process by inserting `fake quant` ops before those quantizable ops. With `quantization aware training`, all weights and activations are `fake quantized` during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while aware of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
 
-## Accuracy aware tuning
+## Accuracy Aware Tuning
 
 Accuracy aware tuning is one of unique features provided by Intel(R) Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods. 
 
 This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met.
 
-### Working flow
+### Working Flow
 
 Currently `accuracy aware tuning` supports `post training quantization`, `quantization aware training`, and `pruning`. Other during-training optimization tunings are under development.
 
@@ -82,7 +82,7 @@ User could refer to below chart to understand the whole tuning flow.
 
 <img src="../docs/imgs/accuracy_aware_tuning_flow.png" width=914 height=480 alt="accuracy aware tuning working flow">
 
-## Supported feature matrix
+## Supported Feature Matrix
 
 Quantization methods include the following three types:
 <table class="center">
@@ -138,7 +138,7 @@ Quantization methods include the following three types:
 <br>
 <br>
 
-## Get started
+## Get Started
 
 The design philosophy of the quantization interface of Intel(R) Neural Compressor is easy-of-use. It requests user to provide `model`, `calibration dataloader`, and `evaluation function`. Those parameters would be used to quantize and tune the model. 
 
