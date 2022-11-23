@@ -4,8 +4,9 @@ set -x
 echo "copy pre-train model..."
 mkdir -p /tmp/.neural_compressor/inc_ut || true
 cp -r /tf_dataset/ut-localfile/resnet_v2 /tmp/.neural_compressor/inc_ut || true
-mkdir -p /root/.keras/datasets || true
-cp -r /tf_dataset/ut-localfile/cifar-10-batches-py /root/.keras/datasets || true
+mkdir -p ~/.keras/datasets || true
+cp -r /tf_dataset/ut-localfile/cifar-10-batches-py* ~/.keras/datasets || true
+ll ~/.keras/datasets
 
 echo "install dependencies..."
 echo "tensorflow version is $tensorflow_version"
