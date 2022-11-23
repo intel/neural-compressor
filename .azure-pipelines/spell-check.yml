@@ -1,0 +1,26 @@
+trigger: none
+
+pr:
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+      - master
+
+pool: ICX-16C
+
+variables:
+  CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
+
+stages:
+  - stage: PyspellingCodeScan
+    displayName: Pyspelling Code Scan
+    dependsOn: []
+    jobs:
+      - job: Pyspelling
+        displayName: Pyspelling
+        steps:
+          - template: template/code-scan-template.yml
+            parameters:
+              codeScanFileName: "pyspelling"
+              uploadPath: "lpot_pyspelling.log"

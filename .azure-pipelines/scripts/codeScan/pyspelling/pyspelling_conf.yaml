@@ -4,8 +4,10 @@ matrix:
     d: en_US.ISO8859-15
   dictionary:
     wordlists:
-    - ${VAL_REPO}/pyspelling/lpot_dict.txt
-    output: ${VAL_REPO}/pyspelling/lpot_dict.dic
+    - ${DICT_DIR}/lpot_dict.txt
+    output: ${DICT_DIR}/lpot_dict.dic
   sources:
-  - ${LPOT_REPO}/neural_coder/**/*.md
-  - ${LPOT_REPO}/neural_coder/*.md
+  - ${REPO_DIR}/docs/*
+  - ${REPO_DIR}/*.md
+  - ${REPO_DIR}/examples/**/*.md|!${REPO_DIR}/examples/pytorch/**/huggingface_models/**/*.md
+  - ${REPO_DIR}/neural_compressor/**/*.md
