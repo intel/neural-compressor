@@ -10,8 +10,7 @@ pr:
     include:
     - neural_compressor
 
-pool:
-  vmImage: "ubuntu-latest"
+pool: ICX-16C
 
 variables:
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
