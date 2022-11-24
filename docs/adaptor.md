@@ -1,34 +1,39 @@
 Adaptor
 =======
-1. [Adaptor Layer Introduction](#adaptor-layer-introduction)
-2. [Working Flow](#working-flow)
-3. [Adaptor API Summary](#adaptor-api-summary)
+1. [Introduction](#introduction)
+2. [Adaptor Support Matrix](#adaptor-support-matrix)
+3. [Working Flow](#working-flow)
+4. [Get Start with Adaptor API](#get-start-with-adaptor-api)
 
-    3.1 [Query API](#query-api)
+    4.1 [Query API](#query-api)
 
-4. [Example of adding a new backend support](#example-of-adding-a-new-backend-support)
+5. [Example of adding a new backend support](#example-of-adding-a-new-backend-support)
 
-    4.1 [Capability](#capability)
+    5.1 [Capability](#capability)
 
-    4.2 [Implement ONNXRTAdaptor Class](#implement-onnxrtadaptor-class)
+    5.2 [Implement ONNXRTAdaptor Class](#implement-onnxrtadaptor-class)
 
-    4.3 [Pre-optimize](#pre-optimize)
-
-    4.4 [Setting Tune Config](#setting-tune-config)
-
-    4.5 [Do Quantization](#do-quantization)
-
-## Adaptor Layer Introduction
+## Introduction
 
 Intel® Neural Compressor builds the low-precision inference
 solution on popular deep learning frameworks such as TensorFlow, PyTorch,
 MXNet, and ONNX Runtime. The adaptor layer is the bridge between the 
 tuning strategy and vanilla framework quantization APIs.
 
+## Adaptor Support Matrix
+
+|Framework     |Adaptor      |
+|--------------|:-----------:|
+|TensorFlow    |&#10004;     |
+|PyTorch       |&#10004;     |
+|ONNX          |&#10004;     |
+|MXNet         |&#10004;     |
+
+
 ## Working Flow
 Adaptor only provide framework API for tuning strategy. So we can find complete working flow in [tuning strategy working flow](./tuning_strategies.md).
 
-## Adaptor API Summary
+## Get Start with Adaptor API
 
 Neural Compressor supports a new adaptor extension by
 implementing a subclass `Adaptor` class in the neural_compressor.adaptor package
@@ -76,8 +81,6 @@ following information on the current runtime framework.
 
 In the past, the above information was generally defined and hidden in every corner of the code which made effective maintenance difficult. With the Query API, we only need to create one unified yaml file and call the corresponding API to get the information. For example, the [tensorflow.yaml](../neural_compressor/adaptor/tensorflow.yaml) keeps the current Tensorflow framework ability. We recommend that the end user not make modifications if requirements are not clear.
 
-#### Unify Config Introduction
-
 Below is a fragment of the Tensorflow configuration file.
 
 * **precisions** field defines the supported precision for Neural Compressor.
@@ -86,129 +89,6 @@ Below is a fragment of the Tensorflow configuration file.
 * **capabilities** field focuses on the quantization ability of specific ops such as granularity, scheme, and algorithm. The activation assumes the same data type for both input and output activation by default based on op semantics defined by frameworks.
 * **patterns** field defines the supported fusion sequence of each op.
 
-```yaml
-  version:
-    name: '2.4.0'
-  
-  precisions: &common_precisions
-    names: int8, uint8, bf16, fp32
-    valid_mixed_precisions: []
-  
-  ops: &common_ops
-    int8: ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
-    uint8: ['Conv2D', 'DepthwiseConv2dNative', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
-    bf16: ['Conv2D']  #TODO need to add more bf16 op types here
-    fp32: ['*'] # '*' means all op types
-  
-  capabilities: &common_capabilities
-    int8: &ref_2_4_int8 {
-          'Conv2D': {
-            'weight': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_channel','per_tensor'],
-                        'algorithm': ['minmax']
-                        },
-            'activation': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
-                        }
-                    },
-          'MatMul': {
-            'weight': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
-                        },
-            'activation': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
-                        }
-                    },
-          'default': {
-            'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['minmax'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor']
-                        }
-                    },
-          }
-
-    uint8: &ref_2_4_uint8 {
-          'Conv2D': {
-            'weight': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_channel','per_tensor'],
-                        'algorithm': ['minmax']
-                        },
-            'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
-                        }
-                    },
-          'MatMul': {
-            'weight': {
-                        'dtype': ['int8', 'fp32'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax', 'kl']
-                        },
-            'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'scheme': ['asym', 'sym'],
-                        'granularity': ['per_tensor'],
-                        'algorithm': ['minmax']
-                        }
-                    },
-          'default': {
-            'activation': {
-                        'dtype': ['uint8', 'fp32'],
-                        'algorithm': ['minmax'],
-                        'scheme': ['sym'],
-                        'granularity': ['per_tensor']
-                        }
-                    },
-          }
-
-  patterns: &common_patterns
-    fp32: [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.
-        'Conv2D + Add + Relu',
-        'Conv2D + Add + Relu6',
-        'Conv2D + Relu',
-        'Conv2D + Relu6',
-        'Conv2D + BiasAdd'
-        ]
-    int8: ['Conv2D + BiasAdd', 'Conv2D + BiasAdd + Relu', 'Conv2D + BiasAdd + Relu6']
-    uint8: [
-        'Conv2D + BiasAdd + AddN + Relu',
-        'Conv2D + BiasAdd + AddN + Relu6',
-        'Conv2D + BiasAdd + AddV2 + Relu',
-        'Conv2D + BiasAdd + AddV2 + Relu6',
-        'Conv2D + BiasAdd + Add + Relu',
-        'Conv2D + BiasAdd + Add + Relu6',
-        'Conv2D + BiasAdd + Relu',
-        'Conv2D + BiasAdd + Relu6',
-        'Conv2D + Add + Relu',
-        'Conv2D + Add + Relu6',
-        'Conv2D + Relu',
-        'Conv2D + Relu6',
-        'Conv2D + BiasAdd',
-        'DepthwiseConv2dNative + BiasAdd + Relu6',
-        'DepthwiseConv2dNative + Add + Relu6',
-        'DepthwiseConv2dNative + BiasAdd',
-        'MatMul + BiasAdd + Relu',
-        'MatMul + BiasAdd',
-  ]
-```
 #### Query API Introduction
 
 The abstract class `QueryBackendCapability` is defined in [query.py](../neural_compressor/adaptor/query.py#L21). Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation [TensorflowQuery](../neural_compressor/adaptor/tensorflow.py#L628).
@@ -233,98 +113,6 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
    * op_types_to_quantize
 
    We define three configuration files to describe the capability of ONNXRT. Please refer to [onnxrt_qlinear.yaml](../neural_compressor/adaptor/onnxrt_qlinear.yaml), [onnxrt_integer.yaml](../neural_compressor/adaptor/onnxrt_integer.yaml) and [onnxrt_qdq.yaml](../neural_compressor/adaptor/onnxrt_qdq.yaml).
-
-   ```yaml  # qlinear
-    version:
-      name: '1.6.0'
-
-    precisions: &common_precisions
-      names: int8, uint8, fp32
-      valid_mixed_precisions: []
-
-    ops:
-      int8: ['Conv', 'MatMul', 'Attention', 'Mul', 'Relu', 'Clip', 
-          'LeakyRelu', 'Gather', 'Sigmoid', 'MaxPool', 'EmbedLayerNormalization',
-          'FusedConv', 'GlobalAveragePool', 'Add']     
-      fp32: ['*'] # '*' means all op types
-
-    capabilities: &common_capabilities
-      int8: &ref_1_6 {
-            'FusedConv': &key_1_6_0 {
-              'weight': {
-                          'dtype': ['int8'],
-                          'scheme': ['sym'],
-                          'granularity': ['per_channel', 'per_tensor'],
-                          'algorithm': ['minmax']
-                          },
-              'activation': {
-                          'dtype': ['uint8'],
-                          'scheme': ['asym'],
-                          'granularity': ['per_tensor'],
-                          'algorithm': ['minmax']
-                          }
-                      },
-            'Conv': {
-              'weight':   {
-                          'dtype': ['int8'],
-                          'scheme': ['sym'],
-                          'granularity': ['per_channel', 'per_tensor'],
-                          'algorithm': ['minmax']
-                          },
-              'activation': {
-                          'dtype': ['uint8'],
-                          'scheme': ['asym'],
-                          'granularity': ['per_tensor'],
-                          'algorithm': ['minmax']
-                          }
-                      },
-            'Gather': {
-              'weight':   {
-                          'dtype': ['uint8'],
-                          'scheme': ['asym'],
-                          'algorithm': ['minmax'],
-                          'granularity': ['per_channel', 'per_tensor'],
-                          },
-              'activation': {
-                          'dtype': ['uint8'],
-                          'scheme': ['asym'],
-                          'algorithm': ['minmax'],
-                          'granularity': ['per_tensor'],
-                          }
-                      },
-            'MatMul': {
-              'weight':   {
-                          'dtype': ['int8'],
-                          'scheme': ['sym'],
-                          'granularity': ['per_tensor'],
-                          'algorithm': ['minmax']
-                          },
-              'activation': {
-                          'dtype': ['uint8'],
-                          'scheme': ['asym'],
-                          'granularity': ['per_tensor'],
-                          'algorithm': ['minmax']
-                          }
-                      },
-            'default': {
-               'weight': {
-                          'dtype': ['int8'],
-                          'scheme': ['sym'],
-                          'algorithm': ['minmax'],
-                          'granularity': ['per_tensor']
-                      },
-               'activation': {
-                          'dtype': ['uint8'],
-                          'scheme': ['asym'],
-                          'algorithm': ['minmax'],
-                          'granularity': ['per_tensor']
-                          }
-                      },
-            }
-
-    graph_optimization: &default_optimization  # from onnxruntime graph_optimization_level
-        level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
-   ```
 
 ### Implement ONNXRTAdaptor Class
 
@@ -366,71 +154,3 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
       def save(self, model, path):
         ......
    ```
-
-### Pre-optimize
-
-   If your backend supports FP32 graph optimization, you can apply it in **query_fw_capability** and quantize your optimized fp32 model instead of
-   the original model: 
-   >model = self.pre_optimized_model if self.pre_optimized_model else model
-
-### Setting Tune Config
-
-   Now we can use onnxrt adaptor to compress the onnx model by setting tune config.
-
-   Tuning config is a yaml file to control the behavior of compressor. please refer to [example](../examples/onnxrt/image_recognition/mobilenet_v2/quantization/ptq/mobilenet_v2.yaml).
-
-   ```yaml
-
-   model:
-      name: xxx                             # mandatory. the model name.
-      framework: onnxrt_qlinearops
-
-   device: cpu
-
-   tuning:
-      strategy:
-        name: basic
-      accuracy_criterion:
-        relative:  0.01
-      objective: performance
-      exit_policy:
-        timeout: 0
-        max_trials: 100
-      ......
-
-   quantization:
-      approach: post_training_static_quant
-      op_wise: {
-        'fuse': {'int8': [['CONV2D', 'RELU', 'BN'], ['CONV2D', 'RELU']],
-        'fp32': [['CONV2D', 'RELU', 'BN']]}, 
-        'calib_iteration': 10,
-        'op': {
-        ['op1', 'CONV2D']: {
-            'activation':  {'dtype': 'uint8',
-                            'algorithm': 'minmax',
-                            'scheme':'sym',
-                            'granularity': 'per_tensor'},
-            'weight': {'dtype': 'int8',
-                        'algorithm': 'kl',
-                        'scheme':'asym',
-                        'granularity': 'per_channel'}
-        },
-        ['op2', 'RELU]: {
-            'activation': {'dtype': 'int8',
-                            'scheme': 'asym',
-                            'granularity': 'per_tensor',
-                            'algorithm': 'minmax'}
-        },
-        ['op3', 'CONV2D']: {
-            'activation':  {'dtype': 'fp32'},
-            'weight': {'dtype': 'fp32'}
-        },
-        ...
-      }
-   ```
-   Then you can parse this config into a format that ONNXQuantizer can accept.
-   Verify whether your quantization API supports model wise or op wise quantization. For example, node "conv1" uses the "minmax" algorithm and node "conv2" uses the "KL" algorithm, or the whole model must use "minmax" or "KL" in general.
-
-### Do Quantization
-
-   Refer to [example](../examples/onnxrt/image_recognition/mobilenet_v2/quantization/ptq/README.md) as an example.
