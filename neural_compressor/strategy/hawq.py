@@ -55,22 +55,7 @@ class HessianTrace:
             self.criterion = torch.nn.CrossEntropyLoss().to(self.device)  ##TODO need to set in config
         self.criterion = self.criterion.to(self.device)
         self.weight_to_op, self.op_list = self.get_fused_mapping()
-
-    def get_qnt_weight_loss(self, weights_name):
-
-        fp32_model = self.fp32model
-
-        qnt_model = self.q_model
-
-        # print(self.model.state_dict())
-        for n, p in self.model.named_parameters():
-            print(n)
-
-        print("*" * 20)
-
-        for n, p in self.q_model._model.named_parameters():
-            print(n)
-        pass
+        self.get_params()
 
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -149,7 +134,6 @@ class HessianTrace:
         return samples
 
     def get_vtHv_weight(self, params, num_samples):
-        num_batches = (num_samples + self.dataloader.batchsize - 1) // self.dataloader
         v = self.sample_rademacher(params)
         H_v = [0] * len(v)
         cnt = 0
@@ -159,7 +143,7 @@ class HessianTrace:
             gradients = self.get_gradients(self.model, data, self.criterion, create_graph=True)
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
             H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
-            if step == num_batches - 1:
+            if cnt >=num_samples:
                 break
         if cnt > 0:
             H_v = [item / cnt for item in H_v]
@@ -246,7 +230,6 @@ class HessianTrace:
         self.params = params
 
     def get_weight_traces(self, num_samples):
-
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for i in range(self.max_iter):
@@ -261,7 +244,7 @@ class HessianTrace:
                 break
             prev_avg_model_trace = model_trace
         weight_name_to_traces = {}
-
+        layer_traces = layer_traces_estimate
         for weight_name, trace in zip(self.weight_names, layer_traces):
             weight_name_to_traces[weight_name] = trace
         op_name_to_trace = {}
@@ -269,7 +252,6 @@ class HessianTrace:
             op_name = self.weight_to_op[weight_name]
             op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
         return op_name_to_trace
-        return layer_traces_estimate
 
     def get_act_traces(self, num_samples):
         self.hook_handles = []
@@ -279,24 +261,18 @@ class HessianTrace:
         for i in range(self.max_iter):
             pass
 
-    def get_avg_traces(self, enable_act=True, num_samples=100):
+    def get_avg_traces(self, enable_act=True, num_samples=32):
         """
         Estimates average hessian trace for each parameter
         """
 
         assert num_samples > 0
-
-        ##num_data_iter = self.op_cfgs_list[0]['calib_iteration']
-        ##num_all_data = num_data_iter * self.dataloader.batch_size
-        ##op_list = self.op_list
-        ##TODO setting this in config
-        self.get_params()
-        # names = [n for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
-        # params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]##remove bias
+        weight_traces = self.get_weight_traces(num_samples)
+        return weight_traces
 
         ## handle activation
-        if enable_act:
-            self.get_act_traces(num_samples)
+        # if enable_act:
+        #     self.get_act_traces(num_samples)
             ##change batchsize to 1
 
         #
@@ -527,12 +503,12 @@ class HawqTuneStrategy(TuneStrategy):
             q_model_state_dict[new_key] = self.q_model.state_dict()[key]
 
         weight_quant_loss = compare_weights(ht.model.state_dict(), q_model_state_dict)
-        pertur_lst={}
+        pertur_lst = {}
         for key in weight_quant_loss:
-            op_float_tensor=weight_quant_loss[key]['float']
-            op_qnt_tensor=weight_quant_loss[key]['quantized'].dequantize()
-            diff_l2=(torch.norm(op_float_tensor-op_qnt_tensor,p=2)**2) #Formula: L2=||Q(w)-w||p^2
-            pertur_lst[key]=diff_l2
+            op_float_tensor = weight_quant_loss[key]['float']
+            op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
+            diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)  # Formula: L2=||Q(w)-w||p^2
+            pertur_lst[key] = diff_l2
         # for i in pertur_lst:
         #     print(pertur_lst[i])
         op_to_traces = ht.get_avg_traces()
