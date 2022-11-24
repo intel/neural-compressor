@@ -1198,6 +1198,85 @@ class OnnxGraph:
                 return False
         return True
 
+    def convert_qdq_nodes(self, q_node, dq_node):
+        """Convert tensorflow QuantizeV2/Dequantize nodes to QuantizeLinear/DequantizeLinear."""
+        qdq_node_output_dtype = self.get_dtype(dq_node.output[0])
+        qdq_node_output_shape = self.get_shape(dq_node.output[0])
+
+        # Get the attributes of qdq node
+        narrow_range = q_node.attr['narrow_range'].i
+        signed_input = bool(q_node.get_attr_value('T', TensorProto.INT8) == TensorProto.INT8)
+
+        min_quantized, max_quantized = [-127, 127]
+        if not narrow_range and signed_input:
+            min_quantized = -128
+
+        if not signed_input:
+            min_quantized, max_quantized = [0, 255]
+
+        # Get axis attribute for per channel implementation.
+        axis = q_node.get_attr_value('axis', -1)
+        q_attrs = {}
+
+        quantized_np_dtype = np.int8 if signed_input else np.uint8
+        quantized_dtype = TensorProto.INT8 if signed_input else TensorProto.UINT8
+
+        if axis != -1:
+            utils.assert_error(self.opset >= 13, "Opset >= 13 is required for per channel quantization")
+            q_attrs['axis'] = axis
+
+        min_np = np.array(min_quantized, np.float32)
+        max_np = np.array(max_quantized, np.float32)
+        max_quantized_const = self.make_const(utils.set_name("max_const"), max_np).output[0]
+        if signed_input:
+            min_quantized_const = self.make_const(utils.set_name("min_const"), min_np).output[0]
+        reduce_attr = {'keepdims': 0}
+        if axis != -1:
+            inp_rank = self.get_rank(q_node.input[0])
+            utils.assert_error(inp_rank is not None, "Input rank cannot be unknown for qdq op %s", q_node.name)
+            reduce_axes = [i for i in range(inp_rank) if i != axis]
+            reduce_attr['axes'] = reduce_axes
+
+        max_value = self.make_node("ReduceMax", [q_node.input[0]], attr=reduce_attr).output[0]
+        if signed_input:
+            min_value = self.make_node("ReduceMin", [q_node.input[0]], attr=reduce_attr).output[0]
+
+        scale_from_max_side = self.make_node("Div", [max_value, max_quantized_const]).output[0]
+        if signed_input:
+            scale_from_min_side = self.make_node("Div", [min_value, min_quantized_const]).output[0]
+            scale = self.make_node("Max", [scale_from_min_side, scale_from_max_side]).output[0]
+        else:
+            scale = scale_from_max_side
+
+        if axis == -1:
+            zero_point_np = np.zeros([], dtype=quantized_np_dtype)
+            zero_point = self.make_const(utils.set_name("zero_point"), zero_point_np).output[0]
+        else:
+            zero_tensor = helper.make_tensor("value", quantized_dtype, dims=[1], vals=[0])
+            scale_shape = self.make_node("Shape", [scale]).output[0]
+            zero_point = self.make_node("ConstantOfShape", inputs=[scale_shape],
+                                        attr={"value": zero_tensor}).output[0]
+
+        quant_node = self.make_node(op_type="QuantizeLinear",
+                                 inputs=[q_node.input[0], scale, zero_point],
+                                 shapes=[qdq_node_output_shape],
+                                 attr=q_attrs,
+                                 dtypes=[quantized_dtype],
+                                 name=utils.set_name("QuantLinearNode"))
+
+        self.set_shape(quant_node.output[0], qdq_node_output_shape)
+
+        self.remove_node(q_node.name)
+        self.remove_node(dq_node.name)
+
+        dequant_node = self.make_node(op_type="DequantizeLinear",
+                                   inputs=[quant_node.output[0], scale, zero_point],
+                                   outputs=[dq_node.output[0]],
+                                   shapes=[qdq_node_output_shape],
+                                   attr=q_attrs,
+                                   dtypes=[qdq_node_output_dtype],
+                                   name=utils.set_name("DequantLinearNode"))
+        self.set_shape(dequant_node.output[0], qdq_node_output_shape)
 
 class GraphUtil(object):
     """Utilities for Graph manipulation."""

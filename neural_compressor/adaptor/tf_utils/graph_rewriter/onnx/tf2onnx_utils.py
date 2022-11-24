@@ -70,6 +70,7 @@ TF2ONNX_DTYPE_MAP = {
     types_pb2.DT_INT32: onnx_pb.TensorProto.INT32,
     types_pb2.DT_UINT8: onnx_pb.TensorProto.UINT8,
     types_pb2.DT_QUINT8: onnx_pb.TensorProto.UINT8,
+    types_pb2.DT_QINT8: onnx_pb.TensorProto.INT8,
     types_pb2.DT_UINT16: onnx_pb.TensorProto.UINT16,
     types_pb2.DT_UINT32: onnx_pb.TensorProto.UINT32,
     types_pb2.DT_UINT64: onnx_pb.TensorProto.UINT64,
@@ -205,23 +206,26 @@ def read_tensorflow_node_attrs(node):
     """Read tensorflow node attribute names."""
     attr = {}
 
-    for each_attr in node.node_def.attr:
-        value = get_tensorflow_node_attr(node, each_attr)
-        if each_attr in TF2ONNX_IGNORED_NODE_ATTRS or each_attr in TF2ONNX_SUBGRAPH_ATTRS or \
+    for attr_name in node.node_def.attr:
+        value = get_tensorflow_node_attr(node, attr_name)
+        if attr_name == 'T' and node.type in ('QuantizeV2', 'Dequantize'):
+            attr[attr_name] = TensorProto.INT8 if get_tensorflow_node_attr(node, attr_name) == 'qint8' \
+                              else TensorProto.UINT8
+        elif attr_name in TF2ONNX_IGNORED_NODE_ATTRS or attr_name in TF2ONNX_SUBGRAPH_ATTRS or \
            isinstance(value, tensor_pb2.TensorProto):
             pass
-        elif each_attr == "shape":
+        elif attr_name == "shape":
             shape = get_tensorflow_node_shape_attr(node)
             if shape is not None:
-                attr[each_attr] = shape
-        elif each_attr == "DstT":
+                attr[attr_name] = shape
+        elif attr_name == "DstT":
             attr["to"] = map_tensorflow_dtype(value)
         elif isinstance(value, tf.DType):
-            attr[each_attr] = map_tensorflow_dtype(value)
+            attr[attr_name] = map_tensorflow_dtype(value)
         elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], tf.DType):
-            attr[each_attr] = [map_tensorflow_dtype(v) for v in value]
+            attr[attr_name] = [map_tensorflow_dtype(v) for v in value]
         else:
-            attr[each_attr] = get_tensorflow_node_attr(node, each_attr)
+            attr[attr_name] = get_tensorflow_node_attr(node, attr_name)
 
     return attr
 
@@ -250,9 +254,9 @@ def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, init
     inputs = []
     outputs = []
     for inp, shape, dtype in zip(node.input, input_shapes, input_dtypes):
-        inputs.append(utils.make_onnx_inputs_outputs(inp, dtype, shape))
+        inputs.append(make_onnx_inputs_outputs(inp, dtype, shape))
     for output in node.output:
-        outputs.append(utils.make_onnx_inputs_outputs(output, TensorProto.UNDEFINED, None))
+        outputs.append(make_onnx_inputs_outputs(output, TensorProto.UNDEFINED, None))
     graph_proto = helper.make_graph([build_onnx_op(node)], "infer-graph", inputs, outputs, initializer=initializers)
     imp = OperatorSetIdProto()
     imp.version = opset_version

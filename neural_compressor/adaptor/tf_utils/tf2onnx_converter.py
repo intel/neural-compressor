@@ -18,8 +18,9 @@
 import logging
 import tensorflow as tf
 from onnx import helper
-from tensorflow.core.framework import tensor_pb2
+from tensorflow.core.framework import tensor_pb2, node_def_pb2
 
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 from .graph_rewriter.onnx import tf2onnx_utils as utils
 from .graph_rewriter.onnx.onnx_graph import OnnxGraph
@@ -35,14 +36,82 @@ class TensorflowQDQToOnnxQDQConverter:
         Args:
             model (graphdef): tensorflow QDQ graphdef
         """
+        graph_def = self.pre_optimize(model)
         graph = tf.Graph()
         with graph.as_default():
-            tf.import_graph_def(model)
+            tf.import_graph_def(graph_def)
 
         self.graph = graph
         self.opset_version = opset_version
         self.input_names = input_names
         self.output_names = output_names
+
+    def duplicate_quantizev2_nodes(self, model):
+        """Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2."""
+        cur_graph = GraphAnalyzer()
+        cur_graph.graph = model
+        graph_info = cur_graph.parse_graph()
+
+        # Scan the QDQ pairs
+        patterns = [['QuantizeV2'], ['Dequantize']]
+        matched_nodes = cur_graph.query_fusion_pattern_nodes(patterns)
+
+        # Append the QDQ pairs to QuantizeV2 nodes map and Dequantize nodes map
+        quantizev2_map = {}
+        dequantize_map = {}
+
+        for i in matched_nodes:
+            quantizev2_input_node_name = graph_info[i[0]].node.input[0]
+            if quantizev2_input_node_name in quantizev2_map:
+                quantizev2_map[quantizev2_input_node_name].append(graph_info[i[0]].node)
+                dequantize_map[quantizev2_input_node_name].append(graph_info[i[1]].node)
+            else:
+                quantizev2_map[quantizev2_input_node_name] = [graph_info[i[0]].node]
+                dequantize_map[quantizev2_input_node_name] = [graph_info[i[1]].node]
+
+        # Find out the QuantizeV2 nodes which needs to be duplicated
+        for input_map_node_name, quantizev2_nodes in quantizev2_map.items():
+            if input_map_node_name not in cur_graph.node_name_details:
+                continue
+
+            dequantize_nodes = dequantize_map[input_map_node_name]
+            if len(dequantize_nodes) == 1:
+                continue
+
+            do_duplicate = True
+            quantizev2_node_name = quantizev2_nodes[0].name
+            for index, node in enumerate(quantizev2_nodes):
+                if index == 0:
+                    continue
+                if node.name != quantizev2_node_name:
+                    do_duplicate = False
+
+            # Duplicate the QuantizeV2 nodes
+            if do_duplicate:
+                for index in range(len(dequantize_nodes) - 1):
+                    dequantize_node = dequantize_nodes[index + 1]
+                    new_quantizev2_node = node_def_pb2.NodeDef()
+                    new_quantizev2_node.CopyFrom(quantizev2_nodes[0])
+                    new_quantizev2_node.name = quantizev2_nodes[0].name + '_copy_' + str(index+1)
+                    cur_graph.add_node(
+                        new_quantizev2_node, input_map_node_name, [dequantize_node.name])
+                    cur_graph.node_name_details[dequantize_node.name].node.ClearField('input')
+                    cur_graph.node_name_details[dequantize_node.name].node.input.extend([
+                        new_quantizev2_node.name, new_quantizev2_node.name + ':1',
+                        new_quantizev2_node.name + ':2'])
+
+        return cur_graph.dump_graph()
+
+    def pre_optimize(self, model):
+        """Pre optimize the tensorflow graphdef to make ONNX QDQ model convert more easier."""
+        # Convert HostConst to Const
+        for node in model.node:
+            if node.op == 'HostConst':
+                node.op = 'Const'
+
+        # Duplicat the QuantizeV2 node if it has multi Dequantize nodes
+        model = self.duplicate_quantizev2_nodes(model)
+        return model
 
     @dump_elapsed_time("Pass TensorflowQDQToOnnxQDQConverter")
     def convert(self, save_path):
@@ -103,20 +172,18 @@ class TensorflowQDQToOnnxQDQConverter:
         # Build ONNX Graph using onnx_nodes, output_shapes and dtypes
         onnx_graph = OnnxGraph(onnx_nodes, output_shapes, dtypes)
 
-        # Convert QDQ pattern and Insert them into the ONNX Graph
-        
-        
-        
-        
-        # 
-
+        # Convert TF QDQ pattern to ONNX QDQ format
+        for node in onnx_graph.get_nodes():
+            if node.type == 'Dequantize':
+                parent_node = onnx_graph.get_node_by_name(node.input[0].rsplit(':', 1)[0])
+                if parent_node:
+                    if parent_node.type == 'QuantizeV2':
+                        onnx_graph.convert_qdq_nodes(parent_node, node)
 
         # Build ONNX model
         model_proto = onnx_graph.make_model("converted from neural compressor")
         # Save ONNX model
         utils.save_protobuf(save_path, model_proto)
 
-        logger.info("Successfully converted TensorFlow model to ONNX")
         logger.info("Model inputs: %s", [n.name for n in model_proto.graph.input])
         logger.info("Model outputs: %s", [n.name for n in model_proto.graph.output])
-

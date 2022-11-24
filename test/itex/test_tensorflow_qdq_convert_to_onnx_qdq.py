@@ -55,8 +55,6 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
-        if version1_gte_version2(tf.version.VERSION, '2.8.0'):
-            shutil.rmtree('workspace')
 
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
@@ -92,7 +90,11 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
             quantizer.calib_dataloader = common.DataLoader(dataset)
             quantizer.model = output_graph_def
             output_graph = quantizer.fit()
-            output_graph.export("workspace/tf_qdq_to_onnx_qdq.onxx")
+            output_graph.save("/home/lvl/tf_itex_qdq.pb")
+            output_graph.export("workspace/tf_qdq_to_onnx_qdq.onnx")
+            import onnx
+            onnx_model = onnx.load("workspace/tf_qdq_to_onnx_qdq.onnx")
+            onnx.checker.check_model(onnx_model)
 
 if __name__ == '__main__':
     unittest.main()
