@@ -712,6 +712,132 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
         )
 
 
+class ExportConfig:
+    def __init__(
+        self,
+        dtype="int8",
+        opset_version=14,
+        quant_mode="'QDQ'",
+        sample_inputs=None,
+        input_names=None,
+        output_names=None,
+        dynamic_axes=None,
+        **kwargs,
+    ):
+        self._dtype = dtype
+        self._opset_version = opset_version
+        self._quant_mode = quant_mode
+        self._sample_inputs = sample_inputs
+        self._input_names = input_names
+        self._output_names = output_names
+        self._dynamic_axes = dynamic_axes
+        self._kwargs = kwargs
+
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @dtype.setter
+    def dtype(self, dtype):
+        self._dtype = dtype
+
+    @property
+    def opset_version(self):
+        return self._opset_version
+
+    @opset_version.setter
+    def opset_version(self, opset_version):
+        self._opset_version = opset_version
+
+    @property
+    def quant_mode(self):
+        return self._quant_mode
+
+    @quant_mode.setter
+    def quant_mode(self, quant_mode):
+        self._quant_mode = quant_mode
+
+    @property
+    def sample_inputs(self):
+        return self._sample_inputs
+
+    @sample_inputs.setter
+    def sample_inputs(self, sample_inputs):
+        self._sample_inputs = sample_inputs
+
+    @property
+    def input_names(self):
+        return self._input_names
+
+    @input_names.setter
+    def input_names(self, input_names):
+        self._input_names = input_names
+
+    @property
+    def output_names(self):
+        return self._output_names
+
+    @output_names.setter
+    def output_names(self, output_names):
+        self._output_names = output_names
+
+    @property
+    def dynamic_axes(self):
+        return self._output_names
+
+    @dynamic_axes.setter
+    def dynamic_axes(self, dynamic_axes):
+        self._dynamic_axes = dynamic_axes
+
+
+class Torch2ONNXConfig(ExportConfig):
+     def __init__(
+        self,
+        dtype="int8",
+        opset_version=14,
+        quant_mode="'QDQ'",
+        sample_inputs=None,
+        input_names=None,
+        output_names=None,
+        dynamic_axes=None,
+        **kwargs,
+    ):
+        super().__init__(
+            dtype=dtype,
+            opset_version=opset_version,
+            quant_mode=quant_mode,
+            sample_inputs=sample_inputs,
+            input_names=input_names,
+            output_names=output_names,
+            dynamic_axes=dynamic_axes,
+            kwargs=kwargs,
+        )
+
+
+class TF2ONNXConfig(ExportConfig):
+     def __init__(
+        self,
+        dtype="int8",
+        opset_version=14,
+        quant_mode="'QDQ'",
+        sample_inputs=None,
+        input_names=None,
+        output_names=None,
+        dynamic_axes=None,
+        **kwargs,
+    ):
+        super().__init__(
+            dtype=dtype,
+            opset_version=opset_version,
+            quant_mode=quant_mode,
+            sample_inputs=sample_inputs,
+            input_names=input_names,
+            output_names=output_names,
+            dynamic_axes=dynamic_axes,
+            kwargs=kwargs,
+        )
+
+
 def set_random_seed(seed: int):
     options.random_seed
 
