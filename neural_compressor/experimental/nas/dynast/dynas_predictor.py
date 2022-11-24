@@ -1,3 +1,5 @@
+"""DyNAS Manager class."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -25,6 +27,10 @@ from sklearn.model_selection import GridSearchCV
 
 
 class Predictor:
+    """The Predictor class.
+
+    It handles the prediction of the metrics like accuracy, MACs and latency etc..
+    """
 
     DEFAULT_ALPHAS = np.arange(0.1, 10.1, 0.1)
     DEFAULT_COST_FACTORS = np.arange(1.0, 101.0, 1.0)
@@ -32,7 +38,7 @@ class Predictor:
 
     def __init__(self, alphas=DEFAULT_ALPHAS, cost_factors=DEFAULT_COST_FACTORS,
                  max_iterations=DEFAULT_MAX_ITERATIONS, verbose=False):
-
+        """Initialize the attributes."""
         SEARCHER_VERBOSITY = 10
 
         # Initialize label normalization factor
@@ -53,18 +59,12 @@ class Predictor:
             scoring='neg_mean_absolute_percentage_error', verbose=SEARCHER_VERBOSITY if (verbose) else 0))
 
     def train(self, examples, labels):
+        """Train the predictor on the specified examples and labels using the underlying regressor.
 
-        '''
-        Trains the predictor on the specified examples and labels using the underlying regressor.
-        Parameters
-        ----------
+        Args:
             examples: Examples to be used for training.
             labels: Labels to be used for training.
-        Returns
-        -------
-            None
-        '''
-
+        """
         # Compute normalized labels
         self.normalization_factor = 10 ** (np.floor(np.log10(np.amax(labels))) - 1.0)
         normalized_labels = labels / self.normalization_factor
@@ -79,16 +79,14 @@ class Predictor:
         self.best_index = np.argmax(scores)
 
     def predict(self, examples):
-        '''
-        Predicts the output values of the specified examples using the underlying regressor.
-        Parameters
-        ----------
-            examples: Examples for which predictions will be made.
-        Returns
-        -------
-            Predictions of the specified examples.
-        '''
+        """Predict the output values of the specified examples using the underlying regressor.
 
+        Args:
+            examples: Examples for which predictions will be made.
+
+        Returns:
+            Predictions of the specified examples.
+        """
         # Compute predictions
         regressor = self.searchers[self.best_index].best_estimator_
         normalized_predictions = regressor.predict(examples)
@@ -97,16 +95,11 @@ class Predictor:
         return predictions
 
     def get_parameters(self):
-        '''
-        Returns the optimal parameter values of the underlying regressor.
-        Parameters
-        ----------
-            None
-        Returns
-        -------
-            Optimal parameter values of the underlying regressor.
-        '''
+        """Return the optimal parameter values of the underlying regressor.
 
+        Returns:
+            Optimal parameter values of the underlying regressor.
+        """
         # Retrieve optimal parameters
         parameters = {}
         for searcher in self.searchers:
@@ -118,21 +111,19 @@ class Predictor:
         return parameters
 
     def get_metrics(self, examples, labels):
-        '''
-        Computes the performance metrics of the underlying regressor.
-        Parameters
-        ----------
+        """Compute the performance metrics of the underlying regressor.
+
+        Args:
             examples: Examples to use when computing performance metrics.
             labels: Labels to use when computing performance metrics.
-        Returns
-        -------
+
+        Returns:
             Performance metrics of the underlying regressor. The metrics are
                 Mean absolute percentage error (MAPE)
                 Root mean squared error (RMSE)
                 Kendall rank correlation coefficient (kendall)
                 Spearman's rank correlation coefficient (spearman)
-        '''
-
+        """
         # Compute predictions of specified examples
         predictions = self.predict(examples)
 
@@ -145,16 +136,11 @@ class Predictor:
         return mape, rmse, kendall, spearman
 
     def load(self, filename):
-        '''
-        Loads the model of the underlying regressor and searcher.
-        Parameters
-        ----------
-            filename: Name of the file from which to load the model.
-        Returns
-        -------
-            None
-        '''
+        """Load the model of the underlying regressor and searcher.
 
+        Args:
+            filename: Name of the file from which to load the model.
+        """
         # Load searcher and regressor from specified file
         with open(filename, 'rb') as input_file:
             self.normalization_factor = pickle.load(input_file)
@@ -162,16 +148,11 @@ class Predictor:
             self.searchers = pickle.load(input_file)
 
     def save(self, filename):
-        '''
-        Saves the model of the underlying regressor and searcher.
-        Parameters
-        ----------
-            filename: Name of the file to which to save the model.
-        Returns
-        -------
-            None
-        '''
+        """Save the model of the underlying regressor and searcher.
 
+        Args:
+            filename: Name of the file to which to save the model.
+        """
         # Save searcher and regressor to specified file
         with open(filename, 'wb') as output_file:
             pickle.dump(self.normalization_factor, output_file)

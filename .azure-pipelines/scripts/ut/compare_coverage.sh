@@ -229,7 +229,7 @@ function main {
             done
         fi
     done
-    # generage table end
+    # generate table end
     echo """</table></div></body></html>""" >> ${output_file}
 
 }

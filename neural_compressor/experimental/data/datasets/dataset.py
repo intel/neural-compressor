@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""This is the base class for each framework."""
+
 from abc import abstractmethod
 import os
 from neural_compressor.utils.utility import LazyImport, singleton
@@ -31,58 +33,102 @@ zipfile = LazyImport('zipfile')
 pickle = LazyImport('pickle')
 glob = LazyImport('glob')
 
+
 @singleton
 class TensorflowDatasets(object):
+    """The base class of Tensorflow datasets class."""
+
     def __init__(self):
+        """Initialize the attributes of class."""
         self.datasets = {}
         self.datasets.update(TENSORFLOW_DATASETS)
 
 
 @singleton
 class PyTorchDatasets(object):
+    """The base class of PyTorch datasets class."""
+
     def __init__(self):
+        """Initialize the attributes of class."""
         self.datasets = {
             'ImageFolder': PytorchMxnetWrapDataset(
                     torchvision.datasets.ImageFolder),
         }
         self.datasets.update(PYTORCH_DATASETS)
 
+
 @singleton
 class MXNetDatasets(object):
+    """The base class of MXNet datasets class."""
+
     def __init__(self):
+        """Initialize the attributes of class."""
         self.datasets = {}
         self.datasets.update(MXNET_DATASETS)
 
+
 @singleton
 class ONNXRTQLDatasets(object):
+    """The base class of ONNXRT QLinear datasets class."""
+
     def __init__(self):
+        """Initialize the attributes of class."""
         self.datasets = {}
         self.datasets.update(ONNXRTQL_DATASETS)
 
+
 @singleton
 class ONNXRTITDatasets(object):
+    """The base class of ONNXRT IT datasets class."""
+
     def __init__(self):
+        """Initialize the attributes of class."""
         self.datasets = {}
         self.datasets.update(ONNXRTIT_DATASETS)
 
+
 class PytorchMxnetWrapDataset():
+    """The base class for PyTorch and MXNet frameworks.
+
+    Args:
+        datafunc: The datasets class of PyTorch or MXNet.
+    """
+
     def __init__(self, datafunc):
+        """Initialize the attributes of class."""
         self.datafunc = datafunc
 
     def __call__(self, transform=None, filter=None, *args, **kwargs):
+        """Wrap the dataset for PyTorch and MXNet framework."""
         return PytorchMxnetWrapFunction(self.datafunc, transform=transform, \
                         filter=filter, *args, **kwargs)
 
+
 class PytorchMxnetWrapFunction():
+    """The Helper class for PytorchMxnetWrapDataset.
+
+    Args:
+        dataset (datasets class): The datasets class of PyTorch or MXNet.
+        transform (transform object):  transform to process input data.
+        filter (Filter objects): filter out examples according to specific
+                                 conditions.
+    """
+
     def __init__(self, dataset, transform, filter, *args, **kwargs):
+        """Initialize the attributes of class."""
         self.dataset = dataset(*args, **kwargs)
         self.transform = transform
         self.filter = filter
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.dataset)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.dataset[index]
         if self.transform is not None:
             sample = self.transform(sample)
@@ -113,7 +159,16 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 
 
 class DATASETS(object):
+    """A base class for all framework datasets.
+
+    Args:
+        framework (str): framework name, like:"tensorflow", "tensorflow_itex",
+                         "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
+                         "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator".
+    """
+
     def __init__(self, framework):
+        """Initialize the attributes of class."""
         assert framework in ["tensorflow", "tensorflow_itex", \
                              "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops", \
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator"], \
@@ -121,9 +176,14 @@ class DATASETS(object):
         self.datasets = framework_datasets[framework]().datasets
 
     def __getitem__(self, dataset_type):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         assert dataset_type in self.datasets.keys(), "dataset type only support {}".\
             format(self.datasets.keys())
         return self.datasets[dataset_type]
+
 
 # user/model specific datasets will be registered here
 TENSORFLOW_DATASETS = {}
@@ -149,8 +209,7 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
 
 
 def dataset_registry(dataset_type, framework, dataset_format=''):
-    """The class decorator used to register all Dataset subclasses.
-
+    """Register dataset subclasses.
 
     Args:
         cls (class): The class of register.
@@ -184,13 +243,18 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
 
 
 class Dataset(object):
-    """ The base class of dataset. Subclass datasets should overwrite two methods:
-    `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
+    """The base class of dataset.
 
+    Subclass datasets should overwrite two methods:
+    `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
     """
 
     @abstractmethod
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         raise NotImplementedError
 
     # it's suggested to implement your  __len__ method though we do not set it in abstract class
@@ -198,17 +262,32 @@ class Dataset(object):
     # def __len__(self):
     #     raise NotImplementedError
 
-class IterableDataset(object):
-    """An iterable Dataset. Subclass iterable dataset should also implement a method:
-    `__iter__` for interating over the samples of the dataset.
 
+class IterableDataset(object):
+    """An iterable Dataset.
+
+    Subclass iterable dataset should also implement a method:
+    `__iter__` for interating over the samples of the dataset.
     """
 
     @abstractmethod
     def __iter__(self):
+        """Magic method.
+
+        Returns the iterator object itself.
+        """
         raise NotImplementedError
 
-def download_url(url, root, filename=None, md5=None): # pragma: no cover
+
+def download_url(url, root, filename=None, md5=None):  # pragma: no cover
+    """Download from url.
+
+    Args:
+        url (str): the address to download from.
+        root (str): the path for saving.
+        filename (str): the file name for saving.
+        md5 (str): the md5 string.
+    """
     import urllib
     root = os.path.expanduser(root)
     if not filename:
@@ -240,24 +319,32 @@ def download_url(url, root, filename=None, md5=None): # pragma: no cover
         if not check_integrity(fpath, md5):
             raise RuntimeError("File not found or corrupted.")
 
+
 def gen_bar_updater():
+    """Generate progress bar."""
     from tqdm import tqdm
     pbar = tqdm(total=None)
+
     def bar_update(count, block_size, total_size):
+        """Update progress bar."""
         if pbar.total is None and total_size:
             pbar.total = total_size
         progress_bytes = count * block_size
         pbar.update(progress_bytes - pbar.n)
     return bar_update
 
+
 def check_integrity(fpath, md5):
+    """Check MD5 checksum."""
     if not os.path.isfile(fpath):
         return False
     if md5 is None:
         return True
     return md5 == calculate_md5(fpath)
 
+
 def calculate_md5(fpath, chunk_size=1024*1024):
+    """Generate MD5 checksum for a file."""
     md5 = hashlib.md5()
     with open(fpath, 'rb') as f:
         for chunk in iter(lambda: f.read(chunk_size), b''):
@@ -267,7 +354,7 @@ def calculate_md5(fpath, chunk_size=1024*1024):
 @dataset_registry(dataset_type="CIFAR10", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class CIFAR10(Dataset):
-    """Configuration for CIFAR10 and CIFAR100 database
+    """The CIFAR10 and CIFAR100 database.
 
     For CIFAR10: If download is True, it will download dataset to root/ and extract it
                  automatically, otherwise user can download file from
@@ -289,6 +376,7 @@ class CIFAR10(Dataset):
                                        and puts it in root directory. If dataset is already
                                        downloaded, it is not downloaded again.
     """
+
     url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
     filename = "cifar-10-python.tar.gz"
     tgz_md5 = 'c58f30108f718f92721af3b95e74349a'
@@ -310,8 +398,13 @@ class CIFAR10(Dataset):
         'md5': '5ff9c542aee3614f3951f8cda6e48888',
     }
 
-    def __init__(self, root, train=False, transform=None, filter=None,
-                    download=True): # pragma: no cover
+    def __init__(self,
+                 root,
+                 train=False,
+                 transform=None,
+                 filter=None,
+                 download=True):  # pragma: no cover
+        """Initialize the attributes of class."""
         self.root = root
         if download:
             self.download()
@@ -341,7 +434,8 @@ class CIFAR10(Dataset):
         self.load_meta()
         self.transform = transform
 
-    def load_meta(self): # pragma: no cover
+    def load_meta(self):  # pragma: no cover
+        """Load meta."""
         path = os.path.join(self.root, self.meta['filename'])
         if not check_integrity(path, self.meta['md5']):
             raise RuntimeError('Dataset metadata file not found or corrupted.' +
@@ -351,16 +445,22 @@ class CIFAR10(Dataset):
             self.classes = data[self.meta['key']]
         self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
 
-    def __getitem__(self, index): # pragma: no cover
+    def __getitem__(self, index):  # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         if self.transform is not None:
             image, label = self.transform((image, label))
         return image, label
 
-    def __len__(self): # pragma: no cover
+    def __len__(self):  # pragma: no cover
+        """Length of the dataset."""
         return len(self.data)
 
-    def download(self): # pragma: no cover
+    def download(self):  # pragma: no cover
+        """Download a file."""
         if self._check_integrity():
             print('Files already downloaded and verified')
             return
@@ -372,7 +472,8 @@ class CIFAR10(Dataset):
         with tarfile.open(archive, 'r:gz') as tar:
             tar.extractall(path=download_root)
 
-    def _check_integrity(self): # pragma: no cover
+    def _check_integrity(self):  # pragma: no cover
+        """Check MD5 checksum."""
         root = self.root
         for fentry in (self.train_list + self.test_list):
             filename, md5 = fentry[0], fentry[1]
@@ -381,27 +482,48 @@ class CIFAR10(Dataset):
                 return False
             return True
 
+
 @dataset_registry(dataset_type="CIFAR10", framework="pytorch", dataset_format='')
 class PytorchCIFAR10(CIFAR10):
-    def __getitem__(self, index): # pragma: no cover
+    """The PyTorch datasets for CIFAR10."""
+
+    def __getitem__(self, index):  # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         image = Image.fromarray(image)
         if self.transform is not None:
             image, label = self.transform((image, label))
         return (image, label)
 
+
 @dataset_registry(dataset_type="CIFAR10", framework="mxnet", dataset_format='')
 class MXNetCIFAR10(CIFAR10):
-    def __getitem__(self, index): # pragma: no cover
+    """The MXNet datasets for CIFAR10."""
+
+    def __getitem__(self, index):  # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         image = mx.nd.array(image)
         if self.transform is not None:
             image, label = self.transform((image, label))
         return (image, label)
 
+
 @dataset_registry(dataset_type="CIFAR10", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowCIFAR10(CIFAR10):
-    def __getitem__(self, index): # pragma: no cover
+    """The Tensorflow datasets for CIFAR10."""
+
+    def __getitem__(self, index):  # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         if self.transform is not None:
             image, label = self.transform((image, label))
@@ -412,9 +534,29 @@ class TensorflowCIFAR10(CIFAR10):
             image = image.numpy()
         return (image, label)
 
+
 @dataset_registry(dataset_type="CIFAR100", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class CIFAR100(CIFAR10):
+    """CIFAR100 database.
+
+    For CIFAR100: If download is True, it will download dataset to root/ and extract it
+                  automatically, otherwise user can download file from
+                  https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to
+                  root/ and extract it.
+
+    Args:
+        root (str): Root directory of dataset.
+        train (bool, default=False): If True, creates dataset from train subset,
+                                     otherwise from validation subset.
+        transform (transform object, default=None):  transform to process input data.
+        filter (Filter objects, default=None): filter out examples according to specific
+                                               conditions.
+        download (bool, default=True): If true, downloads the dataset from the internet
+                                       and puts it in root directory. If dataset is already
+                                       downloaded, it is not downloaded again.
+    """
+
     url = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
     filename = "cifar-100-python.tar.gz"
     tgz_md5 = 'eb9058c3a382ffc7106e4002c42a8d85'
@@ -430,9 +572,16 @@ class CIFAR100(CIFAR10):
         'md5': '7973b15100ade9c7d40fb424638fde48',
     }
 
+
 @dataset_registry(dataset_type="CIFAR100", framework="pytorch", dataset_format='')
 class PytorchCIFAR100(CIFAR100):
-    def __getitem__(self, index): # pragma: no cover
+    """The PyTorch datasets for CIFAR100."""
+
+    def __getitem__(self, index):  # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         image = Image.fromarray(image)
         if self.transform is not None:
@@ -440,18 +589,32 @@ class PytorchCIFAR100(CIFAR100):
         image = np.array(image)
         return (image, label)
 
+
 @dataset_registry(dataset_type="CIFAR100", framework="mxnet", dataset_format='')
 class MXNetCIFAR100(CIFAR100):
-    def __getitem__(self, index): # pragma: no cover
+    """The MXNet datasets for CIFAR100."""
+
+    def __getitem__(self, index):  # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         image = mx.nd.array(image)
         if self.transform is not None:
             image, label = self.transform((image, label))
         return (image, label)
 
+
 @dataset_registry(dataset_type="CIFAR100", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowCIFAR100(CIFAR100):
+    """The Tensorflow datasets for CIFAR100."""
+
     def __getitem__(self, index): # pragma: no cover
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], self.targets[index]
         if self.transform is not None:
             image, label = self.transform((image, label))
@@ -465,8 +628,7 @@ class TensorflowCIFAR100(CIFAR100):
 @dataset_registry(dataset_type="MNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class MNIST(Dataset):
-    """Configuration for Modified National Institute of Standards and Technology database
-       and FashionMNIST database
+    """Modified National Institute of Standards and Technology database and FashionMNIST database.
 
     For MNIST: If download is True, it will download dataset to root/MNIST/, otherwise user
                should put mnist.npz under root/MNIST/ manually.
@@ -486,6 +648,7 @@ class MNIST(Dataset):
                                        and puts it in root directory. If dataset is already
                                        downloaded, it is not downloaded again.
     """
+
     classes = ['0 - zero', '1 - one', '2 - two', '3 - three', '4 - four',
                    '5 - five', '6 - six', '7 - seven', '8 - eight', '9 - nine']
     resource = [
@@ -494,6 +657,7 @@ class MNIST(Dataset):
     ]
 
     def __init__(self, root, train=False, transform=None, filter=None, download=True):
+        """Initialize the attributes of class."""
         self.root = root
         self.train = train
         self.transform = transform
@@ -503,6 +667,7 @@ class MNIST(Dataset):
         self.read_data()
 
     def read_data(self):
+        """Read data from a file."""
         for file_name, checksum in self.resource:
             file_path = os.path.join(self.root, os.path.basename(file_name))
             if not os.path.exists(file_path):
@@ -515,9 +680,14 @@ class MNIST(Dataset):
                     self.data, self.targets = f['x_test'], f['y_test']
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.data)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = np.expand_dims(image, -1)
         if self.transform is not None:
@@ -526,9 +696,11 @@ class MNIST(Dataset):
 
     @property
     def class_to_idx(self):
+        """Return a dict of class."""
         return {_class: i for i, _class in enumerate(self.classes)}
 
     def download(self):
+        """Download a file."""
         for url, md5 in self.resource:
             filename = os.path.basename(url)
             if os.path.exists(os.path.join(self.root, filename)):
@@ -537,9 +709,16 @@ class MNIST(Dataset):
                 download_url(url, root=self.root,
                             filename=filename, md5=md5)
 
+
 @dataset_registry(dataset_type="MNIST", framework="pytorch", dataset_format='')
 class PytorchMNIST(MNIST):
+    """The PyTorch datasets for MNIST."""
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = Image.fromarray(image, mode='L')
         if self.transform is not None:
@@ -547,9 +726,16 @@ class PytorchMNIST(MNIST):
         image = np.array(image)
         return (image, label)
 
+
 @dataset_registry(dataset_type="MNIST", framework="mxnet", dataset_format='')
 class MXNetMNIST(MNIST):
+    """The MXNet datasets for MNIST."""
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = mx.nd.array(image)
         image = image.reshape((image.shape[0], image.shape[1], 1))
@@ -557,9 +743,16 @@ class MXNetMNIST(MNIST):
             image, label = self.transform((image, label))
         return (image, label)
 
+
 @dataset_registry(dataset_type="MNIST", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowMNIST(MNIST):
+    """The Tensorflow datasets for MNIST."""
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = np.expand_dims(image, -1)
         if self.transform is not None:
@@ -571,9 +764,29 @@ class TensorflowMNIST(MNIST):
             image = image.numpy()
         return (image, label)
 
+
 @dataset_registry(dataset_type="FashionMNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class FashionMNIST(MNIST):
+    """FashionMNIST database.
+
+    For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,
+                      otherwise user should put train-labels-idx1-ubyte.gz,
+                      train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
+                      and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.
+
+    Args:
+        root (str): Root directory of dataset.
+        train (bool, default=False): If True, creates dataset from train subset,
+                                     otherwise from validation subset.
+        transform (transform object, default=None):  transform to process input data.
+        filter (Filter objects, default=None): filter out examples according to specific
+                                               conditions.
+        download (bool, default=True): If true, downloads the dataset from the internet
+                                       and puts it in root directory. If dataset is already
+                                       downloaded, it is not downloaded again.
+    """
+
     resource = [
         ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/' + file_name, None)
         for file_name in [
@@ -586,6 +799,7 @@ class FashionMNIST(MNIST):
                'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 
     def read_data(self):
+        """Read data from a file."""
         import struct
         if self.train:
             label_path = os.path.join(self.root, 'train-labels-idx1-ubyte.gz')
@@ -601,9 +815,16 @@ class FashionMNIST(MNIST):
             data = np.frombuffer(f.read(), dtype=np.uint8)
             self.data = data.reshape(len(self.targets), 28, 28)
 
+
 @dataset_registry(dataset_type="FashionMNIST", framework="pytorch", dataset_format='')
 class PytorchFashionMNIST(FashionMNIST):
+    """The PyTorch datasets for FashionMNIST."""
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = Image.fromarray(image, mode='L')
         if self.transform is not None:
@@ -611,9 +832,16 @@ class PytorchFashionMNIST(FashionMNIST):
         image = np.array(image)
         return (image, label)
 
+
 @dataset_registry(dataset_type="FashionMNIST", framework="mxnet", dataset_format='')
 class MXNetFashionMNIST(FashionMNIST):
+    """The MXNet Dataset for FashionMNIST."""
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = mx.nd.array(image)
         image = image.reshape((image.shape[0], image.shape[1], 1))
@@ -621,9 +849,16 @@ class MXNetFashionMNIST(FashionMNIST):
             image, label = self.transform((image, label))
         return (image, label)
 
+
 @dataset_registry(dataset_type="FashionMNIST", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowFashionMNIST(FashionMNIST):
+    """The Tensorflow Dataset for FashionMNIST."""
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         image, label = self.data[index], int(self.targets[index])
         image = np.expand_dims(image, -1)
         if self.transform is not None:
@@ -635,10 +870,11 @@ class TensorflowFashionMNIST(FashionMNIST):
             image = image.numpy()
         return (image, label)
 
+
 @dataset_registry(dataset_type="ImageFolder", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
 class ImageFolder(Dataset):
-    """Configuration for ImageFolder
+    """The base class for ImageFolder.
 
     Expects the data folder to contain subfolders representing the classes to which
     its images belong.
@@ -656,9 +892,11 @@ class ImageFolder(Dataset):
     Args: root (str): Root directory of dataset.
           transform (transform object, default=None):  transform to process input data.
           filter (Filter objects, default=None): filter out examples according to specific
-                                                 conditions
+                                                 conditions.
     """
+
     def __init__(self, root, transform=None, filter=None):
+        """Initialize the attributes of class."""
         self.root = root
         assert os.path.exists(self.root), "Datapath doesn't exist!"
 
@@ -673,9 +911,14 @@ class ImageFolder(Dataset):
                 self.image_list.append((img, idx))
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.image_list)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.image_list[index]
         label = sample[1]
         with Image.open(sample[0]) as image:
@@ -684,9 +927,35 @@ class ImageFolder(Dataset):
                 image, label = self.transform((image, label))
             return (image, label)
 
+
 @dataset_registry(dataset_type="ImageFolder", framework="mxnet", dataset_format='')
 class MXNetImageFolder(ImageFolder):
+    """The MXNet Dataset for image folder.
+
+    Expects the data folder to contain subfolders representing the classes to which
+    its images belong.
+
+    Please arrange data in this way:
+        root/class_1/xxx.png
+        root/class_1/xxy.png
+        root/class_1/xxz.png
+        ...
+        root/class_n/123.png
+        root/class_n/nsdf3.png
+        root/class_n/asd932_.png
+    Please put images of different categories into different folders.
+
+    Args: root (str): Root directory of dataset.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according to specific
+                                                 conditions.
+    """
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.image_list[index]
         label = sample[1]
         image = mx.image.imread(sample[0])
@@ -694,9 +963,35 @@ class MXNetImageFolder(ImageFolder):
             image, label = self.transform((image, label))
         return (image, label)
 
+
 @dataset_registry(dataset_type="ImageFolder", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowImageFolder(ImageFolder):
+    """The Tensorflow Dataset for image folder.
+
+    Expects the data folder to contain subfolders representing the classes to which
+    its images belong.
+
+    Please arrange data in this way:
+        root/class_1/xxx.png
+        root/class_1/xxy.png
+        root/class_1/xxz.png
+        ...
+        root/class_n/123.png
+        root/class_n/nsdf3.png
+        root/class_n/asd932_.png
+    Please put images of different categories into different folders.
+
+    Args: root (str): Root directory of dataset.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according to specific
+                                                 conditions.
+    """
+
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.image_list[index]
         label = sample[1]
         with Image.open(sample[0]) as image:
@@ -712,9 +1007,10 @@ class TensorflowImageFolder(ImageFolder):
                 image = image.numpy()
             return (image, label)
 
+
 @dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowTFRecordDataset(IterableDataset):
-    """Configuration for TensorflowTFRecordDataset
+    """The Tensorflow TFRecord Dataset.
 
     Root is a full path to tfrecord file, which contains the file name.
 
@@ -723,7 +1019,9 @@ class TensorflowTFRecordDataset(IterableDataset):
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
     """
+
     def __new__(cls, root, transform=None, filter=None):
+        """Build a new object of TensorflowTFRecordDataset class."""
         # pylint: disable=no-name-in-module
         from tensorflow.python.data.experimental import parallel_interleave
         from tensorflow.python.platform import gfile
@@ -736,9 +1034,10 @@ class TensorflowTFRecordDataset(IterableDataset):
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
+
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowImageRecord(IterableDataset):
-    """Configuration for ImageNet database in tf record format
+    """Tensorflow imageNet database in tf record format.
 
     Please arrange data in this way:
         root/validation-000-of-100
@@ -750,13 +1049,13 @@ class TensorflowImageRecord(IterableDataset):
     Args: root (str): Root directory of dataset.
           transform (transform object, default=None):  transform to process input data.
           filter (Filter objects, default=None): filter out examples according
-                                                 to specific conditions
+                                                 to specific conditions.
     """
 
     """Configuration for Imagenet dataset."""
     def __new__(cls, root, transform=None, filter=None):
-
-        from tensorflow.python.platform import gfile # pylint: disable=no-name-in-module
+        """Build a new object of TensorflowImageRecord class."""
+        from tensorflow.python.platform import gfile  # pylint: disable=no-name-in-module
         glob_pattern = os.path.join(root, '*-*-of-*')
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
@@ -777,9 +1076,10 @@ class TensorflowImageRecord(IterableDataset):
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
         return ds
 
+
 @dataset_registry(dataset_type="VOCRecord", framework="tensorflow, tensorflow_itex", dataset_format='')
 class TensorflowVOCRecord(IterableDataset):
-    """Configuration for PASCAL VOC 2012 database in tf record format
+    """The Tensorflow PASCAL VOC 2012 database in tf record format.
 
     Please arrange data in this way:
         root/val-00000-of-00004.tfrecord
@@ -791,11 +1091,12 @@ class TensorflowVOCRecord(IterableDataset):
     Args: root (str): Root directory of dataset.
           transform (transform object, default=None):  transform to process input data.
           filter (Filter objects, default=None): filter out examples according
-                                                 to specific conditions
+                                                 to specific conditions.
     """
-    def __new__(cls, root, transform=None, filter=None):
 
-        from tensorflow.python.platform import gfile # pylint: disable=no-name-in-module
+    def __new__(cls, root, transform=None, filter=None):
+        """Build a new object of TensorflowVOCRecord class."""
+        from tensorflow.python.platform import gfile  # pylint: disable=no-name-in-module
         glob_pattern = os.path.join(root, '%s-*' % 'val')
         file_names = gfile.Glob(glob_pattern)
         if not file_names:

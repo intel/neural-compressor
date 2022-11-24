@@ -165,7 +165,7 @@ function generate_html_core {
 
         function show_new_last(batch, link, value, metric) {
             if(value ~/[1-9]/) {
-                if (metric == "perf") {
+                if (metric == "perf" || metric == "ratio") {
                     printf("<td>%s</td> <td><a href=%s>%.2f</a></td>\n",batch,link,value);
                 } else {
                     printf("<td>%s</td> <td><a href=%s>%.2f%</a></td>\n",batch,link,value*100);
@@ -195,12 +195,12 @@ function generate_html_core {
                 }else if(metric == "perf") {
                     target = int8_result / fp32_result;
                     if(target >= 1.5) {
-                        printf("<td rowspan=3 style=\"background-color:#90EE90\">%.2f</td>", target);
+                        printf("<td style=\"background-color:#90EE90\">%.2f</td>", target);
                     }else if(target < 1) {
-                        printf("<td  rowspan=3 style=\"background-color:#FFD2D2\">%.2f</td>", target);
+                        printf("<td style=\"background-color:#FFD2D2\">%.2f</td>", target);
                         job_status = "fail"
                     }else{
-                        printf("<td rowspan=3>%.2f</td>", target);
+                        printf("<td>%.2f</td>", target);
                     }
                 }
                 else {
@@ -233,11 +233,10 @@ function generate_html_core {
                     printf("<td style=\"%s\" colspan=2>%.2f %</td>", status_png, target*100);
                 } else {
                     target = new_result / previous_result;
-                    if(target <= 1.054 && target >= 0.945) {
+                    if(target <= 1.104 && target >= 0.895) {
                         status_png = "background-color:#90EE90";
                     } else {
                         status_png = "background-color:#FFD2D2";
-                        job_status = "fail"
                     }
                     printf("<td style=\"%s\" colspan=2>%.2f</td>", status_png, target);
                 }
@@ -253,6 +252,33 @@ function generate_html_core {
                         printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
                   }
               }
+            }
+        }
+
+        function compare_ratio(int8_perf_value, fp32_perf_value, last_int8_perf_value, last_fp32_perf_value) {
+            if (int8_perf_value ~/[1-9]/ && fp32_perf_value ~/[1-9]/ && last_int8_perf_value ~/[1-9]/ && last_fp32_perf_value ~/[1-9]/) {
+                new_result = int8_perf_value / fp32_perf_value
+                previous_result = last_int8_perf_value / last_fp32_perf_value
+                target = new_result / previous_result;
+                if (target <= 1.054 && target >= 0.945) {
+                    status_png = "background-color:#90EE90";
+                } else {
+                    status_png = "background-color:#FFD2D2";
+                    job_status = "fail"
+                }
+                printf("<td style=\"%s\">%.2f</td>", status_png, target);
+            } else {
+                if (new_result == nan && previous_result == nan) {
+                    printf("<td class=\"col-cell col-cell3\"></td>");
+                } else {
+                    if (new_result == nan) {
+                        job_status = "fail"
+                        status_png = "background-color:#FFD2D2";
+                        printf("<td style=\"%s\"></td>", status_png);
+                    } else {
+                        printf("<td class=\"col-cell col-cell3\"></td>");
+                    }
+                }
             }
         }
 
@@ -327,6 +353,8 @@ function generate_html_core {
             last_fp32_acc_url=last_value[12]
             show_new_last(last_fp32_acc_batch, last_fp32_acc_url, last_fp32_acc_value, "acc");
 
+            compare_current(last_int8_perf_value, last_fp32_perf_value, "perf");
+
             printf("</tr>")
 
             // current vs last
@@ -341,8 +369,11 @@ function generate_html_core {
             // Compare FP32 Performance results
             compare_result(fp32_perf_value, last_fp32_perf_value, "perf");
 
-            // Compare INT8 Performance results
+            // Compare FP32 Accuracy results
             compare_result(fp32_acc_value, last_fp32_acc_value, "acc");
+
+            // Compare INT8 FP32 Performance ratio
+            compare_ratio(int8_perf_value, fp32_perf_value, last_int8_perf_value, last_fp32_perf_value);
 
             printf("</tr>\n");
 
@@ -469,8 +500,8 @@ cat >> ${output_dir}/report.html << eof
                 <th>bs</th>
                 <th>top1</th>
 
-                <th class="col-cell col-cell1">Throughput<br><font size="2px">INT8/FP32>=2</font></th>
-                <th class="col-cell col-cell1">Accuracy<br><font size="2px">(INT8-FP32)/FP32>=-0.01</font></th>
+                <th class="col-cell col-cell1">Throughput<br><font size="2px">INT8/FP32</font></th>
+                <th class="col-cell col-cell1">Accuracy<br><font size="2px">(INT8-FP32)/FP32</font></th>
                 </tr>
 eof
 }
@@ -479,7 +510,7 @@ function generate_html_footer {
 
     cat >> ${output_dir}/report.html << eof
             <tr>
-                <td colspan="22"><font color="#d6776f">Note: </font>All data tested on TensorFlow Dedicated Server.</td>
+                <td colspan="22"><font color="#d6776f">Note: </font>All data tested on Azure Cloud.</td>
                 <td colspan="3" class="col-cell col-cell1 col-cellf"></td>
             </tr>
         </table>

@@ -135,6 +135,21 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         copy_model = torch_utils.util.auto_copy(prepared_model)
         self.assertTrue(isinstance(copy_model, torch.nn.Module))
     
+    
+    def test_bf16(self):
+        from neural_compressor.experimental import Quantization
+        model = M()
+        qconfig = ipex.quantization.default_static_qconfig
+        prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
+        config.quantization.use_bf16 = True
+        config.quantization.performance_only = True
+        quantizer = Quantization(config)
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        dataloader = torch.utils.data.DataLoader(dataset)
+        quantizer.model = model
+        quantizer.calib_dataloader = dataloader
+        quantizer.eval_dataloader = dataloader
+        nc_model = quantizer.fit()
 
 if __name__ == "__main__":
     unittest.main()

@@ -265,8 +265,9 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
     def _insert_qdq_pattern_for_concatv2(self, original_node, is_asymmetric):
         namespace_prefix = original_node.name + "_eightbit"
-        num_input = len(original_node.input)
-        original_inputs = original_node.input[0:num_input - 1]
+        normal_inputs = [i for i in original_node.input if i[0] != '^']
+        num_input = len(normal_inputs)
+        original_inputs = normal_inputs[0:num_input - 1]
         input_idx = 0
         for original_input_name in original_inputs:
             self._insert_qdq_pattern_for_each_input(original_node.name,

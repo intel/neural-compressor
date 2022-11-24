@@ -1,3 +1,5 @@
+"""DyNAS Manager class."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -27,8 +29,13 @@ from neural_compressor.utils import logger
 
 
 class ParameterManager:
-    """The ParameterManager class handles the super-network encoding representation and translates between
+    """The ParameterManager class.
+
+    It handles the super-network encoding representation and translates between
     the 1-hot predictor, pymoo, and super-network dictionary formats during search.
+
+    Args:
+        param_dict (dict): the search space dictionary.
     """
 
     def __init__(
@@ -37,6 +44,7 @@ class ParameterManager:
         verbose: bool = False,
         seed: int = 0,
     ) -> None:
+        """Initialize the attributes."""
         self.param_dict = param_dict
         self.verbose = verbose
         self.mapper, self.param_upperbound, self.param_count = self.process_param_dict()
@@ -44,9 +52,7 @@ class ParameterManager:
         self.set_seed(seed)
 
     def process_param_dict(self) -> Tuple[list, list, int]:
-        '''
-        Builds a parameter mapping arrays and an upper-bound vector for pymoo.
-        '''
+        """Build a parameter mapping arrays and an upper-bound vector for pymoo."""
         parameter_count = 0
         parameter_bound = list()
         parameter_upperbound = list()
@@ -80,9 +86,7 @@ class ParameterManager:
         return parameter_mapper, parameter_upperbound, parameter_count
 
     def _inv_mapper(self) -> list:
-        '''
-        Builds inverse of self.mapper
-        '''
+        """Build inverse of self.mapper."""
         inv_parameter_mapper = list()
 
         for value in self.mapper:
@@ -92,14 +96,18 @@ class ParameterManager:
         return inv_parameter_mapper
 
     def onehot_generic(self, in_array: list) -> np.ndarray:
-        '''
+        """Generate onehot vector.
+
         This is a generic approach to one-hot vectorization for predictor training
         and testing. It does not account for unused parameter mapping (e.g. block depth).
         For unused parameter mapping, the end user will need to provide a custom solution.
 
-        input_array - the pymoo individual 1-D vector
-        mapper - the map for elastic parameters of the supernetwork
-        '''
+        Args:
+            input_array (list): the pymoo individual 1-D vector
+
+        Returns:
+            mapper (numpy array): the map for elastic parameters of the supernetwork
+        """
         # Insure compatible array and mapper
         assert len(in_array) == len(self.mapper)
 
@@ -114,9 +122,7 @@ class ParameterManager:
         return np.array(onehot)
 
     def random_sample(self) -> list:
-        '''
-        Generates a random subnetwork from the possible elastic parameter range
-        '''
+        """Generate a random subnetwork from the possible elastic parameter range."""
         pymoo_vector = list()
         for i in range(len(self.mapper)):
             options = [x for x in range(len(self.mapper[i]))]
@@ -125,9 +131,7 @@ class ParameterManager:
         return pymoo_vector
 
     def random_samples(self, size: int = 100, trial_limit: int = 100000) -> List[list]:
-        '''
-        Generates a list of random subnetworks from the possible elastic parameter range
-        '''
+        """Generate a list of random subnetworks from the possible elastic parameter range."""
         pymoo_vector_list = list()
 
         trials = 0
@@ -143,9 +147,7 @@ class ParameterManager:
         return pymoo_vector_list
 
     def translate2param(self, pymoo_vector: list) -> dict:
-        '''
-        Translate a PyMoo 1-D parameter vector back to the elastic parameter dictionary format
-        '''
+        """Translate a PyMoo 1-D parameter vector back to the elastic parameter dictionary format."""
         output = dict()
 
         # Assign (and map) each vector element to the appropriate parameter dictionary key
@@ -162,9 +164,7 @@ class ParameterManager:
         return output
 
     def translate2pymoo(self, parameters: dict) -> list:
-        '''
-        Translate a single parameter dict to pymoo vector
-        '''
+        """Translate a single parameter dict to pymoo vector."""
         output = list()
 
         mapper_counter = 0
@@ -187,18 +187,21 @@ class ParameterManager:
         column_names: List[str] = None,
         drop_duplicates: bool = True,
     ) -> pd.DataFrame:
-        '''
+        """Import a csv file.
+
         Import a csv file generated from a supernetwork search for the purpose
         of training a predictor.
 
-        filepath - path of the csv to be imported.
-        config - the subnetwork configuration
-        objective - target/label for the subnet configuration (e.g. accuracy, latency)
-        column_names - a list of column names for the dataframe
-        df - the output dataframe that contains the original config dict, pymoo, and 1-hot
-             equivalent vector for training.
-        '''
+        Args:
+            filepath (str): path of the csv to be imported.
+            config (str): the subnetwork configuration.
+            objective (str): target/label for the subnet configuration (e.g. accuracy, latency).
+            column_names: a list of column names for the dataframe.
 
+        Returns:
+            df: the output dataframe that contains the original config dict, pymoo, and 1-hot
+                equivalent vector for training.
+        """
         if column_names == None:
             df = pd.read_csv(filepath)
         else:
@@ -234,9 +237,7 @@ class ParameterManager:
         return df
 
     def set_seed(self, seed) -> None:
-        '''
-        Set the random seed for randomized subnet generation and test/train split
-        '''
+        """Set the random seed for randomized subnet generation and test/train split."""
         self.seed = seed
         random.seed(seed)
 
@@ -247,11 +248,11 @@ class ParameterManager:
         split: float = 0.33,
         seed: bool = None,
     ) -> Tuple[list, list, list, list]:
-        '''
+        """Create the training set.
+
         Create a sklearn compatible test/train set from an imported results csv
         after "import_csv" method is run.
-        '''
-
+        """
         collect_rows = list()
         for i in range(len(dataframe)):
             collect_rows.append(np.asarray(dataframe['config_onehot'].iloc[i]))

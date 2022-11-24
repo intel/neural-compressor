@@ -1,3 +1,5 @@
+"""DyNAS approach class."""
+
 # Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +26,17 @@ from .nas_utils import nas_registry
 
 @nas_registry("DyNAS")
 class DyNAS(NASBase):
-    """
+    """DyNAS approach.
+
+    Defining the pipeline for DyNAS approach.
+
     Args:
         conf_fname_or_obj (string or obj):
             The path to the YAML configuration file or the object of NASConfig.
     """
+
     def __init__(self, conf_fname_or_obj):
+        """Initialize the attributes."""
         from .dynast.dynas_manager import ParameterManager
         from .dynast.dynas_predictor import Predictor
         from .dynast.dynas_search import ProblemMultiObjective, SearchAlgoManager
@@ -69,9 +76,15 @@ class DyNAS(NASBase):
 
 
     def estimate(self, individual):
+        """Estimate performance of the model.
+
+        Returns:
+            Evaluated metrics of the model.
+        """
         self.validation_interface.eval_subnet(individual)
 
     def init_for_search(self):
+        """Initialize the search configuration."""
         self.supernet_manager = self.ParameterManager(
             param_dict=self.SUPERNET_PARAMETERS[self.supernet],
             seed=self.seed
@@ -99,6 +112,11 @@ class DyNAS(NASBase):
         # self.validation_interface.clear_csv()
 
     def search(self):
+        """Execute the search process.
+
+        Returns:
+            Best model architectures found in the search process.
+        """
         self.init_for_search()
 
         # Randomly sample search space for initial population
@@ -166,12 +184,14 @@ class DyNAS(NASBase):
         return output
 
     def select_model_arch(self): # pragma: no cover
+        """Select the model architecture."""
         # model_arch_proposition intrinsically contained in
         # pymoo.minimize API of search_manager.run_search method,
         # don't have to implement it explicitly.
         pass
 
     def create_acc_predictor(self):
+        """Create the accuracy predictor."""
         if 'acc' in self.metrics:
             logger.info('Building Accuracy Predictor')
             df = self.supernet_manager.import_csv(self.results_csv_path,
@@ -185,6 +205,7 @@ class DyNAS(NASBase):
             self.acc_predictor = None
 
     def create_macs_predictor(self):
+        """Create the MACs predictor."""
         if 'macs' in self.metrics:
             logger.info('Building MACs Predictor')
             df = self.supernet_manager.import_csv(self.results_csv_path,
@@ -198,6 +219,7 @@ class DyNAS(NASBase):
             self.macs_predictor = None
 
     def create_latency_predictor(self):
+        """Create the latency predictor."""
         if 'lat' in self.metrics:
             logger.info('Building Latency Predictor')
             df = self.supernet_manager.import_csv(self.results_csv_path,
@@ -211,6 +233,7 @@ class DyNAS(NASBase):
             self.latency_predictor = None
 
     def init_cfg(self, conf_fname_or_obj):
+        """Initialize the configuration."""
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
                 self.conf = Conf(conf_fname_or_obj).usr_cfg

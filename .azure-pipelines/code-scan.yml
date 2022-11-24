@@ -5,7 +5,10 @@ pr:
   drafts: false
   branches:
     include:
-      - master
+    - master
+  paths:
+    include:
+    - neural_compressor
 
 pool: ICX-16C
 
@@ -36,18 +39,6 @@ stages:
             parameters:
               codeScanFileName: "pylint"
               uploadPath: "lpot-pylint.json"
-
-  - stage: PyspellingCodeScan
-    displayName: Pyspelling Code Scan
-    dependsOn: []
-    jobs:
-      - job: Pyspelling
-        displayName: Pyspelling
-        steps:
-          - template: template/code-scan-template.yml
-            parameters:
-              codeScanFileName: "pyspelling"
-              uploadPath: "lpot_pyspelling.log"
 
   - stage: CopyRight
     displayName: CopyRight Code Scan
