@@ -242,9 +242,9 @@ class BasePattern:
             key:
             key_new_sparsity:
             min_sparsity_ratio:
-
+            
         Returns:
-
+        
         """
         need_adjust = False
         adjust_zero_cnt = key_new_sparsity.zero_cnt
@@ -302,13 +302,13 @@ class BasePattern:
 @register_pattern('NxM')
 class PatternNxM(BasePattern):
     """Pruning Pattern.
-
+    
     A Pattern class derived from BasePattern. In this pattern, the weights in a NxM block will be pruned or kept
     during one pruning step.
-
+    
     Args:
         config: A config dict object. Contains the pattern information.
-
+        
     Attributes:
         block_size: A list of two Integers. The height and width of the block.
             Please be aware that the vertical direction of a Linear layer's weight in PyTorch refer to output channel.
@@ -360,10 +360,10 @@ class PatternNxM(BasePattern):
 
     def get_block_size_dict(self):
         """Calulate the zero elements' ration in pre_masks.
-
+        
         Args:
             data: Dict{"layer_name": Tensor}. Store weights or scores.
-
+            
         Returns:
             A dict. Dict{"layer_name": [block_size_1, block_size_2]}.
                 Containing layers' corresponding pruning pattern's block shape.
@@ -446,10 +446,10 @@ class PatternNxM(BasePattern):
         mainly for processing layer dims not equal to 2, for example conv layer
         Args:
             data: the input
-
+            
         Returns:
             a reshaped data
-
+            
         """
         ##TODO need to verify whether it's ok for transposed conv
         if len(data.shape) == 4:
@@ -463,7 +463,7 @@ class PatternNxM(BasePattern):
         Args:
             data: input
             orig_shape: target shape
-
+            
         Returns:
             a reshaped data
         """
@@ -479,9 +479,9 @@ class PatternNxM(BasePattern):
         Args:
             data: the input
             key: the layer name
-
+            
         Returns:
-
+        
         """
         block_size = self.block_size[key]
         data = self._reshape_orig_to_2dims(data)
@@ -498,9 +498,9 @@ class PatternNxM(BasePattern):
             data:
             key:
             orig_shape:
-
+            
         Returns:
-
+        
         """
         block_size = self.block_size[key]
         data = data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
@@ -534,14 +534,14 @@ class PatternNxM(BasePattern):
         """Generate masks for layers.
         Gather all layer's scores together and calculate a common threshold.
         This threshold will be applied for all layers.
-
+        
         Args:
             scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
             cur_target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
             pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
             max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer can reach.
             keep_pre_masks: A bool. If True, keep the masks unchanged.
-
+            
         Returns:
             A dict with the identical size as pre_masks. Update the 0/1 values in it.
         """
@@ -558,6 +558,9 @@ class PatternNxM(BasePattern):
         not_exceed_layers = [key for key in new_scores.keys()]
         if self.min_sparsity_ratio_per_layer > 0:
             sparsity_infos_perlayer, _ = self.get_sparsity_ratio_each_layer(masks)
+            
+        # kthvalue CUDA does not have a deterministic implementation
+        torch.use_deterministic_algorithms(True, warn_only=True)
         while True:
             threshold, _ = torch.kthvalue(global_scores, residual_k)
             for key in not_exceed_layers:
@@ -605,10 +608,10 @@ class PatternNxM(BasePattern):
 
     def get_pattern_lock_masks(self, modules):
         """Obtain masks from original weight map, by masking where weights' are zero.
-
+        
         Args:
             modules: A dict{“layer_name”: Tensor}. Store weights.
-
+            
         Returns:
             A dict with the identical size as modules, containing pattern lock masks.
         """
@@ -754,13 +757,13 @@ class PatternNxM(BasePattern):
 @register_pattern('N:M')
 class PatternNInM(BasePattern):
     """Pruning Pattern.
-
+    
     A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
     For more info of this pattern, please refer to https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
-
+    
     Args:
         config: A config dict object. Contains the pattern information.
-
+        
     Attributes:
         N: The number of elements to be prune in a weight sequence.
         M: The size of the weight sequence.
@@ -821,9 +824,9 @@ class PatternNInM(BasePattern):
         Args:
             pre_masks:
             return_dict:
-
+            
         Returns:
-
+        
         """
         ##simply use elemwise sparsity
         zero_cnt = 0
@@ -892,15 +895,15 @@ class PatternNInM(BasePattern):
 
     def get_ele_mask_per_threshold(self, score, threshold, block_size, least_ninm_mask):
         """
-
+        
         Args:
             score:
             threshold:
             block_size:
             least_m_in_m_masks:
-
+            
         Returns:
-
+        
         """
         zero = torch.tensor([0.]).to(score.device)
         one = torch.tensor([1.]).to(score.device)
@@ -914,16 +917,16 @@ class PatternNInM(BasePattern):
     def get_masks_global(self, scores, cur_target_sparsity_ratio, pre_masks,
                          keep_exact_sparsity_ratio=True):
         """Generate masks for layers.
-
+        
         Gather all layer's scores together and calculate a common threshold.
         This threshold will be applied for all layers.
-
+        
         Args:
             scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
             target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
             pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
             max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer can reach.
-
+            
         Returns:
             A dict with the identical size as pre_masks. Update the 0/1 values in it.
         """
@@ -938,6 +941,9 @@ class PatternNInM(BasePattern):
         global_scores = torch.cat([torch.flatten(v) for v in new_scores.values()])  ##block_wise
         residual_k = k_blockwise
         not_exceed_layers = [key for key in new_scores.keys()]
+        
+        # kthvalue CUDA does not have a deterministic implementation
+        torch.use_deterministic_algorithms(True, warn_only=True)
         while True:
             threshold, _ = torch.kthvalue(global_scores, residual_k)
             for key in not_exceed_layers:
@@ -990,10 +996,10 @@ class PatternNInM(BasePattern):
 
     def get_pattern_lock_masks(self, modules):
         """Obtain masks from original weight map, by masking where weights' are zero.
-
+        
         Args:
             modules: A dict{“layer_name”: Tensor}. Store weights.
-
+            
         Returns:
             A dict with the identical size as modules, containing pattern lock masks.
         """

@@ -98,8 +98,8 @@ class Pruning:
         linear_conv_cnt = 0
         param_cnt = 0
         for name, module in self.model.named_modules():
-            if type(module).__name__ in ["Linear"] or "Conv" in type(module).__name__:
-                linear_conv_cnt += module.weight.numel()
+	    if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+		linear_conv_cnt += module.weight.numel()
 
         for n, param in self.model.named_parameters():
             param_cnt += param.numel()
@@ -159,12 +159,12 @@ class Pruning:
         for pruner in self.pruners:
             pruner.on_train_end()
 
-        # @_call_pruners
-
+    # @_call_pruners
     def on_before_eval(self):
         for pruner in self.pruners:
             pruner.on_before_eval()
 
+    # @_call_pruners
     def on_after_eval(self):
         for pruner in self.pruners:
             pruner.on_after_eval()
