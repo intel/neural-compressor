@@ -24,7 +24,6 @@ from abc import abstractmethod
 from ..adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils import logger
-from neural_compressor.config import Torch2ONNXConfig
 from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 
@@ -623,9 +622,10 @@ class PyTorchModel(PyTorchBaseModel):
     def export(
         self,
         save_path: str,
-        conf: Torch2ONNXConfig,
+        conf,
     ):
         # TODO
+        from neural_compressor.config import Torch2ONNXConfig
         pass
 
 
