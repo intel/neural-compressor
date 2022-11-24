@@ -413,9 +413,10 @@ def compare_weights(
         # For matching "fc.weight" and "fc._packed_params._packed_params"
         match_key = _find_match(float_dict, key, "_packed_params")
         if match_key is not None:
-            weight_dict[key] = {}
-            weight_dict[key]["float"] = float_dict[match_key]
-            weight_dict[key]["quantized"] = quantized_dict[key][0]
+            weight_dict[match_key] = {}
+            weight_dict[match_key]["float"] = float_dict[match_key]
+            weight_dict[match_key]["quantized"] = quantized_dict[key][0]
+            ##TODO:should consider more models in further work
 
         # For LSTM
         split_str = key.split(".")
