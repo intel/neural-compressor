@@ -2377,3 +2377,4 @@ onnxrtadaptor
 constfold
 grappler
 amsgrad
+qoperator
