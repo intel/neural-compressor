@@ -318,10 +318,10 @@ class ModelConversion():
         user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
 
         Args:
-            user_postprocess(neural_compressor.common.Postprocess):
-                user_postprocess should be object initialized from neural_compressor.common.Postprocess,
-                in this method the user_postprocess.postprocess_cls will be
-                registered to specific frameworks and initialized.
+            user_postprocess(neural_compressor.common.Postprocess):user_postprocess should be 
+                            object initialized from neural_compressor.common.Postprocess,
+                            in this method the user_postprocess.postprocess_cls will be
+                            registered to specific frameworks and initialized.
 
         """
         from .common import Postprocess as NCPostprocess
