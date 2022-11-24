@@ -28,7 +28,7 @@ from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSamp
 from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
 from torch.quantization.quantize_fx import fuse_fx
-import torchvision
+
 from typing import Dict, List, Optional, Any, Union, Callable, Set
 
 
@@ -41,8 +41,7 @@ class HessianTrace:
     """
 
     def __init__(self, model, dataloader, criterion=None):
-        from torch.quantization.quantize_fx import fuse_fx
-        self.model = fuse_fx(model.model)
+        self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
 
         self.dataloader = dataloader
         self.max_iter = 500
@@ -102,89 +101,19 @@ class HessianTrace:
         for n, p in model.named_parameters():
             return p.data.device
 
-    def get_gradients(self, model, data, criterion, create_graph=False):
-        model.zero_grad()
-        input = data[0].to(self.device)
-        ##self._input_shape = input.shape  ## for resetting input activation
-        target = data[1].to(self.device)
-        # if enable_act:
-        #     input.requires_grad = True
-        output = model(input)
-        loss = criterion(output, target)
-        # torch.autograd.backward(loss, create_graph=create_graph)
-        loss.backward(create_graph=create_graph)
-        gradients = []
-        for n, p in model.named_parameters():
-            if p.grad != None and n in self.weight_names:
-                gradient = p.grad
-                gradients.append(gradient + 0.0)  ## add 0 to create a copy
-        model.zero_grad()
-        return gradients
-
-    # def get_params(self, model):
-    #     parameters = [p for p in model.parameters() if p.requires_grad]
-    #     return parameters
-
-    def sample_rademacher(self, params):
-        samples = []
-        for param in params:
-            r = torch.randint_like(param, high=2, device=self.device)
-            r.masked_fill_(r == 0, -1)
-            samples.append(r)
-        return samples
-
-    def get_vtHv_weight(self, params, num_samples):
-        v = self.sample_rademacher(params)
-        H_v = [0] * len(v)
-        cnt = 0
-        for step, data in enumerate(self.dataloader):
-            batch_size = data[0].shape[0]
-            cnt += batch_size
-            gradients = self.get_gradients(self.model, data, self.criterion, create_graph=True)
-            H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
-            H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
-            if cnt >=num_samples:
-                break
-        if cnt > 0:
-            H_v = [item / cnt for item in H_v]
-        v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
-        return v_t_H_v
-
-    def get_vtHv_act(self, params, num_samples):
-        v = self.sample_rademacher(params)
-        H_v = [0] * len(v)
-        cnt = 0
-        for step, data in enumerate(self.dataloader):
-            if cnt >= num_samples:
-                break
-            for i in range(self.dataloader.batchsize):  ##force to batchsize to be 1
-                input = data[0][i:i + 1]
-                target = data[1][i:i + 1]
-
-                self.get_gradients(self.model, (input, target), self.criterion, create_graph=True)
-                layer_acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
-                layer_act_gradients = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]
-                hv_one = torch.autograd.grad(layer_act_gradients, layer_acts, v, only_inputs=True, retain_graph=False)
-                cnt += 1
-                if cnt >= num_samples:
-                    break
-
     def _get_act_grad_hook(self, name):
         def act_grad_hook(model, grad_input, grad_output):
+            ##print(name, grad_input[0].shape, grad_output[0].shape)
             self.layer_acts_grads[name] = [grad_input, grad_output]
 
         return act_grad_hook
 
     def _get_enable_act_grad_hook(self, name):
         def enable_act_grad_hook(model, inputs, outputs):
-            try:
-                input = inputs[0]  ##TODO check whether this is right
-            except:
-                input = inputs
-
-            if input.requires_grad is False:
-                input.requires_grad = True
-            self.layer_acts[name] = input
+            for input in inputs:
+                if input.requires_grad is False:
+                    input.requires_grad = True
+            self.layer_acts[name] = inputs
 
         return enable_act_grad_hook
 
@@ -229,18 +158,87 @@ class HessianTrace:
         self.weight_names = weight_names
         self.params = params
 
+    def forward_backward(self, data, create_graph=False, return_w_grad=True):
+        self.model.zero_grad()
+        input = data[0].to(self.device)
+        ##self._input_shape = input.shape  ## for resetting input activation
+        target = data[1].to(self.device)
+        ##input.requires_grad = True
+        output = self.model(input)
+        loss = self.criterion(output, target)
+        torch.autograd.backward(loss, create_graph=create_graph)
+        ##loss.backward(create_graph=create_graph)
+        if return_w_grad:
+            gradients = []
+            for n, p in self.model.named_parameters():
+                if p.grad != None and n in self.weight_names:
+                    gradient = p.grad
+                    gradients.append(gradient + 0.0)  ## add 0 to create a copy
+            self.model.zero_grad()
+            return gradients
+        else:
+            self.model.zero_grad()
+
+    # def get_params(self, model):
+    #     parameters = [p for p in model.parameters() if p.requires_grad]
+    #     return parameters
+
+    def sample_rademacher(self, params):
+        samples = []
+        for param in params:
+            r = torch.randint_like(param, high=2, device=self.device)
+            r.masked_fill_(r == 0, -1)
+            samples.append(r)
+        return samples
+
+    def get_vtHv_weight(self, params, num_samples):
+        v = self.sample_rademacher(params)
+        H_v = [0] * len(v)
+        cnt = 0
+        for step, data in enumerate(self.dataloader):
+            batch_size = data[0].shape[0]
+            cnt += batch_size
+            gradients = self.forward_backward(data, create_graph=True)
+            H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
+            H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
+            if cnt >= num_samples:
+                break
+        if cnt > 0:
+            H_v = [item / cnt for item in H_v]
+        v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
+        return v_t_H_v
+
+    def get_vtHv_act(self, params, num_samples):
+        v = self.sample_rademacher(params)
+        H_v = [0] * len(v)
+        cnt = 0
+        for step, data in enumerate(self.dataloader):
+            if cnt >= num_samples:
+                break
+            for i in range(self.dataloader.batchsize):  ##force to batchsize to be 1
+                input = data[0][i:i + 1]
+                target = data[1][i:i + 1]
+
+                self.get_gradients(self.model, (input, target), self.criterion, create_graph=True)
+                layer_acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
+                layer_act_gradients = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]
+                hv_one = torch.autograd.grad(layer_act_gradients, layer_acts, v, only_inputs=True, retain_graph=False)
+                cnt += 1
+                if cnt >= num_samples:
+                    break
+
     def get_weight_traces(self, num_samples):
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
-        for i in range(self.max_iter):
+        for iter in range(self.max_iter):
             layer_traces = self.get_vtHv_weight(self.params, num_samples)
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
-            if diff_ratio < self.tolerance and i > 10:  ##TODO magic number
+            if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
                 break
-            if i == 50:  ##TODO for debug
+            if iter == 50:  ##TODO for debug
                 break
             prev_avg_model_trace = model_trace
         weight_name_to_traces = {}
@@ -258,8 +256,51 @@ class HessianTrace:
         self.layer_acts = {}
         self.layer_acts_grads = {}
         self.register_act_grad_hooks()
-        for i in range(self.max_iter):
+        cnt = 0
+        for step, data in enumerate(self.dataloader):
+            if cnt >= num_samples:
+                break
+            bs = data[0].shape[0]
+            act_traces_sum = 0
+            act_traces_per_iter = []
+            prev_avg_model_trace = 0
+            act_traces_sums = None
+            for i in range(bs):  ##force the bs to be one
+                input = data[0][i:i + 1]
+                target = data[1][i:i + 1]
+                self.forward_backward((input, target), create_graph=True, return_w_grad=False)
+                acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
+                if act_traces_sums == None:
+                    act_traces_sums = [0] * len(acts)
+                acts_grad = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]  ##same order with acts
+                # vt_H_v_sum_per_act = [0] * len(acts)
+                #
+                # prev_model_act_trace = 0
+                # for iter in range(self.max_iter):
+                #     v = self.sample_rademacher(acts)
+                #     H_v = torch.autograd.grad(acts_grad, acts, v, only_inputs=True, retain_graph=False)
+                #     vt_H_v = [torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)]
+                #
+                #     vt_H_v_sum_per_act = [vt_H_v_sum_per_act[index] + vt_H_v[index] for index, item in
+                #                           enumerate(vt_H_v_sum_per_act)]
+                #     vt_H_v_mean_per_act = [item / (iter + 1) for item in vt_H_v_sum_per_act]
+                #     current_model_act_trace = torch.mean(torch.stack(vt_H_v_mean_per_act))
+                #
+                #     diff_ratio = abs(current_model_act_trace - prev_model_act_trace) / (
+                #             prev_model_act_trace + self.eps)
+                #     if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
+                #         break
+                #     if iter == 50:  ##TODO for debug
+                #         break
+                #
+                #     prev_model_act_trace = current_vt_H_v_mean_per_model
+                #
+                # cnt += 1
+                # if cnt >= num_samples:
+                #     break
             pass
+
+        self.reset_act_gradient_and_hooks()  ##TODO have issues to reset the input grad to False
 
     def get_avg_traces(self, enable_act=True, num_samples=32):
         """
@@ -267,18 +308,9 @@ class HessianTrace:
         """
 
         assert num_samples > 0
+        ##self.get_act_traces(num_samples)
         weight_traces = self.get_weight_traces(num_samples)
         return weight_traces
-
-        ## handle activation
-        # if enable_act:
-        #     self.get_act_traces(num_samples)
-            ##change batchsize to 1
-
-        #
-        # layer_traces = layer_traces_estimate
-        # if enable_act:
-        #     self.reset_act_gradient_and_hooks()
 
 
 ##copy from torch.quantization._numeric_suite
