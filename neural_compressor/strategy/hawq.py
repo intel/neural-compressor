@@ -312,12 +312,12 @@ class HessianTrace:
         self.reset_act_gradient_and_hooks()  ##TODO have issues to reset the input grad to False
         act_traces_stack = torch.stack([torch.stack(item) for item in act_traces_per_sample])
         act_traces = torch.mean(act_traces_stack, dim=0)
-        res_dict={}
+        res_dict = {}
         for index, key in enumerate(self.layer_acts.keys()):
-            res_dict[key]=act_traces[index]
+            res_dict[key] = act_traces[index]
 
-        self.layer_acts=[]
-        self.layer_acts_grads=[]
+        self.layer_acts = []
+        self.layer_acts_grads = []
         return act_traces
 
     def get_avg_traces(self, enable_act=True, num_samples=32):
@@ -331,7 +331,7 @@ class HessianTrace:
         traces['weight'] = weight_traces
         if enable_act:
             act_traces = self.get_act_traces(num_samples)
-            traces['activation']= act_traces
+            traces['activation'] = act_traces
         return traces
 
 
@@ -566,7 +566,8 @@ class HawqTuneStrategy(TuneStrategy):
             pertur_lst[key] = diff_l2
         # for i in pertur_lst:
         #     print(pertur_lst[i])
-        op_to_traces = ht.get_avg_traces()
+        traces = ht.get_avg_traces(enable_act=False)
+        op_to_traces = traces['weight']
         print(op_to_traces)
         if orig_eval == False:
             self._fp32_model.train()
