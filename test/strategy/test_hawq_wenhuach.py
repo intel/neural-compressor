@@ -74,15 +74,15 @@ class TestPytorchAdaptor(unittest.TestCase):
 
 
     def test_run_hawq_one_trial(self):
-        # def eval_func(model):
-        #     self.i -= 1
-        #     return self.i
+        def eval_func(model):
+            self.i -= 1
+            return self.i
         from neural_compressor.experimental import Quantization, common
         model = copy.deepcopy(self.model)
         model.eval()
-        model = fuse_fx(model)
+        # model = fuse_fx(model)
         quantizer = Quantization('ptq_yaml.yaml')
-        ##quantizer.eval_func = eval_func
+        quantizer.eval_func = eval_func
         dataset = quantizer.dataset('dummy', (32, 3, 224, 224), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
