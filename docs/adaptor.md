@@ -57,7 +57,7 @@ class AbcAdaptor(Adaptor):
 ```
 
 * `quantize` function is used to perform quantization for post-training quantization and quantization-aware training. Quantization processing includes calibration and conversion processing for post-training quantization, while for quantization-aware training, it includes training and conversion processing.
-* `evaluate` function is used to run an evaluation on a validation dataset. It is a built-in function, if user wants to use specifical evaluation function, he can pass the evaluation function to quantizer.
+* `evaluate` function is used to run an evaluation on a validation dataset. It is a built-in function, if user wants to use specific evaluation function, he can pass the evaluation function to quantizer.
 * `query_fw_capability` function is used to run a query framework quantization capability and intersects with the user yaml configuration.
 * `query_fused_patterns` function is used to run a query framework graph fusion capability and decide the fusion tuning space.
 
