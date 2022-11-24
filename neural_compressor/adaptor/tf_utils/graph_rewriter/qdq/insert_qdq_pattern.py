@@ -507,9 +507,22 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
         min_enter_node = None
         max_enter_node = None
-        quant_node = Helper.create_node(
-            "QuantizeV2", qint8_const_name + '_quant',
-            [weight_name, min_name, max_name])
+        if insert_reshape:
+            reshape_dims_4to3_name = qint8_const_name + "_reshape_dims_4to3_"
+            reshape_dims_4to3_node = Helper.create_constant_node(
+                reshape_dims_4to3_name, shape_convert, dtypes.int32)
+            reshape_4to3_name = qint8_const_name + "_reshape_4to3_"
+            reshape_4to3_node = Helper.create_node("Reshape", reshape_4to3_name,
+                                                    [weight_node.name, reshape_dims_4to3_name])
+            reshape_4to3_node.attr["T"].CopyFrom(
+                attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum))
+            quant_node = Helper.create_node(
+                    "QuantizeV2", qint8_const_name + '_quant',
+                    [reshape_4to3_name, min_name, max_name])
+        else:
+            quant_node = Helper.create_node(
+                "QuantizeV2", qint8_const_name + '_quant',
+                [weight_node.name, min_name, max_name])
 
         dequant_node = Helper.create_node(
             "Dequantize", base_name + '_dequant',
@@ -520,10 +533,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         Helper.set_attr_dtype(dequant_node, "T", dtypes.qint8)
         Helper.set_attr_string(dequant_node, "mode", b"SCALED")
         if per_channel:
-            if host_op_type == 'Conv2D' or host_op_type == 'Conv2DBackpropInput':
+            if host_op_type in ('Conv2D', 'Conv2DBackpropInput'):
                 Helper.set_attr_int(quant_node, 'axis', 3)
                 Helper.set_attr_int(dequant_node, 'axis', 3)
-            elif host_op_type == 'Conv3D' or host_op_type == 'Conv3DBackpropInputV2':
+            elif host_op_type in ('Conv3D', 'Conv3DBackpropInputV2'):
                 Helper.set_attr_int(quant_node, 'axis', 4)
                 Helper.set_attr_int(dequant_node, 'axis', 4)
             elif host_op_type == 'MatMul':
