@@ -1252,12 +1252,14 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
 class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
     """SelfKnowledge Distillation Loss."""
 
-    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0,add_origin_loss=False, student_model=None, teacher_model=None):
+    def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, 
+                 temperature=1.0,add_origin_loss=False, student_model=None, teacher_model=None):
         """Initialize SelfKnowledge Distillation Loss class.
 
         Args:
             layer_mappings (list): layers of distillation.Format like
-                 [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],[[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
+                 [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],
+                 [[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
             loss_types (list, optional): loss types. Defaults to ['CE'] * len(layer_mappings).
             loss_weights (list, optional): loss weights. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).temperature (float, optional): use to calculate the soft label CE.
             temperature (optional): temperature. Defaults to 1.0.
@@ -1338,16 +1340,15 @@ class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
         return 0
 
 
-class PyTorchSelfKnowledgeDistillationLoss(
-    SelfKnowledgeDistillationLoss
-):
+class PyTorchSelfKnowledgeDistillationLoss(SelfKnowledgeDistillationLoss):
     """PyTorch SelfKnowledge Distillation Loss."""
     def __init__(self, layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0,add_origin_loss=False, student_model=None, teacher_model=None):
         """Initialize PyTorch SelfKnowledge Distillation Loss class.
 
         Args:
             layer_mappings (list): layers of distillation.Format like
-                 [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],[[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
+                 [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],
+                 [[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
             loss_types (list, optional): loss types. Defaults to ['CE'] * len(layer_mappings).
             loss_weights (list, optional): loss weights. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).temperature (float, optional): use to calculate the soft label CE.
             temperature (optional): temperature. Defaults to 1.0.
