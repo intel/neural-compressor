@@ -157,7 +157,7 @@ class ModelConversion():
         """Return dataset.
 
         Args:
-            dataset_typ: dataset type
+            dataset_type: dataset type
 
         Returns:
             class: dataset class
