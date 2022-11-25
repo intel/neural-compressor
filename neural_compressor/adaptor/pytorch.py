@@ -2231,6 +2231,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                 q_model = torch.jit.trace(q_model, example_inputs, strict=False)
                                 q_model = torch.jit.freeze(q_model.eval())
                 else:
+                    q_model = ipex.quantization.convert(q_model)
                     with torch.no_grad():
                         try:
                             q_model = torch.jit.trace(q_model, example_inputs)
