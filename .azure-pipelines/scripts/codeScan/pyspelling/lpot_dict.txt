@@ -2378,12 +2378,3 @@ constfold
 grappler
 amsgrad
 qoperator
-BUILDDIR
-BUILDIMGDIR
-CODEIMGDIR
-IMGDIR
-SOURCEDIR
-SPHINXBUILD
-SPHINXOPTS
-makefile
-autoapi
