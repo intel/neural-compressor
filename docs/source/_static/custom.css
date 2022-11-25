@@ -185,8 +185,17 @@ article.pytorch-article table td {
 
 h1 {
    margin-bottom: 1.375rem;
+   font-size: 1.8rem;
 }
 
 article.pytorch-article table tbody .row-odd {
    background-color: #f3f4f7;
+}
+
+article.pytorch-article {
+   margin: 0;
+}
+
+#validated-mlperf-models table tr td {
+   text-align: center;
 }
