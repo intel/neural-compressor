@@ -1260,6 +1260,7 @@ class SelfKnowledgeDistillationLoss(KnowledgeDistillationFramework):
                  [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],[[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
             loss_types (list, optional): loss types. Defaults to ['CE'] * len(layer_mappings).
             loss_weights (list, optional): loss weights. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).temperature (float, optional): use to calculate the soft label CE.
+            temperature=1.0.
             add_origin_loss (bool, optional): whether to add origin loss for hard label loss.
             student_model (optional): student model. Defaults to None.
             teacher_model (optional): teacher model. Defaults to None.
@@ -1349,6 +1350,7 @@ class PyTorchSelfKnowledgeDistillationLoss(
                  [[[student1_layer_name1, teacher_layer_name1],[student2_layer_name1, teacher_layer_name1]],[[student1_layer_name2, teacher_layer_name2],[student2_layer_name2, teacher_layer_name2]]]
             loss_types (list, optional): loss types. Defaults to ['CE'] * len(layer_mappings).
             loss_weights (list, optional): loss weights. Defaults to [1.0 / len(layer_mappings)] * len(layer_mappings).temperature (float, optional): use to calculate the soft label CE.
+            temperature=1.0.
             add_origin_loss (bool, optional): whether to add origin loss for hard label loss.
             student_model (optional): student model. Defaults to None.
             teacher_model (optional): teacher model. Defaults to None.
