@@ -7,7 +7,7 @@ import torchvision
 import torch.nn as nn
 import tensorflow as tf
 from neural_compressor.data import DATASETS
-from neural_compressor.conf.pythonic_config import DistillationConfig, KnowledgeDistillationLossConfig
+from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 

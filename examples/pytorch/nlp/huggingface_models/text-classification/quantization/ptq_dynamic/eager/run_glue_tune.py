@@ -432,11 +432,11 @@ def main():
                     acc = result[key]
                     break
             return acc
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(model)
-        quantizer.eval_func = eval_func_for_nc
-        q_model = quantizer.fit()
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        tuning_criterion = TuningCriterion(max_trials=600)
+        conf = PostTrainingQuantConfig(approach="dynamic", backend="pytorch", tuning_criterion=tuning_criterion)
+        q_model = fit(model, conf=conf, eval_func=eval_func_for_nc)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
         exit(0)

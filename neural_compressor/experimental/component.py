@@ -105,14 +105,6 @@ class Component(object):
                         logger.error("{}.".format(e))
                         raise RuntimeError("{} is not correctly installed. " \
                             "Please check your environment".format(lib))
-            if self.framework == 'tensorflow' or self.framework == 'inteltensorflow':
-                try:
-                    import tensorflow as tf
-                except Exception as e:
-                    logger.error("{}.".format(e))
-                    raise RuntimeError(
-                        "The TensorFlow framework is not correctly installed. Please check your environment"
-                    )
 
     def prepare(self):
         """Register Quantization Aware Training hooks."""
@@ -132,7 +124,6 @@ class Component(object):
                 self.adaptor.model = self.model
             self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
             self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
-
 
     def prepare_qat(self):
         """Register Quantization Aware Training hooks."""

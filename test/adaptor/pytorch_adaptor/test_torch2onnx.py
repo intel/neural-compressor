@@ -8,9 +8,8 @@ import torch.nn as nn
 import unittest
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor import quantization
-from neural_compressor.conf.pythonic_config import PostTrainingConfig, QuantizationAwareTrainingConfig
+from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.experimental.data.datasets.dataset import DATASETS
-from neural_compressor.training import prepare_compression
 from packaging.version import Version
 from torch.quantization import QuantStub, DeQuantStub
 
@@ -209,11 +208,9 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         for fake_yaml in ['dynamic', 'static']:
             model = DynamicControlModel()
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            conf = PostTrainingConfig(
-                approach="post_training_dynamic_quant" \
-                    if fake_yaml == "dynamic" else "post_training_static_quant",
-                backend="pytorch_fx",
-                performance_only=True
+            conf = PostTrainingQuantConfig(
+                approach=fake_yaml,
+                backend="pytorch_fx"
             )
             dataset = DATASETS("pytorch")['dummy']((100, 3, 224, 224))
             dataloader = torch.utils.data.DataLoader(dataset)
