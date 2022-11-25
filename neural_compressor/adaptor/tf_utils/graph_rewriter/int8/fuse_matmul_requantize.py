@@ -588,10 +588,16 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
             min_filter_node = None
             # The Min and Max of non-const weight node are from QuantizeV2's output, not valid nodes.
             # Add check here for excluding this case.
-            if ":2" not in new_node.input[6]:
-                max_filter_node = self.graph_info[new_node.input[6]].node
-            if ":1" not in new_node.input[5]:
-                min_filter_node = self.graph_info[new_node.input[5]].node
+            if len(attr_fused_ops) == 0: # single matmul case
+                if ":2" not in new_node.input[5]:
+                    max_filter_node = self.graph_info[new_node.input[5]].node
+                if ":1" not in new_node.input[4]:
+                    min_filter_node = self.graph_info[new_node.input[4]].node
+            else:
+                if ":2" not in new_node.input[6]:
+                    max_filter_node = self.graph_info[new_node.input[6]].node
+                if ":1" not in new_node.input[5]:
+                    min_filter_node = self.graph_info[new_node.input[5]].node
             last_node = self.graph_info[new_node.input[0]].node
             is_min_first = bool(quantized_node.attr['input_quant_mode'].s == b'MIN_FIRST')
             weight_node = self.graph_info[new_node.input[1]].node
