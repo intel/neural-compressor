@@ -1,4 +1,4 @@
-strategy
+Strategy
 ###########
 
 The strategy API information is available:
