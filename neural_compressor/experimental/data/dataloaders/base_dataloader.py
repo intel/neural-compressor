@@ -14,21 +14,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""BaseDataloder of all dataloaders."""
 
 from abc import abstractmethod
 
 
-class BaseDataLoader(object):
-    """Base class for all DataLoaders. _generate_dataloader is needed to create a dataloader object
-       from the general params like batch_size and sampler. The dynamic batching is just to
-       generate a new dataloader by setting batch_size and last_batch.
+class BaseDataLoader:
+    """Base class for all DataLoaders.
+
+    _generate_dataloader is needed to create a dataloader object
+    from the general params like batch_size and sampler. The dynamic batching is just to
+    generate a new dataloader by setting batch_size and last_batch.
 
     """
-
+    
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
                  sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
                  shuffle=False, distributed=False):
+        """Initialize BaseDataLoader.
 
+        Args:
+            dataset (object): dataset from which to load the data
+            batch_size (int, optional): number of samples per batch. Defaults to 1.
+            last_batch (str, optional): whether to drop the last batch if it is incomplete.
+                                        Support ['rollover', 'discard'], rollover means False, discard means True.
+                                        Defaults to 'rollover'.
+            collate_fn (callable, optional): merge data with outer dimension batch size. Defaults to None.
+            sampler (Sampler, optional): Sampler object to sample data. Defaults to None.
+            batch_sampler (BatchSampler, optional): BatchSampler object to generate batch of indices. Defaults to None.
+            num_workers (int, optional): number of subprocesses to use for data loading. Defaults to 0.
+            pin_memory (bool, optional): whether to copy data into pinned memory before returning. Defaults to False.
+            shuffle (bool, optional): whether to shuffle data. Defaults to False.
+            distributed (bool, optional): whether the dataloader is distributed. Defaults to False.
+        """
         self.dataset = dataset
         self.collate_fn = collate_fn
         self.sampler = sampler
@@ -54,6 +73,14 @@ class BaseDataLoader(object):
             distributed=distributed)
 
     def batch(self, batch_size, last_batch=None):
+        """Set batch size for dataloader.
+
+        Args:
+            batch_size (int): number of samples per batch.
+            last_batch (str, optional): whether to drop the last batch if it is incomplete.
+                                        Support ['rollover', 'discard'], rollover means False, discard means True.
+                                        Defaults to None.
+        """
         self._batch_size = batch_size
         if last_batch is not None:
             self.last_batch = last_batch
@@ -71,9 +98,19 @@ class BaseDataLoader(object):
 
     @property
     def batch_size(self):
+        """Get dataloader's batch_size.
+
+        Returns:
+            int: batch_size
+        """
         return self._batch_size
 
     def __iter__(self):
+        """Yield data in iterative order.
+
+        Returns:
+            iterator: iterator for dataloder
+        """
         return iter(self.dataloader)
 
     @abstractmethod

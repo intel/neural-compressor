@@ -1,5 +1,5 @@
-NAS
-================
+Neural architecture search (NAS)
+=================================
 
 Package Contents
 ----------------

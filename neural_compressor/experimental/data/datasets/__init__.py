@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Built-in datasets class for multiple framework backends."""
+
 from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob

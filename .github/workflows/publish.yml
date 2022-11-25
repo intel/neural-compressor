@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     branches:
-      - api-docs
+      - master
 
 jobs:
   build:

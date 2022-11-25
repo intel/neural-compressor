@@ -35,6 +35,7 @@
    display: none;
 }
 
+
 .navbar-logo {
    background: #0068b5;
    line-height: 1;
@@ -47,6 +48,21 @@
    align-items: center;
    height: 70px;
 }
+
+@media screen and (min-width: 1600px) {
+   .navbar-logo {
+      width: 26.2rem;
+   }
+ }
+
+ .pytorch-page-level-bar {
+   width: 100%;
+ }
+
+ .pytorch-content-left {
+   width: 100%;
+}
+
 
 article.pytorch-article h2 {
    margin-top: 0;

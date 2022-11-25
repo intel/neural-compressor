@@ -1,5 +1,5 @@
-Component(old API)
-####################
+component(experiemental API, deprecated in 2.0)
+#################################################
 
 The component API information is available:
 

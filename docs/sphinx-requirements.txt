@@ -1,4 +1,4 @@
-sphinx==3.5.4
+sphinx
 pytorch_sphinx_theme
 recommonmark
 sphinx-markdown-tables

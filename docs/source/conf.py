@@ -105,7 +105,7 @@ html_theme = "pytorch_sphinx_theme"
 html_static_path = ['_static']
 
 def skip_util_classes(app, what, name, obj, skip, options):
-    if what == "class" and obj.docstring.startswith("Not displayed") :
+    if what == "class" and obj.docstring.startswith("Not displayed in API Docs.") :
        skip = True
     return skip
 
