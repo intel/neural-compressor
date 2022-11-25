@@ -110,13 +110,12 @@ def config_instance(cores_per_instance, num_of_instance):
         else:
             core_list = np.arange(0, cores_per_instance) + i * cores_per_instance
         core.append(core_list.tolist())
-
+    core = core[::-1]
     for i in range(len(core)):
         core[i] = [str(j) for j in core[i]]
         core[i] = ','.join(core[i])
 
     core = ';'.join(core)
-    core = core[::-1]
     return core
 
 
