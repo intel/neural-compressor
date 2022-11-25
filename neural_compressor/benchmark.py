@@ -72,9 +72,7 @@ class Benchmark(object):
 def fit(
     model, config=None, b_dataloader=None, b_func=None
 ):
-    if config is None:
-        config = Config()
-    elif isinstance(config, BenchmarkConfig):
+    if isinstance(config, BenchmarkConfig):
         config = Config(benchmark=config)
     benchmarker = ExpBenchmark(config)
     benchmarker.model = model
@@ -84,3 +82,6 @@ def fit(
         benchmarker.b_dataloader = b_dataloader
     benchmarker()
     return benchmarker.results
+
+
+benchmark = fit
