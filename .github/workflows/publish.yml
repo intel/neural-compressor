@@ -14,16 +14,17 @@ jobs:
     - uses: actions/checkout@v1
     - name: Install dependencies
       run: |
-        export PATH="$HOME/.local/bin:$PATH"
+        export PATH="$HOME/.local/bin:$PATH/docs"
         sudo apt-get install -y python3-setuptools
-        pip3 install --user -r sphinx-requirements.txt
+        pip3 install --user -r docs/sphinx-requirements.txt
     - name: Build the docs
       run: |
         export PATH="$HOME/.local/bin:$PATH"
+        cd docs/
         make html
     - name: Push the docs
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: _build/html
+        publish_dir: docs/_build/html
         publish_branch: latestHTML
