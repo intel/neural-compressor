@@ -1,0 +1,9 @@
+strategy
+###########
+
+The strategy API information is available:
+
+.. toctree::
+   :maxdepth: 1
+
+   
