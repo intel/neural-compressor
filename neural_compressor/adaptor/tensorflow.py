@@ -1547,16 +1547,11 @@ class TensorFlowAdaptor(Adaptor):
             # backup and set replace tuning config
             backup_cfg = op_cfg[op] 
             op_cfg[op] = replace_cfgs[op]
-            logger.debug(f"Dump tuning config of {op[0]}")
-            logger.debug(tune_cfg)
 
             # quantize and inference the model
             q_model = self._quantize_model(tune_cfg, fp32_model, dataloader)
             q_output = self._inference_model_on_batches(
                 q_model, tune_cfg, dataloader, output_op_names, confidence_batches)
-                
-            mse_result[op] = self._calculate_mse(fp32_output, q_output)
-            logger.debug(f"mse result of {op}: {mse_result[op]}")
 
             # recover tune_cfg
             op_cfg[op] = backup_cfg
