@@ -211,6 +211,7 @@ class Distillation(Component):
         self._train_cfg.optimizer = self.optimizer
 
     def prepare(self):
+        """Prepare hooks."""
         self.generate_hooks()
 
     def pre_process(self):
