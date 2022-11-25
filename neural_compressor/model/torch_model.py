@@ -24,7 +24,6 @@ from abc import abstractmethod
 from ..adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils import logger
-from neural_compressor.conf.dotdict import deep_get, deep_set
 from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 
@@ -623,17 +622,11 @@ class PyTorchModel(PyTorchBaseModel):
     def export(
         self,
         save_path: str,
-        input,
-        target_model_type: str = 'ONNX',
-        quant_mode: str = 'QDQ',
-        opset_version: int = 14,
-        *args,
-        **kwargs
+        conf,
     ):
-        if self.q_config is not None:
-            assert False, "Unsupport convertion from PyTorch to ONNX"
-        else:
-            self.export_to_fp32_onnx(save_path, input, opset_version=opset_version)
+        # TODO
+        from neural_compressor.config import Torch2ONNXConfig
+        pass
 
 
 class PyTorchFXModel(PyTorchModel):
