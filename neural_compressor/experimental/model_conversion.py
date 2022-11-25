@@ -203,20 +203,20 @@ class ModelConversion():
         in yaml file or set postprocess and metric cls. Notice evaluation dataloader will be 
         used to generate data for model inference, make sure the input data can be feed to model.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data.
-                                      Another good practice is to use neural_compressor.common.DataLoader
-                                      to initialize a neural_compressor dataloader object.
-                                      Notice neural_compressor.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' eval_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Quantization object created then
-                                      framework infomation can be known. Future we will support
-                                      creating iterable dataloader from neural_compressor.common.DataLoader
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                    which meet the requirements that can yield tuple of
+                                    (input, label)/(input, _) batched data.
+                                    Another good practice is to use neural_compressor.common.DataLoader
+                                    to initialize a neural_compressor dataloader object.
+                                    Notice neural_compressor.common.DataLoader is just a wrapper of the
+                                    information needed to build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' eval_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object created then
+                                    framework infomation can be known. Future we will support
+                                    creating iterable dataloader from neural_compressor.common.DataLoader
 
         """
         from .common import _generate_common_dataloader
@@ -276,7 +276,7 @@ class ModelConversion():
         postprocess(if have) as inputs, neural_compressor built-in metric always take
         (predictions, labels) as inputs for update,
         and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
-        or user defined metric object
+        or user defined metric object.
 
         Args:
             user_metric(neural_compressor.common.Metric): user_metric should be object initialized from
@@ -304,7 +304,7 @@ class ModelConversion():
             self._metric = user_metric
 
     @property
-    def postprocess(self, user_postprocess):
+    def postprocess(self):
         """Check postprocess."""
         assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
@@ -318,10 +318,10 @@ class ModelConversion():
         user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
 
         Args:
-            user_postprocess(neural_compressor.common.Postprocess):
-                user_postprocess should be object initialized from neural_compressor.common.Postprocess,
-                in this method the user_postprocess.postprocess_cls will be
-                registered to specific frameworks and initialized.
+            user_postprocess(neural_compressor.common.Postprocess):user_postprocess should be 
+                            object initialized from neural_compressor.common.Postprocess,
+                            in this method the user_postprocess.postprocess_cls will be
+                            registered to specific frameworks and initialized.
 
         """
         from .common import Postprocess as NCPostprocess
