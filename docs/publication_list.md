@@ -1,6 +1,7 @@
-Full Publications/Events (44)
+Full Publications/Events (45)
 ==========
-## 2022 (26)
+## 2022 (27)
+* [Neural Compressor: an open-source Python library for network compression](https://cloud.tencent.com/developer/article/2165895) (Nov 2022)
 * [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
 * [Personalized Stable Diffusion with Few-Shot Fine-Tuning](https://medium.com/intel-analytics-software/personalized-stable-diffusion-with-few-shot-fine-tuning-on-a-single-cpu-f01a3316b13) (Nov 2022)
 * [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
