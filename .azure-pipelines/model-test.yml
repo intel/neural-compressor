@@ -12,7 +12,7 @@ pr:
     exclude:
       - neural_compressor/ux
 
-pool: MODEL_PERF_TEST
+pool: test-pool
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
