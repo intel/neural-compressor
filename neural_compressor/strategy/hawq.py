@@ -564,18 +564,17 @@ class HawqTuneStrategy(TuneStrategy):
             op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
             diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)  # Formula: L2=||Q(w)-w||p^2
             pertur_lst[key] = diff_l2
-        # for i in pertur_lst:
-        #     print(pertur_lst[i])
         traces = ht.get_avg_traces(enable_act=False)
         op_to_traces = traces['weight']
-        print(op_to_traces)
+        for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
+            op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2
         if orig_eval == False:
             self._fp32_model.train()
-
         ordered_ops = sorted(op_to_traces.keys(),
                              key=lambda key: op_to_traces[key],
                              reverse=self.higher_is_better)
         # WA for add op type
+        print("ordered_ops:",ordered_ops)
         op_info_map = {}
         for op_info in list(initial_op_tuning_cfg.keys()):
             op_info_map[op_info[0]] = op_info  # op_name: (op_name, op_type)
