@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     branches:
-      - IO-style
+      - master
 
 jobs:
   build:
