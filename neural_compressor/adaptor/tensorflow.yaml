@@ -299,6 +299,7 @@
         'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
         'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2',
+        'Dequantize + FusedBatchNormV3 + LeakyRelu + QuantizeV2',
         'Dequantize + _MklFusedInstanceNorm + Relu + QuantizeV2',
         'Dequantize + _MklFusedInstanceNorm + LeakyRelu + QuantizeV2',
         'Dequantize + Conv2DBackpropInput + BiasAdd + QuantizeV2',
