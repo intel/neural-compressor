@@ -22,7 +22,7 @@ import re
 import tensorflow as tf
 from google.protobuf import text_format
 import numpy as np
-from tensorflow.core.framework import types_pb2, tensor_pb2, graph_pb2
+from tensorflow.core.framework import types_pb2, tensor_pb2
 from tensorflow.python.framework import tensor_util
 from onnx import helper, onnx_pb, numpy_helper, defs, TensorProto, OperatorSetIdProto, shape_inference
 

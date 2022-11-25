@@ -24,7 +24,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.utils.utility import dump_elapsed_time
 from .graph_rewriter.onnx import tf2onnx_utils as utils
 from .graph_rewriter.onnx.onnx_graph import OnnxGraph
-
+import tf2onnx as t2o
 
 logger = logging.getLogger("neural_compressor")
 
@@ -36,17 +36,18 @@ class TensorflowQDQToOnnxQDQConverter:
         Args:
             model (graphdef): tensorflow QDQ graphdef
         """
-        graph_def = self.pre_optimize(model)
+        graph_def = self.tf_graph_optimize(model)
+
         graph = tf.Graph()
         with graph.as_default():
-            tf.import_graph_def(graph_def)
+            tf.import_graph_def(graph_def, name='')
 
         self.graph = graph
         self.opset_version = opset_version
         self.input_names = input_names
         self.output_names = output_names
 
-    def duplicate_quantizev2_nodes(self, model):
+    def duplicate_tf_quantizev2_nodes(self, model):
         """Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = model
@@ -102,7 +103,7 @@ class TensorflowQDQToOnnxQDQConverter:
 
         return cur_graph.dump_graph()
 
-    def pre_optimize(self, model):
+    def tf_graph_optimize(self, model):
         """Pre optimize the tensorflow graphdef to make ONNX QDQ model convert more easier."""
         # Convert HostConst to Const
         for node in model.node:
@@ -110,7 +111,7 @@ class TensorflowQDQToOnnxQDQConverter:
                 node.op = 'Const'
 
         # Duplicat the QuantizeV2 node if it has multi Dequantize nodes
-        model = self.duplicate_quantizev2_nodes(model)
+        model = self.duplicate_tf_quantizev2_nodes(model)
         return model
 
     @dump_elapsed_time("Pass TensorflowQDQToOnnxQDQConverter")
@@ -166,11 +167,12 @@ class TensorflowQDQToOnnxQDQConverter:
                                                 name=node.name, **attr_dict)
                     onnx_nodes.append(onnx_node)
                 except Exception as ex:
-                    logger.error("tf2onnx node convert failed for %s, ex=%s", node.name, ex)
+                    logger.error("tensorflow node convert to onnx failed for %s, ex=%s", node.name, ex)
                     raise
 
         # Build ONNX Graph using onnx_nodes, output_shapes and dtypes
-        onnx_graph = OnnxGraph(onnx_nodes, output_shapes, dtypes)
+        onnx_graph = OnnxGraph(onnx_nodes, output_shapes, dtypes, input_names=self.input_names,
+                               output_names=self.output_names)
 
         # Convert TF QDQ pattern to ONNX QDQ format
         for node in onnx_graph.get_nodes():
@@ -179,6 +181,44 @@ class TensorflowQDQToOnnxQDQConverter:
                 if parent_node:
                     if parent_node.type == 'QuantizeV2':
                         onnx_graph.convert_qdq_nodes(parent_node, node)
+
+        rewriters = [
+            t2o.rewriter.rewrite_biasadd_with_conv2d
+        ]
+
+        t2o.tfonnx.run_rewriters(onnx_graph, rewriters, False)
+
+        # some nodes may already copied into inner Graph, so remove them from main Graph.
+        onnx_graph.delete_unused_nodes(onnx_graph.outputs)
+        t2o.tfonnx.topological_sort(onnx_graph, False)
+
+        # create ops mapping for the desired opsets
+        ops_mapping = t2o.handler.tf_op.create_mapping(onnx_graph.opset, onnx_graph.extra_opset)
+        mapped_op, unmapped_op, exceptions = \
+            t2o.tfonnx.tensorflow_onnx_mapping(onnx_graph, ops_mapping)
+        if unmapped_op:
+            logger.error("Unsupported ops: %s", unmapped_op)
+        if exceptions:
+            raise exceptions[0]
+
+        # onnx requires topological sorting
+        t2o.tfonnx.topological_sort(onnx_graph, False)
+
+        onnx_graph.update_proto()
+
+        op_cnt, attr_cnt = onnx_graph.dump_node_statistics(include_attrs=True, include_subgraphs=False)
+        logger.info(
+            "Summay Stats:\n"
+            "\ttensorflow ops: {}\n"
+            "\ttensorflow attr: {}\n"
+            "\tonnx mapped: {}\n"
+            "\tonnx unmapped: {}".format(op_cnt, attr_cnt, mapped_op, unmapped_op))
+
+        onnx_graph = t2o.optimizer.optimize_graph(onnx_graph)
+
+        # some nodes may already copied into inner Graph, so remove them from main Graph.
+        onnx_graph.delete_unused_nodes(onnx_graph.outputs)
+        t2o.tfonnx.topological_sort(onnx_graph, False)
 
         # Build ONNX model
         model_proto = onnx_graph.make_model("converted from neural compressor")

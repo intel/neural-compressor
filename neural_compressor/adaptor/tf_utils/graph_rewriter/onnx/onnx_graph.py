@@ -64,7 +64,12 @@ class OnnxGraph:
 
         self.set_config(target, opset, extra_opset)
 
-        self.outputs = output_names if output_names is not None else []
+        self.inputs = []
+        self.outputs = []
+        for output_name in output_names:
+            self.outputs.append(output_name +':0')
+        input_ops_names = [input_name + ':0' for input_name in input_names]
+        input_names = input_ops_names
 
         self.parent_graph = None
         self.contained_graphs = {}  # {node_name: {node_attribute_name: Graph}}
@@ -340,6 +345,7 @@ class OnnxGraph:
         for n in self.inputs:
             if n not in ops:
                 raise ValueError("graph input '" + n.name + "' not exist")
+
         for o in self.outputs:
             if o not in self._output_to_node_name:
                 raise ValueError("graph output '" + o.name + "' not exist")
