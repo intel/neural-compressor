@@ -1,24 +1,26 @@
 #!/bin/bash
 
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
-mkdir -p /neural-compressor/.azure-pipelines/scripts/codeScan/scanLog
-pylint_log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
+RESET="echo -en \\E[0m \\n" # close color
+
+log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
+mkdir -p $log_dir
 
 pip install -r /neural-compressor/requirements.txt
 pip install torch==1.12.0
 
-python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/neural_compressor > $pylint_log_dir/lpot-pylint.json
+python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
+--ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/neural_compressor \
+> $log_dir/pylint.json
+
 exit_code=$?
 
-# code-scan close 
-RESET="echo -en \\E[0m \\n"
-
 $BOLD_YELLOW && echo " -----------------  Current pylint cmd start --------------------------" && $RESET
-echo "python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/neural_compressor > $pylint_log_dir/lpot-pylint.json"
+echo "python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto --ignored-modules=tensorflow,torch,torch.quantization,torch.tensor,torchvision,mxnet,onnx,onnxruntime,intel_extension_for_pytorch /neural-compressor/neural_compressor > $log_dir/pylint.json"
 $BOLD_YELLOW && echo " -----------------  Current pylint cmd end --------------------------" && $RESET
 
 $BOLD_YELLOW && echo " -----------------  Current log file output start --------------------------" && $RESET
-cat  $pylint_log_dir/lpot-pylint.json
+cat  $log_dir/pylint.json
 $BOLD_YELLOW && echo " -----------------  Current log file output end --------------------------" && $RESET
 
 
