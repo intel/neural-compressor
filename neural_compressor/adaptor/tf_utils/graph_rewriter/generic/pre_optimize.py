@@ -204,7 +204,7 @@ class PreOptimization():
 
         self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
             self._tmp_graph_def).do_transformation()
-        if not self.new_api:
+        if not self.new_api and not itex_mode:
             #TODO we need to remove below optimizer once the TF enabled the single
             # matmul op quantization
             self._tmp_graph_def = InjectDummyBiasAddOptimizer(
@@ -221,7 +221,7 @@ class PreOptimization():
         self._tmp_graph_def = StripEquivalentNodesOptimizer(
             self._tmp_graph_def, output_node_names).do_transformation()
 
-        if self.new_api:
+        if self.new_api or itex_mode:
             self._tmp_graph_def = DilatedContraction(
                 self._tmp_graph_def).do_transformation()
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
