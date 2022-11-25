@@ -116,6 +116,7 @@ def config_instance(cores_per_instance, num_of_instance):
         core[i] = ','.join(core[i])
 
     core = ';'.join(core)
+    core = core[::-1]
     return core
 
 
