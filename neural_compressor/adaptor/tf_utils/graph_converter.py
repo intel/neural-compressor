@@ -517,6 +517,7 @@ class GraphConverter:
            FP32 + INT8 mixed precision graph.
         """
         try:
+            logger.info("Start BF16 conversion.")
             self._tmp_model.graph_def = BF16Convert(
                 self._tmp_model.graph_def,
                 self.fp32_ops,
