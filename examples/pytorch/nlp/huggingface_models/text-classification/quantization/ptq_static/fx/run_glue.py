@@ -498,13 +498,11 @@ def main():
 
     # optimize and quantize with Neural Compressor
     if model_args.tune:
-        from neural_compressor.experimental import Quantization, common
-        calib_dataloader = eval_dataloader
-        quantizer = Quantization('conf.yaml')
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = calib_dataloader
-        quantizer.model = common.Model(model)
-        model = quantizer.fit()
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        tuning_criterion = TuningCriterion(max_trials=600)
+        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx", tuning_criterion=tuning_criterion)
+        model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(model, tokenizer, training_args.output_dir)
         return

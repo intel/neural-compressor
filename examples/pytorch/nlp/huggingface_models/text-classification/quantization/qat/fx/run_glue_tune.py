@@ -502,12 +502,6 @@ def main():
     eval_dataloader = trainer.get_eval_dataloader()
     batch_size = eval_dataloader.batch_size
 
-    def train_func(model):
-        trainer.model_wrapped = model
-        trainer.model = model
-        trainer.train()
-        return trainer.model
-
     def eval_func(model):
         trainer.model = model
         result = trainer.evaluate(eval_dataset=eval_dataset)
@@ -526,12 +520,17 @@ def main():
 
     # optimize and quantize with Neural Compressor
     if model_args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('conf_qat.yaml')
-        quantizer.eval_func = eval_func
-        quantizer.q_func = train_func
-        quantizer.model = common.Model(model)
-        model = quantizer.fit()
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import QuantizationAwareTrainingConfig
+        conf = QuantizationAwareTrainingConfig(backend="pytorch_fx")
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        trainer.model_wrapped = model
+        trainer.model = model
+        trainer.train()
+        compression_manager.callbacks.on_train_end()
+
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(model, tokenizer, training_args.output_dir)
         return

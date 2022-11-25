@@ -2662,12 +2662,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch_fx"
-        # pragma: no cover
-        if self.approach != 'post_training_dynamic_quant' and self.version.release >= Version("1.13.0").release:
-            assert dataloader is not None, "Please pass a dataloader to quantizer!"
-            example_inputs = get_example_inputs(model._model, dataloader)
-        else:
-            example_inputs = None
+
+        # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
+        # so set it to None.
+        example_inputs = None
+
         if self.default_qconfig is not None:
             default_qconfig = copy.deepcopy(self.default_qconfig)
             default_qconfig['activation']['dtype'] = \
@@ -2862,11 +2861,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         self.model._model.train()
-        if self.version.release >= Version("1.13.0").release:  # pragma: no cover
-            assert dataloader is not None, "Please pass dataloader to qat hook!"
-            example_inputs = get_example_inputs(self.model._model, dataloader)
-        else:
-            example_inputs = None
+
+        # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
+        # so set it to None.
+        example_inputs = None
 
         if self.sub_module_list is None:
             if self.version.release >= Version("1.13.0").release:  # pragma: no cover

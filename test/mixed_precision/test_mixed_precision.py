@@ -10,7 +10,7 @@ import tensorflow as tf
 from neural_compressor import mix_precision
 from neural_compressor.utils.utility import LazyImport, CpuInfo
 from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
-from neural_compressor.conf.pythonic_config import MixedPrecisionConfig, Options
+from neural_compressor.config import MixedPrecisionConfig, set_workspace, TuningCriterion
 from onnx import helper, TensorProto
 from packaging.version import Version
 from tensorflow.core.framework import attr_value_pb2
@@ -262,26 +262,26 @@ class TestMixedPrecisionOnNonEnabledHost(unittest.TestCase):
 
     def test_on_non_enabled_host(self):
         # test onnx
-        conf = MixedPrecisionConfig(precisions=["fp16"], backend="onnxrt_qlinearops")
+        conf = MixedPrecisionConfig(extra_precisions=["fp16"], backend="onnxrt_qlinearops")
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
     @unittest.skipIf(CpuInfo().bf16, 'skip since hardware support bf16')
     def test_on_non_enabled_host_tf(self):
-        conf = MixedPrecisionConfig(precisions=["bf16"], backend="tensorflow")
+        conf = MixedPrecisionConfig(extra_precisions=["bf16"], backend="tensorflow")
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.tf_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
     def test_on_non_enabled_dtype(self):
         # test onnx
-        conf = MixedPrecisionConfig(precisions=["bf16"], backend="onnxrt_qlinearops")
+        conf = MixedPrecisionConfig(extra_precisions=["bf16"], backend="onnxrt_qlinearops")
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
-        conf = MixedPrecisionConfig(precisions=["fp16"], backend="tensorflow")
+        conf = MixedPrecisionConfig(extra_precisions=["fp16"], backend="tensorflow")
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.tf_model, conf)
         self.assertEqual(cm.exception.code, 0)
@@ -310,16 +310,16 @@ class TestMixedPrecision(unittest.TestCase):
         from neural_compressor.experimental import common
         from neural_compressor.experimental.metric.metric import ONNXRT_QL_METRICS
         # test onnx
-        conf = MixedPrecisionConfig(precisions=["fp16"],
+        conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops")
-        options = Options(workspace="./saved")
-        output_model = mix_precision.fit(self.onnx_model, conf, options=options)
+        set_workspace("./saved")
+        output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertFalse(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
-        conf = MixedPrecisionConfig(precisions=["fp16"],
+        tuning_criterion = TuningCriterion(max_trials=3, timeout=50)
+        conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops",
-                                    max_trials=3,
-                                    timeout=50)
+                                    tuning_criterion=tuning_criterion)
         
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
@@ -347,7 +347,7 @@ class TestMixedPrecision(unittest.TestCase):
         from neural_compressor.experimental import MixedPrecision, common
         from neural_compressor import conf
         my_metric = Metric()
-        conf = MixedPrecisionConfig(precisions=["fp16"],
+        conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops")
         
         output_model = mix_precision.fit(self.onnx_model,
@@ -355,7 +355,7 @@ class TestMixedPrecision(unittest.TestCase):
                                          eval_dataloader=common.DataLoader(self.matmul_dataset),
                                          eval_metric=my_metric)
         self.assertFalse(any([i.op_type == 'Cast' for i in output_model.nodes()]))
-        conf = MixedPrecisionConfig(precisions=["fp16"],
+        conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops")
         
         output_model = mix_precision.fit(self.onnx_model,
@@ -367,7 +367,7 @@ class TestMixedPrecision(unittest.TestCase):
         conf = MixedPrecisionConfig(
             inputs="input",
             outputs="final",
-            precisions=["bf16", "fp32"],
+            extra_precisions=["bf16", "fp32"],
         )
 
         output_model = mix_precision.fit(
@@ -376,15 +376,15 @@ class TestMixedPrecision(unittest.TestCase):
             eval_func=eval,
         )
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
-        self.assertEqual(conf.precisions, ['bf16', 'fp32'])
+        self.assertEqual(conf.extra_precisions, ['bf16', 'fp32'])
         self.assertEqual(conf.inputs, 'input')
         self.assertEqual(conf.outputs, 'final')
 
+        tuning_criterion = TuningCriterion(max_trials=4, timeout=500)
         conf = MixedPrecisionConfig(
-            max_trials=4,
-            timeout=500,
-            precisions=["bf16"],
             backend="tensorflow",
+            tuning_criterion=tuning_criterion,
+            extra_precisions=["bf16"],
         )
         output_model = mix_precision.fit(
             common.Model(self.tf_model),
@@ -393,12 +393,12 @@ class TestMixedPrecision(unittest.TestCase):
         )
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
 
+        tuning_criterion = TuningCriterion(max_trials=1, timeout=100)
         conf = MixedPrecisionConfig(
             inputs="input",
             outputs="final, test",
-            max_trials=1,
-            timeout=100,
-            precisions=["bf16", "fp32"],
+            tuning_criterion=tuning_criterion,
+            extra_precisions=["bf16", "fp32"],
         )
         output_model = mix_precision.fit(
             self.tf_model,
@@ -414,7 +414,7 @@ class TestMixedPrecision(unittest.TestCase):
             return 0.5
 
         conf = MixedPrecisionConfig(
-            precisions=["bf16"],
+            extra_precisions=["bf16"],
             backend="pytorch"
         )
         output_model = mix_precision.fit(
