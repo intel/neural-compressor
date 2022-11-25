@@ -227,15 +227,13 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 </table>
 
 ## Selected Publications/Events
+* [Neural Compressor: an open-source Python library for network compression](https://cloud.tencent.com/developer/article/2165895) (Nov 2022)
 * [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
 * [Personalized Stable Diffusion with Few-Shot Fine-Tuning](https://medium.com/intel-analytics-software/personalized-stable-diffusion-with-few-shot-fine-tuning-on-a-single-cpu-f01a3316b13) (Nov 2022)
 * [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
 * [PyTorch* Inference Acceleration with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/developer/articles/technical/pytorch-inference-with-intel-neural-compressor.html#gs.gnq0cj) (Oct 2022)
-* Neural Coder, a new plug-in for Intel Neural Compressor was covered by [Twitter](https://intel.sharepoint.com/sites/iLit-MyLearning/Shared%20Documents/My%20Learning/Haihao/MSR/2022/o%09https:/twitter.com/IntelDevTools/status/1583629213697212416?s=20&t=f2dXY_g9-bCO-GQm-S6Btg), [LinkedIn](https://www.linkedin.com/posts/intel-software_oneapi-ai-deeplearning-activity-6989377309917007872-Dbzg?utm_source=share&utm_medium=member_desktop), and [Intel Developer Zone](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA) from Intel, and [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416/retweets) and [LinkedIn](https://www.linkedin.com/feed/update/urn:li:share:6990377841435574272/) from Hugging Face. (Oct 2022)
+* Neural Coder, a new plug-in for Intel Neural Compressor was covered by [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416), [LinkedIn](https://www.linkedin.com/posts/intel-software_oneapi-ai-deeplearning-activity-6989377309917007872-Dbzg?utm_source=share&utm_medium=member_desktop), and [Intel Developer Zone](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA) from Intel, and [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416/retweets) and [LinkedIn](https://www.linkedin.com/feed/update/urn:li:share:6990377841435574272/) from Hugging Face. (Oct 2022)
 * Intel Neural Compressor successfully landed on [GCP](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [AWS](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel) marketplace. (Oct 2022)
-* [Neural Coder (Intel Neural Compressor Plug-in): One-Click, No-Code Solution (Pat's Keynote IntelON 2022)](https://twitter.com/i/status/1574909338203967497) (Sep 2022)
-* [Alibaba Cloud and Intel Neural Compressor Deliver Better Productivity for PyTorch Users](https://medium.com/intel-analytics-software/alibaba-cloud-collaborates-with-intel-neural-compressor-for-better-productivity-and-performance-83cdb6500420) (Sep 2022)
-* [Efficient Text Classification with Intel Neural Compressor](https://medium.com/intel-analytics-software/efficient-text-classification-with-intel-neural-compressor-4853296deeac) (Sep 2022)
 
 > View our [full publication list](docs/publication_list.md).
 
