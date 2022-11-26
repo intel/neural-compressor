@@ -918,11 +918,13 @@ class GraphRewriterHelper():
             if i.startswith(first_line):
                 iterations += 1
 
-        step = len(valid_data) / iterations
+        step = int(len(valid_data) / iterations)
         final_res = []
 
         for i in range(iterations):
             final_res.extend(gen_per_iter(valid_data[int(i*step): int(step*( i+ 1))]))
+            if i + 1 == iterations and int(step*( i+ 1)) < len(valid_data):
+                final_res.extend(gen_per_iter(valid_data[int(step*( i+ 1)): len(valid_data)]))
 
         return final_res
 
