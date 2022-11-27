@@ -1366,6 +1366,12 @@ class TensorFlowAdaptor(Adaptor):
                 res[op[1]] = {'activation': {'dtype': ['bf16']}, 'weight': {'dtype': ['bf16']}}
         return res
 
+    def _pre_hook_for_qat(self, dataloader=None):
+        pass
+
+    def _post_hook_for_qat(self):
+        pass
+
     def _pre_eval_hook(self, model):
         return model
 

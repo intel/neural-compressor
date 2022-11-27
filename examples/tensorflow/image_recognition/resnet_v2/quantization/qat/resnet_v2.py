@@ -282,7 +282,7 @@ def train():
     model.save("baseline_model")
 
 
-def q_func(model):
+def q_func(compression_manager, model):
     # Load the CIFAR10 data.
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -332,8 +332,8 @@ def q_func(model):
         x_test, y_test, verbose=0)
 
     print('Quant test accuracy:', q_aware_model_accuracy)
-    q_aware_model.save("trained_qat_model")
-    return 'trained_qat_model'
+
+    return q_aware_model
 
 class Dataset(object):
     def __init__(self, batch_size=500):
@@ -365,11 +365,13 @@ class Dataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 if __name__ == '__main__':
-    build_fake_yaml()
     train()
-    from neural_compressor.experimental import Quantization, common
-    quantizer = Quantization('fake_yaml.yaml')
-    quantizer.eval_dataloader = common.DataLoader(Dataset())
-    quantizer.model = './baseline_model'
-    quantizer.q_func = q_func
-    quantizer.fit()
+
+    from neural_compressor.training import prepare_compression
+    from neural_compressor.config import QuantizationAwareTrainingConfig
+    conf = QuantizationAwareTrainingConfig(backend="tensorflow")
+    compression_manager = prepare_compression('./baseline_model', conf)
+    compression_manager.callbacks.on_train_begin()
+    q_aware_model = q_func(compression_manager, compression_manager.model)
+    q_aware_model.save("trained_qat_model")
+    compression_manager.callbacks.on_train_end()
