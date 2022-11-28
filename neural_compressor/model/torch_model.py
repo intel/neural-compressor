@@ -515,11 +515,7 @@ class PyTorchModel(PyTorchBaseModel):
         else:
             op_types_to_quantize=['MatMul', 'Gather', 'Conv']
             pytorch_op_types_to_quantize=['Linear', 'Embedding', 'Conv1d', 'Conv2d']
-            if quant_format == 'QDQ':
-                addition_op_to_quantize = list(ortq.registry.QDQRegistry.keys())
-                addition_op_to_quantize.remove('Relu') # ValueError: x not in list
-            else:
-                addition_op_to_quantize = list(ortq.registry.QLinearOpsRegistry.keys())
+            addition_op_to_quantize = []
 
         if 'U8S8' in dtype:
             op_types_to_quantize.remove('Gather')
