@@ -45,10 +45,7 @@ function run_tuning {
     if [ "${topology}" = "gpt_j_wikitext" ]; then
         TASK_NAME='wikitext'
         model_name_or_path=$input_model 
-        extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
-    elif [ "${topology}" = "gpt_neo_wikitext" ]; then
-        TASK_NAME='wikitext'
-        model_name_or_path=$input_model 
+        extra_cmd='--dataset_config_name=wikitext-2-raw-v1' 
     fi
 
 
