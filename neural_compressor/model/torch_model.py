@@ -20,7 +20,6 @@ import os
 import inspect
 import sys
 from collections import OrderedDict, UserDict
-from abc import abstractmethod
 from ..adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils import logger
@@ -46,7 +45,40 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         self.q_config = None
         self._workspace_path = ''
         self.is_quantized = False
+        try:
+            self.fp32_model = copy.deepcopy(model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
+            self.fp32_model = model
         self.kwargs = kwargs if kwargs else None
+
+    def __repr__(self):
+        # rewirte this func to avoid printing fp32_model
+        from torch.nn.modules.module import _addindent
+        # We treat the extra repr like the sub-module, one item per line
+        extra_lines = []
+        extra_repr = self.extra_repr()
+        # empty string will be split into list ['']
+        if extra_repr:
+            extra_lines = extra_repr.split('\n')
+        child_lines = []
+        for key, module in self._modules.items():
+            if key == 'fp32_model':
+                continue
+            mod_str = repr(module)
+            mod_str = _addindent(mod_str, 2)
+            child_lines.append('(' + key + '): ' + mod_str)
+        lines = extra_lines + child_lines
+        main_str = self._get_name() + '('
+        if lines:
+            # simple one-liner info, which most builtin Modules will use
+            if len(extra_lines) == 1 and not child_lines:
+                main_str += extra_lines[0]
+            else:
+                main_str += '\n  ' + '\n  '.join(lines) + '\n'
+        main_str += ')'
+        return main_str
 
     def forward(self, *args, **kwargs):
         return self._model(*args, **kwargs)
@@ -624,9 +656,38 @@ class PyTorchModel(PyTorchBaseModel):
         save_path: str,
         conf,
     ):
-        # TODO
-        from neural_compressor.config import Torch2ONNXConfig
-        pass
+        from neural_compressor.experimental.export.torch2onnx import (
+            torch_to_fp32_onnx, 
+            torch_to_int8_onnx
+        )
+        if conf.dtype == 'int8':
+            torch_to_int8_onnx(
+                self.fp32_model,
+                self.model,
+                self.q_config,
+                save_path,
+                conf.example_inputs,
+                opset_version=conf.opset_version,
+                dynamic_axes=conf.dynamic_axes,
+                input_names=conf.input_names,
+                output_names=conf.output_names,
+                quant_format=conf.quant_format,
+                dtype='U8S8',
+            )
+        elif conf.dtype == 'fp32':
+            torch_to_fp32_onnx(
+                self.fp32_model,
+                save_path,
+                conf.example_inputs,
+                opset_version=conf.opset_version,
+                dynamic_axes=conf.dynamic_axes,
+                input_names=conf.input_names,
+                output_names=conf.output_names,
+                do_constant_folding=True,
+                verbose=True,
+            )
+        else:   # pragma: no cover
+            assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
 
 
 class PyTorchFXModel(PyTorchModel):
