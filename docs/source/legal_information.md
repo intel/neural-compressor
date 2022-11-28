@@ -16,7 +16,7 @@ See the accompanying [license](https://github.com/intel/neural-compressor/tree/m
 
 ## Citation
 
-If you use Intel® Neural Compressor in your research or you wish to refer to the tuning results published in the [Validated Models](getting_started.md#validated-models), use the following BibTeX entry.
+If you use Intel® Neural Compressor in your research or you wish to refer to the tuning results published in the [Validated Models](getting_started.md), use the following BibTeX entry.
 
 ```
 @misc{Intel® Neural Compressor,
