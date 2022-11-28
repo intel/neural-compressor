@@ -517,10 +517,6 @@ class PyTorchModel(PyTorchBaseModel):
             pytorch_op_types_to_quantize=['Linear', 'Embedding', 'Conv1d', 'Conv2d']
             addition_op_to_quantize = []
 
-        if 'U8S8' in dtype:
-            op_types_to_quantize.remove('Gather')
-            pytorch_op_types_to_quantize.remove('Embedding')
-
         if quant_format == 'QDQ' and opset_version < 13:   # pragma: no cover 
             opset_version = 13
             logger.warning("QDQ format requires opset_version >= 13, " + 
