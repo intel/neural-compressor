@@ -220,18 +220,18 @@ class GraphConverter:
                         return True
 
                     disorder_tensors = []
-                    disorder_inputs = [] 
-                    for idx, sort_tensor in enumerate(input_tensor):
-                        sort_input = inputs[idx] 
+                    disorder_inputs = []
+                    for idx_1, sort_tensor in enumerate(input_tensor):
+                        sort_input = inputs[idx_1]
                         if check_shape(sort_tensor, sort_input):
-                            feed_dict.update({sort_tensor: sort_input}) 
+                            feed_dict.update({sort_tensor: sort_input})
                         else:
                             disorder_tensors.append(sort_tensor)
                             disorder_inputs.append(sort_input)
                     for i, dis_tensor in enumerate(disorder_tensors):
-                       for j, dis_input in enumerate(disorder_inputs):  
+                       for j, dis_input in enumerate(disorder_inputs):
                            if check_shape(dis_tensor, dis_input):
-                               feed_dict.update({dis_tensor: dis_input})    
+                               feed_dict.update({dis_tensor: dis_input})
                                break
             _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
                 else iterator_sess_run(sess, iter_op, \

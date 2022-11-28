@@ -17,6 +17,7 @@
 
 import copy
 import os
+import re
 import shutil
 import importlib
 from abc import abstractmethod
@@ -42,8 +43,6 @@ ort = LazyImport("onnxruntime")
 yaml = LazyImport('yaml')
 json = LazyImport('json')
 np = LazyImport('numpy')
-
-tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
 def get_model_type(model):
     """Get mode type
@@ -332,6 +331,36 @@ def _contains_function_with_implements_attr(saved_model_proto):
           "api_implements", None):
         return True
     return False
+
+def tensor_to_node(tensor_name):
+    """Method that get the valid node name from tensor name.
+    Args:
+        tensor_name (string or list): tensor name.
+    Returns:
+        string or list: return node name string, if tensor_name is string.
+                        return node name list, if tensor_name is list.
+    """
+    if isinstance(tensor_name, str):
+        tensor_name_cache = {}
+        if tensor_name not in tensor_name_cache:
+            key = tensor_name
+            if tensor_name.startswith("^"):
+                tensor_name = tensor_name[1:]
+            m = re.search(r"(.*):\d+$", tensor_name)
+            if m:
+                tensor_name = m.group(1)
+            tensor_name_cache[key] = tensor_name
+            return tensor_name
+        return tensor_name_cache[tensor_name]
+    elif isinstance(tensor_name, list):
+        node_name_list = []
+        for name in tensor_name:
+            node_name = tensor_to_node(name)
+            if node_name not in node_name_list:
+                node_name_list.append(node_name)
+        return node_name_list
+    else:
+        raise TypeError("'tensor_name' must be str or list.")
 
 def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_names):
     """Load graph_def from saved model with the default serving signature key.
@@ -870,12 +899,27 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def iter_op(self):
-        self._iter_op = []
         if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
-        op_list = [node.op for node in self._sess.graph.as_graph_def().node]
-        if 'MakeIterator' in op_list:
-            self._iter_op.append(self._sess.graph.get_operation_by_name('MakeIterator'))
+        graph = self._sess.graph
+        if self._iter_op is not None and \
+            (self._iter_op==[] or self._iter_op[0].graph==graph):
+            return self._iter_op
+        user_output_node_names = tensor_to_node(self.output_tensor_names)
+        graph_def = graph.as_graph_def()
+        sub_graph_def = tf.compat.v1.graph_util.extract_sub_graph(
+                            graph_def=graph_def,
+                            dest_nodes=user_output_node_names)
+        sub_graph_names = [node.name for node in sub_graph_def.node]
+        self._iter_op = []
+        for node in graph_def.node:
+            if node.op == 'MakeIterator':
+                if not node.input:
+                    raise ValueError(f"Graph error, the node '{node.name}'"
+                                     f" in the graph has no predecessor node."
+                                     f" Please check the model under '{self._model}'.")
+                if {tensor_to_node(input_name) for input_name in node.input}.intersection(sub_graph_names):
+                    self._iter_op.append(graph.get_operation_by_name(node.name))
         return self._iter_op
 
     @property
