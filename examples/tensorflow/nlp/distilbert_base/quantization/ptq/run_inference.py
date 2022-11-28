@@ -29,7 +29,6 @@ from tensorflow.core.protobuf import saved_model_pb2
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig, \
     TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
-from neural_compressor.experimental import Quantization, common
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
 
