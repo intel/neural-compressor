@@ -8,7 +8,6 @@ from  tensorflow.keras.regularizers import l2
 from  tensorflow.keras.models import Model
 from  tensorflow.keras.datasets import cifar10
 import numpy as np
-import yaml
 
 
 def lr_schedule(epoch):
@@ -176,29 +175,6 @@ def resnet_v2(input_shape, depth, num_classes=10):
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
     return model
-
-
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-
-        device: cpu
-        quantization:
-          approach: quant_aware_training
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-          exit_policy:
-            performance_only: True
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
 
 
 # Training parameters

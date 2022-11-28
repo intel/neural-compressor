@@ -39,9 +39,6 @@ flags.DEFINE_bool(
     'benchmark', False, 'whether to benchmark the model')
 
 flags.DEFINE_string(
-    'config', 'bert.yaml', 'yaml configuration of the model')
-
-flags.DEFINE_string(
     'calib_data', None, 'location of calibration dataset')
 
 flags.DEFINE_string(
