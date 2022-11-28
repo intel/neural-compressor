@@ -837,7 +837,7 @@ schema = Schema({
     Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
-        'strategy': {'name': 'basic'},
+        'strategy': {'name': 'basic', 'loss': 'CrossEntropyLoss'}, # TODO move loss to appropriate position
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
