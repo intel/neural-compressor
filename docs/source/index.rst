@@ -11,10 +11,8 @@ Sections
    :maxdepth: 1
 
    README.md
-   tutorial.md
    examples_readme.md
    api-documentation/apis.rst
-   doclist.rst
    releases_info.md
    contributions.md
    legal_information.md

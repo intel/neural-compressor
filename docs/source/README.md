@@ -167,7 +167,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
       <td colspan="3" align="center"><a href="./design.html">Architecture</a></td>
       <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
       <td colspan="2" align="center"><a href="./bench.html">GUI</a></td>
-      <td colspan="2" align="center"><a href="./api-introduction.html">APIs</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/api-documentation/apis.html">APIs</a></td>
     </tr>
     <tr>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
