@@ -24,7 +24,7 @@ quantization:                                        # optional. tuning constrai
       batch_size: 1
       dataset:
         ImageFolder:
-          root: /home/bfang1/Projects/HAWQ_INC/datasets/raw/val     # NOTE: modify to calibration dataset location if needed
+          root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
       transform:
         Resize:
           size: 256
@@ -43,7 +43,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageFolder:
-          root: /home/bfang1/Projects/HAWQ_INC/datasets/raw/val      # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/calibration/dataset         # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
@@ -61,7 +61,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageFolder:
-          root: /home/bfang1/Projects/HAWQ_INC/datasets/raw/val        # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/calibration/dataset         # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
