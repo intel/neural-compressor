@@ -13,6 +13,7 @@ import torch
 from fairseq import options, progress_bar, tasks, utils
 from fairseq.data import dictionary
 from fairseq.meters import StopwatchMeter, TimeMeter
+from fairseq.data.encoders.moses_tokenizer import MosesTokenizer
 
 from neural_compressor.utils import logger
 
@@ -20,143 +21,6 @@ from .transformer_supernetwork import TransformerSuperNetwork
 from fvcore.nn import FlopCountAnalysis
 
 warnings.filterwarnings("ignore")
-
-
-try:
-    from fairseq import libbleu
-except ImportError as e:
-    logger.error('missing libbleu.so. run `pip install --editable .`')
-    raise e
-
-
-C = ctypes.cdll.LoadLibrary(libbleu.__file__)
-
-
-class BleuStat(ctypes.Structure):
-    _fields_ = [
-        ('reflen', ctypes.c_size_t),
-        ('predlen', ctypes.c_size_t),
-        ('match1', ctypes.c_size_t),
-        ('count1', ctypes.c_size_t),
-        ('match2', ctypes.c_size_t),
-        ('count2', ctypes.c_size_t),
-        ('match3', ctypes.c_size_t),
-        ('count3', ctypes.c_size_t),
-        ('match4', ctypes.c_size_t),
-        ('count4', ctypes.c_size_t),
-    ]
-
-
-class Scorer(object):
-    def __init__(self, pad, eos, unk):
-        self.stat = BleuStat()
-        self.pad = pad
-        self.eos = eos
-        self.unk = unk
-        self.reset()
-
-    def reset(self, one_init=False):
-        if one_init:
-            C.bleu_one_init(ctypes.byref(self.stat))
-        else:
-            C.bleu_zero_init(ctypes.byref(self.stat))
-
-    def add(self, ref, pred):
-        if not isinstance(ref, torch.IntTensor):
-            raise TypeError('ref must be a torch.IntTensor (got {})'
-                            .format(type(ref)))
-        if not isinstance(pred, torch.IntTensor):
-            raise TypeError('pred must be a torch.IntTensor(got {})'
-                            .format(type(pred)))
-
-        # don't match unknown words
-        rref = ref.clone()
-        assert not rref.lt(0).any()
-        rref[rref.eq(self.unk)] = -999
-
-        rref = rref.contiguous().view(-1)
-        pred = pred.contiguous().view(-1)
-
-        C.bleu_add(
-            ctypes.byref(self.stat),
-            ctypes.c_size_t(rref.size(0)),
-            ctypes.c_void_p(rref.data_ptr()),
-            ctypes.c_size_t(pred.size(0)),
-            ctypes.c_void_p(pred.data_ptr()),
-            ctypes.c_int(self.pad),
-            ctypes.c_int(self.eos))
-
-    def score(self, order=4):
-        psum = sum(math.log(p) if p > 0 else float('-Inf')
-                   for p in self.precision()[:order])
-        return self.brevity() * math.exp(psum / order) * 100
-
-    def precision(self):
-        def ratio(a, b):
-            return a / b if b > 0 else 0
-
-        return [
-            ratio(self.stat.match1, self.stat.count1),
-            ratio(self.stat.match2, self.stat.count2),
-            ratio(self.stat.match3, self.stat.count3),
-            ratio(self.stat.match4, self.stat.count4),
-        ]
-
-    def brevity(self):
-        r = self.stat.reflen / self.stat.predlen
-        return min(1, math.exp(1 - r))
-
-    def result_string(self, order=4):
-        assert order <= 4, "BLEU scores for order > 4 aren't supported"
-        fmt = 'BLEU{} = {:2.2f}, {:2.1f}'
-        for _ in range(1, order):
-            fmt += '/{:2.1f}'
-        fmt += ' (BP={:.3f}, ratio={:.3f}, syslen={}, reflen={})'
-        bleup = [p * 100 for p in self.precision()[:order]]
-        return fmt.format(order, self.score(order=order), *bleup,
-                          self.brevity(), self.stat.predlen/self.stat.reflen,
-                          self.stat.predlen, self.stat.reflen)
-
-
-def get_bleu_score(args, reference_sentences_fpath, translated_sentences_fpath):
-    dict = dictionary.Dictionary()
-    order = 4
-    sentence_bleu = False
-    ignore_case = False
-
-    def readlines(fd):
-        for line in fd.readlines():
-            if ignore_case:
-                yield line.lower()
-            else:
-                yield line
-
-    if sentence_bleu:
-        def score(fdsys):
-            with open(reference_sentences_fpath) as fdref:
-                scorer = Scorer(dict.pad(), dict.eos(), dict.unk())
-                for i, (sys_tok, ref_tok) in enumerate(zip(readlines(fdsys), readlines(fdref))):
-                    scorer.reset(one_init=True)
-                    sys_tok = dict.encode_line(sys_tok)
-                    ref_tok = dict.encode_line(ref_tok)
-                    scorer.add(ref_tok, sys_tok)
-    else:
-        def score(fdsys):
-            with open(reference_sentences_fpath) as fdref:
-                scorer = Scorer(dict.pad(), dict.eos(), dict.unk())
-                for sys_tok, ref_tok in zip(readlines(fdsys), readlines(fdref)):
-                    sys_tok = dict.encode_line(sys_tok)
-                    ref_tok = dict.encode_line(ref_tok)
-                    scorer.add(ref_tok, sys_tok)
-                return(scorer.score(order))
-
-    if translated_sentences_fpath == '-':
-        score = score(sys.stdin)
-    else:
-        with open(translated_sentences_fpath, 'r') as f:
-            score = score(f)
-    logger.info('Achieved BLEU score: {}'.format(score))
-    return score
 
 
 def compute_bleu(config, dataset_path, checkpoint_path):
@@ -173,6 +37,9 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     args.source_lang = 'en'
     args.target_lang = 'de'
     args.batch_size = 128
+    args.eval_bleu_remove_bpe = '@@ '
+    args.eval_bleu_detok = 'moses'
+
     utils.import_user_module(args)
 
     use_cuda = torch.cuda.is_available() and not args.cpu
@@ -187,6 +54,9 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     # Load dataset splits
     task = tasks.setup_task(args)
     task.load_dataset(args.gen_subset)
+
+    tokenizer = MosesTokenizer(args)
+    task.tokenizer=tokenizer
     # Set dictionaries
     try:
         src_dict = getattr(task, 'source_dictionary', None)
@@ -239,115 +109,19 @@ def compute_bleu(config, dataset_path, checkpoint_path):
     generator = task.build_generator([model], args)
 
     num_sentences = 0
-    has_target = True
-    input_len_all = []
-    with open('translations_out.txt', 'a') as fname_translations:
-        with progress_bar.build_progress_bar(args, itr) as t:
-            wps_meter = TimeMeter()
-            for sample in t:
+    bleu_list = []
+    with progress_bar.build_progress_bar(args, itr) as t:
+        for sample in t:
+            sample = utils.move_to_cuda(sample) if use_cuda else sample
+            if 'net_input' not in sample:
+                continue
 
-                sample = utils.move_to_cuda(sample) if use_cuda else sample
-                if 'net_input' not in sample:
-                    continue
+            bleu = task._inference_with_bleu(generator,sample,model)
+            bleu_list.append(bleu.score)
 
-                prefix_tokens = None
-                if args.prefix_size > 0:
-                    prefix_tokens = sample['target'][:, :args.prefix_size]
-
-                gen_timer.start()
-                hypos = task.inference_step(
-                    generator, [model], sample, prefix_tokens)
-                input_len_all.append(
-                    np.mean(sample['net_input']['src_lengths'].cpu().numpy()))
-                num_generated_tokens = sum(len(h[0]['tokens']) for h in hypos)
-                gen_timer.stop(num_generated_tokens)
-
-                for i, sample_id in enumerate(sample['id'].tolist()):
-                    has_target = sample['target'] is not None
-
-                    # Remove padding
-                    src_tokens = utils.strip_pad(
-                        sample['net_input']['src_tokens'][i, :], tgt_dict.pad())
-                    target_tokens = None
-                    if has_target:
-                        target_tokens = utils.strip_pad(
-                            sample['target'][i, :], tgt_dict.pad()).int().cpu()
-
-                    # Either retrieve the original sentences or regenerate them from tokens.
-                    if align_dict is not None:
-                        src_str = task.dataset(
-                            args.gen_subset).src.get_original_text(sample_id)
-                        target_str = task.dataset(
-                            args.gen_subset).tgt.get_original_text(sample_id)
-                    else:
-                        if src_dict is not None:
-                            src_str = src_dict.string(
-                                src_tokens, args.remove_bpe)
-                        else:
-                            src_str = ""
-                        if has_target:
-                            target_str = tgt_dict.string(
-                                target_tokens, args.remove_bpe, escape_unk=True)
-
-                    if not args.quiet:
-                        if src_dict is not None:
-                            fname_translations.write(
-                                'S-{}\t{}'.format(sample_id, src_str))
-                            fname_translations.write('\n')
-
-                        if has_target:
-                            fname_translations.write(
-                                'T-{}\t{}'.format(sample_id, target_str))
-                            fname_translations.write('\n')
-
-                    # Process top predictions
-                    for j, hypo in enumerate(hypos[i][:args.nbest]):
-                        hypo_tokens, hypo_str, alignment = utils.post_process_prediction(
-                            hypo_tokens=hypo['tokens'].int().cpu(),
-                            src_str=src_str,
-                            alignment=hypo['alignment'].int().cpu(
-                            ) if hypo['alignment'] is not None else None,
-                            align_dict=align_dict,
-                            tgt_dict=tgt_dict,
-                            remove_bpe=args.remove_bpe,
-                        )
-
-                        if not args.quiet:
-
-                            fname_translations.write(
-                                'H-{}\t{}\t{}'.format(sample_id, hypo['score'], hypo_str))
-                            fname_translations.write('\n')
-                            fname_translations.write('P-{}\t{}'.format(
-                                sample_id,
-                                ' '.join(map(
-                                    lambda x: '{:.4f}'.format(x),
-                                    hypo['positional_scores'].tolist(),
-                                ))
-                            ))
-                            fname_translations.write('\n')
-
-                            if args.print_alignment:
-                                fname_translations.write('A-{}\t{}'.format(
-                                    sample_id,
-                                    ' '.join(
-                                        map(lambda x: str(utils.item(x)), alignment))
-                                ))
-                                fname_translations.write('\n')
-
-                wps_meter.update(num_generated_tokens)
-                t.log({'wps': round(wps_meter.avg)})
-                num_sentences += sample['nsentences']
-
-    # TODO(macsz) Try to convert this system call to Python code
-    os.system(
-        "grep ^H translations_out.txt | cut -f3- | perl -ple 's{(\S)-(\S)}{$1 ##AT##-##AT## $2}g' > sys.txt")
-    os.system(
-        "grep ^T translations_out.txt | cut -f2- | perl -ple 's{(\S)-(\S)}{$1 ##AT##-##AT## $2}g' > ref.txt")
-    bleu_score = get_bleu_score(args, "ref.txt", "sys.txt")
-
-    os.remove("ref.txt")
-    os.remove("sys.txt")
-    os.remove("translations_out.txt")
+            num_sentences += sample['nsentences']
+    
+    bleu_score = np.mean(np.array(bleu_list))
     return bleu_score
 
 
