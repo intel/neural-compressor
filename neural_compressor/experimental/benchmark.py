@@ -179,12 +179,6 @@ class Benchmark(object):
         """
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
-        if self._b_func is None:
-            assert cfg.evaluation is not None, \
-                'You must pass b_func or benchmark evaluation filed should be set in config yaml file...'
-        # use first eval config in yaml if mode from __call__not same with yaml config
-        if not mode in cfg.evaluation:
-            mode = list(cfg.evaluation.keys())[0]
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
         # disable multi-instance for accuracy mode
@@ -344,7 +338,6 @@ class Benchmark(object):
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
 
-        is_measure = True
         if self._b_func is None:
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
@@ -354,14 +347,13 @@ class Benchmark(object):
                                     iteration=iteration)
         else:
             self._custom_b_func = True
-            is_measure = False
 
         objectives = [i.lower() for i in cfg.tuning.multi_objectives.objective] if \
             deep_get(cfg, 'tuning.multi_objectives') else [cfg.tuning.objective]
         assert len(objectives) == 1, 'benchmark supports one objective at a time'
         self.objectives = MultiObjective(objectives,
                               cfg.tuning.accuracy_criterion,
-                              is_measure=is_measure)
+                              is_measure=True)
 
         if self._custom_b_func:
             val = self.objectives.evaluate(self._b_func, self._model.model)
@@ -370,7 +362,8 @@ class Benchmark(object):
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val
-        warmup = 0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
+        batch_size = self._b_dataloader.batch_size
+        warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
             else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
         if len(self.objectives.objectives[0].result_list()) < warmup:
@@ -380,20 +373,19 @@ class Benchmark(object):
                 warmup = 0
 
         result_list = self.objectives.objectives[0].result_list()[warmup:]
+        latency = np.array(result_list).mean() / batch_size
+        self._results[mode] = acc, batch_size, result_list
 
         logger.info("\n{} mode benchmark result:".format(mode))
         for i, res in enumerate(result_list):
             logger.debug("Iteration {} result {}:".format(i, res))
         if mode == 'accuracy':
-            self._results[mode] = acc, result_list
+            logger.info("Batch size = {}".format(batch_size))
             if isinstance(acc, list):
                 logger.info("Accuracy is" + "".join([" {:.4f}".format(i) for i in acc]))
             else:
                 logger.info("Accuracy is {:.4f}".format(acc))
         elif mode == 'performance':
-            batch_size = self._b_dataloader.batch_size
-            latency = np.array(result_list).mean() / batch_size
-            self._results[mode] = acc, batch_size, result_list
             logger.info("Batch size = {}".format(batch_size))
             logger.info("Latency: {:.3f} ms".format(latency * 1000))
             logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
@@ -475,10 +467,9 @@ class Benchmark(object):
                        auto inferenced, but sometimes auto inferenced
                        inputs/outputs will not meet your requests, so it is better to
                        set them manually in config yaml file.
-                       Another corner case is slim model of tensorflow,
-                       be careful of the name of model configured in yaml file,
-                       make sure the name is in supported slim model list.
-
+                       Another corner case is the slim model of tensorflow,
+                       be careful of the name of the model configured in the yaml file,
+                       make sure the name is in the supported slim model list.
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
@@ -525,7 +516,7 @@ class Benchmark(object):
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
-
+ 
         if isinstance(user_metric, NCMetric):
             metric_cfg = {user_metric.name : {**user_metric.kwargs}}
             deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
