@@ -1,3 +1,4 @@
+
 #
 # -*- coding: utf-8 -*-
 #
@@ -25,6 +26,9 @@ from argparse import ArgumentParser
 from transformers import AutoTokenizer
 from datasets import load_from_disk
 from tensorflow.core.protobuf import saved_model_pb2
+from neural_compressor.quantization import fit
+from neural_compressor.config import PostTrainingQuantConfig, \
+    TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
@@ -259,11 +263,43 @@ class Distilbert_base(object):
     def run(self):
         graph = self.load_graph()
         if ARGS.mode == "tune":
-            quantizer = Quantization(ARGS.config)
-            quantizer.calib_dataloader = self.dataloader
-            quantizer.model = common.Model(graph)
-            quantizer.eval_func = self.eval_func 
-            q_model = quantizer.fit()
+            set_random_seed(9527)
+            tuning_criterion = TuningCriterion(
+                strategy="basic",
+                timeout=0,
+                max_trials=100,
+                objective="performance")
+
+            tolerable_loss = AccuracyLoss(loss=0.02)
+
+            accuracy_criterion = AccuracyCriterion(
+                higher_is_better=True,
+                criterion='relative',
+                tolerable_loss=tolerable_loss)
+
+            config = PostTrainingQuantConfig(
+                device="cpu",
+                backend="tensorflow",
+                inputs=[],
+                outputs=[],
+                approach="static",
+                calibration_sampling_size=[500],
+                op_type_list=None,
+                op_name_list=None,
+                reduce_range=None,
+                extra_precisions=[],
+                tuning_criterion=tuning_criterion,
+                accuracy_criterion=accuracy_criterion)
+
+            q_model = fit(
+                model=graph,
+                conf=config,
+                calib_dataloader=self.dataloader,
+                calib_func=None,
+                eval_dataloader=None,
+                eval_func=self.eval_func,
+                eval_metric=None)
+
             try:
                 q_model.save(ARGS.output_graph)
             except Exception as e:
