@@ -30,9 +30,6 @@ import cv2 as cv
 import onnxruntime as ort
 from PIL import Image
 
-import sys
-sys.path.append('/home2/yuwenzho/new_api/neural-compressor')
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -214,17 +211,15 @@ class IoU:
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     dataloader  = Dataset(args.data_path, args.label_path)
-    # print(dir(dataloader))
     metric = IoU()
 
     def eval_func(model):
-        import tqdm
         metric.reset()
         session = ort.InferenceSession(model.SerializeToString(), None)
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
-        for idx, (inputs, labels) in tqdm.tqdm(enumerate(dataloader), desc='eavl'):
+        for idx, (inputs, labels) in enumerate(dataloader):
                 if not isinstance(labels, list):
                     labels = [labels]
                 if len_inputs == 1:
