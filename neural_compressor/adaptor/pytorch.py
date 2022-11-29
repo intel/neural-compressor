@@ -2851,6 +2851,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 quantized_ops[op[0]] = torch.quantization.default_dynamic_qconfig
             else:
                 quantized_ops[op[0]] = q_cfgs
+        # build for fetching scale and zeropoint 
+        op_config_dict = {}
+        for op in quantizable_ops:
+            op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
         if self.version.release < Version("1.11.0").release:
             quantized_ops["default_qconfig"] = None
         else:
@@ -2892,10 +2896,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                 example_inputs=example_inputs)
         # This is a flag for reloading
         self.model.q_config = {
+            'calib_sampling_size': 100, # tmp arg for export API
             'is_oneshot': True,
             'framework': 'pytorch_fx',
             'reduce_range': REDUCE_RANGE,
             'quantizable_ops': quantizable_ops,
+            'op': op_config_dict,
             'sub_module_list': self.sub_module_list,
             'approach': 'quant_aware_training'
         }
@@ -2917,6 +2923,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
                                                 self.model._model, prefix='')
+
+        if self.approach != 'post_training_dynamic_quant':
+            self._get_scale_zeropoint(self.model._model, self.model.q_config)
+        self._dump_model_op_stats(self.model._model, self.model.q_config, self.approach)
+        torch_utils.util.get_embedding_contiguous(self.model._model)
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
