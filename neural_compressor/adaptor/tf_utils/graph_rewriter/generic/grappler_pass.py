@@ -34,7 +34,7 @@ class GrapplerOptimizer(GraphRewriterBase):
         self.input_output_names = input_output_names
         self.opt_cfg = opt_cfg
         self.generic_optimizer = ('pruning', 'shape', 'dependency', 'debug_stripper', 'loop')
-        self.tf_2_optimizer = ('constfold', 'arithmetic')
+        self.tf_2_optimizer = ('constfold', 'arithmetic', 'min_graph_nodes')
 
     @dump_elapsed_time("Pass GrapplerOptimizer")
     def do_transformation(self):

@@ -1,26 +1,29 @@
+import copy
 import numpy as np
 import onnx
 import os
 import shutil
 import torch
 import torch.nn as nn
-import torch.nn.quantized as nnq
 import unittest
 import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.experimental import Quantization, common
+from neural_compressor import quantization
+from neural_compressor.conf.pythonic_config import PostTrainingConfig, QuantizationAwareTrainingConfig
+from neural_compressor.experimental.data.datasets.dataset import DATASETS
+from neural_compressor.training import prepare_compression
 from packaging.version import Version
 from torch.quantization import QuantStub, DeQuantStub
 
 
-PT_VERSION = nc_torch.get_torch_version()
-if PT_VERSION >= Version("1.8.0-rc1"):
+PT_VERSION = nc_torch.get_torch_version().release
+if PT_VERSION >= Version("1.8.0").release:
     FX_MODE = True
 else:
     FX_MODE = False
 
 ONNX111_VERSION = Version("1.11.0")
 ONNX_VERSION = Version(onnx.__version__)
-if ONNX_VERSION >= ONNX111_VERSION and PT_VERSION >= Version("1.10.0-rc1"):
+if ONNX_VERSION >= ONNX111_VERSION and PT_VERSION >= Version("1.10.0").release:
     BF16_MODE = True
 else:
     BF16_MODE = False
@@ -54,6 +57,21 @@ fake_ptq_yaml = '''
       exit_policy:
         max_trials: 100
     '''
+
+def train_func(compression_manager, model, dataloader=None):
+    compression_manager.callbacks.on_train_begin(dataloader)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    # switch to evaluate mode
+    model.train()
+    input = torch.randn(1, 3, 224, 224)
+    # compute output
+    output = model(input)
+    loss = output.mean()
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    compression_manager.callbacks.on_train_end()
+    return model
 
 
 def build_pytorch_yaml():
@@ -139,11 +157,9 @@ class TestPytorchAdaptor(unittest.TestCase):
         os.remove('dynamic_yaml.yaml')
         os.remove('qat_yaml.yaml')
         shutil.rmtree('runs', ignore_errors=True)
-        os.remove('fp32-model.onnx')
-        os.remove('int8-model.onnx')
 
     @unittest.skipIf(not BF16_MODE, "Unsupport BF16 Mode with ONNX Version Below 1.11")
-    def test_bf16_onnx(self):
+    def test_onnx(self):
         model = M()
         from neural_compressor.experimental.common import Model
         inc_model = Model(model)
@@ -155,13 +171,6 @@ class TestPytorchAdaptor(unittest.TestCase):
                         "output": {0: "batch_size"}},
             do_constant_folding=True,
         )
-        os.remove('bf16-model.onnx')
-
-    def test_eager_quant(self):
-        model = M()
-        from neural_compressor.experimental.common import Model
-        inc_model = Model(model)
-        fp32_jit_model = inc_model.export_to_jit(example_inputs)
         inc_model.export_to_fp32_onnx(
             save_path='fp32-model.onnx',
             example_inputs=example_inputs,
@@ -170,57 +179,8 @@ class TestPytorchAdaptor(unittest.TestCase):
                         "output": {0: "batch_size"}},
             do_constant_folding=True,
         )
-        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', 'qat_yaml.yaml']:
-            model = M()
-            quantizer = Quantization(fake_yaml)
-            quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-            dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
-            quantizer.model = model
-            if fake_yaml == 'qat_yaml.yaml':
-                def train_func(model):
-                    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-                    optimizer.zero_grad()
-                    model.train()
-                    input = torch.randn([1, 3, 224, 224])
-                    # compute output
-                    output = model(input)
-                    loss = output.abs().sum()
-                    loss.backward()
-                    optimizer.step()
-                    return model
-                quantizer.q_func = train_func
-            elif fake_yaml == 'ptq_yaml.yaml':
-                quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
-            q_model = quantizer.fit()
-
-            int8_jit_model = q_model.export_to_jit(example_inputs)
-            # INC will keep fallbacked fp32 modules when exporting onnx model
-            if fake_yaml == 'dynamic_yaml.yaml':
-                calib_dataloader = None
-            else:
-                quantizer.calib_dataloader = common.DataLoader(dataset)
-                calib_dataloader = quantizer.calib_dataloader
-            q_model.export_to_int8_onnx(
-                save_path='int8-model.onnx',
-                example_inputs=example_inputs,
-                opset_version=11,
-                dynamic_axes={"input": {0: "batch_size"},
-                            "output": {0: "batch_size"}},
-                do_constant_folding=True,
-                quant_format='QDQ',
-                dtype='S8S8',
-                fp32_model=model,
-                calib_dataloader=calib_dataloader,
-            )
-            if fake_yaml == 'qat_yaml.yaml':
-                model = onnx.load('int8-model.onnx')
-                tensor_list = {tensor.name:tensor for tensor in model.graph.initializer}
-                torch_data = q_model.model.conv.weight().dequantize().detach().cpu().numpy()
-                from onnx.numpy_helper import to_array
-                onnx_data = to_array(tensor_list['conv.weight_quantized'])
-                onnx_scale = to_array(tensor_list['conv.weight_scale'])
-                self.assertTrue(np.allclose(torch_data, onnx_data * onnx_scale, atol=0.001))
+        os.remove('bf16-model.onnx')
+        os.remove('fp32-model.onnx')
 
     def test_input_tuple(self):
         from neural_compressor.adaptor.torch_utils.util import input2tuple
@@ -246,21 +206,27 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         os.remove('int8-model.onnx')
 
     def test_fx_quant(self):
-        for fake_yaml in ['fx_dynamic_yaml.yaml', 'fx_ptq_yaml.yaml']:
+        for fake_yaml in ['dynamic', 'static']:
             model = DynamicControlModel()
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            quantizer = Quantization(fake_yaml)
-            quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
-            dataset = quantizer.dataset('dummy', (10, 3, 224, 224), label=True)
-            quantizer.calib_dataloader = common.DataLoader(dataset)
-            quantizer.eval_dataloader = common.DataLoader(dataset)
-            quantizer.model = common.Model(model)
-            q_model = quantizer.fit()
+            conf = PostTrainingConfig(
+                approach="post_training_dynamic_quant" \
+                    if fake_yaml == "dynamic" else "post_training_static_quant",
+                backend="pytorch_fx",
+                performance_only=True
+            )
+            dataset = DATASETS("pytorch")['dummy']((100, 3, 224, 224))
+            dataloader = torch.utils.data.DataLoader(dataset)
+            q_model = quantization.fit(model,
+                                       conf,
+                                       calib_dataloader=dataloader,
+                                       eval_dataloader=dataloader
+                                       )
 
             int8_jit_model = q_model.export_to_jit(example_inputs)
             # INC will keep fallbacked fp32 modules when exporting onnx model
-            if 'ptq_yaml.yaml':
-                calib_dataloader = quantizer.calib_dataloader
+            if fake_yaml == 'static':
+                calib_dataloader = dataloader
             else:
                 calib_dataloader = None
             q_model.export_to_int8_onnx(
@@ -273,7 +239,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 quant_format='QLinear',
                 dtype='U8S8',
                 fp32_model=model,
-                calib_dataloader=calib_dataloader,
+                calib_dataloader=calib_dataloader
             )
 
 if __name__ == "__main__":

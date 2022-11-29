@@ -19,14 +19,12 @@ import copy
 import os
 import shutil
 import importlib
-from collections import OrderedDict
 from abc import abstractmethod
 import tempfile
 import sys
 from neural_compressor.utils.utility import LazyImport, compute_sparsity, get_backend
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
-from neural_compressor.conf.dotdict import deep_get, deep_set
 from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
@@ -951,6 +949,11 @@ class TensorflowBaseModel(BaseModel):
         f.write(self.graph_def.SerializeToString())
         logger.info("Save quantized model to {}.".format(pb_file))
 
+    @abstractmethod
+    def convert(self, src_type="QDQ", dst_type="TFDO", *args, **kwargs):
+        ''' abstract method of model saving, Tensorflow model only'''
+        raise NotImplementedError
+
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
     def get_all_weight_names(self):
@@ -1170,17 +1173,3 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
           }
-
-
-def export(model: BaseModel, path: str, to_onnx: bool = False):
-    """_summary_
-
-    Args:
-        model (BaseModel): optimized model
-        path (str): path to save model
-        to_onnx (bool, optional): whether to convert to onnx model. Defaults to False.
-    """
-    if to_onnx:
-        assert False, "Not support yet!"
-    else:
-        model.save(path)

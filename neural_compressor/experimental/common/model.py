@@ -15,27 +15,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""common Model just collects the information to construct a Model."""
+
 import sys
 from neural_compressor.model.model import get_model_fwk_name, MODELS, get_model_type
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import get_backend
 
 class Model(object):
-    """common Model just collect the infos to construct a Model
-    """
+    """A wrapper of the information needed to construct a Model."""
+    
     def __new__(cls, root, **kwargs):
-        """Wrap raw framework model format or path with specific infos
+        """Create a new instance object of Model.
 
         Args:
-            root:   raw model format. For Tensorflow model, could be path to frozen pb file, 
-                    path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras 
-                    model object. For PyTorch model, it's torch.nn.model instance.
-                    For MXNet model, it's mxnet.symbol.Symbol or gluon.HybirdBlock instance.
-            kwargs: specific model format will rely on extra infomation to build the model 
-                    a. estimator: need input_fn to initialize the Model, it will look like this 
-                                  when initialize an estimator model:
-                                  model = Model(estimator_object, input_fn=estimator_input_fn)
-                   
+            root (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
+                path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
+                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol 
+                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto 
+                model object.
+                
+        Returns:
+            BaseModel: neural_compressor built-in model
         """
         backend = get_backend()
         framework = get_model_fwk_name(root)

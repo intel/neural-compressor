@@ -159,7 +159,8 @@ def is_saved_model_format(model_path):
         bool: return True if the model_path contains saved_model format else False.
     """
     file_list = [os.path.splitext(i)[-1] for i in os.listdir(model_path)]
-    return bool(file_list.count('.pb') in [1, 2] and ('variables') in os.listdir(model_path))
+    # TF 2.11.0 added a new fingerprint.pb to the SavedModel directory.
+    return bool(file_list.count('.pb') in [1, 2, 3] and ('variables') in os.listdir(model_path))
 
 def get_estimator_graph(estimator, input_fn):
     with tf.Graph().as_default() as g:

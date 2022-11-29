@@ -1,3 +1,5 @@
+"""Search algorithms for NAS."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -22,7 +24,14 @@ from neural_compressor.utils import logger
 
 
 class Searcher(object):
+    """Base class for defining the common methods of different search algorithms.
+
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+    """
+
     def __init__(self, search_space) -> None:
+        """Initialize the attributes."""
         assert isinstance(search_space, dict) and search_space, \
             "Expect search_space to be a dict."
         self.search_space = search_space
@@ -33,32 +42,63 @@ class Searcher(object):
                     k)
 
     def suggest(self):
-        raise NotImplementedError(
-            'Depends on specific search algorithm.')  # pragma: no cover
+        """Suggest the model architecture."""
+        raise NotImplementedError('Depends on specific search algorithm.') # pragma: no cover
 
     def get_feedback(self, metric):
+        """Get metric feedback for the search algorithm."""
         pass
 
     def params_vec2params_dict(self, para_vec):
+        """Convert the parameters vector to parameters dictionary.
+
+        Where parameters vector and parameters dictionary both define the model architecture.
+
+        Returns:
+            Parameters dictionary defining the model architecture.
+        """
         assert len(para_vec) == len(self.search_space_keys), \
             "Length of para_vec and search_space_keys should be the same."
         return {k: para_vec[i] for i, k in enumerate(self.search_space_keys)}
 
 
 class GridSearcher(Searcher):
+    """Grid search.
+
+    Search the whole search space exhaustively.
+
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+    """
+
     def __init__(self, search_space) -> None:
+        """Initialize the attributes."""
         super(GridSearcher, self).__init__(search_space)
         self.search_space_pool = create_search_space_pool(search_space)
         self.idx = 0
 
     def suggest(self):
+        """Suggest the model architecture.
+
+        Returns:
+            The model architecture.
+        """
         res = self.search_space_pool[self.idx]
         self.idx = (self.idx + 1) % len(self.search_space_pool)
         return self.params_vec2params_dict(res)
 
 
 class RandomSearcher(Searcher):
+    """Random search.
+
+    Search the whole search space randomly.
+
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+    """
+
     def __init__(self, search_space, seed=42) -> None:
+        """Initialize the attributes."""
         super(RandomSearcher, self).__init__(search_space)
         self.search_space_pool = create_search_space_pool(search_space)
         self.indices_pool = list(range(len(self.search_space_pool)))
@@ -66,6 +106,11 @@ class RandomSearcher(Searcher):
         random.shuffle(self.indices_pool)
 
     def suggest(self):
+        """Suggest the model architecture.
+
+        Returns:
+            The model architecture.
+        """
         if not self.indices_pool:
             self.indices_pool = list(range(len(self.search_space_pool)))
             random.shuffle(self.indices_pool)
@@ -74,7 +119,16 @@ class RandomSearcher(Searcher):
 
 
 class BayesianOptimizationSearcher(Searcher):
+    """Bayesian Optimization.
+
+    Search the search space with Bayesian Optimization.
+
+    Args:
+        search_space (dict): A dictionary for defining the search space.
+    """
+
     def __init__(self, search_space, seed=42) -> None:
+        """Initialize the attributes."""
         super(BayesianOptimizationSearcher, self).__init__(search_space)
         idx_search_space = {
             k: (0, len(search_space[k])-1) for k in self.search_space_keys}
@@ -83,11 +137,17 @@ class BayesianOptimizationSearcher(Searcher):
         self.last_param_indices = None
 
     def suggest(self):
+        """Suggest the model architecture.
+
+        Returns:
+            The model architecture.
+        """
         param_indices = self.bo_agent.gen_next_params()
         self.last_param_indices = param_indices
         return self.params_vec2params_dict(self.indices2params_vec(param_indices))
 
     def get_feedback(self, metric):
+        """Get metric feedback and register this metric."""
         assert self.last_param_indices is not None, "Need run suggest first " + \
             "to get parameters and the input metric is corresponding to this parameters."
         try:
@@ -98,6 +158,7 @@ class BayesianOptimizationSearcher(Searcher):
         self.last_param_indices = None
 
     def indices2params_vec(self, indices):
+        """Convert indices to parameters vector."""
         res = []
         for key, ind in indices.items():
             # keep ind within the index range of self.search_space[key]

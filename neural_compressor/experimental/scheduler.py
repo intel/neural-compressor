@@ -1,3 +1,5 @@
+"""Scheduler class."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -89,6 +91,7 @@ class Scheduler(object):
     """
 
     def __init__(self):
+        """Initialize the attributes."""
         self._model = None
         self._train_func = None
         self._eval_func = None
@@ -97,27 +100,27 @@ class Scheduler(object):
     def append(self, *args):
         """Add neural_compressor component into pipeline for sequential execution.
 
-           Args:
-               conf_fname_or_obj (string or obj): The path to user configuration yaml file or
-                                                  conf class.
-               calib_dataloader (generator): Optional. Data loader for calibration of Post-
-                                             Training Static Quantization,
-                                             or None for Post-Training Dynamic Quantization,
-                                             or Data loader for training phase of Quantization-
-                                             aware Training,
-                                             or Data loader for training phase of Pruning,
-                                             if its corresponding field is not configured in yaml.
-               eval_dataloader (generator):  Optional. Data loader for evaluation phase of all
-                                             neural_compressor components, if its corresponding field is not
-                                             configured in yaml and eval_func is not specified.
-               postprocess (Postprocess):    Optional. Object initialized from common.Postprocess.
-               metric (Metric):              Optional. Object initialized from common.Metric.
-               q_func (func):                Optional. Training function for Quantization-Aware
-                                             Training and Pruning cases if user doesn't provide
-                                             training info in user configuration yaml file.
-               eval_func (func):             Optional. Evaluation function for Quantization-Aware
-                                             Training and Pruning, being None for other cases.
-               kwargs (named arguments):     Reserved for interface extension.
+        Args:
+            conf_fname_or_obj (string or obj): The path to user configuration yaml file or
+                                                conf class.
+            calib_dataloader (generator): Optional. Data loader for calibration of Post-
+                                            Training Static Quantization,
+                                            or None for Post-Training Dynamic Quantization,
+                                            or Data loader for training phase of Quantization-
+                                            aware Training,
+                                            or Data loader for training phase of Pruning,
+                                            if its corresponding field is not configured in yaml.
+            eval_dataloader (generator):  Optional. Data loader for evaluation phase of all
+                                            neural_compressor components, if its corresponding field is not
+                                            configured in yaml and eval_func is not specified.
+            postprocess (Postprocess):    Optional. Object initialized from common.Postprocess.
+            metric (Metric):              Optional. Object initialized from common.Metric.
+            q_func (func):                Optional. Training function for Quantization-Aware
+                                            Training and Pruning cases if user doesn't provide
+                                            training info in user configuration yaml file.
+            eval_func (func):             Optional. Evaluation function for Quantization-Aware
+                                            Training and Pruning, being None for other cases.
+            kwargs (named arguments):     Reserved for interface extension.
         """
         for item in args:
             assert any([isinstance(item, supported_component) \
@@ -125,7 +128,7 @@ class Scheduler(object):
             self.components.append(item)
 
     def __call__(self):
-        """The main entry point of sequential pipeline execution.
+        """Do sequential pipeline execution.
 
         NOTE: it's user responsibility to ensure the output of each componenet could be fed as
         the input of next component.
@@ -160,15 +163,16 @@ class Scheduler(object):
 
     def combine(self, *args):
         """Combine neural_compressor components into a new component.
-           Args:
-               args (Component): Components to be combined together. Input Component should be
-               supported in Neural Compressor and pass the sanity check during combine. The illegal combination
-               (e.g. Components uses different frameworks) returns an error.
 
-            Returns:
-                Combined Component: The return component is created as base Component class.
-                It syncs input components configuration and creates dataloaders/functions
-                accordingly.
+        Args:
+            args (Component): Components to be combined together. Input Component should be
+            supported in Neural Compressor and pass the sanity check during combine. The illegal combination
+            (e.g. Components uses different frameworks) returns an error.
+
+        Returns:
+            Combined Component: The return component is created as base Component class.
+            It syncs input components configuration and creates dataloaders/functions
+            accordingly.
         """
         assert len(args) > 1, "Combine requires at least 2 components. Please check your inputs."
         # check if input components are good for combine
@@ -184,6 +188,7 @@ class Scheduler(object):
         return new_component
 
     def _combination_sanity_check(self, *args):
+        """Check sanity of the combination."""
         TEMP_SUPPORTED_COMPONENTS = ['Quantization', 'Pruning', 'Distillation']
         checked_components = []
         for component in args:
@@ -196,14 +201,15 @@ class Scheduler(object):
                     checked_components + [component_class]))
 
     def _combine_components(self, *args, dist_component=None):
-        """Actual implementation of combine(). It loops input component and sync-up status
-           to distance component.
+        """Actual implementation of combine().
 
-           Args:
-               args(tuple): input components.
-               dist_component(Component): the distance component for the combination
+        It loops input component and sync-up status to distance component.
 
-           Returns: None
+        Args:
+            args(tuple): input components.
+            dist_component(Component): the distance component for the combination
+
+        Returns: None
         """
         assert len(args) > 0, "Empty input detected in combine."
         framework = args[0].framework
@@ -299,13 +305,16 @@ class Scheduler(object):
             dist_component.cfg = dist_component_cfg
 
     def _sync_config(self, dist_config, src_config):
-        """Sync the configuration between src and dist. It updates the missing keys in dist config
-           from src config. And check the value for same keys between src and dist.
-           Args:
-               dist_config(DotDict): dist configuration to sync
-               src_config(DotDict): src configuration to sync
+        """Sync the configuration between src and dist.
 
-            Returns: None
+        It updates the missing keys in dist config from src config.
+        And check the value for same keys between src and dist.
+
+        Args:
+            dist_config(DotDict): dist configuration to sync
+            src_config(DotDict): src configuration to sync
+
+        Returns: None
         """
         # sync the config if dist and src configs are not empty
         if dist_config and src_config:
@@ -327,11 +336,16 @@ class Scheduler(object):
 
     @property
     def model(self):
+        """Getter of model.
+        
+        Returns:
+            The model used in the Scheduler process.
+        """
         return self._model
 
     @model.setter
     def model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
+        """Set the user model and dispatch to framework specific internal model object.
 
         Args:
            user_model: user are supported to set model from original framework model format
@@ -355,7 +369,7 @@ class Scheduler(object):
 
     @property
     def train_func(self):
-        """ not support get train_func """
+        """Do not support get train_func."""
         assert False, 'Should not try to get the value of `train_func` attribute.'
         return None
 
@@ -364,7 +378,7 @@ class Scheduler(object):
         """Training function.
 
         Args:
-            user_training_func: This function takes "model" as input parameter
+            user_train_func: This function takes "model" as input parameter
                          and executes entire training process with self
                          contained training hyper-parameters. If training_func set,
                          an evaluation process must be triggered and user should
@@ -376,13 +390,13 @@ class Scheduler(object):
 
     @property
     def eval_func(self):
-        """ not support get eval_func """
+        """Do not support get eval_func."""
         assert False, 'Should not try to get the value of `eval_func` attribute.'
         return None
 
     @eval_func.setter
     def eval_func(self, user_eval_func):
-        """evaluation function.
+        """Evaluate function.
 
         Args:
             user_eval_func: This function takes "model" as input parameter

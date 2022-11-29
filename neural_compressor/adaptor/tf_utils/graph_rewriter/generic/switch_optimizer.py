@@ -48,8 +48,10 @@ class SwitchOptimizer(GraphRewriterBase):
         for node_combination in target_nodes:
             switch_node = graph_info[node_combination[0]].node
             pred_node =  graph_info[switch_node.input[1]].node
-            if pred_node.op == 'PlaceholderWithDefault' and tensor_util.MakeNdarray(
-                            graph_info[pred_node.input[0]].node.attr['value'].tensor):
+            if (pred_node.op == 'Const' and tensor_util.MakeNdarray( \
+               graph_info[pred_node.name].node.attr['value'].tensor)) or \
+               (pred_node.op == 'PlaceholderWithDefault' and tensor_util.MakeNdarray(
+                graph_info[pred_node.input[0]].node.attr['value'].tensor)):
                 condition = []
                 for output in graph_info[node_combination[0]].outputs:
                     successor_node = graph_info[output].node

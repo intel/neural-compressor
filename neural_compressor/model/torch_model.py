@@ -620,6 +620,21 @@ class PyTorchModel(PyTorchBaseModel):
         logger.info(info)
         logger.info("*"*len(info))
 
+    def export(
+        self,
+        save_path: str,
+        input,
+        target_model_type: str = 'ONNX',
+        quant_mode: str = 'QDQ',
+        opset_version: int = 14,
+        *args,
+        **kwargs
+    ):
+        if self.q_config is not None:
+            assert False, "Unsupport convertion from PyTorch to ONNX"
+        else:
+            self.export_to_fp32_onnx(save_path, input, opset_version=opset_version)
+
 
 class PyTorchFXModel(PyTorchModel):
     """Build PyTorchFXModel object

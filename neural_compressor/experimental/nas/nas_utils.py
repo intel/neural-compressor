@@ -1,3 +1,5 @@
+"""Common methods for NAS."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -22,7 +24,10 @@ NASMethods = {}
 
 
 def nas_registry(nas_method):
-    """The class decorator used to register all NAS subclasses.
+    """Decorate the NAS subclasses.
+    
+    The class decorator used to register all NAS subclasses.
+
     Args:
         nas_method (str): The string of supported NAS Method.
 
@@ -38,6 +43,15 @@ def nas_registry(nas_method):
 
 
 def create_search_space_pool(search_space, idx=0):
+    """Create all the samples from the search space.
+
+    Args:
+        search_space (dict): A dict defining the search space.
+        idx (int): An index for indicating which key of search_space to enumerate.
+
+    Return:
+        A list of all the samples from the search space.
+    """
     search_space_keys = sorted(search_space.keys())
     if idx == len(search_space_keys):
         return [[]]
@@ -50,11 +64,11 @@ def create_search_space_pool(search_space, idx=0):
 
 
 def find_pareto_front(metrics):
-    """
-    Find the pareto front points, assuming all metrics are "higher is better".
+    """Find the pareto front points, assuming all metrics are "higher is better".
 
     Args:
-        metrics: An (n_points, n_metrics) array
+        metrics (numpy array or list): An (n_points, n_metrics) array.
+
     Return:
         An array of indices of pareto front points.
         It is a (n_pareto_points, ) integer array of indices.

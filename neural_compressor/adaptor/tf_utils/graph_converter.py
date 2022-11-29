@@ -69,7 +69,7 @@ from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node
 from .graph_util import GraphRewriterHelper as Helper
 
 
-TF_SUPPORTED_MAX_VERSION = '2.10.0'
+TF_SUPPORTED_MAX_VERSION = '2.11.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger("neural_compressor")
@@ -88,7 +88,8 @@ class GraphConverter:
                  itex_mode=False,
                  qdq_enabled=False,
                  new_api=False,
-                 performance_only=False):
+                 performance_only=False,
+                 use_bf16=False):
         """Convert graph.
 
         :param model: input tensorflow model.
@@ -150,6 +151,7 @@ class GraphConverter:
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
         self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
         self.performance_only = performance_only
+        self.use_bf16 = use_bf16
         self.exclude_node_names = []
     # pylint: disable=no-member
     def _inference(self, model):
@@ -198,7 +200,7 @@ class GraphConverter:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
                             t_name = tensor.name if pos < 0 else tensor.name[:pos]
-                            if name == t_name:
+                            if name in [tensor.name, t_name]:
                                 feed_dict[tensor] = inputs[name]
                                 break
                 else:
@@ -339,9 +341,8 @@ class GraphConverter:
 
         if self.exclude_node_names:
             self.bf16_ops.extend(self.exclude_node_names)
-       
-        if (len(self.bf16_ops) > 0 and self.performance_only) or \
-           (os.getenv('MIX_PRECISION_TEST') == '1'):
+
+        if len(self.bf16_ops) > 0 and (self.use_bf16 or self.performance_only):
             model = self.bf16_convert()
 
         if self.new_api:

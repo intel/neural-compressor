@@ -403,7 +403,8 @@ class ONNXModel(BaseModel):
                 q = copy.deepcopy(wait)
                 wait.clear()
         nodes = [i[1] for i in all_nodes.items()]
-        assert len(nodes) == len(self.model.graph.node)
+        assert len(list(set([n.name for n in nodes]))) == \
+            len(list(set([n.name for n in self.model.graph.node])))
         self.model.graph.ClearField('node')
         self.model.graph.node.extend(nodes)
 

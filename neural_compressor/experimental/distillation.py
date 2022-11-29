@@ -1,3 +1,5 @@
+"""Distillation class."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -27,16 +29,26 @@ from ..conf.config import DistillationConf
 from ..conf.pythonic_config import Config
 
 class Distillation(Component):
-    """
-
+    """Distillation class derived from Component class.
+    
+    Distillation class abstracted the pipeline of knowledge distillation, 
+    transfer the knowledge of the teacher model to the student model.
+       
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
-            DistillationConf containing accuracy goal, distillation objective and related
+            Distillation_Conf containing accuracy goal, distillation objective and related
             dataloaders etc.
-
+            
+    Attributes:
+        _epoch_ran: A integer indicating how much epochs ran.
+        eval_frequency: The frequency for doing evaluation of the student model 
+            in terms of epoch.
+        best_score: The best metric of the student model in the training.
+        best_model: The best student model found in the training.
     """
 
     def __init__(self, conf_fname_or_obj=None):
+        """Initialize the attributes."""
         super(Distillation, self).__init__()
         if isinstance(conf_fname_or_obj, DistillationConf):
             self.conf = conf_fname_or_obj
@@ -50,14 +62,17 @@ class Distillation(Component):
         self._teacher_model = None
         self._criterion = None
         self._optimizer = None
-        self._epoch_runned = 0
+        self._epoch_ran = 0
         self.eval_frequency = 1
         self.best_score = 0
         self.best_model = None
         self._train_cfg = None
 
     def _on_train_begin(self, dataloader=None):
-        """ called before training """
+        """Operations called on the begining of the training.
+        
+        Called before training, evaluate the teacher model and the student model. 
+        """
         assert self._model, 'student_model must be set.'
         if self._eval_func is not None:
             if self.teacher_model:
@@ -77,14 +92,23 @@ class Distillation(Component):
                     self.best_model = copy.deepcopy(self._model)
                 else:
                     self.best_model = self._model
-
     def _on_step_begin(self, batch_id):
-        """ called on the beginning of batches"""
+        """Operations called on the beginning of batches."""
         if self.criterion is not None and hasattr(self.criterion, 'clear_features'):
             self.criterion.clear_features()
 
     def _on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
-        """ called after model forward """
+        """Set or compute output of teacher model.
+        
+        Called after student model forward, calculate the output of the teacher model 
+        with the same input of the student model.
+            
+        Args:
+            input (tensor or list or dict): The input of the student model.
+            student_output (tensor): The output logits of the student model.
+            student_loss (tensor or float): The original loss of the student model.
+            teacher_output (tensor, optional): The output logits of the teacher model.
+        """
         if self.criterion is None:
             self.create_criterion()
         assert self.criterion, \
@@ -97,27 +121,33 @@ class Distillation(Component):
         return self.criterion.loss_cal_sloss(student_output, teacher_output, student_loss)
 
     def on_post_forward(self, input, teacher_output=None):  # pragma: no cover
+        """Set or compute output of teacher model.
+        
+        Deprecated.
+        """
         assert False, "This method is deprecated. please use `on_after_compute_loss` instead." \
                       "on_after_compute_loss(input, student_output, student_loss, teacher_output=None)"
 
     def _on_epoch_end(self):
-        """ called on the end of epochs"""
-        self._epoch_runned += 1
+        """Operations called on the end of every epochs.
+        
+        Called on the end of every epochs, evaluate the student model 
+        and record the best one regularly.
+        """
+        self._epoch_ran += 1
         if self._eval_func is not None and self.eval_frequency > 0 and \
-           self._epoch_runned % self.eval_frequency == 0:
+           self._epoch_ran % self.eval_frequency == 0:
             score = self._eval_func(
                 self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
             )
-            logger.info("model score of epoch {} is {}.".format(self._epoch_runned, str(score)))
+            logger.info("model score of epoch {} is {}.".format(self._epoch_ran, str(score)))
             if (isinstance(score, list) and all([s > b_s for s, b_s in
                 zip(score, self.best_score)])) or score > self.best_score:
                 self.best_score = score
-                if self.framework == "pytorch":
-                    self.best_model = copy.deepcopy(self._model)
-                else:
-                    self.best_model = self._model
+                self.best_model = copy.deepcopy(self._model._model)
 
     def init_train_cfg(self):
+        """Initialize the training configuration."""
         if self._train_cfg is None:
             # train section of distillation section in yaml file should be configured.
             self._train_cfg = self.cfg.distillation.train
@@ -125,6 +155,7 @@ class Distillation(Component):
                                 "be configured for distillation if train_func is NOT set."
 
     def create_criterion(self):
+        """Create the criterion for training."""
         self.init_train_cfg()
         if self.criterion is None:
             assert 'criterion' in self._train_cfg.keys(), \
@@ -154,6 +185,7 @@ class Distillation(Component):
         self._train_cfg.criterion = self.criterion
 
     def create_optimizer(self):
+        """Create the optimizer for training."""
         self.init_train_cfg()
         if self.optimizer is None:
             assert 'optimizer' in self._train_cfg.keys(), \
@@ -178,7 +210,14 @@ class Distillation(Component):
 
         self._train_cfg.optimizer = self.optimizer
 
+    def prepare(self):
+        self.generate_hooks()
+
     def pre_process(self):
+        """Preprocessing before the disillation pipeline.
+        
+        Initialize necessary parts for distillation pipeline. 
+        """
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
@@ -232,6 +271,14 @@ class Distillation(Component):
                                                fp32_baseline=False)
 
     def execute(self):
+        """Do distillation pipeline.
+        
+        First train the student model with the teacher model, after training, 
+        evaluating the best student model if any.
+        
+        Returns:
+            Best distilled model found.
+        """
         self._train_func(
             self._model if getattr(self._train_func, 'builtin', None) else self._model.model
         )
@@ -240,7 +287,11 @@ class Distillation(Component):
         logger.info("Model distillation is done.")
         if self._eval_func is not None:
             logger.info("Start to evaluate the distilled model.")
-            self._model = self.best_model if self.best_model else self._model
+            if self.best_model:
+                if self.framework == "pytorch":
+                    self._model._model = self.best_model
+                else:
+                    self._model = self.best_model
             score = self._eval_func(
                 self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
             )
@@ -249,14 +300,17 @@ class Distillation(Component):
         return self._model
 
     def generate_hooks(self):
-        # register hooks for distillation
+        """Register hooks for distillation.
+        
+        Register necessary hooks for distillation pipeline.
+        """
         self.register_hook('on_train_begin', self._on_train_begin)
         self.register_hook('on_step_begin', self._on_step_begin)
         self.register_hook('on_after_compute_loss', self._on_after_compute_loss)
         self.register_hook('on_epoch_end', self._on_epoch_end)
 
     def __call__(self):
-        """The main entry point of distillation.
+        """Do distillation workflow.
 
            This interface currently only works on pytorch
            and provides three usages:
@@ -300,28 +354,58 @@ class Distillation(Component):
 
     @property
     def criterion(self):
+        """Getter of criterion.
+        
+        Returns:
+            The criterion used in the distillation process.
+        """
         return self._criterion
 
     @criterion.setter
     def criterion(self, user_criterion):
+        """Setter of criterion used in the distillation process.
+        
+        Set the user defined criterion. When using built-in train_func, user can 
+        specify the customized criterion through this setter.
+           
+        Args:
+            user_criterion (criterion object): User defined criterion.
+        """
         self._criterion = user_criterion
 
     @property
     def optimizer(self):
+        """Getter of optimizer.
+        
+        Returns:
+            The optimizer used in the distillation process.
+        """
         return self._optimizer
 
     @optimizer.setter
     def optimizer(self, user_optimizer):
+        """Setter of optimizer used in the distillation process.
+        
+        Set the user defined optimizer. When using built-in train_func, user can 
+        specify the customized optimizer through this setter.
+           
+        Args:
+            user_optimizer (criterion object): User defined optimizer.
+        """
         self._optimizer = user_optimizer
 
     @property
     def teacher_model(self):
-        """ Getter of model in neural_compressor.model  """
+        """Getter of the teacher model.
+        
+        Returns:
+            The teacher model used in the distillation process.
+        """
         return self._teacher_model
 
     @teacher_model.setter
     def teacher_model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
+        """Set the user model and dispatch to framework specific internal model object.
 
         Args:
            user_model: user are supported to set model from original framework model format
@@ -345,12 +429,16 @@ class Distillation(Component):
 
     @property
     def student_model(self):
-        """ Getter of model in neural_compressor.model  """
+        """Getter of the student model.
+        
+        Returns:
+            The student model used in the distillation process.
+        """
         return self._model
 
     @student_model.setter
     def student_model(self, user_model):
-        """Set the user model and dispatch to framework specific internal model object
+        """Set the user model and dispatch to framework specific internal model object.
 
         Args:
            user_model: user are supported to set model from original framework model format
@@ -374,26 +462,33 @@ class Distillation(Component):
 
     @property
     def train_cfg(self):
-        """ Getter of model in neural_compressor.model  """
+        """Getter of the train configuration.
+        
+        Returns:
+            The train configuration used in the distillation process.
+        """
         return self._train_cfg
 
     @property
     def evaluation_distributed(self):
-        """ Getter to know whether need distributed evaluation dataloader"""
+        """Getter to know whether need distributed evaluation dataloader."""
         return self._evaluation_distributed
 
     @evaluation_distributed.setter
     def evaluation_distributed(self, distributed):
+        """Setter to know whether need distributed evaluation dataloader."""
         self._evaluation_distributed = distributed
 
     @property
     def train_distributed(self):
-        """ Getter to know whether need distributed training dataloader"""
+        """Getter to know whether need distributed training dataloader."""
         return self._train_distributed
 
     @train_distributed.setter
     def train_distributed(self, distributed):
+        """Setter to know whether need distributed training dataloader."""
         self._train_distributed = distributed
 
     def __repr__(self):
+        """Class representation."""
         return 'Distillation'

@@ -15,38 +15,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The base filter class for all frameworks."""
+
 from abc import abstractmethod
 from neural_compressor.utils.utility import singleton
 
+
 @singleton
 class TensorflowFilters(object):
+    """The base filter class for Tensorflow framework."""
+
     def __init__(self):
+        """Initialize the atrribute of the class."""
         self.filters = {}
         self.filters.update(TENSORFLOW_FILTERS)
 
+
 @singleton
 class ONNXRTQLFilters(object):
+    """The base filter class for ONNXRT framework QLinear mode."""
+
     def __init__(self):
+        """Initialize the atrribute of the class."""
         self.filters = {}
         self.filters.update(ONNXRT_QL_FILTERS)
 
+
 @singleton
 class ONNXRTITFilters(object):
+    """The base filter class for ONNXRT framework IT mode."""
+
     def __init__(self):
+        """Initialize the atrribute of the class."""
         self.filters = {}
         self.filters.update(ONNXRT_IT_FILTERS)
 
+
 @singleton
 class PyTorchFilters(object):
+    """The base filter class for PyTorch framework."""
+
     def __init__(self):
+        """Initialize the atrribute of the class."""
         self.filters = {}
         self.filters.update(PYTORCH_FILTERS)
 
+
 @singleton
 class MXNetFilters(object):
+    """The base filter class for MXNet framework."""
+
     def __init__(self):
+        """Initialize the atrribute of the class."""
         self.filters = {}
         self.filters.update(MXNET_FILTERS)
+
 
 TENSORFLOW_FILTERS = {}
 TENSORFLOW_ITEX_FILTERS = {}
@@ -78,34 +101,49 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
                     "onnxrt_qoperator": ONNXRT_QL_FILTERS,
                     "onnxrt_qlinearops": ONNXRT_QL_FILTERS}
 
+
 class FILTERS(object):
+    """The filter register for all frameworks.
+
+    Args:
+        framework (str): frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
+                                        "onnxrt_qdq", "pytorch", "pytorch_ipex",
+                                        "pytorch_fx", "onnxrt_integerops",
+                                        "onnxrt_qlinearops", "onnxrt_qoperator"].
+    """
+
     def __init__(self, framework):
+        """Initialize the attribute of class."""
         assert framework in ["tensorflow", "tensorflow_itex",
-                             "mxnet", "onnxrt_qdq", "pytorch", "pytorch_ipex", "pytorch_fx", 
+                             "mxnet", "onnxrt_qdq", "pytorch", "pytorch_ipex", "pytorch_fx",
                              "onnxrt_integerops", "onnxrt_qlinearops", "onnxrt_qoperator"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.filters = framework_filters[framework]().filters
         self.framework = framework
 
     def __getitem__(self, filter_type):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         assert filter_type in self.filters.keys(), "filter support {}".\
             format(self.filters.keys())
         return self.filters[filter_type]
 
 
 def filter_registry(filter_type, framework):
-    """The class decorator used to register all transform subclasses.
-
+    """Register all transform subclasses.
 
     Args:
-        filter_type (str): fILTER registration name
-        framework (str): support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'
+        filter_type (str): fILTER registration name.
+        framework (str): support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'.
         cls (class): The class of register.
 
     Returns:
         cls: The class of register.
     """
     def decorator_transform(cls):
+        """Decorate a class."""
         for single_framework in [fwk.strip() for fwk in framework.split(',')]:
             assert single_framework in [
                 "tensorflow", 
@@ -125,10 +163,15 @@ def filter_registry(filter_type, framework):
         return cls
     return decorator_transform
 
+
 class Filter(object):
-    """The base class for transform. __call__ method is needed when write user specific transform
+    """The base class for transform.
+
+    __call__ method is needed when write user specific transform.
 
     """
+
     @abstractmethod
     def __call__(self, *args, **kwargs):
+        """Execute the filter."""
         raise NotImplementedError

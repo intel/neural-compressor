@@ -1,3 +1,5 @@
+"""DyNAS search algorithm class."""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -31,18 +33,13 @@ from pymoo.optimize import minimize
 
 
 class SearchAlgoManager:
-    """
-    Manages the search parameters for the DyNAS-T single/multi-objective search.
+    """Manage the search parameters for the DyNAS-T single/multi-objective search.
 
     Args:
-        algorithm : string
-            Define a multi-objective search algorithm.
-        seed : int
-            Seed value for pymoo search.
-        verbose : Boolean
-            Verbosity option
-        engine : string
-            Support different engine types (e.g. pymoo, optuna, etc.)
+        algorithm (string): Define a multi-objective search algorithm.
+        seed (int): Seed value for pymoo search.
+        verbose (Boolean): Verbosity option.
+        engine (string): Support different engine types (e.g. pymoo, optuna, etc.).
     """
 
     def __init__(
@@ -52,6 +49,7 @@ class SearchAlgoManager:
         verbose: bool = False,
         engine: str = 'pymoo',
     ) -> None:
+        """Initialize the attributes."""
         self.algorithm = algorithm
         self.seed = seed
         self.verbose = verbose
@@ -79,6 +77,7 @@ class SearchAlgoManager:
         mutation_prob: float = 0.02,
         mutation_eta: float = 20.0,
     ) -> None:
+        """Configure the NSGA2 algorithm."""
         self.n_gens = num_evals / population
 
         if type(warm_pop) == 'numpy.ndarray':
@@ -107,6 +106,7 @@ class SearchAlgoManager:
         mutation_prob: float = 0.02,
         mutation_eta: float = 20.0,
     ) -> None:
+        """Configure the AGE algorithm."""
         self.engine = 'pymoo'
         self.n_gens = num_evals / population
 
@@ -131,10 +131,7 @@ class SearchAlgoManager:
         problem: Problem,
         save_history=False,
     ) -> pymoo.core.result.Result:
-        """Starts the search process for the algorithm and problem class that have
-        been previously defined.
-        """
-
+        """Start the search process for the algorithm and problem class that have been previously defined."""
         logger.info('[DyNAS-T] Running Search')
         start_time = time.time()
 
@@ -162,16 +159,12 @@ class SearchAlgoManager:
 
 
 class ProblemMultiObjective(Problem):
-    """
-    Interface between the user-defined evaluation interface and the SearchAlgoManager.
+    """Interface between the user-defined evaluation interface and the SearchAlgoManager.
 
     Args:
-        evaluation_interface : Class
-            Class that handles the objective measurement call from the supernet.
-        param_count : int
-            Number variables in the search space (e.g., OFA MobileNetV3 has 45)
-        param_upperbound : array
-            The upper int array that defines how many options each design variable has.
+        evaluation_interface (Class): Class that handles the objective measurement call from the supernet.
+        param_count (int): Number variables in the search space (e.g., OFA MobileNetV3 has 45).
+        param_upperbound (array): The upper int array that defines how many options each design variable has.
     """
 
     def __init__(
@@ -180,6 +173,7 @@ class ProblemMultiObjective(Problem):
         param_count: int,
         param_upperbound: list,
     ):
+        """Initialize the attributes."""
         super().__init__(
             n_var=param_count,
             n_obj=2,
@@ -198,7 +192,7 @@ class ProblemMultiObjective(Problem):
         *args,
         **kwargs,
     ) -> None:
-
+        """Evaluate the Subnet."""
         # Store results for a given generation for PyMoo
         objective_x_arr, objective_y_arr = list(), list()
 

@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Built-in datasets class for multiple framework backends."""
 
 from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
 from .transforms import TRANSFORMS, BaseTransform, transform_registry

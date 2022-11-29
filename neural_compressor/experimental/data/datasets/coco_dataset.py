@@ -29,6 +29,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+"""Built-in COCO datasets class for multiple framework backends."""
+
 import numpy as np
 from PIL import Image
 from neural_compressor.utils.utility import LazyImport
@@ -39,7 +42,17 @@ mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
 class ParseDecodeCoco():
-    def __call__(self, sample):    
+    """Helper function for TensorflowModelZooBertDataset.
+
+    Parse the features from sample.
+    """
+
+    def __call__(self, sample):
+        """Parse the sample data.
+
+        Args:
+            sample: Data to be parsed.
+        """
         # Dense features in Example proto.
         feature_map = {
             'image/encoded':
@@ -85,7 +98,7 @@ class ParseDecodeCoco():
 
 @dataset_registry(dataset_type="COCORecord", framework="tensorflow, tensorflow_itex", dataset_format='')
 class COCORecordDataset(IterableDataset):
-    """Configuration for Coco dataset in tf record format.
+    """Tensorflow COCO dataset in tf record format.
 
     Root is a full path to tfrecord file, which contains the file name.
     Please use Resize transform when batch_size > 1
@@ -96,7 +109,9 @@ class COCORecordDataset(IterableDataset):
           filter (Filter objects, default=None): filter out examples according 
                                                  to specific conditions.
     """
+
     def __new__(cls, root, num_cores=28, transform=None, filter=filter):
+        """Build a new object."""
         record_iterator = tf.compat.v1.python_io.tf_record_iterator(root)
         example = tf.train.SequenceExample()
         for element in record_iterator:
@@ -134,16 +149,16 @@ class COCORecordDataset(IterableDataset):
                     onnxrt_integerops, pytorch, mxnet, tensorflow, \
                     tensorflow_itex", dataset_format='')
 class COCORaw(Dataset):
-    """Configuration for Coco raw dataset.
+    """Coco raw dataset.
 
-    Please arrange data in this way:  
-        /root/img_dir/1.jpg  
-        /root/img_dir/2.jpg  
-        ...  
-        /root/img_dir/n.jpg  
-        /root/anno_dir  
+    Please arrange data in this way:
+        /root/img_dir/1.jpg
+        /root/img_dir/2.jpg
+        ...
+        /root/img_dir/n.jpg
+        /root/anno_dir
     Please use Resize transform when batch_size > 1
-    
+
     Args: root (str): Root directory of dataset.
           img_dir (str, default='val2017'): image file directory.
           anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
@@ -151,8 +166,10 @@ class COCORaw(Dataset):
           filter (Filter objects, default=None): filter out examples according 
                                                  to specific conditions.
     """
+
     def __init__(self, root, img_dir='val2017', \
             anno_dir='annotations/instances_val2017.json', transform=None, filter=filter):
+        """Initialize the attributes of class."""
         import json
         import os
         import numpy as np
@@ -198,9 +215,14 @@ class COCORaw(Dataset):
                  np.array(img_detail['file_name'].encode('utf-8'))]))
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.image_list)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.image_list[index]
         if self.transform is not None:
             sample= self.transform(sample)
@@ -210,21 +232,26 @@ class COCORaw(Dataset):
                     onnxrt_integerops, pytorch, mxnet, tensorflow, \
                     tensorflow_itex", dataset_format='')
 class COCONpy(Dataset):
-    """Configuration for Coco npy dataset.
+    """COCO npy dataset.
 
-    Please arrange data in this way:  
-        /root/npy_dir/1.jpg.npy  
-        /root/npy_dir/2.jpg.npy  
-        ...  
-        /root/npy_dir/n.jpg.npy  
-        /root/anno_dir  
-    
+    Please arrange data in this way:
+        /root/npy_dir/1.jpg.npy
+        /root/npy_dir/2.jpg.npy
+        ...
+        /root/npy_dir/n.jpg.npy
+        /root/anno_dir
+
     Args: root (str): Root directory of dataset.
           npy_dir (str, default='val2017'): npy file directory.
           anno_dir (str, default='annotations/instances_val2017.json'): annotation file directory.
+          transform (transform object, default=None):  transform to process input data.
+          filter (Filter objects, default=None): filter out examples according 
+                                                 to specific conditions.
     """
+
     def __init__(self, root, npy_dir='val2017', \
             anno_dir='annotations/instances_val2017.json', transform=None, filter=None):
+        """Initialize the attributes of class."""
         import json
         import os
         import numpy as np
@@ -262,8 +289,13 @@ class COCONpy(Dataset):
                 (image, labels))
 
     def __len__(self):
+        """Length of the dataset."""
         return len(self.image_list)
 
     def __getitem__(self, index):
+        """Magic method.
+
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
         sample = self.image_list[index]
         return sample

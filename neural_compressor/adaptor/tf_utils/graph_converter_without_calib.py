@@ -46,7 +46,7 @@ from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimize
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
 from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2, version1_lt_version2
 
-TF_SUPPORTED_MAX_VERSION = '2.10.0'
+TF_SUPPORTED_MAX_VERSION = '2.11.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
 
 logger = logging.getLogger("neural_compressor")
@@ -58,7 +58,8 @@ class GraphConverterWithoutCalib:
                  data_loader=None,
                  recover_config=None,
                  new_api=False,
-                 performance_only=False):
+                 performance_only=False,
+                 use_bf16=False):
         """Convert graph without calibration.
 
         :param model: input tensorflow model.
@@ -91,6 +92,7 @@ class GraphConverterWithoutCalib:
         self._gen_tmp_filenames()
         self.new_api = new_api
         self.performance_only = performance_only
+        self.use_bf16 = use_bf16
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
     # pylint: disable=no-member
     def _check_tf_version(self):

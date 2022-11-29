@@ -1,0 +1,30 @@
+trigger: none
+
+pr:
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - neural_compressor/ux
+    - test/ux
+
+pool: ICX-16C
+
+variables:
+  UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+
+stages:
+- stage:
+  displayName: Unit Test for UX
+  jobs:
+  - job:
+    steps:
+      - template: template/ut-template.yml
+        parameters:
+          dockerConfigName: 'commonDockerConfig'
+          utScriptFileName: 'run_ux'
+          uploadPath: $(UPLOAD_PATH)
+          utArtifact: 'ut-ux'

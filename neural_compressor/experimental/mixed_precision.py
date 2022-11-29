@@ -19,17 +19,15 @@
 import os
 import pickle
 import random
-import tempfile
 import sys
 import numpy as np
-import yaml
 from ..conf.config import MixedPrecision_Conf
-from ..conf.dotdict import deep_get, deep_set, DotDict
+from ..conf.pythonic_config import Config
+from ..conf.dotdict import deep_get
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
 from ..utils.utility import CpuInfo, time_limit, set_backend
-from .common import Model as NCModel
 from ..model import BaseModel
 from .graph_optimization import GraphOptimization
 
@@ -59,6 +57,9 @@ class MixedPrecision(GraphOptimization):
 
         if isinstance(conf_fname_or_obj, MixedPrecision_Conf):
             self.conf = conf_fname_or_obj
+        elif isinstance(conf_fname_or_obj, Config):
+            self.conf = MixedPrecision_Conf()
+            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
         else:
             self.conf = MixedPrecision_Conf(conf_fname_or_obj)
         cfg = self.conf.usr_cfg
@@ -137,7 +138,7 @@ class MixedPrecision(GraphOptimization):
             if 'bf16' in self._precisions or \
                (cfg.mixed_precision and 'bf16' in cfg.mixed_precision.precisions) or \
                (cfg.graph_optimization and 'bf16' in cfg.graph_optimization.precisions):
-                os.environ['MIX_PRECISION_TEST'] = '1'
+                cfg.use_bf16 = True
 
         # when eval_func is set, will be directly used and eval_dataloader can be None
         if self._eval_func is None:

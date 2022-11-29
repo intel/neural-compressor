@@ -20,8 +20,8 @@ from abc import abstractmethod
 class BaseModel:
     ''' base class of all neural_compressor.model, will play graph role'''
 
-    def __init__(self, model, **kwargs): 
-        pass
+    def __init__(self, model, **kwargs):
+        self.component = None
 
     @property
     def model(self):
@@ -32,14 +32,27 @@ class BaseModel:
     def graph_info(self):
         ''' return {Node: Node_type} like {'conv0': 'conv2d'} '''
         raise NotImplementedError
- 
+
     @abstractmethod
     def save(self, root, *args, **kwargs):
         ''' abstract method of model saving'''
         raise NotImplementedError
 
     @abstractmethod
+    def export(
+        self,
+        save_path: str,
+        input,
+        target_model_type: str = 'ONNX',
+        quant_format: str = 'QDQ',
+        opset_version: int = 14,
+        *args,
+        **kwargs
+    ):
+        ''' abstract method of model convertion to ONNX'''
+        raise NotImplementedError
+
+    @abstractmethod
     def framework(self):
         ''' abstract method of model framework'''
         raise NotImplementedError
-    
