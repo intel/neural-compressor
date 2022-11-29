@@ -23,12 +23,62 @@ def build_fake_yaml2():
           strategy:
             name: conservative
           accuracy_criterion:
-            relative: -0.01
+            relative: 0.01
           workspace:
             path: saved
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_yaml2.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+    
+def build_fake_yaml_with_opt_level_0():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op2_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        quantization:
+          optimization_level: 0
+        tuning:
+          accuracy_criterion:
+            relative: 0.01
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_with_opt_level_0.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
+
+def build_fake_yaml_with_opt_level_1():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: x
+          outputs: op2_to_store
+        device: cpu
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        quantization:
+          optimization_level: 1
+        tuning:
+          accuracy_criterion:
+            relative: 0.01
+          workspace:
+            path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_with_opt_level_1.yaml',"w",encoding="utf-8") as f:
         yaml.dump(y,f)
     f.close()
 
@@ -75,6 +125,8 @@ class TestQuantization(unittest.TestCase):
     def setUpClass(self):
         self.constant_graph = build_fake_model()
         build_fake_yaml2()
+        build_fake_yaml_with_opt_level_0()
+        build_fake_yaml_with_opt_level_1()
         self.test1_index = -1
         self.test2_index = -1
         self.test3_index = -1
@@ -82,9 +134,56 @@ class TestQuantization(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
+        os.remove("fake_yaml_with_opt_level_0.yaml")
+        os.remove("fake_yaml_with_opt_level_1.yaml")
         os.remove('fake_yaml2.yaml')
         shutil.rmtree('saved', ignore_errors=True)
+        
+    def test_opt_level_0(self):
+        import time
+        from neural_compressor.experimental import Quantization, common
+        from neural_compressor.strategy.conservative import ConservativeTuneStrategy
+        # accuracy increase and performance decrease 
+        logger.info("*** Test: optimization level 0.")
+        acc_lst =  [1.0, 2.0, 2.1]
+        perf_lst = [2.0, 1.5, 1.0]
+        def _eval(fake_model):
+            self.test1_index += 1
+            perf = perf_lst[self.test1_index]
+            time.sleep(perf)
+            return acc_lst[self.test1_index]
+            
+        quantizer = Quantization('fake_yaml_with_opt_level_0.yaml')
+        quantizer.eval_func = _eval
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        q_model = quantizer.fit()
+        self.assertTrue(isinstance(quantizer.strategy, ConservativeTuneStrategy))
 
+    def test_opt_level_1(self):
+        import time
+        from neural_compressor.experimental import Quantization, common
+        from neural_compressor.strategy.basic import BasicTuneStrategy
+        # accuracy increase and performance decrease 
+        logger.info("*** Test: optimization level 1.")
+        acc_lst =  [1.0, 2.0, 2.1]
+        perf_lst = [2.0, 1.5, 1.0]
+        def _eval(fake_model):
+            self.test1_index += 1
+            perf = perf_lst[self.test1_index]
+            time.sleep(perf)
+            return acc_lst[self.test1_index]
+            
+        quantizer = Quantization('fake_yaml_with_opt_level_1.yaml')
+        quantizer.eval_func = _eval
+        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.model = self.constant_graph
+        q_model = quantizer.fit()
+        self.assertTrue(isinstance(quantizer.strategy, BasicTuneStrategy))
 
     def test_conservative_strategy1(self):
         import time
