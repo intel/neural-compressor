@@ -77,10 +77,9 @@ if __name__ == "__main__":
         evaluator(args.mode)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
+        from neural_compressor import quantization
         from neural_compressor import options
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        q_model = quantize()
-        q_model.save(args.output_model)
+        q_model = quantization.fit(model, args.config)
+        q_model.save(args.output_model) 
+

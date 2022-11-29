@@ -575,40 +575,30 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        b_dataloader = SquadDataset(eval_dataloader)
-        b_dataloader = DataLoader(b_dataloader)
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(model_args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = b_dataloader
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='dynamic', 
+                                         backend='onnxrt_integerops')
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(model_args.save_path)
 
-    if model_args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
+    if model_args.benchmark and model_args.mode == 'performance':
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        
         model = onnx.load(model_args.model_path)
-        if model_args.mode == 'performance':
-            from neural_compressor.data import DATALOADERS, DATASETS
-            session = ort.InferenceSession(model_args.model_path, None)
-            input_tensors = session.get_inputs()
-            shape = []
-            for i in range(len(input_tensors)):
-                shape.append((1, 512))
-            onnx_datasets = DATASETS('onnxrt_integerops')
-            dummy_dataset = onnx_datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
-            evaluator = Benchmark(model_args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = common.DataLoader(dummy_dataset)
-            evaluator(model_args.mode)
-        elif model_args.mode == 'accuracy':
-            b_dataloader = SquadDataset(eval_dataloader)
-            b_dataloader = DataLoader(b_dataloader)
-            evaluator = Benchmark(model_args.config)
-            evaluator.b_dataloader = b_dataloader
-            evaluator.b_func = eval_func
-            evaluator.model = common.Model(model)
-            evaluator(model_args.mode)
+        conf = BenchmarkConfig(iteration=100)
+        fit(model, conf, b_dataloader=eval_dataloader)
+
+        # elif model_args.mode == 'accuracy':
+        #     b_dataloader = SquadDataset(eval_dataloader)
+        #     b_dataloader = DataLoader(b_dataloader)
+        #     evaluator = Benchmark(model_args.config)
+        #     evaluator.b_dataloader = b_dataloader
+        #     evaluator.b_func = eval_func
+        #     evaluator.model = common.Model(model)
+        #     evaluator(model_args.mode)
 
 if __name__ == "__main__":
     main()

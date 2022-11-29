@@ -22,6 +22,12 @@ import argparse
 
 import onnx
 import yaml
+import onnxruntime as ort
+import yaml
+import numpy as np
+
+from data_utils import COCORawDataloader, COCORawDataset, COCOmAPv2, Post
+from data_utils import ComposeTransform, ResizeTransform, RescaleTransform, NormalizeTransform, TransposeTransform, CastTransform
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -35,6 +41,11 @@ parser.add_argument(
     '--model_path',
     type=str,
     help="Pre-trained model on onnx file"
+)
+parser.add_argument(
+    '--data_path',
+    type=str,
+    help="path to dataset"
 )
 parser.add_argument(
     '--benchmark',
@@ -64,31 +75,73 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+class AccuracyLoss:
+    def __init__(self, loss=0.01):
+        self._loss = loss
 
-class Post:
-    def __call__(self, sample):
-        preds, labels = sample
-        preds[0][0][:, [0, 1, 2, 3]] = preds[0][0][:, [1, 0, 3, 2]]
-        return preds, labels
+    @property
+    def absolute(self):
+        return self._loss
+
+    @absolute.setter
+    def absolute(self, absolute):
+        if isinstance(absolute, float):
+            self._loss = absolute
 
 if __name__ == "__main__":
-
     model = onnx.load(args.model_path)
+    transform = ComposeTransform([ResizeTransform(size=1200),
+                                  RescaleTransform(),
+                                  NormalizeTransform(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                  TransposeTransform(perm=[2, 0, 1]),
+                                  CastTransform(dtype='float32')])
+    dataset = COCORawDataset(args.data_path, transform=transform)
+    dataloader = COCORawDataloader(dataset)
+    metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
+    postprocess = Post()
+
+    def eval_func(model):
+        metric.reset()
+        session = ort.InferenceSession(model.SerializeToString(), None)
+        ort_inputs = {}
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        for idx, (inputs, labels) in enumerate(dataloader):
+            if not isinstance(labels, list):
+                labels = [labels]
+            if len_inputs == 1:
+                ort_inputs.update(
+                    inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                )
+            else:
+                assert len_inputs == len(inputs), 'number of input tensors must align with graph inputs'
+                if isinstance(inputs, dict):
+                    ort_inputs.update(inputs)
+                else:
+                    for i in range(len_inputs):
+                        if not isinstance(inputs[i], np.ndarray):
+                            ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                        else:
+                            ort_inputs.update({inputs_names[i]: inputs[i]})
+            predictions = session.run(None, ort_inputs)
+            predictions, labels = postprocess((predictions, labels))
+            metric.update(predictions, labels)
+        return metric.result()
+
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(model)
-        evaluator.postprocess = common.Postprocess(Post)
-        evaluator(args.mode)
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        conf = BenchmarkConfig(iteration=100,
+                               cores_per_instance=28,
+                               num_of_instance=1)
+        fit(model, conf, b_dataloader=dataloader)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        from neural_compressor import options
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.postprocess = common.Postprocess(Post)
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
+        config = PostTrainingQuantConfig(approach='static', 
+                                         accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
         

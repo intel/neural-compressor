@@ -43,7 +43,6 @@ from tqdm import tqdm, trange
 
 from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer)
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -88,6 +87,48 @@ class TextDataset(Dataset):
 
     def __getitem__(self, item):
         return torch.tensor(self.examples[item])
+
+# class Dataloader():
+#     def __init__(self, tokenizer, args, file_path='train', block_size=1024):
+#         assert os.path.isfile(file_path)
+#         directory, filename = os.path.split(file_path)
+#         if not os.path.exists("./dataset_cached"):
+#             os.makedirs("./dataset_cached")
+#         cached_features_file = os.path.join("./dataset_cached", 
+#             args.model_name_or_path + '_cached_lm_' + str(block_size) + '_' + filename)
+
+#         if os.path.exists(cached_features_file) and not args.overwrite_cache:
+#             logger.info("Loading features from cached file %s", cached_features_file)
+#             with open(cached_features_file, 'rb') as handle:
+#                 self.examples = pickle.load(handle)
+#         else:
+#             logger.info("Creating features from dataset file at %s", directory)
+
+#             self.examples = []
+#             with open(file_path, encoding="utf-8") as f:
+#                 text = f.read()
+
+#             tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
+
+#             for i in range(0, len(tokenized_text)-block_size+1, block_size): # Truncate in block of block_size
+#                 self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i:i+block_size]))
+#             # Note that we are loosing the last truncated example here for the sake of simplicity (no padding)
+#             # If your dataset is small, first you should loook for a bigger one :-) and second you
+#             # can change this behavior by adding (model specific) padding.
+
+#             logger.info("Saving features into cached file %s", cached_features_file)
+#             with open(cached_features_file, 'wb') as handle:
+#                 pickle.dump(self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+#     def __len__(self):
+#         return len(self.examples)
+
+#     # def __getitem__(self, item):
+#     #     return torch.tensor(self.examples[item])
+
+#     def __iter__(self):
+#         for data in self.examples:
+#             yield data
 
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
@@ -174,6 +215,18 @@ def evaluate(args, model, tokenizer, prefix=""):
     
     return result['perplexity'].item()
 
+class AccuracyLoss:
+    def __init__(self, loss=0.01):
+        self._loss = loss
+
+    @property
+    def relative(self):
+        return self._loss
+
+    @relative.setter
+    def relative(self, relative):
+        if isinstance(relative, float):
+            self._loss = relative
 
 def main():
     parser = argparse.ArgumentParser()
@@ -260,12 +313,27 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model  
 
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = common.DataLoader(ds, batch_size=args.per_gpu_eval_batch_size)
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        # from neural_compressor.experimental import Quantization, common
+        # quantize = Quantization(args.config)
+        # quantize.model = common.Model(model)
+        # quantize.calib_dataloader = common.DataLoader(ds, batch_size=args.per_gpu_eval_batch_size)
+        # quantize.eval_func = eval_func
+        # q_model = quantize()
+        # q_model.save(args.output_model)
+
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=AccuracyLoss(0.11))
+        config = PostTrainingQuantConfig(approach='dynamic', 
+                                         backend='onnxrt_integerops',
+                                         op_name_list={'MatMul_2924': {
+                                                            'activation':  {'dtype': ['fp32']},
+                                                            'weight': {'dtype': ['fp32']}
+                                                        }},
+                                         accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.output_model)
 
 

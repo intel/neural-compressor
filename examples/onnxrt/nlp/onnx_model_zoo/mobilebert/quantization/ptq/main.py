@@ -136,12 +136,13 @@ def main():
         return evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = eval_dataloader
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='dynamic', 
+                                         backend='onnxrt_integerops',
+                                         calibration_sampling_size=[8])
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.save_path)
 
     if args.benchmark and args.mode == "accuracy":
@@ -150,19 +151,11 @@ def main():
         print("Accuracy: %.5f" % results)
 
     if args.benchmark and args.mode == "performance":
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
         model = onnx.load(args.model_path)
-        
-        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
-        from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
-        shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, max_seq_length)
-        dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int32", label=True)
-        dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
-        
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.b_dataloader = dummy_dataloader
-        evaluator.model = common.Model(model)
-        evaluator(args.mode)
+        conf = BenchmarkConfig(iteration=100)
+        fit(model, conf, b_dataloader=eval_dataloader)
 
 if __name__ == "__main__":
     main()

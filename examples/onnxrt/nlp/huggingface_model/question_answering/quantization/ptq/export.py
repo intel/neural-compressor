@@ -7,21 +7,23 @@ def export_onnx_model(args, model):
     with torch.no_grad():
         symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
         inputs = {'input_ids':      torch.ones(1, args.max_len, dtype=torch.int64),
-                  'token_type_ids': torch.ones(1, args.max_len, dtype=torch.int64),
-                  'attention_mask': torch.ones(1, args.max_len, dtype=torch.int64)}
+                  'attention_mask': torch.ones(1, args.max_len, dtype=torch.int64),
+                  'token_type_ids': torch.ones(1, args.max_len, dtype=torch.int64)}
         torch.onnx.export(model,                            # model being run
                         (inputs['input_ids'],               # model input (or a tuple for multiple inputs) 
-                        inputs['token_type_ids'],
-                        inputs['attention_mask']),          
+                        inputs['attention_mask'],
+                        inputs['token_type_ids']),          
                         args.output_model,                  # where to save the model (can be a file or file-like object)
                         opset_version=11,                   # the ONNX version to export the model
                         do_constant_folding=True,           # whether to execute constant folding
                         input_names=['input_ids',           # the model's input names
-                                    'token_type_ids',
-                                    'attention_mask'],
+                                    'attention_mask',
+                                    'token_type_ids'],
+                        output_names=['start_logits',
+                                      'end_logits'],
                         dynamic_axes={'input_ids': symbolic_names,        # variable length axes
-                                    'token_type_ids' : symbolic_names,
-                                    'attention_mask' : symbolic_names})
+                                    'attention_mask' : symbolic_names,
+                                    'token_type_ids' : symbolic_names})
         print("ONNX Model exported to {0}".format(args.output_model))
 
 

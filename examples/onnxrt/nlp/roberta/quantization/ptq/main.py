@@ -116,10 +116,8 @@ if __name__ == "__main__":
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from neural_compressor.experimental import Quantization, common
+        from neural_compressor import quantization
         from neural_compressor import options
         options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = ['MatMul', 'Gemm','Attention', 'FusedGemm']
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        q_model = quantize()
-        q_model.save(args.output_model)
+        q_model = quantization.fit(model, args.config)
+        q_model.save(args.output_model) 

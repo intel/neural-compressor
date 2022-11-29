@@ -24,6 +24,7 @@ import onnx
 from PIL import Image
 import math
 import numpy as np
+import onnxruntime as ort
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -147,6 +148,170 @@ class Dataloader:
         bboxes = ratio * bboxes
         return image, (bboxes, str_labels, int_labels, image_ids)
     
+class COCOmAPv2():
+    """Compute mean average precision of the detection task."""
+
+    def __init__(self, 
+                 anno_path=None, 
+                 iou_thrs='0.5:0.05:0.95', 
+                 map_points=101, 
+                 map_key='DetectionBoxes_Precision/mAP', 
+                 output_index_mapping={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}):
+        """Initialize the metric.
+
+        Args:
+            anno_path: The path of annotation file.
+            iou_thrs: Minimal value for intersection over union that allows to make decision
+              that prediction bounding box is true positive. You can specify one float value
+              between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.
+            map_points: The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 
+              11-point interpolated AP, 0 for area under PR curve.
+            map_key: The key that mapping to pycocotools COCOeval. 
+              Defaults to 'DetectionBoxes_Precision/mAP'.
+            output_index_mapping: The output index mapping. 
+              Defaults to {'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}.
+        """
+        self.output_index_mapping = output_index_mapping
+        from coco_label_map import category_map
+        if anno_path:
+            import os
+            import yaml
+            assert os.path.exists(anno_path), 'Annotation path does not exists!'
+            with open(anno_path, 'r') as f:
+                label_map = yaml.safe_load(f.read())
+            self.category_map_reverse = {k: v for k,v in label_map.items()}
+        else:
+            # label: index
+            self.category_map_reverse = {v: k for k, v in category_map.items()}
+        self.image_ids = []
+        self.ground_truth_list = []
+        self.detection_list = []
+        self.annotation_id = 1
+        self.category_map = category_map
+        self.category_id_set = set(
+            [cat for cat in self.category_map]) #index
+        self.iou_thrs = iou_thrs
+        self.map_points = map_points
+        self.map_key = map_key
+
+    def update(self, predicts, labels, sample_weight=None):
+        """Add the predictions and labels.
+
+        Args:
+            predicts: The predictions.
+            labels: The labels corresponding to the predictions.
+            sample_weight: The sample weight. Defaults to None.
+        """
+        from coco_tools import ExportSingleImageGroundtruthToCoco,\
+            ExportSingleImageDetectionBoxesToCoco
+        detections = []
+        if 'num_detections' in self.output_index_mapping and \
+            self.output_index_mapping['num_detections'] > -1:
+            for item in zip(*predicts):
+                detection = {}
+                num = int(item[self.output_index_mapping['num_detections']])
+                detection['boxes'] = np.asarray(
+                    item[self.output_index_mapping['boxes']])[0:num]
+                detection['scores'] = np.asarray(
+                    item[self.output_index_mapping['scores']])[0:num]
+                detection['classes'] = np.asarray(
+                    item[self.output_index_mapping['classes']])[0:num]
+                detections.append(detection)
+        else:
+            for item in zip(*predicts):
+                detection = {}
+                detection['boxes'] = np.asarray(item[self.output_index_mapping['boxes']])
+                detection['scores'] = np.asarray(item[self.output_index_mapping['scores']])
+                detection['classes'] = np.asarray(item[self.output_index_mapping['classes']])
+                detections.append(detection)
+
+        bboxes, str_labels,int_labels, image_ids = labels
+        labels = []
+        if len(int_labels[0]) == 0:
+            for str_label in str_labels:
+                str_label = [
+                    x if type(x) == 'str' else x.decode('utf-8')
+                    for x in str_label
+                ]
+                labels.append([self.category_map_reverse[x] for x in str_label])
+        elif len(str_labels[0]) == 0:
+            for int_label in int_labels:
+                labels.append([x for x in int_label])
+
+        for idx, image_id in enumerate(image_ids):
+            image_id = image_id if type(
+                image_id) == 'str' else image_id.decode('utf-8')
+            if image_id in self.image_ids:
+                continue
+            self.image_ids.append(image_id)
+
+            ground_truth = {}
+            ground_truth['boxes'] = np.asarray(bboxes[idx])
+            ground_truth['classes'] = np.asarray(labels[idx])
+
+            self.ground_truth_list.extend(
+                ExportSingleImageGroundtruthToCoco(
+                    image_id=image_id,
+                    next_annotation_id=self.annotation_id,
+                    category_id_set=self.category_id_set,
+                    groundtruth_boxes=ground_truth['boxes'],
+                    groundtruth_classes=ground_truth['classes']))
+            self.annotation_id += ground_truth['boxes'].shape[0]
+
+            self.detection_list.extend(
+                ExportSingleImageDetectionBoxesToCoco(
+                    image_id=image_id,
+                    category_id_set=self.category_id_set,
+                    detection_boxes=detections[idx]['boxes'],
+                    detection_scores=detections[idx]['scores'],
+                    detection_classes=detections[idx]['classes']))
+
+    def reset(self):
+        """Reset the prediction and labels."""
+        self.image_ids = []
+        self.ground_truth_list = []
+        self.detection_list = []
+        self.annotation_id = 1
+
+    def result(self):
+        """Compute mean average precision.
+
+        Returns:
+            The mean average precision score.
+        """
+        from coco_tools import COCOWrapper, COCOEvalWrapper
+        if len(self.ground_truth_list) == 0:
+            logger.warning("Sample num during evaluation is 0.")
+            return 0
+        else:
+            groundtruth_dict = {
+                'annotations':
+                self.ground_truth_list,
+                'images': [{
+                    'id': image_id
+                } for image_id in self.image_ids],
+                'categories': [{
+                    'id': k,
+                    'name': v
+                } for k, v in self.category_map.items()]
+            }
+            coco_wrapped_groundtruth = COCOWrapper(groundtruth_dict)
+            coco_wrapped_detections = coco_wrapped_groundtruth.LoadAnnotations(
+                self.detection_list)
+            box_evaluator = COCOEvalWrapper(coco_wrapped_groundtruth,
+                                                 coco_wrapped_detections,
+                                                 agnostic_mode=False,
+                                                 iou_thrs = self.iou_thrs,
+                                                 map_points = self.map_points)
+            box_metrics, box_per_category_ap = box_evaluator.ComputeMetrics(
+                include_metrics_per_category=False, all_metrics_per_category=False)
+            box_metrics.update(box_per_category_ap)
+            box_metrics = {
+                'DetectionBoxes_' + key: value
+                for key, value in iter(box_metrics.items())
+            }
+
+            return box_metrics[self.map_key]
 
 class Post:
     def __call__(self, sample):
@@ -157,27 +322,67 @@ class Post:
         scores = np.reshape(scores, (1, -1))
         return (bboxes, classes, scores), labels[0]
 
+class AccuracyLoss:
+    def __init__(self, loss=0.01):
+        self._loss = loss
+
+    @property
+    def absolute(self):
+        return self._loss
+
+    @absolute.setter
+    def absolute(self, absolute):
+        if isinstance(absolute, float):
+            self._loss = absolute
+            
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     dataloader = Dataloader(args.data_path)
+    metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
+    postprocess = Post()
+
+    def eval_func(model):
+        metric.reset()
+        session = ort.InferenceSession(model.SerializeToString(), None)
+        ort_inputs = {}
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        for idx, (inputs, labels) in enumerate(dataloader):
+                if not isinstance(labels, list):
+                    labels = [labels]
+                if len_inputs == 1:
+                    ort_inputs.update(
+                        inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                    )
+                else:
+                    assert len_inputs == len(inputs), 'number of input tensors must align with graph inputs'
+                    if isinstance(inputs, dict):
+                        ort_inputs.update(inputs)
+                    else:
+                        for i in range(len_inputs):
+                            if not isinstance(inputs[i], np.ndarray):
+                                ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                            else:
+                                ort_inputs.update({inputs_names[i]: inputs[i]})
+                predictions = session.run(None, ort_inputs)
+                predictions, labels = postprocess((predictions, labels))
+                metric.update(predictions, labels)
+        return metric.result()
+
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(model)
-        evaluator.b_dataloader = dataloader
-        evaluator.postprocess = common.Postprocess(Post)
-        evaluator(args.mode)
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        conf = BenchmarkConfig(iteration=100,
+                               cores_per_instance=4,
+                               num_of_instance=1)
+        fit(model, conf, b_dataloader=dataloader)
 
     if args.tune:
-        from neural_compressor import options
-        from neural_compressor.experimental import Quantization, common
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.eval_dataloader = dataloader
-        quantize.calib_dataloader = dataloader
-        quantize.postprocess = common.Postprocess(Post)
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
+        config = PostTrainingQuantConfig(approach='static', 
+                                         accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
         

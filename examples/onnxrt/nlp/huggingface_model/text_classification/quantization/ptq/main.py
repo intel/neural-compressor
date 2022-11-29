@@ -375,28 +375,19 @@ if __name__ == "__main__":
             metric.update(predictions[0], labels)
         return metric.result()
 
-    if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
+    if args.benchmark and args.mode == 'performance':
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
         model = onnx.load(args.model_path)
-        if args.mode == 'performance':
-            session = ort.InferenceSession(args.model_path, None)
-            input_tensors = session.get_inputs()
-            shape = []
-            for i in range(len(input_tensors)):
-                shape.append((1, 128))
-            datasets = DATASETS('onnxrt_integerops')
-            dummy_dataset = datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = common.DataLoader(dummy_dataset)
-            evaluator(args.mode)
-        elif args.mode == 'accuracy':
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = dataloader
-            evaluator.metric = metric
-            evaluator.b_func = eval_func
-            evaluator(args.mode)
+        conf = BenchmarkConfig(iteration=100)
+        fit(model, conf, b_dataloader=dataloader)
+        # elif args.mode == 'accuracy':
+        #     evaluator = Benchmark(args.config)
+        #     evaluator.model = common.Model(model)
+        #     evaluator.b_dataloader = dataloader
+        #     evaluator.metric = metric
+        #     evaluator.b_func = eval_func
+        #     evaluator(args.mode)
 
     if args.tune:
         from onnxruntime.transformers import optimizer
@@ -413,10 +404,11 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import options
-        from neural_compressor.experimental import Quantization, common
+        from neural_compressor import quantization, PostTrainingQuantConfig
         options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-        quantize = Quantization(args.config)
-        quantize.model = model
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        config = PostTrainingQuantConfig(approach='dynamic', 
+                                         backend='onnxrt_integerops')
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.output_model)
