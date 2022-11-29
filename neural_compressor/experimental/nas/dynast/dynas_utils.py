@@ -175,8 +175,9 @@ class OFARunner(Runner):
         acc_predictor: Predictor,
         macs_predictor: Predictor,
         latency_predictor: Predictor,
-        imagenetpath: str,
+        datasetpath: str,
         batch_size: int,
+        **kwargs,
     ) -> None:
         """Initialize the attributes."""
         self.supernet = supernet
@@ -185,7 +186,7 @@ class OFARunner(Runner):
         self.latency_predictor = latency_predictor
         self.device = 'cpu'
         self.test_size = None
-        ImagenetDataProvider.DEFAULT_PATH = imagenetpath
+        ImagenetDataProvider.DEFAULT_PATH = datasetpath
         self.ofa_network = ofa.model_zoo.ofa_net(supernet, pretrained=True)
         self.run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
         self.batch_size = batch_size
@@ -345,7 +346,8 @@ class TransformerLTRunner(Runner):
         latency_predictor: Predictor,
         datasetpath: str,
         batch_size: int,
-        checkpoint_path: str
+        checkpoint_path: str,
+        **kwargs,
     ) -> None:
         self.supernet = supernet
         self.acc_predictor = acc_predictor

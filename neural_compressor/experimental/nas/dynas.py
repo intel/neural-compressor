@@ -131,7 +131,7 @@ class DyNAS(NASBase):
             latency_predictor=None,
             datasetpath=self.dataset_path,
             batch_size=self.batch_size,
-            checkpoint_path=self.supernet_ckpt_path
+            checkpoint_path=self.supernet_ckpt_path,
         )
 
         # Setup validation interface

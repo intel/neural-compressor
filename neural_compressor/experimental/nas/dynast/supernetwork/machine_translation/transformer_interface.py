@@ -120,7 +120,7 @@ def compute_bleu(config, dataset_path, checkpoint_path):
             bleu_list.append(bleu.score)
 
             num_sentences += sample['nsentences']
-    
+
     bleu_score = np.mean(np.array(bleu_list))
     return bleu_score
 
