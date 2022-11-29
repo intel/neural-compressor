@@ -285,7 +285,7 @@ class _BaseQuantizationConfig:
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
-                 extra_precisions=[],
+                 extra_precisions=["bf16"],
                  accuracy_criterion=accuracy_criterion):
         self._inputs = inputs
         self._outputs = outputs
@@ -837,7 +837,7 @@ class TF2ONNXConfig(ExportConfig):
 
 
 def set_random_seed(seed: int):
-    options.random_seed
+    options.random_seed = seed
 
 
 def set_workspace(workspace: str):
