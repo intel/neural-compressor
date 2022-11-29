@@ -717,21 +717,19 @@ class ExportConfig:
         self,
         dtype="int8",
         opset_version=14,
-        quant_mode="'QDQ'",
-        sample_inputs=None,
+        quant_format="QDQ",
+        example_inputs=None,
         input_names=None,
         output_names=None,
         dynamic_axes=None,
-        **kwargs,
     ):
         self._dtype = dtype
         self._opset_version = opset_version
-        self._quant_mode = quant_mode
-        self._sample_inputs = sample_inputs
+        self._quant_format = quant_format
+        self._example_inputs = example_inputs
         self._input_names = input_names
         self._output_names = output_names
         self._dynamic_axes = dynamic_axes
-        self._kwargs = kwargs
 
     @property
     def dtype(self):
@@ -750,20 +748,20 @@ class ExportConfig:
         self._opset_version = opset_version
 
     @property
-    def quant_mode(self):
-        return self._quant_mode
+    def quant_format(self):
+        return self._quant_format
 
-    @quant_mode.setter
-    def quant_mode(self, quant_mode):
-        self._quant_mode = quant_mode
+    @quant_format.setter
+    def quant_format(self, quant_format):
+        self._quant_format = quant_format
 
     @property
-    def sample_inputs(self):
-        return self._sample_inputs
+    def example_inputs(self):
+        return self._example_inputs
 
-    @sample_inputs.setter
-    def sample_inputs(self, sample_inputs):
-        self._sample_inputs = sample_inputs
+    @example_inputs.setter
+    def example_inputs(self, example_inputs):
+        self._example_inputs = example_inputs
 
     @property
     def input_names(self):
@@ -783,7 +781,7 @@ class ExportConfig:
 
     @property
     def dynamic_axes(self):
-        return self._output_names
+        return self._dynamic_axes
 
     @dynamic_axes.setter
     def dynamic_axes(self, dynamic_axes):
@@ -795,8 +793,8 @@ class Torch2ONNXConfig(ExportConfig):
         self,
         dtype="int8",
         opset_version=14,
-        quant_mode="'QDQ'",
-        sample_inputs=None,
+        quant_format="QDQ",
+        example_inputs=None,
         input_names=None,
         output_names=None,
         dynamic_axes=None,
@@ -805,13 +803,13 @@ class Torch2ONNXConfig(ExportConfig):
         super().__init__(
             dtype=dtype,
             opset_version=opset_version,
-            quant_mode=quant_mode,
-            sample_inputs=sample_inputs,
+            quant_format=quant_format,
+            example_inputs=example_inputs,
             input_names=input_names,
             output_names=output_names,
             dynamic_axes=dynamic_axes,
-            kwargs=kwargs,
         )
+        self.kwargs = kwargs
 
 
 class TF2ONNXConfig(ExportConfig):
@@ -819,8 +817,8 @@ class TF2ONNXConfig(ExportConfig):
         self,
         dtype="int8",
         opset_version=14,
-        quant_mode="'QDQ'",
-        sample_inputs=None,
+        quant_format="QDQ",
+        example_inputs=None,
         input_names=None,
         output_names=None,
         dynamic_axes=None,
@@ -829,13 +827,13 @@ class TF2ONNXConfig(ExportConfig):
         super().__init__(
             dtype=dtype,
             opset_version=opset_version,
-            quant_mode=quant_mode,
-            sample_inputs=sample_inputs,
+            quant_format=quant_format,
+            example_inputs=example_inputs,
             input_names=input_names,
             output_names=output_names,
             dynamic_axes=dynamic_axes,
-            kwargs=kwargs,
         )
+        self.kwargs = kwargs
 
 
 def set_random_seed(seed: int):
