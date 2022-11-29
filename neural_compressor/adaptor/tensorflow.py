@@ -1452,14 +1452,13 @@ class TensorFlowAdaptor(Adaptor):
         from .tf_utils.util import tf_diagnosis_helper
         return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
     
-    def get_output_op_names(self, fp32_model, tune_cfg, dataloader):
+    def get_output_op_names(self, qmodel):
         from .tf_utils.graph_util import GraphAnalyzer
-        qmodel = self._quantize_model(tune_cfg, fp32_model, dataloader)
-        qmodel.save("qmodels/full_qmodel.pb") # TODO: Remove it before merged
+        
         graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
         output_op_names = set()
 
-        def _search(output_opname: str): # non recursive ver
+        for output_opname in qmodel.output_node_names:
             op_count = 0
             stack = [output_opname]
             while stack:
@@ -1479,9 +1478,6 @@ class TensorFlowAdaptor(Adaptor):
                         stack += next_opnames[1:]
 
                     opname = next_opnames[0]
-
-        for opname in qmodel.output_node_names:
-            _search(opname)
 
         output_op_names = list(output_op_names)
         logger.debug(f"output op names: {output_op_names}")
