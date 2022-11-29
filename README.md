@@ -219,9 +219,8 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/reference_examples.md">Reference Example</a></td>
+          <td colspan="6" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
+          <td colspan="6" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
       </tr>
   </tbody>
 </table>
