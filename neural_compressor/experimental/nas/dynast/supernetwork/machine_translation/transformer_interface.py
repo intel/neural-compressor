@@ -1,18 +1,13 @@
 """
 Translate pre-processed data with a trained model.
 """
-import ctypes
-import math
-import os
-import sys
 import time
 import warnings
 
 import numpy as np
 import torch
 from fairseq import options, progress_bar, tasks, utils
-from fairseq.data import dictionary
-from fairseq.meters import StopwatchMeter, TimeMeter
+from fairseq.meters import StopwatchMeter
 from fairseq.data.encoders.moses_tokenizer import MosesTokenizer
 
 from neural_compressor.utils import logger
@@ -265,7 +260,7 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
     return lat_mean, lat_std
 
 
-def compute_macs(config,dataset_path):
+def compute_macs(config, dataset_path):
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser,[dataset_path])
