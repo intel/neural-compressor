@@ -13,6 +13,8 @@ function init_params {
   iters=100
   batch_size=16
   tuned_checkpoint=saved_results
+  max_eval_samples=`expr ${iters} \* ${batch_size}`
+  echo ${max_eval_samples}
   for var in "$@"
   do
     case $var in
@@ -55,9 +57,10 @@ function run_benchmark {
     extra_cmd=''
 
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --accuracy_only "
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd=" --benchmark "
+        extra_cmd=$extra_cmd" --max_eval_samples ${max_eval_samples}"
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -80,7 +83,6 @@ function run_benchmark {
         --do_eval \
         --per_device_eval_batch_size ${batch_size} \
         --output_dir ${tuned_checkpoint} \
-        --iters ${iters} \
         ${mode_cmd} \
         ${extra_cmd}
 
