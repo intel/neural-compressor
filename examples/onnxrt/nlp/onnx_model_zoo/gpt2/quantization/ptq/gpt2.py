@@ -313,19 +313,10 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model  
 
-        # from neural_compressor.experimental import Quantization, common
-        # quantize = Quantization(args.config)
-        # quantize.model = common.Model(model)
-        # quantize.calib_dataloader = common.DataLoader(ds, batch_size=args.per_gpu_eval_batch_size)
-        # quantize.eval_func = eval_func
-        # q_model = quantize()
-        # q_model.save(args.output_model)
-
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
         accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=AccuracyLoss(0.11))
         config = PostTrainingQuantConfig(approach='dynamic', 
-                                         backend='onnxrt_integerops',
                                          op_name_list={'MatMul_2924': {
                                                             'activation':  {'dtype': ['fp32']},
                                                             'weight': {'dtype': ['fp32']}

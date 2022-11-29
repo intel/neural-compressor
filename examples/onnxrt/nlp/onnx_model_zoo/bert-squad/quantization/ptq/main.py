@@ -120,8 +120,7 @@ def main():
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic', 
-                                         backend='onnxrt_integerops', 
+        config = PostTrainingQuantConfig(approach='dynamic',
                                          op_name_list={'bert/encoder/layer_2/output/dense/MatMul': {
                                                             'activation':  {'dtype': ['fp32']},
                                                             'weight': {'dtype': ['fp32']}
@@ -145,7 +144,9 @@ def main():
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         model = onnx.load(args.model_path)
-        conf = BenchmarkConfig(iteration=100)
+        conf = BenchmarkConfig(iteration=100,
+                               cores_per_instance=4,
+                               num_of_instance=7)
         fit(model, conf, b_dataloader=eval_dataloader)
 
 

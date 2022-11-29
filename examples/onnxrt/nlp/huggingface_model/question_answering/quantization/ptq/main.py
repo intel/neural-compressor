@@ -343,7 +343,6 @@ def main():
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
         )
-        print(type(raw_datasets))
     else:
         data_files = {}
         if data_args.train_file is not None:
@@ -552,7 +551,6 @@ def main():
     def eval_func(model, *args):
         logger.info("*** Evaluate ***")
         metrics = trainer.evaluate(onnx_model=model)
-        print('eval_func', metrics)
 
         max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)
         metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
@@ -576,29 +574,21 @@ def main():
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic', 
-                                         backend='onnxrt_integerops')
+        config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)
         q_model.save(model_args.save_path)
 
-    if model_args.benchmark and model_args.mode == 'performance':
+    if model_args.benchmark:
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         
         model = onnx.load(model_args.model_path)
-        conf = BenchmarkConfig(iteration=100)
+        conf = BenchmarkConfig(iteration=100,
+                               cores_per_instance=28,
+                               num_of_instance=1)
         fit(model, conf, b_dataloader=eval_dataloader)
-
-        # elif model_args.mode == 'accuracy':
-        #     b_dataloader = SquadDataset(eval_dataloader)
-        #     b_dataloader = DataLoader(b_dataloader)
-        #     evaluator = Benchmark(model_args.config)
-        #     evaluator.b_dataloader = b_dataloader
-        #     evaluator.b_func = eval_func
-        #     evaluator.model = common.Model(model)
-        #     evaluator(model_args.mode)
 
 if __name__ == "__main__":
     main()

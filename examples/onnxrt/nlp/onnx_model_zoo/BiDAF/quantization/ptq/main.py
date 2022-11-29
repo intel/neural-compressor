@@ -182,7 +182,7 @@ if __name__ == "__main__":
                 metric.update(predictions, labels)
         return metric.result()
  
-    if args.benchmark and args.mode == 'performance':
+    if args.benchmark:
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         model = onnx.load(args.model_path)
@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic', backend='onnxrt_integerops')
+        config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

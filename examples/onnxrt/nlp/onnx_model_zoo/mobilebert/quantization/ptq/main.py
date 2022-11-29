@@ -145,16 +145,12 @@ def main():
                                    eval_func=eval_func)
         q_model.save(args.save_path)
 
-    if args.benchmark and args.mode == "accuracy":
-        results = evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
-        print("Batch size = %d" % batch_size)
-        print("Accuracy: %.5f" % results)
-
-    if args.benchmark and args.mode == "performance":
+    if args.benchmark:
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
-        model = onnx.load(args.model_path)
-        conf = BenchmarkConfig(iteration=100)
+        conf = BenchmarkConfig(iteration=100,
+                               cores_per_instance=4,
+                               num_of_instance=7)
         fit(model, conf, b_dataloader=eval_dataloader)
 
 if __name__ == "__main__":
