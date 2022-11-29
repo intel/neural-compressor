@@ -1821,10 +1821,20 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
   <tr>
     <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=86.8</td>
+    <td>-0.83%</td>
+    <td>60%</br>structured per channel</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
     <td>text classification</br>SST-2</td>
     <td>accuracy=87.61</br>accuracy=86.92</td>
     <td>-0.79%</td>
-    <td>90%</br>Structured 4x1</td>
+    <td>90%</br>structured 4x1</td>
     <td>snip momentum</br>unbalanced</td>  
   </tr>
   <tr>
@@ -1839,6 +1849,16 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
   <tr>
   </tr>  
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.92</td>
+    <td>-0.79%</td>
+    <td>50%</br>structured per channel</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr> 
 </tbody>
 </table>
 
