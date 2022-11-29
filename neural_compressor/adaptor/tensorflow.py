@@ -1535,9 +1535,10 @@ class TensorFlowAdaptor(Adaptor):
                        output_op_names, confidence_batches):
         op_cfg = tune_cfg['op']
         mse_result = {}
+        partial_dataloader = self._partial_dataloader(dataloader, confidence_batches)
         
         fp32_output = self._inference_model_on_batches(
-            fp32_model, tune_cfg, dataloader, output_op_names, confidence_batches)
+            fp32_model, tune_cfg, partial_dataloader, output_op_names)
 
         for op in ops_lst:
             # backup and set replace tuning config
@@ -1545,9 +1546,9 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = replace_cfgs[op]
 
             # quantize and inference the model
-            q_model = self._quantize_model(tune_cfg, fp32_model, dataloader)
+            q_model = self._quantize_model(tune_cfg, fp32_model, partial_dataloader)
             q_output = self._inference_model_on_batches(
-                q_model, tune_cfg, dataloader, output_op_names, confidence_batches)
+                q_model, tune_cfg, partial_dataloader, output_op_names)
                 
             mse_result[op] = self._calculate_mse(fp32_output, q_output)
 
@@ -1559,6 +1560,7 @@ class TensorFlowAdaptor(Adaptor):
     def _quantize_model(self, tune_cfg, fp32_model, dataloader):
         from .tf_utils.graph_converter import GraphConverter
         self.tuning_cfg_to_fw(tune_cfg)
+        
         return GraphConverter(
             model=fp32_model,
             qt_config=self.quantize_config,
@@ -1571,12 +1573,25 @@ class TensorFlowAdaptor(Adaptor):
             qdq_enabled=self.qdq_enabled,
             new_api=self.new_api,
             performance_only=self.performance_only).convert()
+    
+    def _partial_dataloader(self, dataloader, confidence_batches):
+        return type(dataloader)(
+            dataset=dataloader.dataset.take(confidence_batches),
+            batch_size=dataloader.batch_size, 
+            last_batch=dataloader.last_batch, 
+            collate_fn=dataloader.collate_fn,
+            sampler=dataloader.sampler, 
+            batch_sampler=dataloader.batch_sampler, 
+            num_workers=dataloader.num_workers, 
+            pin_memory=dataloader.pin_memory,
+            shuffle=dataloader.shuffle, 
+            distributed=dataloader.distributed)
 
     def _calculate_mse(self, fp32_output, q_output):
         return np.square(fp32_output - q_output).mean()
 
     def _inference_model_on_batches(self, model, tune_cfg, dataloader, 
-                                    output_op_names, confidence_batches):
+                                    output_op_names):
         from .tf_utils.util import generate_feed_dict
 
         input_tensors = model.input_tensor
@@ -1587,7 +1602,6 @@ class TensorFlowAdaptor(Adaptor):
 
         predictions = []
         for index, (inputs, _) in enumerate(dataloader):
-            if index >= confidence_batches: break # select first n inputs
             feed_dict = generate_feed_dict(input_tensors, inputs)
             
             pred = model.sess.run(output_tensors, feed_dict)
