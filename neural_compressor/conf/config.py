@@ -746,6 +746,7 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
+                                      'optimization_level': 1,
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -839,6 +840,7 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
+        Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
     },
     Optional('use_bf16', default=False): bool,
     Optional('graph_optimization'): graph_optimization_schema,
