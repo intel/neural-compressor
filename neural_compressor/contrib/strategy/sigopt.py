@@ -17,11 +17,13 @@
 
 import copy
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 from neural_compressor.strategy.strategy import strategy_registry, TuneStrategy
-from sigopt import Connection
 from collections import OrderedDict
 from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler
 from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
+
+sigopt = LazyImport('sigopt')
 
 @strategy_registry
 class SigOptTuneStrategy(TuneStrategy):
@@ -80,7 +82,15 @@ class SigOptTuneStrategy(TuneStrategy):
             eval_func,
             dicts,
             q_hooks)
-
+        # Initialize the SigOpt tuning strategy if the user specified to use it. 
+        strategy_name = conf.usr_cfg.tuning.strategy.name
+        if strategy_name.lower() == "sigopt":
+            try:
+                import sigopt
+            except ImportError:
+                ImportError(f"Please install sigopt for using {strategy_name} strategy.")
+        else:
+            pass
         # SigOpt init
         client_token = conf.usr_cfg.tuning.strategy.sigopt_api_token
         self.project_id = conf.usr_cfg.tuning.strategy.sigopt_project_id
@@ -107,7 +117,7 @@ class SigOptTuneStrategy(TuneStrategy):
         else:
            logger.info("Experiment name is {}.".format(self.experiment_name))
 
-        self.conn = Connection(client_token)
+        self.conn = sigopt.Connection(client_token)
         self.experiment = None
 
     def params_to_tune_configs(self, params):

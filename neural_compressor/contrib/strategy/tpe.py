@@ -20,14 +20,14 @@ import os
 from pathlib import Path
 from functools import partial
 import numpy as np
-import hyperopt as hpo
-from hyperopt import fmin, hp, STATUS_OK, Trials
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 from neural_compressor.strategy.strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
 from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler
 from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
 
+hyperopt = LazyImport('hyperopt')
 
 try:
     import pandas as pd
@@ -85,10 +85,19 @@ class TpeTuneStrategy(TuneStrategy):
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         assert conf.usr_cfg.quantization.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
+        # Initialize the tpe tuning strategy if the user specified to use it. 
+        strategy_name = conf.usr_cfg.tuning.strategy.name
+        if strategy_name.lower() == "tpe":
+            try:
+                import hyperopt
+            except ImportError:
+                raise ImportError(f"Please install hyperopt for using {strategy_name} strategy.")
+        else:
+            pass
         self.hpopt_search_space = None
         self.warm_start = False
         self.cfg_evaluated = False
-        self.hpopt_trials = Trials()
+        self.hpopt_trials = hyperopt.Trials()
         self.max_trials = conf.usr_cfg.tuning.exit_policy.get('max_trials', 200)
         self.loss_function_config = {
             'acc_th': conf.usr_cfg.tuning.accuracy_criterion.relative if \
@@ -140,7 +149,7 @@ class TpeTuneStrategy(TuneStrategy):
     def _configure_hpopt_search_space_and_params(self, search_space):
         self.hpopt_search_space = {}
         for param, configs in search_space.items():
-            self.hpopt_search_space[(param)] = hp.choice((param[0]), configs)
+            self.hpopt_search_space[(param)] = hyperopt.hp.choice((param[0]), configs)
         # Find minimum number of choices for params with more than one choice
         multichoice_params = [len(configs) for param, configs in search_space.items()
                               if len(configs) > 1]
@@ -149,7 +158,7 @@ class TpeTuneStrategy(TuneStrategy):
         min_param_size = min(multichoice_params) if len(multichoice_params) > 0 else 1
         self.tpe_params['n_EI_candidates'] = min_param_size
         self.tpe_params['prior_weight'] = 1 / min_param_size
-        self._algo = partial(hpo.tpe.suggest,
+        self._algo = partial(hyperopt.tpe.suggest,
                             n_startup_jobs=self.tpe_params['n_initial_point'],
                             gamma=self.tpe_params['gamma'],
                             n_EI_candidates=self.tpe_params['n_EI_candidates'],
@@ -225,12 +234,12 @@ class TpeTuneStrategy(TuneStrategy):
             self._configure_hpopt_search_space_and_params(first_run_cfg)
             # Run first iteration with best result from history
             trials_count = len(self.hpopt_trials.trials) + 1
-            fmin(partial(self.object_evaluation, model=self.model),
-                space=self.hpopt_search_space,
-                algo=self._algo,
-                max_evals=trials_count,
-                trials=self.hpopt_trials,
-                show_progressbar=False)
+            hyperopt.fmin(partial(self.object_evaluation, model=self.model),
+                          space=self.hpopt_search_space,
+                          algo=self._algo,
+                          max_evals=trials_count,
+                          trials=self.hpopt_trials,
+                          show_progressbar=False)
             if pd is not None:
                 self._save_trials(trials_file)
                 self._update_best_result(best_result_file)
@@ -266,12 +275,12 @@ class TpeTuneStrategy(TuneStrategy):
                 self.cfg_evaluated = False
                 logger.debug("Trial iteration start: {} / {}.".format(
                     trials_count, self.max_trials))
-                fmin(partial(self.object_evaluation, model=self.model),
-                    space=self.hpopt_search_space,
-                    algo=self._algo,
-                    max_evals=trials_count,
-                    trials=self.hpopt_trials,
-                    show_progressbar=False)
+                hyperopt.fmin(partial(self.object_evaluation, model=self.model),
+                              space=self.hpopt_search_space,
+                              algo=self._algo,
+                              max_evals=trials_count,
+                              trials=self.hpopt_trials,
+                              show_progressbar=False)
                 trials_count += 1
                 if pd is not None:
                     self._save_trials(trials_file)
@@ -349,7 +358,7 @@ class TpeTuneStrategy(TuneStrategy):
             'acc_loss': acc_diff,
             'lat_diff': lat_diff,
             'quantization_ratio': quantization_ratio,
-            'status': STATUS_OK}
+            'status': hyperopt.STATUS_OK}
 
     def _calculate_acc_lat_diff(self, acc, lat):
         int8_acc = acc
