@@ -3155,7 +3155,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
