@@ -12,7 +12,7 @@ CODEIMGDIR   = _build/html/_static
 
 # Put it first so that "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: help Makefile
 
@@ -22,11 +22,11 @@ html:
 	cp -f "../README.md" "./source/Welcome.md"
 	cp -f "../SECURITY.md" "./source/SECURITY.md"
 	cp -f "./source/Welcome.md" "./source/Welcome.md.tmp"
-	sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; s/.\/examples/https:\/\/github.com\/intel\/neural-compressor\/tree\/master\/examples/g; s/.md/.html/g; ' "./source/Welcome.md.tmp" > "./source/Welcome.md"
+	sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; ' "./source/Welcome.md.tmp" > "./source/Welcome.md"
 	rm -f "./source/Welcome.md.tmp"
 	
 	# make sure other png can display normal
-	$(SPHINXBUILD) -b html "" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)
+	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)
 
 	cp source/_static/index.html $(BUILDDIR)/html/index.html
 	mkdir -p "$(BUILDIMGDIR)"

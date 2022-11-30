@@ -10,13 +10,13 @@ Sections
 .. toctree::
    :maxdepth: 1
 
-   source/Welcome.md
-   source/examples_readme.md
-   source/api-documentation/apis.rst
-   source/releases_info.md
-   source/contributions.md
-   source/legal_information.md
-   source/security_policy.md
+   Welcome.md
+   examples_readme.md
+   api-documentation/apis.rst
+   releases_info.md
+   contributions.md
+   legal_information.md
+   security_policy.md
 
    Intel® Neural Compressor repository <https://github.com/intel/neural-compressor>
 

@@ -16,10 +16,10 @@ from os import getenv
 import importlib.util
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../../'))
 moduleName = 'version'
 # get version.py
-modulePathNeu = os.path.abspath(os.path.join(os.getcwd(), ".."))
+modulePathNeu = os.path.abspath(os.path.join(os.getcwd(), "../.."))
 modulePath = modulePathNeu + '/neural_compressor/version.py'
 spec = importlib.util.spec_from_file_location(moduleName,modulePath)
 NCversion = importlib.util.module_from_spec(spec)
@@ -49,14 +49,14 @@ release = ''
 # ones.
 extensions = ['recommonmark', 'sphinx_markdown_tables', 'sphinx.ext.coverage', 'sphinx.ext.autosummary',
               'sphinx_md', 'autoapi.extension', 'sphinx.ext.napoleon']
-autoapi_dirs = ['../neural_compressor']
+autoapi_dirs = ['../../neural_compressor']
 autoapi_add_toctree_entry = False
 autosummary_generate = True
 autoapi_options = ['members',  'show-inheritance',
                    'show-module-summary', 'imported-members', ]
 autoapi_ignore = []
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['source/_templates']
+templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -102,7 +102,7 @@ html_theme = "pytorch_sphinx_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['source/_static']
+html_static_path = ['_static']
 
 def skip_util_classes(app, what, name, obj, skip, options):
     if what == "class" and obj.docstring.startswith("Not displayed in API Docs.") :
@@ -114,7 +114,7 @@ def setup(app):
     app.add_css_file("custom.css")
     app.connect("autoapi-skip-member", skip_util_classes)   
 
-html_favicon = 'source/_static/imgs/common/intel.svg'
+html_favicon = '_static/imgs/common/intel.svg'
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
