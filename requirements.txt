@@ -1,4 +1,3 @@
-Cython
 numpy
 pandas
 pyyaml
