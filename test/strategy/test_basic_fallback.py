@@ -20,7 +20,7 @@ def build_ptq_yaml():
         framework: pytorch_fx
     tuning:
         strategy:
-            name: basic
+            name: hawq
         accuracy_criterion:
             absolute:  -1
         exit_policy:
