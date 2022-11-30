@@ -198,7 +198,7 @@ function generate_html_core {
                         printf("<td style=\"background-color:#90EE90\">%.2f</td>", target);
                     }else if(target < 1) {
                         printf("<td style=\"background-color:#FFD2D2\">%.2f</td>", target);
-                        job_status = "fail"
+                        perf_status = "fail"
                     }else{
                         printf("<td>%.2f</td>", target);
                     }
@@ -237,7 +237,7 @@ function generate_html_core {
                         status_png = "background-color:#90EE90";
                     } else {
                         status_png = "background-color:#FFD2D2";
-                        job_status = "fail"
+                        perf_status = "fail"
                     }
                     printf("<td style=\"%s\" colspan=2>%.2f</td>", status_png, target);
                 }
@@ -285,6 +285,7 @@ function generate_html_core {
 
         BEGIN {
             job_status = "pass"
+            perf_status = "pass"
             ratio_status = "pass"
             // issue list
             jira_mobilenet = "https://jira01.devtools.intel.com/browse/PADDLEQ-384";
@@ -379,7 +380,8 @@ function generate_html_core {
 
             printf("</tr>\n");
 
-            status = (job_status!="pass" && ratio_status!="pass") ? "fail" : "pass"
+            status = (perf_status == "fail" && ratio_status == "fail") ? "fail" : "pass"
+            status = (job_status == "fail") ? "fail" : status
 
         } END{
             printf("\n%s", status);
