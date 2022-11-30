@@ -847,7 +847,7 @@ schema = Schema({
     Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
-        'strategy': {'name': 'basic', 'loss': 'CrossEntropyLoss'}, # TODO move loss to appropriate position
+        'strategy': {'name': 'basic'}, 
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
@@ -860,8 +860,7 @@ schema = Schema({
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
-            Optional('latency_weight', default=1.0): float,
-            Optional('loss', default='CrossEntropyLoss'): str # TODO only for test, remove it before merge
+            Optional('latency_weight', default=1.0): float
         } ,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
