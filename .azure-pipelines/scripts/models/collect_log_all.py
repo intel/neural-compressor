@@ -23,7 +23,7 @@ def main():
             if '_summary.log' in name:
                 for line in open(file_name, "r"):
                     if 'linux' in line:
-                        line = line.replace("<url>", parse_tuning_log(line, url_dict))
+                        line = line.replace("<url>", parse_summary_log(line, url_dict))
                         summary_content.append(line)
             if '_tuning_info.log' in name:
                 for line in open(file_name, "r"):
@@ -42,6 +42,15 @@ def parse_tuning_log(line, url_dict):
     result = line.split(";")
     OS, Platform, Framework, Version, Model, Strategy, Tune_time, Tuning_trials, URL, __ = result
     file_name = f"{Framework}-{Model}-tune.log"
+    download_url = url_dict.get(f"{Framework}_{Model}")
+    download_url = f"{download_url}{file_name}"
+    return download_url
+
+
+def parse_summary_log(line, url_dict):
+    result = line.split(";")
+    OS, Platform, Framework, Version, Precision, Model, Mode, Type, BS, Value, Url = result
+    file_name = f"{Framework}_{Model}_summary.log"
     download_url = url_dict.get(f"{Framework}_{Model}")
     download_url = f"{download_url}{file_name}"
     return download_url
