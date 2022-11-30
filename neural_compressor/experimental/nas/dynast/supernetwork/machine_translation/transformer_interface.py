@@ -13,7 +13,7 @@ from fairseq.data.encoders.moses_tokenizer import MosesTokenizer
 from neural_compressor.utils import logger
 
 from .transformer_supernetwork import TransformerSuperNetwork
-from fvcore.nn import FlopCountAnalysis
+import torchprofile
 
 warnings.filterwarnings("ignore")
 
@@ -301,13 +301,13 @@ def compute_macs(config, dataset_path):
 
     dummy_src_tokens = [2] + [7] * (dummy_sentence_length - 1)
     dummy_prev = [7] * (dummy_sentence_length - 1) + [2]
-
-    model.set_sample_config(config)
-
+    
+    model.eval()
     model.profile(mode=True)
-    macs = FlopCountAnalysis(model, (torch.tensor([dummy_src_tokens], dtype=torch.long),
-                           torch.tensor([30]), torch.tensor([dummy_prev], dtype=torch.long)))
-    macs_tot =  macs.total()
+    model.set_sample_config(config)
+    macs = torchprofile.profile_macs(model, args=(torch.tensor([dummy_src_tokens], dtype=torch.long),
+                                   torch.tensor([30]), torch.tensor([dummy_prev], dtype=torch.long)))
+    
     model.profile(mode=False)
 
-    return macs_tot
+    return macs
