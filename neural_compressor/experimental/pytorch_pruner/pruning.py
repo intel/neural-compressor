@@ -1,3 +1,4 @@
+"""Pruning."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -20,7 +21,7 @@ import torch.nn
 from .prune_utils import process_config, parse_to_prune, parse_not_to_prune
 from .pruner import get_pruner
 from .logger import logger
-
+import re
 
 class Pruning:
     """Pruning.
@@ -40,13 +41,14 @@ class Pruning:
     """
     
     def __init__(self, config):
+        """Initialize."""
         self.model = None
         self.config_file_path = config
         self.pruners = []
         self.pruner_info = process_config(self.config_file_path)
 
     def update_items_for_all_pruners(self, **kwargs):
-        """Functions which add User-defined arguments to the original configurations.
+        """Add user-defined arguments to the original configurations.
         
         The original config of pruning is read from a file. 
         However, users can still modify configurations by passing key-value arguments in this function.
@@ -75,7 +77,7 @@ class Pruning:
     #    return warpper
 
     def get_sparsity_ratio(self):
-        """Functions that calculate a modules/layers sparsity.
+        """Calculate sparsity ratio of a module/layer.
         
         Returns:
             Three floats.
@@ -98,8 +100,8 @@ class Pruning:
         linear_conv_cnt = 0
         param_cnt = 0
         for name, module in self.model.named_modules():
-	    if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
-		linear_conv_cnt += module.weight.numel()
+            if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+                linear_conv_cnt += module.weight.numel()
 
         for n, param in self.model.named_parameters():
             param_cnt += param.numel()
@@ -111,6 +113,7 @@ class Pruning:
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
     def _generate_pruners(self):
+        """Obtain Pruner objects."""
         assert isinstance(self.model, torch.nn.Module)
 
         for info in self.pruner_info:
@@ -126,50 +129,63 @@ class Pruning:
 
     # @_call_pruners
     def on_train_begin(self):
+        """Implement at the beginning of training process.
+
+        Before training, ensure that pruners are generated.
+        """
         self._generate_pruners()  ##TODO is there better place to place
 
     # @_call_pruners
     def on_epoch_begin(self, epoch):
+        """Implement at the beginning of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
 
     # @_call_pruners
     def on_step_begin(self, local_step):
+        """Implement at the beginning of every step."""
         for pruner in self.pruners:
             pruner.on_step_begin(local_step)
 
     # @_call_pruners
     def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_before_optimizer_step()
 
     # @_call_pruners
     def on_step_end(self):
+        """Implement at the end of every step."""
         for pruner in self.pruners:
             pruner.on_step_end()
 
     # @_call_pruners
     def on_epoch_end(self):
+        """Implement the end of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_end()
 
     # @_call_pruners
     def on_train_end(self):
+        """Implement the end of training phase."""
         for pruner in self.pruners:
             pruner.on_train_end()
 
     # @_call_pruners
     def on_before_eval(self):
+        """Implement at the beginning of evaluation phase."""
         for pruner in self.pruners:
             pruner.on_before_eval()
 
     # @_call_pruners
     def on_after_eval(self):
+        """Implement at the end of evaluation phase."""
         for pruner in self.pruners:
             pruner.on_after_eval()
 
     # @_call_pruners
     def on_after_optimizer_step(self):
+        """Implement after optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()

@@ -89,12 +89,12 @@ def check_config(prune_config):
 def reset_non_value_to_default(obj, key, default):
     """Functions that add up undefined configurations.
 
-     If some configurations are not defined in the configuration, set it to a default value.
+    If some configurations are not defined in the configuration, set it to a default value.
 
-     Args:
-         obj: A dict{key: value}
-         key: A string. Key in obj.
-         default: When the key is not in obj, Add key: default item in original obj.
+    Args:
+        obj: A dict{key: value}
+        key: A string. Key in obj.
+        default: When the key is not in obj, Add key: default item in original obj.
 
     """
     if isinstance(obj, dict):
@@ -238,7 +238,7 @@ def parse_to_prune(config, model):
 
 
 def parse_not_to_prune(config, modules):
-    """Drop non pruned layers."""
+    """Drop non-pruned layers."""
     exclude_names = config["extra_excluded_names"]
     exclude_names.extend(config["excluded_names"])
 

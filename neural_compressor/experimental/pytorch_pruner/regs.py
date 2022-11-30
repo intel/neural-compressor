@@ -1,3 +1,4 @@
+"""Regularizer."""
 from .patterns import BasePattern
 import torch
 
@@ -5,7 +6,7 @@ REGS = {}
 
 
 def register_reg(name):
-    """Register a regularizator to the registry"""
+    """Register a regularizator to the registry."""
 
     def register(reg):
         REGS[name] = reg
@@ -15,6 +16,7 @@ def register_reg(name):
 
 
 def get_reg_type(config):
+    """Obtain the regularizer type."""
     for key in REGS.keys():  ##assume there is only one reg
         if config.get(key, None) != None:
             return key
@@ -22,7 +24,7 @@ def get_reg_type(config):
 
 
 def get_reg(config, modules, pattern):
-    """Get registered regularizator class"""
+    """Get registered regularizator class."""
     reg_type = config["reg_type"]
     if reg_type == None:
         return BaseReg(config, modules, pattern)
@@ -32,21 +34,50 @@ def get_reg(config, modules, pattern):
 
 
 class BaseReg:
+    """Regularizer.
+
+    The class which performs regularization.
+
+    Args:
+        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
+        config: A config dict object that includes information of the regularizer.
+        pattern: A config dict object. The pattern related part in args config.  
+    """
+
     def __init__(self, config: dict, modules: dict, pattern: BasePattern):
+        """Initialize."""
         self.modules = modules
         self.config = config
         self.pattern = pattern
 
     def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
         pass
 
     def on_after_optimizer_step(self):
+        """Implement after optimizer.step()."""
         pass
 
 
 @register_reg("group_lasso")
 class GroupLasso(BaseReg):
+    """Regularizer.
+
+    A regularizer class derived from BaseReg. In this class, the Group-lasso regularization will be performed.
+    Group-lasso is a variable-selection and regularization method.
+
+    Args:
+        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
+        config: A config dict object that includes information of the regularizer.
+        pattern: A config dict object. The pattern related part in args config.  
+
+    Attributes:
+        reg_terms: A dict {"module_name": Tensor} of regularization terms.
+        alpha: A float representing the coeffient related to group lasso.
+    """
+
     def __init__(self, config: dict, modules: dict, pattern: BasePattern, coeff):
+        """Initialize."""
         super(GroupLasso, self).__init__(config, modules, pattern)
         assert "x" in self.config.pattern, "group lasso only supports NXM pattern"
         self.reg_terms = {}
@@ -54,6 +85,7 @@ class GroupLasso(BaseReg):
         assert self.alpha >= 0, "group lasso only supports positive coeff"
 
     def on_before_optimizer_step(self):
+        """Calculate the group-lasso score map."""
         with torch.no_grad():
             if self.pattern.invalid_keys == None:
                 self.pattern.check_layer_validity()
@@ -66,7 +98,8 @@ class GroupLasso(BaseReg):
                 reg_term[torch.isinf(reg_term)] = 0.0
                 self.reg_terms[key] = reg_term
 
-    def on_after_optimizer_step(self):  ##decoupled with grad decent
+    def on_after_optimizer_step(self):  ##decoupled with grad descent
+        """Perform group lasso regularization after optimization."""
         with torch.no_grad():
             for key in self.modules.keys():
                 if key in self.pattern.invalid_keys:
