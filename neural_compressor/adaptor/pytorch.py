@@ -29,7 +29,6 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-from neural_compressor.strategy.hawq_metric import Hawq_top
 
 
 torch = LazyImport("torch")
@@ -1095,23 +1094,6 @@ class TemplateAdaptor(Adaptor):
         else:
             return False
         
-    def calculate_op_sensitivity(self, model, dataloader, method_args):
-        """Compute the op sensitivity by the specific method.
-
-        Args:
-            model(INC model): The fp32 model. 
-            dataloader: The calibration dataloader.
-            method_args(Dict): The parameters for specifying the method.  
-
-        Returns:
-            ops_sensitivity(Dict[tuple, float]): The key is (op_name, op_type), 
-              the value is the sensitivity under the specified method
-        """
-        if method_args['name']=='hessian_trace':
-            Hawq_top(model=model,yaml_cpu=None,yaml_trace=None,dataloader=dataloader)
-            hessian_cmp=Hawq_top.get_init_config()
-            return hessian_cmp
-        pass
 
 unify_op_type_mapping = {
     "ConvReLU2d": "Conv2d",
