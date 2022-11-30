@@ -37,7 +37,8 @@ class DyNAS(NASBase):
 
     def __init__(self, conf_fname_or_obj):
         """Initialize the attributes."""
-        from .dynast.dynas_manager import ParameterManager, TransformerLTEncoding
+        from .dynast.dynas_manager import (ParameterManager,
+                                           TransformerLTEncoding)
         from .dynast.dynas_predictor import Predictor
         from .dynast.dynas_search import (ProblemMultiObjective,
                                           SearchAlgoManager)
@@ -121,7 +122,8 @@ class DyNAS(NASBase):
     def init_for_search(self):
         """Initialize the search configuration."""
         self.supernet_manager = self.SUPERNET_ENCODING[self.supernet](
-            param_dict=self.SUPERNET_PARAMETERS[self.supernet], seed=self.seed)
+            param_dict=self.SUPERNET_PARAMETERS[self.supernet], seed=self.seed
+        )
 
         # Validation High-Fidelity Measurement Runner
         self.runner_validate = self.RUNNERS[self.supernet](

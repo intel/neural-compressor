@@ -70,7 +70,6 @@ class Predictor:
 
     def train(self, examples, labels):
         """Train the predictor on the specified examples and labels using the underlying regressor.
-
         Args:
             examples: Examples to be used for training.
             labels: Labels to be used for training.
@@ -93,7 +92,6 @@ class Predictor:
 
         # Determine index of best searcher
         self.best_index = np.argmax(scores)
-
 
     def predict(self, examples):
         """Predict the output values of the specified examples using the underlying regressor.

@@ -6,14 +6,14 @@ import warnings
 
 import numpy as np
 import torch
+import torchprofile
 from fairseq import options, progress_bar, tasks, utils
-from fairseq.meters import StopwatchMeter
 from fairseq.data.encoders.moses_tokenizer import MosesTokenizer
+from fairseq.meters import StopwatchMeter
 
 from neural_compressor.utils import logger
 
 from .transformer_supernetwork import TransformerSuperNetwork
-import torchprofile
 
 warnings.filterwarnings("ignore")
 
@@ -301,13 +301,13 @@ def compute_macs(config, dataset_path):
 
     dummy_src_tokens = [2] + [7] * (dummy_sentence_length - 1)
     dummy_prev = [7] * (dummy_sentence_length - 1) + [2]
-    
+
     model.eval()
     model.profile(mode=True)
     model.set_sample_config(config)
     macs = torchprofile.profile_macs(model, args=(torch.tensor([dummy_src_tokens], dtype=torch.long),
                                    torch.tensor([30]), torch.tensor([dummy_prev], dtype=torch.long)))
-    
+
     model.profile(mode=False)
 
     return macs
