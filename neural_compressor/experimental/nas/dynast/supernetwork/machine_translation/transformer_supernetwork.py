@@ -1,3 +1,6 @@
+# Part of this source code is licensed under the MIT license found in the
+# LICENSE file in the same directory as this file.
+
 import math
 
 import torch
