@@ -122,13 +122,14 @@ def main():
 
     if args.tune:
         # Dynamic Quantization with Neural Compressor
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(model)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        from neural_compressor.config import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(approach="dynamic", backend="pytorch")
+        q_model = quantization.fit(
+                        model,
+                        conf=conf,
+                        eval_func=eval_func
+                        )
         q_model.save(args.tuned_checkpoint)
-
     elif args.int8:
         from neural_compressor.utils.pytorch import load
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)

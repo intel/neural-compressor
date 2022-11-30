@@ -903,13 +903,13 @@ if __name__ == "__main__":
         dlrm.bot_l.append(DeQuantStub())
         dlrm.top_l.insert(0, QuantStub())
         dlrm.top_l.insert(len(dlrm.top_l) - 1, DeQuantStub())
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(dlrm)
-        quantizer.calib_dataloader = eval_dataloader
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
-        q_model.save(args.tuned_checkpoint)
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        quant_conf = PostTrainingQuantConfig(approach="static", backend="pytorch")
+        q_model = quantization.fit(
+                        dlrm,
+                        quant_conf,
+                        calib_dataloader=eval_dataloader
+                        )
         exit(0)
 
     if args.benchmark:

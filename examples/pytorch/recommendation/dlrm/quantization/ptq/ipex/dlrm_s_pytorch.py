@@ -844,11 +844,17 @@ def run():
                 )
 
         assert args.inference_only, "Please set inference_only in arguments"
-        quantizer = Quantization("./conf_ipex.yaml")
-        quantizer.model = common.Model(dlrm)
-        quantizer.calib_dataloader = DLRM_DataLoader(train_ld)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        eval_dataloader = DLRM_DataLoader(train_ld)
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(approach="static",
+                                       backend="pytorch_ipex"
+                                       )
+        q_model = quantization.fit(
+                            dlrm,
+                            conf=conf,
+                            eval_func=eval_func,
+                            calib_dataloader=eval_dataloader
+                            )
         q_model.save(args.save_model)
         exit(0)
 

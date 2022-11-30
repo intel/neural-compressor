@@ -120,11 +120,12 @@ def main():
                 prediction = [pre.replace("|", " ")for pre in predict]
                 WER = wer(text, prediction)
             return 1-WER
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(model)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+            from neural_compressor.config import PostTrainingQuantConfig, quantization
+            conf = PostTrainingQuantConfig(approach="dynamic", backend="pytorch")
+            q_model = quantization.fit(model,
+                                       conf=conf,
+                                       eval_func=eval_func
+                                       )
         q_model.save(args.tuned_checkpoint)
         exit(0)
     

@@ -897,12 +897,13 @@ if __name__ == "__main__":
     if args.tune:
         print('tune')
         dlrm.eval()
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(dlrm)
-        quantizer.calib_dataloader = eval_dataloader
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx")
+        q_model = quantization.fit(
+                            dlrm,
+                            conf=conf,
+                            calib_dataloader=eval_dataloader
+                            )
         q_model.save(args.tuned_checkpoint)
         exit(0)
 
