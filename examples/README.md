@@ -445,7 +445,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>3D-UNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/image_recognition/3d-unet/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/3d-unet/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>SSD ResNet34</td>
@@ -463,7 +463,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>DLRM</td>
@@ -643,14 +643,14 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>CNN-10</td>
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
-    <td><a href="./pytorch/image_recognition/CNN-2/distillation/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/CNN-2/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>MobileNet V2-0.35</td>
     <td>WideResNet40-2</td>
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
-    <td><a href="./pytorch/image_recognition/MobileNetV2-0.35/distillation/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/MobileNetV2-0.35/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
