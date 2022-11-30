@@ -1071,6 +1071,7 @@ def main(_):
 
       eval_examples = processor.get_dev_examples(FLAGS.data_dir)
       eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
+      dataset = Dataset(eval_file, FLAGS.eval_batch_size)
 
       convert_examples_to_features(
           examples=eval_examples,
@@ -1085,19 +1086,54 @@ def main(_):
           is_training=False,
           drop_remainder=False)
 
-      from neural_compressor.experimental import Quantization, common
-      quantizer = Quantization(FLAGS.config)
-      dataset = Dataset(eval_file, FLAGS.eval_batch_size)
-      quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
-      quantizer.calib_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
-      quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
-      quantizer.metric = Accuracy()
-      q_model = quantizer.fit()
+      from neural_compressor.experimental import common
+      from neural_compressor.quantization import fit
+      from neural_compressor.config import PostTrainingQuantConfig, \
+          TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
+
+      set_random_seed(9527)
+
+      tuning_criterion = TuningCriterion(
+          strategy="basic",
+          timeout=0,
+          max_trials=100,
+          objective="performance")
+
+      tolerable_loss = AccuracyLoss(loss=0.01)
+
+      accuracy_criterion = AccuracyCriterion(
+          higher_is_better=True,
+          criterion='relative',
+          tolerable_loss=tolerable_loss)
+
+      config = PostTrainingQuantConfig(
+          device="cpu",
+          backend="tensorflow",
+          inputs=["input_file", "batch_size"],
+          outputs=["loss/Softmax:0", "IteratorGetNext:3"],
+          approach="static",
+          calibration_sampling_size=[500],
+          op_type_list=None,
+          op_name_list=None,
+          reduce_range=None,
+          extra_precisions=[],
+          tuning_criterion=tuning_criterion,
+          accuracy_criterion=accuracy_criterion)
+
+      q_model = fit(
+          model=common.Model(estimator, input_fn=estimator_input_fn),
+          conf=config,
+          calib_dataloader=common.DataLoader(dataset, collate_fn=collate_fn),
+          calib_func=None,
+          eval_dataloader=common.DataLoader(dataset, collate_fn=collate_fn),
+          eval_func=None,
+          eval_metric=Accuracy())
+
       if FLAGS.strip_iterator:
           q_model.graph_def = strip_iterator(q_model.graph_def)
       q_model.save(FLAGS.output_model)
 
-  if FLAGS.benchmark:
+  if FLAGS.benchmark and FLAGS.mode=="accuracy":
       eval_examples = processor.get_dev_examples(FLAGS.data_dir)
       eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
 
@@ -1120,8 +1156,82 @@ def main(_):
               is_training=False,
               drop_remainder=False)
           evaluator.model = common.Model(estimator, input_fn=estimator_input_fn)
-      evaluator(FLAGS.mode)
+      evaluator("accuracy")
+
+      """ Refactor code of benchmark in accuracy mode with INC User NewAPI.
+      from neural_compressor.experimental import common
+      from neural_compressor.benchmark import fit
+      from neural_compressor.config import BenchmarkConfig
+      from neural_compressor.model.model import get_model_type
+
+      model_type = get_model_type(FLAGS.input_model)
+      if model_type == 'frozen_pb':
+          model = FLAGS.input_model
+      else:
+          estimator_input_fn = input_fn_builder(
+              input_file=eval_file,
+              seq_length=FLAGS.max_seq_length,
+              is_training=False,
+              drop_remainder=False)
+          model = common.Model(estimator, input_fn=estimator_input_fn)
+
+      dataset = Dataset(eval_file, FLAGS.eval_batch_size)
+      b_dataloader = common.DataLoader(
+          dataset,
+          batch_size=FLAGS.eval_batch_size,
+          collate_fn=collate_fn)
+
+      config = BenchmarkConfig(
+          warmup=5,
+          iteration=20,
+          cores_per_instance=28,
+          num_of_instance=1,
+          inter_num_of_threads=None,
+          intra_num_of_threads=None)
+
+      fit(model=model, config=config, b_dataloader=b_dataloader, b_func=b_func)
+      """
+      # Cannot pass 'metric' and 'mode' in fit.
+      # TODO: implement a b_func.
+
+  elif FLAGS.benchmark and FLAGS.mode=="performance":
+      from neural_compressor.experimental import common
+      from neural_compressor.benchmark import fit
+      from neural_compressor.config import BenchmarkConfig
+      from neural_compressor.model.model import get_model_type
+
+      eval_examples = processor.get_dev_examples(FLAGS.data_dir)
+      eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
       
+      model_type = get_model_type(FLAGS.input_model)
+      if model_type == 'frozen_pb':
+          model = FLAGS.input_model
+      else:
+          estimator_input_fn = input_fn_builder(
+              input_file=eval_file,
+              seq_length=FLAGS.max_seq_length,
+              is_training=False,
+              drop_remainder=False)
+          model = common.Model(estimator, input_fn=estimator_input_fn)
+
+      dataset = Dataset(eval_file, FLAGS.eval_batch_size)
+      b_dataloader = common.DataLoader(
+          dataset,
+          batch_size=FLAGS.eval_batch_size,
+          collate_fn=collate_fn)
+
+      config = BenchmarkConfig(
+          inputs=["input_file", "batch_size"],
+          outputs=["loss/Softmax:0" ,"IteratorGetNext:3"],
+          warmup=5,
+          iteration=20,
+          cores_per_instance=28,
+          num_of_instance=1,
+          inter_num_of_threads=None,
+          intra_num_of_threads=None)
+
+      fit(model=model, config=config, b_dataloader=b_dataloader, b_func=None)
+
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("data_dir")
