@@ -149,7 +149,7 @@ class Quantization(Component):
 
         import torchvision.datasets as datasets
         import torchvision.transforms as transforms
-        data_path = "/home/bfang1/Projects/HAWQ_INC/datasets/raw"
+        data_path = "/mnt/data2/dataset/dataset/imagenet/img_raw"
         traindir = os.path.join(data_path, 'train')
         valdir = os.path.join(data_path, 'val')
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
