@@ -75,7 +75,7 @@ class Predictor:
             examples: Examples to be used for training.
             labels: Labels to be used for training.
         """
-                # Compute normalization factor
+        # Compute normalization factor
         max_label = np.amax(np.abs(labels))
         if max_label > 0.0:
             self.normalization_factor = 10 ** (np.floor(np.log10(max_label)) - 1.0)
