@@ -860,7 +860,8 @@ schema = Schema({
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
-            Optional('latency_weight', default=1.0): float
+            Optional('latency_weight', default=1.0): float,
+            Optional('loss', default='CrossEntropyLoss'): str # TODO only for test, remove it before merge
         } ,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
