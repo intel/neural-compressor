@@ -358,7 +358,8 @@ class ConservativeTuneStrategy(TuneStrategy):
         quant_ops_name_set = set()
         for quant_mode, items_lst in quant_mode_wise_items.items():
             if "static" in quant_mode or 'dynamic' in quant_mode:
-                op_item_pairs += [(item, quant_mode) for item in items_lst if item.name not in quant_ops_name_set]
+                _quant_mode = "static" if "static" in quant_mode else "dynamic"
+                op_item_pairs += [(item, _quant_mode) for item in items_lst if item.name not in quant_ops_name_set]
                 quant_ops_name_set = quant_ops_name_set.union([item.name for item in items_lst])
                 op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
                 quant_ops_queue.extend(op_item_pairs)

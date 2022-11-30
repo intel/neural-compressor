@@ -56,6 +56,24 @@ def build_fake_yaml_with_opt_level_0():
     with open('fake_yaml_with_opt_level_0.yaml',"w",encoding="utf-8") as f:
         yaml.dump(y,f)
     f.close()
+    
+def build_fake_yaml_with_opt_level_0_pt():
+    fake_yaml = '''
+    model:
+        name: resnet18
+        framework: pytorch_fx
+    quantization:
+        optimization_level: 0
+    tuning:
+        accuracy_criterion:
+            relative:  0.01
+        exit_policy:
+            max_trials: 4
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml_with_opt_level_0_pt.yaml',"w",encoding="utf-8") as f:
+        yaml.dump(y,f)
+    f.close()
 
 def build_fake_yaml_with_opt_level_1():
     fake_yaml = '''
@@ -127,6 +145,7 @@ class TestQuantization(unittest.TestCase):
         build_fake_yaml2()
         build_fake_yaml_with_opt_level_0()
         build_fake_yaml_with_opt_level_1()
+        build_fake_yaml_with_opt_level_0_pt()
         self.test1_index = -1
         self.test2_index = -1
         self.test3_index = -1
@@ -136,6 +155,7 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         os.remove("fake_yaml_with_opt_level_0.yaml")
         os.remove("fake_yaml_with_opt_level_1.yaml")
+        os.remove("fake_yaml_with_opt_level_0_pt.yaml")
         os.remove('fake_yaml2.yaml')
         shutil.rmtree('saved', ignore_errors=True)
         
@@ -184,6 +204,27 @@ class TestQuantization(unittest.TestCase):
         quantizer.model = self.constant_graph
         q_model = quantizer.fit()
         self.assertTrue(isinstance(quantizer.strategy, BasicTuneStrategy))
+        
+    def test_quantization_saved(self):
+        import time
+        acc_lst =  [1.0, 2.0, 2.1, 3.0, 4.0]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        def _eval(fake_model):
+            self.test1_index += 1
+            perf = perf_lst[self.test1_index]
+            time.sleep(perf)
+            return acc_lst[self.test1_index]
+        from neural_compressor.experimental import Quantization, common
+        from neural_compressor.strategy.basic import BasicTuneStrategy
+        import torchvision
+        model = torchvision.models.resnet18()
+        quantizer = Quantization('fake_yaml_with_opt_level_0_pt.yaml')
+        dataset = quantizer.dataset('dummy', (1, 3, 224, 224))
+        quantizer.model = model
+        quantizer.calib_dataloader = common.DataLoader(dataset)
+        quantizer.eval_func = _eval
+        q_model = quantizer.fit()
+
 
     def test_conservative_strategy1(self):
         import time
