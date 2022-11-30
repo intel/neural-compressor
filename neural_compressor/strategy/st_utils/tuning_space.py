@@ -429,7 +429,7 @@ class TuningSpace:
         config = {item.name: item.options[0] for item in quant_mode_item.options}
         op_tuning_config = OpTuningConfig(op_name_type[0], 
                                           op_name_type[1], 
-                                          quant_mode_item.name, 
+                                          quant_mode, 
                                           self,
                                           config)
         return op_tuning_config
