@@ -136,14 +136,41 @@ options = Options()
 
 
 class BenchmarkConfig:
-    def __init__(self, warmup=5, iteration=-1, cores_per_instance=None, num_of_instance=None,
-        inter_num_of_threads=None, intra_num_of_threads=None):
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 warmup=5,
+                 iteration=-1,
+                 cores_per_instance=None,
+                 num_of_instance=None,
+                 inter_num_of_threads=None,
+                 intra_num_of_threads=None):
+        self._inputs = inputs
+        self._outputs = outputs
         self._warmup = warmup
         self._iteration = iteration
         self._cores_per_instance = cores_per_instance
         self._num_of_instance = num_of_instance
         self._inter_num_of_threads = inter_num_of_threads
         self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def outputs(self):
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, outputs):
+        if check_value('outputs', outputs, str):
+            self._outputs = outputs
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, inputs):
+        if check_value('inputs', inputs, str):
+            self._inputs = inputs
 
     @property
     def warmup(self):
@@ -789,16 +816,16 @@ class ExportConfig:
 
 
 class Torch2ONNXConfig(ExportConfig):
-     def __init__(
-        self,
-        dtype="int8",
-        opset_version=14,
-        quant_format="QDQ",
-        example_inputs=None,
-        input_names=None,
-        output_names=None,
-        dynamic_axes=None,
-        **kwargs,
+    def __init__(
+       self,
+       dtype="int8",
+       opset_version=14,
+       quant_format="QDQ",
+       example_inputs=None,
+       input_names=None,
+       output_names=None,
+       dynamic_axes=None,
+       **kwargs,
     ):
         super().__init__(
             dtype=dtype,
@@ -813,16 +840,16 @@ class Torch2ONNXConfig(ExportConfig):
 
 
 class TF2ONNXConfig(ExportConfig):
-     def __init__(
-        self,
-        dtype="int8",
-        opset_version=14,
-        quant_format="QDQ",
-        example_inputs=None,
-        input_names=None,
-        output_names=None,
-        dynamic_axes=None,
-        **kwargs,
+    def __init__(
+       self,
+       dtype="int8",
+       opset_version=14,
+       quant_format="QDQ",
+       example_inputs=None,
+       input_names=None,
+       output_names=None,
+       dynamic_axes=None,
+       **kwargs,
     ):
         super().__init__(
             dtype=dtype,
