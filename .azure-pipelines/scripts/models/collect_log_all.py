@@ -50,7 +50,7 @@ def parse_tuning_log(line, url_dict):
 def parse_summary_log(line, url_dict):
     result = line.split(";")
     OS, Platform, Framework, Version, Precision, Model, Mode, Type, BS, Value, Url = result
-    file_name = f"{Framework}_{Model}_summary.log"
+    file_name = f"{Framework}-{Model}-tune.log"
     download_url = url_dict.get(f"{Framework}_{Model}")
     download_url = f"{download_url}{file_name}"
     return download_url
