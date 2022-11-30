@@ -155,7 +155,7 @@ stages:
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
               mkdir last_generated
-              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
+              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated --build_id=$(Build.BuildId)
             displayName: "Collect all logs"
           - task: DownloadPipelineArtifact@2
             continueOnError: true

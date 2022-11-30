@@ -1,7 +1,6 @@
 import argparse
 import os
 import re
-import requests
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--framework", type=str, required=True)
@@ -134,9 +133,9 @@ def collect_log():
                 parse_tuning_line(line, tmp)
         print(tmp)
 
-        results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], parse_download_url(f"{args.framework}-{args.model}-tune.log")))
-        results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], parse_download_url(f"{args.framework}-{args.model}-tune.log")))
-        tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['strategy'], str(tmp['tune_time']), str(tmp['tuning_trials']), parse_download_url(f"{args.framework}-{args.model}-tune.log"), f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
+        results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], "<url>"))
+        results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], "<url>"))
+        tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['strategy'], str(tmp['tune_time']), str(tmp['tuning_trials']), "<url>", f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
     # get model benchmark results
     for precision in ['int8', 'fp32']:
         throughput = 0.0
@@ -215,21 +214,6 @@ def parse_perf_line(line):
         perf_data.update({"batch_size": int(batch_size.group(1))})
 
     return perf_data
-
-
-def parse_download_url(file_name):
-    azure_artifact_api_url = f'https://dev.azure.com/lpot-inc/neural-compressor/_apis/build/builds/{args.build_id}/artifacts?api-version=5.1'
-    azure_artifacts_data = {key: value for (key, value) in requests.get(azure_artifact_api_url).json().items()}
-    artifact_count = azure_artifacts_data.get("count")
-    artifact_value = azure_artifacts_data.get("value")
-    url_dict = {}
-    for item in artifact_value:
-        artifact_download_url = item.get("resource").get("downloadUrl")
-        artifact_download_url = f"{artifact_download_url[:-3]}file&subPath=%2F"
-        url_dict[item.get("name")] = artifact_download_url
-    download_url = url_dict.get(f"{args.framework}_{args.model}")
-    download_url = f"{download_url}{file_name}"
-    return download_url
 
 
 def check_status(precision, precision_upper, check_accuracy=False):
