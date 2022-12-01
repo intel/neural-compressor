@@ -34,7 +34,8 @@ from onnx import helper, TensorProto, shape_inference
 from packaging.version import Version
 from importlib.util import find_spec
 from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed
+from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
+    _get_qrange_for_qType, calculate_scale_zp
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -48,7 +49,9 @@ class ONNXRTAugment:
                  dump_op_types,
                  black_nodes=[],
                  white_nodes=[],
-                 iterations=[]):
+                 iterations=[],
+                 backend=['CPUExecutionProvider'],
+                 reduce_range=False):
         '''
         :param model: ONNX model to calibrate
         :param dataloader: user implemented object to read in and preprocess calibration dataset
@@ -56,6 +59,7 @@ class ONNXRTAugment:
         :param black_nodes: operator names that should not be quantized, default = ''
         :param white_nodes: operator names that force to be quantized, default = ''
         :param iterations: tensor of which iteration will be collected.
+        :param providers: execution providers for onnxruntime
         '''
         self.model_wrapper = model_wrapper
         self.model = model_wrapper.model
@@ -68,12 +72,14 @@ class ONNXRTAugment:
         self.white_nodes = white_nodes
         self.augmented_model = None
         self.iterations = iterations
+        self.backend = backend
         self.augment_nodes = []
         self.dequantized_output = {}
         self.already_quantized = 'DequantizeLinear' in \
                                  [node.op_type for node in self.model.graph.node]
         self.dynamically_quantized = False
         self.ort_version = Version(onnxruntime.__version__)
+        self.reduce_range = reduce_range
 
     def augment_graph(self, activation_only=False, weight_only=False):
         '''
@@ -205,9 +211,14 @@ class ONNXRTAugment:
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
 
-        session = onnxruntime.InferenceSession(self.augmented_model.SerializeToString(), so) if \
-            not self.model_wrapper.large_size else \
-            onnxruntime.InferenceSession(self.model_wrapper.model_path  + '_augment.onnx', so)
+        session = onnxruntime.InferenceSession(
+                    self.augmented_model.SerializeToString(),
+                    so,
+                    provider=self.backend) if not self.model_wrapper.large_size else \
+                  onnxruntime.InferenceSession(
+                    self.model_wrapper.model_path  + '_augment.onnx',
+                    so,
+                    provider=self.backend)
 
         intermediate_outputs = []
         len_inputs = len(session.get_inputs())
@@ -366,7 +377,7 @@ class ONNXRTAugment:
         return self._map_calibration(node_output_names, output_dicts,
                                      calib_mode=calib_mode)
 
-    def dump_calibration(self, calib_mode='naive'):
+    def dump_calibration(self, q_config, calib_mode='naive'):
         '''
             Gather calibration params for quantization
             parameter calib_mode: type 'naive' gives (Min, Max) pairs
@@ -376,9 +387,9 @@ class ONNXRTAugment:
                                 second element is a maximum of all values;
             :return: dictionary mapping: {added node names: (ReduceMin, ReduceMax) pairs }
         '''
-        return self.calculate_quantization_params(self.dump_minmax(calib_mode))
+        return self.calculate_quantization_params(q_config, self.dump_minmax(calib_mode))
 
-    def calculate_quantization_params(self, quantization_thresholds):
+    def calculate_quantization_params(self, q_config, quantization_thresholds):
         '''
             Given quantization thresholds, calculate the quantization params.
         :param quantization_thresholds:
@@ -417,11 +428,16 @@ class ONNXRTAugment:
                 if len(children) == 1:
                     child = children[0]
             parent = None
+            scheme = 'asym'
+            qType = 2 # uint8
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
+            if parent and parent.name in q_config:
+                scheme = q_config[parent.name]['activation']['scheme']
+                qType = q_config[parent.name]['activation']['dtype']
             node_thresholds = quantization_thresholds[tensor_name]
             node_params = self.calculate_scale_zeropoint(parent, child, node_thresholds[0],
-                                                         node_thresholds[1])
+                node_thresholds[1], scheme, qType, _get_qrange_for_qType(qType, self.reduce_range))
             quantization_params[tensor_name] = node_params
 
         return quantization_params
@@ -478,7 +494,7 @@ class ONNXRTAugment:
             dumped_tensors_map.update({"activation": map_node_activation})
         return dumped_tensors_map
 
-    def calculate_scale_zeropoint(self, last_node, next_node, rmin, rmax):
+    def calculate_scale_zeropoint(self, last_node, next_node, rmin, rmax, scheme, qType, quantize_range):
         '''
            Given the source and destination node of tensor, \
                  return calculated zero point and scales.
@@ -524,12 +540,12 @@ class ONNXRTAugment:
                         clip_params = attrs[attrs_names.index('activation_params')].floats
                         rmin = min(rmin, clip_params[0], clip_params[1])
                         rmax = max(rmax, clip_params[0], clip_params[1])
-    
-        scale = np.float32((rmax - rmin) / 255 if rmin != rmax else 1)
-        initial_zero_point = (0 - rmin) / scale
-        zero_point = np.uint8(round(max(0, min(255, initial_zero_point))))
-    
-        zp_and_scale.append(zero_point)
-        zp_and_scale.append(scale)
+
+        scale, zp = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
+        if qType == 2:
+            zp_and_scale.append(np.uint8(zp))
+        else:
+            zp_and_scale.append(np.int8(zp))
+        zp_and_scale.append(np.float32(scale))
     
         return zp_and_scale
