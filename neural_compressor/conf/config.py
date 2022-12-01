@@ -730,6 +730,11 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
+        Optional('backend', default=['default']): And(
+                    Or(str, list),
+                    Use(input_to_list),
+                    lambda s: all(i in ['onnxrt_trt_ep', 'onnxrt_cuda_ep'] for i in s)),
+ 
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
                                           Or(float,

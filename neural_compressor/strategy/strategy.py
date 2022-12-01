@@ -535,16 +535,23 @@ class TuneStrategy(object):
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnxrt' in framework.lower():
             if self.mixed_precision_mode:
-                framework_specific_info.update({"backend": "integerops"})
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
-            else:
-                framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
             framework_specific_info.update({'recipes': self.cfg.quantization.recipes})
             framework_specific_info.update(
                                 {'graph_optimization': OPTIONS[framework].graph_optimization})
             framework_specific_info.update({'reduce_range': self.cfg.reduce_range})
+
+            framework_specific_info.update({'backend': self.cfg.model.backend})
+            if framework_specific_info["approach"] == "post_training_dynamic_quant":
+                framework_specific_info.update({"format": "integerops"})
+            elif framework.lower() == 'onnxrt_qdq' or \
+                'onnxrt_trt_ep' in framework_specific_info['backend']:
+                framework_specific_info.update({'format': 'qdq'})
+                framework = 'onnxrt_qdq'
+            else:
+                framework_specific_info.update({'format': 'qlinearops'})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
