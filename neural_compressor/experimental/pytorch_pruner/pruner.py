@@ -294,8 +294,7 @@ class BasicPruner(BasePruner):
         self.completed_pruned_cnt += 1
         if self.criteria.scores == {}:
             return
-        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks,
-                                            )
+        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks)
         self.mask_weights()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
@@ -485,7 +484,7 @@ class ProgressivePruner(BasicPruner):
         for n in self.masks.keys():
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
-        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks, )
+        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks)
         self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, self.criteria.scores,
                                                                        1)
         self.mask_weights_general(self.progressive_masks)

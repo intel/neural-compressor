@@ -77,7 +77,7 @@ class BasePattern:
     """
     Pruning Pattern.
 
-    It defines the basic pruning unit and how this unit will be pruned during pruning,e.g.4x1,2:4
+    It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4
     Args:
         config: A config dict object. Contains the pattern information.
         modules: torch neural network modules, which will be pruned with the pattern
@@ -93,7 +93,7 @@ class BasePattern:
         config: A config dict object. Contains all the information including the pattern's.
         max_sparsity_ratio_per_layer: A float. The maximum sparsity that one layer could reach
         min_sparsity_ratio_per_layer: A float. The minimum sparsity that one layer could reach
-        target_sparsity: A float. The sparsity ratio of the modules will be reached after pruning,
+        target_sparsity: A float. The sparsity ratio of the modules will be reached after pruning.
 
     """
 
@@ -120,7 +120,7 @@ class BasePattern:
             dim: The reduced axis
 
         Returns:
-            The reduced that
+            The reduced tensor
 
         """
         """"""
@@ -586,7 +586,7 @@ class PatternNxM(BasePattern):
             orig_shape:
             
         Returns:
-            data:
+            Original shape data
         
         """
         block_size = self.block_size[key]
