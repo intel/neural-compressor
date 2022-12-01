@@ -205,7 +205,7 @@ class TestQuantization(unittest.TestCase):
         q_model = quantizer.fit()
         self.assertTrue(isinstance(quantizer.strategy, BasicTuneStrategy))
         
-    def test_quantization_saved(self):
+    def test_opt_level_0_pt(self):
         import time
         acc_lst =  [1.0, 2.0, 2.1, 3.0, 4.0]
         perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
