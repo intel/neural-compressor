@@ -530,16 +530,16 @@ tuning_criterion = TuningCriterion()
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def __init__(self,
-                 device='cpu',
+                 device="cpu",
                  backend="NA",
                  inputs=[],
                  outputs=[],
-                 approach='auto',
+                 approach="auto",
                  calibration_sampling_size=[100],
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions = [],
+                 extra_precisions = ["bf16"],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -578,7 +578,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions=[]):
+                 extra_precisions=["bf16"]):
         super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
                          op_type_list=op_type_list, op_name_list=op_name_list,
                          reduce_range=reduce_range, extra_precisions=extra_precisions)

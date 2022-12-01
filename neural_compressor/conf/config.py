@@ -840,7 +840,7 @@ schema = Schema({
             str: ops_schema
         },
     },
-    Optional('use_bf16', default=False): bool,
+    Optional('use_bf16', default=True): bool,
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
