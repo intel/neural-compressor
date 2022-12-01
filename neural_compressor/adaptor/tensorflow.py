@@ -1525,7 +1525,7 @@ class TensorFlowAdaptor(Adaptor):
             output_op_names, confidence_batches)
 
         # Step3. sort
-        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1], reverse=fallback)]
+        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
         logger.debug("Dump MSE order:")
         for op in mse_order:
             logger.debug(f"{op}: {mse_result[op]}")
