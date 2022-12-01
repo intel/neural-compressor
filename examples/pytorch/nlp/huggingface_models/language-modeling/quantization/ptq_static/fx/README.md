@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 ## 2. Run
 
-If the automatic download from modelhub fails, you can download [EleutherAI/gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B?text=My+name+is+Clara+and+I+am) and [EleutherAI/gpt-neo-1.3B](https://huggingface.co/EleutherAI/gpt-neo-1.3B?text=My+name+is+Mariama%2C+my+favorite) offline.
+If the automatic download from modelhub fails, you can download [EleutherAI/gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B?text=My+name+is+Clara+and+I+am) offline.
 
 ```shell
 
@@ -27,16 +27,7 @@ python run_clm.py \
   --do_eval \
   --output_dir /path/to/checkpoint/dir
 ```
-```shell
 
-python run_clm.py \
-  --model_name_or_path EleutherAI/gpt-neo-1.3B \
-  --dataset_name wikitext\
-  --dataset_config_name wikitext-2-raw-v1 \
-  --do_train \
-  --do_eval \
-  --output_dir /path/to/checkpoint/dir
-```
 
 ## 3. Command
 
