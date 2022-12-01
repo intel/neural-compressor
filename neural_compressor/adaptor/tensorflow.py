@@ -1546,7 +1546,7 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = replace_cfgs[op]
 
             # quantize and inference the model
-            q_model = self._quantize_model(tune_cfg, fp32_model, partial_dataloader)
+            q_model = self.quantize(tune_cfg, fp32_model, partial_dataloader)
             q_output = self._inference_model_on_batches(
                 q_model, tune_cfg, partial_dataloader, output_op_names)
                 
@@ -1556,23 +1556,6 @@ class TensorFlowAdaptor(Adaptor):
             op_cfg[op] = backup_cfg
         
         return mse_result
-
-    def _quantize_model(self, tune_cfg, fp32_model, dataloader):
-        from .tf_utils.graph_converter import GraphConverter
-        self.tuning_cfg_to_fw(tune_cfg)
-        
-        return GraphConverter(
-            model=fp32_model,
-            qt_config=self.quantize_config,
-            recipes=self.recipes,
-            int8_sequences=self.op_wise_sequences,
-            fp32_ops=self.fp32_ops,
-            bf16_ops=self.bf16_ops,
-            data_loader=dataloader,
-            itex_mode=self.itex_mode,
-            qdq_enabled=self.qdq_enabled,
-            new_api=self.new_api,
-            performance_only=self.performance_only).convert()
     
     def _partial_dataloader(self, dataloader, confidence_batches):
         return type(dataloader)(
