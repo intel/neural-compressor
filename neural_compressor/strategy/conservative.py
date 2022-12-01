@@ -345,6 +345,16 @@ class ConservativeTuneStrategy(TuneStrategy):
         
         Returns:
             The op queue to be quantized.
+            OrderDict:
+                bf16:
+                    OrderDict:
+                        conv2d: [((conv2d_1, conv2d), bf16), ((conv2d_2, conv2d), bf16)]
+                        linear: [((linear_1, linear), bf16), ((linear_2, linear), bf16)]
+                int8:
+                    OrderDict:
+                        # ((op_name, op_type), quant_mode)
+                        conv2d: [((conv2d_1, conv2d), static), ((conv2d_2, conv2d), static)] 
+                        linear: [((linear_1, linear), static), ((linear_2, linear), static)]
         """
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items
         # Add all quantized pair into queue
