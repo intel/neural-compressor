@@ -23,7 +23,6 @@ requirements:
     - scikit-learn
     - schema
     - py-cpuinfo
-    - hyperopt
     - pandas
     - pycocotools
     - opencv
@@ -35,12 +34,10 @@ requirements:
     - psutil
     - Pillow
     - requests
-    - sigopt
     - prettytable
     - cryptography
     - sqlalchemy==1.4.27
     - alembic==1.7.7
-    - cython
     - pywin32  # [win]
     - packaging
 test:

@@ -1,4 +1,3 @@
-Cython
 numpy
 pandas
 pyyaml
@@ -7,7 +6,6 @@ scikit-image
 matplotlib
 schema
 py-cpuinfo
-hyperopt
 contextlib2
 requests
 Flask
@@ -20,7 +18,6 @@ Pillow
 pycocotools-windows; sys_platform != 'linux'
 pycocotools; sys_platform == 'linux'
 opencv-python
-sigopt
 prettytable
 cryptography
 sqlalchemy==1.4.27

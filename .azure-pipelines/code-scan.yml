@@ -9,6 +9,7 @@ pr:
   paths:
     include:
     - neural_compressor
+    - setup.py
 
 pool: ICX-16C
 
