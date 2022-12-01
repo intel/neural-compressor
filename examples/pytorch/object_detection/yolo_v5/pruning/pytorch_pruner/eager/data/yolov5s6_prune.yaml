@@ -1,0 +1,36 @@
+version: 1.0
+
+model:
+  name: "yolov5s6"
+  framework: "pytorch"
+
+pruning:
+  approach:
+    weight_compression_pytorch:
+      start_step: 0
+      end_step: 0
+      excluded_names: ["model.0.*"]
+      prune_layer_type: ["Conv2d"]
+      target_sparsity: 0.8
+      update_frequency_on_step: 1000
+      max_sparsity_ratio_per_layer: 0.98
+      prune_domain: "global"
+
+      sparsity_decay_type: "exp"
+      pruners:
+        - !Pruner
+            ##"to_prune_layers": [".*query",".*key", ".*value"]
+            ##exclude_names: [".*query",".*key", ".*value"]
+#            prune_type: "snip_momentum"
+#            prune_domain: "global"
+#            sparsity_decay_type: "exp"
+            pattern: "oc_pattern_1x1"
+            target_sparsity: 0.8
+            update_frequency_on_step: 1000
+            prune_domain: "global"
+            prune_type: "snip_momentum"
+            sparsity_decay_type: "exp"
+
+
+
+
