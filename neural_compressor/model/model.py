@@ -265,8 +265,6 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                   rewriter_config_pb2.RewriterConfig.OFF
-        config.graph_options.rewrite_options.use_plugin_optimizers = \
-                 rewriter_config_pb2.RewriterConfig.OFF
     sess = tf.compat.v1.Session(graph=model, config=config)
 
     input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
@@ -355,8 +353,6 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
                     rewriter_config_pb2.RewriterConfig.OFF
-        config.graph_options.rewrite_options.use_plugin_optimizers = \
-                 rewriter_config_pb2.RewriterConfig.OFF
     if not os.listdir(os.path.join(model,'variables')):
         sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
         loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
@@ -653,8 +649,6 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     if get_backend() == 'tensorflow_itex':
         from tensorflow.core.protobuf import rewriter_config_pb2
         config.graph_options.rewrite_options.constant_folding = \
-                 rewriter_config_pb2.RewriterConfig.OFF
-        config.graph_options.rewrite_options.use_plugin_optimizers = \
                  rewriter_config_pb2.RewriterConfig.OFF
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
