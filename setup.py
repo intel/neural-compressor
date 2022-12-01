@@ -40,7 +40,8 @@ install_requires_list = [
         'opencv-python', 'requests', 'psutil', 'Pillow', 'sigopt', 'prettytable', 'cryptography', 'Cython',
         'deprecated']
 ux_install_requires_list = [
-        'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent','sqlalchemy==1.4.27', 'alembic==1.7.7']
+        'Flask-Cors', 'Flask-SocketIO', 'Flask', 'gevent-websocket', 'gevent','sqlalchemy==1.4.27',
+        'alembic==1.7.7', 'cryptography']
 
 # define scripts
 scripts_list = []
