@@ -333,7 +333,10 @@ class TuneStrategy(object):
         if not isinstance(self.adaptor, TensorFlowAdaptor):
             logger.debug("OpType statistics comparation is only available for TensorFlow adaptor.")
             return
-
+        if self.q_func:
+            logger.debug("OpType statistics comparation is not supported by TensorFlow QAT.")
+            return
+            
         adaptor_statistics = self.adaptor.optype_statistics
 
         def _field_skipped(field):

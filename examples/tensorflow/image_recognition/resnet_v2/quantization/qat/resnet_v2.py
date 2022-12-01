@@ -1,3 +1,20 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import print_function
 import tensorflow
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
@@ -227,7 +244,7 @@ n = 3
 
 depth = n * 9 + 2
 
-def train():
+def prepare_dataset():
     # Load the CIFAR10 data.
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
@@ -246,16 +263,18 @@ def train():
     print(x_test.shape[0], 'test samples')
     print('y_train shape:', y_train.shape)
 
-    # Convert class vectors to binary class matrices.
     y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
     y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+    return x_train, y_train, x_test, y_test, input_shape
 
+x_train, y_train, x_test, y_test, input_shape = prepare_dataset()
+
+def train():
     model = resnet_v2(input_shape=input_shape, depth=depth)
 
     model.compile(loss='categorical_crossentropy',
                 optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.01),
                 metrics=['accuracy'])
-    model.summary()
 
     lr_scheduler = LearningRateScheduler(lr_schedule)
 
@@ -281,59 +300,58 @@ def train():
     print('Test accuracy:', scores[1])
     model.save("baseline_model")
 
+def evaluate(model, measurer=None):
+    """Custom evaluate function to inference the model for specified metric on validation dataset.
+
+    Args:
+        model (tf.keras.Model): The input model will be the class of tf.keras.Model.
+        measurer (object, optional): for duration benchmark measurement.
+
+    Returns:
+        accuracy (float): evaluation result, the larger is better.
+
+    """
+    model.compile(loss='categorical_crossentropy',
+                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.001),
+                metrics=['accuracy'])
+
+    if measurer:
+        measurer.start()
+    _, q_aware_model_accuracy = model.evaluate(x_test, y_test)
+    if measurer:
+        measurer.end()
+
+    return q_aware_model_accuracy
 
 def q_func(model):
-    # Load the CIFAR10 data.
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-
-    # Input image dimensions.
-    input_shape = x_train.shape[1:]
-
-    # Normalize data.
-    x_train = x_train.astype('float32') / 255
-    x_test = x_test.astype('float32') / 255
-
-    # If subtract pixel mean is enabled
-    x_train_mean = np.mean(x_train, axis=0)
-    x_train -= x_train_mean
-    x_test -= x_train_mean
-
-    print('x_train shape:', x_train.shape)
-    print(x_train.shape[0], 'train samples')
-    print(x_test.shape[0], 'test samples')
-    print('y_train shape:', y_train.shape)
-
-    # Convert class vectors to binary class matrices.
-    y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
-    y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
-
-    model = tensorflow.keras.models.load_model("baseline_model")
-
-    import tensorflow_model_optimization as tfmot
-    quantize_model = tfmot.quantization.keras.quantize_model
-
-    # q_aware stands for for quantization aware.
-    q_aware_model = quantize_model(model)
+    from neural_compressor.experimental import ModelConversion
+    conversion = ModelConversion()
+    q_aware_model = conversion.fit(model.model)
 
     # `quantize_model` requires a recompile.
     q_aware_model.compile(loss='categorical_crossentropy',
                 optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.001),
                 metrics=['accuracy'])
-    # q_aware_model.summary()
+    q_aware_model.summary()
 
-    train_images_subset = x_train[0:1000]  # out of 60000
-    train_labels_subset = y_train[0:1000]
+    # to avoid memory issue
+    max_data_num = 10000
+    if len(x_train) > max_data_num:
+        train_images_subset = x_train[0:max_data_num]
+        train_labels_subset = y_train[0:max_data_num]
+    else:
+        train_images_subset = x_train
+        train_labels_subset = y_train
 
     q_aware_model.fit(train_images_subset, train_labels_subset,
-                      batch_size=500, epochs=1,
+                      batch_size=500, epochs=2,
                       validation_data=(x_test, y_test))
 
     _, q_aware_model_accuracy = q_aware_model.evaluate(
         x_test, y_test, verbose=0)
 
     print('Quant test accuracy:', q_aware_model_accuracy)
-    q_aware_model.save("trained_qat_model")
-    return 'trained_qat_model'
+    return q_aware_model
 
 class Dataset(object):
     def __init__(self, batch_size=500):
@@ -369,7 +387,7 @@ if __name__ == '__main__':
     train()
     from neural_compressor.experimental import Quantization, common
     quantizer = Quantization('fake_yaml.yaml')
-    quantizer.eval_dataloader = common.DataLoader(Dataset())
+    quantizer.eval_func = evaluate(model)
     quantizer.model = './baseline_model'
     quantizer.q_func = q_func
     quantizer.fit()

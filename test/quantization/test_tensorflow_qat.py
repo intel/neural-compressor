@@ -101,13 +101,10 @@ def q_func(model):
     train_images = train_images / 255.0
     test_images = test_images / 255.0
 
-    model = tf.keras.models.load_model("baseline_model")
-
-    import tensorflow_model_optimization as tfmot
-    quantize_model = tfmot.quantization.keras.quantize_model
-
-    # q_aware stands for for quantization aware.
-    q_aware_model = quantize_model(model)
+    # apply qat convert
+    from neural_compressor.experimental import ModelConversion
+    conversion = ModelConversion()
+    q_aware_model = conversion.fit(model.model)
 
     # `quantize_model` requires a recompile.
     q_aware_model.compile(optimizer='adam',

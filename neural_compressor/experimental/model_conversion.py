@@ -25,7 +25,7 @@ import datetime
 import numpy as np
 import yaml
 from neural_compressor.adaptor import FRAMEWORKS
-from ..conf.config import Conf
+from ..conf.config import Conf, default_workspace
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
@@ -35,23 +35,15 @@ from .common import Model as NCModel
 from ..model import BaseModel
 
 class ModelConversion():
-    """ModelConversion class is used to convert one model format to another.
+    """ModelConversion class is used to convert a fp32 keras model format to a int8 qat keras model.
 
        Currently Neural Compressor only supports Quantization-aware training TensorFlow model to Default
        quantized model.
 
        The typical usage is:
-         from neural_compressor.experimental import ModelConversion, common
+         from neural_compressor.experimental import ModelConversion
          conversion = ModelConversion()
-         conversion.source = 'QAT'
-         conversion.destination = 'default'
-         conversion.model = '/path/to/saved_model'
-         q_model = conversion()
-
-    Args:
-        conf_fname_or_obj (string or obj): Optional. The path to the YAML configuration file or
-            Conf class containing model conversion and evaluation setting if not specifed by code.
-
+         q_model = conversion.fit(model)
     """
 
     def __init__(self, conf_fname_or_obj=None):
@@ -62,16 +54,8 @@ class ModelConversion():
                 Conf class containing model conversion and evaluation setting if not specifed by code.
         """
         self.conf_name = conf_fname_or_obj
-        self._model = None
         self.framework = 'tensorflow'
-
-        self._eval_dataloader = None
-        self._eval_func = None
         self.adaptor = None
-        self._metric = None
-
-        self._source = None
-        self._destination = None
 
         if conf_fname_or_obj is not None:
             if isinstance(conf_fname_or_obj, str):
@@ -87,7 +71,7 @@ class ModelConversion():
 
         set_backend(self.framework)
 
-    def __call__(self):
+    def __call__(self, model):
         """Execute model conversion process.
 
            NOTE: This interface works now only on Intel Optimized TensorFlow to
@@ -95,52 +79,40 @@ class ModelConversion():
            quantized model which is able to run at Intel Xeon platforms.
            https://github.com/tensorflow/model-optimization
 
+        Args:
+            model (tf.keras.Model): The input fp32 keras model.
+
         Returns:
-            converted quantized model
+            q_model (tf.keras.Model): The converted quantized model
         """
-        assert self._model, '"model" property need to be set before __call_() gets invoked'
-
-        framework_specific_info = {}
-        cfg = self.conf.usr_cfg
-        framework_specific_info.update(
-            {'name': cfg.model.name,
-             'device': cfg.device,
-             'fake_quant': True,
-             'inputs': cfg.model.inputs,
-             'outputs': cfg.model.outputs,
-             'workspace_path': cfg.tuning.workspace.path})
-
+        framework_specific_info = self._generate_framework_info()
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
-        q_model = self.adaptor.convert(self._model, self._source, self._destination)
-
-        # when eval_func is None but metric or _eval_dataloader is set by yaml or code,
-        # it means Neural Compressor will create the eval_func from these info.
-        metric_cfg = [self._metric] if self._metric else \
-            deep_get(cfg, 'evaluation.accuracy.metric')
-        postprocess_cfg = deep_get(cfg, 'evaluation.accuracy.postprocess')
-        if self._eval_func is None and metric_cfg:
-            eval_dataloader_cfg = deep_get(cfg, 'evaluation.accuracy.dataloader')
-            if self._eval_dataloader is None and eval_dataloader_cfg:
-                self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
-            assert self._eval_dataloader, 'either "eval_dataloader" property or evaluation' \
-                    '.accuracy.dataloader field in yaml should be set when metric is set'
-
-            self._eval_func = create_eval_func(self.framework, \
-                                            self.eval_dataloader, \
-                                            self.adaptor, \
-                                            metric_cfg, \
-                                            postprocess_cfg, \
-                                            fp32_baseline = True)
-        if self._eval_func:
-            baseline_score = self._eval_func(self._model)
-            qmodel_score = self._eval_func(q_model)
-            logger.info("The score of Quantization-Aware Training model is {}.".
-                        format(str(baseline_score)))
-            logger.info("Converted model score is {}.".format(str(qmodel_score)))
+        q_model = self.adaptor.qat_convert(model)
 
         return q_model
 
     fit = __call__
+
+    def _generate_framework_info(self):
+        """Generate framework specific information from config or default."""
+        framework_specific_info = {}
+        if self.conf:
+            framework_specific_info.update(
+                {'name': self.conf.usr_cfg.model.name,
+                'device': self.conf.usr_cfg.device,
+                'fake_quant': True,
+                'inputs': self.conf.usr_cfg.model.inputs,
+                'outputs': self.conf.usr_cfg.model.outputs,
+                'workspace_path': self.conf.usr_cfg.tuning.workspace.path})
+        else:
+            framework_specific_info.update(
+                {'name': 'keras_model',
+                'device': 'cpu',
+                'fake_quant': True,
+                'inputs': ['input'],
+                'outputs': ['output'],
+                'workspace_path': default_workspace})
+        return framework_specific_info
 
     def _gen_yaml(self):
         random_name = '{}'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))

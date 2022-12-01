@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-model:                                               # mandatory. used to specify model specific information.
-  name: mnist
-  framework: tensorflow_itex                         # mandatory. supported values are tensorflow, tensorflow_itex, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+version: 1.0
 
-device: gpu                                          # optional. set cpu if installed intel-extension-for-tensorflow[cpu], set gpu if installed intel-extension-for-tensorflow[gpu].
+model:                                               # mandatory. used to specify model specific information.
+  name: resnet50
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+
+device: cpu
 quantization:
   approach: quant_aware_training
 
@@ -25,4 +27,6 @@ evaluation:                                          # optional. required if use
   accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     metric:
       Accuracy: {}                                   # built-in metrics are topk, map, f1, allow user to register new metric.
-
+tuning:
+  exit_policy:
+    performance_only: true
