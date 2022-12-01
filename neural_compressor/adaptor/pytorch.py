@@ -1029,7 +1029,7 @@ class TemplateAdaptor(Adaptor):
 
 
         # get bf16 capability
-        if (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -2220,7 +2220,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     self.model_calibration(q_model, dataloader, iterations, None,
                                            tune_cfg.get('calib_sampling_size', 1))
                 q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                if self.use_bf16:
+                if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+                    (self.version.release >= Version("1.11.0").release):
                     with torch.no_grad():
                         with torch.cpu.amp.autocast():
                             q_model = ipex.quantization.convert(q_model)
@@ -2773,7 +2774,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                 q_model._model, prefix='')
 
         if len(self.tune_cfg['bf16_ops_list']) > 0 and \
-            self.version.release >= Version("1.11.0").release and \
+            self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
@@ -2843,6 +2844,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
+        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
+        bf16_ops = []
+        self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
+        bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
         for op in quantizable_ops:
             if op[1] in [
@@ -2901,6 +2906,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             'framework': 'pytorch_fx',
             'reduce_range': REDUCE_RANGE,
             'quantizable_ops': quantizable_ops,
+            'bf16_ops_list': bf16_ops_list,
             'op': op_config_dict,
             'sub_module_list': self.sub_module_list,
             'approach': 'quant_aware_training'
@@ -2926,6 +2932,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(self.model._model, self.model.q_config)
+        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+            self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
         self._dump_model_op_stats(self.model._model, self.model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(self.model._model)
 
@@ -3102,7 +3112,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             res = dict()
             self._get_sub_module_op_stats(model, tune_cfg, approach, res)
 
-        if (self.version.release >= Version("1.11.0").release) and \
+        if self.use_bf16 and (self.version.release >= Version("1.11.0").release) and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             bf16_ops_list = tune_cfg['bf16_ops_list']
             if len(bf16_ops_list) > 0:
