@@ -552,7 +552,6 @@ def main():
             print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
             print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
             print('Batch size = %d' % training_args.per_device_eval_batch_size)
-            exit(0)
 
             return eval_loss
 
