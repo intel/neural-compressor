@@ -17,12 +17,15 @@
 
 import copy
 import os
-
-from collections import deque
-from copy import deepcopy
 import numpy as np
 
+from collections import deque
+from collections import OrderedDict as COrderedDict
+from copy import deepcopy
+from typing import Dict, List, Tuple, OrderedDict
+
 from .strategy import strategy_registry, TuneStrategy
+from .st_utils.tuning_space import TuningItem
 from ..utils import logger
 from ..utils.utility import Statistics
 
@@ -71,21 +74,39 @@ class ConservativeTuneStrategy(TuneStrategy):
         tune_cfg = self._initialize_tune_cfg()
         tune_cfg['calib_sampling_size'] = calib_sampling_size
         op_type_priority = self._get_op_type_priority()
-        quant_queue = self._quant_queue(op_type_priority)
+        quant_items_pool = self._quant_items_pool(op_type_priority)
+        # TODO remove it before merge
+        # Returns:
+        #     The op item pool to convert into lower precision.
+        #     OrderDict:
+        #         bf16:
+        #             OrderDict:
+        #                 conv2d: [(TuningItem, bf16), (TuningItem, bf16)]
+        #                 linear: [(TuningItem, bf16), (TuningItem, bf16)]
+        #         int8:
+        #             OrderDict:
+        #                 # (TuningItem, quant_mode)
+        #                 conv2d: [(TuningItem, static), (TuningItem, static)] 
+        #                 linear: [(TuningItem, static), (TuningItem, static)]
         # Try to add quantized ops.
-        logger.info(f"*** Quantized op list: {[(pair[0].name, pair[1]) for pair in quant_queue]}")
-        while quant_queue:
-            op_item, target_dtype = quant_queue.popleft()
-            op_info = op_item.name
-            op_config = tuning_space.set_deafult_config(op_info, target_dtype)
-            tmp_tune_cfg = deepcopy(tune_cfg)
-            tmp_tune_cfg[op_info] = op_config
-            yield tmp_tune_cfg
-            if self.acc_meet_flag:
-                logger.info(f"*** Convert op {op_info[0]} to {target_dtype} and accuracy still meet the requiments")
-                tune_cfg[op_info] = op_config
-            else:
-                logger.info(f"*** Skip quantize op {op_info[0]}.")
+        logger.info(f"*** Try to convert op into lower precision to improve performance.")
+        for dtype, op_items in quant_items_pool.items():
+            logger.info(f"*** Start to convert op into {dtype}.")
+            for op_type, items_lst in op_items.items():
+                logger.info(f"*** Try to convert {op_type} into {dtype}.")
+                logger.info(f"*** Convert all {op_type} ops into {dtype}.")
+                tmp_tune_cfg = deepcopy(tune_cfg)
+                for item, quant_mode in items_lst:
+                    op_info = item.name
+                    op_config = tuning_space.set_deafult_config(op_info, quant_mode)
+                    tmp_tune_cfg[op_info] = op_config
+                yield tmp_tune_cfg
+                if self.acc_meet_flag:
+                    logger.info(f"*** Convert {op_type} ops to {dtype} and accuracy still meet the requiments")
+                    tune_cfg[op_info] = op_config
+                else:
+                    # TODO convert one by one.
+                    logger.info(f"*** Skip quantize {op_type} ops.")
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
 
     def traverse(self):
@@ -282,29 +303,34 @@ class ConservativeTuneStrategy(TuneStrategy):
         optypewise_cap = self.capability['optypewise']
         op_type_priority = list(optypewise_cap.keys())
         return op_type_priority
-            
-    def _sorted_item_by_op_type(self, items_lst, op_type_priority):
+
+    def _sorted_item_by_op_type(self, 
+                                items_lst: List[Tuple[TuningItem, str]], 
+                                op_type_priority: List[str]) -> OrderedDict[str, List]:
         """ Socring the tuning items according to its op type.
+        
         Args:
-            items_lst: The tuning item list.
-            op_type_priority: The op type list with the order.
+            items_lst: The tuning item list. # [(op_item, quant_mode), ... ]
+            op_type_priority: The op type list with the order. # [optype_1, optype_2]
 
         Returns:
             The tuning items list that sorted according to its op type.
+            OrderDict:
+                # op_type: [(TuningItem, quant_mode), ...]
+                conv2d: [(TuningItem, static), (TuningItem, static)] 
+                linear: [(TuningItem, static), (TuningItem, static)]
         """
-        priority_val_lst = range(len(op_type_priority), 0, -1)
-        # For items whose op type does not exist in the priority list, give it the lowest priority.
-        min_priority_val = 0
-        priority_map = dict(zip(op_type_priority, priority_val_lst))
-        def _map_priority(item):
-            item_op_type = item[0].name[0]
-            priority_val =  priority_map[item_op_type] if item_op_type in op_type_priority else min_priority_val
-            return (item, priority_val)
-        item_priority_lst = list(map(_map_priority, items_lst))
-        # Quantized the element with higher priority value first.
-        sorted_item_priority = sorted(item_priority_lst, key=lambda x: x[1], reverse=True)  
-        sorted_items_lst = [item[0] for item in sorted_item_priority]
-        return sorted_items_lst
+        op_type_lst_from_items_lst = list(set([item[0].name[1] for item in items_lst]))
+        # For items whose op type does not exist in the priority list, assign it with lowest priority.
+        sorted_op_type_lst = [op_type for op_type in op_type_priority if op_type in op_type_lst_from_items_lst]
+        sorted_op_type_lst += list(set(op_type_lst_from_items_lst) - set(op_type_priority))
+        sorted_items = COrderedDict()
+        for op_type in sorted_op_type_lst:
+            sorted_items[op_type] = []
+        for op_item, quant_mode in items_lst:
+            op_type = op_item.name[1]
+            sorted_items[op_type].append((op_item, quant_mode))
+        return sorted_items
             
     def _initialize_tune_cfg(self):
         """Initialize the tuning config with fp32 AMAP.
@@ -337,43 +363,50 @@ class ConservativeTuneStrategy(TuneStrategy):
             initial_tuning_cfg[op_info] = tuning_space.set_deafult_config(op_info, quant_mode)
         return initial_tuning_cfg
             
-    def _quant_queue(self, op_type_priority):
+    def _quant_items_pool(self, op_type_priority: List[str]) -> OrderedDict[
+        str, OrderedDict[str, List[Tuple[TuningItem, str]]]]:
         """Create the op queue to be quantized.
+        
         --------------------------------------------------------------------------
         | Level 1 |         bf16       |         fp16       |  static/dynamic    |
         | Level 2 | conv2d, linear, ...| conv2d, linear, ...| conv2d, linear, ...|
         
+        Args:
+            op_type_priority: The optype list with priority.
+            
         Returns:
-            The op queue to be quantized.
+            The op item pool to convert into lower precision.
             OrderDict:
                 bf16:
                     OrderDict:
-                        conv2d: [((conv2d_1, conv2d), bf16), ((conv2d_2, conv2d), bf16)]
-                        linear: [((linear_1, linear), bf16), ((linear_2, linear), bf16)]
+                        conv2d: [(TuningItem, bf16), (TuningItem, bf16)]
+                        linear: [(TuningItem, bf16), (TuningItem, bf16)]
                 int8:
                     OrderDict:
-                        # ((op_name, op_type), quant_mode)
-                        conv2d: [((conv2d_1, conv2d), static), ((conv2d_2, conv2d), static)] 
-                        linear: [((linear_1, linear), static), ((linear_2, linear), static)]
+                        # (TuningItem, quant_mode)
+                        conv2d: [(TuningItem, static), (TuningItem, static)] 
+                        linear: [(TuningItem, static), (TuningItem, static)]
         """
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items
         # Add all quantized pair into queue
-        quant_ops_queue = deque([])
+        quant_items_pool = COrderedDict()
+        # collect and sorted all ops that support bf16 and fp16
         for quant_mode in  ['bf16', 'fp16']:
             if quant_mode in quant_mode_wise_items:
                 op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
                 op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-                quant_ops_queue.extend(op_item_pairs)
+                quant_items_pool[quant_mode] = op_item_pairs
         op_item_pairs = []
         quant_ops_name_set = set()
+        # collect and sorted all ops that support int8
         for quant_mode, items_lst in quant_mode_wise_items.items():
             if "static" in quant_mode or 'dynamic' in quant_mode:
                 _quant_mode = "static" if "static" in quant_mode else "dynamic"
                 op_item_pairs += [(item, _quant_mode) for item in items_lst if item.name not in quant_ops_name_set]
                 quant_ops_name_set = quant_ops_name_set.union([item.name for item in items_lst])
                 op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-                quant_ops_queue.extend(op_item_pairs)
-        return quant_ops_queue
+                quant_items_pool['int8'] = op_item_pairs
+        return quant_items_pool
         
         
             
