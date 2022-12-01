@@ -1308,18 +1308,33 @@ class PyTorchAdaptor(TemplateAdaptor):
                                                                  qscheme=torch.per_tensor_affine,
                                                                  reduce_range=REDUCE_RANGE),
             weight=torch.quantization.default_weight_fake_quant)
+        self.non_quant_dict = self.get_non_quant_modules(self.model.kwargs) 
+        quantizable_ops = []
+        self._get_quantizable_ops_recursively(self.model._model, '', quantizable_ops)
+        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
+        bf16_ops = []
+        if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self._get_bf16_ops_recursively(self.model._model, '', bf16_ops)
+        bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         self.model.model.training = True
         torch.quantization.prepare_qat(self.model._model, inplace=True)
 
-    def _post_hook_for_qat(self):
-        torch.quantization.convert(self.model._model, inplace=True)
         # This is a flag for reloading
         self.model.q_config = {
             'is_oneshot': True,
             'framework': 'pytorch',
             'reduce_range': REDUCE_RANGE,
-            'approach': 'quant_aware_training'
+            'approach': 'quant_aware_training',
+            'bf16_ops_list': bf16_ops_list,
         }
+
+    def _post_hook_for_qat(self):
+        torch.quantization.convert(self.model._model, inplace=True)
+        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+            self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
 
     def _pre_hook_for_hvd(self, dataloader=None):
         # TODO: lazy init here
@@ -2488,7 +2503,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
-                            to config.yaml'.format(batch_size))
+                            to config.yaml'                                           .format(batch_size))
             del init_model
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
@@ -2846,7 +2861,9 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
         self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
-        self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
+        if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
         for op in quantizable_ops:
@@ -2856,7 +2873,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 quantized_ops[op[0]] = torch.quantization.default_dynamic_qconfig
             else:
                 quantized_ops[op[0]] = q_cfgs
-        # build for fetching scale and zeropoint 
+        # build for fetching scale and zeropoint
         op_config_dict = {}
         for op in quantizable_ops:
             op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
