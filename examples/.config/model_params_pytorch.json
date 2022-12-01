@@ -9,6 +9,15 @@
       "batch_size": 100,
       "new_benchmark": false
     },
+      "efficientnet_b0_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
     "resnet18_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
