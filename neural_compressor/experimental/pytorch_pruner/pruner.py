@@ -257,6 +257,12 @@ class BasicPruner(BasePruner):
         self.scheduler = get_scheduler(self.config)
         self.criteria = get_criteria(self.config, self.modules)
         self.reg = get_reg(self.config, self.modules, self.pattern)
+        # if switch off progressive but use per-channel pruning, give a warn
+        if "channel" in self.pattern.pattern:
+            logger.info("UserWarning: use per-channel pruning pattern without progressive pruning!")
+            logger.info("Instead, enabling progressive pruning would be a better choice.")
+        else:
+            pass
 
     def set_global_step(self, global_step):
         """Set global step number."""
@@ -271,7 +277,6 @@ class BasicPruner(BasePruner):
 
     def update_masks(self, local_step):
         """Update the masks at a given local step."""
-
         if self.global_step == self.start_step:
             if self.config['lock_init_sparsity']:
                 self.masks = self.pattern.get_pattern_lock_masks(self.modules)
@@ -317,7 +322,8 @@ class BasicPruner(BasePruner):
 class PatternLockPruner(BasePruner):
     """Pruning Pruner.
 
-    A Pruner class derived from BasePruner. In this pruner, original model's sparsity pattern will be fixed while training.
+    A Pruner class derived from BasePruner.
+    In this pruner, original model's sparsity pattern will be fixed while training.
     This pruner is useful when you want to train a sparse model without change its original structure.
 
     Args:
@@ -354,7 +360,8 @@ class ProgressivePruner(BasicPruner):
     """Pruning Pruner.
 
     A Pruner class derived from BasePruner. In this pruner, mask interpolation will be applied.
-    Mask interpolation is a fine-grained improvement for NxM structured pruning, by adding interval masks between masks of two pruning steps
+    Mask interpolation is a fine-grained improvement for NxM structured pruning, 
+    By adding interval masks between masks of two pruning steps
 
     Args:
         modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
@@ -366,9 +373,6 @@ class ProgressivePruner(BasicPruner):
 
     def __init__(self, config, modules):
         """Initialize."""
-        # self.modules = modules
-        # self.config = config
-        # self.masks = {}
         super(ProgressivePruner, self).__init__(config, modules)
 
     def _init(self):
@@ -379,26 +383,30 @@ class ProgressivePruner(BasicPruner):
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # progressive pruning set up, including check up paramters.
         self.use_progressive = self.config["progressive"]
-        if self.use_progressive:
-            self._init_for_progressive()
-        else:
-            # if switch off progressive but use per-channel pruning, give a warn
-            if "channel" in self.pattern.pattern:
-                logger.info("UserWarning: use per-channel pruning pattern without progressive pruning!")
-                logger.info("Instead, enabling progressive pruning would be a better choice.")
-            else:
-                pass
+        # progressive parameters
+        # dict passed to Pattern's functions
+        self.progressive_configs = {
+            "progressive_steps": 4,
+            "progressive_type": "scores",
+            "use_global": True
+        }
+        self.progressive_steps = self.progressive_configs["progressive_steps"]
+        self.progressive_type = self.progressive_configs["progressive_type"]
+        self.use_global = self.progressive_configs["use_global"]
+        self.progressive_logger = False
+        self._init_for_progressive()
 
     def _init_for_progressive(self):
         """Auxiliary function for initializing progressive pruning."""
         # detailed progressive parameters will stored at patterns.py
         # step 1: check if pattern is NxM
         if "x" not in self.pattern.pattern:
-            raise NotImplementedError(f"Currently progressive only support NxM and per-channel pruning patterns.")
+            raise NotImplementedError(f"Currently progressive only " \
+                                    f"support NxM and per-channel pruning patterns.")
 
         # step 2: check if current set up will "degrade" into non-progressive
         degrading_flag = False
-        if (self.end_step - self.start_step) <= self.pattern.progressive_steps or self.pattern.progressive_steps <= 1:
+        if (self.end_step - self.start_step) <= self.progressive_steps or self.progressive_steps <= 1:
             logger.info("Current progressive setting will degrading to non-progressive pruning.")
             self.use_progressive = False
             return
@@ -406,15 +414,39 @@ class ProgressivePruner(BasicPruner):
         # step 3: log hyper-parameters. and check validity.
         if self.use_progressive:
             logger.info(f"Progressive pruning is enabled!")
-            logger.info(f"Progressive pruning steps: {self.pattern.progressive_steps}")
-            logger.info(f"Progressive type: {self.pattern.progressive_type}")
-            logger.info(f"Progressive balance: {self.pattern.use_global}")
-            self.pattern.check_progressive_validity()
+            logger.info(f"Progressive pruning steps: {self.progressive_steps}")
+            logger.info(f"Progressive type: {self.progressive_type}")
+            logger.info(f"Progressive balance: {self.use_global}")
+            self.check_progressive_validity()
             self.pre_masks = copy.deepcopy(self.masks)
             self.progressive_masks = copy.deepcopy(self.masks)
-            self.update_frequency_on_step_progressive = self.update_frequency_on_step // self.pattern.progressive_steps
+            self.update_frequency_on_step_progressive = self.update_frequency_on_step // self.progressive_steps
             # this is a structural pruning step, it fits self.update_frequency_on_step
             self.structured_update_step = 0
+
+    def check_progressive_validity(self):
+        """Check if the settings of progressive pruning are valid."""
+        # check some problematic settings
+        if self.progressive_type == "linear":
+            if self.use_global:
+                # when global progressive is applied, linear type is contradict.
+                raise NotImplementedError("Global progressive pruning do not support linear pattern")
+            # When linear, progressive_step should not meet a indivisible 
+            for key in self.pattern.block_size.keys():
+                block_size = self.pattern.block_size[key]
+                progressive_direction = max(block_size)
+                if progressive_direction % self.progressive_steps != 0:
+                    raise ValueError(
+                        f"In layer {key}, its pruning pattern is {block_size}, " \
+                        f"while progressive steps {self.progressive_steps} is indivisible.")
+        else:
+            for key in self.pattern.block_size.keys():
+                block_size = self.pattern.block_size[key]
+                total_block_size = block_size[0] * block_size[1]
+                if total_block_size < self.progressive_steps:
+                    raise ValueError(
+                        f"In layer {key}, its pruning pattern is {block_size}, " \
+                        f"while progressive steps {self.progressive_steps} is overflowing.")
 
     def check_is_pruned_progressive_step(self, step):
         """Check if a progressive pruning process should be performed at the current step.
@@ -449,25 +481,23 @@ class ProgressivePruner(BasicPruner):
             return
 
         # case 2: step which does progressive update, but it is not a pruning step in case 3
-        if self.check_is_pruned_progressive_step(self.global_step) and self.check_is_pruned_step(
-                self.global_step) == False:
+        if self.check_is_pruned_progressive_step(self.global_step) \
+                and self.check_is_pruned_step(self.global_step) == False:
             # do not do global pruning, only do the progressive mask update.
             step_offset = self.global_step - self.structured_update_step
             progressive_idx = step_offset // self.update_frequency_on_step_progressive
-            if progressive_idx < (self.pattern.progressive_steps - 1):
-                self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks,
-                                                                               self.criteria.scores,
-                                                                               progressive_idx + 1)
+            if progressive_idx < (self.progressive_steps - 1):
+                self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
+                                                                               self.criteria.scores, \
+                                                                               progressive_idx+1, \
+                                                                               self.progressive_configs)
             else:
                 # in the end, directly use new masks.
-                # logger.info("Use complete mask at the end of pruning process.")
-                logger.info(f"{self.global_step} Use complete mask at the end of pruning process.")
                 for n in self.masks.keys():
                     self.progressive_masks[n] = self.masks[n].clone()
-            current_sparsity = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
-            # logger.info("Current progressive sparsity is {}".format(current_sparsity))
-            logger.info("{} Current progressive sparsity is {}".format(self.global_step, current_sparsity))
             self.mask_weights_general(self.progressive_masks)
+            if self.progressive_logger: 
+                self.print_progressive_sparsity()
             return
 
         # case 3: a pruning step, generate new masks, progressive masks also update.
@@ -484,13 +514,14 @@ class ProgressivePruner(BasicPruner):
         for n in self.masks.keys():
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
-        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks)
-        self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, self.criteria.scores,
-                                                                       1)
+        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks,)
+        self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
+                                                                       self.criteria.scores, 1, \
+                                                                       self.progressive_configs)
         self.mask_weights_general(self.progressive_masks)
-        current_sparsity = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
-        # logger.info("***Current progressive sparsity is {}".format(current_sparsity))
-        logger.info("***{} Current progressive sparsity is {}".format(self.global_step, current_sparsity))
+        if self.progressive_logger: 
+            self.print_progressive_sparsity()
+        return
 
     def on_step_begin(self, local_step):
         """Update the masks at a given local_step."""
@@ -520,3 +551,9 @@ class ProgressivePruner(BasicPruner):
             self.mask_weights_general(self.progressive_masks)
         self.criteria.on_after_optimizer_step()
         self.global_step += 1
+
+    def print_progressive_sparsity(self):
+        """Output the progressive sparsity."""
+        cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
+        logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
+

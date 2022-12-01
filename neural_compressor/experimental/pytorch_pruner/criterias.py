@@ -39,8 +39,7 @@ def get_criteria(config, modules):
 
 
 class Criteria:
-    """
-    Pruning criteria.
+    """Pruning criteria.
 
     Args:
         config: A config dict object that includes information about pruner and pruning criteria.

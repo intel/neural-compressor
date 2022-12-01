@@ -82,8 +82,8 @@ def check_config(prune_config):
         prune_config['reg_coeff'] = float(prune_config['reg_coeff'])
         assert prune_config['reg_coeff'] >= 0, "only support positive reg_type"
     assert prune_config["min_sparsity_ratio_per_layer"] >= 0 and prune_config["min_sparsity_ratio_per_layer"] <= \
-           prune_config[
-               'max_sparsity_ratio_per_layer'], "min_sparsity_ratio_per_layer should in[0, max_sparsity_ratio_per_layer]"
+           prune_config['max_sparsity_ratio_per_layer'], \
+                        "min_sparsity_ratio_per_layer should in[0, max_sparsity_ratio_per_layer]"
 
 
 def reset_non_value_to_default(obj, key, default):
