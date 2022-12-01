@@ -150,6 +150,9 @@ class TestQuantization(unittest.TestCase):
         self.test2_index = -1
         self.test3_index = -1
         self.test4_index = -1
+        self.test_opt_level_0_index = -1
+        self.test_opt_level_1_index = -1
+        self.test_opt_level_0_pt_index = -1
 
     @classmethod
     def tearDownClass(self):
@@ -168,10 +171,10 @@ class TestQuantization(unittest.TestCase):
         acc_lst =  [1.0, 2.0, 2.1]
         perf_lst = [2.0, 1.5, 1.0]
         def _eval(fake_model):
-            self.test1_index += 1
-            perf = perf_lst[self.test1_index]
+            self.test_opt_level_0_index += 1
+            perf = perf_lst[self.test_opt_level_0_index]
             time.sleep(perf)
-            return acc_lst[self.test1_index]
+            return acc_lst[self.test_opt_level_0_index]
             
         quantizer = Quantization('fake_yaml_with_opt_level_0.yaml')
         quantizer.eval_func = _eval
@@ -192,9 +195,9 @@ class TestQuantization(unittest.TestCase):
         perf_lst = [2.0, 1.5, 1.0]
         def _eval(fake_model):
             self.test1_index += 1
-            perf = perf_lst[self.test1_index]
+            perf = perf_lst[self.test_opt_level_1_index]
             time.sleep(perf)
-            return acc_lst[self.test1_index]
+            return acc_lst[self.test_opt_level_1_index]
             
         quantizer = Quantization('fake_yaml_with_opt_level_1.yaml')
         quantizer.eval_func = _eval
@@ -207,13 +210,13 @@ class TestQuantization(unittest.TestCase):
         
     def test_opt_level_0_pt(self):
         import time
-        acc_lst =  [1.0, 2.0, 2.1, 3.0, 4.0]
+        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
         perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
         def _eval(fake_model):
-            self.test1_index += 1
-            perf = perf_lst[self.test1_index]
+            self.test_opt_level_0_pt_index += 1
+            perf = perf_lst[self.test_opt_level_0_pt_index]
             time.sleep(perf)
-            return acc_lst[self.test1_index]
+            return acc_lst[self.test_opt_level_0_pt_index]
         from neural_compressor.experimental import Quantization, common
         from neural_compressor.strategy.basic import BasicTuneStrategy
         import torchvision

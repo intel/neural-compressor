@@ -93,8 +93,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         for dtype, op_items in quant_items_pool.items():
             logger.info(f"*** Start to convert op into {dtype}.")
             for op_type, items_lst in op_items.items():
-                logger.info(f"*** Try to convert {op_type} into {dtype}.")
-                logger.info(f"*** Convert all {op_type} ops into {dtype}.")
+                logger.info(f"*** Try to convert all {op_type} ops into {dtype}.")
                 tmp_tune_cfg = deepcopy(tune_cfg)
                 for item, quant_mode in items_lst:
                     op_info = item.name
@@ -102,11 +101,23 @@ class ConservativeTuneStrategy(TuneStrategy):
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
                 if self.acc_meet_flag:
-                    logger.info(f"*** Convert {op_type} ops to {dtype} and accuracy still meet the requiments")
-                    tune_cfg[op_info] = op_config
+                    logger.info(f"*** Convert {op_type} ops to {dtype} and accuracy still meet the requirements")
+                    tune_cfg = deepcopy(tmp_tune_cfg)
                 else:
                     # TODO convert one by one.
-                    logger.info(f"*** Skip quantize {op_type} ops.")
+                    logger.info(f"*** Try to convert all {op_type} ops into {dtype} one by one.")
+                    for item, quant_mode in items_lst:
+                        op_info = item.name
+                        op_config = tuning_space.set_deafult_config(op_info, quant_mode)
+                        tmp_tune_cfg[op_info] = op_config
+                        yield tmp_tune_cfg
+                        if self.acc_meet_flag:
+                            tune_cfg[op_info] = op_config
+                            logger.info(f"*** Convert one {op_type} op({op_info}) \
+                                into {dtype} and accuracy still meet the requirements")
+                        else:
+                            tmp_tune_cfg[op_info] = tune_cfg[op_info]
+                            logger.info(f"*** Skip convert {op_info}.")
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
 
     def traverse(self):
@@ -376,7 +387,7 @@ class ConservativeTuneStrategy(TuneStrategy):
             
         Returns:
             The op item pool to convert into lower precision.
-            OrderDict:
+            quant_items_pool(OrderDict):
                 bf16:
                     OrderDict:
                         conv2d: [(TuningItem, bf16), (TuningItem, bf16)]
