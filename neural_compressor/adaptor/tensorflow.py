@@ -1588,7 +1588,8 @@ class TensorFlowAdaptor(Adaptor):
             feed_dict = generate_feed_dict(input_tensors, inputs)
             
             pred = model.sess.run(output_tensors, feed_dict)
-            predictions.append(*pred)
+            for item in pred:
+                predictions.append(item)
 
         return np.array(predictions)
 
