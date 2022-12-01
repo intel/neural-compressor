@@ -28,10 +28,22 @@ from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSamp
 from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
 from torch.quantization.quantize_fx import fuse_fx
-
+import torch.nn.intrinsic.quantized as nniq
+from torch.fx import symbolic_trace, graph_module
+import torch.nn as nn
+import logging
+logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
-
-
+# Define Collector based on hook, which is used to record the intermediate result
+class Node_collector:
+    def __init__(self, m):
+        self.handle = m.register_forward_hook(self.hook_fn_act)
+    def hook_fn_act(self, m, inp, outp):
+        self.out_features = outp.clone()
+        self.in_features = inp
+        self.m = m
+    def remove(self):
+        self.handle.remove()
 class HessianTrace:
     """
     please refer to
@@ -40,11 +52,10 @@ class HessianTrace:
     https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
     """
 
-    def __init__(self, model, dataloader, criterion=None):
+    def __init__(self, model, dataloader,q_model,criterion=None):
         self.unfused_model = model.model
-
+        self.q_model=q_model
         self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
-
         self.dataloader = dataloader
         self.max_iter = 500
         self.tolerance = 1e-5
@@ -78,7 +89,22 @@ class HessianTrace:
         #     return name
         # else:
         return name
-
+    def mse_metric_gap(self,fp32_tensor, dequantize_tensor):
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor
+        Args:
+            fp32_tensor (tensor): The FP32 tensor.
+            dequantize_tensor (tensor): The INT8 dequantize tensor.
+        """
+        fp32_max = np.max(fp32_tensor)
+        fp32_min = np.min(fp32_tensor)
+        dequantize_max = np.max(dequantize_tensor)
+        dequantize_min = np.min(dequantize_tensor)
+        fp32_tensor = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
+        dequantize_tensor = (dequantize_tensor - dequantize_min) / \
+            (dequantize_max - dequantize_min)
+        diff_tensor = fp32_tensor - dequantize_tensor
+        euclidean_dist = np.sum(diff_tensor ** 2)
+        return euclidean_dist / fp32_tensor.size
     def get_fused_mapping(self):
         model = self.model
         weights_info = dict(model.named_parameters())
@@ -255,7 +281,6 @@ class HessianTrace:
             op_name = self.weight_to_op[weight_name]
             op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
         return op_name_to_trace
-
     def get_act_traces(self, num_samples):
         unfused_training = self.unfused_model.training
         self.unfused_model.eval()
@@ -318,19 +343,100 @@ class HessianTrace:
 
         self.layer_acts = []
         self.layer_acts_grads = []
-        return act_traces
+        return res_dict    
+    def insert_hook(self, model, target_module_list):
+        intern_outputs = []
+        for layer,module in model.named_modules():     
+            for target_module in target_module_list:
+                # print("layer:",layer)
+                # print("target_model:",target_module)   
+                if  layer == target_module:
+                    logging.debug("Collect: %s" % (module))
+                    # print("Collect: %s" % (module))
+                    intern_outputs.append(Node_collector(module))
+                
+        logging.info("Total %d hook inserted" % (len(intern_outputs)))
+        # print("Total %d hook inserted" % (len(intern_outputs)))
+        return model, intern_outputs
+    def insert_hook_quantize(self,model, target_module_list):
+        intern_outputs = []
+        for layer,module in model.named_modules():     
+            for target_module in target_module_list:
+                # print("layer:",layer)
+                length = len("_model.")
+                new_key = layer[length:]
+                # print("target_model:",target_module)   
+                if  new_key == target_module:
+                    logging.debug("Collect: %s" % (module))
+                    # print("Collect: %s" % (module))
+                    intern_outputs.append(Node_collector(module))
+        logging.info("Total %d hook inserted" % (len(intern_outputs)))
+        # print("Total %d hook inserted" % (len(intern_outputs)))
+        return model, intern_outputs
+    def get_act_gap(self,fp32_model,q_model):
+        """
+        Estimates each activation gap between quantized model and float model 
+        """
+        self.handle_acts=[]
+        fp32_model.eval()
+        # temp_model = fuse_fx(fp32_model.model)
+        temp_model=fp32_model
+        # target_module_list = [nn.ReLU] # Insert hook for FP32 model
+        target_module_list = self.op_list
+        temp_model, intern_outputs =self.insert_hook(temp_model, target_module_list)
+        # intern_outputs={}
+        for input, target in self.dataloader:
+            temp_model(input)
+            break
 
+        fp32_act_out={}
+        for i, intern_output in enumerate(intern_outputs):
+            stat_features = intern_output.out_features.view(-1)
+            # print ("No.", i, " ", intern_output.out_features.shape)
+            # print ("Numpy No.", i, " ", intern_output.out_features.cpu().data.numpy().shape)
+            # print ("No.", i, " ", stat_features.cpu().data.numpy().shape)
+            # print ("Numpy No.", i, " ", stat_features.cpu().data.numpy())
+            fp32_act_out[target_module_list[i]]=stat_features.cpu().data.numpy()
+            # break
+        for i in intern_outputs:
+            # print(i)
+            i.remove()
+        target_module_list = self.op_list
+        q_model, intern_outputs=self.insert_hook_quantize(q_model, target_module_list)
+        for input, target in self.dataloader: #only one sample
+            q_model(input)
+            break
+        qnt_act_out={}
+        intern_outputs={}
+        for i, intern_output in enumerate(intern_outputs):
+            stat_features = intern_output.out_features.view(-1)
+            qnt_act_out[target_module_list[i]]=stat_features.dequantize().cpu().data.numpy()
+            # break
+        for i in intern_outputs:
+            # print(i)
+            i.remove()
+        act_gap={}
+        mse_gap={}
+        for fp_i,int_i in zip(fp32_act_out,qnt_act_out):
+            activation_qnt_error=fp32_act_out[fp_i]-qnt_act_out[int_i]
+            mse_gap[fp_i]=self.mse_metric_gap(fp32_act_out[fp_i],qnt_act_out[int_i])
+            act_gap[fp_i]=np.sum(activation_qnt_error)/activation_qnt_error.size
+        return act_gap,mse_gap
     def get_avg_traces(self, enable_act=True, num_samples=32):
         """
         Estimates average hessian trace for each parameter
         """
-
         assert num_samples > 0
         traces = {}
         weight_traces = self.get_weight_traces(num_samples)
         traces['weight'] = weight_traces
+        act_trace={}
         if enable_act:
+            act_gap,mse_gap=self.get_act_gap(self.model,self.q_model)
             act_traces = self.get_act_traces(num_samples)
+            for i,j in zip(act_traces,mse_gap):
+                #currently use mse to analysis 
+                act_trace[i]=act_traces[i]+mse_gap[j]
             traces['activation'] = act_traces
         return traces
 
@@ -536,22 +642,21 @@ class HawqTuneStrategy(TuneStrategy):
         quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
         quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
 
-        target_dtype = "fp32"  ##TODO support bf16
+        target_dtype = "int8"  ##TODO support bf16
         target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
         fp_op_list = [item.name for item in quant_ops if item in target_type_lst]
         # for n, p in self._fp32_model.named_modules():
         #     print(n)
         # for n, p in self._fp32_model.named_parameters():
         #     print(n)
-
         orig_eval = True
         if self._fp32_model.training:
             orig_eval = False
         self._fp32_model.eval()
-        ht = HessianTrace(self._fp32_model, self.calib_dataloader)
-
-        q_model_state_dict = {
-        }
+        import copy
+        temp_q_model=copy.deepcopy(self.q_model)
+        ht = HessianTrace(self._fp32_model, self.calib_dataloader,temp_q_model)
+        q_model_state_dict = {}
         for key in self.q_model.state_dict().keys():
             length = len("_model.")
             new_key = key[length:]
@@ -564,24 +669,39 @@ class HawqTuneStrategy(TuneStrategy):
             op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
             diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)  # Formula: L2=||Q(w)-w||p^2
             pertur_lst[key] = diff_l2
-        traces = ht.get_avg_traces(enable_act=False)
+        traces = ht.get_avg_traces(enable_act=True)
         op_to_traces = traces['weight']
-        for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
-            op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2
+        act_to_traces=traces['activation']
+        # print("act_to_traces:",act_to_traces)
+        #TODO() optimize relationship of weights quantized loss and activation quantized loss, to find best conbine
+        #TODO() do double check why layer1's output is not 0 for activation quantized
+        for trace_i, pertur_i,act_i in zip(op_to_traces.keys(),pertur_lst.keys(),act_to_traces.keys()):
+            op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i]+act_to_traces[act_i] #Formula:Omig=Trace*L2+act_trace
+        # for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
+        #     op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2
         if orig_eval == False:
             self._fp32_model.train()
         ordered_ops = sorted(op_to_traces.keys(),
                              key=lambda key: op_to_traces[key],
                              reverse=self.higher_is_better)
         # WA for add op type
-        print("ordered_ops:",ordered_ops)
+        # print("ordered_ops:",ordered_ops)
         op_info_map = {}
         for op_info in list(initial_op_tuning_cfg.keys()):
             op_info_map[op_info[0]] = op_info  # op_name: (op_name, op_type)
         tmp_ordered_ops = [op_info_map[op_name] for op_name in ordered_ops]
         op_dtypes = OrderedDict(zip(tmp_ordered_ops, [target_dtype] * len(ordered_ops)))
+        indx=0
+        #defautly fallback 5 ops
+        for i in op_dtypes.keys():
+            op_dtypes[i]="fp32"
+            indx=indx+1
+            if indx>4:
+                break
+        print(op_dtypes)
+        logger.info("hawq op_config:"+str(op_dtypes))
         logger.info(f"Start to accumulate fallback to {target_dtype}.")
-
+        initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
         fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
                                                  initial_op_tuning_cfg=op_tuning_cfg,
                                                  op_dtypes=op_dtypes, accumulate=True)
