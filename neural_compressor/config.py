@@ -136,14 +136,41 @@ options = Options()
 
 
 class BenchmarkConfig:
-    def __init__(self, warmup=5, iteration=-1, cores_per_instance=None, num_of_instance=None,
-        inter_num_of_threads=None, intra_num_of_threads=None):
+    def __init__(self,
+                 inputs=[],
+                 outputs=[],
+                 warmup=5,
+                 iteration=-1,
+                 cores_per_instance=None,
+                 num_of_instance=None,
+                 inter_num_of_threads=None,
+                 intra_num_of_threads=None):
+        self._inputs = inputs
+        self._outputs = outputs
         self._warmup = warmup
         self._iteration = iteration
         self._cores_per_instance = cores_per_instance
         self._num_of_instance = num_of_instance
         self._inter_num_of_threads = inter_num_of_threads
         self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def outputs(self):
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, outputs):
+        if check_value('outputs', outputs, str):
+            self._outputs = outputs
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, inputs):
+        if check_value('inputs', inputs, str):
+            self._inputs = inputs
 
     @property
     def warmup(self):
@@ -285,7 +312,7 @@ class _BaseQuantizationConfig:
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
-                 extra_precisions=[],
+                 extra_precisions=["bf16"],
                  accuracy_criterion=accuracy_criterion):
         self._inputs = inputs
         self._outputs = outputs
@@ -503,16 +530,16 @@ tuning_criterion = TuningCriterion()
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def __init__(self,
-                 device='cpu',
+                 device="cpu",
                  backend="NA",
                  inputs=[],
                  outputs=[],
-                 approach='auto',
+                 approach="auto",
                  calibration_sampling_size=[100],
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions = [],
+                 extra_precisions = ["bf16"],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -551,7 +578,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions=[]):
+                 extra_precisions=["bf16"]):
         super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
                          op_type_list=op_type_list, op_name_list=op_name_list,
                          reduce_range=reduce_range, extra_precisions=extra_precisions)
@@ -789,16 +816,16 @@ class ExportConfig:
 
 
 class Torch2ONNXConfig(ExportConfig):
-     def __init__(
-        self,
-        dtype="int8",
-        opset_version=14,
-        quant_format="QDQ",
-        example_inputs=None,
-        input_names=None,
-        output_names=None,
-        dynamic_axes=None,
-        **kwargs,
+    def __init__(
+       self,
+       dtype="int8",
+       opset_version=14,
+       quant_format="QDQ",
+       example_inputs=None,
+       input_names=None,
+       output_names=None,
+       dynamic_axes=None,
+       **kwargs,
     ):
         super().__init__(
             dtype=dtype,
@@ -813,16 +840,16 @@ class Torch2ONNXConfig(ExportConfig):
 
 
 class TF2ONNXConfig(ExportConfig):
-     def __init__(
-        self,
-        dtype="int8",
-        opset_version=14,
-        quant_format="QDQ",
-        example_inputs=None,
-        input_names=None,
-        output_names=None,
-        dynamic_axes=None,
-        **kwargs,
+    def __init__(
+       self,
+       dtype="int8",
+       opset_version=14,
+       quant_format="QDQ",
+       example_inputs=None,
+       input_names=None,
+       output_names=None,
+       dynamic_axes=None,
+       **kwargs,
     ):
         super().__init__(
             dtype=dtype,
@@ -837,7 +864,7 @@ class TF2ONNXConfig(ExportConfig):
 
 
 def set_random_seed(seed: int):
-    options.random_seed
+    options.random_seed = seed
 
 
 def set_workspace(workspace: str):
