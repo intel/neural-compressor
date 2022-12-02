@@ -37,13 +37,13 @@ from ..model import BaseModel
 class ModelConversion():
     """ModelConversion class is used to convert a fp32 keras model format to a int8 qat keras model.
 
-       Currently Neural Compressor only supports converting a Keras model to Quantization-aware training 
-       model.
+    Currently Neural Compressor only supports converting a Keras model to Quantization-aware training 
+    model.
 
-       The typical usage is:
-         from neural_compressor.experimental import ModelConversion
-         conversion = ModelConversion()
-         q_model = conversion.fit(model)
+    The typical usage is:
+        from neural_compressor.experimental import ModelConversion
+        conversion = ModelConversion()
+        q_model = conversion.fit(model)
     """
 
     def __init__(self, conf_fname_or_obj=None):
