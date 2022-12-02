@@ -64,11 +64,6 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
             if len(self.graph_info[quantized_node_name].outputs) > 3:
                 continue
 
-            # QuantizedConv only supports {"Dequantize"} and {"BiasAdd", "Dequantize"}
-            if str(quantized_node.attr['fused_ops'].list.s) != str([b"BiasAdd", b"Requantize"]) and \
-               str(quantized_node.attr['fused_ops'].list.s) != str([b"Requantize"]):
-                continue
-
             new_node = node_def_pb2.NodeDef()
             new_node.op = quantized_node.op
             fused_ops = str(quantized_node.attr['fused_ops'].list.s).replace("Requantize", "Dequantize")
