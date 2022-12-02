@@ -27,7 +27,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend='NA',
+                 backend='default',
                  device='cpu',
                  approach='post_training_static_quant',
                  calibration_sampling_size=[100],

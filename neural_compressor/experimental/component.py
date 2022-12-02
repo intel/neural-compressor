@@ -477,8 +477,6 @@ class Component(object):
 
         if self.cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
-            if self.framework == 'onnxruntime':
-                self.framework = 'onnxrt_qoperator'
             self.cfg.model.framework = self.framework
             set_backend(self.framework)
 
