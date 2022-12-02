@@ -556,3 +556,4 @@ class ProgressivePruner(BasicPruner):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
+

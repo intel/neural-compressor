@@ -255,6 +255,10 @@ class BasePattern:
         """Check if a layer is valid for this block_size."""
         pass
 
+    def get_reduced_masks_from_data(self, data, key):
+        """Obtain the unpruned weights and reshape according to the block_size."""
+        raise NotImplementedError
+    
     def update_residual_cnt(self, masks, target_sparsity_ratio):
         """Update the number of parameters yet to be pruned.
         

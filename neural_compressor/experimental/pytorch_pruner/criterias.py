@@ -182,3 +182,4 @@ class SnipMomentumCriteria(Criteria):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(p * p.grad)
+

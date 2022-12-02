@@ -144,8 +144,9 @@ class IterativeScheduler(Scheduler):
             current_prune_step: A integer. The current pruning step.
             total_prune_steps: A integer. The total steps included in the pruning progress.
             masks: A dict{"module_name": Tensor}. The masks for modules' weights.
+            init_sparsity_ratio:
         
-        Returns：
+        Returns:
             A float representing the target sparsity ratio the model will reach after the next pruning step.
         """
         aggressive_ratio = target_ratio
