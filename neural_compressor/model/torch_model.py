@@ -576,7 +576,7 @@ class PyTorchModel(PyTorchBaseModel):
                     model.graph.initializer.append(new_tensor)
             onnx.save(model, fp32_path)
 
-        from neural_compressor.adaptor.onnxrt import ONNXRTAdaptor
+        from neural_compressor.adaptor.onnxrt import ONNXRUNTIMEAdaptor
         # pylint: disable=E1120
         inc_model = ONNXRTAdaptor._replace_gemm_with_matmul(model)
         model = inc_model.model
