@@ -34,11 +34,11 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
     ], ['Dequantize']]
 
     fuse_sum_op_types_str = (
-        str([b'BiasAdd', b'Sum']),
-        str([b'BiasAdd', b'Sum', b'Relu']),
-        str([b'BiasAdd', b'Sum', b'LeakyRelu']),
-        str([b'BiasAdd', b'Relu', b'Sum']),
-        str([b'BiasAdd', b'LeakyRelu', b'Sum'])
+        str([b'BiasAdd', b'Sum', b'Requantize']),
+        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']),
+        str([b'BiasAdd', b'Sum', b'LeakyRelu', b'Requantize']),
+        str([b'BiasAdd', b'Relu', b'Sum', b'Requantize']),
+        str([b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize'])
         )
 
     def __init__(self, model, device='cpu'):
