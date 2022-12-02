@@ -37,9 +37,10 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    if [ "mobilenet_v2" = "$topology" ];then
-        sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf.yaml
-    fi
+    # TODO only for test, uncomment it before merge
+    # if [ "mobilenet_v2" = "$topology" ];then
+    #     sed -i "/relative:/s|relative:.*|relative: 0.02|g" conf.yaml
+    # fi
     extra_cmd=""
     if [ -n "$output_model" ];then
         extra_cmd = $extra_cmd"--tuned_checkpoint ${output_model}"
