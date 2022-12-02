@@ -139,6 +139,7 @@ class BenchmarkConfig:
     def __init__(self,
                  inputs=[],
                  outputs=[],
+                 backend='default',
                  warmup=5,
                  iteration=-1,
                  cores_per_instance=None,
@@ -147,12 +148,23 @@ class BenchmarkConfig:
                  intra_num_of_threads=None):
         self._inputs = inputs
         self._outputs = outputs
+        self._backend = backend
         self._warmup = warmup
         self._iteration = iteration
         self._cores_per_instance = cores_per_instance
         self._num_of_instance = num_of_instance
         self._inter_num_of_threads = inter_num_of_threads
         self._intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def backend(self):
+        return self._backend
+
+    @backend.setter
+    def backend(self, backend):
+        if check_value('backend', backend, str, [
+                'default', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            self._backend = backend
 
     @property
     def outputs(self):
@@ -731,7 +743,7 @@ class DistillationConfig:
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     def __init__(self,
                  device="cpu",
-                 backend="NA",
+                 backend="default",
                  inputs=[],
                  outputs=[],
                  tuning_criterion=tuning_criterion,
