@@ -163,8 +163,7 @@ class GraphConverter:
         # ITEX optimization has broken INC calibration process.
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
-        if self.itex_mode:
-            os.environ["ITEX_REMAPPER"] = "0"
+        os.environ["ITEX_REMAPPER"] = "0"
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
@@ -225,26 +224,25 @@ class GraphConverter:
                         return True
 
                     disorder_tensors = []
-                    disorder_inputs = [] 
+                    disorder_inputs = []
                     for idx, sort_tensor in enumerate(input_tensor):
                         sort_input = inputs[idx] 
                         if check_shape(sort_tensor, sort_input):
-                            feed_dict.update({sort_tensor: sort_input}) 
+                            feed_dict.update({sort_tensor: sort_input})
                         else:
                             disorder_tensors.append(sort_tensor)
                             disorder_inputs.append(sort_input)
                     for i, dis_tensor in enumerate(disorder_tensors):
-                       for j, dis_input in enumerate(disorder_inputs):  
-                           if check_shape(dis_tensor, dis_input):
-                               feed_dict.update({dis_tensor: dis_input})    
-                               break
+                        for j, dis_input in enumerate(disorder_inputs):
+                            if check_shape(dis_tensor, dis_input):
+                                feed_dict.update({dis_tensor: dis_input})
+                                break
             _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
                 else iterator_sess_run(sess, iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
             if idx + 1 == self.calib_iteration:
                 break
-        if self.itex_mode:
-            os.environ["ITEX_REMAPPER"] = "1"
+        os.environ["ITEX_REMAPPER"] = "1"
 
     def _check_tf_version(self):
         is_supported_version = False
