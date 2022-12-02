@@ -111,7 +111,7 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
 
                 yield outputs['output_all'], outputs['labels']
 
-    def benchmark(model):
+    def b_func(model):
         total_samples = 0
         total_time = 0
         index = 0
@@ -196,16 +196,16 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
         # print(f"Accuracy: {total_accuracy}")
 
         if args.tune:
-            from neural_compressor.experimental import Quantization
             # neural_compressor tune
             model.load_state_dict(torch.load(args.input_model))
             dataloader = Bert_DataLoader(loader=data_iter, batch_size=args.batch_size)
-
-            quantizer = Quantization(args.tuned_yaml)
-            quantizer.calib_dataloader = dataloader
-            quantizer.model = model
-            quantizer.eval_func = eval_func
-            q_model = quantizer.fit()
+            from neural_compressor.quantization import fit
+            from neural_compressor.config import PostTrainingQuantConfig
+            conf = PostTrainingQuantConfig(approach="static", backend="pytorch")
+            q_model = fit(model,
+                          conf=conf,
+                          calib_dataloader=dataloader,
+                          eval_func=eval_func)
             q_model.save(args.tuned_checkpoint)
 
         elif args.int8:
@@ -216,7 +216,10 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             if args.accuracy_only:
                 eval_func(int8_model)
             elif args.benchmark:
-                benchmark(int8_model)
+                from neural_compressor import benchmark
+                from neural_compressor.config import BenchmarkConfig
+                conf = BenchmarkConfig()
+                benchmark.fit(int8_model, config=conf, b_func=b_func)
 
         else:
             model.load_state_dict(torch.load(args.input_model))
@@ -224,7 +227,10 @@ def main(config='config/blendcnn/mrpc/eval.json', args=None):
             if args.accuracy_only:
                 eval_func(model)
             elif args.benchmark:
-                benchmark(model)
+                from neural_compressor import benchmark
+                from neural_compressor.config import BenchmarkConfig
+                conf = BenchmarkConfig()
+                benchmark.fit(model, config=conf, b_func=b_func)
 
 
 if __name__ == '__main__':
