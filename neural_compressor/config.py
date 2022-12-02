@@ -301,7 +301,8 @@ class _BaseQuantizationConfig:
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend="NA",
+                 backend="default",
+                 output_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
                  op_type_list=None,
@@ -317,6 +318,7 @@ class _BaseQuantizationConfig:
         self._inputs = inputs
         self._outputs = outputs
         self._backend = backend
+        self._output_format = output_format
         self._device = device
         self._op_type_list = op_type_list
         self._op_name_list = op_name_list
@@ -393,6 +395,16 @@ class _BaseQuantizationConfig:
             self._objective = objective
 
     @property
+    def output_format(self):
+        return self._output_format
+
+    @output_format.setter
+    def output_format(self, output_format):
+        if check_value('output_format', output_format, str,
+            ['default', 'QDQ', 'QOperator']):
+            self._output_format = output_format
+
+    @property
     def strategy(self):
         return self._strategy
 
@@ -455,9 +467,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'tensorflow', 'tensorflow_itex', 'pytorch', 'pytorch_ipex', 'pytorch_fx',
-                'onnxrt_qlinearops', 'onnxrt_integerops', 'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet'
-        ]):
+                'default', 'onnxrt_trt_ep', 'pnnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -531,7 +541,8 @@ tuning_criterion = TuningCriterion()
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def __init__(self,
                  device="cpu",
-                 backend="NA",
+                 backend="default",
+                 output_format="default",
                  inputs=[],
                  outputs=[],
                  approach="auto",
@@ -558,6 +569,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          extra_precisions=extra_precisions,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
+        self._output_format = output_format
 
     @property
     def approach(self):
@@ -568,11 +580,19 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         if check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
 
+    @property
+    def output_format(self):
+        return self._output_format
+
+    @output_format.setter
+    def output_format(self, output_format):
+        if check_value("output_format", output_format, str, ["default", "QDQ", "QOperator"]):
+            self._output_format = output_format
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def __init__(self,
                  device="cpu",
-                 backend="NA",
+                 backend="default",
                  inputs=[],
                  outputs=[],
                  op_type_list=None,

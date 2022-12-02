@@ -730,10 +730,6 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
-        Optional('backend', default=['default']): And(
-                    Or(str, list),
-                    Use(input_to_list),
-                    lambda s: all(i in ['onnxrt_trt_ep', 'onnxrt_cuda_ep'] for i in s)),
  
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
@@ -1333,7 +1329,8 @@ class Conf(object):
                 'device': pythonic_config.quantization.device,
                 'model.inputs': pythonic_config.quantization.inputs,
                 'model.outputs': pythonic_config.quantization.outputs,
-                'model.framework': pythonic_config.quantization.backend,
+                'model.backend': pythonic_config.quantization.backend,
+                'model.output_format': pythonic_config.quantization.output_format,
                 'quantization.approach': pythonic_config.quantization.approach,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,

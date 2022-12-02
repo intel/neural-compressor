@@ -27,7 +27,7 @@ from packaging.version import Version
 from importlib.util import find_spec
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
-from neural_compressor.adaptor.ox_utils.util import provider_mapping
+from neural_compressor.adaptor.ox_utils.util import PROVIDERS, ONNXRT_BACKENDS
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
                                             GLOBAL_STATE, MODE
 from neural_compressor.utils.utility import Statistics
@@ -55,40 +55,37 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
     def __init__(self, framework_specific_info):
         super().__init__(framework_specific_info)
-        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
-        self.format = "qlinearops"
-
         self.__config_dict = {}
         self.quantizable_ops = []
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
-        self.format = framework_specific_info["format"]
-        if self.format == "qlinearops":
-            self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-               os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
-        elif self.format == "integerops":
-             self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-               os.path.dirname(__file__), "onnxrt_integer.yaml"))
-        else: # TRT EP
-             self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-               os.path.dirname(__file__), "onnxrt_qdq.yaml"))
- 
-        backend = framework_specific_info["backend"]
-        self.backend = []
-        for idx, item in enumerate(backend):
-            if provider_mapping[item] in ort.get_all_providers() and \
-                provider_mapping[item] not in self.backend:
-                self.backend.append(provider_mapping[item])
-            else:
-                logger.warning("Only {} are available, {} is not supported!".format(
-                    ort.get_all_providers(), provider_mapping[item]))
-        if 'TensorrtExecutionProvider' in self.backend:
+        self.backend = PROVIDERS[framework_specific_info["backend"]]
+
+        if self.backend not in ort.get_all_providers():
+            logger.warning("{} backend is not supported in current environment, "
+                "supported backends: {}".format(framework_specific_info["backend"],
+                [ONNXRT_BACKENDS[i] for i in ort.get_all_providers()]))
+        if self.backend == 'TensorrtExecutionProvider':
             from neural_compressor import options
             options.onnxrt.qdq_setting.AddQDQPairToWeight = True
             options.onnxrt.qdq_setting.DedicatedQDQPair = True
             options.onnxrt.graph_optimization.level = 'DISABLE_ALL'
+        if framework_specific_info["format"] in ["default", "QOperator"] and \
+            self.backend != 'TensorrtExecutionProvider':
+            if not self.dynamic:
+                self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                    os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
+                self.format = "qlinearops"
+            else:
+                self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                    os.path.dirname(__file__), "onnxrt_integer.yaml"))
+                self.format = "integerops"
+        else:
+            self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                os.path.dirname(__file__), "onnxrt_qdq.yaml"))
+            self.format = "qdq"
+
         self.work_space = framework_specific_info["workspace_path"]
         self.graph_optimization = framework_specific_info["graph_optimization"]
         self.recipes = deep_get(framework_specific_info, 'recipes', {})
@@ -496,11 +493,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if not model.large_size:
             ort.InferenceSession(model.model.SerializeToString(),
                                  sess_options,
-                                 providers=self.backend)
+                                 providers=[self.backend])
         elif model.model_path is not None: # pragma: no cover
             ort.InferenceSession(model.model_path,
                                  sess_options,
-                                 providers=self.backend)
+                                 providers=[self.backend])
         else: # pragma: no cover 
             logger.warning('Please use model path instead of onnx model object to quantize')
 
@@ -675,44 +672,38 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     query.get_op_types_by_precision(precision) != ['*'] else \
                     optype_wise.keys()
  
-                for backend in self.backend:
-                    # if TRT EP exists, the capability should follow TRT EP's capability
-                    if 'TensorrtExecutionProvider' in self.backend and \
-                        backend != 'TensorrtExecutionProvider':
-                        continue
+                if self.backend in query.get_quantization_capability():
+                    configs = query.get_quantization_capability()[self.backend] if \
+                        precision in query.get_quantization_capability() else \
+                        {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}
+                else:
+                    continue
 
-                    if backend in query.get_quantization_capability():
-                        configs = query.get_quantization_capability()[backend] if \
-                            precision in query.get_quantization_capability() else \
-                            {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}
-                    else:
+                for op in optypes:
+                    if op not in quantizable_optype:
                         continue
-
-                    for op in optypes:
-                        if op not in quantizable_optype:
-                            continue
-                        if op not in configs:
-                            if 'default' in configs:
-                                op_capability = copy.deepcopy(configs['default'])
-                            else:
-                                continue
+                    if op not in configs:
+                        if 'default' in configs:
+                            op_capability = copy.deepcopy(configs['default'])
                         else:
-                            op_capability = copy.deepcopy(configs[op])
+                            continue
+                    else:
+                        op_capability = copy.deepcopy(configs[op])
 
-                        if precision in ['int8', 'uint8']:
-                            if self.static:
-                                op_capability['activation']['quant_mode'] = 'static'
-                            elif self.dynamic:
-                                op_capability['activation']['quant_mode'] = 'dynamic'
-                            elif query == self.query_handler: # query static capability for auto
-                                op_capability['activation']['quant_mode'] = 'static'
-                            elif query == self.query_handler_ext: # query dynamic capability for auto
-                                op_capability['activation']['quant_mode'] = 'dynamic'
+                    if precision in ['int8', 'uint8']:
+                        if self.static:
+                            op_capability['activation']['quant_mode'] = 'static'
+                        elif self.dynamic:
+                            op_capability['activation']['quant_mode'] = 'dynamic'
+                        elif query == self.query_handler: # query static capability for auto
+                            op_capability['activation']['quant_mode'] = 'static'
+                        elif query == self.query_handler_ext: # query dynamic capability for auto
+                            op_capability['activation']['quant_mode'] = 'dynamic'
 
-                        if op not in optype_wise.keys():
-                            optype_wise[op] = [op_capability]
-                        elif op_capability not in optype_wise[op]:
-                            optype_wise[op].append(op_capability)
+                    if op not in optype_wise.keys():
+                        optype_wise[op] = [op_capability]
+                    elif op_capability not in optype_wise[op]:
+                        optype_wise[op].append(op_capability)
 
         first_quantizable_node = []
         last_quantizable_node = []
@@ -861,10 +852,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             sess_options.register_custom_ops_library(get_library_path())
         session = ort.InferenceSession(self.work_space + 'eval.onnx',
                                        sess_options,
-                                       providers=self.backend) if input_graph.large_size else \
+                                       providers=[self.backend]) if input_graph.large_size else \
                   ort.InferenceSession(input_graph.model.SerializeToString(),
                                        sess_options,
-                                       providers=self.backend)
+                                       providers=[self.backend])
         results = []
         if metrics:
             for metric in metrics:

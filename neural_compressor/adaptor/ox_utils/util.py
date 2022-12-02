@@ -61,10 +61,16 @@ dtype_mapping = {
     'complex128': 15,
 }
 
-provider_mapping = {
+PROVIDERS = {
     'default': 'CPUExecutionProvider',
     'onnxrt_trt_ep': 'TensorrtExecutionProvider',
     'onnxrt_cuda_ep': 'CUDAExecutionProvider',
+}
+
+ONNXRT_BACKENDS = {
+    'CPUExecutionProvider': 'default',
+    'TensorrtExecutionProvider': 'onnxrt_trt_ep',
+    'CUDAExecutionProvider': 'onnxrt_cuda_ep'
 }
 
 def dtype_to_name(dtype_mapping, dtype):
