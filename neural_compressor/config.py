@@ -302,7 +302,6 @@ class _BaseQuantizationConfig:
                  inputs=[],
                  outputs=[],
                  backend="default",
-                 output_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
                  op_type_list=None,
@@ -318,7 +317,6 @@ class _BaseQuantizationConfig:
         self._inputs = inputs
         self._outputs = outputs
         self._backend = backend
-        self._output_format = output_format
         self._device = device
         self._op_type_list = op_type_list
         self._op_name_list = op_name_list
@@ -395,16 +393,6 @@ class _BaseQuantizationConfig:
             self._objective = objective
 
     @property
-    def output_format(self):
-        return self._output_format
-
-    @output_format.setter
-    def output_format(self, output_format):
-        if check_value('output_format', output_format, str,
-            ['default', 'QDQ', 'QOperator']):
-            self._output_format = output_format
-
-    @property
     def strategy(self):
         return self._strategy
 
@@ -467,7 +455,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'onnxrt_trt_ep', 'pnnxrt_cuda_ep']):
+                'default', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property

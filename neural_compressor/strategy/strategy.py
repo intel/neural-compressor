@@ -519,7 +519,9 @@ class TuneStrategy(object):
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
-
+        framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
+        framework_specific_info.update({'format': self.cfg.model.get('output_format', 'default')})
+ 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)
 
@@ -542,10 +544,8 @@ class TuneStrategy(object):
             framework_specific_info.update(
                                 {'graph_optimization': OPTIONS[framework].graph_optimization})
             framework_specific_info.update({'reduce_range': self.cfg.reduce_range})
-            framework_specific_info.update({'backend': self.cfg.model.backend})
-            framework_specific_info.update({'format': self.cfg.model.output_format})
             if framework.lower() == 'onnxrt_qdq' or \
-                'onnxrt_trt_ep' in framework_specific_info['backend']:
+                framework_specific_info['backend'] == 'onnxrt_trt_ep':
                 framework_specific_info.update({'format': 'QDQ'})
                 framework = 'onnxrt_qdq'
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':

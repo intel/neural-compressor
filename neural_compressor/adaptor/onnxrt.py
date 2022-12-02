@@ -60,19 +60,29 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
-        self.backend = PROVIDERS[framework_specific_info["backend"]]
+        self.backend = PROVIDERS[framework_specific_info["backend"]] if \
+            "backend" in framework_specific_info else "CPUExecutionProvider"
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
-                "supported backends: {}".format(framework_specific_info["backend"],
+                "supported backends: {}".format(ONNXRT_BACKENDS[self.backend],
                 [ONNXRT_BACKENDS[i] for i in ort.get_all_providers()]))
+
         if self.backend == 'TensorrtExecutionProvider':
             from neural_compressor import options
             options.onnxrt.qdq_setting.AddQDQPairToWeight = True
             options.onnxrt.qdq_setting.DedicatedQDQPair = True
             options.onnxrt.graph_optimization.level = 'DISABLE_ALL'
-        if framework_specific_info["format"] in ["default", "QOperator"] and \
-            self.backend != 'TensorrtExecutionProvider':
+            self.static = True
+            self.dynamic = False
+
+        if (not self.dynamic and "format" in framework_specific_info and \
+            framework_specific_info["format"].lower() == 'qdq') or \
+            self.backend == 'TensorrtExecutionProvider':
+            self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                os.path.dirname(__file__), "onnxrt_qdq.yaml"))
+            self.format = "qdq"
+        else:
             if not self.dynamic:
                 self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
                     os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
@@ -81,11 +91,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
                     os.path.dirname(__file__), "onnxrt_integer.yaml"))
                 self.format = "integerops"
-        else:
-            self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-                os.path.dirname(__file__), "onnxrt_qdq.yaml"))
-            self.format = "qdq"
-
+                if "format" in framework_specific_info and \
+                    framework_specific_info["format"].lower() == 'qdq':
+                    logger.warning("Dynamic approach doesn't support QDQ format.")
+ 
         self.work_space = framework_specific_info["workspace_path"]
         self.graph_optimization = framework_specific_info["graph_optimization"]
         self.recipes = deep_get(framework_specific_info, 'recipes', {})
@@ -234,6 +243,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         fwk_info['approach'] = "post_training_static_quant" if self.static else \
                                                         "post_training_dynamic_quant"
         fwk_info['format'] = self.format
+        fwk_info['backend'] = ONNXRT_BACKENDS[self.backend]
         fwk_info['workspace_path'] = self.work_space
         fwk_info['graph_optimization'] = self.graph_optimization
         fwk_info['device'] = self.device
@@ -675,7 +685,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 if self.backend in query.get_quantization_capability():
                     configs = query.get_quantization_capability()[self.backend] if \
                         precision in query.get_quantization_capability() else \
-                        {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}
+                        {'default': {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}}
                 else:
                     continue
 

@@ -22,7 +22,7 @@ def build_static_yaml():
     fake_yaml = """
         model:
           name: imagenet
-          framework: onnxrt_qoperator
+          framework: onnxrt_qlinearops
 
         quantization:                                        
           approach: post_training_static_quant  
@@ -679,7 +679,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                "approach": "post_training_static_quant",
                                "random_seed": 1234,
                                "q_dataloader": None,
-                               "backend": "qlinearops",
+                               "backend": "default",
+                               "format": "default",
                                "graph_optimization": options.onnxrt.graph_optimization,
                                "workspace_path": './nc_workspace/{}/{}/'.format(
                                                        'onnxrt',
@@ -763,7 +764,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      "approach": "post_training_static_quant",
                      "random_seed": 1234,
                      "q_dataloader": None,
-                     "backend": "qlinearops",
+                     "backend": "default",
+                     "format": "default",
                      "graph_optimization": options.onnxrt.graph_optimization,
                      "workspace_path": './nc_workspace/{}/{}/'.format(
                                              'onnxrt',
@@ -893,7 +895,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                      "approach": "post_training_static_quant",
                      "random_seed": 1234,
                      "q_dataloader": None,
-                     "backend": "qlinearops",
+                     "backend": "default",
+                     "format": "default",
                      "graph_optimization": options.onnxrt.graph_optimization,
                      "workspace_path": './nc_workspace/{}/{}/'.format(
                                              'onnxrt',
@@ -1054,6 +1057,41 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertTrue('add' in node_names)
         self.assertTrue('add2' in node_names)
     
+    def test_new_API(self):
+        import time
+        result = [0.1]
+        def sub_eval(model, result):
+            time.sleep(0.001 * len(result))
+            return result[0]
+
+        def eval(model):
+            return sub_eval(model, result)
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='static', output_format='QDQ')
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
+ 
+        config = PostTrainingQuantConfig(approach='static')
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('QLinearMatMul' in [i.op_type for i in q_model.nodes()])
+ 
+        config = PostTrainingQuantConfig(approach='dynamic')
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
+ 
+        config = PostTrainingQuantConfig(approach='dynamic', output_format='QDQ')
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
+ 
+        config = PostTrainingQuantConfig(approach='static', backend='onnxrt_trt_ep')
+        q_model = quantization.fit(self.matmul_model, config,
+            calib_dataloader=self.matmul_dataloader, eval_func=eval)
+        self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
+ 
     def test_multi_metrics(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'

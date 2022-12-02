@@ -307,10 +307,9 @@ class Benchmark(object):
                                             'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
-        if 'onnxrt' in framework.lower():
+        if 'onnx' in framework.lower():
             framework_specific_info.update(
-                                {"backend": framework.lower().split('_')[-1], \
-                                 'workspace_path': cfg.tuning.workspace.path, \
+                                 {'workspace_path': cfg.tuning.workspace.path, \
                                  'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,

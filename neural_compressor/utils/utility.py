@@ -348,7 +348,7 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
 
     from neural_compressor.adaptor import FRAMEWORKS
     adaptor = FRAMEWORKS[framework](q_config['framework_specific_info'])
-    if 'onnxrt' in framework:
+    if 'onnx' in framework:
         from neural_compressor.experimental import common
         ox_fp32_model = common.Model(fp32_model)
         tune_index_qmodel = adaptor.recover(ox_fp32_model, q_config)
