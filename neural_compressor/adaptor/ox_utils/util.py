@@ -18,11 +18,14 @@
 
 import os
 import numpy as np
-from onnx import helper, numpy_helper
-from onnx import onnx_pb as onnx_proto  
+from neural_compressor.utils.utility import LazyImport
 from enum import Enum
 from pathlib import Path
 import abc
+
+helper = LazyImport('onnx.helper')
+numpy_helper = LazyImport('onnx.numpy_helper')
+onnx_proto = LazyImport('onnx.onnx_pb')
 
 __producer__ = "onnx.quantize"
 __version__ = "0.1.0"
