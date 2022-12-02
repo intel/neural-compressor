@@ -25,6 +25,7 @@ python run_clm.py \
   --dataset_config_name wikitext-2-raw-v1 \
   --do_train \
   --do_eval \
+  --tune \
   --output_dir /path/to/checkpoint/dir
 ```
 
