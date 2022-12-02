@@ -2379,3 +2379,5 @@ grappler
 amsgrad
 qoperator
 apis
+keepachangelog
+vscode
