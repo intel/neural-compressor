@@ -696,6 +696,7 @@ Goyal
 gpg
 GPG
 gpt
+GPTJ
 gpu
 gpus
 GPUs
