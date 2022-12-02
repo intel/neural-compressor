@@ -169,18 +169,24 @@ if __name__ == "__main__":
 
         model.eval()
         model.fuse_model()
-        from neural_compressor.experimental import Quantization, common
+
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion, AccuracyLoss
         dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
         dataloader = torch.utils.data.DataLoader(
             dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn
         )
         nc_dataloader = yolo_dataLoader(dataloader)
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(model)
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = nc_dataloader
+        tuning_criterion = TuningCriterion(timeout=0)
+        accuracy_criterion = AccuracyCriterion(tolerable_loss=AccuracyLoss(0.05))
 
-        q_model = quantizer.fit()
+        conf = PostTrainingQuantConfig(approach="static", backend="pytorch",
+            tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model,
+            conf=conf,
+            eval_func=eval_func,
+            calib_dataloader=nc_dataloader
+        )
         q_model.save(opt.tuned_checkpoint)
         exit(0)
 

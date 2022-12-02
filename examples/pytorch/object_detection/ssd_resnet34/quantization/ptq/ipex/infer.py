@@ -624,16 +624,23 @@ def eval_ssd_r34_mlperf_coco(args):
             return False
 
     if args.tune:
-         ssd_r34.eval()
-         ssd_r34.model = optimization.fuse(ssd_r34.model)
-         from neural_compressor.experimental import Quantization, common
-         quantizer = Quantization("./conf.yaml")
-         quantizer.model = common.Model(ssd_r34)
-         quantizer.calib_dataloader = val_dataloader
-         quantizer.eval_func = coco_eval
-         q_model = quantizer.fit()
-         q_model.save(args.tuned_checkpoint)
-         return
+        ssd_r34.eval()
+        ssd_r34.model = optimization.fuse(ssd_r34.model)
+
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion, AccuracyLoss
+        tuning_criterion = TuningCriterion(timeout=0, max_trials=600)
+        accuracy_criterion = AccuracyCriterion(tolerable_loss=AccuracyLoss(0.05))
+
+        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_ipex",
+            calibration_sampling_size=[800], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(ssd_r34,
+            conf=conf,
+            eval_func=coco_eval,
+            calib_dataloader=val_dataloader
+        )
+        q_model.save(args.tuned_checkpoint)
+        return
 
     if args.benchmark or args.accuracy_mode:
         ssd_r34.eval()

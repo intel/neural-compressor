@@ -300,7 +300,9 @@ def train300_mlperf_coco(args):
         return current_accuracy
 
     if args.tune:
-        def training_func_for_nc(model):
+        def training_func_for_nc(compression_manager, model, dataloader=None):
+            compression_manager.callbacks.on_train_begin(dataloader=dataloader)
+
             current_lr = args.lr * (global_batch_size / 32)
             current_momentum = 0.9
             optim = torch.optim.SGD(model.parameters(), lr=current_lr,
@@ -392,15 +394,18 @@ def train300_mlperf_coco(args):
                         print("Iteration: {:6d}, Loss function: {:5.3f}, Average Loss: {:.3f}"\
                             .format(iter_num, loss.item(), avg_loss))
                     iter_num += 1
+            compression_manager.callbacks.on_train_end()
             return model
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(ssd300)
-        quantizer.eval_func = eval_func
-        quantizer.q_func = training_func_for_nc
-        quantizer.calib_dataloader = val_dataloader
-        q_model = quantizer.fit()
+        from neural_compressor import quantization
+        from neural_compressor.config import QuantizationAwareTrainingConfig
+        import copy
+
+        conf = QuantizationAwareTrainingConfig(backend="pytorch_fx")
+        from neural_compressor.training import prepare_compression
+        compression_manager = prepare_compression(copy.deepcopy(ssd300), conf)
+        q_model = training_func_for_nc(compression_manager, compression_manager.model, val_dataloader)
+
         q_model.save(args.tuned_checkpoint)
 
     if args.benchmark or args.accuracy:
