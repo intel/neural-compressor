@@ -104,6 +104,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                     logger.info(f"*** Convert {op_type} ops to {dtype} and accuracy still meet the requirements")
                     tune_cfg = deepcopy(tmp_tune_cfg)
                 else:
+                    tmp_tune_cfg = deepcopy(tune_cfg)
                     # TODO convert one by one.
                     logger.info(f"*** Try to convert all {op_type} ops into {dtype} one by one.")
                     for item, quant_mode in items_lst:
