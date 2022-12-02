@@ -2398,3 +2398,10 @@ outPut
 settingPath
 topRight
 visualstudio
+amodio
+dbaeumer
+dropdown
+eslint
+registerCommand
+tsl
+viewlet
