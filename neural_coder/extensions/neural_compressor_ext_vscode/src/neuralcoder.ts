@@ -120,7 +120,8 @@ class CodeOptimizer {
           (err, result) => {
             if (err) {
               vscode.window.showErrorMessage("Please input correct python Path!");
-              throw new Error('this is my customed error');
+              this.working = false;
+              throw new Error('Please input correct python Path! OR Please active a file');
             }
             resolve(result);
           }
