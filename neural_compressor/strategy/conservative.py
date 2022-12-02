@@ -179,7 +179,11 @@ class ConservativeTuneStrategy(TuneStrategy):
                     self.best_qmodel = self.last_qmodel
                     self.best_tune_result = self.last_tune_result
                 else:
-                    logger.info(f"*** The model meets the accuracy requirements but not achive the better performance.")
+                    # TODO WA for save q model
+                    logger.info(f"*** Update the model by ignore performance.")
+                    self.best_qmodel = self.last_qmodel
+                    self.best_tune_result = self.last_tune_result
+                    #logger.info(f"*** The model meets the accuracy requirements but not achive the better performance.")
             # Dump the current state to log
             self.dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
             # Judge stop or continue tuning
