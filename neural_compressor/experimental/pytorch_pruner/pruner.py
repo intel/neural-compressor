@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 import torch
 from .patterns import get_pattern
 from .scheduler import get_scheduler
@@ -466,7 +467,6 @@ class ProgressivePruner(BasicPruner):
 
     def update_masks_progressive(self, local_step):
         """Update the masks in progressive pruning mode at a given local step."""
-
         if self.global_step == self.start_step:
             if self.config['lock_init_sparsity']:
                 self.masks = self.pattern.get_pattern_lock_masks(self.modules)
@@ -556,4 +556,3 @@ class ProgressivePruner(BasicPruner):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
-

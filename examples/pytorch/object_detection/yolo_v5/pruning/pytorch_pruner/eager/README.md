@@ -2,7 +2,7 @@
 ## Intro
 [**Pytorch Pruner**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/experimental/pytorch_pruner) is an INC build-in API which supports a wide range of pruning algorithms, patterns as well as pruning schedulers. Features below are currently supported:
 > algorithms: magnitude, snip, snip-momentum\
-> patterns: NxM, N:M\
+> patterns: N*M, N:M\
 > pruning schedulers: iterative pruning scheduler, oneshot pruning scheduler.
 
 ## Usage
@@ -19,7 +19,7 @@ pruning:
   approach:
     weight_compression_pytorch:
       # Global settings
-      # if start step equals to end step, oneshot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
+      # if start step equals to end step, one-shot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends
       not_to_prune_names: ["model.0.*"] # a global announcement of layers which you do not wish to prune. 
@@ -44,7 +44,7 @@ pruning:
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
 ```
-Please be awared that when the keywords appear in both global and local settings, we select the **local** settings as priority.
+Please be aware that when the keywords appear in both global and local settings, we select the **local** settings as priority.
 ### Coding template:
 With a settled config file, we provide a template for implementing pytorch_pruner API:
 ```python
@@ -86,15 +86,14 @@ for epoch in range(start_epoch, epochs):
         optimizer.zero_grad()
     
     results, maps, _ = validate.run(data_dict, ... , compute_loss=compute_loss):
-        ...
 ```
 For more usage, please refer to our example codes below.
 
 ## Examples
 we have provided several pruning examples, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
-### [yolov5-coco]
+### [yolo-coco](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/yolo_v5/pruning/pytorch_pruner/eager)
 We can train a sparse model with NxM (2:4) pattern:
-```
+```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         examples/pruning/yolov5/train_prune.py \
         --data examples/pruning/yolov5/data/coco.yaml \
@@ -110,7 +109,7 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         --patience 0
 ```
 We can also choose pruning with distillation(l2/kl):
-```
+```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         ./examples/pruning/yolov5/train_prune.py \
         --data examples/pruning/yolov5/data/coco.yaml \
@@ -127,7 +126,7 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         --patience 0
 ```
 Dense model training is also supported as following (by setting --do_prune to False):
-```
+```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         examples/pruning/yolov5/train_prune.py \
         --data examples/pruning/yolov5/data/coco.yaml \

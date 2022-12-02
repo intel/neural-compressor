@@ -406,28 +406,6 @@ class PatternNxM(BasePattern):
         self.block_size = self.get_block_size_dict()
         self.check_layer_validity()
 
-    def check_progressive_validity(self):
-        """Check if the settings of progressive pruning are valid."""
-        # check some problematic settings
-        if self.progressive_type == "linear":
-            if self.use_global:
-                # when global progressive is applied, linear type is contradict.
-                raise NotImplementedError("Global progressive pruning do not support linear pattern")
-            # When linear, progressive_step should not meet a indivisible 
-            for key in self.block_size.keys():
-                progressive_direction = max(self.block_size[key])
-                if progressive_direction % self.progressive_steps != 0:
-                    raise ValueError(
-                        f"in layer {key}, its pruning pattern is {self.block_size[key]}, " \
-                        f"while progressive steps {self.progressive_steps} is indivisible.")
-        else:
-            for key in self.block_size.keys():
-                total_block_size = self.block_size[key][0] * self.block_size[key][1]
-                if total_block_size < self.progressive_steps:
-                    raise ValueError(
-                        f"in layer {key}, its pruning pattern is {self.block_size[key]}, " \
-                        f"while progressive steps {self.progressive_steps} is overflowing.")
-
     def get_block_size_dict(self):
         """Calulate the zero elements' ration in pre_masks.
         
@@ -437,7 +415,7 @@ class PatternNxM(BasePattern):
         Returns:
             A dict. Dict{"layer_name": [block_size_1, block_size_2]}.
                 Containing layers' corresponding pruning pattern's block shape.
-                Please be aware that because in channel-wise pruning, different layers can have different pruning patterns.
+                Because in channel-wise pruning different layers can have different pruning patterns.
         """
         data = self.modules
         block_sizes_dict = {}
@@ -732,13 +710,15 @@ class PatternNxM(BasePattern):
         # Generate the progressive masks
         use_global = progressive_configs["use_global"]
         if use_global:
-            return self.update_progressive_masks_global(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+            return self.update_progressive_masks_global(pre_masks, cur_masks, scores, \
+                                                        progressive_step, progressive_configs)
         else:
-            return self.update_progressive_masks_local(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+            return self.update_progressive_masks_local(pre_masks, cur_masks, scores, \
+                                                       progressive_step, progressive_configs)
 
     def update_progressive_masks_linear(self, pre_masks, cur_masks, progressive_step, progressive_configs):
         """Generate the progressive masks along the block's larger dimension."""
-        progressiev_steps = progressiev_steps["progressive_steps"]
+        progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
         new_added_masks = self.update_new_added_masks(pre_masks, cur_masks)
         for key in pre_masks.keys():
@@ -805,9 +785,11 @@ class PatternNxM(BasePattern):
         """Generate progressive masks in a local pruning domain."""
         progressive_type = progressive_configs["progressive_type"]
         if progressive_type == "linear":
-            progressive_masks = self.update_progressive_masks_linear(pre_masks, cur_masks, progressive_step, progressive_configs)
+            progressive_masks = self.update_progressive_masks_linear(pre_masks, cur_masks, \
+                                                                     progressive_step, progressive_configs)
         elif progressive_type == "scores":
-            progressive_masks = self.update_progressive_masks_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+            progressive_masks = self.update_progressive_masks_scores(pre_masks, cur_masks, scores, \
+                                                                     progressive_step, progressive_configs)
         else:
             raise NotImplementedError
         return progressive_masks

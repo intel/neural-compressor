@@ -107,7 +107,7 @@ class OneshotScheduler(Scheduler):
         Args:
             target_ratio: A float representing the sparsity ratio after pruning.
             current_prune_step: An integer representing the current pruning step.
-            total_prune_step: An integer representing the total number of steps of the pruning process.
+            total_prune_steps: An integer representing the total number of steps of the pruning process.
             masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
             init_ratio: A float representing the sparsity ratio before pruning. 
 
