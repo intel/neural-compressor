@@ -59,7 +59,8 @@ class ONNXRTAugment:
         :param black_nodes: operator names that should not be quantized, default = ''
         :param white_nodes: operator names that force to be quantized, default = ''
         :param iterations: tensor of which iteration will be collected.
-        :param providers: execution providers for onnxruntime
+        :param backend: execution provider for onnxruntime
+        :reduce_range: use 7 bit or not
         '''
         self.model_wrapper = model_wrapper
         self.model = model_wrapper.model
@@ -432,7 +433,7 @@ class ONNXRTAugment:
             qType = 2 # uint8
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
-            if parent and parent.name in q_config:
+            if parent and parent.name in q_config and q_config[parent.name] not in ['fp32']:
                 scheme = q_config[parent.name]['activation']['scheme']
                 qType = q_config[parent.name]['activation']['dtype']
             node_thresholds = quantization_thresholds[tensor_name]
