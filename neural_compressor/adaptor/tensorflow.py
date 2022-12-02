@@ -1571,7 +1571,10 @@ class TensorFlowAdaptor(Adaptor):
             distributed=dataloader.distributed)
 
     def _calculate_mse(self, fp32_output, q_output):
-        return np.square(fp32_output - q_output).mean()
+        result = []
+        for i, j in zip(fp32_output, q_output):
+            result.append(np.square(i - j).mean())
+        return np.array(result).mean()
 
     def _inference_model_on_batches(self, model, tune_cfg, dataloader, 
                                     output_op_names):
@@ -1591,8 +1594,7 @@ class TensorFlowAdaptor(Adaptor):
             for item in pred:
                 predictions.append(item)
 
-        return np.array(predictions)
-
+        return predictions
         
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
