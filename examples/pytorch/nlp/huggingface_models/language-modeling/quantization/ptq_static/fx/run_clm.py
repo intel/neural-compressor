@@ -563,6 +563,31 @@ def main():
         q_model = quantizer.fit()
         q_model.save(training_args.output_dir)
         exit(0)
+    
+    # Benchmark or accuracy
+    if model_args.benchmark or model_args.accuracy_only:
+        if model_args.int8:
+            from neural_compressor.utils.pytorch import load
+            new_model = load(
+                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
+        else:
+            new_model = model
+        trainer.model = new_model
+        eval_output = trainer.evaluate(eval_dataset=eval_dataset)
+        perplexity = math.exp(eval_output["eval_loss"])
+        results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
+                    "eval_samples_per_second":eval_output['eval_samples_per_second']}
+        clm_task_metrics_keys = ["eval_loss"]
+        for key in clm_task_metrics_keys:
+            if key in results.keys():
+                acc = results[key]
+                break
+        print("Accuracy: %.5f" % acc)
+        print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
+        print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
+        exit(0)
+ 
     # Training
     if training_args.do_train:
         checkpoint = None
