@@ -5,6 +5,7 @@ import unittest
 import os
 import shutil
 import yaml
+import platform
 import numpy as np
 from neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
@@ -218,7 +219,8 @@ class TestItexEnabling(unittest.TestCase):
             self.assertEqual(reshape_counter, 2)
 
     @disable_random()
-    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0') or \
+                     platform.system().lower() == "windows", "Only supports tf greater 2.7.0 and Linux")
     def test_itex_benchmark_gpu(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")
         top_relu = tf.nn.relu(x)
@@ -255,7 +257,13 @@ class TestItexEnabling(unittest.TestCase):
             evaluator.model = output_graph
             evaluator('performance')
 
-            self.assertEqual(os.environ.get('NC_ENV_CONF'), 'True')
+        found_multi_instance_log = False
+        for file_name in os.listdir(os.getcwd()):
+            if file_name.endswith(".log"):
+                found_multi_instance_log = True
+                break
+
+        self.assertEqual(found_multi_instance_log, False)
 
 
 if __name__ == '__main__':
