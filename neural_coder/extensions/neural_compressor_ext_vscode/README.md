@@ -62,7 +62,7 @@ Click the "Extension Settings" tab of the setting button on the right and fill i
 <img  width="400px"  src="./images/readme/settingPath.png" alt="Click Extension SettingsPython Path for Neural Coder" />
 </p>
 
-### 4. icon appear
+### 4. Icon
 Open your code for the Deep Learning model that you want to quantize and evaluate. 
 
 You can see a new icon appear to the upper right, and also a left sidebars for the purpose of displaying operation history. 

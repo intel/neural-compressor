@@ -3,7 +3,7 @@
   "displayName": "Neural Coder",
   "description": "Enable and benchmark quantization on Deep Learning models in one-click",
   "publisher": "IntelNeuralCompressor",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.70.0"
   },
