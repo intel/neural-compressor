@@ -55,7 +55,13 @@ class HessianTrace:
     def __init__(self, model, dataloader,q_model,criterion=None):
         self.unfused_model = model.model
         self.q_model=q_model
-        self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
+        tmp_model=model.model
+        if 'graph' in (str(dir(tmp_model))): #check the attribute and it's length
+            logger.info("This is aready fused model")
+            self.model=model.model
+        else:
+            logger.info("fusing model")
+            self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
         self.dataloader = dataloader
         self.max_iter = 500
         self.tolerance = 1e-5
@@ -654,14 +660,12 @@ class HawqTuneStrategy(TuneStrategy):
             orig_eval = False
         self._fp32_model.eval()
         import copy
-        temp_q_model=copy.deepcopy(self.q_model)
-        ht = HessianTrace(self._fp32_model, self.calib_dataloader,temp_q_model)
+        ht = HessianTrace(self._fp32_model, self.calib_dataloader,self.q_model)
         q_model_state_dict = {}
         for key in self.q_model.state_dict().keys():
             length = len("_model.")
             new_key = key[length:]
             q_model_state_dict[new_key] = self.q_model.state_dict()[key]
-
         weight_quant_loss = compare_weights(ht.model.state_dict(), q_model_state_dict)
         pertur_lst = {}
         for key in weight_quant_loss:
@@ -669,16 +673,18 @@ class HawqTuneStrategy(TuneStrategy):
             op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
             diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)  # Formula: L2=||Q(w)-w||p^2
             pertur_lst[key] = diff_l2
-        traces = ht.get_avg_traces(enable_act=True)
+        self.enable_act=False #enable activation trace and quantization loss analysis feature
+        traces = ht.get_avg_traces(self.enable_act)
         op_to_traces = traces['weight']
-        act_to_traces=traces['activation']
-        # print("act_to_traces:",act_to_traces)
+        if self.enable_act:
+            act_to_traces=traces['activation']
         #TODO() optimize relationship of weights quantized loss and activation quantized loss, to find best conbine
         #TODO() do double check why layer1's output is not 0 for activation quantized
-        for trace_i, pertur_i,act_i in zip(op_to_traces.keys(),pertur_lst.keys(),act_to_traces.keys()):
-            op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i]+act_to_traces[act_i] #Formula:Omig=Trace*L2+act_trace
-        # for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
-        #     op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2
+            for trace_i, pertur_i,act_i in zip(op_to_traces.keys(),pertur_lst.keys(),act_to_traces.keys()):
+                op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i]+act_to_traces[act_i] #Formula:Omig=Trace*L2+act_trace
+        else:
+            for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
+                op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2
         if orig_eval == False:
             self._fp32_model.train()
         ordered_ops = sorted(op_to_traces.keys(),
