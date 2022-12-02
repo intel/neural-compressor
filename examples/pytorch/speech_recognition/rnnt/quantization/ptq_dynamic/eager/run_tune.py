@@ -122,7 +122,7 @@ def main():
 
     if args.tune:
         # Dynamic Quantization with Neural Compressor
-        from neural_compressor.config import PostTrainingQuantConfig, quantization
+        from neural_compressor import PostTrainingQuantConfig, quantization
         conf = PostTrainingQuantConfig(approach="dynamic", backend="pytorch")
         q_model = quantization.fit(
                         model,
