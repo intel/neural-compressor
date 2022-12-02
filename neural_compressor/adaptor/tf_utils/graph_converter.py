@@ -160,6 +160,11 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
+        # ITEX optimization has broken INC calibration process.
+        # INC needs turn off ITEX optimization pass in calibration stage.
+        # TODO ITEX will provide API to replace setting environment variable.
+        if self.itex_mode:
+            os.environ["ITEX_REMAPPER"] = "0"
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
@@ -238,6 +243,8 @@ class GraphConverter:
                     feed_dict, output_tensor, self.calib_iteration)
             if idx + 1 == self.calib_iteration:
                 break
+        if self.itex_mode:
+            os.environ["ITEX_REMAPPER"] = "1"
 
     def _check_tf_version(self):
         is_supported_version = False
