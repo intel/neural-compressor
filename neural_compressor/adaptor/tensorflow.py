@@ -1439,8 +1439,9 @@ class TensorFlowAdaptor(Adaptor):
             converted_model (tf.keras.Model): Quantized model with fake quant nodes inserted.
         """
         import tensorflow as tf
-        assert isinstance(model, tf.keras.Model), ("The model to be converted is expected to be a `tf.keras.Model` instance."
-        "You should not pass an instance of type: {input}.".format(input=model.__class__.__name__))
+        assert isinstance(model, tf.keras.Model), ("The model to be converted is expected to be "
+        "a `tf.keras.Model` instance. You should not pass an instance of type: {input}.".format(
+            input=model.__class__.__name__))
 
         assert (
             model.__class__.__name__ in ['Functional', 'Sequential']

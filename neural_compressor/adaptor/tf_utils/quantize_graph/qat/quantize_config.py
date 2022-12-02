@@ -55,20 +55,7 @@ class QuantizeConfig():
                                          'conv5_block3_3_add' : {'quantize': True, 'index': [1, 3]}
                                         }
         """
-        self.quantize_recipe.update(quantize_recipe)
-            
-
-    def from_optimized(self, model_name):
-        """Load quantize recipe from pre-optimized model.
-
-        Args:
-            model_name (string): Special pre-optimized model name.
-        """
-        if model_name not in pre_optimized_model:
-            logger.warning("The input model name doesn't match any"
-                " neural compressor pre-optimized model.")
-            return
-        
+        self.quantize_recipe.update(quantize_recipe)                    
 
     def query_layer(self, layer_name):
         """Query if a specific layer is in the quantize_recipe dict.
@@ -122,9 +109,6 @@ class QuantizeConfig():
         """Clear recipe of quantization to be an empty dict."""
         self.quantize_recipe.clear()
 
-    def clear_global_config(self):
-        """Remove the current QuantizeConfig instance from the global_config."""
-        global_config.claer()
 
 layer_wise_config = {
     'quantize_layers': {'Conv2D', 'Dense', 'DepthwiseConv2D', 'MaxPooling2D',  

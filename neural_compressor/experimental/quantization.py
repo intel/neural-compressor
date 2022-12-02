@@ -408,12 +408,13 @@ class Quantization(Component):
 
     @property
     def model(self):
-        """Override model getter method to handle quantization aware training case"""
+        """Override model getter method to handle quantization aware training case."""
         return self._model
 
     @model.setter
     def model(self, user_model):
         """Override model setter method to handle quantization aware training case.
+        
         Args:
            user_model: user are supported to set model from original framework model format
                        (eg, tensorflow frozen_pb or path to a saved model),
