@@ -60,8 +60,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
-        self.backend = PROVIDERS[framework_specific_info["backend"]] if \
-            "backend" in framework_specific_info else "CPUExecutionProvider"
+        self.backend = PROVIDERS[framework_specific_info["backend"]]
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
