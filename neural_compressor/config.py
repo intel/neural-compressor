@@ -158,7 +158,7 @@ class BenchmarkConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -324,7 +324,6 @@ class _BaseQuantizationConfig:
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
-        self.output_format = output_format
         self.device = device
         self.op_type_list = op_type_list
         self.op_name_list = op_name_list
@@ -563,7 +562,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          outputs=outputs,
                          device=device,
                          backend=backend,
-                         output_format=output_format,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,
@@ -575,6 +573,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          extra_precisions=extra_precisions,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
+        self.output_format = output_format
 
     @property
     def approach(self):
@@ -593,6 +592,15 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def tuning_criterion(self, tuning_criterion):
         if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
             self._tuning_criterion = tuning_criterion
+
+    @property
+    def output_format(self):
+        return self._output_format
+
+    @output_format.setter
+    def output_format(self, output_format):
+        if check_value("output_format", output_format, str, ["default", "QDQ", "QOperator"]):
+            self._output_format = output_format
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
