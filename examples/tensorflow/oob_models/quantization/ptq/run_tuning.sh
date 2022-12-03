@@ -162,7 +162,6 @@ function set_args {
 function run_tuning {
     input="input"
     output="predict"
-    yaml='./config.yaml'
     extra_cmd+=' --num_warmup 10 -n 500 '
 
     if [[ "${models_need_name[@]}"  =~ " ${topology} " ]]; then
@@ -189,7 +188,6 @@ function run_tuning {
     python tf_benchmark.py \
             --model_path ${input_model} \
             --output_path ${output_model} \
-            --yaml ${yaml} \
             --tune \
             ${extra_cmd}
 

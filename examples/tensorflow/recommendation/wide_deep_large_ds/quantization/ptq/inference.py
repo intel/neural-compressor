@@ -178,17 +178,54 @@ class eval_classifier_optimized_graph:
         Returns:
             graph: it will return a quantized pb
         """
-        from neural_compressor.experimental import Quantization
+        from neural_compressor.experimental import common
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, \
+             TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
         infer_graph = load_graph(self.args.input_graph)
-        quantizer = Quantization(self.args.config)
+        set_random_seed(9527)
+
+        tuning_criterion = TuningCriterion(
+            strategy="basic",
+            timeout=0,
+            max_trials=100,
+            objective="accuracy")
+
+        tolerable_loss = AccuracyLoss(loss=0.01)
+        accuracy_criterion = AccuracyCriterion(
+            higher_is_better=True,
+            criterion='relative',
+            tolerable_loss=tolerable_loss)
+
+        config = PostTrainingQuantConfig(
+            device="cpu",
+            backend="tensorflow",
+            inputs=["new_numeric_placeholder", "new_categorical_placeholder"],
+            outputs=["import/head/predictions/probabilities"],
+            approach="static",
+            calibration_sampling_size=[2000],
+            op_type_list=None,
+            op_name_list={
+                'import/dnn/hiddenlayer_0/MatMul': {
+                'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'scheme':['asym']},
+                }
+            },
+            reduce_range=None,
+            extra_precisions=[],
+            tuning_criterion=tuning_criterion,
+            accuracy_criterion=accuracy_criterion)
+
         if self.args.calib_data:
-            quantizer.model = infer_graph
-            quantizer.calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
-            quantizer.eval_func = self.eval_inference
-            q_model = quantizer.fit()
+            q_model = fit(
+                model=common.Model(infer_graph),
+                conf=config,
+                calib_dataloader=Dataloader(self.args.calib_data, self.args.batch_size),
+                calib_func=None,
+                eval_dataloader=None,
+                eval_func=self.eval_inference,
+                eval_metric=None)
             return q_model
-        else:
-            print("Please provide calibration dataset!")
+        print("Please provide calibration dataset!")
 
     def eval_inference(self, infer_graph):
         print("Run inference")
