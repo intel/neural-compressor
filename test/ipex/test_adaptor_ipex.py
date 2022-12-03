@@ -48,7 +48,7 @@ def calib_func(model):
 class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        config.quantization.backend = 'pytorch_ipex'
+        config.quantization.backend = 'ipex'
         config.quantization.approach = 'post_training_static_quant'
         config.quantization.use_bf16 = False
 
@@ -61,10 +61,10 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
         from neural_compressor.experimental import Quantization
         model = M()
         quantizer = Quantization(config)
+        quantizer.model = model
         quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = torch.utils.data.DataLoader(dataset)
-        quantizer.model = model
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
@@ -82,7 +82,7 @@ class TestPytorchIPEX_1_10_Adaptor(unittest.TestCase):
 class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        config.quantization.backend = 'pytorch_ipex'
+        config.quantization.backend = 'ipex'
         config.quantization.approach = 'post_training_static_quant'
         config.quantization.use_bf16 = False
 
@@ -95,10 +95,10 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         from neural_compressor.experimental import Quantization
         model = M()
         quantizer = Quantization(config)
+        quantizer.model = model
         quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = torch.utils.data.DataLoader(dataset)
-        quantizer.model = model
         quantizer.calib_dataloader = dataloader
         quantizer.calib_func = calib_func
         quantizer.eval_dataloader = dataloader
@@ -119,11 +119,11 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         qconfig = ipex.quantization.default_static_qconfig
         prepared_model = ipex.quantization.prepare(model, qconfig, example_inputs=torch.ones(1, 3, 224, 224), inplace=False)
         quantizer = Quantization(config)
+        quantizer.model = prepared_model
         quantizer.conf.usr_cfg.tuning.exit_policy['max_trials'] = 5
         quantizer.conf.usr_cfg.tuning.exit_policy['timeout'] = 100
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = torch.utils.data.DataLoader(dataset)
-        quantizer.model = prepared_model
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
@@ -144,9 +144,9 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         config.quantization.use_bf16 = True
         config.quantization.performance_only = True
         quantizer = Quantization(config)
+        quantizer.model = model
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = torch.utils.data.DataLoader(dataset)
-        quantizer.model = model
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()

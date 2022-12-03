@@ -477,6 +477,11 @@ class Component(object):
 
         if self.cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "pytorch":
+                if self.cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif self.cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
             self.cfg.model.framework = self.framework
             set_backend(self.framework)
 

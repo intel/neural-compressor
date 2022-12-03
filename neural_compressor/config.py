@@ -17,7 +17,6 @@
 
 import datetime
 import logging
-from typing import List
 from schema import Schema, And, Optional
 from .conf.dotdict import DotDict
 from .conf.config import Pruner
@@ -65,24 +64,20 @@ ops_schema = Schema({
 
 def check_value(name, src, supported_type, supported_value=[]):
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
-        logger.warning("Type of {} items should be {} but not {}, " \
-            "use its default value.".format(name, str(supported_type), [type(i) for i in src]))
-        return False
+        assert False, ("Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src]))
     elif not isinstance(src, list) and not isinstance(src, supported_type):
-        logger.warning("Type of {} should be {} but not {}, " \
-            "use its default value.".format(name, str(supported_type), type(src)))
-        return False
+        assert False, ("Type of {} should be {} but not {}".format(
+            name, str(supported_type), type(src)))
 
     if len(supported_value) > 0:
         if isinstance(src, str) and src not in supported_value:
-            logger.warning("{} is not in supported {}: {}. Skip setting it and" \
-                " use default value.".format(src, name, str(supported_value)))
-            return False
+            assert False, ("{} is not in supported {}: {}. Skip setting it and".format(
+                src, name, str(supported_value)))
         elif isinstance(src, list) and all([isinstance(i, str) for i in src]) and \
             any([i not in supported_value for i in src]):
-            logger.warning("{} is not in supported {}: {}. Skip setting it and" \
-                " use default value.".format(src, name, str(supported_value)))
-            return False
+            assert False, ("{} is not in supported {}: {}. Skip setting it and".format(
+                src, name, str(supported_value)))
 
     return True
 
@@ -326,27 +321,32 @@ class _BaseQuantizationConfig:
                  reduce_range=None,
                  extra_precisions=["bf16"],
                  accuracy_criterion=accuracy_criterion):
-        self._inputs = inputs
-        self._outputs = outputs
-        self._backend = backend
-        self._device = device
-        self._op_type_list = op_type_list
-        self._op_name_list = op_name_list
-        self._strategy = strategy
-        self._objective = objective
-        self._timeout = timeout
-        self._max_trials = max_trials
-        self._performance_only = performance_only
-        self._reduce_range = reduce_range
-        self._extra_precisions = extra_precisions \
-            if isinstance(extra_precisions, List) else [extra_precisions]
-        self.use_bf16 = "bf16" in self._extra_precisions
-        self._accuracy_criterion = accuracy_criterion
-        self._calibration_sampling_size = calibration_sampling_size
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.output_format = output_format
+        self.device = device
+        self.op_type_list = op_type_list
+        self.op_name_list = op_name_list
+        self.strategy = strategy
+        self.objective = objective
+        self.timeout = timeout
+        self.max_trials = max_trials
+        self.performance_only = performance_only
+        self.reduce_range = reduce_range
+        self.extra_precisions = extra_precisions
+        self.use_bf16 = "bf16" in self.extra_precisions
+        self.accuracy_criterion = accuracy_criterion
+        self.calibration_sampling_size = calibration_sampling_size
 
     @property
     def accuracy_criterion(self):
         return self._accuracy_criterion
+
+    @accuracy_criterion.setter
+    def accuracy_criterion(self, accuracy_criterion):
+        if check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
+            self._accuracy_criterion = accuracy_criterion
 
     @property
     def extra_precisions(self):
@@ -354,7 +354,7 @@ class _BaseQuantizationConfig:
 
     @extra_precisions.setter
     def extra_precisions(self, extra_precisions):
-        if check_value('extra_precisions', extra_precisions, List):
+        if check_value("extra_precisions", extra_precisions, str, "bf16"):
             self._extra_precisions = extra_precisions
             self._use_bf16 = "bf16" in extra_precisions
 
@@ -364,7 +364,7 @@ class _BaseQuantizationConfig:
 
     @reduce_range.setter
     def reduce_range(self, reduce_range):
-        if check_value('reduce_range', reduce_range, bool):
+        if reduce_range is None or check_value('reduce_range', reduce_range, bool):
             self._reduce_range = reduce_range
 
     @property
@@ -420,13 +420,15 @@ class _BaseQuantizationConfig:
 
     @op_name_list.setter
     def op_name_list(self, op_name_list):
-        if not isinstance(op_name_list, dict):
-            logger.warning("Type of op_name_list should be dict but not {}, " \
-                "use its default value.".format(type(op_name_list)))
-        else:
+        if op_name_list is None:
+            self._op_name_list = op_name_list
+        elif isinstance(op_name_list, dict):
             for k, v in op_name_list.items():
                 ops_schema.validate(v)
             self._op_name_list = op_name_list
+        else:
+            assert False, ("Type of op_name_list should be dict but not {}, ".format(
+                type(op_name_list)))
 
     @property
     def op_type_list(self):
@@ -434,13 +436,15 @@ class _BaseQuantizationConfig:
 
     @op_type_list.setter
     def op_type_list(self, op_type_list):
-        if not isinstance(op_type_list, dict):
-            logger.warning("Type of op_type_list should be dict but not {}, " \
-                "use its default value.".format(type(op_type_list)))
-        else:
+        if op_type_list is None:
+            self._op_type_list = op_type_list
+        elif isinstance(op_type_list, dict):
             for k, v in op_type_list.items():
                 ops_schema.validate(v)
             self._op_type_list = op_type_list
+        else:
+            assert False, ("Type of op_type_list should be dict but not {}".format(
+                type(op_type_list)))
 
     @property
     def calibration_sampling_size(self):
@@ -467,7 +471,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -491,10 +495,10 @@ class _BaseQuantizationConfig:
 
 class TuningCriterion:
     def __init__(self, strategy="basic", timeout=0, max_trials=100, objective="performance"):
-        self._strategy = strategy
-        self._timeout = timeout
-        self._max_trials = max_trials
-        self._objective = objective
+        self.strategy = strategy
+        self.timeout = timeout
+        self.max_trials = max_trials
+        self.objective = objective
 
     @property
     def max_trials(self):
@@ -554,10 +558,12 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
+        self.tuning_criterion = tuning_criterion
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
                          backend=backend,
+                         output_format=output_format,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,
@@ -569,7 +575,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          extra_precisions=extra_precisions,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
-        self._output_format = output_format
 
     @property
     def approach(self):
@@ -581,13 +586,14 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             self._approach = QUANTMAPPING[approach]
 
     @property
-    def output_format(self):
-        return self._output_format
+    def tuning_criterion(self):
+        return self._tuning_criterion
 
-    @output_format.setter
-    def output_format(self, output_format):
-        if check_value("output_format", output_format, str, ["default", "QDQ", "QOperator"]):
-            self._output_format = output_format
+    @tuning_criterion.setter
+    def tuning_criterion(self, tuning_criterion):
+        if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
+            self._tuning_criterion = tuning_criterion
+
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def __init__(self,
@@ -599,9 +605,14 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  extra_precisions=["bf16"]):
-        super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
-                         op_type_list=op_type_list, op_name_list=op_name_list,
-                         reduce_range=reduce_range, extra_precisions=extra_precisions)
+        super().__init__(inputs=inputs,
+                         outputs=outputs,
+                         device=device,
+                         backend=backend,
+                         op_type_list=op_type_list,
+                         op_name_list=op_name_list,
+                         reduce_range=reduce_range,
+                         extra_precisions=extra_precisions)
         self._approach = 'quant_aware_training'
 
     @property
@@ -619,7 +630,7 @@ class PruningConfig:
                  update_frequency_on_step=1, not_to_prune_names=[], prune_domain="global",
                  names=[], exclude_names=[], prune_layer_type=[], sparsity_decay_type="exp",
                  pattern="tile_pattern_1x1"):
-        self._weight_compression = DotDict({
+        self.weight_compression = DotDict({
             'initial_sparsity': initial_sparsity,
             'target_sparsity': target_sparsity,
             'max_sparsity_ratio_per_layer': max_sparsity_ratio_per_layer,
@@ -711,9 +722,9 @@ class DistillationConfig:
                  optimizer={'SGD': {
                      'learning_rate': 0.0001
                  }}):
-        self._criterion = criterion.config
-        self._optimizer = optimizer
-        self._teacher_model = teacher_model
+        self.criterion = criterion.config
+        self.optimizer = optimizer
+        self.teacher_model = teacher_model
 
     @property
     def criterion(self):

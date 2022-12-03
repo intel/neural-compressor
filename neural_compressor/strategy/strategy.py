@@ -549,6 +549,12 @@ class TuneStrategy(object):
                 framework_specific_info.update({'format': 'QDQ'})
                 framework = 'onnxrt_qdq'
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
+            if self.cfg.model.backend == 'ipex':
+                self.cfg.model.framework = 'pytorch_ipex'
+                framework = 'pytorch_ipex'
+            elif self.cfg.model.backend == 'default':
+                self.cfg.model.framework = 'pytorch_fx'
+                framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"q_dataloader": q_dataloader})
