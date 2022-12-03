@@ -931,50 +931,42 @@ def main():
     def eval_func(model):
         return evaluation(args, model, accelerator, eval_dataloader, metric)
 
+    confs = []
     if args.do_prune:
         # Pruning!
-        from neural_compressor.experimental import Pruning, common
-        agent = Pruning(args.prune_config)
-        criterion = None # use huggingface's loss
-        if args.do_distillation:
-            logger.info('='*30 + 'Teacher model on validation set' + '='*30)
-            evaluation(args, teacher_model, accelerator, eval_dataloader, metric)  
+        from neural_compressor.config import Pruner, PruningConfig
+        pruner = Pruner(prune_type="pattern_lock")
+        p_conf = PruningConfig(pruners=[pruner])
+        confs.append(p_conf)
 
-            # from neural_compressor.experimental import Distillation
-            from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-            criterion = PyTorchKnowledgeDistillationLoss(
-                                    temperature=args.temperature,
-                                    loss_types=args.loss_types,
-                                    loss_weights=args.loss_weights)
-            criterion.teacher_model = teacher_model
-            
-        if args.do_quantization:
-            # transforming the student model to fx mode for QAT
-            from transformers.utils.fx import symbolic_trace
-            for input in train_dataloader:
-                input_names = list(input.keys())
-                if 'teacher_logits' in input_names:
-                    input_names.remove('teacher_logits')
-                break
-            model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
-                                   batch_size=args.batch_size, sequence_length=args.max_seq_length)
-                                   
-            from neural_compressor.experimental.scheduler import Scheduler
-            from neural_compressor.experimental import Quantization
-            combs = [agent, Quantization(args.quantization_config)]
-            scheduler = Scheduler()                         
-            scheduler.model = common.Model(model)
-            agent = scheduler.combine(*combs)
-            agent.train_func = train_func
-            agent.eval_func = eval_func
-            print(agent)
-            scheduler.append(agent)
-            model = scheduler.fit()
-        else:
-            agent.model = common.Model(model)
-            agent.pruning_func = train_func
-            agent.eval_func = eval_func
-            model = agent()
+    if args.do_quantization:
+        # transforming the student model to fx mode for QAT
+        from transformers.utils.fx import symbolic_trace
+        for input in train_dataloader:
+            input_names = list(input.keys())
+            if 'teacher_logits' in input_names:
+                input_names.remove('teacher_logits')
+            break
+        model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
+                               batch_size=args.batch_size, sequence_length=args.max_seq_length)
+                               
+        from neural_compressor import QuantizationAwareTrainingConfig
+        q_conf = QuantizationAwareTrainingConfig()
+        confs.append(q_conf)
+
+    if args.do_distillation:
+        logger.info('='*30 + 'Teacher model on validation set' + '='*30)
+        evaluation(args, teacher_model, accelerator, eval_dataloader, metric)  
+
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+        distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
+                                                                 loss_types=args.loss_types,
+                                                                 loss_weights=args.loss_weights)
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        confs.append(d_conf)
+
+    from neural_compressor.training import prepare_compression
+    compression_manager = prepare_compression(model, confs)
         model = common.Model(accelerator.unwrap_model(model.model))
         if accelerator.local_process_index in [-1, 0]:
             model.save(args.output_dir)
