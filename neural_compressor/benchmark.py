@@ -82,6 +82,3 @@ def fit(
         benchmarker.b_dataloader = b_dataloader
     benchmarker()
     return benchmarker.results
-
-
-benchmark = fit
