@@ -4,10 +4,6 @@ Step-by-Step
 This document is used to list steps of reproducing PyTorch BERT tuning zoo result.
 Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/text-classification/README.md).
 
-> **Note**
->
-> Dynamic Quantization is the recommended method for huggingface models. 
-
 # Prerequisite
 
 ## 1. Installation

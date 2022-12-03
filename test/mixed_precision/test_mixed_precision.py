@@ -320,7 +320,7 @@ class TestMixedPrecision(unittest.TestCase):
         conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops",
                                     tuning_criterion=tuning_criterion)
-        
+
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
                                          eval_dataloader=common.DataLoader(self.matmul_dataset),
@@ -349,7 +349,7 @@ class TestMixedPrecision(unittest.TestCase):
         my_metric = Metric()
         conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops")
-        
+
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
                                          eval_dataloader=common.DataLoader(self.matmul_dataset),
@@ -357,7 +357,7 @@ class TestMixedPrecision(unittest.TestCase):
         self.assertFalse(any([i.op_type == 'Cast' for i in output_model.nodes()]))
         conf = MixedPrecisionConfig(extra_precisions=["fp16"],
                                     backend="onnxrt_qlinearops")
-        
+
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
                                          eval_dataloader=common.DataLoader(self.matmul_dataset),
@@ -413,10 +413,7 @@ class TestMixedPrecision(unittest.TestCase):
         def eval(model):
             return 0.5
 
-        conf = MixedPrecisionConfig(
-            extra_precisions=["bf16"],
-            backend="pytorch"
-        )
+        conf = MixedPrecisionConfig(extra_precisions=["bf16"], )
         output_model = mix_precision.fit(
             self.pt_model,
             conf,

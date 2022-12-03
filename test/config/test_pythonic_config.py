@@ -194,7 +194,6 @@ class TestPyhonicConf(unittest.TestCase):
         self.assertTrue(all([not i.name.endswith('_quant') for i in q_model.nodes()]))
 
     def test_distillation(self):
-        config.quantization.backend = 'pytorch'
         distiller = Distillation(config)
         model = ConvNet(16, 32)
         origin_weight = copy.deepcopy(model.out.weight)
@@ -238,7 +237,6 @@ class TestPyhonicConf(unittest.TestCase):
         self.assertTrue(torch.any(weight != origin_weight))
 
     def test_pruning(self):
-        config.quantization.backend = 'pytorch'
         prune = Pruning(config)
         model = ConvNet(16, 32)
         origin_weight = copy.deepcopy(model.out.weight)
@@ -285,7 +283,6 @@ class TestPyhonicConf(unittest.TestCase):
 
     def test_use_bf16(self):
         config.quantization.device = 'cpu'
-        config.quantization.backend = 'pytorch'
         config.quantization.approach = 'post_training_dynamic_quant'
         config.quantization.use_bf16 = False
         q = Quantization(config)
@@ -297,7 +294,7 @@ class TestPyhonicConf(unittest.TestCase):
 
     def test_quantization_pytorch(self):
         config.quantization.device = 'cpu'
-        config.quantization.backend = 'pytorch'
+        config.quantization.backend = 'default'
         config.quantization.approach = 'post_training_dynamic_quant'
         config.quantization.use_bf16 = False
         q = Quantization(config)
