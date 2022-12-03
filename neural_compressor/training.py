@@ -187,9 +187,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
             elif isinstance(conf, DistillationConfig):
                 conf_ = Config(distillation=conf)
                 com = Distillation(conf_)
-                assert conf.teacher_model is not None, \
-                    "Please set teacher_model in DistillationConfig"
-                com.teacher_model = conf.teacher_model
+                if conf.teacher_model is not None:
+                    com.teacher_model = conf.teacher_model
             else:
                 assert False, "Unsupported configure: {}".format(type(conf))
 
@@ -210,9 +209,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         elif type(confs) == DistillationConfig:
             conf = Config(distillation=confs)
             component = Distillation(conf)
-            assert confs.teacher_model is not None, \
-                    "Please set teacher_model in DistillationConfig"
-            component.teacher_model = confs.teacher_model
+            if confs.teacher_model is not None:
+                component.teacher_model = confs.teacher_model
         else:
             assert False, logger.error(
                 "confs should be one of QuantizationAwareTrainingConfig, "

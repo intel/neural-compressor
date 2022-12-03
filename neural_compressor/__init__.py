@@ -17,7 +17,7 @@
 
 from .quantization import Quantization
 from .pruning import Pruning
-from .benchmark import benchmark, Benchmark
+from .benchmark import Benchmark
 from .version import __version__
 from .contrib import *
 # we need to set a global 'NA' backend, or Model can't be used
