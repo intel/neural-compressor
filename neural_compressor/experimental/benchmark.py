@@ -480,6 +480,11 @@ class Benchmark(object):
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "pytorch":
+                if cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
             cfg.model.framework = self.framework
             set_backend(self.framework)
 
