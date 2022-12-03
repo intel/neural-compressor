@@ -25,7 +25,8 @@ Intel Extension for Tensorflow is mandatory to be installed for quantizing the m
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -44,7 +45,7 @@ python prepare_model.py   --output_model=/path/to/model
 
 ## Run Command
   ```shell
-  bash run_tuning.sh --input_model=./path/to/model --output_model=./result --eval_data=/path/to/evaluation/dataset --calib_data=/path/to/calibration/dataset
-  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --eval_data=/path/to/evaluation/dataset
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --dataset_location=/path/to/evaluation/dataset
   ```
 

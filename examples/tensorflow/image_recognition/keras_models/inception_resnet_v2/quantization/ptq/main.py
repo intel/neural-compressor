@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2018 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -101,14 +101,40 @@ def evaluate(model, measurer=None):
 def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
-        tuning_criterion = TuningCriterion(max_trials=200)
-        accuracy_criterion = AccuracyCriterion()
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow",
-                                       tuning_criterion=tuning_criterion,
-                                       accuracy_criterion=accuracy_criterion)
-        q_model = fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
-                      eval_func=evaluate)
+        from neural_compressor.config import PostTrainingQuantConfig, \
+            TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
+        set_random_seed(9527)
+        tuning_criterion = TuningCriterion(
+            strategy="basic",
+            timeout=0,
+            max_trials=100,
+            objective="performance")
+        tolerable_loss = AccuracyLoss(loss=0.01)
+        accuracy_criterion = AccuracyCriterion(
+            higher_is_better=True,
+            criterion='relative',
+            tolerable_loss=tolerable_loss)
+        config = PostTrainingQuantConfig(
+            device="cpu",
+            backend="tensorflow",
+            inputs=[],
+            outputs=[],
+            approach="static",
+            calibration_sampling_size=[50, 100],
+            op_type_list=None,
+            op_name_list=None,
+            reduce_range=None,
+            extra_precisions=[],
+            tuning_criterion=tuning_criterion,
+            accuracy_criterion=accuracy_criterion)
+        q_model = fit(
+            model=FLAGS.input_model,
+            conf=config,
+            calib_dataloader=calib_dataloader,
+            calib_func=None,
+            eval_dataloader=eval_dataloader,
+            eval_func=evaluate,
+            eval_metric=None)
         q_model.save(FLAGS.output_model)
 
     if FLAGS.benchmark:
