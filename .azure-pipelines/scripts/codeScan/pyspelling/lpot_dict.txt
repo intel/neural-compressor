@@ -696,6 +696,7 @@ Goyal
 gpg
 GPG
 gpt
+GPTJ
 gpu
 gpus
 GPUs
@@ -2378,3 +2379,4 @@ constfold
 grappler
 amsgrad
 qoperator
+apis

@@ -30,17 +30,30 @@ class DataReader(ortq.CalibrationDataReader):
         self.datasize = self.batch_num * self.batch_size
 
         self.data = []
-        for i, (input, label) in enumerate(self.dataloader):
-            if i * self.batch_size >= self.datasize:
-                break
-            if isinstance(input, dict) or isinstance(input, UserDict):
-                batch = {k: v.detach().cpu().numpy() for k, v in input.items()}
-            elif isinstance(input, list) or isinstance(input, tuple):
-                batch = {'input': [v.detach().cpu().numpy() for v in input]}
-            else:
-                batch = {'input': input.detach().cpu().numpy()}
-            self.data.append(batch)
-        self.data = iter(self.data)
+        try:
+            for i, (input, label) in enumerate(self.dataloader):
+                if i * self.batch_size >= self.datasize:
+                    break
+                if isinstance(input, dict) or isinstance(input, UserDict):
+                    batch = {k: v.detach().cpu().numpy() for k, v in input.items()}
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    batch = {'input': [v.detach().cpu().numpy() for v in input]}
+                else:
+                    batch = {'input': input.detach().cpu().numpy()}
+                self.data.append(batch)
+            self.data = iter(self.data)
+        except:
+            for i, input in enumerate(self.dataloader):
+                if i * self.batch_size >= self.datasize:
+                    break
+                if isinstance(input, dict) or isinstance(input, UserDict):
+                    batch = {k: v.detach().cpu().numpy() for k, v in input.items()}
+                elif isinstance(input, list) or isinstance(input, tuple):
+                    batch = {'input': [v.detach().cpu().numpy() for v in input]}
+                else:
+                    batch = {'input': input.detach().cpu().numpy()}
+                self.data.append(batch)
+            self.data = iter(self.data)
 
     def get_next(self):
         return next(self.data, None)

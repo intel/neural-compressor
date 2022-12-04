@@ -167,7 +167,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
       <td colspan="3" align="center"><a href="./docs/source/design.md">Architecture</a></td>
       <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
       <td colspan="2" align="center"><a href="./docs/source/bench.md">GUI</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/api-introduction.md">APIs</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/api-documentation/apis.html">APIs</a></td>
     </tr>
     <tr>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
@@ -194,7 +194,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/Quantization.md">Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/quantization.md">Quantization</a></td>
         <td colspan="1" align="center"><a href="./docs/source/pruning.md">Pruning(Sparsity)</a></td> 
         <td colspan="2" align="center"><a href="./docs/source/distillation.md">Knowledge Distillation</a></td>
         <td colspan="2" align="center"><a href="./docs/source/mixed_precision.md">Mixed Precision</a></td>
@@ -208,7 +208,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
     </tr>
     <tr>
         <td colspan="4" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-        <td colspan="5" align="center"><a href="neural_coder">Neural Coder</a></td>
+        <td colspan="5" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/neural_coder">Neural Coder</a></td>
     </tr>    
     
   </tbody>
@@ -219,9 +219,8 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/reference_examples.md">Reference Example</a></td>
+          <td colspan="6" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
+          <td colspan="6" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
       </tr>
   </tbody>
 </table>
