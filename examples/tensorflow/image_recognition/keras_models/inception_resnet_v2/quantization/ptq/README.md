@@ -44,6 +44,25 @@ python prepare_model.py   --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
+## Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    inputs=[],
+    outputs=[],
+    approach="static",
+    calibration_sampling_size=[50, 100],
+    op_type_list=None,
+    op_name_list=None,
+    reduce_range=None,
+    extra_precisions=[],
+    tuning_criterion=tuning_criterion,
+    accuracy_criterion=accuracy_criterion)
+```
+
 ## Run Command
   ```shell
   bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset
