@@ -229,6 +229,6 @@ model = prune.fit()
 
 ## Examples
 
-We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](../docs/validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
+We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](../../docs/source/validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
 
-Please refer to pruning examples([TensorFlow](../examples/README.md#Pruning), [PyTorch](../examples/README.md#Pruning-1)) for more information.
+Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.

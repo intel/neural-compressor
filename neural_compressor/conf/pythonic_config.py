@@ -39,11 +39,12 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
-                 use_bf16=False,
+                 use_bf16=True,
                  accuracy_criterion=accuracy_criterion):
+        extra_precisions = ["bf16"] if use_bf16 else []
         super().__init__(inputs, outputs, backend, device, calibration_sampling_size, op_type_list,
                          op_name_list, strategy, objective, timeout, max_trials, performance_only,
-                         reduce_range, use_bf16, accuracy_criterion)
+                         reduce_range, extra_precisions, accuracy_criterion)
         self._approach = approach
 
     @property

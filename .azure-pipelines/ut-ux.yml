@@ -10,6 +10,7 @@ pr:
     include:
     - neural_compressor/ux
     - test/ux
+    - setup.py
 
 pool: ICX-16C
 
