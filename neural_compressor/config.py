@@ -158,7 +158,7 @@ class BenchmarkConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -482,7 +482,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
