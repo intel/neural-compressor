@@ -385,5 +385,11 @@ models = [
         'low': -1.0,
         'high': 1.0
     },
+    # centernet_hg104
+    {
+        'model_name': 'centernet_hg104',
+        'input': {'input_tensor': generate_data([224, 224, 3]),},
+        'output': ['Identity'],
+    },
 ]
 
