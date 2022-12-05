@@ -378,7 +378,9 @@ class TestTensorflowPruning(unittest.TestCase):
                                            'workspace_path': './nc_workspace/',
                                            'q_dataloader': None,
                                            'inputs': [],
-                                           'outputs': []})
+                                           'outputs': [],
+                                           'format': 'default',
+                                           'backend': 'default'})
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         dataloader = common.DataLoader(TrainDataset(), batch_size=32)
@@ -400,7 +402,9 @@ class TestTensorflowPruning(unittest.TestCase):
                                            'workspace_path': './nc_workspace/',
                                            'q_dataloader': None,
                                            'inputs': [],
-                                           'outputs': []})
+                                           'outputs': [],
+                                           'format': 'default',
+                                           'backend': 'default'})
         adaptor = FRAMEWORKS[framework](framework_specific_info)
 
         dataloader = common.DataLoader(TrainDataset(), batch_size=32)
