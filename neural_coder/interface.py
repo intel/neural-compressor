@@ -65,6 +65,7 @@ def enable(
     test_code_line=False, # print code line info for debug use
     cache_load_transformers=True,
     optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
+    use_inc=False,
 ):
     """enable a feature or a couple of features for the code
 
@@ -291,7 +292,8 @@ def enable(
                 globals.code_domain = determine_domain(globals.list_code_path[0])
 
                 # for transformers code, enable optimum-intel api by default
-                if "transformers" in globals.code_domain:
+                # if specify use_inc, then still use INC API
+                if "transformers" in globals.code_domain and not use_inc:
                     if "static_quant" in feature:
                         feature = "pytorch_inc_huggingface_optimum_static"
                     elif "dynamic_quant" in feature:
@@ -711,6 +713,7 @@ def superbench(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
+    use_inc=False,
     auto_quant=False,
 ):
 
@@ -877,6 +880,7 @@ def superbench(
                     ncore_per_instance=ncore_per_instance,
                     ninstances=ninstances,
                     bench_batch_size=bench_batch_size,
+                    use_inc=use_inc,
                 )
 
                 if dry_run:
@@ -1072,6 +1076,7 @@ def superbench(
                             ncore_per_instance=ncore_per_instance,
                             ninstances=ninstances,
                             bench_batch_size=bench_batch_size,
+                            use_inc=use_inc,
                         )
 
                         if dry_run:
@@ -1236,6 +1241,7 @@ def auto_quant(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
+    use_inc=False,
 ):
     return superbench(
         code,
@@ -1251,5 +1257,6 @@ def auto_quant(
         ncore_per_instance=ncore_per_instance,  # only for "self_defined" mode
         ninstances=ninstances,  # only for "self_defined" mode
         bench_batch_size=bench_batch_size,  # only for "self_defined" mode
+        use_inc=use_inc,
         auto_quant=True,
     )
