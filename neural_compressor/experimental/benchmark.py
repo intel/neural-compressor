@@ -232,7 +232,7 @@ class Benchmark(object):
             bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 
         for i in range(0, num_of_instance):
-            if get_architecture() == 'x86_64' and sys.platform in ['linux']:
+            if sys.platform in ['linux'] and get_architecture() == 'x86_64':
                 core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
                 core_list = np.array(bounded_threads)[core_list_idx]
             else:
