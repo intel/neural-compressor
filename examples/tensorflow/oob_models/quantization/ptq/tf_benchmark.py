@@ -334,37 +334,13 @@ if __name__ == "__main__":
 
         from neural_compressor.experimental import common
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, \
-            TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
+        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
 
         set_random_seed(9527)
-
-        tuning_criterion = TuningCriterion(
-            strategy="basic",
-            timeout=0,
-            max_trials=100,
-            objective="performance")
-
-        tolerable_loss = AccuracyLoss(loss=0.01)
-
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,
-            criterion='relative',
-            tolerable_loss=tolerable_loss)
-
         config = PostTrainingQuantConfig(
-            device="cpu",
-            backend="tensorflow",
             inputs=list(inputs.keys()),
             outputs=outputs,
-            approach="static",
-            calibration_sampling_size=[1],
-            op_type_list=None,
-            op_name_list=None,
-            reduce_range=None,
-            extra_precisions=[],
-            tuning_criterion=tuning_criterion,
-            accuracy_criterion=accuracy_criterion)
+            calibration_sampling_size=[1])
 
         # generate dummy data
         if model_detail.get('sparse_d_shape'):
@@ -402,11 +378,7 @@ if __name__ == "__main__":
         q_model = fit(
             model=common.Model(args.model_path),
             conf=config,
-            calib_dataloader=calib_dataloader,
-            calib_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            eval_metric=None)
+            calib_dataloader=calib_dataloader)
         q_model.save(args.output_path)
 
     # benchmark

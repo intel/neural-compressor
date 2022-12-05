@@ -75,26 +75,14 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/wide_
 ```
 
 ### 8. Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'tensorflow_itex' and the 'device' parameter should be set to 'gpu'.
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
 
 ```
 config = PostTrainingQuantConfig(
         device="gpu",
-        backend="tensorflow_itex",
-        inputs=["new_numeric_placeholder", "new_categorical_placeholder"],
-        outputs=["import/head/predictions/probabilities"],
-        approach="static",
-        calibration_sampling_size=[2000],
-        op_type_list=None,
-        op_name_list={
-        'import/dnn/hiddenlayer_0/MatMul': {
-        'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'scheme':['asym']},
-        }
-        },
-        reduce_range=None,
-        extra_precisions=[],
-        tuning_criterion=tuning_criterion,
-        accuracy_criterion=accuracy_criterion)
+        backend="itex",
+        ...
+        )
 ```
 
 ### 9. Run Command
@@ -102,7 +90,7 @@ config = PostTrainingQuantConfig(
   ```shell
   bash run_tuning.sh --dataset_location=/path/to/datasets --input_model=/path/to/wide_deep_fp32_pretrained_model.pb --output_model=./wnd_int8_opt.pb
   bash run_benchmark.sh --dataset_location=/path/to/datasets --input_model=./wnd_int8_opt.pb --mode=accuracy --batch_size=500
-  bash run_benchmark.sh --dataset_location=/path/to/datasets --input_model=./wnd_int8_opt.pb --mode=benchmark --batch_size=500
+  bash run_benchmark.sh --dataset_location=/path/to/datasets --input_model=./wnd_int8_opt.pb --mode=performance --batch_size=500
   ```
 ### Other
 This example takes the reference from https://github.com/IntelAI/models/tree/master/benchmarks/recommendation/tensorflow/wide_deep_large_ds.

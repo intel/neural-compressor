@@ -39,7 +39,7 @@ function init_params {
 function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
       mode_cmd=" --benchmark --accuracy_only"
-    elif [[ ${mode} == "benchmark" ]]; then
+    elif [[ ${mode} == "performance" ]]; then
       mode_cmd=" --benchmark"
     else
       echo "Error: No such mode: ${mode}"

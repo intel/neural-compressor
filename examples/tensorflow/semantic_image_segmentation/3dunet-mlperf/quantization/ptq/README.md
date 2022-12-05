@@ -52,22 +52,14 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
    The calibration set is the forty images listed in brats_cal_images_list.txt. They are randomly selected from Fold 0, Fold 2, Fold 3, and Fold 4 of BraTS 2019 Training Dataset.
 
 ### 7. Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'tensorflow_itex' and the 'device' parameter should be set to 'gpu'.
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
 
 ```
 config = PostTrainingQuantConfig(
    device="gpu",
-   backend="tensorflow_itex",
-   inputs=[],
-   outputs=[],
-   approach="static",
-   calibration_sampling_size=[40],
-   op_type_list=None,
-   op_name_list=None,
-   reduce_range=None,
-   extra_precisions=[],
-   tuning_criterion=tuning_criterion,
-   accuracy_criterion=accuracy_criterion)
+   backend="itex",
+   ...
+   )
 ```
 
 ### 8. Test command

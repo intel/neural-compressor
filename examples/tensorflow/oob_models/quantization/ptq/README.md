@@ -89,22 +89,14 @@ List models names can get with open_model_zoo:
 |	ssd-resnet34 300x300	|	https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/ssd_resnet34_fp32_bs1_pretrained_model.pb	|
 
 ## 5. Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'tensorflow_itex' and the 'device' parameter should be set to 'gpu'.
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
 
 ```
 config = PostTrainingQuantConfig(
     device="gpu",
-    backend="tensorflow_itex",
-    inputs=list(inputs.keys()),
-    outputs=outputs,
-    approach="static",
-    calibration_sampling_size=[1],
-    op_type_list=None,
-    op_name_list=None,
-    reduce_range=None,
-    extra_precisions=[],
-    tuning_criterion=tuning_criterion,
-    accuracy_criterion=accuracy_criterion)
+    backend="itex",
+    ...
+    )
 ```
 
 # Run
@@ -117,5 +109,5 @@ config = PostTrainingQuantConfig(
 ## run benchmarking
 
 ```bash
-./run_benchmark.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --mode=benchmark --batch_size=1 --iters=200
+./run_benchmark.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --mode=benchmark --batch_size=1
 ```

@@ -107,6 +107,9 @@ def input_fn(data_file, num_epochs, shuffle, batch_size, compute_accuracy=True):
     dataset = dataset.prefetch(batch_size*10)
     return dataset
 
+def evaluation_func(model, measurer=None):
+    evaluate_opt_graph.eval_inference(model)
+
 class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph"""
 
@@ -180,59 +183,35 @@ class eval_classifier_optimized_graph:
         """
         from neural_compressor.experimental import common
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, \
-             TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
+        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
         infer_graph = load_graph(self.args.input_graph)
         set_random_seed(9527)
 
-        tuning_criterion = TuningCriterion(
-            strategy="basic",
-            timeout=0,
-            max_trials=100,
-            objective="accuracy")
-
-        tolerable_loss = AccuracyLoss(loss=0.01)
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,
-            criterion='relative',
-            tolerable_loss=tolerable_loss)
-
         config = PostTrainingQuantConfig(
-            device="cpu",
-            backend="tensorflow",
             inputs=["new_numeric_placeholder", "new_categorical_placeholder"],
             outputs=["import/head/predictions/probabilities"],
-            approach="static",
             calibration_sampling_size=[2000],
-            op_type_list=None,
             op_name_list={
                 'import/dnn/hiddenlayer_0/MatMul': {
                 'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'scheme':['asym']},
                 }
-            },
-            reduce_range=None,
-            extra_precisions=[],
-            tuning_criterion=tuning_criterion,
-            accuracy_criterion=accuracy_criterion)
+            })
 
         if self.args.calib_data:
             q_model = fit(
                 model=common.Model(infer_graph),
                 conf=config,
                 calib_dataloader=Dataloader(self.args.calib_data, self.args.batch_size),
-                calib_func=None,
-                eval_dataloader=None,
-                eval_func=self.eval_inference,
-                eval_metric=None)
+                eval_func=self.eval_inference)
             return q_model
         print("Please provide calibration dataset!")
 
     def eval_inference(self, infer_graph):
         print("Run inference")
         if isinstance(infer_graph, tf.compat.v1.GraphDef):
-            graph = tf.Graph() 
+            graph = tf.Graph()
             with graph.as_default():
-                tf.import_graph_def(infer_graph, name='') 
+                tf.import_graph_def(infer_graph, name='')
             infer_graph = graph
 
         data_config = tf.compat.v1.ConfigProto()
@@ -334,8 +313,12 @@ class eval_classifier_optimized_graph:
             q_model.save(self.args.output_graph)
 
         if self.args.benchmark:
-            infer_graph = load_graph(self.args.input_graph)
-            self.eval_inference(infer_graph)
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+            fit(self.args.input_graph, conf,
+                b_dataloader=Dataloader(self.args.eval_data, self.args.batch_size),
+                b_func=evaluation_func)
 
 class Dataloader(object):
     def __init__(self, data_location, batch_size):
