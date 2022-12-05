@@ -44,6 +44,8 @@ flags.DEFINE_string(
 flags.DEFINE_string(
     'eval_data', None, 'location of evaluate dataset')
 
+flags.DEFINE_integer('batch_size', 1, 'batch_size')
+
 from neural_compressor.experimental.metric.metric import TensorflowTopK
 from neural_compressor.experimental.data.transforms.transform import ComposeTransform
 from neural_compressor.experimental.data.datasets.dataset import TensorflowImageRecord
@@ -54,7 +56,7 @@ from neural_compressor.data.transforms.imagenet_transform import BilinearImagene
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
                  [BilinearImagenetTransform(height=224, width=224)]))
 if FLAGS.benchmark and FLAGS.mode == 'performance':
-    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
+    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=FLAGS.batch_size)
 else:
     eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=32)
 if FLAGS.calib_data:
@@ -122,6 +124,7 @@ def main(_):
         else:
             from neural_compressor.experimental import common
             accuracy = evaluate(common.Model(FLAGS.input_model).model)
+            print('Batch size = %d' % FLAGS.batch_size)
             print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
