@@ -43,7 +43,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s))},
@@ -56,7 +56,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
@@ -301,7 +301,7 @@ class _BaseQuantizationConfig:
                  inputs=[],
                  outputs=[],
                  backend="default",
-                 output_format="default",
+                 quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
                  op_type_list=None,
@@ -317,7 +317,7 @@ class _BaseQuantizationConfig:
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
-        self.output_format = output_format
+        self.quant_format = quant_format
         self.device = device
         self.op_type_list = op_type_list
         self.op_name_list = op_name_list
@@ -458,14 +458,14 @@ class _BaseQuantizationConfig:
             self._device = device
 
     @property
-    def output_format(self):
-        return self._output_format
+    def quant_format(self):
+        return self._quant_format
 
-    @output_format.setter
-    def output_format(self, output_format):
-        if check_value('output_format', output_format, str,
+    @quant_format.setter
+    def quant_format(self, quant_format):
+        if check_value('quant_format', quant_format, str,
             ['default', 'QDQ', 'QOperator']):
-            self._output_format = output_format
+            self._quant_format = quant_format
 
     @property
     def backend(self):
@@ -549,7 +549,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def __init__(self,
                  device="cpu",
                  backend="default",
-                 output_format="default",
+                 quant_format="default",
                  inputs=[],
                  outputs=[],
                  approach="static",
@@ -566,7 +566,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          outputs=outputs,
                          device=device,
                          backend=backend,
-                         output_format=output_format,
+                         quant_format=quant_format,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,

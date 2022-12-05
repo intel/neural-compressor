@@ -299,7 +299,8 @@ class Benchmark(object):
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
                                    'random_seed': cfg.tuning.random_seed,
-                                   'backend': cfg.model.get('backend', 'default')}
+                                   'backend': cfg.model.get('backend', 'default'),
+                                   'format': cfg.model.get('quant_format', 'default')}
         framework = cfg.model.framework.lower()
         if 'tensorflow' in framework:
             framework_specific_info.update({"inputs": cfg.model.inputs, \

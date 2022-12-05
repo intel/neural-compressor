@@ -69,7 +69,7 @@ class TestItexNewAPI(unittest.TestCase):
         config = PostTrainingQuantConfig(
             device="cpu",
             backend="itex",
-            output_format="QDQ",
+            quant_format="QDQ",
             inputs=[],
             outputs=[],
             approach="static",

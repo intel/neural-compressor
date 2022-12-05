@@ -378,13 +378,13 @@ class TuneStrategy(object):
         
     def initial_tuning_cfg(self):
         if self.cfg.quantization.approach == 'post_training_auto_quant':
-            query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'dynamic', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'post_training_dynamic_quant':
-            query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['dynamic', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'post_training_static_quant':
-            query_order = ['static', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'quant_aware_training':
-            query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'dynamic', 'bf16', 'fp32']
 
         quant_mode_wise_items = OrderedDict()
         pre_items = set()
@@ -520,7 +520,7 @@ class TuneStrategy(object):
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
         framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
-        framework_specific_info.update({'format': self.cfg.model.get('output_format', 'default')})
+        framework_specific_info.update({'format': self.cfg.model.get('quant_format', 'default')})
 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)
