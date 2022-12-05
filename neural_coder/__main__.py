@@ -61,6 +61,8 @@ if args.opt == "":
         features = ["pytorch_inc_dynamic_quant"]
 else:
     features = args.opt.split(",")
+
+# execute optimization enabling
 enable(
     code=script_copied,
     features=features,
