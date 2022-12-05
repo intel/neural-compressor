@@ -167,7 +167,7 @@
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/inception_resnet_v2_keras/saved_model/",
       "main_script": "main.py",
-      "batch_size": 1
+      "batch_size": 32
     },
     "vgg16": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
@@ -291,7 +291,7 @@
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/resnetv2_50_keras/saved_model",
       "main_script": "main.py",
-      "batch_size": 1
+      "batch_size": 32
     },
     "resnetv2_101": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
@@ -2477,7 +2477,7 @@
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/xception_keras/saved_model/",
       "main_script": "main.py",
-      "batch_size": 1
+      "batch_size": 32
     }
   }
 }
