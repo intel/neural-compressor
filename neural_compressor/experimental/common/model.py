@@ -20,7 +20,6 @@
 import sys
 from neural_compressor.model.model import get_model_fwk_name, MODELS, get_model_type
 from neural_compressor.utils import logger
-from neural_compressor.utils.utility import get_backend
 
 class Model(object):
     """A wrapper of the information needed to construct a Model."""

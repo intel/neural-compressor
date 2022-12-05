@@ -30,7 +30,7 @@ from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils import OPTIONS
-from ..utils.utility import set_backend, GLOBAL_STATE, MODE
+from ..utils.utility import set_framework, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
@@ -166,7 +166,7 @@ class Benchmark(object):
             self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
-            set_backend(self.framework)
+            set_framework(self.framework)
 
     def __call__(self, mode='performance'):
         """Directly call a Benchmark object.
@@ -487,7 +487,7 @@ class Benchmark(object):
                 elif cfg.model.backend == "ipex":
                     self.framework = "pytorch_ipex"
             cfg.model.framework = self.framework
-            set_backend(self.framework)
+            set_framework(self.framework)
 
         # (TODO) ugly to set these params, but tensorflow need
         if 'tensorflow' in self.framework:
