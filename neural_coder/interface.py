@@ -139,7 +139,10 @@ def enable(
         "pytorch_aliblade",
         "tensorflow_amp",
         "keras_amp",
-        "onnx_inc_static_quant_qlinear"
+        "tensorflow_inc",
+        "onnx_inc_static_quant_qlinear",
+        "onnx_inc_static_quant_qdq",
+        "onnx_inc_dynamic_quant",
     ]
     '''
 
@@ -350,6 +353,9 @@ def enable(
                 if "tensorflow_mixed_precision" in features:
                     from .coders.tensorflow.amp import TensorFlowKerasAMP
                     list_transformed_code[i] = TensorFlowKerasAMP(list_transformed_code[i]).transform()
+                if "tensorflow_inc" in features:
+                    from .coders.tensorflow.inc import TensorFlowKerasINC
+                    list_transformed_code[i] = TensorFlowKerasINC(list_transformed_code[i]).transform()
                 # Change Trainer to NLPTrainer (only for intel_extension_for_pytorch)
                 if "change_trainer_to_nlptrainer" in features:
                     from .coders.pytorch.change_trainer_to_nlptrainer import TrainerToNLPTrainer
