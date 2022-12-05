@@ -2,8 +2,8 @@
 ## Intro
 [**Pytorch Pruner**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/experimental/pytorch_pruner) is an INC build-in API which supports a wide range of pruning algorithms, patterns as well as pruning schedulers. Features below are currently supported:
 > algorithms: magnitude, snip, snip-momentum\
-> patterns: N*M, N:M\
-> pruning schedulers: iterative pruning scheduler, oneshot pruning scheduler.
+> patterns: NxM, N:M\
+> pruning schedulers: iterative pruning scheduler, one-shot pruning scheduler.
 
 ## Usage
 ### Write a config yaml file
@@ -108,6 +108,7 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         --batch-size 64 \
         --patience 0
 ```
+
 We can also choose pruning with distillation(l2/kl):
 ```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
