@@ -326,6 +326,7 @@ convolutional
 Convolutional
 ConvPerStage
 ConvReLU
+cooldown
 copt
 coreml
 CoreML
@@ -739,6 +740,7 @@ horovodrun
 hostfile
 Hounsfield
 howpublished
+hyp
 HqEgzS
 href
 html
@@ -1174,6 +1176,7 @@ ngatang
 NGPUS
 ngram
 NHWC
+ni
 NIC
 nifti
 niftis
@@ -1235,8 +1238,11 @@ nvidia
 NVIDIA
 NVIDIA's
 nvme
+nw
 Nx
+NxM
 nyu
+oc
 ok
 ol
 Omer
@@ -1889,6 +1895,7 @@ unidecode
 uniq
 unittest
 unref
+unscale
 unsqueeze
 unstack
 upenn
