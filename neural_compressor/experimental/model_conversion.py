@@ -30,7 +30,7 @@ from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader, create_eval_func
-from ..utils.utility import CpuInfo, set_backend
+from ..utils.utility import CpuInfo, set_framework
 from .common import Model as NCModel
 from ..model import BaseModel
 
@@ -85,7 +85,7 @@ class ModelConversion():
         else:
             self.conf = None
 
-        set_backend(self.framework)
+        set_framework(self.framework)
 
     def __call__(self):
         """Execute model conversion process.

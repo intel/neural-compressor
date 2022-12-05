@@ -28,7 +28,7 @@ from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
-from ..utils.utility import CpuInfo, time_limit, set_backend
+from ..utils.utility import CpuInfo, time_limit, set_framework
 from .common import Model as NCModel
 from ..model import BaseModel
 
@@ -70,7 +70,7 @@ class Graph_Optimization():
         cfg = self.conf.usr_cfg
         if cfg.model.framework != 'NA':
             self.framework = cfg.model.framework.lower()
-            set_backend(self.framework)
+            set_framework(self.framework)
 
         cfg.tuning.strategy.name = 'automixedprecision'
         seed = cfg.tuning.random_seed
@@ -307,7 +307,7 @@ class Graph_Optimization():
         if self.conf.usr_cfg.model.framework == 'NA':
             self.set_config_by_model(self._model)
             self.framework = self.conf.usr_cfg.model.framework.lower()
-            set_backend(self.framework)
+            set_framework(self.framework)
 
     @property
     def metric(self):

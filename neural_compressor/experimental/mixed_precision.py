@@ -27,7 +27,7 @@ from ..conf.dotdict import deep_get
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
-from ..utils.utility import CpuInfo, time_limit, set_backend
+from ..utils.utility import CpuInfo, time_limit, set_framework
 from ..model import BaseModel
 from .graph_optimization import GraphOptimization
 
@@ -65,7 +65,7 @@ class MixedPrecision(GraphOptimization):
         cfg = self.conf.usr_cfg
         if cfg.model.framework != 'NA':
             self.framework = cfg.model.framework.lower()
-            set_backend(self.framework)
+            set_framework(self.framework)
 
         cfg.tuning.strategy.name = 'automixedprecision'
         seed = cfg.tuning.random_seed
