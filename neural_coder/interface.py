@@ -1017,6 +1017,7 @@ def superbench(
             code=code,
             features=features_to_generate,
             save_patch_path="intel_optimization",
+            use_inc=use_inc,
         )
         logger.info('The optimization patch was saved to "intel_optimziation.diff"')
 
