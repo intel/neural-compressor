@@ -101,6 +101,9 @@ function set_args {
   NeuMF
   PRNet
   DIEN_Deep-Interest-Evolution-Network
+  EfficientDet-D2-768x768
+  EfficientDet-D4-1024x1024
+  centernet_hg104
   --------
   )
 
