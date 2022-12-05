@@ -140,7 +140,6 @@ class TestPyhonicConf(unittest.TestCase):
     def test_config_setting(self):
         config.quantization.inputs = ['image']
         config.quantization.outputs = ['out']
-        config.quantization.backend = 'onnxrt_integerops'
         config.quantization.approach = 'post_training_dynamic_quant'
         config.quantization.device = 'gpu'
         config.quantization.op_type_list = {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}}
@@ -154,7 +153,6 @@ class TestPyhonicConf(unittest.TestCase):
 
         self.assertEqual(config.quantization.inputs, ['image'])
         self.assertEqual(config.quantization.outputs, ['out'])
-        self.assertEqual(config.quantization.backend, 'onnxrt_integerops')
         self.assertEqual(config.quantization.approach, 'post_training_dynamic_quant')
         self.assertEqual(config.quantization.device, 'gpu')
         self.assertEqual(config.quantization.op_type_list,
@@ -181,7 +179,6 @@ class TestPyhonicConf(unittest.TestCase):
             
 
     def test_quantization(self):
-        config.quantization.backend = 'onnxrt_integerops'
         q = Quantization(config)
         q.model = build_matmul_model()
         q_model = q()
@@ -194,6 +191,7 @@ class TestPyhonicConf(unittest.TestCase):
         self.assertTrue(all([not i.name.endswith('_quant') for i in q_model.nodes()]))
 
     def test_distillation(self):
+        config.quantization.device = 'cpu'
         distiller = Distillation(config)
         model = ConvNet(16, 32)
         origin_weight = copy.deepcopy(model.out.weight)
@@ -311,7 +309,6 @@ class TestTFPyhonicConf(unittest.TestCase):
     def test_tf_quantization(self):
         config.quantization.inputs = ['input']
         config.quantization.outputs = ['out']
-        config.quantization.backend = 'tensorflow'
         config.quantization.approach = 'post_training_static_quant'
         config.quantization.device = 'cpu'
         config.quantization.strategy = 'basic'
@@ -321,9 +318,9 @@ class TestTFPyhonicConf(unittest.TestCase):
         config.quantization.reduce_range = False
 
         q = Quantization(config)
+        q.model = build_conv2d_model()
         dataset = q.dataset('dummy', shape=(1, 224, 224, 3), label=True)
         q.calib_dataloader = common.DataLoader(dataset)
-        q.model = build_conv2d_model()
         q_model = q()
         
         self.assertTrue(any([i.name.endswith('_requantize') for i in q_model.graph_def.node]))

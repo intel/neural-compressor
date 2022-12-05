@@ -72,11 +72,11 @@ def check_value(name, src, supported_type, supported_value=[]):
 
     if len(supported_value) > 0:
         if isinstance(src, str) and src not in supported_value:
-            assert False, ("{} is not in supported {}: {}. Skip setting it and".format(
+            assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
                 src, name, str(supported_value)))
         elif isinstance(src, list) and all([isinstance(i, str) for i in src]) and \
             any([i not in supported_value for i in src]):
-            assert False, ("{} is not in supported {}: {}. Skip setting it and".format(
+            assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
                 src, name, str(supported_value)))
 
     return True

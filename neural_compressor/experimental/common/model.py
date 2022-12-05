@@ -38,7 +38,6 @@ class Model(object):
         Returns:
             BaseModel: neural_compressor built-in model
         """
-        backend = get_backend()
         framework = get_model_fwk_name(root)
 
         if framework == 'tensorflow':
@@ -48,9 +47,7 @@ class Model(object):
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
         elif framework == 'pytorch':
-            if backend == 'NA':
-                backend = 'pytorch'
-            model = MODELS[backend](root, **kwargs)
+            model = MODELS[framework](root, **kwargs)
         else:
             model = MODELS[framework](root, **kwargs)
         return model
