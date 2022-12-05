@@ -271,8 +271,6 @@ class AutoInc_Harness(object):
                         lines_to_insert = lines_to_insert \
                             .replace("DATALOADER_NAME", dataloader_name)
 
-                    if globals.optimum_quant_config == "":
-                        globals.optimum_quant_config = "quantization/quant_config"
                     optimum_quant_config_line = \
                         'IncQuantizationConfig.from_pretrained("' + globals.optimum_quant_config + '")'
 
