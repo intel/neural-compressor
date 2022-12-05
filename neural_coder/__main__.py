@@ -55,11 +55,11 @@ shutil.copy(args.script, script_copied)
 from neural_coder import enable
 if args.opt == "":
     if args.approach == "static":
-        features=["pytorch_inc_static_quant_fx"]
+        features = ["pytorch_inc_static_quant_fx"]
     if args.approach == "static_ipex":
-        features=["pytorch_inc_static_quant_ipex"]
+        features = ["pytorch_inc_static_quant_ipex"]
     if args.approach == "dynamic":
-        features=["pytorch_inc_dynamic_quant"]
+        features = ["pytorch_inc_dynamic_quant"]
 else:
     features = args.opt.split(",")
 
