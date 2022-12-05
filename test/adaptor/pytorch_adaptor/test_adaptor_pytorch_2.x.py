@@ -6,8 +6,7 @@ import torch
 import torch.nn as nn
 import unittest
 import os
-from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
-from neural_compressor.config import set_workspace
+from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace
 from neural_compressor.data import DATASETS, DATALOADERS
 from neural_compressor.experimental.data.datasets.dataset import DATASETS
 from neural_compressor import quantization
@@ -425,7 +424,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 self.assertTrue("quantize" in str(type(q_model.model.encoder)))
                 self.assertTrue("quantize" in str(type(q_model.model.rnn)))
             else:
-                conf = PostTrainingQuantConfig()
+                conf = PostTrainingQuantConfig(approach="auto")
                 q_model = quantization.fit(model_origin,
                                            conf,
                                            calib_dataloader=dataloader)

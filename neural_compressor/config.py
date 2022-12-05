@@ -234,37 +234,11 @@ class BenchmarkConfig:
             self._intra_num_of_threads = intra_num_of_threads
 
 
-class AccuracyLoss:
-    def __init__(self, loss=0.01):
-        self._loss = loss
-
-    @property
-    def relative(self):
-        return self._loss
-
-    @relative.setter
-    def relative(self, relative):
-        if check_value('relative tolerable loss', relative, float):
-            self._loss = relative
-
-    @property
-    def absolute(self):
-        return self._loss
-
-    @absolute.setter
-    def absolute(self, absolute):
-        if check_value('absolute tolerable loss', absolute, float):
-            self._loss = absolute
-
-
-tolerable_loss = AccuracyLoss()
-
-
 class AccuracyCriterion:
-    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=tolerable_loss):
-        self._higher_is_better = higher_is_better
-        self._criterion = criterion
-        self._tolerable_loss = tolerable_loss
+    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
+        self.higher_is_better = higher_is_better
+        self.criterion = criterion
+        self.tolerable_loss = tolerable_loss
 
     @property
     def higher_is_better(self):
@@ -277,28 +251,46 @@ class AccuracyCriterion:
 
     @property
     def relative(self):
-        if self._criterion != 'relative':
+        if self.criterion != 'relative':
             return None
-        return self._tolerable_loss.relative
+        return self.tolerable_loss
 
     @relative.setter
     def relative(self, relative):
-        self._criterion = 'relative'
-        self._tolerable_loss.relative = relative
+        self.criterion = 'relative'
+        self.tolerable_loss = relative
 
     @property
     def absolute(self):
-        if self._criterion != 'absolute':
+        if self.criterion != 'absolute':
             return None
-        return self._tolerable_loss.absolute
+        return self.tolerable_loss
 
     @absolute.setter
     def absolute(self, absolute):
-        self._criterion = 'absolute'
-        self._tolerable_loss.absolute = absolute
+        self.criterion = 'absolute'
+        self.tolerable_loss = absolute
+
+    @property
+    def criterion(self):
+        return self._criterion
+
+    @criterion.setter
+    def criterion(self, criterion):
+        if check_value('criterion', criterion, str, ['relative', 'absolute']):
+            self._criterion = criterion
+
+    @property
+    def tolerable_loss(self):
+        return self._tolerable_loss
+
+    @tolerable_loss.setter
+    def tolerable_loss(self, tolerable_loss):
+        if check_value('tolerable_loss', tolerable_loss, float):
+            self._tolerable_loss = tolerable_loss
 
     def __str__(self):
-        return self._criterion
+        return self.criterion
 
 
 accuracy_criterion = AccuracyCriterion()
@@ -320,7 +312,7 @@ class _BaseQuantizationConfig:
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
-                 extra_precisions=["bf16"],
+                 excluded_precisions=[],
                  accuracy_criterion=accuracy_criterion):
         self.inputs = inputs
         self.outputs = outputs
@@ -335,8 +327,8 @@ class _BaseQuantizationConfig:
         self.max_trials = max_trials
         self.performance_only = performance_only
         self.reduce_range = reduce_range
-        self.extra_precisions = extra_precisions
-        self.use_bf16 = "bf16" in self.extra_precisions
+        self.excluded_precisions = excluded_precisions
+        self.use_bf16 = "bf16" not in self.excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
 
@@ -350,14 +342,14 @@ class _BaseQuantizationConfig:
             self._accuracy_criterion = accuracy_criterion
 
     @property
-    def extra_precisions(self):
-        return self._extra_precisions
+    def excluded_precisions(self):
+        return self._excluded_precisions
 
-    @extra_precisions.setter
-    def extra_precisions(self, extra_precisions):
-        if check_value("extra_precisions", extra_precisions, str, "bf16"):
-            self._extra_precisions = extra_precisions
-            self._use_bf16 = "bf16" in extra_precisions
+    @excluded_precisions.setter
+    def excluded_precisions(self, excluded_precisions):
+        if check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
+            self._excluded_precisions = excluded_precisions
+            self._use_bf16 = "bf16" not in excluded_precisions
 
     @property
     def reduce_range(self):
@@ -560,12 +552,12 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  output_format="default",
                  inputs=[],
                  outputs=[],
-                 approach="auto",
+                 approach="static",
                  calibration_sampling_size=[100],
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions = ["bf16"],
+                 excluded_precisions = [],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -583,7 +575,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          timeout=tuning_criterion.timeout,
                          max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
-                         extra_precisions=extra_precisions,
+                         excluded_precisions=excluded_precisions,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
 
@@ -615,7 +607,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions=["bf16"]):
+                 excluded_precisions=[]):
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -623,7 +615,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,
                          reduce_range=reduce_range,
-                         extra_precisions=extra_precisions)
+                         excluded_precisions=excluded_precisions)
         self._approach = 'quant_aware_training'
 
     @property
@@ -770,14 +762,14 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                  outputs=[],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-                 extra_precisions=["bf16"]):
+                 excluded_precisions=[]):
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
                          backend=backend,
                          tuning_criterion=tuning_criterion,
                          accuracy_criterion=accuracy_criterion,
-                         extra_precisions=extra_precisions,
+                         excluded_precisions=excluded_precisions,
         )
 
 
