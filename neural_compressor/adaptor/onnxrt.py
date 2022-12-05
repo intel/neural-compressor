@@ -791,6 +791,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         from onnx import onnx_pb as onnx_proto
         for _, op in enumerate(self.quantizable_ops):
+            if (op.name, op.op_type) not in tune_cfg['op']:
+                continue
             if tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype'] in \
                 self.query_handler.get_fallback_list():
                 quantize_config[op.name] = \
