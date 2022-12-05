@@ -50,6 +50,15 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
             dequantize_node_name = i[1]
             dequantize_node = self.graph_info[dequantize_node_name].node
 
+            if len(self.graph_info[quantized_node_name].outputs) > 3:
+                need_drop = False
+                for output in self.graph_info[quantized_node_name].outputs:
+                    if self.graph_info[output].node.op != 'Dequantize':
+                        need_drop = True
+                        break
+                if need_drop:
+                    continue
+
             # ignore shared output case for license-plate-recognition-barrier-0007 model
             if len(self.graph_info[dequantize_node_name].outputs) == 2 and \
                self.graph_info[self.graph_info[dequantize_node_name].outputs[0]].node.op == 'Reshape' and \
