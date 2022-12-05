@@ -198,6 +198,10 @@ def enable(
         "pytorch_inc_static_quant_ipex" in features:
         features = ["pytorch_reclaim_inputs"] + features
 
+    # intel_extension_for_transformers
+    if "intel_extension_for_transformers" in features:
+        features = ["change_trainer_to_nlptrainer"] + features
+
     transformed_list_code_path = []
 
     ## Determine Code Domain
@@ -276,7 +280,10 @@ def enable(
                     "pytorch_inc_static_quant_ipex",
                     "pytorch_inc_huggingface_optimum_static",
                     "pytorch_inc_huggingface_optimum_dynamic",
-                    "onnx_inc_static_quant_qlinear"
+                    "onnx_inc_static_quant_qlinear",
+                    "onnx_inc_static_quant_qdq",
+                    "onnx_inc_dynamic_quant",
+                    "intel_extension_for_transformers",
                 ]:
 
                 # determine domain
@@ -332,6 +339,10 @@ def enable(
                 if "tensorflow_mixed_precision" in features:
                     from .coders.tensorflow.amp import TensorFlowKerasAMP
                     list_transformed_code[i] = TensorFlowKerasAMP(list_transformed_code[i]).transform()
+                # Change Trainer to NLPTrainer (only for intel_extension_for_pytorch)
+                if "change_trainer_to_nlptrainer" in features:
+                    from .coders.pytorch.change_trainer_to_nlptrainer import TrainerToNLPTrainer
+                    list_transformed_code[i] = TrainerToNLPTrainer(list_transformed_code[i]).transform()
 
         logger.info(f"Code transformation for feature: [{feature}] finished.")
 
