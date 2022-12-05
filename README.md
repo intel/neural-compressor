@@ -226,6 +226,8 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 </table>
 
 ## Selected Publications/Events
+* [Intel together with Tencent deepens the cooperation to build a cloud foundation for digital and intelligent industry](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w) (Dec 2022)
+* [Intel Neural Compressor for TF Virtual Appliance packaged by Bitnami](https://marketplace.cloud.vmware.com/services/details/e9c3d891-ca51-4f07-a5aa-3fe6394f15ae) (Nov 2022)
 * [Neural Compressor: an open-source Python library for network compression](https://cloud.tencent.com/developer/article/2165895) (Nov 2022)
 * [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
 * [Personalized Stable Diffusion with Few-Shot Fine-Tuning](https://medium.com/intel-analytics-software/personalized-stable-diffusion-with-few-shot-fine-tuning-on-a-single-cpu-f01a3316b13) (Nov 2022)
