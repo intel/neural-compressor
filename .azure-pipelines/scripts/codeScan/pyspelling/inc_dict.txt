@@ -2385,3 +2385,4 @@ Nsh
 UmK
 fe
 vmware
+PythonLauncher
