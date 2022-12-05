@@ -131,7 +131,7 @@ def fuse(sym_model, ctx):
         if check_mx_version('2.0.0'):
             symnet = symnet.optimize_for(framework)
         else:
-            symnet = symnet.get_framework_symbol(framework)
+            symnet = symnet.get_backend_symbol(framework)
     return (symnet, args, auxs)
 
 
