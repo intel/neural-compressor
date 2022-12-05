@@ -92,7 +92,7 @@ class SigOptTuneStrategy(TuneStrategy):
                     import subprocess
                     import sys
                     subprocess.check_call([sys.executable, "-m", "pip", "install", "sigopt"])
-                    import sigopt
+                    import sigopt # pylint: disable=import-error
                 except:
                     assert False, "Unable to import sigopt from the local environment."
         else:
