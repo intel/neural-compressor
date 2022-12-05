@@ -1,4 +1,4 @@
-"""pruning criteria."""
+"""pruning criterion."""
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -20,29 +20,29 @@ import torch
 CRITERIAS = {}
 
 
-def register_criteria(name):
-    """Register a criteria to the registry."""
+def register_criterion(name):
+    """Register a criterion to the registry."""
 
-    def register(criteria):
-        CRITERIAS[name] = criteria
-        return criteria
+    def register(criterion):
+        CRITERIAS[name] = criterion
+        return criterion
 
     return register
 
 
-def get_criteria(config, modules):
-    """Get registered criteria class."""
-    name = config["criteria_type"]
+def get_criterion(config, modules):
+    """Get registered criterion class."""
+    name = config["criterion_type"]
     if name not in CRITERIAS.keys():
-        assert False, f"criterias does not support {name}, currently only support {CRITERIAS.keys()}"
+        assert False, f"criteria does not support {name}, currently only support {CRITERIAS.keys()}"
     return CRITERIAS[name](modules, config)
 
 
-class Criteria:
-    """Pruning criteria.
+class BaseCriterion:
+    """Pruning base criterion.
 
     Args:
-        config: A config dict object that includes information about pruner and pruning criteria.
+        config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
     
     Attributes:
@@ -64,15 +64,15 @@ class Criteria:
         pass
 
 
-@register_criteria('magnitude')
-class MagnitudeCriteria(Criteria):
+@register_criterion('magnitude')
+class MagnitudeCriterion(BaseCriterion):
     """Pruning criterion.
     
-    The magnitude criteria_class is derived from Criteria. 
+    The magnitude criterion_class is derived from BaseCriterion. 
     The magnitude value is used to score and determine if a weight is to be pruned.
 
     Args:
-        config: A config dict object that includes information about pruner and pruning criteria.
+        config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
     
     Attributes:
@@ -81,7 +81,7 @@ class MagnitudeCriteria(Criteria):
 
     def __init__(self, modules, config):
         """Initiliaze a magnitude pruning criterion."""
-        super(MagnitudeCriteria, self).__init__(modules, config)
+        super(MagnitudeCriterion, self).__init__(modules, config)
 
     def on_step_begin(self):
         """Calculate and store the pruning scores based on magtinude criterion."""
@@ -90,15 +90,15 @@ class MagnitudeCriteria(Criteria):
                 p = self.modules[key].weight.data
                 self.scores[key] = p
 
-@register_criteria('gradient')
-class GradientCriteria(Criteria):
+@register_criterion('gradient')
+class GradientCriterion(BaseCriterion):
     """Pruning criterion.
     
-    The gradient criteria_class is derived from Criteria. 
+    The gradient criterion_class is derived from BaseCriterion. 
     The absolute value of gradient is used to score and determine if a weight is to be pruned.
 
     Args:
-        config: A config dict object that includes information about pruner and pruning criteria.
+        config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
     
     Attributes:
@@ -107,7 +107,7 @@ class GradientCriteria(Criteria):
 
     def __init__(self, modules, config):
         """Initiliaze a gradient pruning criterion."""
-        super(GradientCriteria, self).__init__(modules, config)
+        super(GradientCriterion, self).__init__(modules, config)
 
     def on_after_optimizer_step(self):
         """Calculate and store the pruning scores based on gradient criterion."""
@@ -116,17 +116,17 @@ class GradientCriteria(Criteria):
                 p = self.modules[key].weight
                 self.scores[key] = torch.abs(p.grad)
 
-@register_criteria('snip')
-class SnipCriteria(Criteria):
+@register_criterion('snip')
+class SnipCriterion(BaseCriterion):
     """Pruning criterion.
     
-    The snip criteria_class is derived from Criteria. 
+    The snip criterion_class is derived from BaseCriterion. 
     The product of magnitude and gradient is used to score and determine if a weight is to be pruned.
     Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity.
     (https://arxiv.org/abs/1810.02340)
 
     Args:
-        config: A config dict object that includes information about pruner and pruning criteria.
+        config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
     
     Attributes:
@@ -135,8 +135,8 @@ class SnipCriteria(Criteria):
 
     def __init__(self, modules, config):
         """Initiliaze a snip pruning criterion."""
-        super(SnipCriteria, self).__init__(modules, config)
-        assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
+        super(SnipCriterion, self).__init__(modules, config)
+        assert self.config.end_step > 0, "gradient based criterion does not work on step 0"
 
     def on_after_optimizer_step(self):
         """Calculate and store the pruning scores based on snip criterion."""
@@ -147,15 +147,15 @@ class SnipCriteria(Criteria):
                 self.scores[key] = torch.abs(p * p.grad)
 
 
-@register_criteria('snip_momentum')
-class SnipMomentumCriteria(Criteria):
+@register_criterion('snip_momentum')
+class SnipMomentumCriterion(BaseCriterion):
     """Pruning criterion.
     
-    The snip_momentum criteria_class is derived from Criteria. 
+    The snip_momentum criterion_class is derived from BaseCriterion. 
     A momentum mechanism is used to calculate snip score, which determines if a weight is to be pruned.
 
     Args:
-        config: A config dict object that includes information about pruner and pruning criteria.
+        config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
         beta: A parameter that determines how much of the snip score is updated at the current step.
@@ -166,8 +166,8 @@ class SnipMomentumCriteria(Criteria):
 
     def __init__(self, modules, config):
         """Initiliaze a snip_momentum pruning criterion."""
-        super(SnipMomentumCriteria, self).__init__(modules, config)
-        assert self.config.end_step > 0, "gradient based criteria does not work on step 0"
+        super(SnipMomentumCriterion, self).__init__(modules, config)
+        assert self.config.end_step > 0, "gradient based criterion does not work on step 0"
         for key in modules.keys():
             p = modules[key].weight
             self.scores[key] = torch.zeros(p.shape).to(p.device)

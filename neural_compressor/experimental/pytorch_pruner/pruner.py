@@ -19,7 +19,7 @@ import copy
 import torch
 from .patterns import get_pattern
 from .scheduler import get_scheduler
-from .criterias import get_criteria, CRITERIAS
+from .criteria import get_criterion, CRITERIAS
 from .regs import get_reg
 from .logger import logger
 
@@ -71,10 +71,10 @@ def get_pruner(config, modules):
         config["progressive"] = True
     if name in CRITERIAS:
         if config["progressive"] == False:
-            config['criteria_type'] = name
+            config['criterion_type'] = name
             name = "basic"  ##return the basic pruner
         else:
-            config['criteria_type'] = name
+            config['criterion_type'] = name
             name = "progressive"  ## return the progressive pruner
 
     if name not in PRUNERS.keys():
@@ -96,7 +96,7 @@ class BasePruner:
         config: A config dict object. Contains the pruner information.
         masks: A dict {"module_name": Tensor}. Store the masks for modules' weights.
         scores: A dict {"module_name": Tensor}. Store the score for modules' weights,
-            which are used to decide pruning parts with a criteria.
+            which are used to decide pruning parts with a criterion.
         pattern: A Pattern object. Defined in ./patterns.py
         scheduler: A scheduler object. Defined in ./scheduler.py
         current_sparsity_ratio: A float. Current model's sparsity ratio, initialized as zero.
@@ -232,7 +232,7 @@ class BasicPruner(BasePruner):
 
     The class which executes pruning process.
     1. Defines pruning functions called at step begin/end, epoch begin/end.
-    2. Defines the pruning criteria.
+    2. Defines the pruning criterion.
 
     Args:
         modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
@@ -240,7 +240,7 @@ class BasicPruner(BasePruner):
 
     Attributes:
         pattern: A Pattern object. Define pruning weights' arrangements within space.
-        criteria: A Criteria Object. Define which weights are to be pruned
+        criterion: A Criterion Object. Define which weights are to be pruned
         scheduler: A Scheduler object. Define model's sparsity changing method as training/pruning executes.
         reg: A Reg object. Define regulization terms.
     """
@@ -256,7 +256,7 @@ class BasicPruner(BasePruner):
         """Auxiliary function for initializing."""
         self.pattern = get_pattern(self.config, self.modules)
         self.scheduler = get_scheduler(self.config)
-        self.criteria = get_criteria(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # if switch off progressive but use per-channel pruning, give a warn
         if "channel" in self.pattern.pattern:
@@ -290,7 +290,7 @@ class BasicPruner(BasePruner):
         if self.current_sparsity_ratio > self.target_sparsity_ratio:
             return
 
-        self.criteria.on_step_begin()
+        self.criterion.on_step_begin()
         current_target_sparsity_ratio = self.scheduler.update_sparsity_ratio(self.target_sparsity_ratio,
                                                                              self.completed_pruned_cnt,
                                                                              self.total_prune_cnt, self.masks,
@@ -298,9 +298,9 @@ class BasicPruner(BasePruner):
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
 
         self.completed_pruned_cnt += 1
-        if self.criteria.scores == {}:
+        if self.criterion.scores == {}:
             return
-        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks)
+        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks)
         self.mask_weights()
 
         self.current_sparsity_ratio = self.pattern.get_sparsity_ratio(self.masks)
@@ -315,7 +315,7 @@ class BasicPruner(BasePruner):
         ##the order of the following three lines can't not be exchanged
         self.reg.on_after_optimizer_step()
         self.mask_weights()
-        self.criteria.on_after_optimizer_step()
+        self.criterion.on_after_optimizer_step()
         self.global_step += 1
 
 
@@ -380,7 +380,7 @@ class ProgressivePruner(BasicPruner):
         """Auxiliary function for initialization."""
         self.pattern = get_pattern(self.config, self.modules)
         self.scheduler = get_scheduler(self.config)
-        self.criteria = get_criteria(self.config, self.modules)
+        self.criterion = get_criterion(self.config, self.modules)
         self.reg = get_reg(self.config, self.modules, self.pattern)
         # progressive pruning set up, including check up paramters.
         self.use_progressive = self.config["progressive"]
@@ -488,7 +488,7 @@ class ProgressivePruner(BasicPruner):
             progressive_idx = step_offset // self.update_frequency_on_step_progressive
             if progressive_idx < (self.progressive_steps - 1):
                 self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
-                                                                               self.criteria.scores, \
+                                                                               self.criterion.scores, \
                                                                                progressive_idx+1, \
                                                                                self.progressive_configs)
             else:
@@ -507,16 +507,16 @@ class ProgressivePruner(BasicPruner):
                                                                              self.completed_pruned_cnt,
                                                                              self.total_prune_cnt, self.masks)
         logger.info(f"current target ratio is {current_target_sparsity_ratio}")
-        self.criteria.on_step_begin()
+        self.criterion.on_step_begin()
         self.completed_pruned_cnt += 1
-        if self.criteria.scores == {}:
+        if self.criterion.scores == {}:
             return
         for n in self.masks.keys():
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
-        self.masks = self.pattern.get_masks(self.criteria.scores, current_target_sparsity_ratio, self.masks,)
+        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks,)
         self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
-                                                                       self.criteria.scores, 1, \
+                                                                       self.criterion.scores, 1, \
                                                                        self.progressive_configs)
         self.mask_weights_general(self.progressive_masks)
         if self.progressive_logger: 
@@ -549,7 +549,7 @@ class ProgressivePruner(BasicPruner):
             self.mask_weights()
         else:
             self.mask_weights_general(self.progressive_masks)
-        self.criteria.on_after_optimizer_step()
+        self.criterion.on_after_optimizer_step()
         self.global_step += 1
 
     def print_progressive_sparsity(self):

@@ -1,13 +1,13 @@
-# Pytorch Pruner
+# PyTorch Pruner
 ## Intro
-[**Pytorch Pruner**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/experimental/pytorch_pruner) is an INC build-in API which supports a wide range of pruning algorithms, patterns as well as pruning schedulers. Features below are currently supported:
+[**PyTorch Pruner**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/experimental/pytorch_pruner) is an Intel® Neural Compressor build-in API which supports a wide range of pruning algorithms, Criteria, patterns as well as pruning schedulers. Features below are currently supported:
 > algorithms: magnitude, snip, snip-momentum\
 > patterns: NxM, N:M\
 > pruning schedulers: iterative pruning scheduler, one-shot pruning scheduler.
 
 ## Usage
 ### Write a config yaml file
-Pytorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an bert-mini example of it:
+PyTorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an yolov5s example of it:
 ```yaml
 version: 1.0
 
@@ -22,10 +22,10 @@ pruning:
       # if start step equals to end step, one-shot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends
-      not_to_prune_names: ["model.0.*"] # a global announcement of layers which you do not wish to prune. 
+      not_to_prune_names: ["model.33.m.*"] # a global announcement of layers which you do not wish to prune. 
       prune_layer_type: ["Conv2d"] # the module type which you want to prune (Linear, Conv2d, etc.)
       target_sparsity: 0.8 # the sparsity you want the model to be pruned.
-      max_sparsity_ratio_per_layer: 0.98 # the sparsity ratio's maximum which one layer can reach.
+      max_sparsity_ratio_per_layer: 0.98 # the highest sparsity a layer can reach.
 
       pruners: # below each "Pruner" defines a pruning process for a group of layers. This enables us to apply different pruning methods for different layers in one model.
         # Local settings
@@ -39,7 +39,7 @@ pruning:
         - !Pruner
             exclude_names: []
             pattern: "oc_pattern_4x1"
-            update_frequency_on_step: 100
+            update_frequency_on_step: 1000
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
@@ -84,8 +84,8 @@ for epoch in range(start_epoch, epochs):
         pruner.on_after_optimizer_step()
         scaler.update()
         optimizer.zero_grad()
-    
-    results, maps, _ = validate.run(data_dict, ... , compute_loss=compute_loss):
+
+    ...
 ```
 For more usage, please refer to our example codes below.
 
@@ -108,7 +108,6 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
         --batch-size 64 \
         --patience 0
 ```
-
 We can also choose pruning with distillation(l2/kl):
 ```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
