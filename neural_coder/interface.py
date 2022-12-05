@@ -302,8 +302,10 @@ def enable(
                 # optimum-intel quantization config for static and dynamic
                 if feature = "pytorch_inc_huggingface_optimum_static":
                     globals.optimum_quant_config = "quantization/quant_config_static"
-                elif feautre = "pytorch_inc_huggingface_optimum_dynamic":
+                elif feature = "pytorch_inc_huggingface_optimum_dynamic":
                     globals.optimum_quant_config = "quantization/quant_config_dynamic"
+                else:
+                    pass
 
                 from .coders.autoinc.autoinc_harness import AutoInc_Harness
                 from .coders.autoinc.calib_dataloader import Calib_Dataloader
