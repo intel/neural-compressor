@@ -226,13 +226,13 @@ class Benchmark(object):
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
 
-        if(get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
+        if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
             raise OSError('Currently no support on AMD with hyperthreads')
-        else:
+        elif sys.platform in ['linux']:
             bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 
         for i in range(0, num_of_instance):
-            if get_architecture() == 'x86_64':
+            if get_architecture() == 'x86_64' and sys.platform in ['linux']:
                 core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
                 core_list = np.array(bounded_threads)[core_list_idx]
             else:
