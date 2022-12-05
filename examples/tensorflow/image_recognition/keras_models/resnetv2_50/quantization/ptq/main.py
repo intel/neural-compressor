@@ -101,47 +101,28 @@ def evaluate(model, measurer=None):
 def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, \
-            TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
+        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
         set_random_seed(9527)
-        tuning_criterion = TuningCriterion(
-            strategy="basic",
-            timeout=0,
-            max_trials=100,
-            objective="performance")
-        tolerable_loss = AccuracyLoss(loss=0.01)
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,
-            criterion='relative',
-            tolerable_loss=tolerable_loss)
         config = PostTrainingQuantConfig(
-            device="cpu",
-            backend="tensorflow",
-            inputs=[],
-            outputs=[],
-            approach="static",
-            calibration_sampling_size=[50, 100],
-            op_type_list=None,
-            op_name_list=None,
-            reduce_range=None,
-            extra_precisions=[],
-            tuning_criterion=tuning_criterion,
-            accuracy_criterion=accuracy_criterion)
+            calibration_sampling_size=[50, 100])
         q_model = fit(
             model=FLAGS.input_model,
             conf=config,
             calib_dataloader=calib_dataloader,
-            calib_func=None,
             eval_dataloader=eval_dataloader,
-            eval_func=evaluate,
-            eval_metric=None)
+            eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=7)
-        fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+            fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+        else:
+            from neural_compressor.experimental import common
+            accuracy = evaluate(common.Model(FLAGS.input_model).model)
+            print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

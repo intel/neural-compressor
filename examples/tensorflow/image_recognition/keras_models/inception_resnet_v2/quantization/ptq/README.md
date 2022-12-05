@@ -51,16 +51,8 @@ The Quantization Config class has default parameters setting for running on Inte
 config = PostTrainingQuantConfig(
     device="gpu",
     backend="itex",
-    inputs=[],
-    outputs=[],
-    approach="static",
-    calibration_sampling_size=[50, 100],
-    op_type_list=None,
-    op_name_list=None,
-    reduce_range=None,
-    extra_precisions=[],
-    tuning_criterion=tuning_criterion,
-    accuracy_criterion=accuracy_criterion)
+    ...
+    )
 ```
 
 ## Run Command
