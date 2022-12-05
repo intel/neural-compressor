@@ -12,9 +12,9 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow
+### 2. Install Tensorflow
 ```shell
-pip install intel-tensorflow
+pip install tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../../README.md).
 ### 3. Install Intel Extension for Tensorflow
@@ -41,12 +41,9 @@ python prepare_model.py   --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
-## Write Yaml config file
-In examples directory, there is a resnet101.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The resnet101_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
-
 ## Run Command
   ```shell
-  bash run_tuning.sh --config=resnet101.yaml --input_model=./path/to/model --output_model=./result --eval_data=/path/to/evaluation/dataset --calib_data=/path/to/calibration/dataset
-  bash run_benchmark.sh --config=resnet101.yaml --input_model=./path/to/model --mode=performance --eval_data=/path/to/evaluation/dataset
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result --eval_data=/path/to/evaluation/dataset --calib_data=/path/to/calibration/dataset
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --eval_data=/path/to/evaluation/dataset
   ```
 
