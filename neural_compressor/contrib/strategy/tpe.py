@@ -91,7 +91,13 @@ class TpeTuneStrategy(TuneStrategy):
             try:
                 import hyperopt
             except ImportError:
-                raise ImportError(f"Please install hyperopt for using {strategy_name} strategy.")
+                try:
+                    import subprocess
+                    import sys
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "hyperopt"])
+                    import hyperopt
+                except:
+                    assert False, "Unable to import hyperopt from the local environment."
         else:
             pass
         self.hpopt_search_space = None

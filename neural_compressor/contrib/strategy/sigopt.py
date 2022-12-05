@@ -88,7 +88,13 @@ class SigOptTuneStrategy(TuneStrategy):
             try:
                 import sigopt
             except ImportError:
-                ImportError(f"Please install sigopt for using {strategy_name} strategy.")
+                try:
+                    import subprocess
+                    import sys
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "sigopt"])
+                    import sigopt
+                except:
+                    assert False, "Unable to import sigopt from the local environment."
         else:
             pass
         # SigOpt init
