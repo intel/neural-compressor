@@ -237,6 +237,7 @@ function generate_html_core {
                         status_png = "background-color:#90EE90";
                     } else {
                         status_png = "background-color:#FFD2D2";
+                        job_status = "fail"
                     }
                     printf("<td style=\"%s\" colspan=2>%.2f</td>", status_png, target);
                 }

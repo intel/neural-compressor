@@ -160,6 +160,10 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
+        # ITEX optimization has broken INC calibration process.
+        # INC needs turn off ITEX optimization pass in calibration stage.
+        # TODO ITEX will provide API to replace setting environment variable.
+        os.environ["ITEX_REMAPPER"] = "0"
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
@@ -177,12 +181,68 @@ class GraphConverter:
                 else iterator_sess_run(sess, iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
         for idx, (inputs, labels) in enumerate(self.data_loader):
-            feed_dict = generate_feed_dict(input_tensor, inputs)
-            _ = model.sess.run(output_tensor, feed_dict) if model.iter_op==[] \
-                else iterator_sess_run(model.sess, model.iter_op, \
+            if len(input_tensor) == 1:
+                feed_dict = {}
+                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
+                  or isinstance(inputs, UserDict):
+                    for name in inputs:
+                        for tensor in input_tensor:
+                            pos = tensor.name.rfind(":")
+                            t_name = tensor.name if pos < 0 else tensor.name[:pos]
+                            if name == t_name:
+                                feed_dict[tensor] = inputs[name]
+                                break
+                else:
+                    feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
+            else:
+                assert len(input_tensor) == len(inputs), \
+                    'inputs len must equal with input_tensor'
+                feed_dict = {}
+                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
+                  or isinstance(inputs, UserDict):
+                    for name in inputs:
+                        for tensor in input_tensor:
+                            pos = tensor.name.rfind(":")
+                            t_name = tensor.name if pos < 0 else tensor.name[:pos]
+                            if name in [tensor.name, t_name]:
+                                feed_dict[tensor] = inputs[name]
+                                break
+                else:
+                    # sometimes the input_tensor is not the same order with inputs
+                    # we should check and pair them
+                    def check_shape(tensor, data):
+                        # scalar or 1 dim default True
+                        if tensor.shape == None or \
+                           len(tensor.shape.dims) == 1 or \
+                           not hasattr(data, 'shape'):
+                            return True
+                        tensor_shape = tuple(tensor.shape)
+                        data_shape = tuple(data.shape)
+                        for tensor_dim, data_dim in zip(tensor_shape, data_shape):
+                            if tensor_dim is not None and tensor_dim != data_dim:
+                                return False
+                        return True
+
+                    disorder_tensors = []
+                    disorder_inputs = []
+                    for idx, sort_tensor in enumerate(input_tensor):
+                        sort_input = inputs[idx] 
+                        if check_shape(sort_tensor, sort_input):
+                            feed_dict.update({sort_tensor: sort_input})
+                        else:
+                            disorder_tensors.append(sort_tensor)
+                            disorder_inputs.append(sort_input)
+                    for i, dis_tensor in enumerate(disorder_tensors):
+                        for j, dis_input in enumerate(disorder_inputs):
+                            if check_shape(dis_tensor, dis_input):
+                                feed_dict.update({dis_tensor: dis_input})
+                                break
+            _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
+                else iterator_sess_run(sess, iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
             if idx + 1 == self.calib_iteration:
                 break
+        os.environ["ITEX_REMAPPER"] = "1"
 
     def _check_tf_version(self):
         is_supported_version = False
@@ -462,6 +522,7 @@ class GraphConverter:
            FP32 + INT8 mixed precision graph.
         """
         try:
+            logger.info("Start BF16 conversion.")
             self._tmp_model.graph_def = BF16Convert(
                 self._tmp_model.graph_def,
                 self.fp32_ops,

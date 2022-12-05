@@ -1,0 +1,30 @@
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+transformation:
+  location:
+    - insert_below_model_definition_line
+  content:
+    - |-
+      [+] from neural_compressor.experimental import Quantization, common
+      [+] from neural_compressor import options, conf
+      [+] conf.model.framework = 'onnxrt_integerops'
+      [+] conf.quantization.approach = 'post_training_dynamic_quant'
+      [+] quantizer = Quantization(conf)
+      [+] quantizer.model = common.Model(MODEL_NAME)
+      [+] quantizer.eval_func = EVAL_FUNCTION_NAME
+      [+] MODEL_NAME = quantizer()
+  order:
+    - below:
+      above:

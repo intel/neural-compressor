@@ -17,14 +17,14 @@
 
 
 from .experimental.mixed_precision import MixedPrecision
-from neural_compressor.conf.pythonic_config import Config, MixedPrecisionConfig, Options
+from neural_compressor.conf.pythonic_config import Config
+from neural_compressor.config import MixedPrecisionConfig
 
 def fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs):
     assert isinstance(config, MixedPrecisionConfig), "Please provide MixedPrecisionConfig!"
-    options = Options() if "options" not in kwargs else kwargs["options"]
-    conf = Config(quantization=config, options=options)
+    conf = Config(quantization=config)
     converter = MixedPrecision(conf)
-    converter.precisions = config.precisions
+    converter.precisions = config.extra_precisions
     converter.model = model
     if eval_func is not None:
         converter.eval_func = eval_func

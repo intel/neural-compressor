@@ -840,7 +840,7 @@ schema = Schema({
             str: ops_schema
         },
     },
-    Optional('use_bf16', default=False): bool,
+    Optional('use_bf16', default=True): bool,
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1373,6 +1373,10 @@ class Conf(object):
                 'tuning.tensorboard': pythonic_config.options.tensorboard,
             })
         if pythonic_config.benchmark is not None:
+            if pythonic_config.benchmark.inputs != []:
+                mapping.update({'model.inputs': pythonic_config.benchmark.inputs})
+            if pythonic_config.benchmark.outputs != []:
+                mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,

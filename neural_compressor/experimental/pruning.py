@@ -114,6 +114,7 @@ class Pruning(Component):
             pruner.on_after_optimizer_step()
 
     def prepare(self):
+        """Functions prepare for generate_hooks, generate_pruners."""
         self.generate_hooks()
         self.generate_pruners()
 
