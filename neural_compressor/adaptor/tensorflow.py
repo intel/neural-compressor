@@ -1559,9 +1559,18 @@ class TensorFlowAdaptor(Adaptor):
         
         return mse_result
     
+    def _partial_dataset_of(self, dataloader, confidence_batches):
+        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+        if isinstance(dataloader.dataset, DummyDataset):
+            ds = copy.deepcopy(dataloader.dataset)
+            ds.dataset = ds.dataset[:confidence_batches]
+            return ds
+        else:
+            return dataloader.dataset.take(confidence_batches)
+    
     def _partial_dataloader(self, dataloader, confidence_batches):
         return type(dataloader)(
-            dataset=dataloader.dataset.take(confidence_batches),
+            dataset=self._partial_dataset_of(dataloader, confidence_batches),
             batch_size=dataloader.batch_size, 
             last_batch=dataloader.last_batch, 
             collate_fn=dataloader.collate_fn,
