@@ -18,7 +18,6 @@ class TensorFlowKerasINC(object):
     def __init__(self, file) -> None:
         self.file = file
         self.result = []
-        self.keras_edited_flag = False
 
     def transform(self):
         # import pdb
