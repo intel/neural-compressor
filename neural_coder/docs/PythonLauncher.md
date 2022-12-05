@@ -27,7 +27,7 @@ Note: Any modification on the optimized code ```run_glue_optimized.py``` will be
 
 Users can specify which Deep Learning optimization they want to conduct using ```--opt``` argument. The list of supported Deep Learning optimization features can be found [here](SupportMatrix.md).
 
-Note that if specifically optimizing with INT8 quantization by Intel® Neural Compressor, ```--strategy``` argument can be specified with either ```static```, ```static_ipex``` or ```dynamic```. For example, to run INT8 dynamic quantization by Intel® Neural Compressor instead of the default static quantization:
+Note that if specifically optimizing with INT8 quantization by Intel® Neural Compressor, to choose a quantization approach (strategy), ```--approach``` argument can be specified with either ```static```, ```static_ipex``` or ```dynamic```. For example, to run INT8 dynamic quantization by Intel® Neural Compressor instead of the default static quantization:
 ```bash
-python -m neural_coder --strategy dynamic run_glue.py --model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result
+python -m neural_coder --approach dynamic run_glue.py --model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result
 ```

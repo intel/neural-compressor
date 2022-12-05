@@ -146,16 +146,16 @@ class PreOptimization():
 
         self._tmp_graph_def = ConvertPlaceholderToConst(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
-
         self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = GrapplerOptimizer(
+            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
             input_node_names, output_node_names).do_transformation()
 
-        self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
+        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
+            self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
