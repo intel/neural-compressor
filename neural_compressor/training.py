@@ -179,14 +179,29 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         comps = []
         for conf in confs:
             if isinstance(conf, QuantizationAwareTrainingConfig):
-                conf_ = Config(quantization=conf)
+                conf_ = Config(quantization=conf,
+                               benchmark=None,
+                               pruning=None,
+                               distillation=None,
+                               nas=None)
                 com = Quantization(conf_)
+                com.model = model
             elif isinstance(conf, PruningConfig):
-                conf_ = Config(pruning=conf)
+                conf_ = Config(pruning=conf,
+                               benchmark=None,
+                               quantization=None,
+                               distillation=None,
+                               nas=None)
                 com = Pruning(conf_)
+                com.model = model
             elif isinstance(conf, DistillationConfig):
-                conf_ = Config(distillation=conf)
+                conf_ = Config(distillation=conf,
+                               benchmark=None,
+                               quantization=None,
+                               pruning=None,
+                               nas=None)
                 com = Distillation(conf_)
+                com.model = model
                 if conf.teacher_model is not None:
                     com.teacher_model = conf.teacher_model
             else:
@@ -201,13 +216,25 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         component = scheduler
     else:
         if isinstance(confs, QuantizationAwareTrainingConfig):
-            conf = Config(quantization=confs)
+            conf = Config(quantization=confs,
+                          benchmark=None,
+                          pruning=None,
+                          distillation=None,
+                          nas=None)
             component = Quantization(conf)
         elif type(confs) == PruningConfig:
-            conf = Config(pruning=confs)
+            conf = Config(pruning=confs,
+                          benchmark=None,
+                          quantization=None,
+                          distillation=None,
+                          nas=None)
             component = Pruning(conf)
         elif type(confs) == DistillationConfig:
-            conf = Config(distillation=confs)
+            conf = Config(distillation=confs,
+                          benchmark=None,
+                          quantization=None,
+                          pruning=None,
+                          nas=None)
             component = Distillation(conf)
             if confs.teacher_model is not None:
                 component.teacher_model = confs.teacher_model

@@ -1332,7 +1332,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model._model, inplace=True)
-        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+        if self.model.q_config is not None and len(self.model.q_config['bf16_ops_list']) > 0 and \
             self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)

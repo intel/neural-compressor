@@ -897,19 +897,3 @@ class TF2ONNXConfig(ExportConfig):
             dynamic_axes=dynamic_axes,
         )
         self.kwargs = kwargs
-
-
-def set_random_seed(seed: int):
-    options.random_seed = seed
-
-
-def set_workspace(workspace: str):
-    options.workspace = workspace
-
-
-def set_resume_from(resume_from: str):
-    options.resume_from = resume_from
-
-
-def set_tensorboard(tensorboard: bool):
-    options.tensorboard = tensorboard
