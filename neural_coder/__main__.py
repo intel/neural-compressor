@@ -25,10 +25,11 @@ def parse_args():
     """
     parser = ArgumentParser(description="command-launch a Python script with quantization auto-enabled")
 
-    parser.add_argument("--opt", type=str, default="",
+    parser.add_argument("-o", "--opt", type=str, default="",
                         help="optimization feature to enable")
 
-    parser.add_argument("--approach", type=str, default="static",
+    parser.add_argument("-a", "--approach", type=str, default="static",
+
                         help="quantization approach (strategy)")
 
     parser.add_argument('--config', type=str, default="",
@@ -54,13 +55,23 @@ shutil.copy(args.script, script_copied)
 from neural_coder import enable
 if args.opt == "":
     if args.approach == "static":
+<<<<<<< HEAD
         features=["pytorch_inc_static_quant_fx"]
     if args.approach == "static_ipex":
         features=["pytorch_inc_static_quant_ipex"]
     if args.approach == "dynamic":
         features=["pytorch_inc_dynamic_quant"]
+=======
+        features = ["pytorch_inc_static_quant_fx"]
+    if args.approach == "static_ipex":
+        features = ["pytorch_inc_static_quant_ipex"]
+    if args.approach == "dynamic":
+        features = ["pytorch_inc_dynamic_quant"]
+>>>>>>> d28bd1485387d059cf52c54af18e1ab927fa0c13
 else:
-    features=[args.opt]
+    features = args.opt.split(",")
+
+# execute optimization enabling
 enable(
     code=script_copied,
     features=features,
