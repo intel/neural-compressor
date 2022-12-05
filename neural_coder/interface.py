@@ -300,9 +300,9 @@ def enable(
                         feature = "pytorch_inc_huggingface_optimum_dynamic"
 
                 # optimum-intel quantization config for static and dynamic
-                if feature = "pytorch_inc_huggingface_optimum_static":
+                if feature == "pytorch_inc_huggingface_optimum_static":
                     globals.optimum_quant_config = "quantization/quant_config_static"
-                elif feature = "pytorch_inc_huggingface_optimum_dynamic":
+                elif feature == "pytorch_inc_huggingface_optimum_dynamic":
                     globals.optimum_quant_config = "quantization/quant_config_dynamic"
                 else:
                     pass
