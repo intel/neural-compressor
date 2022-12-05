@@ -6,8 +6,7 @@ import unittest
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.experimental import common
 from neural_compressor.quantization import fit
-from neural_compressor.config import PostTrainingQuantConfig, \
-             TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
+from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 import tensorflow as tf
@@ -53,44 +52,17 @@ class TestItexNewAPI(unittest.TestCase):
                 output_node_names=[out_name])
 
         set_random_seed(9527)
-
-        tuning_criterion = TuningCriterion(
-            strategy="basic",
-            timeout=0,
-            max_trials=100,
-            objective="accuracy")
-
-        tolerable_loss = AccuracyLoss(loss=0.01)
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,
-            criterion='relative',
-            tolerable_loss=tolerable_loss)
-
         config = PostTrainingQuantConfig(
-            device="cpu",
             backend="itex",
             quant_format="QDQ",
-            inputs=[],
-            outputs=[],
-            approach="static",
-            calibration_sampling_size=[200],
-            op_type_list=None,
-            op_name_list=None,
-            reduce_range=None,
-            extra_precisions=[],
-            tuning_criterion=tuning_criterion,
-            accuracy_criterion=accuracy_criterion)
+            calibration_sampling_size=[200])
 
         from neural_compressor.data import DATASETS
         dataset = DATASETS('tensorflow')['dummy'](shape=(100, 56, 56, 16), label=True)
         output_graph = fit(
             model=common.Model(output_graph_def),
             conf=config,
-            calib_dataloader=common.DataLoader(dataset=dataset, batch_size=1),
-            calib_func=None,
-            eval_dataloader=None,
-            eval_func=None,
-            eval_metric=None)
+            calib_dataloader=common.DataLoader(dataset=dataset, batch_size=1))
 
         dequant_count = 0
         quantize_count = 0
