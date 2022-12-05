@@ -185,6 +185,7 @@ def enable(
         "pytorch_cuda_to_cpu",
         "pytorch_lightning_bf16_cpu",
         "tensorflow_mixed_precision",
+        "change_trainer_to_nlptrainer",
     ]
     
     # # features that need creating dummy dataloader (when needed) first
