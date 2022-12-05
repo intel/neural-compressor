@@ -177,7 +177,7 @@ class MSETuneStrategy(TuneStrategy):
         for calib_sampling_size in calib_sampling_size_lst:
             # step1. collect the ops that support static and dynamic
             quant_mode_wise_items = OrderedDict()
-            query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'dynamic', 'bf16', 'fp32']
             pre_items = set()
             for quant_mode in query_order:
                 items = tuning_space.query_items_by_quant_mode(quant_mode)
