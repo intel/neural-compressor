@@ -206,47 +206,16 @@ if __name__ == "__main__":
     if args.mode == 'tune':
         from neural_compressor.experimental import common
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, \
-            TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
-
+        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
         set_random_seed(9527)
-
-        tuning_criterion = TuningCriterion(
-            strategy="basic",
-            timeout=0,
-            max_trials=100,
-            objective="accuracy")
-
-        tolerable_loss = AccuracyLoss(loss=0.01)
-
-        accuracy_criterion = AccuracyCriterion(
-            higher_is_better=True,
-            criterion='relative',
-            tolerable_loss=tolerable_loss)
-
-        config = PostTrainingQuantConfig(
-            device="cpu",
-            backend="tensorflow",
-            inputs=[],
-            outputs=[],
-            approach="static",
-            calibration_sampling_size=[40],
-            op_type_list=None,
-            op_name_list=None,
-            reduce_range=None,
-            extra_precisions=[],
-            tuning_criterion=tuning_criterion,
-            accuracy_criterion=accuracy_criterion)
+        config = PostTrainingQuantConfig(calibration_sampling_size=[40])
 
         q_model = fit(
             model=common.Model(graph),
             conf=config,
             calib_dataloader=common.DataLoader(CalibrationDL()),
-            calib_func=None,
             eval_dataloader=common.DataLoader(CalibrationDL()),
-            eval_func=eval_func,
-            eval_metric=None)
-
+            eval_func=eval_func)
         try:
             q_model.save(args.output_model)
         except Exception as e:
