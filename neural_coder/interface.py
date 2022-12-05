@@ -65,6 +65,7 @@ def enable(
     test_code_line=False, # print code line info for debug use
     cache_load_transformers=True,
     optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
+    use_inc=False,
 ):
     """enable a feature or a couple of features for the code
 
@@ -184,6 +185,7 @@ def enable(
         "pytorch_cuda_to_cpu",
         "pytorch_lightning_bf16_cpu",
         "tensorflow_mixed_precision",
+        "change_trainer_to_nlptrainer",
     ]
     
     # # features that need creating dummy dataloader (when needed) first
@@ -197,6 +199,10 @@ def enable(
         "pytorch_inc_static_quant_fx" in features or \
         "pytorch_inc_static_quant_ipex" in features:
         features = ["pytorch_reclaim_inputs"] + features
+
+    # intel_extension_for_transformers
+    if "intel_extension_for_transformers" in features:
+        features = ["change_trainer_to_nlptrainer"] + features
 
     transformed_list_code_path = []
 
@@ -276,7 +282,10 @@ def enable(
                     "pytorch_inc_static_quant_ipex",
                     "pytorch_inc_huggingface_optimum_static",
                     "pytorch_inc_huggingface_optimum_dynamic",
-                    "onnx_inc_static_quant_qlinear"
+                    "onnx_inc_static_quant_qlinear",
+                    "onnx_inc_static_quant_qdq",
+                    "onnx_inc_dynamic_quant",
+                    "intel_extension_for_transformers",
                 ]:
 
                 # determine domain
@@ -284,11 +293,20 @@ def enable(
                 globals.code_domain = determine_domain(globals.list_code_path[0])
 
                 # for transformers code, enable optimum-intel api by default
-                if "transformers" in globals.code_domain:
+                # if specify use_inc, then still use INC API
+                if "transformers" in globals.code_domain and not use_inc:
                     if "static_quant" in feature:
                         feature = "pytorch_inc_huggingface_optimum_static"
                     elif "dynamic_quant" in feature:
                         feature = "pytorch_inc_huggingface_optimum_dynamic"
+
+                # optimum-intel quantization config for static and dynamic
+                if feature == "pytorch_inc_huggingface_optimum_static":
+                    globals.optimum_quant_config = "quantization/quant_config_static"
+                elif feature == "pytorch_inc_huggingface_optimum_dynamic":
+                    globals.optimum_quant_config = "quantization/quant_config_dynamic"
+                else:
+                    pass
 
                 from .coders.autoinc.autoinc_harness import AutoInc_Harness
                 from .coders.autoinc.calib_dataloader import Calib_Dataloader
@@ -332,6 +350,10 @@ def enable(
                 if "tensorflow_mixed_precision" in features:
                     from .coders.tensorflow.amp import TensorFlowKerasAMP
                     list_transformed_code[i] = TensorFlowKerasAMP(list_transformed_code[i]).transform()
+                # Change Trainer to NLPTrainer (only for intel_extension_for_pytorch)
+                if "change_trainer_to_nlptrainer" in features:
+                    from .coders.pytorch.change_trainer_to_nlptrainer import TrainerToNLPTrainer
+                    list_transformed_code[i] = TrainerToNLPTrainer(list_transformed_code[i]).transform()
 
         logger.info(f"Code transformation for feature: [{feature}] finished.")
 
@@ -700,6 +722,7 @@ def superbench(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
+    use_inc=False,
     auto_quant=False,
 ):
 
@@ -866,6 +889,7 @@ def superbench(
                     ncore_per_instance=ncore_per_instance,
                     ninstances=ninstances,
                     bench_batch_size=bench_batch_size,
+                    use_inc=use_inc,
                 )
 
                 if dry_run:
@@ -1002,6 +1026,7 @@ def superbench(
             code=code,
             features=features_to_generate,
             save_patch_path="intel_optimization",
+            use_inc=use_inc,
         )
         logger.info('The optimization patch was saved to "intel_optimziation.diff"')
 
@@ -1061,6 +1086,7 @@ def superbench(
                             ncore_per_instance=ncore_per_instance,
                             ninstances=ninstances,
                             bench_batch_size=bench_batch_size,
+                            use_inc=use_inc,
                         )
 
                         if dry_run:
@@ -1225,6 +1251,7 @@ def auto_quant(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
+    use_inc=False,
 ):
     return superbench(
         code,
@@ -1240,5 +1267,6 @@ def auto_quant(
         ncore_per_instance=ncore_per_instance,  # only for "self_defined" mode
         ninstances=ninstances,  # only for "self_defined" mode
         bench_batch_size=bench_batch_size,  # only for "self_defined" mode
+        use_inc=use_inc,
         auto_quant=True,
     )
