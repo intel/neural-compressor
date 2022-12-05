@@ -29,6 +29,7 @@ def parse_args():
                         help="optimization feature to enable")
 
     parser.add_argument("-a", "--approach", type=str, default="static",
+
                         help="quantization approach (strategy)")
 
     parser.add_argument('--config', type=str, default="",
