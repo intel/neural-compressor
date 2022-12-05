@@ -75,20 +75,6 @@ class ConservativeTuneStrategy(TuneStrategy):
         tune_cfg['calib_sampling_size'] = calib_sampling_size
         op_type_priority = self._get_op_type_priority()
         quant_items_pool = self._quant_items_pool(op_type_priority)
-        # TODO remove it before merge
-        # Returns:
-        #     The op item pool to convert into lower precision.
-        #     OrderDict:
-        #         bf16:
-        #             OrderDict:
-        #                 conv2d: [(TuningItem, bf16), (TuningItem, bf16)]
-        #                 linear: [(TuningItem, bf16), (TuningItem, bf16)]
-        #         int8:
-        #             OrderDict:
-        #                 # (TuningItem, quant_mode)
-        #                 conv2d: [(TuningItem, static), (TuningItem, static)] 
-        #                 linear: [(TuningItem, static), (TuningItem, static)]
-        # Try to add quantized ops.
         logger.info(f"*** Try to convert op into lower precision to improve performance.")
         for dtype, op_items in quant_items_pool.items():
             logger.info(f"*** Start to convert op into {dtype}.")
@@ -101,12 +87,12 @@ class ConservativeTuneStrategy(TuneStrategy):
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
                 if self.acc_meet_flag:
-                    logger.info(f"*** Convert {op_type} ops to {dtype} and accuracy still meet the requirements")
+                    logger.info(f"*** Convert all {op_type} ops to {dtype} and accuracy still meet the requirements")
                     tune_cfg = deepcopy(tmp_tune_cfg)
                 else:
                     tmp_tune_cfg = deepcopy(tune_cfg)
-                    # TODO convert one by one.
-                    logger.info(f"*** Try to convert all {op_type} ops into {dtype} one by one.")
+                    logger.info(f"*** Convert all {op_type} ops to {dtype} but accuracy not meet the requirements")
+                    logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
                     for item, quant_mode in items_lst:
                         op_info = item.name
                         op_config = tuning_space.set_deafult_config(op_info, quant_mode)
@@ -184,7 +170,6 @@ class ConservativeTuneStrategy(TuneStrategy):
                     logger.info(f"*** Update the model by ignore performance.")
                     self.best_qmodel = self.last_qmodel
                     self.best_tune_result = self.last_tune_result
-                    #logger.info(f"*** The model meets the accuracy requirements but not achive the better performance.")
             # Dump the current state to log
             self.dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
             # Judge stop or continue tuning
@@ -221,7 +206,7 @@ class ConservativeTuneStrategy(TuneStrategy):
             need_stop = True
         return need_stop
             
-    def compare_performace(self, last_tune_result, best_tune_result):
+    def compare_performace(self, last_tune_result, best_tune_result): # pragma: no cover
         _, last_perf = last_tune_result
         _, best_perf = best_tune_result
         return last_perf[0] < best_perf[0]
