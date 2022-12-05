@@ -7,10 +7,10 @@ import numpy as np
 import neural_compressor.adaptor.pytorch as nc_torch
 import shutil
 import tensorflow as tf
-from neural_compressor import mix_precision
+from neural_compressor import mix_precision, set_workspace
 from neural_compressor.utils.utility import LazyImport, CpuInfo
 from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
-from neural_compressor.config import MixedPrecisionConfig, set_workspace, TuningCriterion
+from neural_compressor.config import MixedPrecisionConfig, TuningCriterion
 from onnx import helper, TensorProto
 from packaging.version import Version
 from tensorflow.core.framework import attr_value_pb2

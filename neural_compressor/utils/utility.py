@@ -487,3 +487,24 @@ def dump_data_to_local(data, path, filename):
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
+
+
+
+def set_random_seed(seed: int):
+    from neural_compressor.config import options
+    options.random_seed = seed
+
+
+def set_workspace(workspace: str):
+    from neural_compressor.config import options
+    options.workspace = workspace
+
+
+def set_resume_from(resume_from: str):
+    from neural_compressor.config import options
+    options.resume_from = resume_from
+
+
+def set_tensorboard(tensorboard: bool):
+    from neural_compressor.config import options
+    options.tensorboard = tensorboard

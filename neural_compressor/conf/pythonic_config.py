@@ -43,7 +43,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  use_bf16=True,
                  optimization_level=1,
                  accuracy_criterion=accuracy_criterion):
-        extra_precisions = ["bf16"] if use_bf16 else []
+        excluded_precisions = ["bf16"] if not use_bf16 else []
         super().__init__(
             inputs=inputs,
             outputs=outputs,
@@ -59,7 +59,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
             max_trials=max_trials,
             performance_only=performance_only,
             reduce_range=reduce_range,
-            extra_precisions=["bf16"],
+            excluded_precisions=excluded_precisions,
             accuracy_criterion=accuracy_criterion,
             optimization_level=optimization_level
         )
