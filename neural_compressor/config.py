@@ -314,6 +314,7 @@ class _BaseQuantizationConfig:
                  performance_only=False,
                  reduce_range=None,
                  extra_precisions=["bf16"],
+                 optimization_level=1,
                  accuracy_criterion=accuracy_criterion):
         self._inputs = inputs
         self._outputs = outputs
@@ -330,6 +331,7 @@ class _BaseQuantizationConfig:
         self._reduce_range = reduce_range
         self._extra_precisions = extra_precisions \
             if isinstance(extra_precisions, List) else [extra_precisions]
+        self._optimization_level = optimization_level
         self.use_bf16 = "bf16" in self._extra_precisions
         self._accuracy_criterion = accuracy_criterion
         self._calibration_sampling_size = calibration_sampling_size
@@ -347,6 +349,14 @@ class _BaseQuantizationConfig:
         if check_value('extra_precisions', extra_precisions, List):
             self._extra_precisions = extra_precisions
             self._use_bf16 = "bf16" in extra_precisions
+
+    @property
+    def optimization_level(self):
+        return self._optimization_level
+    
+    @optimization_level.setter
+    def optimization_level(self, optimization_level):
+        self._optimization_level = optimization_level
 
     @property
     def reduce_range(self):
@@ -576,9 +586,9 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
                          extra_precisions=extra_precisions,
+                         optimization_level=optimization_level,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
-        self.optimization_level = optimization_level
 
     @property
     def approach(self):
@@ -599,10 +609,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions=["bf16"]):
+                 extra_precisions=["bf16"],
+                 optimization_level=1):
         super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
                          op_type_list=op_type_list, op_name_list=op_name_list,
-                         reduce_range=reduce_range, extra_precisions=extra_precisions)
+                         reduce_range=reduce_range, extra_precisions=extra_precisions, 
+                         optimization_level=optimization_level)
         self._approach = 'quant_aware_training'
 
     @property
