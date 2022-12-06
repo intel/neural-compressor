@@ -14,7 +14,7 @@ def build_mse_yaml():
 
     tuning:
         strategy:
-            name: mse
+            name: mse_v2
         accuracy_criterion:
             relative:  0.01
         exit_policy:

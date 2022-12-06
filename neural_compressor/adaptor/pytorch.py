@@ -3488,7 +3488,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             logger.info('Module has no forward function')
         return False
 
-    def get_output_op_names(self, fp32_model, tune_cfg, dataloader):
+    def get_output_op_names(self, *args, **kwargs):
         return None
 
     def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 

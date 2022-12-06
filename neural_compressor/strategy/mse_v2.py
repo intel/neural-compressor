@@ -29,7 +29,7 @@ from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.helper import tuning_record_msg
 
 @strategy_registry
-class MSETuneStrategy(TuneStrategy):
+class MSE_V2TuneStrategy(TuneStrategy):
     """The tuning strategy using MSE policy in tuning space.
 
        This MSE policy runs fp32 model and int8 model seperately to get all activation tensors,
@@ -83,7 +83,7 @@ class MSETuneStrategy(TuneStrategy):
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         self.ordered_ops = None
         super(
-            MSETuneStrategy,
+            MSE_V2TuneStrategy,
             self).__init__(
             model,
             conf,
@@ -198,9 +198,9 @@ class MSETuneStrategy(TuneStrategy):
 
             # Optype-wise tuning 
             early_stop_tuning = True
-            stage1_cnt = 0  
+            stage1_cnt = 0
             int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
-            stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
+            stage1_max = 2  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
             for op_tuning_cfg in op_wise_tuning_sampler:
@@ -230,42 +230,86 @@ class MSETuneStrategy(TuneStrategy):
             new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
             yield new_op_tuning_cfg
 
-            best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
+            # Fallback one by one by op sensitivity(mse)
+            # 1. while the accuracy requirements not met:  # to improve the accuracy
+            #     1) calculate the sensitivity of int8 ops in current state. 
+            #     2) fallback the op with higher sensitivity accumulatively
+            # 2. after the accuracy requirements met:  # to improve the performance 
+            #     1) calculate the sensitivity of fp32 ops in the current state
+            #     2) re-quantize the op with lower sensitivity accumulatively
+            tune_cfg = deepcopy(self.cur_best_tuning_cfg)
+            requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg))
+            self.output_op_names = self.adaptor.get_output_op_names(self.cur_best_qmodel)
+            self.confidence_batches = self.cfg.tuning.strategy.confidence_batches
+            tune_cfg_backup = deepcopy(tune_cfg)
+            quant_ops_in_tune_cfg = self._collect_ops_by_quant_mode(tune_cfg, 'dynamic') + \
+                                    self._collect_ops_by_quant_mode(tune_cfg, 'static')
+            op_quant_cfgs = {op_info: tune_cfg_backup[op_info] for op_info in quant_ops_in_tune_cfg}
+            fallback_records = []
+            self.re_quant = True
+            while not self.objectives.compare(self.last_tune_result, self.baseline):
+                # Record the time of calcutating the sensitivity
+                start = time()
+                ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
+                                                                self.calib_dataloader, 
+                                                                deepcopy(self._tune_cfg_converter(tune_cfg)), 
+                                                                self.output_op_names,
+                                                                self.confidence_batches,
+                                                                fallback=True)
+                logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
+                select_op_info = ops_lst[0]
+                logger.info(f"*** The op {select_op_info} have the highest sensitivity in the current state, \
+                    fallback it to fp32.")
+                tune_cfg[select_op_info] = OpTuningConfig(select_op_info[0], 
+                                                            select_op_info[1], 
+                                                            'fp32', 
+                                                            self.tuning_space)
+                # Record the fallback history
+                if not fallback_records: 
+                    fallback_records = [[select_op_info]]
+                else:
+                    fallback_records.append(fallback_records[-1] + [select_op_info])
+                logger.debug(f"*** The fallback ops record: \n{tuning_record_msg(fallback_records)}")
+                yield tune_cfg
 
-            # Fallback to float point datatypes ('bf16' or 'fp32')
-            for target_dtype in ['bf16', 'fp32']:
-                fallback_items_lst = [item for item in int8_ops if
-                                    item in tuning_space.query_items_by_quant_mode(target_dtype)]
-                if fallback_items_lst:
-                    logger.info(f"Start to fallback op to {target_dtype} one by one.")
-                # Replace it with sorted items list
-                fallback_items_name_lst = [item.name for item in fallback_items_lst]
-                # TODO check the best_qmodel
-                ordered_op_name_types = self.mse_impact_lst(fallback_items_name_lst, self.model, self.best_qmodel)
-                self.ordered_ops = [op_name for (op_name, op_type) in ordered_op_name_types]
-                op_dtypes = OrderedDict(zip(ordered_op_name_types, [target_dtype] * len(fallback_items_name_lst)))
-                initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-                fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                        initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                        op_dtypes=op_dtypes, accumulate=False)
-                op_fallback_acc_impact = OrderedDict()
-                for op_index, op_tuning_cfg in enumerate(fallback_sampler):
-                    op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                    yield op_tuning_cfg
-                    acc, _ = self.last_tune_result
-                    op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
-
-                # Do accumulated fallback according to the order in the previous stage
-                if len(op_fallback_acc_impact) > 0:
-                    ordered_ops = sorted(op_fallback_acc_impact.keys(), 
-                                        key=lambda key: op_fallback_acc_impact[key],
-                                        reverse=self.higher_is_better)
-                    op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
-                    logger.info(f"Start to accumulate fallback to {target_dtype}.")
-                    initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)
-                    fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
-                                                            initial_op_tuning_cfg=initial_op_tuning_cfg,
-                                                            op_dtypes=op_dtypes, accumulate=True)
-                    for op_tuning_cfg in fallback_sampler:
-                        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                        yield op_tuning_cfg
+            logger.info(f"*** The accuracy meeting the accuracy requirements, stop fallback ops.")
+            while self.objectives.compare(self.last_tune_result, self.baseline):
+                if len(fallback_records) == 0 or len(fallback_records[-1]) <= 1:
+                    logger.info(f"*** Stop re-quant due to no int8 op or only 1 int8 op left.")
+                    break
+                logger.info(f"*** Start to re-quant the fallback op in the previous stage.")
+                # Track the current fallback ops
+                tmp_fallback_ops = fallback_records[-1] if fallback_records else [] 
+                start = time()
+                ops_lst = self.adaptor.calculate_op_sensitivity(self.model, 
+                                                                self.calib_dataloader, 
+                                                                deepcopy(self._tune_cfg_converter(tune_cfg)),
+                                                                self.output_op_names, 
+                                                                self.confidence_batches,
+                                                                fallback=False,
+                                                                requantize_cfgs=requantize_cfg['op'])
+                logger.debug(f"*** The op sensitivity analysis took {time() - start:.2f}s.")
+                if not ops_lst: 
+                    logger.warning("No op to be requantized")
+                    break
+                for select_op_info in ops_lst:
+                    #assert select_op_info in tmp_fallback_ops, f"{select_op_info} not in fallback list."
+                    if select_op_info not in tmp_fallback_ops:
+                        logger.debug(f"{select_op_info} not in fallback list.")
+                        continue
+                    
+                    new_fallback_ops = deepcopy(tmp_fallback_ops)
+                    new_fallback_ops.remove(select_op_info)
+                    if new_fallback_ops not in fallback_records:
+                        logger.info(f"*** The op {select_op_info} have the lowest sensitivity in the current state, \
+                                    re-quantize it.")
+                        tune_cfg[select_op_info] = op_quant_cfgs[select_op_info]
+                        fallback_records.append(new_fallback_ops)
+                        logger.debug(f"*** The fallback ops record: \n{tuning_record_msg(fallback_records)}")
+                        yield tune_cfg
+                        break
+                    else:
+                        logger.debug(f"*** Skip re-qaunt {select_op_info}, due the config has been evallated.")
+                        continue
+            self.re_quant = False
+            logger.info(f"*** The accuracy not meeting the accuracy requirements, stop re-quantize ops.")

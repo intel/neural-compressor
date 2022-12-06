@@ -4,7 +4,7 @@ import unittest
 import tensorflow as tf
 import numpy as np
 
-def build_mse_yaml():
+def build_msev2_yaml():
     mse_yaml = '''
     model:
         name: fake_yaml
@@ -18,7 +18,7 @@ def build_mse_yaml():
                 topk: 1
     tuning:
         strategy:
-            name: mse
+            name: mse_v2
         accuracy_criterion:
             relative:  0.01
         exit_policy:
@@ -67,7 +67,7 @@ def build_fake_model():
 class TestGetOutputTensor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        build_mse_yaml()
+        build_msev2_yaml()
         self.model = build_fake_model()
         
     @classmethod
