@@ -46,6 +46,8 @@ flags.DEFINE_string(
 flags.DEFINE_string(
     'eval_data', None, 'location of evaluate dataset')
 
+flags.DEFINE_integer('batch_size', 1, 'batch_size')
+
 from neural_compressor.experimental.metric.metric import TensorflowTopK
 from neural_compressor.experimental.data.transforms.transform import ComposeTransform
 from neural_compressor.experimental.data.datasets.dataset import TensorflowImageRecord
@@ -54,66 +56,73 @@ from neural_compressor.experimental.data.dataloaders.default_dataloader import D
 from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
 
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
-				[BilinearImagenetTransform(height=299, width=299)]))
+                [BilinearImagenetTransform(height=299, width=299)]))
 if FLAGS.benchmark and FLAGS.mode == 'performance':
-	eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
+    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 else:
-	eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=32)
+    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=32)
 if FLAGS.calib_data:
-	calib_dataset = TensorflowImageRecord(root=FLAGS.calib_data, transform=ComposeTransform(transform_list= \
-    				[BilinearImagenetTransform(height=299, width=299)]))
-	calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
+    calib_dataset = TensorflowImageRecord(root=FLAGS.calib_data, transform=ComposeTransform(transform_list= \
+                    [BilinearImagenetTransform(height=299, width=299)]))
+    calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
 def evaluate(model, measurer=None):
-	"""
-	Custom evaluate function to inference the model for specified metric on validation dataset.
+    """
+    Custom evaluate function to inference the model for specified metric on validation dataset.
 
-	Args:
-		model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-		measurer (object, optional): for benchmark measurement of duration.
-		
-	Returns:
-		accuracy (float): evaluation result, the larger is better.
-	"""
-	infer = model.signatures["serving_default"]
-	output_dict_keys = infer.structured_outputs.keys()
-	output_name = list(output_dict_keys )[0]
-	postprocess = LabelShift(label_shift=1)
-	metric = TensorflowTopK(k=1)
+    Args:
+        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+        measurer (object, optional): for benchmark measurement of duration.
+        
+    Returns:
+        accuracy (float): evaluation result, the larger is better.
+    """
+    infer = model.signatures["serving_default"]
+    output_dict_keys = infer.structured_outputs.keys()
+    output_name = list(output_dict_keys )[0]
+    postprocess = LabelShift(label_shift=1)
+    metric = TensorflowTopK(k=1)
 
-	def eval_func(dataloader, metric):
-		results = []
-		for idx, (inputs, labels) in enumerate(dataloader):
-			inputs = np.array(inputs)
-			input_tensor = tf.constant(inputs)
-			if measurer:
-				measurer.start()
-			predictions = infer(input_tensor)[output_name]
-			if measurer:
-				measurer.end()
-			predictions = predictions.numpy()
-			predictions, labels = postprocess((predictions, labels))
-			metric.update(predictions, labels)
-		return results
+    def eval_func(dataloader, metric):
+        results = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            inputs = np.array(inputs)
+            input_tensor = tf.constant(inputs)
+            if measurer:
+                measurer.start()
+            predictions = infer(input_tensor)[output_name]
+            if measurer:
+                measurer.end()
+            predictions = predictions.numpy()
+            predictions, labels = postprocess((predictions, labels))
+            metric.update(predictions, labels)
+        return results
 
-	results = eval_func(eval_dataloader, metric)
-	acc = metric.result()
-	return acc
+    results = eval_func(eval_dataloader, metric)
+    acc = metric.result()
+    return acc
 
 def main(_):
-	if FLAGS.tune:
-		from neural_compressor import quantization
-		from neural_compressor.config import PostTrainingQuantConfig
-		conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
-		q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
-					eval_func=evaluate)
-		q_model.save(FLAGS.output_model)
+    if FLAGS.tune:
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+        conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
+        q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
+                    eval_func=evaluate)
+        q_model.save(FLAGS.output_model)
 
-	if FLAGS.benchmark:
-		from neural_compressor import benchmark
-		from neural_compressor.config import BenchmarkConfig
-		conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=7)
-		benchmark.fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+    if FLAGS.benchmark:
+        from neural_compressor import benchmark
+        from neural_compressor.config import BenchmarkConfig
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+            benchmark.fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+        else:
+            from neural_compressor.experimental import common
+            model = common.Model(FLAGS.input_model).model
+            accuracy = evaluate(model)
+            print('Batch size = %d' % FLAGS.batch_size)
+            print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

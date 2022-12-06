@@ -25,25 +25,27 @@ FLAGS = flags.FLAGS
 
 ## Required parameters
 flags.DEFINE_string(
-    'input_model', None, 'Run inference with specified keras model.')
+	'input_model', None, 'Run inference with specified keras model.')
 
 flags.DEFINE_string(
-    'output_model', None, 'The output quantized model.')
+	'output_model', None, 'The output quantized model.')
 
 flags.DEFINE_string(
-    'mode', 'performance', 'define benchmark mode for accuracy or performance')
+	'mode', 'performance', 'define benchmark mode for accuracy or performance')
 
 flags.DEFINE_bool(
-    'tune', False, 'whether to tune the model')
+	'tune', False, 'whether to tune the model')
 
 flags.DEFINE_bool(
-    'benchmark', False, 'whether to benchmark the model')
+	'benchmark', False, 'whether to benchmark the model')
 
 flags.DEFINE_string(
-    'calib_data', None, 'location of calibration dataset')
+	'calib_data', None, 'location of calibration dataset')
 
 flags.DEFINE_string(
-    'eval_data', None, 'location of evaluate dataset')
+	'eval_data', None, 'location of evaluate dataset')
+
+flags.DEFINE_integer('batch_size', 1, 'batch_size')
 
 from neural_compressor.experimental.metric.metric import TensorflowTopK
 from neural_compressor.experimental.data.transforms.transform import ComposeTransform
@@ -103,13 +105,13 @@ def main(_):
 		from neural_compressor import quantization
 		from neural_compressor.config import PostTrainingQuantConfig
 		conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50],
-                         				op_name_list={'StatefulPartitionedCall/mobilenetv2_1.00_224/ \
+										op_name_list={'StatefulPartitionedCall/mobilenetv2_1.00_224/ \
 											expanded_conv_depthwise/depthwise':
 												{
 												'activation':  {'dtype': ['fp32']},
 												'weight': {'dtype': ['fp32']},
 												}		
-										 	}
+											}
 										)
 		q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
 					eval_func=evaluate)
@@ -118,8 +120,15 @@ def main(_):
 	if FLAGS.benchmark:
 		from neural_compressor import benchmark
 		from neural_compressor.config import BenchmarkConfig
-		conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=7)
-		benchmark.fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+		if FLAGS.mode == 'performance':
+			conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+			benchmark.fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+		else:
+			from neural_compressor.experimental import common
+			model = common.Model(FLAGS.input_model).model
+			accuracy = evaluate(model)
+			print('Batch size = %d' % FLAGS.batch_size)
+			print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
-    tf.compat.v1.app.run()
+	tf.compat.v1.app.run()
