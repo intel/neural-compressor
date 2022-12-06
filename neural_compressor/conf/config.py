@@ -841,6 +841,7 @@ schema = Schema({
         },
     },
     Optional('use_bf16', default=True): bool,
+    Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1111,6 +1112,7 @@ quantization_default_schema = Schema({
                                                      'activation': {}},
                                     }): dict,
     Optional('use_bf16', default=False): bool,
+    Optional('optimization_level', default=1): int,
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
