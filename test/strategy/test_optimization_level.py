@@ -1,10 +1,15 @@
-"""Tests for quantization"""
-import numpy as np
-import unittest
-import shutil
+"""Tests for optimization level(conservative)"""
+
 import os
+import shutil
+import unittest
+import time
 import yaml
+
+import numpy as np
+
 from neural_compressor.utils import logger
+
 
 def build_fake_yaml2():
     fake_yaml = '''
@@ -137,7 +142,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-class TestQuantization(unittest.TestCase):
+class TestOptimizationLevel(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -146,13 +151,6 @@ class TestQuantization(unittest.TestCase):
         build_fake_yaml_with_opt_level_0()
         build_fake_yaml_with_opt_level_1()
         build_fake_yaml_with_opt_level_0_pt()
-        self.test1_index = -1
-        self.test2_index = -1
-        self.test3_index = -1
-        self.test4_index = -1
-        self.test_opt_level_0_index = -1
-        self.test_opt_level_1_index = -1
-        self.test_opt_level_0_pt_index = -1
 
     @classmethod
     def tearDownClass(self):
@@ -161,20 +159,15 @@ class TestQuantization(unittest.TestCase):
         os.remove("fake_yaml_with_opt_level_0_pt.yaml")
         os.remove('fake_yaml2.yaml')
         shutil.rmtree('saved', ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
         
     def test_opt_level_0(self):
-        import time
         from neural_compressor.experimental import Quantization, common
         from neural_compressor.strategy.conservative import ConservativeTuneStrategy
         # accuracy increase and performance decrease 
         logger.info("*** Test: optimization level 0.")
-        acc_lst =  [1.0, 2.0, 2.1]
-        perf_lst = [2.0, 1.5, 1.0]
         def _eval(fake_model):
-            self.test_opt_level_0_index += 1
-            perf = perf_lst[self.test_opt_level_0_index]
-            time.sleep(perf)
-            return acc_lst[self.test_opt_level_0_index]
+            return 1
             
         quantizer = Quantization('fake_yaml_with_opt_level_0.yaml')
         quantizer.eval_func = _eval
@@ -186,18 +179,12 @@ class TestQuantization(unittest.TestCase):
         self.assertTrue(isinstance(quantizer.strategy, ConservativeTuneStrategy))
 
     def test_opt_level_1(self):
-        import time
         from neural_compressor.experimental import Quantization, common
         from neural_compressor.strategy.basic import BasicTuneStrategy
         # accuracy increase and performance decrease 
         logger.info("*** Test: optimization level 1.")
-        acc_lst =  [1.0, 2.0, 2.1]
-        perf_lst = [2.0, 1.5, 1.0]
         def _eval(fake_model):
-            self.test1_index += 1
-            perf = perf_lst[self.test_opt_level_1_index]
-            time.sleep(perf)
-            return acc_lst[self.test_opt_level_1_index]
+            return 1
             
         quantizer = Quantization('fake_yaml_with_opt_level_1.yaml')
         quantizer.eval_func = _eval
@@ -209,33 +196,34 @@ class TestQuantization(unittest.TestCase):
         self.assertTrue(isinstance(quantizer.strategy, BasicTuneStrategy))
         
     def test_opt_level_0_pt(self):
-        import time
+        from neural_compressor.experimental import Quantization, common
+        import torchvision
+        model = torchvision.models.resnet18()
+        
         acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
         perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        self.test_opt_level_0_pt_index = -1
         def _eval(fake_model):
             self.test_opt_level_0_pt_index += 1
             perf = perf_lst[self.test_opt_level_0_pt_index]
             time.sleep(perf)
             return acc_lst[self.test_opt_level_0_pt_index]
-        from neural_compressor.experimental import Quantization, common
-        from neural_compressor.strategy.basic import BasicTuneStrategy
-        import torchvision
-        model = torchvision.models.resnet18()
+        
         quantizer = Quantization('fake_yaml_with_opt_level_0_pt.yaml')
         dataset = quantizer.dataset('dummy', (1, 3, 224, 224))
         quantizer.model = model
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_func = _eval
         q_model = quantizer.fit()
-
+        self.assertEqual(quantizer.strategy.best_tune_result[0], 2.3)
 
     def test_conservative_strategy1(self):
-        import time
         from neural_compressor.experimental import Quantization, common
         # accuracy increase and performance decrease 
         logger.info("*** Test: accuracy increase and performance decrease.")
-        acc_lst =  [1.0, 2.0, 2.1, 3.0, 4.0]
-        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        acc_lst =  [1.0, 2.0]
+        perf_lst = [2.0, 1.5]
+        self.test1_index = -1
         def _eval(fake_model):
             self.test1_index += 1
             perf = perf_lst[self.test1_index]
@@ -249,14 +237,15 @@ class TestQuantization(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
         quantizer.fit()
+        self.assertEqual(quantizer.strategy.best_tune_result[0], 2.0)
         
     def test_conservative_strategy2(self):
-        import time
         from neural_compressor.experimental import Quantization, common
         # accuracy meets and performance disturbance 
         logger.info("*** Test: accuracy meets and performance disturbance.")
-        acc_lst =  [5.0, 6.0, 6.0, 6.0, 6.0, 6.0]
-        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1, 0.5]
+        acc_lst =  [5.0, 6.0, 6.0, 6.0]
+        perf_lst = [2.0, 1.5, 1.0, 0.5]
+        self.test2_index = -1
         def _eval(fake_model):
             self.test2_index += 1
             perf = perf_lst[self.test2_index]
@@ -269,49 +258,31 @@ class TestQuantization(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer.fit()
-
-    def test_conservative_strategy3(self):
-        import time
-        from neural_compressor.experimental import Quantization, common
-        # accuracy disturbance and performance disturbance.
-        logger.info("*** Test: accuracy disturbance and performance disturbance.")
-        acc_lst =  [5.0, 6.0, 6.0, 4.0, 6.0, 6.0]
-        perf_lst = [2.0, 1.5, 1.0, 0.1, 0.5, 1]
-        def _eval(fake_model):
-            self.test3_index += 1
-            perf = perf_lst[self.test3_index]
-            time.sleep(perf)
-            return acc_lst[self.test3_index]
-            
-        quantizer = Quantization('fake_yaml2.yaml')
-        quantizer.eval_func = _eval
-        dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset)
-        quantizer.eval_dataloader = common.DataLoader(dataset)
-        quantizer.model = self.constant_graph
-        quantizer.fit()
+        qmodel = quantizer.fit()
+        self.assertIsNotNone(qmodel)
 
     def test_conservative_strategy4(self):
-        import time
         from neural_compressor.experimental import Quantization, common
         # accuracy not meet 
         logger.info("*** Test: accuracy not meet.")
         acc_lst =  [5.0, 4.0, 4.0, 4.0]
         perf_lst = [2.0, 1.5, 1.0, 0.1]
+        self.test4_index = -1
         def _eval(fake_model):
             self.test4_index += 1
             perf = perf_lst[self.test4_index]
             time.sleep(perf)
             return acc_lst[self.test4_index]
-            
+        
         quantizer = Quantization('fake_yaml2.yaml')
         quantizer.eval_func = _eval
         dataset = quantizer.dataset('dummy', (100, 3, 3, 1), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        quantizer.fit()
+        q_model = quantizer.fit()
+        self.assertIsNone(q_model)
+        
 
 if __name__ == "__main__":
     unittest.main()
