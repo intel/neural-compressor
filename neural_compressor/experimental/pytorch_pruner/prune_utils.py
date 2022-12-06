@@ -50,9 +50,9 @@ def check_config(prune_config):
     assert prune_config['prune_domain'] == "global" or prune_config['prune_domain'] == "local", \
         "only support 'global' and 'local' prune domain"
     try:
-        prune_config['lock_init_sparsity'] = bool(prune_config['lock_init_sparsity'])
+        prune_config['infer_initial_sparsity'] = bool(prune_config['infer_initial_sparsity'])
     except:
-        assert False, "lock_init_sparsity should be bool value"
+        assert False, "infer_initial_sparsity should be bool value"
     if "x" in prune_config["pattern"]:
         pattern = prune_config["pattern"].split('_')[-1].split('x')
         if pattern[0] == "channel" or pattern[1] == "channel":
@@ -134,7 +134,7 @@ def process_and_check_config(val):
     names = reset_non_value_to_default(val, "names", [])
     extra_excluded_names = reset_non_value_to_default(val, "extra_excluded_names", [])
     pattern = reset_non_value_to_default(val, "pattern", "tile_pattern_4x1")
-    lock_init_sparsity = reset_non_value_to_default(val, "pattern", False)
+    infer_initial_sparsity = reset_non_value_to_default(val, "pattern", False)
     reg_type = reset_non_value_to_default(val, "reg_type", None)
     reg_coeff = reset_non_value_to_default(val, "reg_coeff", None)
     max_sparsity_ratio_per_layer = reset_non_value_to_default(val, "max_sparsity_ratio_per_layer", 0.98)
@@ -162,8 +162,8 @@ def process_and_check_config(val):
         pruner['pattern'] = reset_non_value_to_default(info, 'pattern',
                                                        pattern)
 
-        pruner['lock_init_sparsity'] = reset_non_value_to_default(info, 'lock_init_sparsity',
-                                                                  lock_init_sparsity)
+        pruner['infer_initial_sparsity'] = reset_non_value_to_default(info, 'infer_initial_sparsity',
+                                                                  infer_initial_sparsity)
 
         ##ugly design
         pruner['reg_type'] = reset_non_value_to_default(info, 'reg_type', reg_type)
