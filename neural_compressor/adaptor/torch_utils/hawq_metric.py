@@ -541,15 +541,11 @@ def compare_weights(
                 )
 
     return weight_dict
-# op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model, 
-        #                                                     dataloader = self.calib_dataloader, 
-        #                                                     q_model = self.q_model, 
-        #                                                     criterion = torch.nn.CrossEntropyLoss(), # TODO replace it with user specify loss
-        #                                                     enable_act = False)
 def hawq_top(fp32_model,q_model,dataloader,criterion,enable_act):
     orig_eval=True
     if fp32_model.training:
         orig_eval=False
+    fp32_model.eval()
     ht=HessianTrace(fp32_model,dataloader=dataloader,q_model=q_model)
     q_model_state_dict={}
     for key in q_model.state_dict().keys():
@@ -563,7 +559,7 @@ def hawq_top(fp32_model,q_model,dataloader,criterion,enable_act):
         op_qnt_tensor=weight_quant_loss[key]['quantized'].dequantize()
         diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)
         pertur_lst[key]=diff_l2
-    traces=ht.get_act_traces(enable_act)
+    traces=ht.get_avg_traces(enable_act)
     op_to_traces=traces['weight']
     if enable_act:
         act_to_traces=traces['activation']
