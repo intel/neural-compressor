@@ -1,7 +1,7 @@
 # Accelerate VGG19 Inference on Intel® Gen4 Xeon®  Sapphire Rapids
 
 
-## Instroduction
+## Introduction
 
 Intel® Gen4 Xeon® Sapphire Rapids supports new hardware feature: [Intel® Advanced Matrix Extensions (AMX)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/intrinsics/intrinsics-for-amx-instructions.html) which accelerates deep learning inference by INT8/BF16 data type.
 
@@ -11,7 +11,7 @@ Intel® Neural Compressor helps quantize the FP32 model to INT8 and control the 
 
 This example shows a whole pipeline:
 
-1. Train an image classification model [VGG19](https://arxiv.org/abs/1409.1556) by transfer learning based on [TensorFLow Hub](https://tfhub.dev) trained model.
+1. Train an image classification model [VGG19](https://arxiv.org/abs/1409.1556) by transfer learning based on [TensorFlow Hub](https://tfhub.dev) trained model.
 
 2. Quantize the FP32 Keras model and get a INT8 PB model by Intel® Neural Compressor.
 
@@ -38,7 +38,7 @@ We will learn the acceleration of AI inference by Intel AI technology:
 
 As we know, SPR support AMX-INT8 and AMX-BF16 instructions which accelerate the INT8 and BF16 layer inference.
 
-Intel® Neural Compressor has this speical function for SPR: during quantizing the model, it will convert the FP32 layers to BF16 which can't be quantized when execute the quantization on SPR automaticly. Convert FP32 to BF16 is following the rule of AI framework too.
+Intel® Neural Compressor has this speical function for SPR: during quantizing the model, it will convert the FP32 layers to BF16 which can't be quantized when execute the quantization on SPR automatically. Convert FP32 to BF16 is following the rule of AI framework too.
 
 It will help accelerate the model on SPR as possible and control the accuracy loss as expected.
 
@@ -50,7 +50,7 @@ Note, the public release can't support it now.
 
 2. Execute quantization process by calling Intel® Neural Compressor API on SPR.
 
-we could force to enable this feature by setting environment variables, if the quantization is executed on the Xeon which dosen't support AMX.
+we could force to enable this feature by setting environment variables, if the quantization is executed on the Xeon which doesn't support AMX.
 
 ```
 import os
