@@ -237,14 +237,14 @@ class TestMixedPrecisionOnNonEnabledHost(unittest.TestCase):
 
     @unittest.skipIf(CpuInfo().bf16, 'skip since hardware support bf16')
     def test_on_non_enabled_host_tf(self):
-        conf = MixedPrecisionConfig(extra_precisions=["bf16"])
+        conf = MixedPrecisionConfig()
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.tf_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
     def test_on_non_enabled_dtype(self):
         # test onnx
-        conf = MixedPrecisionConfig(extra_precisions=["bf16"])
+        conf = MixedPrecisionConfig()
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertEqual(cm.exception.code, 0)
@@ -281,7 +281,6 @@ class TestMixedPrecision(unittest.TestCase):
         conf = MixedPrecisionConfig(
             inputs="input",
             outputs="final",
-            extra_precisions=["bf16", "fp32"],
         )
 
         output_model = mix_precision.fit(
@@ -290,15 +289,11 @@ class TestMixedPrecision(unittest.TestCase):
             eval_func=eval,
         )
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
-        self.assertEqual(conf.extra_precisions, ['bf16', 'fp32'])
         self.assertEqual(conf.inputs, 'input')
         self.assertEqual(conf.outputs, 'final')
 
         tuning_criterion = TuningCriterion(max_trials=4, timeout=500)
-        conf = MixedPrecisionConfig(
-            tuning_criterion=tuning_criterion,
-            extra_precisions=["bf16"],
-        )
+        conf = MixedPrecisionConfig(tuning_criterion=tuning_criterion)
         output_model = mix_precision.fit(
             common.Model(self.tf_model),
             conf,
@@ -307,12 +302,9 @@ class TestMixedPrecision(unittest.TestCase):
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
 
         tuning_criterion = TuningCriterion(max_trials=1, timeout=100)
-        conf = MixedPrecisionConfig(
-            inputs="input",
-            outputs="final, test",
-            tuning_criterion=tuning_criterion,
-            extra_precisions=["bf16", "fp32"],
-        )
+        conf = MixedPrecisionConfig(inputs="input",
+                                    outputs="final, test",
+                                    tuning_criterion=tuning_criterion)
         output_model = mix_precision.fit(
             self.tf_model,
             conf,
@@ -326,7 +318,7 @@ class TestMixedPrecision(unittest.TestCase):
         def eval(model):
             return 0.5
 
-        conf = MixedPrecisionConfig(extra_precisions=["bf16"], )
+        conf = MixedPrecisionConfig()
         output_model = mix_precision.fit(
             self.pt_model,
             conf,
