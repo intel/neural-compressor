@@ -661,30 +661,51 @@ class PyTorchModel(PyTorchBaseModel):
         save_path: str,
         conf,
     ):
+        from neural_compressor.experimental.export import (
+            torch_to_fp32_onnx, 
+            torch_to_int8_onnx
+        )
         if conf.dtype == 'int8':
-            calib_dataloader = conf.kwargs.pop("calib_dataloader", None)
-            self.export_to_int8_onnx(
-                save_path=save_path,
-                example_inputs=conf.example_inputs,
+            recipe = conf.kwargs.pop('recipe', 1)
+            assert recipe in [1, 2, 3], "`recipe` refers to how to process " \
+                "nn.quantized.Linear module, which can only be 1 or 2 or 3."
+            if recipe == 1:
+                use_int32_bias = False
+                use_output_scale_zp = False
+            elif recipe == 2:
+                use_int32_bias = True
+                use_output_scale_zp = False
+            elif recipe == 3:
+                use_int32_bias = False
+                use_output_scale_zp = True
+            linear_options = {'use_int32_bias': use_int32_bias,
+                            'use_output_scale_zp': use_output_scale_zp}
+
+            torch_to_int8_onnx(
+                self.fp32_model,
+                self.model,
+                self.q_config,
+                save_path,
+                conf.example_inputs,
                 opset_version=conf.opset_version,
                 dynamic_axes=conf.dynamic_axes,
                 input_names=conf.input_names,
                 output_names=conf.output_names,
                 quant_format=conf.quant_format,
                 dtype='U8S8',
-                fp32_model=self.fp32_model,
-                calib_dataloader=calib_dataloader,
+                linear_options=linear_options,
             )
         elif conf.dtype == 'fp32':
-            self.export_to_fp32_onnx(
-                save_path=save_path,
-                example_inputs=conf.example_inputs,
+            torch_to_fp32_onnx(
+                self.fp32_model,
+                save_path,
+                conf.example_inputs,
                 opset_version=conf.opset_version,
                 dynamic_axes=conf.dynamic_axes,
                 input_names=conf.input_names,
                 output_names=conf.output_names,
+                do_constant_folding=True,
                 verbose=True,
-                fp32_model=self.fp32_model,
             )
         else:   # pragma: no cover
             assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
