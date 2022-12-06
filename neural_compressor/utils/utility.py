@@ -108,13 +108,6 @@ def singleton(cls):
         return instances[cls]
     return _singleton
 
-def set_framework(framework):
-    global __FRAMEWORK
-    __FRAMEWORK = framework
-
-def get_framework():
-    global __FRAMEWORK
-    return __FRAMEWORK
 
 @contextmanager
 def time_limit(seconds):

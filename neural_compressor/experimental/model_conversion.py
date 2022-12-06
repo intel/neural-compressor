@@ -17,20 +17,14 @@
 
 """Helps convert one model format to another."""
 
-import pickle
-import random
 import tempfile
-import sys
 import datetime
-import numpy as np
 import yaml
 from neural_compressor.adaptor import FRAMEWORKS
 from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
-from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader, create_eval_func
-from ..utils.utility import CpuInfo, set_framework
 from .common import Model as NCModel
 from ..model import BaseModel
 
@@ -84,8 +78,6 @@ class ModelConversion():
                     Conf class to model_conversion"
         else:
             self.conf = None
-
-        set_framework(self.framework)
 
     def __call__(self):
         """Execute model conversion process.
