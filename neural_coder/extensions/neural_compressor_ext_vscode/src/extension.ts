@@ -136,7 +136,7 @@ export async function activate(context: vscode.ExtensionContext) {
               if (typeof value !== "undefined") {
                 userInput = value ? value : "";
                 const opc =
-                  vscode.window.createOutputChannel("autoBenchOutput");
+                  vscode.window.createOutputChannel("Neural Coder Auto-Bench");
                 ncCoder.optimizeCodes(
                   curPythonPath,
                   "auto-quant",

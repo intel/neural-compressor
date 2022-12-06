@@ -120,7 +120,7 @@
     "submenus": [
       {
         "id": "neuralCoder/editor/title",
-        "label": "neuralCoder",
+        "label": "Neural Coder",
         "icon": {
           "dark": "./images/dark/dark_logo.png",
           "light": "./images/light/light_logo.svg"
