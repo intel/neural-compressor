@@ -1160,4 +1160,7 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_ipex': PyTorchIpexModel if TORCH else None,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
+          'onnxrt_qlinearops': ONNXModel,
+          'onnxrt_qdq': ONNXModel,
+          'onnxrt_integerops': ONNXModel
           }
