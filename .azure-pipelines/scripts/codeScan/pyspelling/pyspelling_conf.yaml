@@ -4,8 +4,8 @@ matrix:
     d: en_US.ISO8859-15
   dictionary:
     wordlists:
-    - ${DICT_DIR}/lpot_dict.txt
-    output: ${DICT_DIR}/lpot_dict.dic
+    - ${DICT_DIR}/inc_dict.txt
+    output: ${DICT_DIR}/inc_dict.dic
   sources:
   - ${REPO_DIR}/docs/source/*.md
   - ${REPO_DIR}/*.md

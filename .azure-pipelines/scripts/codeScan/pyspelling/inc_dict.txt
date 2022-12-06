@@ -696,6 +696,7 @@ Goyal
 gpg
 GPG
 gpt
+GPTJ
 gpu
 gpus
 GPUs
@@ -2383,3 +2384,9 @@ AccuracyCriterion
 AccuracyLoss
 PostTrainingQuantConfig
 TuningCriterion
+CPz
+Nsh
+UmK
+fe
+vmware
+PythonLauncher
