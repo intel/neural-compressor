@@ -31,6 +31,7 @@ from ..utils.create_obj_from_config import create_dataloader
 from ..utils.utility import CpuInfo, time_limit
 from .common import Model as NCModel
 from ..model import BaseModel
+from ..model.model import get_model_fwk_name
 
 class Graph_Optimization(): 
     """Graph_Optimization class.
@@ -299,13 +300,29 @@ class Graph_Optimization():
         """
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = NCModel(user_model)
+            if self.conf.usr_cfg.model.framework == 'NA':
+                self.framework = get_model_fwk_name(user_model)
+                if self.framework == "pytorch":
+                    if self.conf.usr_cfg.model.backend == "default":
+                        self.framework = "pytorch_fx"
+                    elif self.conf.usr_cfg.model.backend == "ipex":
+                        self.framework = "pytorch_ipex"
+                self.conf.usr_cfg.model.framework = self.framework
+                self._model = NCModel(user_model, framework=self.framework)
+                self.set_config_by_model(self._model)
+            else:
+                self._model = NCModel(user_model, framework=self.framework)
         else:
             self._model = user_model
-
-        if self.conf.usr_cfg.model.framework == 'NA':
-            self.set_config_by_model(self._model)
-            self.framework = self.conf.usr_cfg.model.framework.lower()
+            if self.conf.usr_cfg.model.framework == 'NA':
+                self.framework = get_model_fwk_name(user_model)
+                if self.framework == "pytorch":
+                    if self.conf.usr_cfg.model.backend == "default":
+                        self.framework = "pytorch_fx"
+                    elif self.conf.usr_cfg.model.backend == "ipex":
+                        self.framework = "pytorch_ipex"
+                self.conf.usr_cfg.model.framework = self.framework
+                self.set_config_by_model(self._model)
 
     @property
     def metric(self):

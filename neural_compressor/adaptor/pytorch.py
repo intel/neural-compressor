@@ -2785,7 +2785,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             scale_info = torch_utils.util._get_input_scale(q_model._model, hook_list)
 
         if self.sub_module_list is None:
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model,
                                             convert_custom_config=self.convert_custom_config_dict)
