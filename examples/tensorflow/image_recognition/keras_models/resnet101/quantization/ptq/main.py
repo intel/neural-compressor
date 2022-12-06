@@ -45,7 +45,7 @@ flags.DEFINE_string(
 flags.DEFINE_string(
 	'eval_data', None, 'location of evaluate dataset')
 
-flags.DEFINE_integer('batch_size', 1, 'batch_size')
+flags.DEFINE_integer('batch_size', 32, 'batch_size')
 
 from neural_compressor.experimental.metric.metric import TensorflowTopK
 from neural_compressor.experimental.data.transforms.transform import ComposeTransform
@@ -83,19 +83,24 @@ def evaluate(model, measurer=None):
 	metric = TensorflowTopK(k=1)
 
 	def eval_func(dataloader, metric):
-		results = []
-		for idx, (inputs, labels) in enumerate(dataloader):
-			inputs = np.array(inputs)
-			input_tensor = tf.constant(inputs)
-			if measurer:
-				measurer.start()
-			predictions = infer(input_tensor)[output_name]
-			if measurer:
-				measurer.end()
-			predictions = predictions.numpy()
-			predictions, labels = postprocess((predictions, labels))
-			metric.update(predictions, labels)
-		return results
+        results = []
+        iteration = None
+        if FLAGS.benchmark and FLAGS.mode == 'performance':
+            iteration = 100
+        for idx, (inputs, labels) in enumerate(dataloader):
+            inputs = np.array(inputs)
+            input_tensor = tf.constant(inputs)
+            if measurer:
+                measurer.start()
+            predictions = infer(input_tensor)[output_name]
+            if measurer:
+                measurer.end()
+            predictions = predictions.numpy()
+            predictions, labels = postprocess((predictions, labels))
+            metric.update(predictions, labels)
+            if iteration and idx >= iteration:
+                break
+        return results
 
 	results = eval_func(eval_dataloader, metric)
 	acc = metric.result()
@@ -114,7 +119,7 @@ def main(_):
 		from neural_compressor import benchmark
 		from neural_compressor.config import BenchmarkConfig
 		if FLAGS.mode == 'performance':
-			conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+			conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
 			benchmark.fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
 		else:
 			from neural_compressor.experimental import common
