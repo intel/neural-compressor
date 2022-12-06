@@ -103,8 +103,8 @@ class MixedPrecision(GraphOptimization):
         if 'onnx' in self.framework and 'bf16' in self._precisions:
             logger.warning("Mixed precision doesn't support bf16 for ONNX models.")
             sys.exit(0)
-
-        if self._precisions == ['bf16'] and not CpuInfo().bf16: # pragma: no cover
+    
+        if 'bf16' in self._precisions and not CpuInfo().bf16: # pragma: no cover
             if os.getenv('FORCE_BF16') == '1':
                 logger.warning("Mixed precision will generate bf16 graph although " \
                                "the hardware doesn't support bf16 instruction.")
