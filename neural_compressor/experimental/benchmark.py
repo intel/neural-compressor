@@ -338,7 +338,9 @@ class Benchmark(object):
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
 
+        is_measure = False
         if self._b_func is None:
+            is_measure = True
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
                                     adaptor, \
@@ -353,10 +355,11 @@ class Benchmark(object):
         assert len(objectives) == 1, 'benchmark supports one objective at a time'
         self.objectives = MultiObjective(objectives,
                               cfg.tuning.accuracy_criterion,
-                              is_measure=True)
+                              is_measure=is_measure)
 
         if self._custom_b_func:
             val = self.objectives.evaluate(self._b_func, self._model.model)
+            return
         else:
             val = self.objectives.evaluate(self._b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
