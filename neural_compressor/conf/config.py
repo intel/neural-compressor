@@ -1357,7 +1357,6 @@ class Conf(object):
                     'accuracy_weight', 'latency_weight']:
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
-                        print(st_key)
                         mapping.update({'tuning.strategy.' + st_key: st_val})
             
         if pythonic_config.distillation is not None:
