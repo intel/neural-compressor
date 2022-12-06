@@ -696,6 +696,7 @@ Goyal
 gpg
 GPG
 gpt
+GPTJ
 gpu
 gpus
 GPUs
@@ -2379,6 +2380,11 @@ grappler
 amsgrad
 qoperator
 apis
+CPz
+Nsh
+UmK
+fe
+vmware
 keepachangelog
 vscode
 IntelNeuralCompressor
@@ -2405,3 +2411,4 @@ eslint
 registerCommand
 tsl
 viewlet
+PythonLauncher
