@@ -44,7 +44,7 @@ flags.DEFINE_string(
 flags.DEFINE_string(
     'eval_data', None, 'location of evaluate dataset')
 
-flags.DEFINE_integer('batch_size', 1, 'batch_size')
+flags.DEFINE_integer('batch_size', 32, 'batch_size')
 
 from neural_compressor.experimental.metric.metric import TensorflowTopK
 from neural_compressor.experimental.data.transforms.transform import ComposeTransform
@@ -118,7 +118,7 @@ def main(_):
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
             conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-            fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+            fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader)
         else:
             from neural_compressor.experimental import common
             accuracy = evaluate(common.Model(FLAGS.input_model).model)
