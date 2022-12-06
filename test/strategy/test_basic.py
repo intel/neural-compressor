@@ -155,7 +155,7 @@ def build_fake_model():
             tf.import_graph_def(graph_def, name='')
     return graph
 
-class TestQuantization(unittest.TestCase):
+class TestBasicTuningStrategy(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -217,6 +217,26 @@ class TestQuantization(unittest.TestCase):
         quantizer.model = self.constant_graph
         quantizer.fit()
 
+        
+    def test_run_basic_one_trial_new_api(self):
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import AccuracyCriterion, AccuracyLoss, PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.experimental.common import DataLoader
+        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+
+        # dataset and dataloader
+        dataset = DummyDataset(shape=(100, 3, 3, 1), label=True)
+        dataloader = DataLoader(dataset)
+        
+        # tuning and accuracy criterion
+        tolerable_loss = AccuracyLoss(0.01)
+        accuracy_criterion = AccuracyCriterion(criterion='relative', tolerable_loss=tolerable_loss)
+        tuning_criterion = TuningCriterion(strategy='basic')
+        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", 
+                                       tuning_criterion=tuning_criterion,
+                                       accuracy_criterion=accuracy_criterion)
+        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
+        self.assertIsNotNone(q_model)
 
 if __name__ == "__main__":
     unittest.main()
