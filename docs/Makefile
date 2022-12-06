@@ -19,11 +19,11 @@ help:
 
 html:
 	# cp README.md to docs, modify response-link
-	cp -f "../README.md" "./source/getting_started.md"
+	cp -f "../README.md" "./source/Welcome.md"
 	cp -f "../SECURITY.md" "./source/SECURITY.md"
-	cp -f "./source/getting_started.md" "./source/getting_started.md.tmp"
-	sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; s/.\/examples/https:\/\/github.com\/intel\/neural-compressor\/tree\/master\/examples/g; s/.md/.html/g; ' "./source/getting_started.md.tmp" > "./source/getting_started.md"
-	rm -f "./source/getting_started.md.tmp"
+	cp -f "./source/Welcome.md" "./source/Welcome.md.tmp"
+	sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; ' "./source/Welcome.md.tmp" > "./source/Welcome.md"
+	rm -f "./source/Welcome.md.tmp"
 	
 	# make sure other png can display normal
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)

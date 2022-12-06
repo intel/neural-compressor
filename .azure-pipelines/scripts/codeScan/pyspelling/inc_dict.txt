@@ -698,6 +698,7 @@ Goyal
 gpg
 GPG
 gpt
+GPTJ
 gpu
 gpus
 GPUs
@@ -2385,3 +2386,9 @@ grappler
 amsgrad
 qoperator
 apis
+CPz
+Nsh
+UmK
+fe
+vmware
+PythonLauncher
