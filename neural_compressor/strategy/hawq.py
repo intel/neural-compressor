@@ -638,6 +638,8 @@ class HawqTuneStrategy(TuneStrategy):
                 break
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
+        
+        # Start compute the hessian trace
 
         # import torch.quantization._numeric_suite as ns
         # self.model.eval()
@@ -687,6 +689,14 @@ class HawqTuneStrategy(TuneStrategy):
                 op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2
         if orig_eval == False:
             self._fp32_model.train()
+
+        # End compute the hessian trace
+        # # TODO uncomment it when algo ready.
+        # op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model, 
+        #                                                     dataloader = self.calib_dataloader, 
+        #                                                     q_model = self.q_model, 
+        #                                                     criterion = torch.nn.CrossEntropyLoss(), # TODO replace it with user specify loss
+        #                                                     enable_act = False)
         ordered_ops = sorted(op_to_traces.keys(),
                              key=lambda key: op_to_traces[key],
                              reverse=self.higher_is_better)

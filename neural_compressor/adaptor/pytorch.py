@@ -1094,6 +1094,25 @@ class TemplateAdaptor(Adaptor):
         else:
             return False
         
+    def calculate_hessian_trace(fp32_model, 
+                                dataloader, 
+                                q_model,
+                                criterion = torch.nn.CrossEntropyLoss(), 
+                                enable_act = False):
+        """Calculate hessian trace.
+
+        Args:
+            fp32_model: The original fp32 model.
+            criterion: The loss function for calculate the hessian trace. # loss = criterion(output, target)
+            dataloader: The dataloader for calculate the gradient.
+            q_model: The INT8 AMAP model.
+            enable_act: Enabling quantization error or not.
+            
+        Return:
+            hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
+        """
+        pass
+
 
 unify_op_type_mapping = {
     "ConvReLU2d": "Conv2d",
