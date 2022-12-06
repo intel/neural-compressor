@@ -1094,7 +1094,7 @@ class TemplateAdaptor(Adaptor):
         else:
             return False
         
-    def calculate_hessian_trace(
+    def calculate_hessian_trace(self,
                                 fp32_model, 
                                 dataloader, 
                                 q_model,
