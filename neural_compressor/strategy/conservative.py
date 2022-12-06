@@ -55,14 +55,10 @@ class ConservativeTuneStrategy(TuneStrategy):
         3. Add op to quant_queue according to the op type priority
         4. Go through the quant_queue and replace it with the fp32 config in tune_cfg if
            accuracy meets the requirements else continue
-           1) if accuracy meets the requirements, update the model with the best performance
-           
         
-        Stop condition:
         For bf16 and fp16, do the same thing as int8
         Note:
         1) other tunable items will using the first option as the default value.
-        2) If auto: for op support both dynamic and static, use dynamic.
 
         Yields:
             tune_config (dict): It's a dict containing the tuning configuration to run.
@@ -100,8 +96,8 @@ class ConservativeTuneStrategy(TuneStrategy):
                         yield tmp_tune_cfg
                         if self.acc_meet_flag:
                             tune_cfg[op_info] = op_config
-                            logger.info(f"*** Convert one {op_type} op({op_info}) \
-                                into {dtype} and accuracy still meet the requirements")
+                            logger.info((f"*** Convert one {op_type} op({op_info}) "
+                                         f"into {dtype} and accuracy still meet the requirements"))
                         else:
                             tmp_tune_cfg[op_info] = tune_cfg[op_info]
                             logger.info(f"*** Skip convert {op_info}.")
@@ -124,9 +120,9 @@ class ConservativeTuneStrategy(TuneStrategy):
             self._fp32_model = self.model
             self.baseline = self._evaluate(self.model)       
             self.objectives.baseline = self.baseline
-            self.best_tune_result = self.baseline
+            # self.best_tune_result = self.baseline
             # Initialize the best qmodel as fp32 model
-            self.best_qmodel = self._fp32_model
+            # self.best_qmodel = self._fp32_model
             # Record the FP32 baseline
             self._add_tuning_history()
         self.show_baseline_info()
@@ -159,17 +155,20 @@ class ConservativeTuneStrategy(TuneStrategy):
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.acc_meet_flag = self.objectives.accuracy_meets()
             if self.acc_meet_flag:
-                # Update current tuning config and model with best performance
-                get_better_performance = self.compare_performace(self.last_tune_result, self.best_tune_result)
-                if get_better_performance:
-                    logger.info(f"*** Update the model with better performance.")
+                # For the first tuning
+                if not self.best_tune_result:
+                    self.best_tune_result = self.last_tune_result
                     self.best_qmodel = self.last_qmodel
                     self.best_tune_result = self.last_tune_result
                 else:
-                    # TODO WA for save q model
-                    logger.info(f"*** Update the model by ignore performance.")
-                    self.best_qmodel = self.last_qmodel
-                    self.best_tune_result = self.last_tune_result
+                    # Update current tuning config and model with best performance
+                    get_better_performance = self.compare_performace(self.last_tune_result, self.best_tune_result)
+                    if get_better_performance:
+                        logger.info(f"*** Update the model with better performance.")
+                        self.best_qmodel = self.last_qmodel
+                        self.best_tune_result = self.last_tune_result
+                    else:
+                        logger.info(f"*** The qmodel was not updated due to not achieving better performance.")
             # Dump the current state to log
             self.dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
             # Judge stop or continue tuning
