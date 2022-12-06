@@ -60,7 +60,7 @@ eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTran
 if FLAGS.benchmark and FLAGS.mode == 'performance':
     eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 else:
-    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=32)
+    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=FLAGS.batch_size)
 if FLAGS.calib_data:
     calib_dataset = TensorflowImageRecord(root=FLAGS.calib_data, transform=ComposeTransform(transform_list= \
                     [BilinearImagenetTransform(height=299, width=299)]))
