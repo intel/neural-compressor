@@ -15,9 +15,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -34,13 +31,11 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    config=$topology'.yaml'
     python main.py \
       --input_graph=${input_model} \
       --inputs_file=${dataset_location}/newstest2014.en \
       --reference_file=${dataset_location}/newstest2014.de \
       --vocab_file=${dataset_location}/vocab.txt \
-      --config=${config} \
       --output_model=${output_model} \
       --mode=tune
 }

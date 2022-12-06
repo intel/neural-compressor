@@ -17,7 +17,6 @@ function init_params {
   dataset_location="./transformer_uniform_data"
   output_model="./output_transformer_mlperf_int8.pb"
   file_out="./output_translation_result.txt"
-  config="./transformer_lt_mlperf.yaml"
   batch_size=64
   warmup_steps=10
   bleu_variant="uncased"
@@ -41,9 +40,6 @@ function init_params {
       ;;
       --file_out=*)
           file_out=$(echo ${var} |cut -f2 -d=)
-      ;;
-      --config=*)
-          config=$(echo ${var} |cut -f2 -d=)
       ;;
       --batch_size=*)
           batch_size=$(echo ${var} |cut -f2 -d=)
@@ -79,7 +75,6 @@ function run_tuning {
             --vocab_file=${dataset_location}/vocab.ende.32768 \
             --output_model=${output_model} \
             --file_out=${file_out} \
-            --config=${config} \
             --mode=tune \
             --warmup_steps=${warmup_steps} \
             --batch_size=${batch_size} \

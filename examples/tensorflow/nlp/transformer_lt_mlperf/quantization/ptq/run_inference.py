@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,9 +40,6 @@ from neural_compressor.utils import logger
 INPUT_TENSOR_NAMES = ['input_tokens:0']
 OUTPUT_TENSOR_NAMES = ["model/Transformer/strided_slice_15:0"]
 
-flags.DEFINE_string(
-    "config", "transformer_lt_mlperf.yaml",
-    """Quantization configuration file to load.""")
 flags.DEFINE_string(
     "input_graph", "transformer_mlperf_fp32.pb",
     """TensorFlow 'GraphDef' file to load.""")
@@ -289,14 +286,19 @@ def eval_func(infer_graph):
 def main(unused_args):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.mode == 'tune':
-        quantizer = Quantization(FLAGS.config)
+        from neural_compressor import quantization
+        from neural_compressor.experimental import common
+        from neural_compressor.config import PostTrainingQuantConfig
         dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
-        quantizer.calib_dataloader = common.DataLoader(dataset,
-                                                       collate_fn = collate_fn,
-                                                       batch_size = FLAGS.batch_size)
-        quantizer.model = common.Model(graph)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        calib_dataloader = common.DataLoader(dataset,
+                                             collate_fn = collate_fn,
+                                             batch_size = FLAGS.batch_size)
+        input_model = common.Model(graph)										
+        conf = PostTrainingQuantConfig(inputs=['input_tokens'],
+                                        outputs=['model/Transformer/strided_slice_15'],
+                                        calibration_sampling_size=[500])       
+        q_model = quantization.fit(input_model, conf=conf, calib_dataloader=calib_dataloader,
+                    eval_func=eval_func)
         try:
             q_model.save(FLAGS.output_model)
         except Exception as e:
