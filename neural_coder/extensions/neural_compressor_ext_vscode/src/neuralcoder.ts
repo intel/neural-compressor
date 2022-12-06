@@ -120,10 +120,10 @@ class CodeOptimizer {
               currentPythonPath
             ],
           },
-          (err, result) => {
+          (err, result) => {            
             this.pathExist = true;
             if (err) {
-              vscode.window.showErrorMessage("Please install correct package!");
+              // vscode.window.showErrorMessage("Please install correct package!");
               this.working = false;
             }
             resolve(result);
@@ -163,9 +163,7 @@ class CodeOptimizer {
     if (!this.pathExist) {
       vscode.window.showErrorMessage("Please input correct python Path!");
       this.working = false;
-    }
-    console.log('pythonRes', pythonRes);
-    
+    }    
     return pythonRes;
   }
 
@@ -207,7 +205,7 @@ class CodeOptimizer {
             "genLog",
             currentPythonPath,
             this.autoSaveFinalLogPath
-          );
+          );          
           const currentFps = resFps.pop();
 
           this.fpsList.push(parseFloat(currentFps));
