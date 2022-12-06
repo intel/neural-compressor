@@ -417,173 +417,86 @@ def sub_graph_with_int32_bias(
     int8_onnx_model.graph.node.extend([matmul_node, add_node, cast_node, mul_node])
     return int8_onnx_model
 
-
-def qdq_model_use_int32_bias(
+def qdq_fp32_bias(
     int8_onnx_model,
-    quantize_nodes,
+    quant_format,
 ):
-    """Excute post-process on QDQ int8 model with recipe 2.
+    """Excute post-process on int8 onnx model with recipe 'QDQ_OP_FP32_BIAS'.
 
-    Export a QDQ model with recalculated int32 bias and remapped input scale 
-    and zero point for nn.quantized.Linear module.
+    Insert QDQ before quantizable op and using fp32 bias.
 
     Args:
         int8_onnx_model (ModelProto): onnx int8 model to process.
+        quant_format (QuantFormat): quantization format.
 
     Returns:
         int8_onnx_model: processed onnx int8 model.
     """
-    # nn.quantized.Linear module will be converted to the following format:
+    # For QDQ quantization format, nn.quantized.Linear module will be 
+    # converted to the following format:
     #  QuantizeLinear
     #        |
-    #  MatMulInteger
+    # DequantizeLinear
+    #        |             
+    #      MatMul
     #        |
     #       Add
-    #        |
-    #      Cast
-    #        |
-    #       Mul
-    remove_nodes = set()
-    replace_input = {}
-    for node in int8_onnx_model.graph.node:
-        if node.name in quantize_nodes and node.op_type == 'MatMul':
-            parents = ortq.onnx_model.ONNXModel(int8_onnx_model).get_parents(node)
-            add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
-            bias_name = None
-            for inp in add_node.input:
-                if inp.endswith('.bias'):
-                    bias_name = inp
-            if not bias_name: # pragma: no cover 
-                continue
-
-            for parent in parents:
-                grand_parent = ortq.onnx_model.ONNXModel(int8_onnx_model).get_parents(parent)
-                if grand_parent:
-                    replace_input[parent.output[0]] = grand_parent[0].input[0]
-
-            int8_onnx_model = sub_graph_with_int32_bias(int8_onnx_model, 
-                                                            node, 
-                                                            parents[0].input[:3],
-                                                            parents[1].input[:3],
-                                                            bias_name, 
-                                                            add_node.output[0])
-            remove_nodes.add(node.name)
-            remove_nodes.add(parents[0].name)
-            remove_nodes.add(parents[1].name)
-            remove_nodes.add(add_node.name)
-    int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
-    for node in int8_onnx_model.graph.node: # pragma: no cover 
-        for i in range(len(node.input)):
-            if node.input[i] in replace_input: 
-                node.input[i] = replace_input[node.input[i]]
-    return int8_onnx_model
-
-
-def qdq_model_use_output_scale_zp(
-    int8_onnx_model,
-    quantize_nodes,
-):
-    """Excute post-process on QDQ int8 model with recipe 3.
-    
-    Export a QDQ model with FP32 bias and remapped in/output scale and zero point 
-    for nn.quantized.Linear module.
-
-    Args:
-        int8_onnx_model (ModelProto): onnx int8 model to process.
-
-    Returns:
-        int8_onnx_model: processed onnx int8 model.
-    """
-    # nn.quantized.Linear module will be converted to the following format:
-    # QuantizeLinear
-    #        |
-    # DequantizeLinear   DequantizeLinear
-    #        |                  |
-    #        --------------------
-    #                  |
-    #               MatMul
-    #                  |
-    #                 Add
-    #                  |
-    #           QuantizeLinear
-    #                  |
-    #           DequantizeLinear
-    for node in int8_onnx_model.graph.node:
-        if node.name in quantize_nodes and node.op_type == 'MatMul':
-            quantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
-            deqauntizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(quantizelinear_node)[0]
-            add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(deqauntizelinear_node)[0]
-            deqauntizelinear_node.output[0] = add_node.output[0]
-            add_node.output[0] = add_node.output[0] + '_add'
-            for i in range(len(add_node.input)):
-                if not add_node.input[i].endswith('.bias'):
-                    add_node.input[i] = node.output[0]
-            quantizelinear_node.input[0] = add_node.output[0]
-    return int8_onnx_model
-
-
-def qop_model_default(
-    int8_onnx_model
-):
-    """Excute post-process on QOperator int8 model with recipe 1.
-    
-    Export a QOperator model with FP32 bias and remapped input scale and zero point 
-    for nn.quantized.Linear module.
-
-    Args:
-        int8_onnx_model (ModelProto): onnx int8 model to process.
-
-    Returns:
-        int8_onnx_model: processed onnx int8 model.
-    """
-    # nn.quantized.Linear module will be converted to the following format:
+    # 
+    # For QOperator quantization format, nn.quantized.Lienar module will be 
+    # converted to the following format:
     #     QuantizeLinear
     #           |
     #  MatMulIntegerToFloat
     #           |
     #          Add 
-    remove_nodes = set()
-    for node in int8_onnx_model.graph.node:
-        if node.op_type == 'QLinearMatMul':
-            dequantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
-            add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(dequantizelinear_node)[0]
-            a = node.input[0]
-            a_scale = node.input[1]
-            a_zero_point = node.input[2]
-            b = node.input[3]
-            b_scale = node.input[4]
-            b_zero_point = node.input[5]
-            matmulintegertofloat_node = onnx.helper.make_node("MatMulIntegerToFloat",
-                                inputs=[a, b, a_scale, b_scale, a_zero_point, b_zero_point],
-                                outputs=[node.output[0]],
-                                name=node.name + '_matmulintegertofloat',
-                                domain='com.microsoft')
-            for idx in range(len(add_node.input)):
-                if add_node.input[idx] == dequantizelinear_node.output[0]:
-                    add_node.input[idx] = node.output[0]
-            remove_nodes.add(node.name)
-            remove_nodes.add(dequantizelinear_node.name)
-            int8_onnx_model.graph.node.extend([matmulintegertofloat_node])
+    if quant_format == ortq.QuantFormat.QDQ:
+        return int8_onnx_model
+    elif quant_format == ortq.QuantFormat.QOperator:
+        remove_nodes = set()
+        for node in int8_onnx_model.graph.node:
+            if node.op_type == 'QLinearMatMul':
+                dequantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
+                add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(dequantizelinear_node)[0]
+                a = node.input[0]
+                a_scale = node.input[1]
+                a_zero_point = node.input[2]
+                b = node.input[3]
+                b_scale = node.input[4]
+                b_zero_point = node.input[5]
+                matmulintegertofloat_node = onnx.helper.make_node("MatMulIntegerToFloat",
+                                    inputs=[a, b, a_scale, b_scale, a_zero_point, b_zero_point],
+                                    outputs=[node.output[0]],
+                                    name=node.name + '_matmulintegertofloat',
+                                    domain='com.microsoft')
+                for idx in range(len(add_node.input)):
+                    if add_node.input[idx] == dequantizelinear_node.output[0]:
+                        add_node.input[idx] = node.output[0]
+                remove_nodes.add(node.name)
+                remove_nodes.add(dequantizelinear_node.name)
+                int8_onnx_model.graph.node.extend([matmulintegertofloat_node])
 
-    int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
-    return int8_onnx_model
+        int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
+        return int8_onnx_model
 
-
-def qop_model_use_int32_bias(
-    int8_onnx_model
+def qdq_int32_bias(
+    int8_onnx_model,
+    quantize_nodes,
+    quant_format,
 ):
-    """Excute post-process on QOperator int8 model with recipe 2.
-    
-    Export a QOperator model with recalculated int32 bias and remapped input scale and zero point 
-    for nn.quantized.Linear module.
+    """Excute post-process on int8 onnx model with recipe 'QDQ_OP_INT32_BIAS'.
+
+    Insert QDQ before quantizable op and using int32 bias.
 
     Args:
         int8_onnx_model (ModelProto): onnx int8 model to process.
+        quantize_nodes (list): quantize nodes list.
+        quant_format (QuantFormat): quantization format.
 
     Returns:
         int8_onnx_model: processed onnx int8 model.
     """
-    # nn.quantized.Linear module will be converted to the following format:
+    # For QDQ/Operator quantization format, nn.quantized.Linear module will be 
+    # converted to the following format:
     #  QuantizeLinear
     #        |
     #  MatMulInteger
@@ -593,48 +506,100 @@ def qop_model_use_int32_bias(
     #      Cast
     #        |
     #       Mul
-    remove_nodes = set()
-    for node in int8_onnx_model.graph.node:
-        if node.op_type == 'QLinearMatMul':
-            dequantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
-            add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(dequantizelinear_node)[0]
+    if quant_format == ortq.QuantFormat.QDQ:
+        remove_nodes = set()
+        replace_input = {}
+        for node in int8_onnx_model.graph.node:
+            if node.name in quantize_nodes and node.op_type == 'MatMul':
+                parents = ortq.onnx_model.ONNXModel(int8_onnx_model).get_parents(node)
+                add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
+                bias_name = None
+                for inp in add_node.input:
+                    if inp.endswith('.bias'):
+                        bias_name = inp
+                if not bias_name: # pragma: no cover 
+                    continue
 
-            bias_name = None
-            for inp in add_node.input:
-                if inp.endswith('.bias'):
-                    bias_name = inp
-            if not bias_name: # pragma: no cover 
-                continue
+                for parent in parents:
+                    grand_parent = ortq.onnx_model.ONNXModel(int8_onnx_model).get_parents(parent)
+                    if grand_parent:
+                        replace_input[parent.output[0]] = grand_parent[0].input[0]
 
-            int8_onnx_model = sub_graph_with_int32_bias(int8_onnx_model, 
-                                                            node, 
-                                                            node.input[:3],
-                                                            node.input[3:6],
-                                                            bias_name, 
-                                                            add_node.output[0])
-            remove_nodes.add(node.name)
-            remove_nodes.add(add_node.name)
-            remove_nodes.add(dequantizelinear_node.name)
+                int8_onnx_model = sub_graph_with_int32_bias(int8_onnx_model, 
+                                                                node, 
+                                                                parents[0].input[:3],
+                                                                parents[1].input[:3],
+                                                                bias_name, 
+                                                                add_node.output[0])
+                remove_nodes.add(node.name)
+                remove_nodes.add(parents[0].name)
+                remove_nodes.add(parents[1].name)
+                remove_nodes.add(add_node.name)
+        int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
+        for node in int8_onnx_model.graph.node: # pragma: no cover 
+            for i in range(len(node.input)):
+                if node.input[i] in replace_input: 
+                    node.input[i] = replace_input[node.input[i]]
+    elif quant_format == ortq.QuantFormat.QOperator:
+        remove_nodes = set()
+        for node in int8_onnx_model.graph.node:
+            if node.op_type == 'QLinearMatMul':
+                dequantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
+                add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(dequantizelinear_node)[0]
 
-    int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
+                bias_name = None
+                for inp in add_node.input:
+                    if inp.endswith('.bias'):
+                        bias_name = inp
+                if not bias_name: # pragma: no cover 
+                    continue
+
+                int8_onnx_model = sub_graph_with_int32_bias(int8_onnx_model, 
+                                                                node, 
+                                                                node.input[:3],
+                                                                node.input[3:6],
+                                                                bias_name, 
+                                                                add_node.output[0])
+                remove_nodes.add(node.name)
+                remove_nodes.add(add_node.name)
+                remove_nodes.add(dequantizelinear_node.name)
+
+        int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
     return int8_onnx_model
 
-
-def qop_model_use_output_scale_zp(
-    int8_onnx_model
+def qdq_fp32_bias_qdq(
+    int8_onnx_model,
+    quantize_nodes,
+    quant_format,
 ):
-    """Excute post-process on QOperator int8 model with recipe 3.
-    
-    Export a QOperator model with FP32 bias and remapped in/output scale and zero point 
-    for nn.quantized.Linear module.
+    """Excute post-process on onnx int8 model with recipe 'QDQ_OP_FP32_BIAS_QDQ'.
+
+    Insert QDQ before and after quantizable op and using fp32 bias.
 
     Args:
         int8_onnx_model (ModelProto): onnx int8 model to process.
+        quantize_nodes (list): quantize nodes list.
+        quant_format (QuantFormat): quantization format.
 
     Returns:
         int8_onnx_model: processed onnx int8 model.
     """
-    # nn.quantized.Lienar module will be converted to the following format:
+    # For QDQ quantization format, nn.quantized.Linear module will be 
+    # converted to the following format:
+    #  QuantizeLinear
+    #        |
+    # DequantizeLinear   
+    #        |
+    #      MatMul
+    #        |
+    #       Add
+    #        |
+    #  QuantizeLinear
+    #        |
+    #  DequantizeLinear
+    # 
+    # For QOperator quantization format, nn.quantized.Lienar module will be 
+    # converted to the following format:
     #     QuantizeLinear
     #           |
     #  MatMulIntegerToFloat
@@ -644,38 +609,50 @@ def qop_model_use_output_scale_zp(
     #     QuantizeLinear
     #           |
     #    DequantizeLinear
-    import copy
-    remove_nodes = set()
-    for node in int8_onnx_model.graph.node:
-        if node.op_type == 'QLinearMatMul':
-            dequantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
-            add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(dequantizelinear_node)[0]
-            a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point = node.input[:8]
-            matmulintegertofloat_node = onnx.helper.make_node("MatMulIntegerToFloat",
-                                inputs=[a, b, a_scale, b_scale, a_zero_point, b_zero_point],
-                                outputs=[node.output[0]],
-                                name=node.name + '_matmulintegertofloat',
-                                domain='com.microsoft')
+    if quant_format == ortq.QuantFormat.QDQ:
+        for node in int8_onnx_model.graph.node:
+            if node.name in quantize_nodes and node.op_type == 'MatMul':
+                quantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
+                deqauntizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(quantizelinear_node)[0]
+                add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(deqauntizelinear_node)[0]
+                deqauntizelinear_node.output[0] = add_node.output[0]
+                add_node.output[0] = add_node.output[0] + '_add'
+                for i in range(len(add_node.input)):
+                    if not add_node.input[i].endswith('.bias'):
+                        add_node.input[i] = node.output[0]
+                quantizelinear_node.input[0] = add_node.output[0]
+    elif quant_format == ortq.QuantFormat.QOperator:
+        import copy
+        remove_nodes = set()
+        for node in int8_onnx_model.graph.node:
+            if node.op_type == 'QLinearMatMul':
+                dequantizelinear_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(node)[0]
+                add_node = ortq.onnx_model.ONNXModel(int8_onnx_model).get_children(dequantizelinear_node)[0]
+                a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point = node.input[:8]
+                matmulintegertofloat_node = onnx.helper.make_node("MatMulIntegerToFloat",
+                                    inputs=[a, b, a_scale, b_scale, a_zero_point, b_zero_point],
+                                    outputs=[node.output[0]],
+                                    name=node.name + '_matmulintegertofloat',
+                                    domain='com.microsoft')
 
-            for idx in range(len(add_node.input)):
-                if add_node.input[idx] == dequantizelinear_node.output[0]:
-                    add_node.input[idx] = node.output[0]
+                for idx in range(len(add_node.input)):
+                    if add_node.input[idx] == dequantizelinear_node.output[0]:
+                        add_node.input[idx] = node.output[0]
 
-            quantizelinear_node = onnx.helper.make_node("QuantizeLinear",
-                                inputs=[add_node.output[0] +'_add', y_scale, y_zero_point],
-                                outputs=[node.output[0] + '_quantizelinear'],
-                                name=node.name + '_quantizelinear')
+                quantizelinear_node = onnx.helper.make_node("QuantizeLinear",
+                                    inputs=[add_node.output[0] +'_add', y_scale, y_zero_point],
+                                    outputs=[node.output[0] + '_quantizelinear'],
+                                    name=node.name + '_quantizelinear')
 
-            dequantizelinear_node.input[0] = node.output[0] + '_quantizelinear'
-            dequantizelinear_node.output[0] = copy.deepcopy(add_node.output[0])
-            add_node.output[0] = add_node.output[0] +'_add'
+                dequantizelinear_node.input[0] = node.output[0] + '_quantizelinear'
+                dequantizelinear_node.output[0] = copy.deepcopy(add_node.output[0])
+                add_node.output[0] = add_node.output[0] +'_add'
 
-            remove_nodes.add(node.name)
-            int8_onnx_model.graph.node.extend([matmulintegertofloat_node, quantizelinear_node])
+                remove_nodes.add(node.name)
+                int8_onnx_model.graph.node.extend([matmulintegertofloat_node, quantizelinear_node])
 
-    int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
+        int8_onnx_model = remove_nodes_by_name(int8_onnx_model, remove_nodes)
     return int8_onnx_model
-
 
 def torch_to_fp32_onnx(
     fp32_model,
@@ -741,8 +718,7 @@ def torch_to_int8_onnx(
     output_names=None,
     quant_format: str = 'QDQ',
     dtype: str = 'U8S8',
-    linear_options: dict = {'use_int32_bias': False,
-                             'use_output_scale_zp': False},
+    recipe: str = 'QDQ_OP_FP32_BIAS',
 ):
     """Export INT8 PyTorch model into INT8 ONNX model.
 
@@ -759,12 +735,11 @@ def torch_to_int8_onnx(
         output_names (list, optional): output names. Defaults to None.
         quant_format (str, optional): quantization format of ONNX model. Defaults to 'QDQ'.
         dtype (str, optional): data types of activation and weight of ONNX model. Defaults to 'U8S8'.
-        linear_options (dict, optionl): Recipe with options for processing nn.quantized.Linear module. 
-                Recipe 1: use fp32 bias, map input scale and zero point from PyTorch model.
-                Recipe 2: use int32 bias, map input scale and zero point from PyTorch model.
-                Recipe 3: use fp32 bias, map input and otput scale and zero point from PyTorch model.
-                Defaults to recipe 1: {'use_int32_bias': False,
-                                       'use_output_scale_zp': False}
+        recipe (str, optionl): Recipe for processing nn.quantized.Linear module. 
+            'QDQ_OP_FP32_BIAS': inserting QDQ before quantizable op and using fp32 bias.
+            'QDQ_OP_INT32_BIAS': inserting QDQ before quantizable op and using int32 bias.
+            'QDQ_OP_FP32_BIAS_QDQ': inserting QDQ before and after quantizable op and using fp32 bias.
+            Defaults to 'QDQ_OP_FP32_BIAS'.
     """
     global op_types_to_quantize
     if q_config['approach'] == 'post_training_dynamic_quant':
@@ -776,16 +751,6 @@ def torch_to_int8_onnx(
         opset_version = 13
         logger.warning("QDQ format requires opset_version >= 13, " + 
                         "we reset opset_version={} here".format(opset_version))
-    
-    use_int32_bias = linear_options['use_int32_bias']
-    use_output_scale_zp = linear_options['use_output_scale_zp']
-    if use_int32_bias and use_output_scale_zp: # pragma: no cover 
-        use_output_scale_zp = False
-        linear_options = {'use_int32_bias': use_int32_bias,
-                          'use_output_scale_zp': use_output_scale_zp}
-        logger.warning(f"For linear_options, only one of 'use_int32_bias' "
-                       f"and 'use_output_scale_zp' can be set to True. "
-                       f"We reset linear_options = {linear_options} here")
 
     # pylint: disable=E1101
     fp32_onnx_path = save_path + '.tmp' if save_path else 'int8-model.onnx.tmp'
@@ -813,7 +778,7 @@ def torch_to_int8_onnx(
     quant_format = ortq.QuantFormat.QOperator if quant_format != 'QDQ' else ortq.QuantFormat.QDQ
 
     extra_options = {'OpTypesToExcludeOutputQuantizatioin': ['MatMul']} \
-        if (not use_output_scale_zp and quant_format == ortq.QuantFormat.QDQ) else {}
+        if (recipe != 'QDQ_OP_FP32_BIAS_QDQ' and quant_format == ortq.QuantFormat.QDQ) else {}
 
     if q_config['approach'] == 'post_training_dynamic_quant':
         logger.info("Quantization format is not avalible when executing dynamic quantization.")
@@ -843,24 +808,15 @@ def torch_to_int8_onnx(
             extra_options=extra_options,
         )
 
-        int8_onnx_model = onnx.load(save_path)
-        onnx.save(int8_onnx_model, 'test.onnx')
         int8_onnx_model = recalculate_bias(save_path, scale_mapping, quantize_nodes, quant_format)
         int8_onnx_model = set_scale_info(int8_onnx_model, scale_mapping, activation_type)
-        onnx.save(int8_onnx_model, 'test1.onnx')
 
-        if quant_format == ortq.QuantFormat.QDQ:
-            if use_int32_bias:
-                int8_onnx_model = qdq_model_use_int32_bias(int8_onnx_model, quantize_nodes)
-            if use_output_scale_zp:
-                int8_onnx_model = qdq_model_use_output_scale_zp(int8_onnx_model, quantize_nodes)
-        elif quant_format == ortq.QuantFormat.QOperator:
-            if not use_int32_bias and not use_output_scale_zp:
-                int8_onnx_model = qop_model_default(int8_onnx_model)
-            if use_int32_bias:
-                int8_onnx_model = qop_model_use_int32_bias(int8_onnx_model)
-            if use_output_scale_zp:
-                int8_onnx_model = qop_model_use_output_scale_zp(int8_onnx_model)
+        if recipe == 'QDQ_OP_FP32_BIAS':
+            int8_onnx_model = qdq_fp32_bias(int8_onnx_model, quant_format)
+        elif recipe == 'QDQ_OP_INT32_BIAS':
+            int8_onnx_model = qdq_int32_bias(int8_onnx_model, quantize_nodes, quant_format)
+        elif recipe == 'QDQ_OP_FP32_BIAS_QDQ':
+            int8_onnx_model = qdq_fp32_bias_qdq(int8_onnx_model, quantize_nodes, quant_format)
         
         onnx.save(int8_onnx_model, save_path)
 

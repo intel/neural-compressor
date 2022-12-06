@@ -206,7 +206,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['output'],
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
-                recipe=2,
+                recipe='QDQ_OP_INT32_BIAS',
             )
             q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
             check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
@@ -220,7 +220,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['output'],
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
-                recipe=2,
+                recipe='QDQ_OP_INT32_BIAS',
             )
             q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
             check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
@@ -262,7 +262,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['output'],
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
-                recipe=3,
+                recipe='QDQ_OP_FP32_BIAS_QDQ',
             )
             q_model.export('int8-cv-qdq-model.onnx', int8_onnx_config)
             check_CV_onnx('int8-cv-qdq-model.onnx', self.cv_dataloader)
@@ -276,7 +276,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 output_names=['output'],
                 dynamic_axes={"input": {0: "batch_size"},
                               "output": {0: "batch_size"}},
-                recipe=3
+                recipe='QDQ_OP_FP32_BIAS_QDQ',
             )
             q_model.export('int8-cv-qlinear-model.onnx', int8_onnx_config)
             check_CV_onnx('int8-cv-qlinear-model.onnx', self.cv_dataloader)
@@ -399,7 +399,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 input_names=list(self.nlp_input.keys()),
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
-                recipe=2,
+                recipe='QDQ_OP_INT32_BIAS',
             )
             q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
             check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
@@ -412,7 +412,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 input_names=list(self.nlp_input.keys()),
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
-                recipe=2,
+                recipe='QDQ_OP_INT32_BIAS',
             )
             q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
             check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)
@@ -460,7 +460,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 input_names=list(self.nlp_input.keys()),
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
-                recipe=3,
+                recipe='QDQ_OP_FP32_BIAS_QDQ',
             )
             q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
             check_NLP_onnx('int8-nlp-qdq-model.onnx', self.nlp_input)
@@ -473,7 +473,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 input_names=list(self.nlp_input.keys()),
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
-                recipe=3,
+                recipe='QDQ_OP_FP32_BIAS_QDQ',
             )
             q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
             check_NLP_onnx('int8-nlp-qlinear-model.onnx', self.nlp_input)

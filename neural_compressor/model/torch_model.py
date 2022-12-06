@@ -666,21 +666,6 @@ class PyTorchModel(PyTorchBaseModel):
             torch_to_int8_onnx
         )
         if conf.dtype == 'int8':
-            recipe = conf.kwargs.pop('recipe', 1)
-            assert recipe in [1, 2, 3], "`recipe` refers to how to process " \
-                "nn.quantized.Linear module, which can only be 1 or 2 or 3."
-            if recipe == 1:
-                use_int32_bias = False
-                use_output_scale_zp = False
-            elif recipe == 2:
-                use_int32_bias = True
-                use_output_scale_zp = False
-            elif recipe == 3:
-                use_int32_bias = False
-                use_output_scale_zp = True
-            linear_options = {'use_int32_bias': use_int32_bias,
-                            'use_output_scale_zp': use_output_scale_zp}
-
             torch_to_int8_onnx(
                 self.fp32_model,
                 self.model,
@@ -693,7 +678,7 @@ class PyTorchModel(PyTorchBaseModel):
                 output_names=conf.output_names,
                 quant_format=conf.quant_format,
                 dtype='U8S8',
-                linear_options=linear_options,
+                recipe=conf.recipe,
             )
         elif conf.dtype == 'fp32':
             torch_to_fp32_onnx(
