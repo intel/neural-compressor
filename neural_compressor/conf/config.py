@@ -1346,8 +1346,17 @@ class Conf(object):
                 'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
                 'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
                 'use_bf16': pythonic_config.quantization.use_bf16,
+                'quantization.optimization_level': pythonic_config.quantization.optimization_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
+            if pythonic_config.quantization.strategy_kwargs:
+                st_kwargs = pythonic_config.quantization.strategy_kwargs
+                for st_key in ['sigopt_api_token', 'sigopt_experiment_name', 'accuracy_weight', 'latency_weight']:
+                    if st_key in st_kwargs:
+                        st_val =  st_kwargs[st_key]
+                        print(st_key)
+                        mapping.update({'tuning.strategy.' + st_key: st_val})
+            
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
