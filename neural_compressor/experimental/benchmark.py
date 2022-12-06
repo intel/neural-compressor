@@ -471,12 +471,6 @@ class Benchmark(object):
                        be careful of the name of the model configured in the yaml file,
                        make sure the name is in the supported slim model list.
         """
-        if not isinstance(user_model, BaseModel):
-            logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = NCModel(user_model)
-        else:
-            self._model = user_model
-
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
@@ -485,7 +479,14 @@ class Benchmark(object):
                     self.framework = "pytorch_fx"
                 elif cfg.model.backend == "ipex":
                     self.framework = "pytorch_ipex"
+                    import intel_extension_for_pytorch
             cfg.model.framework = self.framework
+
+        if not isinstance(user_model, BaseModel):
+            logger.warning("Force convert framework model to neural_compressor model.")
+            self._model = NCModel(user_model, framework=self.framework)
+        else:
+            self._model = user_model
 
         # (TODO) ugly to set these params, but tensorflow need
         if 'tensorflow' in self.framework:

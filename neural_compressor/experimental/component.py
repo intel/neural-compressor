@@ -468,12 +468,6 @@ class Component(object):
                         make sure the name is in supported slim model list.
 
         """
-        if not isinstance(user_model, BaseModel):
-            logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = Model(user_model)
-        else:
-            self._model = user_model
-
         if self.cfg.model.framework == 'NA':
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "pytorch":
@@ -482,6 +476,12 @@ class Component(object):
                 elif self.cfg.model.backend == "ipex":
                     self.framework = "pytorch_ipex"
             self.cfg.model.framework = self.framework
+
+        if not isinstance(user_model, BaseModel):
+            logger.warning("Force convert framework model to neural_compressor model.")
+            self._model = Model(user_model, framework=self.framework)
+        else:
+            self._model = user_model
 
         if 'tensorflow' in self.framework:
             self._model.name = self.cfg.model.name

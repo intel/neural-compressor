@@ -17,9 +17,7 @@
 
 """common Model just collects the information to construct a Model."""
 
-import sys
 from neural_compressor.model.model import get_model_fwk_name, MODELS, get_model_type
-from neural_compressor.utils import logger
 
 class Model(object):
     """A wrapper of the information needed to construct a Model."""
@@ -37,7 +35,9 @@ class Model(object):
         Returns:
             BaseModel: neural_compressor built-in model
         """
-        framework = get_model_fwk_name(root)
+        framework = kwargs.get("framework", "NA")
+        if framework == "NA":
+            framework = get_model_fwk_name(root)
 
         if framework == 'tensorflow':
             if 'modelType' in kwargs:
