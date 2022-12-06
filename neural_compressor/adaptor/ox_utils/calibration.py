@@ -436,6 +436,10 @@ class ONNXRTAugment:
             if parent and parent.name in q_config and q_config[parent.name] not in ['fp32']:
                 scheme = q_config[parent.name]['activation']['scheme']
                 qType = q_config[parent.name]['activation']['dtype']
+            elif tensor_name in self.model_wrapper.input() and \
+                self.backend in ['TensorrtExecutionProvider']:
+                scheme = 'sym'
+                qType = 3
             node_thresholds = quantization_thresholds[tensor_name]
             node_params = self.calculate_scale_zeropoint(parent, child, node_thresholds[0],
                 node_thresholds[1], scheme, qType, _get_qrange_for_qType(qType, self.reduce_range))

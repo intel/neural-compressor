@@ -849,6 +849,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                             location="weights.pb",
                             convert_attribute=False)
         sess_options = ort.SessionOptions()
+        if self.backend == 'TensorrtExecutionProvider':
+            sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL 
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
