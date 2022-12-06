@@ -1353,7 +1353,8 @@ class Conf(object):
             })
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
-                for st_key in ['sigopt_api_token', 'sigopt_experiment_name', 'accuracy_weight', 'latency_weight']:
+                for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
+                    'accuracy_weight', 'latency_weight']:
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         print(st_key)
