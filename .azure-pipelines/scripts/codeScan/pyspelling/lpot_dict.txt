@@ -55,6 +55,7 @@ amazonlinux
 Amodei
 AmpConf
 AMX
+amx
 analytics
 Analytics
 Anastasiia
@@ -546,6 +547,7 @@ ensp
 entrypoint
 enum
 env
+environ
 eq
 erf
 Erf
@@ -787,6 +789,7 @@ IML
 impl
 ImportError
 IMS
+ibean
 inceptionresnetv
 InceptionResNetV
 inceptionv
@@ -831,6 +834,7 @@ ipc
 ipex
 IPEX
 ipynb
+ipynbrun
 ipython
 ir
 irv
@@ -843,6 +847,7 @@ IssueQueryThreads
 iter
 IteratorGetNext
 iters
+intrinsics
 Jäger
 jemalloc
 Jens
@@ -1783,6 +1788,7 @@ TestSettings
 tf
 TF
 TFBertForSequenceClassification
+tfhub
 tflite
 tfp
 tfrecord
