@@ -38,7 +38,7 @@ We will learn the acceleration of AI inference by Intel AI technology:
 
 As we know, SPR support AMX-INT8 and AMX-BF16 instructions which accelerate the INT8 and BF16 layer inference.
 
-Intel® Neural Compressor has this speical function for SPR: during quantizing the model, it will convert the FP32 layers to BF16 which can't be quantized when execute the quantization on SPR automatically. Convert FP32 to BF16 is following the rule of AI framework too.
+Intel® Neural Compressor has this special function for SPR: during quantizing the model, it will convert the FP32 layers to BF16 which can't be quantized when execute the quantization on SPR automatically. Convert FP32 to BF16 is following the rule of AI framework too.
 
 It will help accelerate the model on SPR as possible and control the accuracy loss as expected.
 
