@@ -6,6 +6,7 @@ import * as fs from "fs-extra";
 
 class CodeOptimizer {
   protected working: boolean;
+  protected pathExist: boolean;
   public outPutLogPath: string;
   public outPutLogFilePath: string;
   public autoSaveLogPath: string;
@@ -20,6 +21,7 @@ class CodeOptimizer {
 
   constructor() {
     this.working = false;
+    this.pathExist = false;
     this.autoSaveLogPath = "../neural_coder_workspace/Auto/";
     this.enableSaveLogPath = "../neural_coder_workspace/Enable/";
     this.outPutLogPath = "../neural_coder_workspace/outPutLog/";
@@ -115,13 +117,14 @@ class CodeOptimizer {
               currentFileArgs,
               status,
               saveLogPath + "/" + feature,
+              currentPythonPath
             ],
           },
           (err, result) => {
+            this.pathExist = true;
             if (err) {
-              vscode.window.showErrorMessage("Please input correct python Path!");
+              vscode.window.showErrorMessage("Please install correct package!");
               this.working = false;
-              throw new Error('Please input correct python Path! OR Please active a file');
             }
             resolve(result);
           }
@@ -156,6 +159,13 @@ class CodeOptimizer {
       currentPythonPath,
       saveLogPath
     );
+
+    if (!this.pathExist) {
+      vscode.window.showErrorMessage("Please input correct python Path!");
+      this.working = false;
+    }
+    console.log('pythonRes', pythonRes);
+    
     return pythonRes;
   }
 

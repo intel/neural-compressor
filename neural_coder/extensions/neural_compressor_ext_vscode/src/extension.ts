@@ -9,7 +9,6 @@ async function highLight () {
     return;
   }
   const document = editor.document;
-  console.log('document', document);
   
   const text = document.getText();
   const regStart = /# \[NeuralCoder\] .*? \[Beginning Line\]/g;
@@ -26,17 +25,14 @@ async function highLight () {
     let path = vscode.window.activeTextEditor?.document.fileName;
     if (path) {
       let filePath = DirPath.resolve(`${__dirname}`, "../", path);
-      console.log('filePath', filePath);
-      
       // vscode.workspace.openTextDocument(filePath).then(async (document) => {
       //    await vscode.window.showTextDocument(document , {preserveFocus: false, selection: range, viewColumn: vscode.ViewColumn.One});
       // });
-
     }    
     }
 }
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {  
   // init
   const key = "neuralCoder.pythonPath";
   let config: vscode.WorkspaceConfiguration =
@@ -59,7 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // start
-  let path = vscode.window.activeTextEditor?.document.fileName;
+  let path = vscode.window.activeTextEditor?.document.fileName;  
   let userInput: string = "";
   let ncCoder = new NeuralCodeOptimizer();
   let curPythonPath = currentCondaName;
@@ -73,7 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
           location: vscode.ProgressLocation.Notification,
           title: "Running INT8 Static!",
         },
-        async () => {
+        async () => {          
           ncCoder.optimizeCodes(
             curPythonPath,
             "pytorch_inc_static_quant_fx",
@@ -160,7 +156,6 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(incEnableBF16);
   context.subscriptions.push(incAutoEnableBenchmark);
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-    console.log('e, editor has some change', e);
     highLight();
 }));
 

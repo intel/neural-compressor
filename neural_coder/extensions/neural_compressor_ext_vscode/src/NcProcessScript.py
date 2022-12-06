@@ -1,7 +1,17 @@
+import os
 import sys
-from neural_coder import enable
 import subprocess
-from neural_coder import auto_quant
+libs = ['neural-compressor']
+
+try:
+    from neural_coder import enable
+    from neural_coder import auto_quant
+
+except ModuleNotFoundError:
+    for lib in libs:
+        os.system(f'{sys.argv[6]} -m pip install -U {lib}')
+    from neural_coder import enable
+    from neural_coder import auto_quant
 
 if (sys.argv[4] == "normal"):
     enable(code=sys.argv[1],features=[sys.argv[2]], overwrite=True)  
