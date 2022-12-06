@@ -123,29 +123,17 @@ class HawqTuneStrategy(TuneStrategy):
             yield op_tuning_cfg
         
         # Start compute the hessian trace
-        # Fallback the ops supported both static and dynamic from static to dynamic
-        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
-        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
-
-        target_dtype = "int8"  ##TODO support bf16
-        target_type_lst = set(tuning_space.query_items_by_quant_mode(target_dtype))
-        fp_op_list = [item.name for item in quant_ops if item in target_type_lst]
-        # for n, p in self._fp32_model.named_modules():
-        #     print(n)
-        # for n, p in self._fp32_model.named_parameters():
-        #     print(n)
-        # # TODO uncomment it when algo ready.
+        target_dtype = "int8"  # TODO support bf16
         criterion=torch.nn.CrossEntropyLoss()
         op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model, 
                                                             dataloader = self.calib_dataloader, 
                                                             q_model = self.q_model, 
-                                                            criterion =criterion, # TODO replace it with user specify loss
+                                                            criterion =criterion, # TODO using user specify loss
                                                             enable_act = False)
         ordered_ops = sorted(op_to_traces.keys(),
                              key=lambda key: op_to_traces[key],
                              reverse=self.higher_is_better)
         # WA for add op type
-        # print("ordered_ops:",ordered_ops)
         op_info_map = {}
         for op_info in list(initial_op_tuning_cfg.keys()):
             op_info_map[op_info[0]] = op_info  # op_name: (op_name, op_type)
@@ -158,7 +146,7 @@ class HawqTuneStrategy(TuneStrategy):
             indx=indx+1
             if indx>4:
                 break
-        print(op_dtypes)
+
         logger.info("hawq op_config:"+str(op_dtypes))
         logger.info(f"Start to accumulate fallback to {target_dtype}.")
         initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
