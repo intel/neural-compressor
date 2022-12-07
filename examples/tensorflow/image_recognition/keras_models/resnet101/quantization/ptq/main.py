@@ -65,46 +65,46 @@ if FLAGS.calib_data:
 			[TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
 	calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
-def evaluate(model, measurer=None):
-	"""
-	Custom evaluate function to inference the model for specified metric on validation dataset.
+def evaluate(model):
+    """
+    Custom evaluate function to inference the model for specified metric on validation dataset.
 
-	Args:
-		model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-		measurer (object, optional): for benchmark measurement of duration.
-		
-	Returns:
-		accuracy (float): evaluation result, the larger is better.
-	"""
-	infer = model.signatures["serving_default"]
-	output_dict_keys = infer.structured_outputs.keys()
-	output_name = list(output_dict_keys )[0]
-	postprocess = LabelShift(label_shift=1)
-	metric = TensorflowTopK(k=1)
+    Args:
+        model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
+        
+    Returns:
+        accuracy (float): evaluation result, the larger is better.
+    """
+    infer = model.signatures["serving_default"]
+    output_dict_keys = infer.structured_outputs.keys()
+    output_name = list(output_dict_keys )[0]
+    postprocess = LabelShift(label_shift=1)
+    metric = TensorflowTopK(k=1)
 
-	def eval_func(dataloader, metric):
-        results = []
+    def eval_func(dataloader, metric):
         iteration = None
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = 100
         for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
             input_tensor = tf.constant(inputs)
-            if measurer:
-                measurer.start()
+            start = time.time()
             predictions = infer(input_tensor)[output_name]
-            if measurer:
-                measurer.end()
+            end = time.time()
             predictions = predictions.numpy()
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             if iteration and idx >= iteration:
                 break
-        return results
+        return end - start
 
-	results = eval_func(eval_dataloader, metric)
-	acc = metric.result()
-	return acc
+    latency = eval_func(eval_dataloader, metric)
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+        print("Batch size = {}".format(eval_dataloader.batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
+    acc = metric.result()
+    return acc
 
 def main(_):
 	if FLAGS.tune:
@@ -116,11 +116,11 @@ def main(_):
 		q_model.save(FLAGS.output_model)
 
 	if FLAGS.benchmark:
-		from neural_compressor import benchmark
+		from neural_compressor.benchmark import fit
 		from neural_compressor.config import BenchmarkConfig
 		if FLAGS.mode == 'performance':
 			conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
-			benchmark.fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader, b_func=evaluate)
+			fit(FLAGS.input_model, conf, b_func=evaluate)
 		else:
 			from neural_compressor.experimental import common
 			model = common.Model(FLAGS.input_model).model
