@@ -33,6 +33,14 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
         "_FusedQuantizedDeconv3D"
     ], ['Dequantize']]
 
+    fuse_sum_op_types_str = (
+        str([b'BiasAdd', b'Sum', b'Requantize']),
+        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']),
+        str([b'BiasAdd', b'Sum', b'LeakyRelu', b'Requantize']),
+        str([b'BiasAdd', b'Relu', b'Sum', b'Requantize']),
+        str([b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize'])
+        )
+
     def __init__(self, model, device='cpu'):
         super().__init__(model)
         self.device = device
@@ -52,7 +60,7 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
             dtypes.float32.as_datatype_enum: dtypes.float32,
             dtypes.qint32.as_datatype_enum: dtypes.qint32,
             dtypes.bfloat16.as_datatype_enum: dtypes.bfloat16
-        }    
+        }
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.fuse_patterns)
 
         for i in target_nodes:
@@ -64,9 +72,9 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
             if len(self.graph_info[quantized_node_name].outputs) > 3:
                 continue
 
-            # QuantizedConv only supports {"Dequantize"} and {"BiasAdd", "Dequantize"}
-            if str(quantized_node.attr['fused_ops'].list.s) != str([b"BiasAdd", b"Requantize"]) and \
-               str(quantized_node.attr['fused_ops'].list.s) != str([b"Requantize"]):
+            # QuantizedConv doesn't support {"BiasAdd", "Sum", "Activation", "Dequantize"},
+            # {"BiasAdd", "Activation", "Sum", "Dequantize"} and {"BiasAdd", "Sum", "Dequantize"}
+            if str(quantized_node.attr['fused_ops'].list.s) in self.fuse_sum_op_types_str:
                 continue
 
             new_node = node_def_pb2.NodeDef()
