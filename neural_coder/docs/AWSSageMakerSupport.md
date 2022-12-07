@@ -1,7 +1,7 @@
-AWS SageMaker Support
+AWS Amazon SageMaker Support
 =====
 
-[AWS SageMaker](https://aws.amazon.com/sagemaker/) users can easily enjoy the productivity boost brought by Neural Coder by one-click installing [Neural Coder Jupyter Lab extension](https://www.npmjs.com/package/jupyter-lab-neural-compressor) in either **SageMaker Studio** or **SageMaker Notebook instance**.
+[AWS Amazon SageMaker](https://aws.amazon.com/sagemaker/) users can easily enjoy the productivity boost brought by Neural Coder by one-click installing [Neural Coder Jupyter Lab extension](https://www.npmjs.com/package/jupyter-lab-neural-compressor) in either **SageMaker Studio** or **SageMaker Notebook instance**.
 
 ## Start Jupyter Lab 3
 [Neural Coder Jupyter extension](https://www.npmjs.com/package/jupyter-lab-neural-compressor) requires Jupyter Lab 3. Using Jupyter Lab 1 will cause installation error. To start Jupyter Lab 3, please check the following:
