@@ -15,28 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
-import numpy as np
 from collections import OrderedDict
-
-import torch.nn
+from copy import deepcopy
 
 from .strategy import strategy_registry, TuneStrategy
-from ..utils import logger
 
 from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .st_utils.tuning_structs import OpTuningConfig
 from .st_utils.tuning_space import TUNING_ITEMS_LST
-from torch.quantization.quantize_fx import fuse_fx
-import torch.nn.intrinsic.quantized as nniq
-from torch.fx import symbolic_trace, graph_module
-import torch.nn as nn
-import logging
-logger = logging.getLogger(__name__)
-from typing import Dict, List, Optional, Any, Union, Callable, Set
+from ..utils import logger
+
 @strategy_registry
 class HAWQ_V2TuneStrategy(TuneStrategy):
-    """The hawq v2 tuning strategy.
+    """The HAWQ v2 tuning strategy.
 
     Args:
         model (object):                        The FP32 model specified for low precision tuning.
@@ -95,7 +86,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
-        from copy import deepcopy
+        # TODO remove it before merge
+        import torch
         tuning_space = self.tuning_space
         calib_size = tuning_space.root_item.get_option_by_name('calib_sampling_size').options[0]  ##TODO suppoprt list
 
