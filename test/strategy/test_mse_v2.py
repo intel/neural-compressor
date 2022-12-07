@@ -115,7 +115,7 @@ class Test_MSEV2Strategy_Tensorflow(unittest.TestCase):
         q_model = quantizer.fit()
         q_model.save('./saved')
 
-class TestMSEV2Strategy(unittest.TestCase):
+class Test_MSEV2Strategy_PyTorch(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_mse_yaml_pytorch()
@@ -130,8 +130,6 @@ class TestMSEV2Strategy(unittest.TestCase):
     def test_quantization_saved(self):
         i = [0]
         def fake_eval_func(model):
-            # 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-            # 1, 0, 0, 0, 0, 0, 0, 1, 1, 0,
             acc_lst = [1, 1, 0, 0, 0, 0, 1, 1.1, 1.5, 1.1]
             
             i[0] += 1
