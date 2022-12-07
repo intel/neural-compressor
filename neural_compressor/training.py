@@ -115,29 +115,14 @@ class CompressionManager:
     def export(
         self,
         save_path: str,
-        input,
-        target_model_type: str = 'ONNX',
-        quant_mode: str = 'QDQ',
-        opset_version: int = 14,
-        *args,
-        **kwargs
+        conf,
     ):
         """Convert the model to another type model, like `onnx` model and so on.
 
         Args:
 
         """
-        if target_model_type == "ONNX":
-            if self.model.q_config is not None:
-                assert self.fp32_model is not None, "Can't deepcopy fp32 model, so we can't " \
-                    "export to onnx model now, this is a limitation, will remove in furture."
-                self.model.export_to_int8_onnx(
-                    save_path, input, opset_version=opset_version, fp32_model=self.fp32_model
-                )
-            else:
-                self.model.export_to_fp32_onnx(save_path, input, opset_version=opset_version)
-        else:
-            assert False, "Unsupport export for {} model".format(type(self.model))
+        self.model.export(save_path, conf)
 
 
 def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs):
