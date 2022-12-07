@@ -23,7 +23,7 @@ from ..model import BaseModel
 from .common import Metric, Postprocess
 
 from .quantization import Quantization
-from neural_compressor.pruning.pruning import Pruning
+from neural_compressor.pruning import Pruning
 from .distillation import Distillation
 from .model_conversion import ModelConversion
 from .graph_optimization import Graph_Optimization

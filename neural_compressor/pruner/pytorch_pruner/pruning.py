@@ -19,7 +19,7 @@
 import torch.nn
 
 from .prune_utils import process_config, parse_to_prune, parse_not_to_prune
-from .pruner import get_pruner
+from .pruners import get_pruner
 from .logger import logger
 import re
 
