@@ -568,22 +568,23 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             self.g_weight.add_node(reshape_3to4_node, dequant_node.name, [computational_node.name])
             computational_node.input[1] = reshape_3to4_node.name
         else:
-            if weight_node.name in self.g.parent_frame_details and self.g.parent_frame_details[weight_node.name]:
+            if computational_node.name in self.g.parent_frame_details and \
+               self.g.parent_frame_details[computational_node.name]:
                 min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
                 Helper.set_attr_string(min_enter_node, 'frame_name',
-                    self.g.parent_frame_details[weight_node.name].attr['frame_name'].s)
+                    self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
                 Helper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
                 Helper.set_attr_bool(min_enter_node, 'is_constant', True)
                 Helper.set_attr_int(min_enter_node, 'parallel_iterations', \
-                 self.g.parent_frame_details[weight_node.name].attr['parallel_iterations'].i)
+                 self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
 
                 max_enter_node = Helper.create_node('Enter', max_name + '_enter', [max_name])
                 Helper.set_attr_string(max_enter_node, 'frame_name',
-                    self.g.parent_frame_details[weight_node.name].attr['frame_name'].s)
+                    self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
                 Helper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
                 Helper.set_attr_bool(max_enter_node, 'is_constant', True)
                 Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
-                    self.g.parent_frame_details[weight_node.name].attr['parallel_iterations'].i)
+                    self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
 
                 self.g_weight.add_node(quant_node, weight_name, [])
                 self.g_weight.add_node(min_node, None, [min_enter_node.name])

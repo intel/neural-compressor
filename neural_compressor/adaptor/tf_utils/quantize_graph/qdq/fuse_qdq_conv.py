@@ -1795,6 +1795,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 if cur_node.name != self.start_node_name:
                     continue
 
+                # Disable inserting QDQ for DepthwiseConv2dNative since its poor perf.
+                if cur_node.op == "DepthwiseConv2dNative" and self.itex_mode:
+                    continue
+
                 if ((v in ("Conv2D", "DepthwiseConv2dNative")
                      and not self.enable_s8)
                 ) and not self._find_relu_node(cur_node):
