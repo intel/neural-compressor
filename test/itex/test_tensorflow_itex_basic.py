@@ -258,8 +258,11 @@ class TestItexEnabling(unittest.TestCase):
             evaluator('performance')
 
         found_multi_instance_log = False
+        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
+        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+        log_file = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, 0)
         for file_name in os.listdir(os.getcwd()):
-            if file_name.endswith(".log"):
+            if file_name == log_file:
                 found_multi_instance_log = True
                 break
 
