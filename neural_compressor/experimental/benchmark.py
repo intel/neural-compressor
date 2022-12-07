@@ -274,16 +274,11 @@ class Benchmark(object):
             # (TODO) should we move the hw_info from ux?
             from neural_compressor.ux.utils.hw_info import get_number_of_sockets
             num_of_socket = int(get_number_of_sockets())
-            logger.info("Num of socket = {}".format(num_of_socket))
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
-            logger.info("Cores per instance = {}".format(cores_per_instance))
             cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
-            logger.info("Cores per socket = {}".format(cores_per_socket))
             socket_id = int(core_list[0] // cores_per_socket)
-            logger.info("Socket id = {}".format(socket_id))
             # cores per socket should integral multiple of cores per instance, else not bind core
             if cores_per_socket % cores_per_instance == 0:
-                logger.info("hit!!!")
                 from functools import reduce
                 hex_core = hex(reduce(lambda x, y : x | y, [1 << p for p in core_list]))
                 return 'start /b /WAIT /node {} /affinity {} CMD /c'.format(socket_id, hex_core)
