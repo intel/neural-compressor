@@ -543,7 +543,8 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, confidence_batches, fallback=False, requantize_cfgs=None):
+def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, 
+                       confidence_batches, fallback=False, requantize_cfgs=None):
     fp32_model.eval()
     order_dict = {}
     for i in range(0, confidence_batches):
@@ -570,7 +571,7 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
         fallback_order (dict/list): The fallback order for strategy.
     """
 
-    inner_output = 0
+    inner_output = None
     def output_hook(self, input, output):
         nonlocal inner_output
         inner_output = output
@@ -681,7 +682,7 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
     return ordered_ops
 
 def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
-    inner_output = 0
+    inner_output = None
     def output_hook(self, input, output):
         nonlocal inner_output
         inner_output = output
