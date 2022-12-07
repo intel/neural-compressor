@@ -11,9 +11,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;    
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -33,7 +30,6 @@ function run_tuning {
     python main.py \
             --model_path ${input_model} \
             --output_model ${output_model} \
-            --config ${config} \
             --data_path ${data_path} \
             --tune
 }

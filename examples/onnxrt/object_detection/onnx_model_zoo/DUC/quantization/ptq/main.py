@@ -84,9 +84,9 @@ stride = 8
 rgb_mean = [122.675, 116.669, 104.008]
 labels = cityscapes_labels.labels
  
-class Dataset:
-    def __init__(self, data_dir, label_dir):
-        self.batch_size = 1
+class Dataloader:
+    def __init__(self, data_dir, label_dir, batch_size=1):
+        self.batch_size = batch_size
         index = 0
         val_lst = []
         all_images = glob.glob(os.path.join(data_dir, '*/*.png'))
@@ -210,7 +210,8 @@ class IoU:
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataloader  = Dataset(args.data_path, args.label_path)
+    batch_size = 1
+    dataloader  = Dataloader(args.data_path, args.label_path, batch_size=batch_size)
     metric = IoU()
 
     def eval_func(model):
@@ -240,13 +241,18 @@ if __name__ == "__main__":
                 metric.update(predictions, labels)
         return metric.result()
     
-    if args.benchmark and args.mode == 'performance':
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=4,
-                               num_of_instance=1)
-        fit(model, conf, b_dataloader=dataloader)
+    if args.benchmark:
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=4,
+                                   num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig

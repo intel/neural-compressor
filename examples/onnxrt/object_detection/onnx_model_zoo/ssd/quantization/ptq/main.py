@@ -73,6 +73,12 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    '--quant_format',
+    type=str,
+    choices=['QLinear', 'QDQ'],
+    help="quantization format"
+)
 args = parser.parse_args()
 
 class AccuracyLoss:
@@ -96,7 +102,8 @@ if __name__ == "__main__":
                                   TransposeTransform(perm=[2, 0, 1]),
                                   CastTransform(dtype='float32')])
     dataset = COCORawDataset(args.data_path, transform=transform)
-    dataloader = COCORawDataloader(dataset)
+    batch_size = 1
+    dataloader = COCORawDataloader(dataset, batch_size=batch_size)
     metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
     postprocess = Post()
 
@@ -129,19 +136,25 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=28,
-                               num_of_instance=1)
-        fit(model, conf, b_dataloader=dataloader)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                cores_per_instance=28,
+                                num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
         accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
         config = PostTrainingQuantConfig(approach='static', 
-                                         accuracy_criterion=accuracy_criterion)
+                                         accuracy_criterion=accuracy_criterion,
+                                         quant_format=args.quant_format,)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
         

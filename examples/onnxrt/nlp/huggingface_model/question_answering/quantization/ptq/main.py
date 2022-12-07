@@ -109,10 +109,6 @@ class ModelArguments:
         default='performance',
         metadata={"help": ("INC benchmark mode")},
     )
-    config: str = field(
-        default='bert-base-multilingual-cased-static.yaml',
-        metadata={"help": ("INC config")},
-    )
     save_path: str = field(
         default=None,
         metadata={"help": ("onnx int8 model path")},
@@ -581,14 +577,19 @@ def main():
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        
         model = onnx.load(model_args.model_path)
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=28,
-                               num_of_instance=1)
-        fit(model, conf, b_dataloader=eval_dataloader)
+        if model_args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            
+            conf = BenchmarkConfig(iteration=100,
+                                cores_per_instance=28,
+                                num_of_instance=1)
+            fit(model, conf, b_dataloader=eval_dataloader)
+        elif model_args.mode == 'accuracy':
+            eval_f1 = eval_func(model)
+            print("Batch size = %d" % training_args.per_device_eval_batch_size)
+            print("Accuracy: %.5f" % eval_f1)
 
 if __name__ == "__main__":
     main()

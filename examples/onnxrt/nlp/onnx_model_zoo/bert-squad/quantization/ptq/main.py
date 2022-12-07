@@ -85,8 +85,6 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
 def main():
     parser = argparse.ArgumentParser(description='onnx squad')
     parser.add_argument('--model_path', required=True, help='model path')
-    parser.add_argument('--config', required=True, type=str,
-                        help='Tuning config file path')
     parser.add_argument('--save_path', type=str, default='bertsquad_tune.onnx', 
                         help='save tuned model path')
     parser.add_argument('--data_path', type=str,
@@ -99,6 +97,9 @@ def main():
                         help="benchmark mode of performance or accuracy")
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
+    parser.add_argument('--quant_format', type=str, default='Default', 
+                        choices=['Default', 'QDQ'],
+                        help="quantization format")
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
@@ -120,28 +121,39 @@ def main():
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic',
-                                         op_name_list={'bert/encoder/layer_2/output/dense/MatMul': {
-                                                            'activation':  {'dtype': ['fp32']},
-                                                            'weight': {'dtype': ['fp32']}
-                                                        },
-                                                        'bert/encoder/layer_10/output/dense/MatMul': {
-                                                            'activation':  {'dtype': ['fp32']},
-                                                            'weight': {'dtype': ['fp32']}
-                                                        }})
+        op_name_list={'bert/encoder/layer_2/output/dense/MatMul': {
+                        'activation':  {'dtype': ['fp32']},
+                        'weight': {'dtype': ['fp32']}
+                     },
+                      'bert/encoder/layer_10/output/dense/MatMul': {
+                        'activation':  {'dtype': ['fp32']},
+                        'weight': {'dtype': ['fp32']}
+                     }}
+        if args.quant_format == 'QDQ':
+            config = PostTrainingQuantConfig(approach='static',
+                                             op_name_list=op_name_list,
+                                             quant_format=args.quant_format)
+        else:
+            config = PostTrainingQuantConfig(approach='dynamic',
+                                             op_name_list=op_name_list)
         q_model = quantization.fit(model, 
-                                   config,
-                                   eval_func=eval_func)
+                                config,
+                                eval_func=eval_func)
         q_model.save(args.save_path)
 
     if args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
         model = onnx.load(args.model_path)
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=4,
-                               num_of_instance=7)
-        fit(model, conf, b_dataloader=eval_dataloader)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                cores_per_instance=4,
+                                num_of_instance=7)
+            fit(model, conf, b_dataloader=eval_dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
 
 if __name__ == "__main__":

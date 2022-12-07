@@ -116,6 +116,9 @@ def main():
                         help="benchmark mode of performance or accuracy")
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
+    parser.add_argument('--quant_format', type=str, default='Default',
+                        choices=['Default', 'QDQ'],
+                        help="quantization format")
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
@@ -137,21 +140,33 @@ def main():
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic', 
-                                         backend='onnxrt_integerops',
-                                         calibration_sampling_size=[8])
+        if args.quant_format == 'QDQ':
+            config = PostTrainingQuantConfig(approach='static', 
+                                            backend='onnxrt_integerops',
+                                            calibration_sampling_size=[8],
+                                            quant_format=args.quant_format)
+        else:
+            config = PostTrainingQuantConfig(approach='dynamic', 
+                                            backend='onnxrt_integerops',
+                                            calibration_sampling_size=[8])
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)
         q_model.save(args.save_path)
 
     if args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=4,
-                               num_of_instance=7)
-        fit(model, conf, b_dataloader=eval_dataloader)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                cores_per_instance=4,
+                                num_of_instance=7)
+            fit(model, conf, b_dataloader=eval_dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
+
 
 if __name__ == "__main__":
     main()

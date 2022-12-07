@@ -29,15 +29,13 @@ Dynamic quantize:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune \
-                   --config=qa_dynamic.yaml
+                   --output_model=/path/to/model_tune 
 ```
 
 ### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
-                      --config=qa_dynamic.yaml
                       --mode=performance # or accuracy
 ```
 

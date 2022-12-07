@@ -75,14 +75,14 @@ parser.add_argument(
 args = parser.parse_args()
 
 class Dataloader:
-    def __init__(self, root, size=416, img_dir='val2017', \
+    def __init__(self, root, batch_size=1, size=416, img_dir='val2017', \
             anno_dir='annotations/instances_val2017.json'):
         import json
         import os
         import numpy as np
         from pycocotools.coco import COCO
         from neural_compressor.experimental.metric.coco_label_map import category_map
-        self.batch_size = 1
+        self.batch_size = batch_size
         self.image_list = []
         self.model_image_size = (size, size)
         img_path = os.path.join(root, img_dir)
@@ -339,7 +339,8 @@ class AccuracyLoss:
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataloader = Dataloader(args.data_path)
+    batch_size = 1
+    dataloader = Dataloader(args.data_path, batch_size=batch_size)
     metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':1, 'classes':2})
     postprocess = Post()
 
@@ -372,12 +373,18 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=4,
-                               num_of_instance=1)
-        fit(model, conf, b_dataloader=dataloader)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                cores_per_instance=4,
+                                num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
+
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig

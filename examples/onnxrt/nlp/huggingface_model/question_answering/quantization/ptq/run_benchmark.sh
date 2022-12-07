@@ -13,9 +13,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -37,8 +34,7 @@ function run_benchmark {
     fi
 
     python main.py \
-            --model_path ${input_model} \
-            --config ${config} \
+            --model_path ${input_model} 
             --mode=${mode} \
             --model_name_or_path=${model_name_or_path} \
             --output_dir './output' \

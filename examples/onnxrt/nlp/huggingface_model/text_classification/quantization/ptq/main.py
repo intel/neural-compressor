@@ -376,13 +376,19 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
         model = onnx.load(args.model_path)
-        conf = BenchmarkConfig(iteration=100,
-                               cores_per_instance=28,
-                               num_of_instance=1)
-        fit(model, conf, b_dataloader=dataloader)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                cores_per_instance=28,
+                                num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % args.batch_size)
+            print("Accuracy: %.5f" % acc_result)
+
 
     if args.tune:
         from onnxruntime.transformers import optimizer

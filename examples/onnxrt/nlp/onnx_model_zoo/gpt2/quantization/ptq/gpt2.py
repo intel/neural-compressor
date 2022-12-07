@@ -172,19 +172,6 @@ def evaluate(args, model, tokenizer, prefix=""):
     
     return result['perplexity'].item()
 
-class AccuracyLoss:
-    def __init__(self, loss=0.01):
-        self._loss = loss
-
-    @property
-    def relative(self):
-        return self._loss
-
-    @relative.setter
-    def relative(self, relative):
-        if isinstance(relative, float):
-            self._loss = relative
-
 def main():
     parser = argparse.ArgumentParser()
 
@@ -272,7 +259,9 @@ def main():
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
-        accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=AccuracyLoss(0.11))
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.higher_is_better = False
+        accuracy_criterion.relative = 0.11
         config = PostTrainingQuantConfig(approach='dynamic', 
                                          op_name_list={'MatMul_2924': {
                                                             'activation':  {'dtype': ['fp32']},

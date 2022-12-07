@@ -19,7 +19,6 @@ wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentatio
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --config=DUC.yaml \ 
                    --data_path=/path/to/leftImg8bit/val \
                    --label_path=/path/to/gtFine/val \
                    --output_model=path/to/save
@@ -29,7 +28,6 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=DUC.yaml \
                       --data_path=/path/to/leftImg8bit/val \
                       --label_path=/path/to/gtFine/val \
                       --mode=performance
