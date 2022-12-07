@@ -18,7 +18,7 @@
 
 import torch.nn
 
-from neural_compressor.pruner.prune_utils import process_config, parse_to_prune, parse_not_to_prune
+from neural_compressor.pruner.prune_utils import process_config, parse_to_prune
 from neural_compressor.pruner.pruners import get_pruner
 from neural_compressor.utils import logger
 import re

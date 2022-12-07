@@ -133,7 +133,8 @@ def process_and_check_config(val):
     default_global_config = {'target_sparsity': 0.9, 'prune_type': 'snip_momentum', 'pattern': '4x1', 'names': [],
                              'excluded_names': [],
                              'start_step': 0, 'end_step': 0, 'prune_domain': 'global', 'update_frequency': 1,
-                             'min_layer_sparsity_ratio': 0.0, 'max_layer_sparsity_ratio': 0.98,'prune_layer_type':['Conv','Linear'],
+                             'min_layer_sparsity_ratio': 0.0, 'max_layer_sparsity_ratio': 0.98,
+                             'prune_layer_type': ['Conv', 'Linear'],
                              'resume_from_pruned_checkpoint': False}
 
     default_local_config = {'extra_excluded_names': [], 'sparsity_decay_type': 'exp', 'reg_type': None,
@@ -146,13 +147,12 @@ def process_and_check_config(val):
     for key in default_global_config.keys():
         default_local_config[key] = reset_none_to_default(val, key, default_local_config[key])
 
-        
     pruners_info = []
     for info in val['pruners']:
         pruner_info = {}
         for key in default_local_config:
             pruner_info[key] = reset_none_to_default(info, key, default_local_config[key])
-        pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']##TODO trick
+        pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']  ##TODO trick
         check_config(pruner_info)
         pruner_info = DotDict(pruner_info)
         pruners_info.append(pruner_info)
@@ -278,9 +278,7 @@ def parse_to_prune(config, model):
                     break
     ##remove not to prune layers
     """Drop non-pruned layers."""
-    exclude_names = config["extra_excluded_names"]
-    exclude_names.extend(config["excluded_names"])
-
+    exclude_names = config["extra_excluded_names"] + config["excluded_names"]
     patterns = [re.compile(s) for s in exclude_names]
     if len(patterns) <= 0:
         return modules
@@ -290,21 +288,3 @@ def parse_to_prune(config, model):
             continue
         new_modules[name] = modules[name]
     return new_modules
-
-
-
-
-# def parse_not_to_prune(config, modules):
-#     """Drop non-pruned layers."""
-#     exclude_names = config["extra_excluded_names"]
-#     exclude_names.extend(config["excluded_names"])
-#
-#     patterns = [re.compile(s) for s in exclude_names]
-#     if len(patterns) <= 0:
-#         return modules
-#     new_module = {}
-#     for name in modules.keys():
-#         if any([p.search(name) for p in patterns]):
-#             continue
-#         new_module[name] = modules[name]
-#     return new_module

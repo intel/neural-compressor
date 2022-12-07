@@ -44,7 +44,7 @@ def build_fake_yaml_basic():
                 update_frequency: 2
                 names: ['layer2.*']
                 prune_domain: local
-                pattern: "tile_pattern_2:4"
+                pattern: "2:4"
                 sparsity_decay_type: "exp"
 
             - !Pruner
@@ -54,7 +54,7 @@ def build_fake_yaml_basic():
                 prune_type: "snip"
                 names: ['layer3.*']
                 prune_domain: "local"
-                pattern: "tile_pattern_16x1"
+                pattern: "16x1"
                 sparsity_decay_type: "cube"
 
     """
