@@ -73,6 +73,12 @@ class TestItexEnabling(unittest.TestCase):
               accuracy:
                 metric:
                   topk: 1
+              performance:
+                warmup: 10
+                iteration: 100
+                configs:
+                  cores_per_instance: 4
+                  num_of_instance: 7
             tuning:
                 strategy:
                   name: basic
@@ -238,6 +244,8 @@ class TestItexEnabling(unittest.TestCase):
         relu = tf.nn.relu(add)
         relu6 = tf.nn.relu6(relu, name='op_to_store')
         out_name = relu6.name.split(':')[0]
+        num_of_instance = 1
+        cores_per_instance = 1
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
@@ -254,12 +262,12 @@ class TestItexEnabling(unittest.TestCase):
 
             evaluator = Benchmark('fake_yaml_2.yaml')
             evaluator.b_dataloader = common.DataLoader(dataset)
+            num_of_instance = evaluator.conf.usr_cfg.evaluation.performance.configs.num_of_instance
+            cores_per_instance = evaluator.conf.usr_cfg.evaluation.performance.configs.cores_per_instance
             evaluator.model = output_graph
             evaluator('performance')
 
         found_multi_instance_log = False
-        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
-        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
         log_file = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, 0)
         for file_name in os.listdir(os.getcwd()):
             if file_name == log_file:
