@@ -198,5 +198,10 @@ Shapley values originate from cooperative game theory that come with desirable p
 > **Note** : run_glue_tune_with_shap.py is the example of "SST2" task. If you want to execute other glue task, you may take some slight change under "ShapleyMSE" class.  
 
 
+# Appendix
 
+## Export to ONNX
 
+Right now, we experimentally support exporting PyTorch model to ONNX model, includes FP32 and INT8 model.
+
+By enabling `--onnx` argument, Intel Neural Compressor will export fp32 ONNX model, INT8 QDQ ONNX model, and INT8 QLinear ONNX model.

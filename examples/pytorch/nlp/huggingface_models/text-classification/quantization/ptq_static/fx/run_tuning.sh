@@ -47,6 +47,7 @@ function run_tuning {
     if [ "${topology}" = "bert_base_MRPC" ];then
         TASK_NAME='mrpc'
         model_name_or_path=${input_model}
+        extra_cmd='--onnx'
     elif [ "${topology}" = "bert_base_CoLA" ]; then
         TASK_NAME='cola'
         model_name_or_path=${input_model}

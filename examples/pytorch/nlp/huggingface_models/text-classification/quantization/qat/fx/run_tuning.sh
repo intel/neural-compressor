@@ -14,6 +14,7 @@ function init_params {
     task_name="mrpc"
     output_model="saved_results"
     input_model="bert-base-cased"
+    extra_cmd='--onnx'
     for var in "$@"
     do
       case $var in
@@ -60,7 +61,8 @@ function run_tuning {
         --save_strategy steps \
         --metric_for_best_model f1 \
         --save_total_limit 1 \
-        --tune
+        --tune \
+        ${extra_cmd}
 }
 
 main "$@"
