@@ -24,7 +24,7 @@ def build_fake_yaml_basic():
           start_step: 0
           end_step: 40
           excluded_names: ["classifier", "fp32"]
-          update_frequency_on_step: 8
+          update_frequency: 8
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
@@ -61,7 +61,7 @@ def build_fake_yaml_channel():
               start_step: 0
               end_step: 40
               excluded_names: ["classifier", "fp32"]
-              update_frequency_on_step: 8
+              update_frequency: 8
               sparsity_decay_type: "exp"
               pruners:
                 - !Pruner

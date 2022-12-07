@@ -25,7 +25,7 @@ def build_fake_yaml_basic():
           end_step: 10
           excluded_names: ["classifier"]
 
-          update_frequency_on_step: 1
+          update_frequency: 1
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
@@ -77,7 +77,7 @@ def build_fake_yaml_channel():
               end_step: 10
               excluded_names: ["classifier"]
 
-              update_frequency_on_step: 1
+              update_frequency: 1
               sparsity_decay_type: "exp"
               pruners:
                 - !Pruner
@@ -143,7 +143,7 @@ class TestPytorchPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_items_for_all_pruners(update_frequency_on_step=1)
+        prune.update_items_for_all_pruners(update_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)

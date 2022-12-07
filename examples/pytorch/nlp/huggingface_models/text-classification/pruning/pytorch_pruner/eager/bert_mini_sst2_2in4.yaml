@@ -12,14 +12,14 @@ pruning:
       excluded_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense", "LayerNorm"]
       prune_layer_type: ["Linear"]
       target_sparsity: 0.5
-      update_frequency_on_step: 1000
-      max_sparsity_ratio_per_layer: 0.98
+      update_frequency: 1000
+      max_layer_sparsity_ratio: 0.98
       prune_domain: "global"
       sparsity_decay_type: "exp"
       pruners:
         - !Pruner
             pattern: "2:4"
-            update_frequency_on_step: 100
+            update_frequency: 100
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"

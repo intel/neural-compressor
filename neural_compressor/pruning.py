@@ -227,7 +227,7 @@ class Pruning(Component):
                     import torch
                 except:
                     raise ImportError("Run pruning under Framework PyTorch, but torch not properly installed.")
-                from .pytorch_pruner.pruning import Pruning as Pytorch_Pruning
+                from neural_compressor.pruner.pytorch_pruner.pruning import Pruning as Pytorch_Pruning
                 self.pytorch_pruner = Pytorch_Pruning(self.cfg)
                 self.pytorch_pruner.model = self.model # add the same nc.PyTorchModel
                 self.pytorch_pruner.on_train_begin() # generate pruners
@@ -240,23 +240,7 @@ class Pruning(Component):
                                                 self._model, \
                                                 pruner,
                                                 self.cfg.pruning.approach.weight_compression))
-                    """                    
-                    elif pruner.prune_type == 'pattern_lock':
-                        self.pruners.append(PRUNERS['PatternLock'](\
-                                                self._model, \
-                                                pruner,
-                                                self.cfg.pruning.approach.weight_compression))
-                    elif pruner.prune_type == 'gradient_sensitivity':
-                        self.pruners.append(PRUNERS['GradientSensitivity'](\
-                                                self._model, \
-                                                pruner,
-                                                self.cfg.pruning.approach.weight_compression))
-                    elif pruner.prune_type == 'group_lasso':
-                        self.pruners.append(PRUNERS['GroupLasso'](\
-                                                self._model, \
-                                                pruner,
-                                                self.cfg.pruning.approach.weight_compression))
-                    """
+
                     else:
                         ##print(pruner.prune_type)
                         assert False, 'now only support {}'.format(PRUNERS.keys())

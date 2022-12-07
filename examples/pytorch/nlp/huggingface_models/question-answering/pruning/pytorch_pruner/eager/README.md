@@ -25,21 +25,21 @@ pruning:
       excluded_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
       prune_layer_type: ["Linear"] # the module type which you want to prune (Linear, Conv2d, etc.)
       target_sparsity: 0.9 # the sparsity you want the model to be pruned.
-      max_sparsity_ratio_per_layer: 0.98 # the sparsity ratio's maximum which one layer can reach.
+      max_layer_sparsity_ratio: 0.98 # the sparsity ratio's maximum which one layer can reach.
 
       pruners: # below each "Pruner" defines a pruning process for a group of layers. This enables us to apply different pruning methods for different layers in one model.
         # Local settings
         - !Pruner
             extra_excluded_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
             pattern: "1x1" # pattern type, we support "NxM" and "N:M"
-            update_frequency_on_step: 100 # if use iterative pruning scheduler, this define the pruning frequency.
+            update_frequency: 100 # if use iterative pruning scheduler, this define the pruning frequency.
             prune_domain: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
             prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
         - !Pruner
             extra_excluded_names: [".*output", ".*intermediate"]
             pattern: "4x1"
-            update_frequency_on_step: 100
+            update_frequency: 100
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"

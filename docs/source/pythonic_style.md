@@ -83,14 +83,14 @@ To specify pruning configurations, users can assign values to the corresponding 
 from neural_compressor import config
 config.pruning.weight_compression.initial_sparsity = 0.0
 config.pruning.weight_compression.target_sparsity = 0.9
-config.pruning.weight_compression.max_sparsity_ratio_per_layer = 0.98
+config.pruning.weight_compression.max_layer_sparsity_ratio = 0.98
 config.pruning.weight_compression.prune_type = "basic_magnitude"
 config.pruning.weight_compression.start_epoch = 0
 config.pruning.weight_compression.end_epoch = 3
 config.pruning.weight_compression.start_step = 0
 config.pruning.weight_compression.end_step = 0
 config.pruning.weight_compression.update_frequency = 1.0
-config.pruning.weight_compression.update_frequency_on_step = 1
+config.pruning.weight_compression.update_frequency = 1
 config.pruning.weight_compression.prune_domain = "global"
 config.pruning.weight_compression.pattern = "tile_pattern_1x1"
 

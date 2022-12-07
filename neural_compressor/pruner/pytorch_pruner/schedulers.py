@@ -150,7 +150,7 @@ class IterativeScheduler(BaseScheduler):
             A float representing the target sparsity ratio the model will reach after the next pruning step.
         """
         aggressive_ratio = target_ratio
-        aggressive_ratio = min(self.config.max_sparsity_ratio_per_layer,
+        aggressive_ratio = min(self.config.max_layer_sparsity_ratio,
                                aggressive_ratio)  ##legacy issue
 
         decay_type = self.config.sparsity_decay_type

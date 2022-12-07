@@ -33,7 +33,6 @@ QUANTMAPPING = {
     "qat": "quant_aware_training",
 }
 
-
 ops_schema = Schema({
     Optional('weight', default=None): {
         Optional('granularity'): And(
@@ -66,22 +65,22 @@ ops_schema = Schema({
 def check_value(name, src, supported_type, supported_value=[]):
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
         logger.warning("Type of {} items should be {} but not {}, " \
-            "use its default value.".format(name, str(supported_type), [type(i) for i in src]))
+                       "use its default value.".format(name, str(supported_type), [type(i) for i in src]))
         return False
     elif not isinstance(src, list) and not isinstance(src, supported_type):
         logger.warning("Type of {} should be {} but not {}, " \
-            "use its default value.".format(name, str(supported_type), type(src)))
+                       "use its default value.".format(name, str(supported_type), type(src)))
         return False
 
     if len(supported_value) > 0:
         if isinstance(src, str) and src not in supported_value:
             logger.warning("{} is not in supported {}: {}. Skip setting it and" \
-                " use default value.".format(src, name, str(supported_value)))
+                           " use default value.".format(src, name, str(supported_value)))
             return False
         elif isinstance(src, list) and all([isinstance(i, str) for i in src]) and \
-            any([i not in supported_value for i in src]):
+                any([i not in supported_value for i in src]):
             logger.warning("{} is not in supported {}: {}. Skip setting it and" \
-                " use default value.".format(src, name, str(supported_value)))
+                           " use default value.".format(src, name, str(supported_value)))
             return False
 
     return True
@@ -389,7 +388,7 @@ class _BaseQuantizationConfig:
     @objective.setter
     def objective(self, objective):
         if check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
+                       ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
     @property
@@ -399,7 +398,7 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive']):
+                       ['basic', 'mse', 'bayesian', 'random', 'exhaustive']):
             self._strategy = strategy
 
     @property
@@ -410,7 +409,7 @@ class _BaseQuantizationConfig:
     def op_name_list(self, op_name_list):
         if not isinstance(op_name_list, dict):
             logger.warning("Type of op_name_list should be dict but not {}, " \
-                "use its default value.".format(type(op_name_list)))
+                           "use its default value.".format(type(op_name_list)))
         else:
             for k, v in op_name_list.items():
                 ops_schema.validate(v)
@@ -424,7 +423,7 @@ class _BaseQuantizationConfig:
     def op_type_list(self, op_type_list):
         if not isinstance(op_type_list, dict):
             logger.warning("Type of op_type_list should be dict but not {}, " \
-                "use its default value.".format(type(op_type_list)))
+                           "use its default value.".format(type(op_type_list)))
         else:
             for k, v in op_type_list.items():
                 ops_schema.validate(v)
@@ -455,8 +454,8 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'tensorflow', 'tensorflow_itex', 'pytorch', 'pytorch_ipex', 'pytorch_fx',
-                'onnxrt_qlinearops', 'onnxrt_integerops', 'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet'
+            'tensorflow', 'tensorflow_itex', 'pytorch', 'pytorch_ipex', 'pytorch_fx',
+            'onnxrt_qlinearops', 'onnxrt_integerops', 'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet'
         ]):
             self._backend = backend
 
@@ -511,7 +510,7 @@ class TuningCriterion:
     @objective.setter
     def objective(self, objective):
         if check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
+                       ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
     @property
@@ -521,7 +520,7 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive']):
+                       ['basic', 'mse', 'bayesian', 'random', 'exhaustive']):
             self._strategy = strategy
 
 
@@ -539,10 +538,10 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions = ["bf16"],
+                 extra_precisions=["bf16"],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-    ):
+                 ):
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -593,31 +592,26 @@ pruners = [Pruner()]
 
 
 class PruningConfig:
-    def __init__(self, pruners=pruners, initial_sparsity=0.0, target_sparsity=0.97,
-                 max_sparsity_ratio_per_layer=0.98, prune_type="basic_magnitude",
-                 start_epoch=0, end_epoch=4, start_step=0, end_step=0, update_frequency=1.0,
-                 update_frequency_on_step=1, not_to_prune_names=[], prune_domain="global",
-                 names=[], exclude_names=[], prune_layer_type=[], sparsity_decay_type="exp",
-                 pattern="tile_pattern_1x1"):
+    def __init__(self, pruners=pruners, target_sparsity=0.9, prune_type="snip_momentum", pattern="4x1", names=[],
+                 excluded_names=[],
+                 start_step=0, end_step=0, prune_domain="global", update_frequency=1,
+                 min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98, prune_layer_type=['Conv', 'Linear'], resume_from_pruned_checkpoint=False,
+                 ):
         self._weight_compression = DotDict({
-            'initial_sparsity': initial_sparsity,
+            'pruners': pruners,
             'target_sparsity': target_sparsity,
-            'max_sparsity_ratio_per_layer': max_sparsity_ratio_per_layer,
             'prune_type': prune_type,
-            'start_epoch': start_epoch,
-            'end_epoch': end_epoch,
+            'pattern': pattern,
+            'names': names,
+            'excluded_names': excluded_names,##global only
             'start_step': start_step,
             'end_step': end_step,
-            'update_frequency': update_frequency,
-            'update_frequency_on_step': update_frequency_on_step,
-            'not_to_prune_names': not_to_prune_names,
             'prune_domain': prune_domain,
-            'names': names,
-            'exclude_names': exclude_names,
+            'update_frequency': update_frequency,
+            'min_layer_sparsity_ratio': min_layer_sparsity_ratio,
+            'max_layer_sparsity_ratio': max_layer_sparsity_ratio,
             'prune_layer_type': prune_layer_type,
-            'sparsity_decay_type': sparsity_decay_type,
-            'pattern': pattern,
-            'pruners': pruners
+            'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint##resume_from_pruned_checkpoint
         })
 
     @property
@@ -736,19 +730,19 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                          tuning_criterion=tuning_criterion,
                          accuracy_criterion=accuracy_criterion,
                          extra_precisions=extra_precisions,
-        )
+                         )
 
 
 class ExportConfig:
     def __init__(
-        self,
-        dtype="int8",
-        opset_version=14,
-        quant_format="QDQ",
-        example_inputs=None,
-        input_names=None,
-        output_names=None,
-        dynamic_axes=None,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
     ):
         self._dtype = dtype
         self._opset_version = opset_version
@@ -817,15 +811,15 @@ class ExportConfig:
 
 class Torch2ONNXConfig(ExportConfig):
     def __init__(
-       self,
-       dtype="int8",
-       opset_version=14,
-       quant_format="QDQ",
-       example_inputs=None,
-       input_names=None,
-       output_names=None,
-       dynamic_axes=None,
-       **kwargs,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
+            **kwargs,
     ):
         super().__init__(
             dtype=dtype,
@@ -841,15 +835,15 @@ class Torch2ONNXConfig(ExportConfig):
 
 class TF2ONNXConfig(ExportConfig):
     def __init__(
-       self,
-       dtype="int8",
-       opset_version=14,
-       quant_format="QDQ",
-       example_inputs=None,
-       input_names=None,
-       output_names=None,
-       dynamic_axes=None,
-       **kwargs,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
+            **kwargs,
     ):
         super().__init__(
             dtype=dtype,

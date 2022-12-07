@@ -29,7 +29,7 @@ def build_fake_yaml_basic():
           end_step: 10
           excluded_names: ["classifier", "fp32"]
 
-          update_frequency_on_step: 1
+          update_frequency: 1
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
@@ -81,7 +81,7 @@ def build_fake_yaml_channel():
               end_step: 10
               excluded_names: ["classifier", "fp32"]
 
-              update_frequency_on_step: 1
+              update_frequency: 1
               sparsity_decay_type: "exp"
               pruners:
                 - !Pruner
@@ -174,7 +174,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruner_channel_pruning(self):
         #import pdb;pdb.set_trace()
         prune = Pruning("fake_channel_pruning.yaml")
-        prune.update_items_for_all_pruners(update_frequency_on_step=1)
+        prune.update_items_for_all_pruners(update_frequency=1)
         prune.model = self.model
         prune.prepare()
 

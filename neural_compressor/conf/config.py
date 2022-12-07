@@ -46,43 +46,37 @@ def constructor_register(cls):
     )
     return cls
 
+
+
+
 @constructor_register
-class Pruner():
-    def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None,
-                 target_sparsity=None, update_frequency=1, method='per_tensor', 
-                 prune_type='basic_magnitude', ##for pytorch pruning, these values should be None
-                 start_step=None, end_step=None, update_frequency_on_step=None, prune_domain=None,
-                 sparsity_decay_type=None, pattern="tile_pattern_1x1", names=None, 
-                 extra_excluded_names=None, parameters=None, infer_initial_sparsity=None,
-                 reg_type=None, max_sparsity_ratio_per_layer=None, min_sparsity_ratio_per_layer=None):
-        self.start_epoch = start_epoch
-        self.end_epoch = end_epoch
-        self.update_frequency = update_frequency
+class Pruner:
+    def __init__(self,
+                 extra_excluded_names=[], sparsity_decay_type="exp", reg_type=None, reduce_type="mean", parameters={"reg_coeff":0.0},  ####local config,
+                 # the following global key should be set to None
+                 target_sparsity=None, prune_type=None, pattern=None, names=None,
+                 excluded_names=None,
+                 start_step=None, end_step=None, prune_domain=None, update_frequency=None,
+                 min_layer_sparsity_ratio=None, max_layer_sparsity_ratio=None, resume_from_pruned_checkpoint=None,
+         ):
+        self.extra_excluded_names = extra_excluded_names
+        self.sparsity_decay_type = sparsity_decay_type
+        self.reg_type = reg_type
+        self.reduce_type = reduce_type
+        self.parameters = parameters
         self.target_sparsity = target_sparsity
-        self.initial_sparsity = initial_sparsity
-        self.update_frequency = update_frequency
+        self.prune_type = prune_type
+        self.pattern = pattern
+        self.names = names
+        self.excluded_names = excluded_names
         self.start_step = start_step
         self.end_step = end_step
-        self.update_frequency_on_step = update_frequency_on_step
         self.prune_domain = prune_domain
-        self.sparsity_decay_type = sparsity_decay_type
-        self.extra_excluded_names = extra_excluded_names
-        self.pattern = pattern
-        ## move this to experimental/pruning to support dynamic pruning
-        # assert prune_type.replace('_', '') in [i.lower() for i in PRUNERS], \
-        #                                  'now only support {}'.format(PRUNERS.keys())
-        self.prune_type = prune_type
-        self.method = method
-        self.names = names
-        self.parameters = parameters
-        self.infer_initial_sparsity = infer_initial_sparsity
-        self.reg_type = reg_type
-        self.reg_coeff = None
-        if self.parameters != None:
-            self.reg_coeff = self.parameters.get('reg_coeff')
-        self.max_sparsity_ratio_per_layer = max_sparsity_ratio_per_layer
-        self.min_sparsity_ratio_per_layer = min_sparsity_ratio_per_layer
-        self.reduce_type = None
+        self.update_frequency = update_frequency
+        self.min_layer_sparsity_ratio = min_layer_sparsity_ratio
+        self.max_layer_sparsity_ratio = max_layer_sparsity_ratio
+        self.resume_from_pruned_checkpoint = resume_from_pruned_checkpoint
+
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -689,36 +683,33 @@ train_schema = Schema({
     Optional('hostfile'): str
 })
 
+
+
 weight_compression_schema = Schema({
-    Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
-    Optional('target_sparsity', default=0.97): float,
-    Optional('max_sparsity_ratio_per_layer', default=0.98): float,
-    Optional('prune_type', default="basic_magnitude"): str,
-    Optional('start_epoch', default=0): int,
-    Optional('end_epoch', default=4): int,
+    Optional('target_sparsity', default=0.9): float,
+    Optional('prune_type', default="snip_momentum"): str,
+    Optional('pattern', default="4x1"): str,
+    Optional('names', default="[]"): list,
+    Optional('excluded_names', default="[]"): list,
     Optional('start_step', default=0): int,
     Optional('end_step', default=0): int,
-    Optional('update_frequency', default=1.0): float,
-    Optional('update_frequency_on_step', default=1):int,
-    Optional('excluded_names', default=[]):list,
     Optional('prune_domain', default="global"): str,
-    Optional('names', default=[]): list,
-    Optional('extra_excluded_names', default=None): list,
-    Optional('prune_layer_type', default=None): list,
-    Optional('sparsity_decay_type', default="exp"): str,
-    Optional('pattern', default="tile_pattern_1x1"): str,
+    Optional('update_frequency', default=1): int,
+    Optional('min_layer_sparsity_ratio', default=0.0): float,
+    Optional('max_layer_sparsity_ratio', default=0.98): float,
+    Optional('prune_layer_type', default=['Conv', 'Linear']): list,
 
+    Optional('resume_from_pruned_checkpoint', default=False): bool,
     Optional('pruners'): And(list, \
                                lambda s: all(isinstance(i, Pruner) for i in s))
 })
 
-# weight_compression_pytorch_schema = Schema({},ignore_extra_keys=True)
 
 approach_schema = Schema({
     Hook('weight_compression', handler=_valid_prune_sparsity): object,
-    Hook('weight_compression_pytorch', handler=_valid_prune_sparsity): object,
+    ##Hook('weight_compression_pytorch', handler=_valid_prune_sparsity): object,
     Optional('weight_compression'): weight_compression_schema,
-    Optional('weight_compression_pytorch'): weight_compression_schema,
+    ##Optional('weight_compression_pytorch'): weight_compression_schema,
 })
 
 default_workspace = './nc_workspace/{}/'.format(

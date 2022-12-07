@@ -12,8 +12,8 @@ pruning:
       excluded_names: ["qa_outputs", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
       prune_layer_type: ["Linear"]
       target_sparsity: 0.8
-      update_frequency_on_step: 1000
-      max_sparsity_ratio_per_layer: 0.98
+      update_frequency: 1000
+      max_layer_sparsity_ratio: 0.98
       prune_domain: "global"
 
       sparsity_decay_type: "exp"
@@ -21,7 +21,7 @@ pruning:
         - !Pruner
             pattern: "oc_pattern_4x1"
             target_sparsity: 0.8
-            update_frequency_on_step: 1000
+            update_frequency: 1000
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
