@@ -90,6 +90,7 @@ class MagnitudeCriterion(BaseCriterion):
                 p = self.modules[key].weight.data
                 self.scores[key] = p
 
+
 @register_criterion('gradient')
 class GradientCriterion(BaseCriterion):
     """Pruning criterion.
@@ -115,6 +116,7 @@ class GradientCriterion(BaseCriterion):
             for key in self.modules.keys():
                 p = self.modules[key].weight
                 self.scores[key] = torch.abs(p.grad)
+
 
 @register_criterion('snip')
 class SnipCriterion(BaseCriterion):
@@ -182,4 +184,3 @@ class SnipMomentumCriterion(BaseCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(p * p.grad)
-
