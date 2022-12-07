@@ -13,10 +13,10 @@ from neural_compressor.experimental import Pruning, common
 from neural_compressor.utils import logger
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.utils.create_obj_from_config import create_train_func
-from neural_compressor.experimental.pruning import TfPruningCallback
+from neural_compressor.pruning.pruning import TfPruningCallback
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
-from platform import platform, system
+from platform import system
 
 def build_fake_yaml():
     fake_yaml = """

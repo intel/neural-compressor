@@ -16,15 +16,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .component import Component
-from ..pruners import PRUNERS
-from ..utils import logger
-from ..utils.utility import GLOBAL_STATE, MODE
-from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
-from ..model import BaseModel
-from ..adaptor import FRAMEWORKS
-from ..conf.config import PruningConf
-from ..conf.pythonic_config import Config
+from neural_compressor.experimental.component import Component
+from neural_compressor.lagacy.pruner import PRUNERS
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import GLOBAL_STATE, MODE
+from neural_compressor.utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
+from neural_compressor.model import BaseModel
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.conf.config import PruningConf
+from neural_compressor.conf.pythonic_config import Config
 
 from deprecated import deprecated
 

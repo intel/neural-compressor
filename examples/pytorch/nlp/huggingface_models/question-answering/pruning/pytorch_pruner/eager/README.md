@@ -47,19 +47,22 @@ pruning:
 Please be awared that when the keywords appear in both global and local settings, we select the **local** settings as priority.
 ### Coding template:
 With a settled config file, we provide a template for implementing pytorch_pruner API:
+
 ```python
 model = Model()
 criterion = Criterion()
 optimizer = Optimizer()
 args = Args()
 
-from neural_compressor.experimental.pytorch_pruner.pruning import Pruning
+from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
 
 pruner = Pruning("path/to/your/config.yaml")
 if args.do_prune:
-    pruner.update_items_for_all_pruners(start_step=int(args.sparsity_warm_epochs * num_iterations), end_step=int(total_iterations))  ##iterative
+    pruner.update_items_for_all_pruners(start_step=int(args.sparsity_warm_epochs * num_iterations),
+                                        end_step=int(total_iterations))  ##iterative
 else:
-   pruner.update_items_for_all_pruners(start_step=total_iterations+1, end_step=total_iterations+1) ## remove the pruner
+    pruner.update_items_for_all_pruners(start_step=total_iterations + 1,
+                                        end_step=total_iterations + 1)  ## remove the pruner
 pruner.model = model
 pruner.on_train_begin()
 for epoch in range(epochs):
@@ -73,7 +76,7 @@ for epoch in range(epochs):
         optimizer.step()
         pruner.on_after_optimizer_step()
         optimizer.zero_grad()
-    
+
     model.eval()
     for step, batch in enumerate(val_dataloader):
         ...
