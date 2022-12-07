@@ -15,9 +15,12 @@ ut_log_name=${LOG_DIR}/ut_neural_coder.log
 
 echo "cat run.sh..."
 cat run.sh | tee ${ut_log_name}
-echo "-------------"
+echo "------UT start-------"
 bash run.sh 2>&1 | tee -a ${ut_log_name}
+echo "------UT end -------"
 
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
+    echo "Find errors in UT test, please check the output..."
     exit 1
 fi
+echo "UT finished successfully! "
