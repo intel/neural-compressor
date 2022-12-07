@@ -80,3 +80,40 @@ class PoolOperator(Operator):
 
             self.quantizer.new_nodes.append(qnode)
             self.quantizer.remove_nodes.append(node)
+
+@qop_registry(op_types="QLinearAveragePool")
+class QPoolOperator(QOperator):
+    def __init__(self, onnx_node):
+        super().__init__(onnx_node)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        # input dq
+        in_dq = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.inputs[:3],
+            [node.name + '_in_dequant'])
+        inputs = [node.name + '_in_dequant']
+        add_nodes.append(in_dq)
+        # output q
+        if not self.disable_qdq_for_node_output:
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out', node.inputs[3], node.inputs[4]],
+                node.outputs,
+                node.name + '_out_quant')
+            outputs = [node.name + '_out']
+            add_nodes.append(out_q)
+        else:
+            outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+        kwargs["domain"] = ms_domain
+
+        activation_node = onnx.helper.make_node(
+            'AveragePool', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(activation_node)
+        return True, add_nodes 

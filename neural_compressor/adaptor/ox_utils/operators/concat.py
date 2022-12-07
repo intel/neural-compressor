@@ -96,3 +96,43 @@ class ConcatOperator(Operator):
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
         self.quantizer.dtype_cast(self.node, self.dtype)
+
+@qop_registry(op_types="QLinearConcat")
+class QConcatOperator(QOperator):
+    def __init__(self, onnx_node):
+        super().__init__(onnx_node)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inputs = []
+        # input dq
+        for i in range((len(node.inputs) - 2) / 3 - 1):
+            in_dq = onnx.helper.make_node(
+                'DequantizeLinear',
+                node.inputs[2 + i*3 : 2 + (i+1)*3],
+                [node.name + '_in_dequant_' + str(i)])
+            inputs.append(node.name + '_in_dequant_' + str(i))
+            add_nodes.append(in_dq)
+
+        # output q
+        if not self.disable_qdq_for_node_output:
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out', node.inputs[0], node.inputs[1]],
+                node.outputs,
+                node.name + '_out_quant')
+            outputs = [node.name + '_out']
+            add_nodes.append(out_q)
+        else:
+            outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+        kwargs["domain"] = ms_domain
+
+        concat_node = onnx.helper.make_node(
+            'Concat', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(concat_node)
+        return True, add_nodes 

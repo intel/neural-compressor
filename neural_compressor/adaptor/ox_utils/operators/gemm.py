@@ -92,3 +92,46 @@ class GemmOperator(Operator):
         self.quantizer.remove_nodes.extend(parents)
         self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(node)
+        
+@qop_registry(op_types="QGemm")
+class QGemmOperator(QOperator):
+    def __init__(self, onnx_node):
+        super().__init__(onnx_node)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        # input dq
+        in_dq1 = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.inputs[:3],
+            [node.name + '_in_dequant1'])
+        
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.inputs[3:6],
+            [node.name + '_in_dequant2'])
+        inputs = [node.name + '_in_dequant1', node.name + '_in_dequant2']
+        
+        add_nodes.extend([in_dq1, in_dq2])
+        # output q
+        if not self.disable_qdq_for_node_output:
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out', node.inputs[6], node.inputs[7]],
+                node.outputs,
+                node.name + '_out_quant')
+            outputs = [node.name + '_out']
+            add_nodes.append(out_q)
+        else:
+            outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+        kwargs["domain"] = ms_domain
+
+        gemm_node = onnx.helper.make_node(
+            'Gemm', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(gemm_node)
+        return True, add_nodes 

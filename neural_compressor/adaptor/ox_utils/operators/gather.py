@@ -90,3 +90,35 @@ class GatherOperator(Operator):
                         self.quantizer.model.replace_node_input(n, 
                                         child.output[0], gather_new_output)
             self.quantizer.remove_nodes.extend([node, parents[0]])
+            
+@qop_registry(op_types="Gather")
+class QGatherOperator(QOperator):
+    def __init__(self, onnx_node):
+        super().__init__(onnx_node)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inputs = []
+        if all([i.op_type != 'DequantizeLinear' for i in self.children]):
+            return False, add_nodes
+        for child in self.children:
+            if child.op_type == 'DequantizeLinear':
+                in_dq = onnx.helper.make_node(
+                    'DequantizeLinear',
+                    [node.input[0], child.input[1], child.input[2]],
+                    [node.name + '_in_dequant_' + str(i)])
+                inputs.append(node.name + '_in_dequant_' + str(i))
+                add_nodes.append(in_dq)
+                break
+        outputs = node.outputs
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+        kwargs["domain"] = ms_domain
+
+        gather_node = onnx.helper.make_node(
+            'Gather', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(gather_node)
+        return True, add_nodes 

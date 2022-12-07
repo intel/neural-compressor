@@ -379,3 +379,21 @@ def find_by_name(name, item_list):
         return items[0]
     else:
         return None
+
+def convert_qoperator_to_qdq(model, config):
+    from neural_compressor.adaptor.ox_utils/operators.ops import QOPERATORS
+    add_nodes = []
+    remove_nodes = []
+    inits = []
+    for node in model.nodes():
+        if node.op_type in QOPERATORS:
+            converter = QOPERATORS[node.op_type](node)
+            done, add_node = converter.convert()
+            if done:
+                add_nodes.extend(add_node)
+                remove_nodes.extend(node)
+    model.add_nodes(add_nodes)
+    model.remove_nodes(remove_nodes)
+    model.remove_unused_constant()
+    model.topological_sort()
+    return model

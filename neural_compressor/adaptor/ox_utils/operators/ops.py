@@ -17,6 +17,7 @@
 #
 
 OPERATORS = {}
+QOPERATORS= {}
 
 def op_registry(op_types):
     '''The class decorator used to register all Operator subclasses.
@@ -33,6 +34,24 @@ def op_registry(op_types):
             OPERATORS[single_op_type] = cls
         return cls
     return decorator_op
+
+def qop_registry(op_types):
+    '''The class decorator used to register all qOperator subclasses.
+
+       Args:
+           cls (class): The class of register.
+    '''
+    def decorator_op(cls):
+        assert cls.__name__.endswith(
+            'Operator'), "The name of subclass of QOperator should end with \'Operator\' substring."
+        if cls.__name__[:-len('Operator')] in OPERATORS: # pragma: no cover
+            raise ValueError('Cannot have two operators with the same name.')
+        for single_op_type in [op_type.strip() for op_type in op_types.split(',')]:
+            if single_op_type.startswith('QLinear') or single_op_type in ['QGemm']:
+                QOPERATORS[single_op_type] = cls
+        return cls
+    return decorator_op
+
 
 class Operator(object):
     def __init__(self, onnx_quantizer, onnx_node):
@@ -82,3 +101,24 @@ class Operator(object):
 
     def cast(self): # pragma: no cover
         self.quantizer.dtype_cast(self.node, self.dtype)
+
+class QOperator(object):
+    def __init__(self, onnx_node, add_qdq_to_weight=False,
+        dedicated_qdq=False, optypes_to_exclude_output_quantization=[]):
+        self.node = onnx_node
+        self.add_qdq_to_weight = add_qdq_to_weight
+        self.dedicated_qdq = dedicated_qdq
+        self.disable_qdq_for_node_output = True if onnx_node.op_type in \
+            optypes_to_exclude_output_quantization else False
+        self.per_channel = False
+        self.algorithm = 'minmax'
+        self.weight_scheme = 'sym'
+        self.weight_dtype = None
+        self.activation_dtype = None
+        self.activation_scheme = 'asym'
+
+    def convert_check(self, convert_format):
+        return True
+
+    def convert(self):
+        return
