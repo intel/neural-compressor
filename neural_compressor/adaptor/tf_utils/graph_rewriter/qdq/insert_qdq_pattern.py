@@ -145,6 +145,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                                      per_channel,
                                                      weight_bit,
                                                      self.device)
+
         # Adaption for strip equivalent nodes feature
         # Replicate shared Dequantize for next step fusion
         self.g_qdq = GraphAnalyzer()
@@ -570,6 +571,15 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         else:
             if computational_node.name in self.g.parent_frame_details and \
                self.g.parent_frame_details[computational_node.name]:
+                weight_enter_node = Helper.create_node('Enter', \
+                                            weight_node.name + '_enter', [weight_node.name])
+                Helper.set_attr_string(weight_enter_node, 'frame_name',
+                    self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
+                Helper.set_attr_dtype(weight_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(weight_enter_node, 'is_constant', True)
+                Helper.set_attr_int(weight_enter_node, 'parallel_iterations', \
+                    self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
+
                 min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
                 Helper.set_attr_string(min_enter_node, 'frame_name',
                     self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
@@ -586,11 +596,15 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
                     self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
 
-                self.g_weight.add_node(quant_node, weight_name, [])
                 self.g_weight.add_node(min_node, None, [min_enter_node.name])
                 self.g_weight.add_node(max_node, None, [max_enter_node.name])
                 self.g_weight.add_node(min_enter_node, min_node.name, [quant_node.name])
                 self.g_weight.add_node(max_enter_node, max_node.name, [quant_node.name])
+                self.g_weight.add_node(weight_enter_node, weight_node.name, [quant_node.name])
+                quant_node.input[0] = weight_enter_node.name
+                quant_node.input[1] = min_enter_node.name
+                quant_node.input[2] = max_enter_node.name
+                self.g_weight.add_node(quant_node, weight_enter_node.name, [])
                 self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
                 computational_node.input[1] = dequant_node.name
             else:
