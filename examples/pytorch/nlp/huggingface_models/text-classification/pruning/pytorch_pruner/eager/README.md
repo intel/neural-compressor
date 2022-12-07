@@ -56,10 +56,10 @@ from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
 
 pruner = Pruning("path/to/your/config.yaml")
 if args.do_prune:
-    pruner.update_items_for_all_pruners(start_step=int(args.sparsity_warm_epochs * num_iterations),
+    pruner.update_config(start_step=int(args.sparsity_warm_epochs * num_iterations),
                                         end_step=int(total_iterations))  ##iterative
 else:
-    pruner.update_items_for_all_pruners(start_step=total_iterations + 1,
+    pruner.update_config(start_step=total_iterations + 1,
                                         end_step=total_iterations + 1)  ##removing the pruner
 pruner.model = model
 pruner.on_train_begin()

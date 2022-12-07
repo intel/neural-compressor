@@ -62,7 +62,7 @@ if opt.do_prune:
 else:
     start = nb * epochs + 1
     end = start
-pruner.update_items_for_all_pruners(start_step=start, end_step=end)
+pruner.update_config(start_step=start, end_step=end)
 pruner.model = model
 pruner.on_train_begin()
 for epoch in range(start_epoch, epochs):

@@ -973,12 +973,12 @@ def main():
     from pytorch_pruner.pruning import Pruning
     pruner = Pruning(args.pruning_config)
     if args.do_prune:
-        pruner.update_items_for_all_pruners( \
+        pruner.update_config( \
                 start_step = int(args.warm_epochs*num_iterations+args.num_warmup_steps), \
                 end_step = int(total_iterations))##iterative
     else:
         total_step = num_iterations * args.num_train_epochs + 1
-        pruner.update_items_for_all_pruners(start_step=total_step, end_step=total_step)
+        pruner.update_config(start_step=total_step, end_step=total_step)
     pruner.model = model
     pruner.on_train_begin()
 

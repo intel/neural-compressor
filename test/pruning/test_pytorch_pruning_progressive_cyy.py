@@ -130,7 +130,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruning_basic(self):
         prune = Pruning("fake_snip.yaml")
         ##prune.generate_pruners()
-        prune.update_items_for_all_pruners(start_step=1)
+        prune.update_config(start_step=1)
         prune.model = self.model
         prune.prepare()
 
@@ -172,7 +172,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruner_channel_pruning(self):
         prune = Pruning("fake_channel_pruning.yaml")
         ##prune.generate_pruners()
-        prune.update_items_for_all_pruners(start_step=1)
+        prune.update_config(start_step=1)
         prune.model = self.model
         prune.prepare()
 

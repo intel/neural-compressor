@@ -298,7 +298,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         else:
             start = nb * epochs + 1
             end = start
-        pruner.update_items_for_all_pruners(start_step=start, end_step=end)
+        pruner.update_config(start_step=start, end_step=end)
         
     pruner.model = model
     pruner.on_train_begin()

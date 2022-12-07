@@ -48,7 +48,7 @@ class Pruning:
         self.pruners = []
         self.pruner_info = process_config(self.config_file_path)
 
-    def update_items_for_all_pruners(self, **kwargs):
+    def update_config(self, **kwargs):
         """Add user-defined arguments to the original configurations.
 
         The original config of pruning is read from a file.

@@ -139,7 +139,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruning_basic(self):
         #import pdb;pdb.set_trace()
         prune = Pruning("fake_snip.yaml")
-        prune.update_items_for_all_pruners(start_step=1)
+        prune.update_config(start_step=1)
         prune.model = self.model
         prune.prepare()
 
@@ -174,7 +174,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruner_channel_pruning(self):
         #import pdb;pdb.set_trace()
         prune = Pruning("fake_channel_pruning.yaml")
-        prune.update_items_for_all_pruners(update_frequency=1)
+        prune.update_config(update_frequency=1)
         prune.model = self.model
         prune.prepare()
 

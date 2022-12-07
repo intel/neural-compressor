@@ -128,7 +128,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruning_basic(self):
         prune = Pruning("fake_snip.yaml")
         ##prune.generate_pruners()
-        prune.update_items_for_all_pruners(start_step=1)
+        prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
@@ -143,7 +143,7 @@ class TestPytorchPruning(unittest.TestCase):
             dummy_dataset = TensorDataset(x_train, y_train)
         dummy_dataloader = DataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_items_for_all_pruners(update_frequency=1)
+        prune.update_config(update_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
@@ -169,7 +169,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruner_channel_pruning(self):
         prune = Pruning("fake_snip.yaml")
         ##prune.generate_pruners()
-        prune.update_items_for_all_pruners(start_step=1)
+        prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
