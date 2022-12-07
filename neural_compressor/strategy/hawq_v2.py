@@ -110,7 +110,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             yield op_tuning_cfg
         
         # Start compute the hessian trace
-        target_dtype = "int8"  # TODO support bf16
+        target_dtype = "int8"  
+        # TODO remove it before merge
         criterion=torch.nn.CrossEntropyLoss()
         op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model, 
                                                             dataloader = self.calib_dataloader, 
