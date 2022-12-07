@@ -53,7 +53,7 @@ sh run_tuning.sh --topology=topology_name --dataset_location=/path/to/glue/data/
 or
 
 ```bash
-python -u ./run_glue_tune.py \
+python -u ./run_glue.py \
         --model_name_or_path distilbert-base-uncased-finetuned-sst-2-english \
         --task_name sst2 \
         --do_eval \
@@ -69,7 +69,7 @@ python -u ./run_glue_tune.py \
 ### 2. To get the benchmark of tuned model, includes batch_size and throughput: 
 
 ```bash
-python -u ./run_glue_tune.py \
+python -u ./run_glue.py \
         --model_name_or_path ./int8_model_dir \
         --task_name sst2 \
         --do_eval \
@@ -154,7 +154,7 @@ Here we set accuracy target as tolerating 0.01 relative accuracy loss of baselin
 
 ### Code Prepare
 
-We just need update run_squad_tune.py and run_glue_tune.py like below
+We just need update run_glue.py like below
 
 ```python
 if model_args.tune:
@@ -191,7 +191,7 @@ if model_args.tune:
 ### Using Shapley MSE as Objective
 
 Shapley values originate from cooperative game theory that come with desirable properties, and now are widely used as a tool to fulfill Explainable AI. The run_glue_tune_with_shap.py is designed to help build a bert-based model using Shapley MSE as an objective. Here, the Shapley MSE means that we can get one result from FP32 and several results from INT8 model, so we use MSE to calculate how different between the two shapley values. It can reflect the explainability of INT8 model. 
-> **Note** : run_glue_tune_with_shap.py is the example of "SST2" task. If you want to execute other glue task, you may take some slight change under "ShapleyMSE" class.  
+> **Note** : run_glue_with_shap.py is the example of "SST2" task. If you want to execute other glue task, you may take some slight change under "ShapleyMSE" class.  
 
 
 # Appendix
