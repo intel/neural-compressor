@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # 
+import time
 import numpy as np
 from neural_compressor import data
 import tensorflow as tf
@@ -96,7 +97,8 @@ def evaluate(model):
             metric.update(predictions, labels)
             if iteration and idx >= iteration:
                 break
-        return end - start
+        latency = (end - start) / eval_dataloader.batch_size
+        return latency
 
     latency = eval_func(eval_dataloader, metric)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
