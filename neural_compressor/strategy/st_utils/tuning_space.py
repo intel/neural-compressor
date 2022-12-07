@@ -172,8 +172,7 @@ class TuningSpace:
                                     merged_options.append(option)
                                 else:
                                     logger.warning("By default, {1}: {2} is not supported for {0} ".format(
-                                                    key, item_name, option) +
-                                                   "in Intel Neural Compressor")
+                                                    key, item_name, option) + "in Intel Neural Compressor")
                                     logger.warning("Please visit neural_compressor/adaptor/[xxx].yaml " +
                                                    "to enhance the default capability in Intel Neural Compressor")
                             if len(merged_options) == 0:
