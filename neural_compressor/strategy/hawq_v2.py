@@ -35,13 +35,8 @@ import logging
 logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
 @strategy_registry
-class HawqTuneStrategy(TuneStrategy):
-    """The basic tuning strategy which tunes the low precision model with below order.
-
-    1. modelwise tuning for all quantizable ops.
-    2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
-       on accuracy.
-    3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
+class HAWQ_V2TuneStrategy(TuneStrategy):
+    """The hawq v2 tuning strategy.
 
     Args:
         model (object):                        The FP32 model specified for low precision tuning.
@@ -88,7 +83,7 @@ class HawqTuneStrategy(TuneStrategy):
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         super(
-            HawqTuneStrategy,
+            HAWQ_V2TuneStrategy,
             self).__init__(
             model,
             conf,
