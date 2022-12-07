@@ -70,6 +70,7 @@ class Test_MSEV2Strategy(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             approach="static",
             backend="tensorflow",
+            optimization_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
         
         q_model = fit(
@@ -97,10 +98,11 @@ class Test_MSEV2Strategy(unittest.TestCase):
         conf = PostTrainingQuantConfig(
             approach="static",
             backend="tensorflow",
+            optimization_level=1,
             tuning_criterion=TuningCriterion(
                 strategy="mse_v2",
                 strategy_kwargs={
-                    "confidence_batches": 1,
+                    "confidence_batches": 5,
                 }))
         
         q_model = fit(
