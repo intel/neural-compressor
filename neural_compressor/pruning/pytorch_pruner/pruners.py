@@ -18,7 +18,7 @@
 import copy
 import torch
 from .patterns import get_pattern
-from .scheduler import get_scheduler
+from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIAS
 from .regs import get_reg
 from .logger import logger

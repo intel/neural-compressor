@@ -212,7 +212,7 @@ class Pruning(Component):
                 'now we only support weight_compression and weight_compression_pytorch'
 
             if self.cfg.pruning.approach.weight_compression_pytorch != None:
-                from .pytorch_pruner.pruning import Pruning as PytorchPruning
+                from neural_compressor.pruning.pytorch_pruner import Pruning as PytorchPruning
                 self.pytorch_pruner = PytorchPruning(self.cfg)
                 self.pruners.append(self.pytorch_pruner)
 

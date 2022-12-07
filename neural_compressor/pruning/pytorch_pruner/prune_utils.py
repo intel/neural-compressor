@@ -20,7 +20,7 @@ import re
 import yaml
 
 try:
-    from ...conf.dotdict import DotDict
+    from neural_compressor.conf.dotdict import DotDict
 except:
     from .dot_dict import DotDict  ##TODO
 from .logger import logger

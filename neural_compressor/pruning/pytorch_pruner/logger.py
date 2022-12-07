@@ -17,7 +17,7 @@
 # limitations under the License.
 
 try:
-    from ...utils import logger
+    from neural_compressor.utils import logger
 except:
     import logging
     logger = logging.getLogger(__name__)
