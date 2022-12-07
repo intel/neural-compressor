@@ -86,7 +86,7 @@ def check_config(prune_config):
         "min_layer_sparsity_ratio should in[0, max_layer_sparsity_ratio]"
 
 
-def reset_non_value_to_default(obj, key, default):
+def reset_none_to_default(obj, key, default):
     """Functions that add up undefined configurations.
 
     If some configurations are not defined in the configuration, set it to a default value.
@@ -141,11 +141,17 @@ def process_and_check_config(val):
 
     default_local_config.update(default_global_config)
     val = val["pruning"]['approach']['weight_compression']
+
+    ##set global_value
+    for key in default_global_config.keys():
+        default_local_config[key] = reset_none_to_default(val, key, default_local_config[key])
+
+        
     pruners_info = []
     for info in val['pruners']:
         pruner_info = {}
         for key in default_local_config:
-            pruner_info[key] = reset_non_value_to_default(info, key, default_local_config[key])
+            pruner_info[key] = reset_none_to_default(info, key, default_local_config[key])
         pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']##TODO trick
         check_config(pruner_info)
         pruner_info = DotDict(pruner_info)
