@@ -18,6 +18,7 @@
 from abc import abstractmethod
 import time
 import numpy as np
+from copy import deepcopy
 
 import tracemalloc
 from .utils.utility import get_size
@@ -178,7 +179,7 @@ class MultiObjective:
 
         self.objectives = [OBJECTIVES[i]() for i in objectives]
         self.representation = [str(i).capitalize() for i in self.objectives]
-        self.baseline = None
+        self._baseline = None
         self.val = None
         if obj_criterion:
             if len(self.objectives) != len(obj_criterion) and len(obj_criterion) == 1:
@@ -192,7 +193,24 @@ class MultiObjective:
         self.metric_criterion = metric_criterion
         self.obj_weight = obj_weight
         self.is_measure = is_measure
-
+        self._accuracy_target = None
+    
+    @property
+    def baseline(self):
+        return self._baseline
+    
+    @baseline.setter
+    def baseline(self, val):
+        self._baseline = val
+        
+    @property
+    def accuracy_target(self):
+        return self._accuracy_target
+    
+    @accuracy_target.setter
+    def accuracy_target(self, val):
+        self._accuracy_target = val
+    
     def compare(self, last, baseline):
         """The interface of comparing if metric reaches
            the goal with acceptable accuracy loss.
@@ -248,6 +266,49 @@ class MultiObjective:
                             zip(acc, acc_target, self.metric_criterion)])
         else:
             return False
+    
+    def _get_accuracy_target(self):
+        assert self._baseline is not None, "Baseline is None"
+        base_acc, _ = self._baseline
+        if not isinstance(base_acc, list):
+            base_acc = [base_acc]
+        if self.metric_weight is not None and len(base_acc) > 1:
+            base_acc = [np.mean(np.array(base_acc) * self.metric_weight)]
+
+        if self.relative:
+            if len(base_acc) == 1:
+                acc_target = [base_acc[0] * (1 - float(self.acc_goal)) if self.higher_is_better \
+                    else base_acc[0] * (1 + float(self.acc_goal))]
+            else:
+                # use metric_criterion to replace acc_criterion
+                acc_target = [b_acc * (1 - float(self.acc_goal)) if higher_is_better \
+                    else b_acc * (1 + float(self.acc_goal)) \
+                    for b_acc, higher_is_better in zip(base_acc, self.metric_criterion)]
+        else:
+            if len(base_acc) == 1:
+                acc_target =  [base_acc[0] - float(self.acc_goal) if self.higher_is_better \
+                    else base_acc[0] + float(self.acc_goal)]
+            else:
+                # use metric_criterion to replace acc_criterion
+                acc_target = [b_acc - float(self.acc_goal) if higher_is_better \
+                    else b_acc + float(self.acc_goal) \
+                    for b_acc, higher_is_better in zip(base_acc, self.metric_criterion)]
+        return acc_target
+    
+    def accuracy_meets(self):
+        last_acc, _ = deepcopy(self.val)
+        got_better_result = False
+        if not isinstance(last_acc, list):
+            last_acc = [last_acc]
+    
+        if self.metric_weight is not None and len(last_acc) > 1:
+            last_acc = [np.mean(np.array(last_acc) * self.metric_weight)]
+        if not self._accuracy_target:
+            self.accuracy_target = self._get_accuracy_target()
+        all_higher = all([_last > _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
+        all_lower = all([_last < _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
+        got_better_result = (all_higher and self.higher_is_better) or (all_lower and not self.higher_is_better)
+        return got_better_result
 
     def evaluate(self, eval_func, model):
         """The interface of calculating the objective.
