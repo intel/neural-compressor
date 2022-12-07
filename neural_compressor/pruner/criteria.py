@@ -38,7 +38,7 @@ def get_criterion(config, modules):
     return CRITERIAS[name](modules, config)
 
 
-class BaseCriterion:
+class PruningCriterion:
     """Pruning base criterion.
 
     Args:
@@ -65,10 +65,10 @@ class BaseCriterion:
 
 
 @register_criterion('magnitude')
-class MagnitudeCriterion(BaseCriterion):
+class MagnitudeCriterion(PruningCriterion):
     """Pruning criterion.
     
-    The magnitude criterion_class is derived from BaseCriterion. 
+    The magnitude criterion_class is derived from PruningCriterion.
     The magnitude value is used to score and determine if a weight is to be pruned.
 
     Args:
@@ -92,10 +92,10 @@ class MagnitudeCriterion(BaseCriterion):
 
 
 @register_criterion('gradient')
-class GradientCriterion(BaseCriterion):
+class GradientCriterion(PruningCriterion):
     """Pruning criterion.
     
-    The gradient criterion_class is derived from BaseCriterion. 
+    The gradient criterion_class is derived from PruningCriterion.
     The absolute value of gradient is used to score and determine if a weight is to be pruned.
 
     Args:
@@ -119,10 +119,10 @@ class GradientCriterion(BaseCriterion):
 
 
 @register_criterion('snip')
-class SnipCriterion(BaseCriterion):
+class SnipCriterion(PruningCriterion):
     """Pruning criterion.
     
-    The snip criterion_class is derived from BaseCriterion. 
+    The snip criterion_class is derived from PruningCriterion.
     The product of magnitude and gradient is used to score and determine if a weight is to be pruned.
     Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity.
     (https://arxiv.org/abs/1810.02340)
@@ -150,10 +150,10 @@ class SnipCriterion(BaseCriterion):
 
 
 @register_criterion('snip_momentum')
-class SnipMomentumCriterion(BaseCriterion):
+class SnipMomentumCriterion(PruningCriterion):
     """Pruning criterion.
     
-    The snip_momentum criterion_class is derived from BaseCriterion. 
+    The snip_momentum criterion_class is derived from PruningCriterion.
     A momentum mechanism is used to calculate snip score, which determines if a weight is to be pruned.
 
     Args:

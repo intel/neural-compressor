@@ -59,7 +59,7 @@ def get_scheduler(config):
     return SCHEDULERS[name](config)
 
 
-class BaseScheduler:
+class PruningScheduler:
     """Pruning Scheduler.
 
     The class which defines a sparsity changing process during pruning.
@@ -84,7 +84,7 @@ class BaseScheduler:
 
 
 @register_scheduler('oneshot')
-class OneshotScheduler(BaseScheduler):
+class OneshotScheduler(PruningScheduler):
     """Pruning Scheduler.
     
     A Scheduler class derived from Scheduler.
@@ -118,7 +118,7 @@ class OneshotScheduler(BaseScheduler):
 
 
 @register_scheduler('iterative')
-class IterativeScheduler(BaseScheduler):
+class IterativeScheduler(PruningScheduler):
     """Pruning Scheduler.
     
     A Scheduler class derived from Scheduler.
