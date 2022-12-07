@@ -1,5 +1,5 @@
 """logger module."""
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2022 Intel Corporation
@@ -20,4 +20,5 @@ try:
     from neural_compressor.utils import logger
 except:
     import logging
+
     logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 """scheduler module."""
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2022 Intel Corporation
@@ -130,7 +130,7 @@ class IterativeScheduler(BaseScheduler):
     Attributes:
         Inherit from parent class Scheduler.
     """
-    
+
     def __init__(self, config):
         """Initialize."""
         super(IterativeScheduler, self).__init__(config)

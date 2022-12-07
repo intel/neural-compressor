@@ -403,7 +403,7 @@ class ProgressivePruner(BasicPruner):
         # step 1: check if pattern is NxM
         if "x" not in self.pattern.pattern:
             raise NotImplementedError(f"Currently progressive only " \
-                                    f"support NxM and per-channel pruning patterns.")
+                                      f"support NxM and per-channel pruning patterns.")
 
         # step 2: check if current set up will "degrade" into non-progressive
         degrading_flag = False
@@ -489,14 +489,14 @@ class ProgressivePruner(BasicPruner):
             if progressive_idx < (self.progressive_steps - 1):
                 self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
                                                                                self.criterion.scores, \
-                                                                               progressive_idx+1, \
+                                                                               progressive_idx + 1, \
                                                                                self.progressive_configs)
             else:
                 # in the end, directly use new masks.
                 for n in self.masks.keys():
                     self.progressive_masks[n] = self.masks[n].clone()
             self.mask_weights_general(self.progressive_masks)
-            if self.progressive_logger: 
+            if self.progressive_logger:
                 self.print_progressive_sparsity()
             return
 
@@ -514,12 +514,12 @@ class ProgressivePruner(BasicPruner):
         for n in self.masks.keys():
             self.pre_masks[n] = self.masks[n].clone()
         # update new masks
-        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks,)
+        self.masks = self.pattern.get_masks(self.criterion.scores, current_target_sparsity_ratio, self.masks, )
         self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
                                                                        self.criterion.scores, 1, \
                                                                        self.progressive_configs)
         self.mask_weights_general(self.progressive_masks)
-        if self.progressive_logger: 
+        if self.progressive_logger:
             self.print_progressive_sparsity()
         return
 
@@ -556,4 +556,3 @@ class ProgressivePruner(BasicPruner):
         """Output the progressive sparsity."""
         cur_sp = self.pattern.get_sparsity_ratio_progressive(self.progressive_masks)
         logger.info("Step: {} -> Current progressive sparsity: {}".format(self.global_step, cur_sp))
-

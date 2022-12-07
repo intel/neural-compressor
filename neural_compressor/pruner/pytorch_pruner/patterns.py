@@ -110,7 +110,6 @@ class BasePattern:
         self.target_sparsity_ratio = self.config['target_sparsity']
         # Not using deterministic_algorithms for all examples
         torch.use_deterministic_algorithms(False)
-        
 
     def reduce_tensor(self, data, dim):
         """Reduce the data along the given dimension.
@@ -258,7 +257,7 @@ class BasePattern:
     def get_reduced_masks_from_data(self, data, key):
         """Obtain the unpruned weights and reshape according to the block_size."""
         raise NotImplementedError
-    
+
     def update_residual_cnt(self, masks, target_sparsity_ratio):
         """Update the number of parameters yet to be pruned.
         
@@ -768,13 +767,13 @@ class PatternNxM(BasePattern):
             new_shape = [shape[0] // block_size[0], block_size[0], shape[1] // block_size[1], block_size[1]]
             score_masked_new = score_masked.clone()
             score_masked_new_shape = score_masked_new.reshape(new_shape)
-            score_masked_new_shape = score_masked_new_shape.permute(0,2,1,3)
-            score_masked_new_flatten = torch.flatten(score_masked_new_shape, start_dim = 2, end_dim = 3)
-            threshold, _ = torch.kthvalue(score_masked_new_flatten, mask_num_each_block, dim = 2)
+            score_masked_new_shape = score_masked_new_shape.permute(0, 2, 1, 3)
+            score_masked_new_flatten = torch.flatten(score_masked_new_shape, start_dim=2, end_dim=3)
+            threshold, _ = torch.kthvalue(score_masked_new_flatten, mask_num_each_block, dim=2)
             threshold = threshold.unsqueeze(-1)
-            threshold = threshold.repeat(1, 1, (block_size[0]*block_size[1]))
+            threshold = threshold.repeat(1, 1, (block_size[0] * block_size[1]))
             threshold = threshold.reshape([threshold.shape[0], threshold.shape[1], block_size[0], block_size[1]])
-            threshold = threshold.permute(0,2,1,3)
+            threshold = threshold.permute(0, 2, 1, 3)
             threshold = threshold.reshape((shape[0], shape[1]))
             one = torch.tensor([1.]).to(score.device)
             zero = torch.tensor([0.]).to(score.device)

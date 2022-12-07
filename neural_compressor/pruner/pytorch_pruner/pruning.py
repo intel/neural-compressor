@@ -1,5 +1,5 @@
 """Pruning."""
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2022 Intel Corporation
@@ -23,6 +23,7 @@ from .pruners import get_pruner
 from .logger import logger
 import re
 
+
 class Pruning:
     """Pruning.
     
@@ -39,7 +40,7 @@ class Pruning:
         pruners: A list. A list of Pruner objects.
         pruner_info: A config dict object. Contains pruners' information.    
     """
-    
+
     def __init__(self, config):
         """Initialize."""
         self.model = None
@@ -140,7 +141,6 @@ class Pruning:
         """Implement at the beginning of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
-
 
     # @_call_pruners
     def on_step_begin(self, local_step):
