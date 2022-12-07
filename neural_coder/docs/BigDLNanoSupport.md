@@ -1,7 +1,7 @@
 BigDL Nano Support
 ===========================
 
-| Optimization Set | API Aias | 
+| Optimization Set | API Alias | 
 | ------------- | ------------- | 
 | BF16 + Channels Last | `nano_bf16_channels_last` | 
 | BF16 + IPEX + Channels Last | `nano_bf16_ipex_channels_last` | 
