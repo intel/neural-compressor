@@ -21,17 +21,13 @@ requirements:
     - scikit-learn
     - schema
     - py-cpuinfo
-    - hyperopt
     - pandas
     - pycocotools
     - opencv
     - psutil
     - Pillow
     - requests
-    - sigopt
     - prettytable
-    - cryptography
-    - cython
     - packaging
 test:
   imports:
