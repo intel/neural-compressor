@@ -72,6 +72,7 @@ class DyNAS(NASBase):
         self.macs_predictor = None
         self.latency_predictor = None
         self.results_csv_path = None
+        self.num_workers = 20
         self.init_cfg(conf_fname_or_obj)
 
 
@@ -98,6 +99,7 @@ class DyNAS(NASBase):
             latency_predictor=None,
             imagenetpath=self.dataset_path,
             batch_size=self.batch_size,
+            num_workers=self.num_workers,
         )
 
         # Setup validation interface
@@ -145,6 +147,7 @@ class DyNAS(NASBase):
                 latency_predictor=self.latency_predictor,
                 imagenetpath=self.dataset_path,
                 batch_size=self.batch_size,
+                num_workers=self.num_workers,
             )
 
             # Setup validation interface

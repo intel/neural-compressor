@@ -173,6 +173,7 @@ class OFARunner(Runner):
         latency_predictor: Predictor,
         imagenetpath: str,
         batch_size: int,
+        num_workers: int = 20,
     ) -> None:
         """Initialize the attributes."""
         self.supernet = supernet
@@ -183,7 +184,7 @@ class OFARunner(Runner):
         self.test_size = None
         ImagenetDataProvider.DEFAULT_PATH = imagenetpath
         self.ofa_network = ofa.model_zoo.ofa_net(supernet, pretrained=True)
-        self.run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
+        self.run_config = ImagenetRunConfig(test_batch_size=64, n_worker=num_workers)
         self.batch_size = batch_size
 
     def estimate_accuracy_top1(
@@ -547,6 +548,7 @@ class TorchVisionReference:
         dataset_path (str): The path to the dataset.
         batch_size (int): Batch size of the input.
         input_size (int): Input image's width and height.
+        num_workers (int): How many subprocesses to use for data loading.
     """
 
     def __init__(
@@ -555,6 +557,7 @@ class TorchVisionReference:
         dataset_path: str,
         batch_size: int,
         input_size: int = 224,
+        num_workers: int = 20,
     ) -> None:
         """Initialize the attributes."""
         if 'ofa_resnet50' in model_name:
@@ -566,6 +569,7 @@ class TorchVisionReference:
         self.dataset_path = dataset_path
         self.batch_size = batch_size
         self.input_size = input_size
+        self.num_workers = num_workers
 
         logger.info(
             '{name} for \'{model_name}\' on \'{val_dataset_path}\' dataset'.format(
@@ -587,7 +591,7 @@ class TorchVisionReference:
         """
         ImagenetDataProvider.DEFAULT_PATH = self.dataset_path
         model = get_torchvision_model(model_name=self.model_name)
-        run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
+        run_config = ImagenetRunConfig(test_batch_size=64, n_worker=self.num_workers)
         folder_name = '.torch/tmp-{}'.format(uuid.uuid1().hex)
         run_manager = RunManager(
             '{}/eval_subnet'.format(folder_name), model, run_config, init=False
