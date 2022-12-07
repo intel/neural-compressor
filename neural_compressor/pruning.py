@@ -126,7 +126,6 @@ class Pruning:
 
         for info in self.pruner_info:
             modules = parse_to_prune(info, self.model)
-            modules = parse_not_to_prune(info, modules)
             if modules == {}:
                 logger.warning("one pruner hooks no layers, please have a check")
 

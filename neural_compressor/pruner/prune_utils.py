@@ -276,11 +276,7 @@ def parse_to_prune(config, model):
                 if layer_type in type(module).__name__:
                     modules[name] = module
                     break
-
-    return modules
-
-
-def parse_not_to_prune(config, modules):
+    ##remove not to prune layers
     """Drop non-pruned layers."""
     exclude_names = config["extra_excluded_names"]
     exclude_names.extend(config["excluded_names"])
@@ -288,9 +284,27 @@ def parse_not_to_prune(config, modules):
     patterns = [re.compile(s) for s in exclude_names]
     if len(patterns) <= 0:
         return modules
-    new_module = {}
+    new_modules = {}
     for name in modules.keys():
         if any([p.search(name) for p in patterns]):
             continue
-        new_module[name] = modules[name]
-    return new_module
+        new_modules[name] = modules[name]
+    return new_modules
+
+
+
+
+# def parse_not_to_prune(config, modules):
+#     """Drop non-pruned layers."""
+#     exclude_names = config["extra_excluded_names"]
+#     exclude_names.extend(config["excluded_names"])
+#
+#     patterns = [re.compile(s) for s in exclude_names]
+#     if len(patterns) <= 0:
+#         return modules
+#     new_module = {}
+#     for name in modules.keys():
+#         if any([p.search(name) for p in patterns]):
+#             continue
+#         new_module[name] = modules[name]
+#     return new_module
