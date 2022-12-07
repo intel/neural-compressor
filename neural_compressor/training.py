@@ -19,7 +19,7 @@ import copy
 from .conf.pythonic_config import Config
 from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
 from .experimental.distillation import Distillation
-from .experimental.pruning import Pruning
+from neural_compressor.pruning.pruning import Pruning
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
 from .utils import logger

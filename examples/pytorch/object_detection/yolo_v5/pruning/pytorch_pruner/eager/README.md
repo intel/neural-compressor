@@ -47,13 +47,14 @@ pruning:
 Please be aware that when the keywords appear in both global and local settings, we select the **local** settings as priority.
 ### Coding template:
 With a settled config file, we provide a template for implementing pytorch_pruner API:
+
 ```python
 model = Model()
 criterion = Criterion()
 optimizer = Optimizer()
 args = Args()
 
-from neural_compressor.experimental.pytorch_pruner.pruning import Pruning
+from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
 
 pruner = Pruning("path/to/your/config.yaml")
 if opt.do_prune:

@@ -6,8 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 import numpy as np
-from torch.utils.data import Dataset, DataLoader, TensorDataset
-from neural_compressor.experimental.pytorch_pruner.pruning import Pruning
+from torch.utils.data import DataLoader, TensorDataset
+from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
 
 def build_fake_yaml_basic():
     fake_snip_yaml = """

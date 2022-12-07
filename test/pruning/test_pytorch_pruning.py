@@ -8,7 +8,7 @@ import torch.nn as nn
 
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.experimental.pytorch_pruner.pruning import Pruning
+from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
 
 def build_fake_yaml_basic():
     fake_snip_yaml = """

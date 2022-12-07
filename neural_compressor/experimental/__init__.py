@@ -20,7 +20,7 @@
 
 from .component import Component
 from .quantization import Quantization
-from .pruning import Pruning
+from neural_compressor.pruning.pruning import Pruning
 from .benchmark import Benchmark
 from .graph_optimization import Graph_Optimization, GraphOptimization
 from .mixed_precision import MixedPrecision
