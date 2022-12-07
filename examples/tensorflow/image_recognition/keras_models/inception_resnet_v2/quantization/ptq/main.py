@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import time
 import numpy as np
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -63,7 +64,7 @@ if FLAGS.calib_data:
          ComposeTransform(transform_list= [BilinearImagenetTransform(height=299, width=299)]))
     calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
-def evaluate(model, measurer=None):
+def evaluate(model):
     """
     Custom evaluate function to inference the model for specified metric on validation dataset.
 
@@ -81,21 +82,28 @@ def evaluate(model, measurer=None):
     metric = TensorflowTopK(k=1)
 
     def eval_func(dataloader, metric):
-        results = []
-        for _, (inputs, labels) in enumerate(dataloader):
+        iteration = None
+        if FLAGS.benchmark and FLAGS.mode == 'performance':
+            iteration = 100
+        for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
             input_tensor = tf.constant(inputs)
-            if measurer:
-                measurer.start()
+            start = time.time()
             predictions = infer(input_tensor)[output_name]
-            if measurer:
-                measurer.end()
+            end = time.time()
             predictions = predictions.numpy()
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
-        return results
+            if iteration and idx >= iteration:
+                break
+        latency = (end - start) / eval_dataloader.batch_size
+        return latency
 
-    _ = eval_func(eval_dataloader, metric)
+    latency = eval_func(eval_dataloader, metric)
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+        print("Batch size = {}".format(eval_dataloader.batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()
     return acc
 
@@ -118,7 +126,7 @@ def main(_):
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
             conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-            fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader)
+            fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.experimental import common
             accuracy = evaluate(common.Model(FLAGS.input_model).model)
