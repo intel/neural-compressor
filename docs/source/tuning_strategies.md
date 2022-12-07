@@ -215,9 +215,10 @@ better especially in models with a long full-dataset evaluation time and a
 large number of tuning counts.
 
 #### Usage
-`MSE_v2` is similar to `MSE` in usage, with strategy name of `mse_v2` included
-mandatorily. Also the option `confidence_batches` can be included optionally
-to specify the count of batches in sensitivity calculation process.
+`MSE_v2` is similar to `MSE` in usage. To use the `MSE_v2` tuning strategy,
+the specific strategy name of `mse_v2` must be included. Also, the option
+`confidence_batches` can be included optionally to specify the count of batches
+in sensitivity calculation process.
 
 
 ```yaml
