@@ -85,10 +85,10 @@ def check_value(name, src, supported_type, supported_value=[]):
 class Options:
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
-        self._random_seed = random_seed
-        self._workspace = workspace
-        self._resume_from = resume_from
-        self._tensorboard = tensorboard
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+        self.tensorboard = tensorboard
 
     @property
     def random_seed(self):
@@ -114,7 +114,7 @@ class Options:
 
     @resume_from.setter
     def resume_from(self, resume_from):
-        if check_value('resume_from', resume_from, str):
+        if resume_from is None or check_value('resume_from', resume_from, str):
             self._resume_from = resume_from
 
     @property
@@ -141,15 +141,15 @@ class BenchmarkConfig:
                  num_of_instance=None,
                  inter_num_of_threads=None,
                  intra_num_of_threads=None):
-        self._inputs = inputs
-        self._outputs = outputs
-        self._backend = backend
-        self._warmup = warmup
-        self._iteration = iteration
-        self._cores_per_instance = cores_per_instance
-        self._num_of_instance = num_of_instance
-        self._inter_num_of_threads = inter_num_of_threads
-        self._intra_num_of_threads = intra_num_of_threads
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.warmup = warmup
+        self.iteration = iteration
+        self.cores_per_instance = cores_per_instance
+        self.num_of_instance = num_of_instance
+        self.inter_num_of_threads = inter_num_of_threads
+        self.intra_num_of_threads = intra_num_of_threads
 
     @property
     def backend(self):
@@ -203,7 +203,8 @@ class BenchmarkConfig:
 
     @cores_per_instance.setter
     def cores_per_instance(self, cores_per_instance):
-        if check_value('cores_per_instance', cores_per_instance, int):
+        if cores_per_instance is None or check_value('cores_per_instance', cores_per_instance,
+                                                     int):
             self._cores_per_instance = cores_per_instance
 
     @property
@@ -212,7 +213,7 @@ class BenchmarkConfig:
 
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
-        if check_value('num_of_instance', num_of_instance, int):
+        if num_of_instance is None or check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
@@ -221,7 +222,8 @@ class BenchmarkConfig:
 
     @inter_num_of_threads.setter
     def inter_num_of_threads(self, inter_num_of_threads):
-        if check_value('inter_num_of_threads', inter_num_of_threads, int):
+        if inter_num_of_threads is None or check_value('inter_num_of_threads',
+                                                       inter_num_of_threads, int):
             self._inter_num_of_threads = inter_num_of_threads
 
     @property
@@ -230,7 +232,8 @@ class BenchmarkConfig:
 
     @intra_num_of_threads.setter
     def intra_num_of_threads(self, intra_num_of_threads):
-        if check_value('intra_num_of_threads', intra_num_of_threads, int):
+        if intra_num_of_threads is None or check_value('intra_num_of_threads',
+                                                       intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
 
 
@@ -358,7 +361,7 @@ class _BaseQuantizationConfig:
     @property
     def optimization_level(self):
         return self._optimization_level
-    
+
     @optimization_level.setter
     def optimization_level(self, optimization_level):
         self._optimization_level = optimization_level
@@ -422,7 +425,7 @@ class _BaseQuantizationConfig:
     @property
     def strategy_kwargs(self):
         return self._strategy_kwargs
-    
+
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
@@ -561,11 +564,11 @@ class TuningCriterion:
         if check_value('strategy', strategy, str,
             ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
             self._strategy = strategy
-    
+
     @property
     def strategy_kwargs(self):
         return self._strategy_kwargs
-    
+
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
@@ -817,13 +820,13 @@ class ExportConfig:
         output_names=None,
         dynamic_axes=None,
     ):
-        self._dtype = dtype
-        self._opset_version = opset_version
-        self._quant_format = quant_format
-        self._example_inputs = example_inputs
-        self._input_names = input_names
-        self._output_names = output_names
-        self._dynamic_axes = dynamic_axes
+        self.dtype = dtype
+        self.opset_version = opset_version
+        self.quant_format = quant_format
+        self.example_inputs = example_inputs
+        self.input_names = input_names
+        self.output_names = output_names
+        self.dynamic_axes = dynamic_axes
 
     @property
     def dtype(self):
