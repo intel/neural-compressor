@@ -27,25 +27,22 @@ from neural_compressor.conf.config import PruningConf
 from neural_compressor.conf.pythonic_config import Config
 
 from deprecated import deprecated
+import re
 
 
 class Pruning(Component):
     """This is base class of pruning object.
-
        Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
        (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.).
        Pruning class provides a flexible configuration interface via YAML for users to specify
        these parameters.
-
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or
             PruningConf class containing accuracy goal, pruning objective and related
             dataloaders etc.
-
     Attributes:
         conf: A config dict object. Contains pruning setting parameters.
         pruners: A list of Pruner object.
-
     """
 
     def __init__(self, conf_fname_or_obj=None):
@@ -63,10 +60,12 @@ class Pruning(Component):
         self.pruners = []
         self.callbacks = dict(tf_pruning=TfPruningCallback)
 
-    def _on_train_begin(self, dataloader=None):
+    def _on_train_begin(self):
         """Functions called before training."""
+        # for pruner in self.pruners:
+        #     pruner.on_train_begin(dataloader)
         for pruner in self.pruners:
-            pruner.on_train_begin(dataloader)
+            pruner.on_train_begin()
 
     def _on_epoch_begin(self, epoch):
         """Functions called on the beginning of epochs."""
@@ -112,6 +111,16 @@ class Pruning(Component):
         """Functions called after optimzier step."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
+
+    def _on_before_eval(self):
+        """Implement at the beginning of evaluation phase."""
+        for pruner in self.pruners:
+            pruner.on_before_eval()
+
+    def _on_after_eval(self):
+        """Implement at the end of evaluation phase."""
+        for pruner in self.pruners:
+            pruner.on_after_eval()
 
     def prepare(self):
         """Functions prepare for generate_hooks, generate_pruners."""
@@ -179,7 +188,6 @@ class Pruning(Component):
 
     def execute(self):
         """Functions that execute the pruning process.
-
         Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
         """
         logger.info("Start to get the baseline model's score before pruning.")
@@ -204,6 +212,9 @@ class Pruning(Component):
         self.register_hook('on_step_begin', self._on_step_begin)
         self.register_hook('on_step_end', self._on_step_end)
         self.register_hook('on_before_optimizer_step', self._on_before_optimizer_step)
+        self.register_hook('on_after_optimizer_step', self._on_after_optimizer_step)
+        self.register_hook('on_after_optimizer_step', self._on_before_eval)
+        self.register_hook('on_after_optimizer_step', self._on_after_eval)
 
     def generate_pruners(self):
         """Functions that generate pruners and set up self.pruners."""
@@ -212,10 +223,15 @@ class Pruning(Component):
                 'now we only support weight_compression and weight_compression_pytorch'
 
             if self.cfg.pruning.approach.weight_compression_pytorch != None:
-                from neural_compressor.pruner.pytorch_pruner import Pruning as PytorchPruning
-                self.pytorch_pruner = PytorchPruning(self.cfg)
-                self.pruners.append(self.pytorch_pruner)
-
+                try:
+                    import torch
+                except:
+                    raise ImportError("Run pruning under Framework PyTorch, but torch not properly installed.")
+                from .pytorch_pruner.pruning import Pruning as Pytorch_Pruning
+                self.pytorch_pruner = Pytorch_Pruning(self.cfg)
+                self.pytorch_pruner.model = self.model # add the same nc.PyTorchModel
+                self.pytorch_pruner.on_train_begin() # generate pruners
+                self.pruners += self.pytorch_pruner.pruners
 
             if self.cfg.pruning.approach.weight_compression != None:
                 for pruner in self.cfg.pruning.approach.weight_compression.pruners:
@@ -224,6 +240,7 @@ class Pruning(Component):
                                                 self._model, \
                                                 pruner,
                                                 self.cfg.pruning.approach.weight_compression))
+                    """                    
                     elif pruner.prune_type == 'pattern_lock':
                         self.pruners.append(PRUNERS['PatternLock'](\
                                                 self._model, \
@@ -239,33 +256,28 @@ class Pruning(Component):
                                                 self._model, \
                                                 pruner,
                                                 self.cfg.pruning.approach.weight_compression))
+                    """
                     else:
                         ##print(pruner.prune_type)
                         assert False, 'now only support {}'.format(PRUNERS.keys())
 
     def __call__(self):
         """Entry point of pruning.
-
            This interface currently only works on pytorch
            and provides three usages:
            a) Fully yaml configuration: User specifies all the info through yaml,
               including dataloaders used in training and evaluation phases
               and pruning tuning settings.
-
               For this usage, only model parameter is mandatory.
-
            b) Partial yaml configuration: User specifies dataloaders used in training
               and evaluation phase by code.
               The tool provides built-in dataloaders and evaluators, user just need provide
               a dataset implemented __iter__ or __getitem__ methods and invoke dataloader()
               with dataset as input parameter to create neural_compressor dataloader before calling this
               function.
-
               After that, User specifies fp32 "model", training dataset "p_dataloader"
               and evaluation dataset "eval_dataloader".
-
               For this usage, model, p_dataloader and eval_dataloader parameters are mandatory.
-
            c) Partial yaml configuration: User specifies dataloaders used in training phase
               by code.
               This usage is quite similar with b), just user specifies a custom "eval_func"
@@ -273,12 +285,9 @@ class Pruning(Component):
               The trained and pruned model is evaluated with "eval_func".
               The "eval_func" tells the tuner whether the pruned model meets
               the accuracy criteria. If not, the Tuner starts a new training and tuning flow.
-
               For this usage, model, q_dataloader and eval_func parameters are mandatory.
-
         Returns:
             pruned model: best pruned model found, otherwise return None
-
         """
         return super(Pruning, self).__call__()
 
@@ -295,7 +304,6 @@ class Pruning(Component):
     @deprecated(version='2.0', reason="please use `train_func` instead")
     def pruning_func(self, user_pruning_func):
         """Training function for pruning.
-
         Args:
             user_pruning_func: This function takes "model" as input parameter
                          and executes entire training process with self
@@ -334,10 +342,58 @@ class Pruning(Component):
         """Return the class's string representation."""
         return 'Pruning'
 
+    def update_items_for_all_pruners(self, **kwargs):
+        """Add user-defined arguments to the original configurations.
+
+        The original config of pruning is read from a file.
+        However, users can still modify configurations by passing key-value arguments in this function.
+        Please note that the key-value arguments' keys are analysable in current configuration.
+        """
+        for item in self.cfg.pruning.approach.weight_compression_pytorch.pruners:
+            for key in kwargs:
+                if hasattr(item, key):
+                    print(f"key {key} has been modified to {kwargs[key]}")
+                    setattr(item, key, kwargs[key])
+
+    def get_sparsity_ratio(self):
+        """Calculate sparsity ratio of a module/layer.
+
+        Returns:
+            Three floats.
+            elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+            elementwise_over_all refers to zero elements' ratio in all layers in the model.
+            blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+        """
+        pattern_sparsity_cnt = 0
+        element_sparsity_cnt = 0
+        for pruner in self.pruners:
+            modules = pruner.modules
+            sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+            cnt = 0
+            for key in modules.keys():
+                cnt += modules[key].weight.numel()
+            pattern_sparsity_cnt += int(cnt * sparsity_ratio)
+            for key in pruner.masks.keys():
+                element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item()
+
+        linear_conv_cnt = 0
+        param_cnt = 0
+        for name, module in self.model.named_modules():
+            if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+                linear_conv_cnt += module.weight.numel()
+
+        for n, param in self.model.named_parameters():
+            param_cnt += param.numel()
+        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_all = float(
+            element_sparsity_cnt) / param_cnt
+
+        return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
+
 
 class TfPruningCallback(object):
     """Class that contains callback functions.
-
     Args:
         nc_model: A neural compression model object.
         hooks: A dict. Contains pure-defined hooks.
