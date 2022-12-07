@@ -10,7 +10,7 @@
             "new_benchmark": true
         },
         "bert_base_MRPC_static": {
-            "model_src_dir": "language_translation/bert/quantization/ptq",
+            "model_src_dir": "nlp/bert/quantization/ptq",
             "dataset_location": "glue_data/MRPC",
             "input_model": "models/onnx/bert.onnx",
             "yaml": "bert_static.yaml",
