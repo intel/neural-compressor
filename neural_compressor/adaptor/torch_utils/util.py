@@ -17,11 +17,11 @@
 import copy
 import re
 import numpy as np
-from tqdm import tqdm
 from collections import UserDict
 from ...utils import logger
 from ...utils.utility import LazyImport, CpuInfo
 
+tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 def get_embedding_contiguous(model):
