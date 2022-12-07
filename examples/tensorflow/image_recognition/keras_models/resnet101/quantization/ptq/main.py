@@ -67,8 +67,7 @@ if FLAGS.calib_data:
 	calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
 def evaluate(model):
-    """
-    Custom evaluate function to inference the model for specified metric on validation dataset.
+    """Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
         model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
@@ -82,8 +81,9 @@ def evaluate(model):
     postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
 
+    iteration = None
     def eval_func(dataloader, metric):
-        iteration = None
+        latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = 100
         for idx, (inputs, labels) in enumerate(dataloader):
@@ -95,9 +95,10 @@ def evaluate(model):
             predictions = predictions.numpy()
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
+            latency_list.append(end - start)
             if iteration and idx >= iteration:
                 break
-        latency = (end - start) / eval_dataloader.batch_size
+        latency = np.array(latency_list).mean() / eval_dataloader.batch_size
         return latency
 
     latency = eval_func(eval_dataloader, metric)
