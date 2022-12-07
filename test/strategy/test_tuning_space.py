@@ -12,7 +12,7 @@ op_cap = {
                     'dtype': ['int8'],
                     'quant_mode': 'static',
                     'scheme': ['sym'],
-                    'granularity': ['per_channel', 'per_tensor'],
+                    'granularity': ['per_channel'],
                     'algorithm': ['minmax', 'kl']
                 },
             'weight':
