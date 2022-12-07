@@ -469,6 +469,8 @@ class Component(object):
 
         """
         if self.cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "pytorch":
                 if self.cfg.model.backend == "default":
