@@ -7,3 +7,5 @@ transformers>=4.10.0
 shap
 scipy
 sacremoses
+onnx
+onnxruntime
