@@ -42,7 +42,7 @@ def eval_func(model):
         return acc_lst[i]
 
 
-class TestMSEStrategy(unittest.TestCase):
+class TestMSEV2Strategy_PyTorch(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_mse_yaml()

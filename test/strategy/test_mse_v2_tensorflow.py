@@ -77,7 +77,7 @@ def eval_func(model):
     return eval_list[i]
 
 
-class TestMSEStrategy(unittest.TestCase):
+class TestMSEV2Strategy_Tensorflow(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_mse_yaml()
