@@ -61,7 +61,7 @@ class TestItexNewAPI(unittest.TestCase):
         from neural_compressor.data import DATASETS
         dataset = DATASETS('tensorflow')['dummy'](shape=(100, 56, 56, 16), label=True)
         output_graph = fit(
-            model=common.Model(output_graph_def),
+            model=output_graph_def,
             conf=config,
             calib_dataloader=common.DataLoader(dataset=dataset, batch_size=1))
 
