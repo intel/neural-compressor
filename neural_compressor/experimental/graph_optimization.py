@@ -313,16 +313,9 @@ class Graph_Optimization():
             else:
                 self._model = NCModel(user_model, framework=self.framework)
         else:
+            assert self.conf.usr_cfg.model.framework != 'NA', \
+                "Please pass an original framework model but not neural compressor model!"
             self._model = user_model
-            if self.conf.usr_cfg.model.framework == 'NA':
-                self.framework = get_model_fwk_name(user_model)
-                if self.framework == "pytorch":
-                    if self.conf.usr_cfg.model.backend == "default":
-                        self.framework = "pytorch_fx"
-                    elif self.conf.usr_cfg.model.backend == "ipex":
-                        self.framework = "pytorch_ipex"
-                self.conf.usr_cfg.model.framework = self.framework
-                self.set_config_by_model(self._model)
 
     @property
     def metric(self):

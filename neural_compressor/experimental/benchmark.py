@@ -476,6 +476,8 @@ class Benchmark(object):
         """
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "pytorch":
                 if cfg.model.backend == "default":

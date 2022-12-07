@@ -734,12 +734,14 @@ class TuneStrategy(object):
             metric_cfg = self.cfg.evaluation.accuracy.metric if \
                 self.cfg.evaluation.accuracy.metric else \
                 self.cfg.evaluation.accuracy.multi_metrics
+            iteration = -1 if self.cfg.evaluation.accuracy.iteraiton is None \
+                else self.cfg.evaluation.accuracy.iteraiton
             eval_func = create_eval_func(self.framework,
                 self.eval_dataloader,
                 self.adaptor,
                 metric_cfg,
                 postprocess_cfg,
-                self.cfg.evaluation.accuracy.iteration,
+                iteration,
                 tensorboard = self.cfg.tuning.tensorboard,
                 fp32_baseline = self.baseline == None)
 
