@@ -108,8 +108,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
                 break
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
-        
         # Start compute the hessian trace
+        logger.info(f"**************  Start compute the hessian trace  *****************")
         target_dtype = "int8"  
         # TODO remove it before merge
         criterion=torch.nn.CrossEntropyLoss()
@@ -118,15 +118,31 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
                                                             q_model = self.q_model, 
                                                             criterion =criterion, # TODO using user specify loss
                                                             enable_act = False)
-        ordered_ops = sorted(op_to_traces.keys(),
-                             key=lambda key: op_to_traces[key],
+        sorted_op_to_traces = dict(sorted(op_to_traces.items(), key=lambda item: item[1], reverse=True))
+        logger.info(f"**************  Hessian Trace  *****************")
+        for op_name, trace in sorted_op_to_traces.items():
+            logger.info(f"*** op: {op_name}, hessian trace : {trace}")
+        logger.info(f"************************************************")
+        # WA for op mapping
+        ordered_ops_tmp = {}
+        for op_info in list(initial_op_tuning_cfg.keys()):
+            op_name, op_type = op_info
+            for op_trace_name in op_to_traces.keys():
+                if isinstance(op_trace_name, str) and op_trace_name.startswith(op_name):
+                    if op_name in ordered_ops_tmp:
+                        logger.info((f"*** Already assigned the hessian trace to {op_name}",
+                                     f"update it with the value of {op_trace_name}"))
+                    ordered_ops_tmp[op_name] = op_to_traces[op_trace_name]
+
+        ordered_ops_tmp = sorted(ordered_ops_tmp.keys(),
+                             key=lambda key: ordered_ops_tmp[key],
                              reverse=self.higher_is_better)
         # WA for add op type
         op_info_map = {}
         for op_info in list(initial_op_tuning_cfg.keys()):
             op_info_map[op_info[0]] = op_info  # op_name: (op_name, op_type)
-        tmp_ordered_ops = [op_info_map[op_name] for op_name in ordered_ops]
-        op_dtypes = OrderedDict(zip(tmp_ordered_ops, [target_dtype] * len(ordered_ops)))
+        tmp_ordered_ops = [op_info_map[op_name] for op_name in ordered_ops_tmp]
+        op_dtypes = OrderedDict(zip(tmp_ordered_ops, [target_dtype] * len(ordered_ops_tmp)))
         indx=0
         #defautly fallback 5 ops
         for i in op_dtypes.keys():
