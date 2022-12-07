@@ -39,7 +39,7 @@ class Model(object):
         if framework == "NA":
             framework = get_model_fwk_name(root)
 
-        if framework == 'tensorflow':
+        if 'tensorflow' in framework:
             if 'modelType' in kwargs:
                 model_type = kwargs['modelType']
             else:
