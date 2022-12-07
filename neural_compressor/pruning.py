@@ -27,6 +27,7 @@ from neural_compressor.conf.config import PruningConf
 from neural_compressor.conf.pythonic_config import Config
 
 from deprecated import deprecated
+import re
 
 
 class Pruning(Component):
@@ -63,10 +64,12 @@ class Pruning(Component):
         self.pruners = []
         self.callbacks = dict(tf_pruning=TfPruningCallback)
 
-    def _on_train_begin(self, dataloader=None):
+    def _on_train_begin(self):
         """Functions called before training."""
+        # for pruner in self.pruners:
+        #     pruner.on_train_begin(dataloader)
         for pruner in self.pruners:
-            pruner.on_train_begin(dataloader)
+            pruner.on_train_begin()
 
     def _on_epoch_begin(self, epoch):
         """Functions called on the beginning of epochs."""
@@ -112,6 +115,16 @@ class Pruning(Component):
         """Functions called after optimzier step."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
+
+    def _on_before_eval(self):
+        """Implement at the beginning of evaluation phase."""
+        for pruner in self.pruners:
+            pruner.on_before_eval()
+
+    def _on_after_eval(self):
+        """Implement at the end of evaluation phase."""
+        for pruner in self.pruners:
+            pruner.on_after_eval()
 
     def prepare(self):
         """Functions prepare for generate_hooks, generate_pruners."""
@@ -204,6 +217,9 @@ class Pruning(Component):
         self.register_hook('on_step_begin', self._on_step_begin)
         self.register_hook('on_step_end', self._on_step_end)
         self.register_hook('on_before_optimizer_step', self._on_before_optimizer_step)
+        self.register_hook('on_after_optimizer_step', self._on_after_optimizer_step)
+        self.register_hook('on_after_optimizer_step', self._on_before_eval)
+        self.register_hook('on_after_optimizer_step', self._on_after_eval)
 
     def generate_pruners(self):
         """Functions that generate pruners and set up self.pruners."""
@@ -212,10 +228,15 @@ class Pruning(Component):
                 'now we only support weight_compression and weight_compression_pytorch'
 
             if self.cfg.pruning.approach.weight_compression_pytorch != None:
-                from neural_compressor.pruner.pytorch_pruner import Pruning as PytorchPruning
-                self.pytorch_pruner = PytorchPruning(self.cfg)
-                self.pruners.append(self.pytorch_pruner)
-
+                try:
+                    import torch
+                except:
+                    raise ImportError("Run pruning under Framework PyTorch, but torch not properly installed.")
+                from .pytorch_pruner.pruning import Pruning as Pytorch_Pruning
+                self.pytorch_pruner = Pytorch_Pruning(self.cfg)
+                self.pytorch_pruner.model = self.model # add the same nc.PyTorchModel
+                self.pytorch_pruner.on_train_begin() # generate pruners
+                self.pruners += self.pytorch_pruner.pruners
 
             if self.cfg.pruning.approach.weight_compression != None:
                 for pruner in self.cfg.pruning.approach.weight_compression.pruners:
@@ -224,6 +245,7 @@ class Pruning(Component):
                                                 self._model, \
                                                 pruner,
                                                 self.cfg.pruning.approach.weight_compression))
+                    """                    
                     elif pruner.prune_type == 'pattern_lock':
                         self.pruners.append(PRUNERS['PatternLock'](\
                                                 self._model, \
@@ -239,6 +261,7 @@ class Pruning(Component):
                                                 self._model, \
                                                 pruner,
                                                 self.cfg.pruning.approach.weight_compression))
+                    """
                     else:
                         ##print(pruner.prune_type)
                         assert False, 'now only support {}'.format(PRUNERS.keys())
@@ -333,6 +356,55 @@ class Pruning(Component):
     def __repr__(self):
         """Return the class's string representation."""
         return 'Pruning'
+
+    def update_items_for_all_pruners(self, **kwargs):
+        """Add user-defined arguments to the original configurations.
+        
+        The original config of pruning is read from a file. 
+        However, users can still modify configurations by passing key-value arguments in this function.
+        Please note that the key-value arguments' keys are analysable in current configuration.
+        """
+        for item in self.cfg.pruning.approach.weight_compression_pytorch.pruners:
+            for key in kwargs:
+                if hasattr(item, key):
+                    print(f"key {key} has been modified to {kwargs[key]}")
+                    setattr(item, key, kwargs[key])
+
+    def get_sparsity_ratio(self):
+        """Calculate sparsity ratio of a module/layer.
+        
+        Returns:
+            Three floats.
+            elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+            elementwise_over_all refers to zero elements' ratio in all layers in the model.
+            blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+        """
+        pattern_sparsity_cnt = 0
+        element_sparsity_cnt = 0
+        for pruner in self.pruners:
+            modules = pruner.modules
+            sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+            cnt = 0
+            for key in modules.keys():
+                cnt += modules[key].weight.numel()
+            pattern_sparsity_cnt += int(cnt * sparsity_ratio)
+            for key in pruner.masks.keys():
+                element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item()
+
+        linear_conv_cnt = 0
+        param_cnt = 0
+        for name, module in self.model.named_modules():
+            if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+                linear_conv_cnt += module.weight.numel()
+
+        for n, param in self.model.named_parameters():
+            param_cnt += param.numel()
+        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_all = float(
+            element_sparsity_cnt) / param_cnt
+
+        return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
 
 class TfPruningCallback(object):
