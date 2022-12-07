@@ -151,7 +151,7 @@ class IterativeScheduler(BaseScheduler):
         """
         aggressive_ratio = target_ratio
         aggressive_ratio = min(self.config.max_sparsity_ratio_per_layer,
-                               aggressive_ratio)  ##lagacy issue
+                               aggressive_ratio)  ##legacy issue
 
         decay_type = self.config.sparsity_decay_type
         if decay_type == "cos":

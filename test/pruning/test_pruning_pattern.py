@@ -4,7 +4,7 @@ import copy
 import unittest
 import numpy as np
 
-from neural_compressor.lagacy.pruning_recipes.patterns import patterns
+from neural_compressor.legacy.pruning_recipes.patterns import patterns
 
 class TestPruningPattern(unittest.TestCase):
 
