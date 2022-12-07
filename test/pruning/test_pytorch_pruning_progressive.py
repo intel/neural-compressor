@@ -167,6 +167,9 @@ class TestPytorchPruning(unittest.TestCase):
         prune.on_after_eval()
 
     def test_pytorch_pruner_channel_pruning(self):
+        prune = Pruning("fake_snip.yaml")
+        ##prune.generate_pruners()
+        prune.update_items_for_all_pruners(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
