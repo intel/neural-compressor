@@ -83,6 +83,7 @@ def evaluate(model):
 
     def eval_func(dataloader, metric):
         iteration = None
+        latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = 100
         for idx, (inputs, labels) in enumerate(dataloader):
@@ -91,12 +92,13 @@ def evaluate(model):
             start = time.time()
             predictions = infer(input_tensor)[output_name]
             end = time.time()
+            latency_list.append(end - start)
             predictions = predictions.numpy()
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             if iteration and idx >= iteration:
                 break
-        latency = (end - start) / eval_dataloader.batch_size
+        latency = np.array(latency_list).mean() / eval_dataloader.batch_size
         return latency
 
     latency = eval_func(eval_dataloader, metric)
