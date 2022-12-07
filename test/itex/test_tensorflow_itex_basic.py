@@ -216,7 +216,7 @@ class TestItexEnabling(unittest.TestCase):
             for i in output_graph.graph_def.node:
                 if i.op == 'Reshape':
                     reshape_counter += 1
-            self.assertEqual(reshape_counter, 2)
+            self.assertEqual(reshape_counter, 0)
 
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0') or \
