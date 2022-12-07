@@ -96,6 +96,7 @@ class Test_MSEV2Strategy_Tensorflow(unittest.TestCase):
         os.remove('mse_yaml_tf.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_quantization_saved(self):
         i = [0] # use a mutable type (list) to wrap the int object
@@ -113,6 +114,7 @@ class Test_MSEV2Strategy_Tensorflow(unittest.TestCase):
         quantizer.eval_dataloader = common.DataLoader(dataset)
         quantizer.eval_func = fake_eval_func
         q_model = quantizer.fit()
+        self.assertIsNotNone(q_model)
         q_model.save('./saved')
 
 class Test_MSEV2Strategy_PyTorch(unittest.TestCase):
@@ -126,6 +128,7 @@ class Test_MSEV2Strategy_PyTorch(unittest.TestCase):
         os.remove('mse_yaml_pytorch.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_quantization_saved(self):
         i = [0]
@@ -142,6 +145,7 @@ class Test_MSEV2Strategy_PyTorch(unittest.TestCase):
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_func = fake_eval_func
         q_model = quantizer.fit()
+        self.assertIsNotNone(q_model)
         q_model.save('./saved')
 
 if __name__ == "__main__":
