@@ -20,5 +20,4 @@ try:
     from neural_compressor.utils import logger
 except:
     import logging
-
     logger = logging.getLogger(__name__)

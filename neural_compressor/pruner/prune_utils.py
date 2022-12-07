@@ -232,7 +232,7 @@ def process_config(config):
                     from .schema_check import schema
 
                 except ImportError:
-                    from ...conf.config import schema
+                    from ..conf.config import schema
 
                 val = yaml.safe_load(content)
                 schema.validate(val)
