@@ -595,7 +595,8 @@ class PruningConfig:
     def __init__(self, pruners=pruners, target_sparsity=0.9, prune_type="snip_momentum", pattern="4x1", names=[],
                  excluded_names=[],
                  start_step=0, end_step=0, prune_domain="global", update_frequency=1,
-                 min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98, prune_layer_type=['Conv', 'Linear'], resume_from_pruned_checkpoint=False,
+                 min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98, sparsity_decay_type="exp", prune_layer_type=['Conv', 'Linear'],
+                 resume_from_pruned_checkpoint=False
                  ):
         self._weight_compression = DotDict({
             'pruners': pruners,
@@ -603,15 +604,16 @@ class PruningConfig:
             'prune_type': prune_type,
             'pattern': pattern,
             'names': names,
-            'excluded_names': excluded_names,##global only
+            'excluded_names': excluded_names,  ##global only
             'start_step': start_step,
             'end_step': end_step,
             'prune_domain': prune_domain,
             'update_frequency': update_frequency,
             'min_layer_sparsity_ratio': min_layer_sparsity_ratio,
             'max_layer_sparsity_ratio': max_layer_sparsity_ratio,
+            'sparsity_decay_type': sparsity_decay_type,
             'prune_layer_type': prune_layer_type,
-            'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint##resume_from_pruned_checkpoint
+            'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint  ##resume_from_pruned_checkpoint
         })
 
     @property

@@ -127,23 +127,24 @@ def process_and_check_config(val):
     #              start_step=0, end_step=0, prune_domain="global", update_frequency=1,
     #              min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98, resume_from_pruned_checkpoint=False,
     #              ):
-    # extra_excluded_names = [], sparsity_decay_type = "exp", reg_type = None, reduce_type = "mean", parameters = {
+    # extra_excluded_names = [], sparsity_decay_type = "exp", reg_type = None, criterion_criterion_reduce_type = "mean", parameters = {
     #                                                                                                                 "reg_coeff": 0.0},  ####local config,
 
     default_global_config = {'target_sparsity': 0.9, 'prune_type': 'snip_momentum', 'pattern': '4x1', 'names': [],
                              'excluded_names': [],
                              'start_step': 0, 'end_step': 0, 'prune_domain': 'global', 'update_frequency': 1,
                              'min_layer_sparsity_ratio': 0.0, 'max_layer_sparsity_ratio': 0.98,
+                             'sparsity_decay_type': 'exp',
                              'prune_layer_type': ['Conv', 'Linear'],
                              'resume_from_pruned_checkpoint': False}
 
-    default_local_config = {'extra_excluded_names': [], 'sparsity_decay_type': 'exp', 'reg_type': None,
-                            'reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
+    default_local_config = {'extra_excluded_names': [], 'reg_type': None,
+                            'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
 
     default_local_config.update(default_global_config)
     val = val["pruning"]['approach']['weight_compression']
 
-    ##set global_value
+    ##set global value
     for key in default_global_config.keys():
         default_local_config[key] = reset_none_to_default(val, key, default_local_config[key])
 
@@ -179,7 +180,7 @@ def process_and_check_config(val):
     # reg_coeff = reset_non_value_to_default(val, "reg_coeff", None)
     # max_layer_sparsity_ratio = reset_non_value_to_default(val, "max_layer_sparsity_ratio", 0.98)
     # min_layer_sparsity_ratio = reset_non_value_to_default(val, "min_layer_sparsity_ratio", 0.0)
-    # reduce_type = reset_non_value_to_default(val, "reduce_type", "mean")
+    # criterion_reduce_type = reset_non_value_to_default(val, "criterion_reduce_type", "mean")
     #
     # pruners_info = []
     # for info in val['pruners']:
@@ -213,7 +214,7 @@ def process_and_check_config(val):
     #
     #     pruner['min_layer_sparsity_ratio'] = reset_non_value_to_default(info, 'min_layer_sparsity_ratio',
     #                                                                         min_layer_sparsity_ratio)
-    #     pruner['reduce_type'] = reset_non_value_to_default(info, 'reduce_type', reduce_type)
+    #     pruner['criterion_reduce_type'] = reset_non_value_to_default(info, 'criterion_reduce_type', criterion_reduce_type)
     #
     #     check_config(pruner)
     #     pruner_info = DotDict(pruner)

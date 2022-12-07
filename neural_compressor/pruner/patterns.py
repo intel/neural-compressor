@@ -122,7 +122,7 @@ class BasePattern:
             The reduced tensor
 
         """
-        name = self.config['reduce_type']
+        name = self.config['criterion_reduce_type']
         if name == "mean":
             return torch.mean(data, dim=dim)
         elif name == "sum":
