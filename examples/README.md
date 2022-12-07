@@ -888,49 +888,49 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/bert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/bert/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/bert/quantization/ptq">integerops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/bert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./onnxrt/nlp/bert/quantization/ptq">integerops</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/bert/quantization/ptq">integerops</a></td>
   </tr>
   <tr>
     <td>DistilBERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/nlp/distilbert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/distilbert/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/distilbert/quantization/ptq">integerops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/distilbert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Mobile bert MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/nlp/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/mobilebert/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/mobilebert/quantization/ptq">integerops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Roberta base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/nlp/roberta/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/roberta/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/roberta/quantization/ptq">integerops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/language_translation/roberta/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BERT SQuAD</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/nlp/bert-squad/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/bert-squad/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/bert-squad/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>GPT2 lm head WikiText</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./onnxrt/nlp/gpb2/quantization/ptq">integerops</a></td>
+    <td><a href="./onnxrt/nlp/onnx_model_zoo/gpt2/quantization/ptq">integerops</a></td>
   </tr>
   <tr>
     <td>MobileBERT SQuAD MLPerf</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./onnxrt/nlp/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/mobilebert/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq">integerops</a> / <a href="./onnxrt/nlp/onnx_model_zoo/mobilebert/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>BiDAF</td>
@@ -1002,19 +1002,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>SSD MobileNet V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/object_detection/ssd_mobilenet_v1/quantization/ptq">qlinearops</a> / <a href="./onnxrt/object_detection/ssd_mobilenet_v1/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/ssd_mobilenet_v1/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/ssd_mobilenet_v1/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>SSD MobileNet V2</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="./onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/ssd_mobilenet_v2/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>DUC</td>
