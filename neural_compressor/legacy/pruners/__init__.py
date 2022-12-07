@@ -17,7 +17,7 @@
 
 from os.path import dirname, basename, isfile, join
 import glob
-from neural_compressor.legacy.pruners.pruner import PRUNERS
+from .pruner import PRUNERS
 
 modules = glob.glob(join(dirname(__file__), "*.py"))
 
