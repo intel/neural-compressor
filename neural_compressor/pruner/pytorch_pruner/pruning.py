@@ -106,10 +106,17 @@ class Pruning:
 
         for n, param in self.model.named_parameters():
             param_cnt += param.numel()
-        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
-        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
-        elementwise_over_all = float(
-            element_sparsity_cnt) / param_cnt
+        if linear_conv_cnt == 0:
+            blockwise_over_matmul_gemm_conv = 0
+            elementwise_over_matmul_gemm_conv = 0
+        else:
+            blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+            elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+        if param_cnt == 0:
+            elementwise_over_all = 0
+        else:
+            elementwise_over_all = float(
+                element_sparsity_cnt) / param_cnt
 
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 

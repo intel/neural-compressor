@@ -97,6 +97,8 @@ def reset_non_value_to_default(obj, key, default):
         default: When the key is not in obj, Add key: default item in original obj.
 
     """
+    if obj == None:
+        return None
     if isinstance(obj, dict):
         if (not key in obj.keys()) or obj[key] == None:
             return default
@@ -137,13 +139,14 @@ def process_and_check_config(val):
     default_local_config = {'extra_excluded_names': [], 'sparsity_decay_type': 'exp', 'reg_type': None,
                             'reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
 
-    default_config = default_local_config.update(default_global_config)
+    default_local_config.update(default_global_config)
     val = val["pruning"]['approach']['weight_compression']
     pruners_info = []
     for info in val['pruners']:
         pruner_info = {}
         for key in default_local_config:
-            pruner_info[key] = reset_non_value_to_default(info, key, default_config[key])
+            pruner_info[key] = reset_non_value_to_default(info, key, default_local_config[key])
+        pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']##TODO trick
         check_config(pruner_info)
         pruner_info = DotDict(pruner_info)
         pruners_info.append(pruner_info)
@@ -263,8 +266,11 @@ def parse_to_prune(config, model):
         except:
             assert False, f"regular expression match does not support {raw}"
         for name, module in filter(lambda t: pattern.search(t[0]), model.named_modules()):
-            if type(module).__name__ in config["prune_layer_type"]:
-                modules[name] = module
+            for layer_type in config["prune_layer_type"]:
+                if layer_type in type(module).__name__:
+                    modules[name] = module
+                    break
+
     return modules
 
 

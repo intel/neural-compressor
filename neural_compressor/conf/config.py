@@ -52,7 +52,7 @@ def constructor_register(cls):
 @constructor_register
 class Pruner:
     def __init__(self,
-                 extra_excluded_names=[], sparsity_decay_type="exp", reg_type=None, reduce_type="mean", parameters={"reg_coeff":0.0},  ####local config,
+                 extra_excluded_names=[], sparsity_decay_type="exp", reg_type=None, reduce_type="mean", parameters={"reg_coeff":0.0},
                  # the following global key should be set to None
                  target_sparsity=None, prune_type=None, pattern=None, names=None,
                  excluded_names=None,
@@ -707,9 +707,9 @@ weight_compression_schema = Schema({
 
 approach_schema = Schema({
     Hook('weight_compression', handler=_valid_prune_sparsity): object,
-    ##Hook('weight_compression_pytorch', handler=_valid_prune_sparsity): object,
+    ##Hook('weight_compression', handler=_valid_prune_sparsity): object,
     Optional('weight_compression'): weight_compression_schema,
-    ##Optional('weight_compression_pytorch'): weight_compression_schema,
+    ##Optional('weight_compression'): weight_compression_schema,
 })
 
 default_workspace = './nc_workspace/{}/'.format(

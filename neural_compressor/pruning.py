@@ -219,10 +219,10 @@ class Pruning(Component):
     def generate_pruners(self):
         """Functions that generate pruners and set up self.pruners."""
         for name in self.cfg.pruning.approach:
-            assert name == 'weight_compression' or name == "weight_compression_pytorch", \
-                'now we only support weight_compression and weight_compression_pytorch'
+            assert name == 'weight_compression' or name == "weight_compression", \
+                'now we only support weight_compression and weight_compression'
 
-            if self.cfg.pruning.approach.weight_compression_pytorch != None:
+            if self.cfg.pruning.approach.weight_compression != None:
                 try:
                     import torch
                 except:
@@ -333,7 +333,7 @@ class Pruning(Component):
         However, users can still modify configurations by passing key-value arguments in this function.
         Please note that the key-value arguments' keys are analysable in current configuration.
         """
-        for item in self.cfg.pruning.approach.weight_compression_pytorch.pruners:
+        for item in self.cfg.pruning.approach.weight_compression.pruners:
             for key in kwargs:
                 if hasattr(item, key):
                     print(f"key {key} has been modified to {kwargs[key]}")

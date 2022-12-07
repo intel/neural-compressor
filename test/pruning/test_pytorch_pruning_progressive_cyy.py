@@ -18,7 +18,7 @@ def build_fake_yaml_basic():
       framework: pytorch
     pruning:
       approach:
-        weight_compression_pytorch:
+        weight_compression:
           initial_sparsity: 0.0
           target_sparsity: 0.9
           start_step: 0
@@ -55,7 +55,7 @@ def build_fake_yaml_channel():
           framework: pytorch
         pruning:
           approach:
-            weight_compression_pytorch:
+            weight_compression:
               initial_sparsity: 0.0
               target_sparsity: 0.9
               start_step: 0

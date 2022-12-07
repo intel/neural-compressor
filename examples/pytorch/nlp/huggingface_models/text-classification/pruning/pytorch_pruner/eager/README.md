@@ -17,7 +17,7 @@ model:
 
 pruning:
   approach:
-    weight_compression_pytorch:
+    weight_compression:
       # if start step equals to end step, oneshot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends

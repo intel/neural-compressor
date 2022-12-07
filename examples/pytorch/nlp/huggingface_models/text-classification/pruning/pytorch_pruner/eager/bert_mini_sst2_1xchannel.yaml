@@ -6,7 +6,7 @@ model:
 
 pruning:
   approach:
-    weight_compression_pytorch:
+    weight_compression:
       start_step: 0
       end_step: 0
       excluded_names: ["classifier", "pooler", ".*embeddings*", "LayerNorm"]
