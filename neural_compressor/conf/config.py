@@ -711,7 +711,6 @@ weight_compression_schema = Schema({
     Optional('min_layer_sparsity_ratio', default=0.0): float,
     Optional('max_layer_sparsity_ratio', default=0.98): float,
     Optional('prune_layer_type', default=['Conv', 'Linear']): list,
-
     Optional('resume_from_pruned_checkpoint', default=False): bool,
     Optional('pruners'): And(list, \
                              lambda s: all(isinstance(i, Pruner) for i in s))
