@@ -101,59 +101,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
         save_dict = super().__getstate__()
         return save_dict
 
-    def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
-        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor
-
-        Args:
-            fp32_tensor (tensor): The FP32 tensor.
-            dequantize_tensor (tensor): The INT8 dequantize tensor.
-        """
-        fp32_max = np.max(fp32_tensor)
-        fp32_min = np.min(fp32_tensor)
-        dequantize_max = np.max(dequantize_tensor)
-        dequantize_min = np.min(dequantize_tensor)
-        fp32_tensor = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
-        dequantize_tensor = (dequantize_tensor - dequantize_min) / \
-            (dequantize_max - dequantize_min)
-        diff_tensor = fp32_tensor - dequantize_tensor
-        euclidean_dist = np.sum(diff_tensor ** 2)
-        return euclidean_dist / fp32_tensor.size
-
-    def mse_impact_lst(self, op_list: List, fp32_model,  best_qmodel):
-        """_summary_
-
-        Args:
-            op_list (List): [(op_name, op_type), ...]
-            fp32_model: model before quantized
-            current_best_model :  model after quantized
-        """
-        op_name_lst = [element[0] for element in op_list ]
-        op_mapping = {}
-        for (op_name, op_type) in list(op_list):
-            op_mapping[op_name] = (op_name, op_type)
-        current_best_tune_cfg = self._tune_cfg_converter(self.cur_best_tuning_cfg)
-        fp32_dump_content = self.adaptor.inspect_tensor(fp32_model, 
-            self.calib_dataloader, op_name_lst, [1], inspect_type='activation', 
-            save_to_disk=True, save_path="./nc_workspace/", 
-            quantization_cfg=current_best_tune_cfg)
-        fp32_tensor_dict = fp32_dump_content['activation'][0]
-        best_qmodel = self.q_model = self.adaptor.quantize(current_best_tune_cfg, self.model, \
-                                                           self.calib_dataloader, self.q_func)
-        quant_dump_content = self.adaptor.inspect_tensor(best_qmodel, 
-            self.calib_dataloader, op_name_lst, [1], inspect_type='activation',
-            save_to_disk=True, save_path="./nc_workspace/", 
-            quantization_cfg=current_best_tune_cfg)
-        dequantize_tensor_dict = quant_dump_content['activation'][0]
-        ops_mse = {
-            op: self.mse_metric_gap(
-                list(fp32_tensor_dict[op].values())[0],
-                list(dequantize_tensor_dict[op].values())[0]) for op in fp32_tensor_dict}
-        ordered_op_names = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=self.higher_is_better)
-        
-        ordered_op_name_types = [op_mapping[name] for name in ordered_op_names]
-        return ordered_op_name_types
-
-
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
            according to last tuning result.
