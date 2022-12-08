@@ -532,6 +532,9 @@ class TuneStrategy(object):
                  'recipes': self.cfg.quantization.recipes,
                  'performance_only': self.cfg.tuning.exit_policy.performance_only,
                  'use_bf16': self.cfg.use_bf16 if self.cfg.use_bf16 is not None else False})
+        if 'keras' in framework:
+            framework_specific_info.update({
+                 'workspace_path': self.cfg.tuning.workspace.path, })
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnxrt' in framework.lower():
