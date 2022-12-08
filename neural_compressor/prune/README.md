@@ -43,13 +43,9 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial for reducing the computational and memory footprint that huge neural networks require.
 A detailed explanation of pruning technique and results could be found in  [Pruning details](../../docs/source/pruning_details.md#introduction).
 
-
-
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
     <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=400 height=200 alt="pruning intro">
 </a>
-
-
 
 
 ### Pruning Patterns
@@ -58,46 +54,20 @@ A detailed explanation of pruning technique and results could be found in  [Prun
 
 Pruning patterns defines the rules of pruned weights' arrangements in space. INC currently supports unstructured, N:M pruning and blockwise patterns. [Details](../../docs/source/pruning_details.md#pruning-patterns).
 
-
-
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
     <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=600 height=200 alt="Sparsity Pattern">
 </a>
-
 
 
 ### Pruning Criteria
 
 
 
-Pruning criteria determines how should the weights of a neural network be scored and pruned. The magnitude and gradient are widely used to score the weights.
+Pruning Criteria determines how should the weights of a neural network be scored and pruned. In the image below, pruning scores are represented by neurons' color and those with the lowest scores are pruned. The magnitude and gradient are widely used to score the weights. Currently, INC supports magnitude, snip and snip_momentum criteria. [Details](../../docs/source/pruning_details.md#pruning-criteria).
 
-
-
-- Magnitude
-
-
-
-  The algorithm prunes the weight by the lowest absolute value at each layer with given sparsity target.
-
-
-
-- SNIP
-
-
-
-  The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
-
-
-
-- SNIP with momentum
-
-
-
-  The algorithm improves original SNIP algorithms and introduces weights' score maps which updates in a momentum way.\
-  In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
-  $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
-
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=400 height=200 alt="Pruning criteria">
+</a>
 
 
 ### Pruning Schedule
