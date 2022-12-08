@@ -4,9 +4,12 @@ import copy
 import shutil
 import unittest
 
-import numpy as np
-
 from neural_compressor.utils import logger
+
+# loss function for hawq-v2
+def hawq_v2_loss(output, target):
+    import torch
+    return torch.nn.CrossEntropyLoss()(output, target)
 
 class TestHAWQV2TuningStrategy(unittest.TestCase):
 
@@ -39,9 +42,10 @@ class TestHAWQV2TuningStrategy(unittest.TestCase):
         # dataset and dataloader
         dataset = DATASETS("pytorch")["dummy"](((1, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
-
-        # tuning and accuracy criterion
-        tuning_criterion = TuningCriterion(strategy='hawq_v2', max_trials=5)
+        
+        #tuning and accuracy criterion
+        strategy_kwargs = {'hawq_v2_loss': hawq_v2_loss}
+        tuning_criterion = TuningCriterion(strategy='hawq_v2', strategy_kwargs=strategy_kwargs, max_trials=5)
         conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx", tuning_criterion=tuning_criterion)
 
         # fit

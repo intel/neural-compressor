@@ -861,7 +861,8 @@ schema = Schema({
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
-            Optional('latency_weight', default=1.0): float
+            Optional('latency_weight', default=1.0): float,
+            Optional('hawq_v2_loss', default=None): object,
         } ,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
@@ -1354,7 +1355,7 @@ class Conf(object):
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
-                    'accuracy_weight', 'latency_weight']:
+                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})

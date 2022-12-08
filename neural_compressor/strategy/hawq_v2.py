@@ -86,10 +86,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
-        # TODO remove it before merge
-        import torch
         tuning_space = self.tuning_space
-        calib_size = tuning_space.root_item.get_option_by_name('calib_sampling_size').options[0]  ##TODO suppoprt list
+        calib_size = tuning_space.root_item.get_option_by_name('calib_sampling_size').options[0]
 
         # Initialize the tuning config for each op according to the quantization approach
         op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
@@ -111,12 +109,13 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
         # Start compute the hessian trace
         logger.info(f"**************  Start compute the hessian trace  *****************")
         target_dtype = "int8"  
-        # TODO remove it before merge
-        criterion=torch.nn.CrossEntropyLoss()
-        op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model, 
-                                                            dataloader = self.calib_dataloader, 
-                                                            q_model = self.q_model, 
-                                                            criterion =criterion, # TODO using user specify loss
+        hawq_v2_criterion =self.cfg.tuning.strategy.hawq_v2_loss
+        assert hawq_v2_criterion is not None, "HAWQ-V2 strategy needs model loss function to compute the gradient, \
+            Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."
+        op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model,
+                                                            dataloader = self.calib_dataloader,
+                                                            q_model = self.q_model,
+                                                            criterion =hawq_v2_criterion,
                                                             enable_act = False)
         sorted_op_to_traces = dict(sorted(op_to_traces.items(), key=lambda item: item[1], reverse=True))
         logger.info(f"**************  Hessian Trace  *****************")
