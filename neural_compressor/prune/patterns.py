@@ -952,7 +952,7 @@ class PatternNInM(BasePattern):
             data = data.permute(0, 3, 1, 2)
         return data
 
-    def reshape_orig_to_pattern(self, data: torch.Tensor, key):
+    def reshape_orig_to_pattern(self, data, key):
         """Reshape the data based on the pruning pattern."""
         data = self._reshape_orig_to_2dims(data)
         shape = data.shape
