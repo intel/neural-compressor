@@ -25,7 +25,6 @@ def build_fake_yaml_basic():
           excluded_names: ["classifier"]
           max_layer_sparsity_ratio: 0.95
           prune_frequency: 1
-        #   sparsity_decay_type: "cos"
           pruners:
             - !Pruner
                 start_step: 0

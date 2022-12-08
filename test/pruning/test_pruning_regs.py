@@ -63,6 +63,7 @@ def build_fake_yaml():
                 sparsity_decay_type: "cube"
                 reg_type: "group_lasso"
                 parameters: {'reg_coeff':2.0}
+                
             - !Pruner
                 start_step: 2
                 end_step: 8
@@ -83,7 +84,7 @@ def build_fake_yaml():
 
 
 
-class TestPruningCriteria(unittest.TestCase):
+class TestPruningRegs(unittest.TestCase):
     model = torchvision.models.resnet18()
 
     @classmethod
@@ -96,7 +97,7 @@ class TestPruningCriteria(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    def test_pruning_criteria(self):
+    def test_pruning_regs(self):
         prune = Pruning("fake_snip.yaml")
         ##prune.generate_pruners()
         prune.update_config(start_step=1)
