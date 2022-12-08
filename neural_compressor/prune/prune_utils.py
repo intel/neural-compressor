@@ -153,7 +153,10 @@ def process_and_check_config(val):
         pruner_info = {}
         for key in default_local_config:
             pruner_info[key] = reset_none_to_default(info, key, default_local_config[key])
-        pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']  ##TODO trick
+        if 'parameters' in pruner_info.keys() and 'reg_coeff' in pruner_info['parameters'].keys():
+            pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']  ##TODO trick
+        else:
+            pruner_info['reg_coeff'] = 0.0
         check_config(pruner_info)
         pruner_info = DotDict(pruner_info)
         pruners_info.append(pruner_info)
