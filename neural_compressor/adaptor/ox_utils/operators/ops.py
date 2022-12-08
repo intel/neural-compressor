@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from neural_compressor.utils.utility import LazyImport
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
+onnx = LazyImport('onnx')
 
 OPERATORS = {}
 QOPERATORS= {}
@@ -105,15 +108,51 @@ class Operator(object):
 class QOperator(object):
     def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
         self.node = onnx_node
-        self.chilren = children
+        self.children = children
         self.initializers = initializers
         self.disable_qdq_for_node_output = True if onnx_node.op_type in \
             exclude_output_quantization else False
         self.axis = channel_axis
         self.per_channel = False
 
-    def convert_check(self, convert_format):
-        return True
-
     def convert(self):
-        return
+        node = self.node
+        add_nodes = []
+        inputs = []
+        inits = []
+        # output is not int8 tensor
+        if all([i.op_type != 'DequantizeLinear' for i in self.children]):
+            return False, add_nodes
+        # input dq
+        for child in self.children:
+            if child.op_type == 'DequantizeLinear':
+                in_dq = onnx.helper.make_node(
+                    'DequantizeLinear',
+                    [node.input[0], child.input[1], child.input[2]],
+                    [node.name + '_in_dequant'],
+                    node.name + '_in_dequant')
+                inputs.append(node.name + '_in_dequant')
+                add_nodes.append(in_dq)
+                break
+        # output q
+        if not self.disable_qdq_for_node_output:
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out', in_dq.input[1], in_dq.input[2]],
+                node.output,
+                node.name + '_out_quant')
+            outputs = [node.name + '_out']
+            add_nodes.append(out_q)
+        else:
+            outputs = node.output
+
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+            
+        inputs.append(node.input[1:])
+        new_node = onnx.helper.make_node(
+            node.op_type, inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(new_node)
+        return True, add_nodes, inits

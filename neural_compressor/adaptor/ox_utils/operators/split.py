@@ -18,7 +18,7 @@
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 
 @op_registry(op_types="Split")
@@ -92,17 +92,36 @@ class QDirectOperator(QOperator):
         add_nodes = []
         inputs = []
         inits = []
+        
         if all([i.op_type != 'DequantizeLinear' for i in self.children]):
             return False, add_nodes
+        # input dq
         for child in self.children:
             if child.op_type == 'DequantizeLinear':
                 in_dq = onnx.helper.make_node(
                     'DequantizeLinear',
                     [node.input[0], child.input[1], child.input[2]],
-                    [node.name + '_in_dequant_' + str(i)])
-                inputs.append(node.name + '_in_dequant_' + str(i))
+                    [node.name + '_in_dequant'],
+                    node.name + '_in_dequant')
+                inputs.append(node.name + '_in_dequant')
                 add_nodes.append(in_dq)
                 break
+
+        # output q
+        outputs = []
+        output_optype_mapping = dict((child.input[0], child.op_type) for child in self.children)
+        if not self.disable_qdq_for_node_output:
+            for i, out in enumerate(node.output):
+                out_q = onnx.helper.make_node(
+                    'QuantizeLinear',
+                    [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
+                    [node.output[i]],
+                    node.name + '_out_quant_' + str(i))
+            outputs.append([node.name + '_out_quant_' + str(i)])
+            add_nodes.append(out_q)
+        else:
+            outputs = node.output
+
         outputs = node.output
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover

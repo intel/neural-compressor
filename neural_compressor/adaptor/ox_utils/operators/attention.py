@@ -94,7 +94,7 @@ class QAttentionOperator(QOperator):
         
         weight_scale = onnx.numpy_helper.to_array(
             find_by_name(node.input[4], self.initializers))
-        if len(weight_scale) > 1:
+        if len(weight_scale.shape) == 1:
             if 'MatMul' not in self.axis:
                 from neural_compressor.utils import logger
                 logger.warning(

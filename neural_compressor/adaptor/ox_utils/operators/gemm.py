@@ -117,7 +117,7 @@ class QGemmOperator(QOperator):
             [node.name + '_in_dequant1'],
             node.name + '_in_dequant1')
 
-        if len(weight_scale) > 1:
+        if len(weight_scale.shape) == 1:
             axis = 0 if is_B_transposed(node) else 1
             in_dq2 = onnx.helper.make_node(
                 'DequantizeLinear',

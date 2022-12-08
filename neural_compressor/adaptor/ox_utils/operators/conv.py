@@ -179,20 +179,36 @@ class QConvOperator(QOperator):
             node.input[:3],
             [node.name + '_in_dequant1'],
             node.name + '_in_dequant1')
-        
-        in_dq2 = onnx.helper.make_node(
-            'DequantizeLinear',
-            node.input[3:6],
-            [node.name + '_in_dequant2'],
-            node.name + '_in_dequant2')
+
+        weight_scale = onnx.numpy_helper.to_array(
+            find_by_name(node.input[4], self.initializers))
+        if weight_scale is not None and len(weight_scale.shape) == 1:
+            if 'Conv' not in self.axis:
+                from neural_compressor.utils import logger
+                logger.warning("Don't offer the axis of per-channel quantizd Conv, use default axis=0")
+                axis = 0
+            else:
+                axis = self.axis['Conv']
+            in_dq2 = onnx.helper.make_node(
+                'DequantizeLinear',
+                node.input[3:6],
+                [node.name + '_in_dequant2'],
+                node.name + '_in_dequant2',
+                axis=axis)
+        elif weight_scale is not None:
+            in_dq2 = onnx.helper.make_node(
+                'DequantizeLinear',
+                node.input[3:6],
+                [node.name + '_in_dequant2'],
+                node.name + '_in_dequant2')
+                
         add_nodes.extend([in_dq1, in_dq2])
         inputs = [node.name + '_in_dequant1', node.name + '_in_dequant2']
         if len(node.input) == 9:
             import numpy as np
             input_scale = onnx.numpy_helper.to_array(
                 find_by_name(node.input[1], self.initializers))
-            weight_scale = onnx.numpy_helper.to_array(
-                find_by_name(node.input[4], self.initializers))
+
             bias_scale = input_scale * weight_scale
 
             # update scale initializer

@@ -142,8 +142,7 @@ class QMatMulOperator(QOperator):
 
         weight_scale = onnx.numpy_helper.to_array(
             find_by_name(node.input[4], self.initializers))
-        import pdb;pdb.set_trace()
-        if weight_scale is not None and len(weight_scale) > 1:
+        if weight_scale is not None and len(weight_scale.shape) == 1:
             if 'MatMul' not in self.axis:
                 from neural_compressor.utils import logger
                 logger.warning("Don't offer the axis of per-channel quantizd MatMul, use default axis=1")

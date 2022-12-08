@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+import onnx
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 @op_registry(op_types="ArgMax")
 class ArgMaxOperator(Operator):
@@ -37,3 +37,8 @@ class ArgMaxOperator(Operator):
         if origin_name in self.quantizer.quantized_value_map:
             node.input[0] = self.quantizer.quantized_value_map[origin_name].q_name
             node.name = node.name + '_quant'
+
+@qop_registry(op_types="ArgMax")
+class QArgMaxOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
+        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
