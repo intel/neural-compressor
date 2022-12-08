@@ -26,13 +26,13 @@ def build_fake_yaml():
           prune_frequency: 1 
           sparsity_decay_type: "exp"
           pruners:
-            # - !Pruner
-            #     start_step: 0
-            #     end_step: 10
-            #     prune_type: "magnitude_progressive"
-            #     names: ['layer1.*']
-            #     extra_excluded_names: ['layer2.*']
-            #     prune_domain: "global"
+            - !Pruner
+                start_step: 0
+                end_step: 0
+                prune_type: "pattern_lock"
+                names: ['layer1.*']
+                extra_excluded_names: ['layer2.*']
+                prune_domain: "global"
 
             - !Pruner
                 start_step: 1
@@ -88,8 +88,6 @@ class TestPruningTypes(unittest.TestCase):
 
     def test_pruning_types(self):
         prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
-        prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
