@@ -17,7 +17,7 @@
 
 """common DataLoader just collects the information to construct a dataloader."""
 
-from data import DATALOADERS
+from neural_compressor.data import DATALOADERS
 
 class DataLoader(object):
     """A wrapper of the information needed to construct a dataloader.

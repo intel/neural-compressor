@@ -33,6 +33,7 @@
 
 import numpy as np
 from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils import logger
 from .transform import transform_registry, BaseTransform
 tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')
@@ -132,14 +133,19 @@ class ParseDecodeImagenet():
         image = features['image/encoded']
         image = tf.image.decode_jpeg(
             image, channels=3, fancy_upscaling=False, dct_method='INTEGER_FAST')
-
         return (image, label)
 
 @transform_registry(transform_type="ParseDecodeImagenet", \
                     process="preprocess", framework="tensorflow")
 class ParseDecodeImagenetTransform(BaseTransform):
+    """imagenet decoding will be performed automatically from Neural Compressor v1.4.
+
+       Returns:
+            sample
+    """
 
     def __call__(self, sample):
+        """Return sample"""
         logger.warning("This transform is going to be deprecated, " \
             "imagenet decoding will be performed automatically from Neural Compressor v1.4.")
         return sample
@@ -166,7 +172,7 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
                  resize_method='bilinear', random_flip_left_right=False, \
                  mean_value=[0.0,0.0,0.0], scale=1.0, \
                  data_format='channels_last', subpixels='RGB'):
-
+        """Initialize `TensorflowResizeCropImagenetTransform` class."""
         self.height = height
         self.width = width
         self.mean_value = mean_value
@@ -180,6 +186,7 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
 
     # sample is (images, labels)
     def __call__(self, sample):
+        """Convert `TensorflowResizeCropImagenetTransform` feature."""
         image, label = sample
         shape = tf.shape(input=image)
         
@@ -215,8 +222,7 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         image = tf.expand_dims(image, 0)
         image = tf.image.resize(image, [new_height, new_width],
                                 method=self.resize_method)
-        image = tf.squeeze(image)
-        
+        image = tf.squeeze(image)    
         shape = tf.shape(input=image)
         if self.random_crop:
             y0 = tf.random.uniform(shape=[], minval=0, maxval=(shape[0] - self.height +1), 
@@ -253,7 +259,7 @@ class BilinearImagenetTransform(BaseTransform):
 
     def __init__(self, height, width, central_fraction=0.875,
                  mean_value=[0.0,0.0,0.0], scale=1.0):
-
+        """Initialize `BilinearImagenetTransform` class."""
         self.height = height
         self.width = width
         self.mean_value = mean_value
@@ -262,6 +268,7 @@ class BilinearImagenetTransform(BaseTransform):
 
     # sample is (images, labels)
     def __call__(self, sample):
+        """Convert `BilinearImagenetTransform` feature."""
         image, label = sample
         if image.dtype is not tf.float32:
             image = tf.image.convert_image_dtype(image, dtype=tf.float32)
@@ -280,7 +287,6 @@ class BilinearImagenetTransform(BaseTransform):
         image = tf.multiply(image, 2.0)
         means = tf.broadcast_to(self.mean_value, tf.shape(input=image))
         image = (image - means) * self.scale
-
         return (image, label)
 
 @transform_registry(transform_type="BilinearImagenet", process="preprocess", \
@@ -301,6 +307,7 @@ class OnnxBilinearImagenetTransform(BaseTransform):
 
     def __init__(self, height, width, central_fraction=0.875,
                  mean_value=[0.0,0.0,0.0], scale=1.0):
+        """Initialize `OnnxBilinearImagenetTransform` class."""
         self.height = height
         self.width = width
         self.mean_value = mean_value
@@ -308,6 +315,7 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         self.central_fraction = central_fraction
 
     def __call__(self, sample):
+        """Convert `OnnxBilinearImagenetTransform` feature."""
         image, label = sample
         if isinstance(image, np.ndarray):
             image = image.astype('float32') / 255. 
@@ -331,7 +339,6 @@ class OnnxBilinearImagenetTransform(BaseTransform):
         means = np.broadcast_to(self.mean_value, image.shape)
         image = (image - means) * self.scale
         image = image.astype(np.float32)
-
         return (image, label)
 
 @transform_registry(transform_type="ResizeCropImagenet", process="preprocess", \
@@ -353,7 +360,7 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
     def __init__(self, height, width, random_crop=False, resize_side=256, \
                  mean_value=[0.0,0.0,0.0], std_value=[0.229, 0.224, 0.225], \
                  resize_method='bilinear', data_format='channels_last', subpixels='RGB'):
-
+        """Initialize `ONNXResizeCropImagenetTransform` class."""
         self.height = height
         self.width = width
         self.mean_value = mean_value
@@ -366,6 +373,7 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
 
     # sample is (images, labels)
     def __call__(self, sample):
+        """Convert `ONNXResizeCropImagenetTransform` feature."""
         # TODO Support optional resize_method, data_format, subpixels for ONNX
         image, label = sample
         height, width = image.shape[0], image.shape[1]
@@ -392,13 +400,21 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
 @transform_registry(transform_type="ResizeWithAspectRatio", process="preprocess", \
                     framework="onnxrt_qlinearops, onnxrt_integerops")
 class ResizeWithAspectRatio(BaseTransform):
+    """Resize the image with aspect ratio.
+
+    Returns:
+        image and label
+    """
+
     def __init__(self, height, width, scale=87.5, inter_pol=cv2.INTER_AREA):
+        """Initialize `ResizeWithAspectRatio` class."""
         self.height = height
         self.width = width
         self.scale = scale
         self.inter_pol = inter_pol
 
     def __call__(self, sample):
+        """Convert `ResizeWithAspectRatio` feature."""
         (img, label) = sample
         assert len(img.shape) == 3
         height, width, _ = img.shape
