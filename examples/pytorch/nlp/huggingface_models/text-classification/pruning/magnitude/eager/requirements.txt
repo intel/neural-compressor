@@ -1,7 +1,0 @@
-transformers
-torch
-argparse
-onnx
-onnxruntime
-tqdm
-
