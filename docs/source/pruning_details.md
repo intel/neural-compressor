@@ -23,7 +23,7 @@ Pruning details
 
 
 
-    1.5. [Regularization](#regularization)
+    1.5. [Regularization](#regularization)
 
 
 
