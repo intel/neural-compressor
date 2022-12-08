@@ -58,12 +58,16 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 'DequantizeConv2DSigmoidQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddLeakyReluAddQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DBiasAddReluAddQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DBiasAddAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddLeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddV2LeakyReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DLeakyReluAddQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DReluAddV2QuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
+                'DequantizeConv2DReluAddQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddRelu6QuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DAddReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
                 'DequantizeConv2DBiasAddAddRelu6MulMulQuantizeV2': self.apply_conv_biasadd_hardswish_fusion,
@@ -1194,7 +1198,9 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         # Dequantize + Conv2D + BiasAdd + AddV2 + Relu6 + QuantizeV2
         # Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
         # Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2
+        # Dequantize + Conv2D + BiasAdd + Relu + AddV2(Add) + QuantizeV2
         # Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2
+        # Dequantize + Conv2D + Relu + AddV2(Add) + QuantizeV2
         # Dequantize + Conv2D + Add + Add + Relu + QuantizeV2
         # Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
         skip_node_name = match_node_name[2:]
@@ -1236,8 +1242,8 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         forth_node = self.node_name_mapping[match_node_name[4]].node
-        if forth_node.op != 'LeakyRelu':
-            if third_node.op != 'LeakyRelu' and not self._find_relu_node(matched_node.node):
+        if forth_node.op not in ('LeakyRelu', 'Relu'):
+            if third_node.op not in ('LeakyRelu', 'Relu') and not self._find_relu_node(matched_node.node):
                 return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         is_leakyrelu_add_fusion = third_node.op == 'LeakyRelu' and forth_node.op.find('Add') != -1
@@ -1251,7 +1257,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         sum_node_name = self.node_name_mapping[match_node_name[3 + relu_offset]].node.input[sum_index]
         deq_node = self.node_name_mapping[sum_node_name].node
-        if (deq_node.op != 'LeakyRelu' and deq_node.op != 'Dequantize') or \
+        if (deq_node.op != 'LeakyRelu' and deq_node.op != 'Dequantize' and deq_node.op != 'BiasAdd') or \
                    deq_node.op.find("Quantize") != -1:
             return self.apply_newly_conv_biasadd_fusion(match_node_name[:3]+[match_node_name[-1]])
 
@@ -1350,7 +1356,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
                 self.add_output_graph_node(quantized_conv_node)
 
-                if is_leakyrelu_add_fusion or is_leakyrelu:
+                if is_leakyrelu_add_fusion or is_leakyrelu or is_relu_add_fusion:
                     quantize_down_name = self._add_quantize_down_nodes(
                                         node, quantized_node_name, dtypes.qint8, False)
                     self._intel_cpu_add_dequantize_result_node(

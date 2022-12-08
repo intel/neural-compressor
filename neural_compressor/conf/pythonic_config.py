@@ -34,12 +34,14 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  strategy='basic',
+                 strategy_kwargs=None,
                  objective='performance',
                  timeout=0,
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
                  use_bf16=True,
+                 optimization_level=1,
                  accuracy_criterion=accuracy_criterion):
         excluded_precisions = ["bf16"] if not use_bf16 else []
         super().__init__(
@@ -51,13 +53,15 @@ class QuantizationConfig(_BaseQuantizationConfig):
             op_type_list=op_type_list,
             op_name_list=op_name_list,
             strategy=strategy,
+            strategy_kwargs=strategy_kwargs,
             objective=objective,
             timeout=timeout,
             max_trials=max_trials,
             performance_only=performance_only,
             reduce_range=reduce_range,
             excluded_precisions=excluded_precisions,
-            accuracy_criterion=accuracy_criterion
+            accuracy_criterion=accuracy_criterion,
+            optimization_level=optimization_level
         )
         self._approach = approach
 
