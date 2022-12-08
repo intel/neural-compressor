@@ -187,3 +187,11 @@ quantizer.model = common.Model(model)
 model = quantizer.fit()
 model.save(training_args.output_dir)
 ```
+
+# Appendix
+
+## Export to ONNX
+
+Right now, we experimentally support exporting PyTorch model to ONNX model, includes FP32 and INT8 model.
+
+By enabling `--onnx` argument, Intel Neural Compressor will export fp32 ONNX model, INT8 QDQ ONNX model, and INT8 QLinear ONNX model.
