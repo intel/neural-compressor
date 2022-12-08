@@ -40,12 +40,13 @@ Pruning
 
 
 ### Neural Network Pruning
-Neural network pruning (briefly known as pruning or sparsity) is a promising model compression technique that removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial for reducing the computational and memory footprint that huge neural networks require.
+Neural network pruning is a promising model compression technique that removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial for reducing the computational and memory footprint that huge neural networks require.
+A detailed explanation of pruning technique and results could be found in  [Pruning details](../../docs/source/pruning_details.md#introduction).
 
 
 
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_intro.png">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=400 height=250 alt="pruning intro">
 </a>
 
 
@@ -300,42 +301,20 @@ Following section shows how to use hooks in user pass-in training function which
 
 
 ```python
-def pruning_func(model):
-    for epoch in range(int(args.num_train_epochs)):
-        pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
-        model.train()
-        prune.on_epoch_begin(epoch)
-        for step, batch in enumerate(train_dataloader):
-            prune.on_step_begin(step)
-            batch = tuple(t.to(args.device) for t in batch)
-            inputs = {'input_ids': batch[0],
-                      'attention_mask': batch[1],
-                      'labels': batch[3]}
-            #inputs['token_type_ids'] = batch[2]
-            outputs = model(**inputs)
-            loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
-
-
-
-            if args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
-            if args.gradient_accumulation_steps > 1:
-                loss = loss / args.gradient_accumulation_steps
-
-
-
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-
-
-
-            if (step + 1) % args.gradient_accumulation_steps == 0:
-                prune.on_before_optimizer_step()
-                optimizer.step()
-                scheduler.step()  # Update learning rate schedule
-                model.zero_grad()
-    
-            prune.on_step_end()
+   for epoch in range(num_train_epochs):
+       model.train()
+       prune.on_epoch_begin(epoch)
+       for step, batch in enumerate(train_dataloader):
+           prune.on_step_begin(step)
+           outputs = model(**batch)
+           loss = outputs.loss / gradient_accumulation_steps
+           loss.backward()
+           if (step + 1) % gradient_accumulation_steps == 0:
+               prune.on_before_optimizer_step()
+               optimizer.step()
+               scheduler.step()  # Update learning rate schedule
+               model.zero_grad()
+           prune.on_step_end()
 ...
 ```
 In this case, the launcher code is like the following:
@@ -358,7 +337,15 @@ model = prune.fit()
 
 We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed below. A complete overview of validated examples including quantization, pruning and distillation result could be found in  [INC Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
-
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Dataset</th>
+    <th>Pruning Algorithm</th>
+    <th>Framework</th>
+  </tr>
+</thead>
 
 Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
  
