@@ -283,8 +283,7 @@ def eval_func(model):
     return 0.0
 
 
-def train_func(compression_manager, model, dataloader=None):
-    compression_manager.callbacks.on_train_begin(dataloader=dataloader)
+def train_func(model):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
     # switch to evaluate mode
     model.train()
@@ -295,7 +294,6 @@ def train_func(compression_manager, model, dataloader=None):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    compression_manager.callbacks.on_train_end()
     return model
 
 
@@ -307,15 +305,19 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         shutil.rmtree("runs", ignore_errors=True)
 
     def test_fx_quant(self):
-        for fake_yaml in ["qat", "static"]:
+        for approach in ["qat", "static"]:
             model_origin = resnet18()
             dataset = DATASETS("pytorch")["dummy"]((10, 3, 224, 224), label=True)
             dataloader = DATALOADERS["pytorch"](dataset)
-            if fake_yaml == "qat":
+            if approach == "qat":
+                model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(
                   op_name_list=qat_op_name_list)
-                compression_manager = prepare_compression(copy.deepcopy(model_origin), conf)
-                q_model = train_func(compression_manager, compression_manager.model, dataloader)
+                compression_manager = prepare_compression(model, conf)
+                compression_manager.callbacks.on_train_begin()
+                q_model = train_func(model)
+                compression_manager.callbacks.on_train_end()
+                compression_manager.save("./saved")
             else:
                 conf = PostTrainingQuantConfig(
                   op_name_list=ptq_fx_op_name_list)
@@ -324,30 +326,33 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                            conf,
                                            calib_dataloader=dataloader,
                                            calib_func=eval_func)
-            q_model.save("./saved")
+                q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved", model_origin,
                             **{"dataloader": torch.utils.data.DataLoader(dataset)})
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
-            if fake_yaml != "qat":
+            if approach != "qat":
                 # recover int8 model with only tune_cfg
                 history_file = "./saved/history.snapshot"
                 model_fx_recover = recover(model_origin, history_file, 0,
                                 **{"dataloader": dataloader})
                 self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree("./saved", ignore_errors=True)
-        for fake_yaml in ["qat", "static"]:
+        for approach in ["qat", "static"]:
             model_origin = M()
             # run fx_quant in neural_compressor and save the quantized GraphModule
             dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224), label=True)
             dataloader = DATALOADERS["pytorch"](dataset)
-            if fake_yaml == "qat":
+            if approach == "qat":
+                model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(
                   op_name_list=qat_op_name_list
                 )
-                compression_manager = prepare_compression(copy.deepcopy(model_origin), conf)
-                q_model = train_func(compression_manager, compression_manager.model, dataloader)
+                compression_manager = prepare_compression(model, conf)
+                compression_manager.callbacks.on_train_begin()
+                q_model = train_func(model)
+                compression_manager.callbacks.on_train_end()
                 compression_manager.save("./saved")
             else:
                 conf = PostTrainingQuantConfig(
@@ -405,7 +410,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             return 1
 
         # Model Definition
-        for fake_yaml in ["qat", "auto"]:
+        for approach in ["qat", "auto"]:
             model_origin = LSTMModel(
                 ntoken = 10,
                 ninp = 512,
@@ -415,14 +420,18 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             dataset = DATASETS("pytorch")["dummy"]((3, 10))
             dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            if fake_yaml == "qat":
+            if approach == "qat":
+                model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(
                     op_name_list=qat_op_name_list
                 )
-                compression_manager = prepare_compression(copy.deepcopy(model_origin), conf)
-                q_model = train_func(compression_manager, compression_manager.model, dataloader=dataloader)
-                self.assertTrue("quantize" in str(type(q_model.model.encoder)))
-                self.assertTrue("quantize" in str(type(q_model.model.rnn)))
+                compression_manager = prepare_compression(model, conf)
+                compression_manager.callbacks.on_train_begin()
+                model = compression_manager.model.model
+                train_func(model)
+                compression_manager.callbacks.on_train_end()
+                self.assertTrue("quantize" in str(type(model.encoder)))
+                self.assertTrue("quantize" in str(type(model.rnn)))
             else:
                 conf = PostTrainingQuantConfig(approach="auto")
                 q_model = quantization.fit(model_origin,
@@ -432,29 +441,34 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 self.assertTrue("quantize" in str(type(q_model.model.rnn)))
 
     def test_fx_sub_module_quant(self):
-        for fake_yaml in ["qat", "static"]:
+        for approach in ["qat", "static"]:
             model_origin = DynamicControlModel()
             dataset = DATASETS("pytorch")["dummy"]((1, 3, 224, 224))
             dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            if fake_yaml == "qat":
+            if approach == "qat":
+                model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(op_name_list=qat_op_name_list)
-                compression_manager = prepare_compression(copy.deepcopy(model_origin), conf)
-                q_model = train_func(compression_manager, compression_manager.model, dataloader)
+                compression_manager = prepare_compression(model, conf)
+                model = compression_manager.model.model
+                compression_manager.callbacks.on_train_begin()
+                q_model = train_func(model)
+                compression_manager.callbacks.on_train_end()
+                compression_manager.save("./saved")
             else:
                 set_workspace("./saved")
                 conf = PostTrainingQuantConfig()
                 q_model = quantization.fit(model_origin,
                                            conf,
                                            calib_dataloader=dataloader)
-            q_model.save("./saved")
+                q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved/best_model.pt", model_origin,
                                **{"dataloader": torch.utils.data.DataLoader(dataset)
                               })
             self.assertTrue(isinstance(model_fx.sub, torch.fx.graph_module.GraphModule))
 
-            if fake_yaml != "qat":
+            if approach != "qat":
                 # recover int8 model with only tune_cfg
                 history_file = "./saved/history.snapshot"
                 model_fx_recover = recover(model_origin, history_file, 0,

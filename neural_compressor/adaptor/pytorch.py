@@ -3425,7 +3425,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         try:
             tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
             graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1124, E1123
                 fused_model = _fuse_fx(graph_module,
                                         is_qat,
