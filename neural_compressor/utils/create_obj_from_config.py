@@ -65,7 +65,7 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
         preprocesses = TRANSFORMS(framework, 'preprocess')
         preprocess = get_preprocess(preprocesses, cfg_preprocess)
     # even we can unify transform, how can we handle the IO, or we do the transform here
-    datasets = DATASETS(framework)
+    datasets = Datasets(framework)
     dataset_type = list(data_source.keys())[0]
     # generate framework and dataset specific filters
     filter = None
