@@ -259,9 +259,10 @@ class HessianTrace:
                     break
 
     def get_weight_traces(self, num_samples):
+        import tqdm
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
-        for iter in range(self.max_iter):
+        for iter in tqdm.tqdm(range(self.max_iter)):
             layer_traces = self.get_vtHv_weight(self.params, num_samples)
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
