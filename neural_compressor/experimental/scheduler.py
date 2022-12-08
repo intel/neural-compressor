@@ -29,7 +29,7 @@ from .model_conversion import ModelConversion
 from .graph_optimization import Graph_Optimization
 from .benchmark import Benchmark
 from .component import Component
-from ..conf.dotdict import DotDict, deep_set
+from ..conf.dotdict import DotDict, deep_set, deep_get
 
 SUPPORTED_COMPONENTS = [
   Quantization,

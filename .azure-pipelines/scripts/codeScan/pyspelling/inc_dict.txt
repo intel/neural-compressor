@@ -150,6 +150,7 @@ berts
 bertsquad
 BertTokenizer
 bfloat
+blockwise
 BFP
 BGR
 Bianchi
@@ -1257,6 +1258,7 @@ oneapi
 oneAPI
 onednn
 oneDNN
+oneshot
 onlinedocs
 onnx
 ONNX

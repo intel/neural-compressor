@@ -102,11 +102,7 @@ def _valid_prune_epoch(key, scope, error):
 
 
 def _valid_prune_sparsity(key, scope, error):
-    if "initial_sparsity" in scope[key] and "target_sparsity" in scope[key]:
-        assert scope[key]["initial_sparsity"] <= scope[key]["target_sparsity"]
-    elif "initial_sparsity" in scope[key]:
-        assert scope[key]["initial_sparsity"] >= 0
-    elif "target_sparsity" in scope[key]:
+    if "target_sparsity" in scope[key]:
         assert scope[key]["target_sparsity"] < 1
 
 
@@ -1151,9 +1147,9 @@ pruning_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('pruning', default={'approach': {'weight_compression': {'initial_sparsity': 0.0, \
-                                                                     'target_sparsity': 0.97, 'start_epoch': 0, \
-                                                                     'end_epoch': 4}}}): dict,
+    Optional('pruning', default={'approach': {'weight_compression': {
+                                                                     'target_sparsity': 0.9, 'start_step': 0, \
+                                                                     'end_step': 0}}}): dict,
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
 })
