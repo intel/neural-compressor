@@ -28,4 +28,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["DATASETS", "Dataset", "IterableDataset", "dataset_registry"]
+__all__ = ["Datasets", "Dataset", "IterableDataset", "dataset_registry"]
