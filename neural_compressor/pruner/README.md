@@ -83,7 +83,7 @@ Structured pruning means pruning parameters in groups and deleting entire blocks
 
 
 
-- 2in4 Pruning
+ -  2in4 Pruning
 
 
 
@@ -91,7 +91,7 @@ NVIDIA proposed [2:4 sparsity](https://developer.nvidia.com/blog/accelerating-in
 
 
 
-- Block-wise Pruning
+ -  Block-wise Pruning
 
 
 
