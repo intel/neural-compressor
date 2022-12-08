@@ -7,23 +7,23 @@ Pruning
 
 
 
-      1.1. [Neural Network Pruning](#neural-network-pruning)
+        1.1. [Neural Network Pruning](#neural-network-pruning)
 
 
 
-      1.2. [Pruning Patterns](#pruning-patterns)
+        1.2. [Pruning Patterns](#pruning-patterns)
 
 
 
-      1.3. [Pruning Criteria](#pruning-criteria)
+        1.3. [Pruning Criteria](#pruning-criteria)
 
 
 
-      1.4. [Pruning Schedule](#pruning-schedule)
+        1.4. [Pruning Schedule](#pruning-schedule)
 
 
 
-      1.5. [Regularization](#regularization)
+        1.5. [Regularization](#regularization)
 
 
 
