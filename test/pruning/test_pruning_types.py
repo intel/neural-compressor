@@ -23,7 +23,7 @@ def build_fake_yaml():
           target_sparsity: 0.9
           start_step: 0
           end_step: 10
-          prune_frequency: 1 
+          prune_frequency: 3 
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
@@ -54,6 +54,7 @@ def build_fake_yaml():
                 prune_domain: "local"
                 pattern: "16x1"
                 sparsity_decay_type: "cube"
+                prune_frequency: 1
 
             
             

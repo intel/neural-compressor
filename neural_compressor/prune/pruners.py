@@ -423,8 +423,8 @@ class ProgressivePruner(BasicPruner):
             self.progressive_masks = copy.deepcopy(self.masks)
             if self.prune_frequency < self.progressive_steps:##TODO trick
                 self.progressive_steps = self.prune_frequency
-                if self.progressive_steps == 3:
-                    self.progressive_steps = 2
+                # if self.progressive_steps == 3:
+                #     self.progressive_steps = 2
                 self.prune_frequency_progressive = self.progressive_steps
             else:
                 self.prune_frequency_progressive = self.prune_frequency // self.progressive_steps
