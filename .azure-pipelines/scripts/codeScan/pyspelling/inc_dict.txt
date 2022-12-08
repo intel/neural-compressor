@@ -2435,3 +2435,4 @@ efe
 npmjs
 AWSSageMakerSupport
 sagemaker
+xpu
