@@ -69,7 +69,7 @@ class MXNetMetrics(object):
     
     def __init__(self) -> None:
         """Initialize the metrics collection."""
-        from ...adaptor.mxnet_utils.util import check_mx_version
+        from neural_compressor.adaptor.mxnet_utils.util import check_mx_version
         if check_mx_version('2.0.0'):
             import mxnet.gluon.metric as mx_metrics
         else:

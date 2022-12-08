@@ -152,7 +152,7 @@ class TensorflowImagenetDataset(IterableDataset):
     """Configuration for Imagenet dataset."""
 
     def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
-
+        """New a imagenet dataset for tensorflow"""
         assert subset in ('validation', 'train'), \
             'only support subset (validation, train)'
         logger.warning("This api is going to be deprecated, "
@@ -203,9 +203,11 @@ class ONNXRTImagenetDataset(Dataset):
                 self.image_list.append((img, idx))
 
     def __len__(self):
+        """Return the number of images"""
         return len(self.image_list)
 
     def __getitem__(self, index):
+        """Return the item of dataset according to the given index."""
         from PIL import Image
         sample = self.image_list[index]
         image = Image.open(sample[0])
