@@ -60,58 +60,6 @@ def build_fake_yaml_basic():
     with open('fake_snip.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_snip_yaml)
 
-def build_fake_yaml_channel():
-    fake_channel_pruning_yaml = """
-        model:
-          name: imagenet_prune
-          framework: pytorch
-
-        pruning:
-          approach:
-            weight_compression:
-              target_sparsity: 0.9
-              start_step: 0
-              end_step: 10
-              excluded_names: ["classifier"]
-
-              prune_frequency: 1
-              
-              pruners:
-                - !Pruner
-                    start_step: 5
-                    end_step: 5
-                    prune_type: "pattern_lock"
-                    names: ['layer1.*']
-                    extra_excluded_names: ['layer2.*']
-                    prune_domain: "global"
-                    pattern: "channelx1"
-                    sparsity_decay_type: "exp"
-
-                - !Pruner
-                    start_step: 1
-                    end_step: 1
-                    target_sparsity: 0.5
-                    prune_type: "pattern_lock"
-                    prune_frequency: 2
-                    names: ['layer2.*']
-                    prune_domain: local
-                    pattern: "2:4"
-                    sparsity_decay_type: "exp"
-
-                - !Pruner
-                    start_step: 2
-                    end_step: 8
-                    target_sparsity: 0.8
-                    prune_type: "snip"
-                    names: ['layer3.*']
-                    prune_domain: "local"
-                    pattern: "1xchannel"
-                    sparsity_decay_type: "cube"
-
-        """
-
-    with open('fake_channel_pruning.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_channel_pruning_yaml)
 
 
 class TestPruning(unittest.TestCase):
@@ -121,12 +69,10 @@ class TestPruning(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         build_fake_yaml_basic()
-        build_fake_yaml_channel()
 
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('fake_channel_pruning.yaml')
         os.remove('fake_snip.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
@@ -164,33 +110,6 @@ class TestPruning(unittest.TestCase):
         prune.on_before_eval()
         prune.on_after_eval()
 
-    def test_pruner_channel_pruning(self):
-        prune = Pruning("fake_channel_pruning.yaml")
-        ##prune.generate_pruners()
-        prune.model = self.model
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        prune.on_train_begin()
-        for epoch in range(2):
-            self.model.train()
-            prune.on_epoch_begin(epoch)
-            local_step = 0
-            for image, target in dummy_dataloader:
-                prune.on_step_begin(local_step)
-                output = self.model(image)
-                loss = criterion(output, target)
-                optimizer.zero_grad()
-                loss.backward()
-                prune.on_before_optimizer_step()
-                optimizer.step()
-                prune.on_after_optimizer_step()
-                prune.on_step_end()
-                local_step += 1
-
-            prune.on_epoch_end()
 
 if __name__ == "__main__":
     unittest.main()

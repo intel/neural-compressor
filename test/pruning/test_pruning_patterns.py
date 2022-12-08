@@ -45,7 +45,7 @@ def build_fake_yaml():
                 names: ['layer2.*']
                 prune_domain: local
                 target_sparsity: 0.75
-                pattern: "3:4"
+                pattern: "channelx1"
                 sparsity_decay_type: "exp"
 
             - !Pruner
@@ -64,7 +64,7 @@ def build_fake_yaml():
                 prune_type: "gradient"
                 names: ['fc']
                 prune_domain: "local"
-                pattern: "1x1"
+                pattern: "1xchannel"
                 sparsity_decay_type: "cube"
 
     """
