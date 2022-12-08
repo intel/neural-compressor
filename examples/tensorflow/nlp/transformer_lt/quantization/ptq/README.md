@@ -25,7 +25,8 @@ Intel Extension for Tensorflow is mandatory to be installed for quantizing the m
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -92,9 +93,26 @@ class Dataset(object):
 ### Evaluation Part Adaption
 We evaluate the model with BLEU score, its source: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
 
+### Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+	inputs=['input_tensor'],
+    outputs=['model/Transformer/strided_slice_19'],
+    ...
+    )
+```
+
+Here we set the input tensor and output tensors name into *inputs* and *outputs* args.
+In this case we calibrate and quantize the model, and use our calibration dataloader initialized from a 'Dataset' object.
+
 ### Code update
 After prepare step is done, we add tune code to generate quantized model.
 
+#### Tune
 ```python
 	from neural_compressor import quantization
 	from neural_compressor.experimental import common
@@ -108,7 +126,18 @@ After prepare step is done, we add tune code to generate quantized model.
 									calibration_sampling_size=[500])       
 	q_model = quantization.fit(input_model, conf=conf, calib_dataloader=calib_dataloader,
 				eval_func=eval_func)
-	q_model.save(FLAGS.output_model)
+	try:
+		q_model.save(FLAGS.output_model)
+	except Exception as e:
+		print("Failed to save model due to {}".format(str(e)))
 ```
-
-The Intel® Neural Compressor quantizer.fit() function will return a best quantized model under time constraint.
+#### Benchmark
+```python
+	from neural_compressor.benchmark import fit
+	from neural_compressor.config import BenchmarkConfig
+	if FLAGS.mode == 'performance':
+		fit(graph, conf=BenchmarkConfig(), b_func=eval_func)
+	elif FLAGS.mode == 'accuracy':
+		eval_func(graph)
+```
+The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.

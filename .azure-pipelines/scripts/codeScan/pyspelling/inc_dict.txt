@@ -2385,6 +2385,8 @@ AccuracyLoss
 PostTrainingQuantConfig
 TuningCriterion
 CPz
+PostTrainingQuantConfig
+dgpu
 Nsh
 UmK
 fe

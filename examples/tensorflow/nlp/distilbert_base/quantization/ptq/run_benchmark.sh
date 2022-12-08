@@ -14,7 +14,7 @@ function init_params {
   # set default value
   input_model="./distilbert_base_fp32.pb"
   dataset_location="./sst2_validation_dataset"
-  mode="accuracy"
+  mode="performance"
   batch_size=128
   max_seq_length=128
   iters=872
@@ -25,9 +25,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -70,6 +67,7 @@ function run_benchmark {
         python run_inference.py \
             --in-graph=${input_model} \
             --data-location=${dataset_location} \
+            --benchmark \
             --mode=${mode} \
             --steps=${iters} \
             --warmup-steps=${warmup_steps} \

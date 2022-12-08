@@ -247,7 +247,6 @@ class TensorFlowAdaptor(Adaptor):
         import tensorflow as tf
         from .tf_utils.util import iterator_sess_run
         outputs = model.output_tensor_names
-        iteration=-1 if iteration is None else iteration
 
         if getattr(dataloader, 'distributed', False):
             import horovod.tensorflow as hvd

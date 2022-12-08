@@ -37,7 +37,7 @@ function run_tuning {
       --reference_file=${dataset_location}/newstest2014.de \
       --vocab_file=${dataset_location}/vocab.txt \
       --output_model=${output_model} \
-      --mode=tune
+      --tune
 }
 
 main "$@"

@@ -43,8 +43,8 @@ function define_mode {
     
     if [[ ${mode} == "accuracy" ]]; then
         mode="accuracy"
-    elif [[ ${mode} == "benchmark" ]]; then
-        mode="benchmark"
+    elif [[ ${mode} == "performance" ]]; then
+        mode="performance"
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -58,6 +58,7 @@ function run_benchmark {
       --inputs_file=${dataset_location}/newstest2014.en \
       --reference_file=${dataset_location}/newstest2014.de \
       --vocab_file=${dataset_location}/vocab.txt \
+      --benchmark \
       --mode=${mode} \
       --iters=${iters} \
       --batch_size=${batch_size} 
