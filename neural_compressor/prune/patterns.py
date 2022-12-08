@@ -18,7 +18,8 @@
 
 import logging
 
-import torch
+from neural_compressor.utils.utility import LazyImport
+torch = LazyImport('torch')
 from .logger import logger
 from collections import namedtuple
 

@@ -16,7 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
-import torch
+from neural_compressor.utils.utility import LazyImport
+torch = LazyImport('torch')
 from .patterns import get_pattern
 from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIAS
