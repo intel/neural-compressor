@@ -48,7 +48,7 @@ Neural network pruning is a promising model compression technique that removes t
 A detailed explanation of pruning technique and results could be found in  [Pruning details](../../docs/source/pruning_details.md#introduction).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=450 height=200 alt="pruning intro">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=400 height=160 alt="pruning intro">
 </a>
 
 
@@ -70,7 +70,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. INC
 Pruning Criteria determines how should the weights of a neural network be scored and pruned. In the image below, pruning scores are represented by neurons' color and those with the lowest scores are pruned. The magnitude and gradient are widely used to score the weights. Currently, INC supports magnitude, snip and snip_momentum criteria. [Details](../../docs/source/pruning_details.md#pruning-criteria).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=450 height=200 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=400 height=160 alt="Pruning criteria">
 </a>
 
 
@@ -83,7 +83,7 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 - One-shot Pruning
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG" width=450 height=200 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG" width=400 height=160 alt="Pruning criteria">
 </a>
 
 - Iterative Pruning
@@ -102,7 +102,7 @@ Regularization is a technique that discourages learning a more complex model and
 [Details](../../docs/source/pruning_details.md#regularization).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/Regularization.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Regularization.PNG" width=450 height=200 alt="Regularization">
+    <img src="./../../docs/source/_static/imgs/pruning/Regularization.PNG" width=400 height=160 alt="Regularization">
 </a>
 
 
