@@ -162,16 +162,6 @@ class BenchmarkConfig:
             self._backend = backend
 
     @property
-    def backend(self):
-        return self._backend
-
-    @backend.setter
-    def backend(self, backend):
-        if check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
-            self._backend = backend
-
-    @property
     def outputs(self):
         return self._outputs
 
