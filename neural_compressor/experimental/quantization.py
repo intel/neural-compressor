@@ -133,6 +133,9 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
+        if cfg.quantization.optimization_level == 0:
+            strategy = "conservative"
+            logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
