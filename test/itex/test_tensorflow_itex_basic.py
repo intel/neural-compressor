@@ -77,8 +77,8 @@ class TestItexEnabling(unittest.TestCase):
                 warmup: 10
                 iteration: 100
                 configs:
-                  cores_per_instance: 4
-                  num_of_instance: 7
+                  cores_per_instance: 1
+                  num_of_instance: 1
             tuning:
                 strategy:
                   name: basic
