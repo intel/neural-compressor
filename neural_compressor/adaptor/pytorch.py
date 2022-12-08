@@ -29,7 +29,6 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-from .torch_utils.hawq_metric import hawq_top
 
 torch = LazyImport("torch")
 json = LazyImport("json")
@@ -1113,6 +1112,7 @@ class TemplateAdaptor(Adaptor):
         Return:
             hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
         """
+        from .torch_utils.hawq_metric import hawq_top
         op_to_traces=hawq_top(fp32_model=fp32_model,dataloader=dataloader,q_model=q_model,criterion=criterion,enable_act=enable_act)
         return op_to_traces
         pass
