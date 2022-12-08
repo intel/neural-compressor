@@ -327,19 +327,6 @@ class Post:
         classes = np.reshape(classes, (1, -1))
         scores = np.reshape(scores, (1, -1))
         return (bboxes, classes, scores), labels[0]
-
-class AccuracyLoss:
-    def __init__(self, loss=0.01):
-        self._loss = loss
-
-    @property
-    def absolute(self):
-        return self._loss
-
-    @absolute.setter
-    def absolute(self, absolute):
-        if isinstance(absolute, float):
-            self._loss = absolute
             
 if __name__ == "__main__":
     model = onnx.load(args.model_path)

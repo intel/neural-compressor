@@ -324,18 +324,6 @@ class Post:
             out_boxes.append(boxes[idx_1])
         return ([out_boxes], [out_scores], [out_classes]), labels
 
-class AccuracyLoss:
-    def __init__(self, loss=0.01):
-        self._loss = loss
-
-    @property
-    def absolute(self):
-        return self._loss
-
-    @absolute.setter
-    def absolute(self, absolute):
-        if isinstance(absolute, float):
-            self._loss = absolute
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
@@ -389,7 +377,9 @@ if __name__ == "__main__":
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
-        accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute', tolerable_loss=AccuracyLoss(0.02))
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.criterion =' absolute'
+        accuracy_criterion.absolute = 0.02
         config = PostTrainingQuantConfig(approach='static', 
                                          calibration_sampling_size=[1],
                                         accuracy_criterion=accuracy_criterion)
