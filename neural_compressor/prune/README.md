@@ -76,15 +76,10 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights). Both one-shot and iterative pruning schedules are supported. [Details](../../docs/source/pruning_details.md#pruning-schedule).
 
-- One-shot Pruning
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG">
     <img src="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG" width=350 height=170 alt="Pruning criteria">
-</a>
-
-- Iterative Pruning
-
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/iterative_pruning.PNG">
+</a>  <a target="_blank" href="./../../docs/source/_static/imgs/pruning/iterative_pruning.PNG">
     <img src="./../../docs/source/_static/imgs/pruning/iterative_pruning.PNG" width=500 height=200 alt="Iterative Pruning">
 </a>
 
