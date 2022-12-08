@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="Add, Mul")
@@ -81,22 +81,25 @@ class BinaryOperator(Operator):
 
 @qop_registry(op_types="QLinearAdd, QLinearMul")
 class QBinaryOperator(QOperator):
-    def __init__(self, onnx_node):
-        super().__init__(onnx_node)
+    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
+        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
 
     def convert(self):
         node = self.node
         add_nodes = []
+        inits = []
         # input dq
         in_dq1 = onnx.helper.make_node(
             'DequantizeLinear',
-            node.inputs[:3],
-            [node.name + '_in_dequant1'])
+            node.input[:3],
+            [node.name + '_in_dequant1'],
+            node.name + '_in_dequant1')
         
         in_dq2 = onnx.helper.make_node(
             'DequantizeLinear',
-            node.inputs[3:6],
-            [node.name + '_in_dequant2'])
+            node.input[3:6],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
         inputs = [node.name + '_in_dequant1', node.name + '_in_dequant2']
         
         add_nodes.extend([in_dq1, in_dq2])
@@ -104,8 +107,8 @@ class QBinaryOperator(QOperator):
         if not self.disable_qdq_for_node_output:
             out_q = onnx.helper.make_node(
                 'QuantizeLinear',
-                [node.name + '_out', node.inputs[6], node.inputs[7]],
-                node.outputs,
+                [node.name + '_out', node.input[6], node.input[7]],
+                node.output,
                 node.name + '_out_quant')
             outputs = [node.name + '_out']
             add_nodes.append(out_q)
@@ -114,10 +117,9 @@ class QBinaryOperator(QOperator):
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
-        kwargs["domain"] = ms_domain
 
         binary_node = onnx.helper.make_node(
             node.op_type.split('QLinear')[-1], inputs,
             outputs, node.name + '_convert', **kwargs)
         add_nodes.append(binary_node)
-        return True, add_nodes 
+        return True, add_nodes, inits

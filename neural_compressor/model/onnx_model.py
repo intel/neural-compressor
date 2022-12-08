@@ -154,6 +154,10 @@ class ONNXModel(BaseModel):
         if ortq.find_by_name(tensor.name, self._model.graph.initializer) is None:
             self._model.graph.initializer.extend([tensor])
 
+    def add_initializers(self, tensors):
+        for tensor in tensors:
+            self.add_initializer(tensor)
+
     def get_initializer(self, name):
         for tensor in self._model.graph.initializer:
             if tensor.name == name:
@@ -423,3 +427,17 @@ class ONNXModel(BaseModel):
                 start_node.append(parent.name)
 
         return result_chain
+
+    def export(self, save_path, conf):
+        from neural_compressor.experimental.export import onnx_qlinear_to_qdq
+        add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
+                                         self.initializer(),
+                                         self._output_name_to_node,
+                                         conf.channel_axis,
+                                         conf.exclude_output_quantization)
+        self.add_nodes(add_nodes)
+        self.remove_nodes(remove_nodes)
+        self.remove_unused_constant()
+        self.add_initializers(inits)
+        self.topological_sort()
+        self.save(save_path)

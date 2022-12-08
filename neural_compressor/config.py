@@ -815,6 +815,31 @@ class ExportConfig:
         self._dynamic_axes = dynamic_axes
 
 
+class ONNXQlinear2QDQConfig:
+    def __init__(
+        self,
+        channel_axis={},
+        exclude_output_quantization={}
+    ):
+        self._channel_axis = channel_axis
+        self._exclude_output_quantization = exclude_output_quantization
+
+    @property
+    def channel_axis(self):
+        return self._channel_axis
+
+    @channel_axis.setter
+    def channel_axis(self, channel_axis):
+        self._dtype = channel_axis
+
+    @property
+    def exclude_output_quantization(self):
+        return self._exclude_output_quantization
+
+    @exclude_output_quantization.setter
+    def exclude_output_quantization(self, exclude_output_quantization):
+        self._exclude_output_quantization = exclude_output_quantization
+
 class Torch2ONNXConfig(ExportConfig):
     def __init__(
        self,

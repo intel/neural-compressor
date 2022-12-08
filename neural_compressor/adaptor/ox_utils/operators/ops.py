@@ -103,19 +103,14 @@ class Operator(object):
         self.quantizer.dtype_cast(self.node, self.dtype)
 
 class QOperator(object):
-    def __init__(self, onnx_node, add_qdq_to_weight=False,
-        dedicated_qdq=False, optypes_to_exclude_output_quantization=[]):
+    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
         self.node = onnx_node
-        self.add_qdq_to_weight = add_qdq_to_weight
-        self.dedicated_qdq = dedicated_qdq
+        self.chilren = children
+        self.initializers = initializers
         self.disable_qdq_for_node_output = True if onnx_node.op_type in \
-            optypes_to_exclude_output_quantization else False
+            exclude_output_quantization else False
+        self.axis = channel_axis
         self.per_channel = False
-        self.algorithm = 'minmax'
-        self.weight_scheme = 'sym'
-        self.weight_dtype = None
-        self.activation_dtype = None
-        self.activation_scheme = 'asym'
 
     def convert_check(self, convert_format):
         return True

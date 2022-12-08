@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="Concat")
@@ -99,19 +99,21 @@ class ConcatOperator(Operator):
 
 @qop_registry(op_types="QLinearConcat")
 class QConcatOperator(QOperator):
-    def __init__(self, onnx_node):
-        super().__init__(onnx_node)
+    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
+        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
 
     def convert(self):
         node = self.node
         add_nodes = []
         inputs = []
+        inits = []
         # input dq
         for i in range((len(node.inputs) - 2) / 3 - 1):
             in_dq = onnx.helper.make_node(
                 'DequantizeLinear',
-                node.inputs[2 + i*3 : 2 + (i+1)*3],
-                [node.name + '_in_dequant_' + str(i)])
+                node.input[2 + i*3 : 2 + (i+1)*3],
+                [node.name + '_in_dequant_' + str(i)],
+                node.name + '_in_dequant_' + str(i))
             inputs.append(node.name + '_in_dequant_' + str(i))
             add_nodes.append(in_dq)
 
@@ -119,8 +121,8 @@ class QConcatOperator(QOperator):
         if not self.disable_qdq_for_node_output:
             out_q = onnx.helper.make_node(
                 'QuantizeLinear',
-                [node.name + '_out', node.inputs[0], node.inputs[1]],
-                node.outputs,
+                [node.name + '_out', node.input[0], node.input[1]],
+                node.output,
                 node.name + '_out_quant')
             outputs = [node.name + '_out']
             add_nodes.append(out_q)
@@ -129,10 +131,9 @@ class QConcatOperator(QOperator):
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
-        kwargs["domain"] = ms_domain
 
         concat_node = onnx.helper.make_node(
             'Concat', inputs,
             outputs, node.name + '_convert', **kwargs)
         add_nodes.append(concat_node)
-        return True, add_nodes 
+        return True, add_nodes, inits

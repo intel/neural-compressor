@@ -17,8 +17,8 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="Gather")
 class GatherOperator(Operator):
@@ -93,13 +93,14 @@ class GatherOperator(Operator):
             
 @qop_registry(op_types="Gather")
 class QGatherOperator(QOperator):
-    def __init__(self, onnx_node):
-        super().__init__(onnx_node)
+    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
+        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
 
     def convert(self):
         node = self.node
         add_nodes = []
         inputs = []
+        inits = []
         if all([i.op_type != 'DequantizeLinear' for i in self.children]):
             return False, add_nodes
         for child in self.children:
@@ -107,18 +108,18 @@ class QGatherOperator(QOperator):
                 in_dq = onnx.helper.make_node(
                     'DequantizeLinear',
                     [node.input[0], child.input[1], child.input[2]],
-                    [node.name + '_in_dequant_' + str(i)])
-                inputs.append(node.name + '_in_dequant_' + str(i))
+                    [node.name + '_in_dequant'],
+                    node.name + '_in_dequant')
+                inputs.append(node.name + '_in_dequant')
                 add_nodes.append(in_dq)
                 break
-        outputs = node.outputs
+        outputs = node.output
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
-        kwargs["domain"] = ms_domain
 
         gather_node = onnx.helper.make_node(
             'Gather', inputs,
             outputs, node.name + '_convert', **kwargs)
         add_nodes.append(gather_node)
-        return True, add_nodes 
+        return True, add_nodes, inits
