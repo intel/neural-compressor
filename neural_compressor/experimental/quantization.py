@@ -233,8 +233,8 @@ class Quantization(Component):
 
     def dataset(self, dataset_type, *args, **kwargs):
         """Get dataset according to dataset_type."""
-        from ..data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from ..data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def calib_dataloader(self):
