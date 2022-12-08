@@ -296,6 +296,7 @@ class TuneStrategy(object):
                         self.best_qmodel = recover(self.model.model, 
                             os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
                             best_trail)
+                        logger.debug(f"*** Update the best qmodel by recovering from history.")
                         self.best_tune_result = best_result
                     self._dump_tuning_process_statistics()
                 break
@@ -820,6 +821,7 @@ class TuneStrategy(object):
             del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
+            logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}")
             if self.metric_met_point == 0:
                 self.metric_met_point = self.tuning_times
         
@@ -828,6 +830,7 @@ class TuneStrategy(object):
             if self.objectives.compare(self.last_tune_result, self.best_tune_result):
                 self.best_tune_result = self.last_tune_result
                 self.best_qmodel = self.last_qmodel
+                logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}")
             
 
         if self.last_tune_result:
