@@ -66,7 +66,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space.
 
 
 
-- Unstructured Pruning
+#### Unstructured Pruning
 
 
 
@@ -75,7 +75,7 @@ Unstructured pruning means pruning the least salient connections in the model. T
 
 
 
-- Structured Pruning
+#### Structured Pruning
 
 
 
@@ -174,6 +174,12 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
   Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
 
 
+
+- Progressive Pruning
+
+
+
+  Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure. 
 
 
 ### Regularization
