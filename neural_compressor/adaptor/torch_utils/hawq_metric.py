@@ -267,13 +267,13 @@ class HessianTrace:
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
             if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
                 break
-            if iter == 50:  ##TODO for debug
+            if iter == 20:  ##TODO for debug
                 break
             prev_avg_model_trace = model_trace
         weight_name_to_traces = {}
         layer_traces = layer_traces_estimate
         for weight_name, trace in zip(self.weight_names, layer_traces):
-            weight_name_to_traces[weight_name] = trace
+            weight_name_to_traces[weight_name] = float(trace)# tensor->float
         op_name_to_trace = {}
         for weight_name in self.weight_names:
             op_name = self.weight_to_op[weight_name]
@@ -434,7 +434,7 @@ class HessianTrace:
             act_traces = self.get_act_traces(num_samples)
             for i,j in zip(act_traces,mse_gap):
                 #currently use mse to analysis 
-                act_trace[i]=act_traces[i]+mse_gap[j]
+                act_trace[i]=float(act_traces[i])+float(mse_gap[j])# Tensor->float
             traces['activation'] = act_traces
         return traces
 
