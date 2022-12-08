@@ -26,7 +26,7 @@ import datasets
 from datasets import load_dataset, load_metric
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-
+from neural_compressor.pruning import Pruning
 import transformers
 from accelerate import Accelerator
 from huggingface_hub import Repository
@@ -461,8 +461,6 @@ def main():
     # Only show the progress bar once on each machine.
     progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
     completed_steps = 0
-
-    from pytorch_pruner.pruning import Pruning
     pruner = Pruning(args.pruning_config)
     num_iterations = len(train_dataset) / total_batch_size
 

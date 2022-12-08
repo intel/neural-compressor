@@ -111,6 +111,13 @@ def reset_none_to_default(obj, key, default):
             return getattr(obj, key)
 
 
+def update_params(info):
+    if "parameters" in info.keys():
+        params = info["parameters"]
+        for key in params:
+            info[key] = params[key]
+
+
 def process_and_check_config(val):
     """Functions which converts a initial configuration object to a Pruning configuration.
     
@@ -134,6 +141,7 @@ def process_and_check_config(val):
     default_local_config = {'extra_excluded_names': [], 'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
 
+    prams_default_config = {"reg_coeff": 0.0}
     default_local_config.update(default_global_config)
     val = val["pruning"]['approach']['weight_compression']
 
@@ -141,15 +149,15 @@ def process_and_check_config(val):
     for key in default_global_config.keys():
         default_local_config[key] = reset_none_to_default(val, key, default_local_config[key])
 
+    default_local_config.update(prams_default_config)
+
     pruners_info = []
     for info in val['pruners']:
         pruner_info = {}
         for key in default_local_config:
             pruner_info[key] = reset_none_to_default(info, key, default_local_config[key])
-        if 'parameters' in pruner_info.keys() and 'reg_coeff' in pruner_info['parameters'].keys():
-            pruner_info['reg_coeff'] = pruner_info['parameters']['reg_coeff']  ##TODO trick
-        else:
-            pruner_info['reg_coeff'] = 0.0
+
+        update_params(pruner_info)
         check_config(pruner_info)
         pruner_info = DotDict(pruner_info)
         pruners_info.append(pruner_info)
