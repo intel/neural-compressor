@@ -104,10 +104,10 @@ class GroupLasso(BaseReg):
     def on_before_optimizer_step(self):
         """Calculate the group-lasso score map."""
         with torch.no_grad():
-            if self.pattern.invalid_keys == None:
+            if self.pattern.invalid_layers == None:
                 self.pattern.check_layer_validity()
             for key in self.modules.keys():
-                if key in self.pattern.invalid_keys:
+                if key in self.pattern.invalid_layers:
                     continue
                 grad = self.modules[key].weight.grad
                 reg_term = self.pattern.reshape_orig_to_pattern(grad, key)
@@ -119,7 +119,7 @@ class GroupLasso(BaseReg):
         """Perform group lasso regularization after optimization."""
         with torch.no_grad():
             for key in self.modules.keys():
-                if key in self.pattern.invalid_keys:
+                if key in self.pattern.invalid_layers:
                     continue
                 reg_term = self.pattern.reshape_reduced_to_orig(self.reg_terms[key], key,
                                                                 self.modules[key].weight.shape)
