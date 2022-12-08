@@ -814,12 +814,11 @@ class ExportConfig:
     def dynamic_axes(self, dynamic_axes):
         self._dynamic_axes = dynamic_axes
 
-
 class ONNXQlinear2QDQConfig:
     def __init__(
         self,
         channel_axis={},
-        exclude_output_quantization={}
+        exclude_output_quantization=[]
     ):
         self._channel_axis = channel_axis
         self._exclude_output_quantization = exclude_output_quantization
