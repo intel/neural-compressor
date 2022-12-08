@@ -254,16 +254,18 @@ class FallbackTuningSampler(TuningSampler):
                  tuning_order_lst: List[TuningOrder],
                  initial_op_tuning_cfg: Dict[tuple, Any],
                  op_dtypes: Dict[str, str],
-                 accumulate: bool
+                 accumulate: bool,
+                 skip_first: bool = True
                  ):
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
         self.op_dtypes = op_dtypes
         self.accumulate = accumulate
+        self.skip_first = skip_first
         pass
 
     def __iter__(self):
         new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
-        skip_first = False
+        skip_first = self.skip_first
         for op_name_type, target_dtype in self.op_dtypes.items():
             if not self.accumulate:
                 new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
@@ -272,7 +274,7 @@ class FallbackTuningSampler(TuningSampler):
             if self.accumulate and skip_first:  # skip the first one
                 skip_first = False
                 continue
-            logger.info(f"fallback {op_name_type} to {target_dtype}")
+            logger.debug(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
 
 
