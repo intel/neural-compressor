@@ -15,8 +15,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import torch.nn
+from neural_compressor.utils.utility import LazyImport
+LazyImport('torch.nn')
+torch = LazyImport('torch')
 
 from neural_compressor.prune.prune_utils import process_config, parse_to_prune
 from neural_compressor.prune.pruners import get_pruner
