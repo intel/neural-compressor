@@ -46,7 +46,7 @@ A detailed explanation of pruning technique and results could be found in  [Prun
 
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=400 height=250 alt="pruning intro">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=500 height=250 alt="pruning intro">
 </a>
 
 
