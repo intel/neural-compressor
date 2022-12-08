@@ -64,11 +64,6 @@ def build_model(x_train, y_train, x_test, y_test):
                   metrics=["accuracy"], run_eagerly=True)
     model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
     model.summary()
-    # start_time = time.time()
-    # fp32_score = model.evaluate(x_test, y_test, verbose=0)
-    # duration = time.time() - start_time
-    # print("Fp32 accuracy:", fp32_score[1])
-    # print("Fp32 duration:", duration)
     if not os.path.exists('fp32_model'):
         model.save('fp32_model')
     return model

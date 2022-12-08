@@ -29,16 +29,7 @@ from ..utils.utility import Statistics, GLOBAL_STATE, MODE, version1_lt_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-
 tf = LazyImport('tensorflow')
-
-# REGISTERED_LAYERS = [
-#     "Quantize",
-#     "DeQuantize",
-#     "FakeQuant",
-#     "QConv2D",
-#     "QDense",
-# ]
 
 def _add_supported_quantized_objects(custom_objects):
   """Map all the quantized objects."""
@@ -66,10 +57,9 @@ class KerasAdaptor(Adaptor):
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         os.makedirs(self.work_dir, exist_ok=True)
 
+        self.pre_optimized_model = None
         self.pre_optimizer_handle = None
-
         self.fp32_ops = []
-
         self.query_handler = KerasQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), 'keras.yaml'))
 
@@ -79,14 +69,12 @@ class KerasAdaptor(Adaptor):
         self.callbacks = []
         self.optype_statistics = None
 
-
     def tuning_cfg_to_fw(self, tuning_cfg):
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
         self.quantize_config['device'] = self.device
         self.quantize_config['advance'] = deep_get(tuning_cfg, 'advance')
         fp32_ops = []
         dispatched_op_names = [j[0] for j in tuning_cfg['op']]
-
         invalid_op_names = [i for i in self.quantize_config['op_wise_config']
                             if i not in dispatched_op_names]
 
@@ -95,7 +83,6 @@ class KerasAdaptor(Adaptor):
 
         for each_op_info in tuning_cfg['op']:
             op_name = each_op_info[0]
-
             if tuning_cfg['op'][each_op_info]['activation']['dtype'] == 'fp32':
                 if op_name in self.quantize_config['op_wise_config']:
                     self.quantize_config['op_wise_config'].pop(op_name)
@@ -109,9 +96,7 @@ class KerasAdaptor(Adaptor):
                     'granularity'] == 'per_channel'
                 #bit = tuning_cfg['op'][each_op_info]['weight']['bit']
             weight_bit = bit if bit else 7.0
-
             algorithm = tuning_cfg['op'][each_op_info]['activation']['algorithm']
-
             is_asymmetric = False
             if 'activation' in tuning_cfg['op'][each_op_info]:
                 is_asymmetric = tuning_cfg['op'][each_op_info]['activation']['scheme'] == 'asym'
@@ -131,7 +116,6 @@ class KerasAdaptor(Adaptor):
                dataloader(object): The dataloader used to load quantization dataset.
                q_func (optional): training function for quantization aware training mode.
         '''
-        import pdb; pdb.set_trace()
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -240,10 +224,10 @@ class KerasAdaptor(Adaptor):
         return quantized_model
 
     def _restore_model_from_json(self, json_model):
-        # We need to keep a dictionary of custom objects as our quantized library
-        # is not recognized by keras.
         from tensorflow.keras.models import model_from_json
         custom_objects = {}
+        # We need to keep a dictionary of custom objects as our quantized library
+        # is not recognized by keras.
         custom_objects = _add_supported_quantized_objects(custom_objects)
         qmodel = model_from_json(json.dumps(json_model), custom_objects=custom_objects)
         qmodel = self._set_weights(qmodel, self.layer_weights)
@@ -265,7 +249,6 @@ class KerasAdaptor(Adaptor):
                     if not hit_layer:
                         raise ValueError('Can not match the module weights....')
         return qmodel
-
 
     @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(self, model, dataloader, postprocess=None,
@@ -464,7 +447,6 @@ class KerasAdaptor(Adaptor):
         pass
 
 class KerasQuery(QueryBackendCapability):
-
     def __init__(self, local_config_file=None):
         super().__init__()
         self.version = tf.version.VERSION
