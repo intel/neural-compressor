@@ -7,23 +7,23 @@ Pruning
 
 
 
-    1.1. [Neural Network Pruning](#neural-network-pruning)
+      1.1. [Neural Network Pruning](#neural-network-pruning)
 
 
 
-    1.2. [Pruning Patterns](#pruning-patterns)
+      1.2. [Pruning Patterns](#pruning-patterns)
 
 
 
-    1.3. [Pruning Criteria](#pruning-criteria)
+      1.3. [Pruning Criteria](#pruning-criteria)
 
 
 
-    1.4. [Pruning Schedule](#pruning-schedule)
+      1.4. [Pruning Schedule](#pruning-schedule)
 
 
 
-    1.5. [Regularization](#regularization)
+      1.5. [Regularization](#regularization)
 
 
 
@@ -44,7 +44,7 @@ Neural network pruning is a promising model compression technique that removes t
 A detailed explanation of pruning technique and results could be found in  [Pruning details](../../docs/source/pruning_details.md#introduction).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=350 height=160 alt="pruning intro">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=350 height=170 alt="pruning intro">
 </a>
 
 
@@ -66,7 +66,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. INC
 Pruning Criteria determines how should the weights of a neural network be scored and pruned. In the image below, pruning scores are represented by neurons' color and those with the lowest scores are pruned. The magnitude and gradient are widely used to score the weights. Currently, INC supports magnitude, snip and snip_momentum criteria. [Details](../../docs/source/pruning_details.md#pruning-criteria).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=350 height=160 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=350 height=170 alt="Pruning criteria">
 </a>
 
 
@@ -79,7 +79,7 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 - One-shot Pruning
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG" width=350 height=160 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG" width=350 height=170 alt="Pruning criteria">
 </a>
 
 - Iterative Pruning
@@ -98,7 +98,7 @@ Regularization is a technique that discourages learning a more complex model and
 [Details](../../docs/source/pruning_details.md#regularization).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/Regularization.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Regularization.PNG" width=350 height=160 alt="Regularization">
+    <img src="./../../docs/source/_static/imgs/pruning/Regularization.PNG" width=350 height=170 alt="Regularization">
 </a>
 
 
@@ -163,7 +163,7 @@ for epoch in range(num_train_epochs):
 
 
 
-We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed [Pruning Examples](../../docs/source/pruning_details.md#examples). A complete overview of validated examples including quantization, pruning and distillation result could be found in  [INC Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
+We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed in [Pruning Examples](../../docs/source/pruning_details.md#examples). A complete overview of validated examples including quantization, pruning and distillation result could be found in  [INC Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
 
 Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
