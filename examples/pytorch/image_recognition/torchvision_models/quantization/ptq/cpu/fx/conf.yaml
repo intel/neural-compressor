@@ -21,7 +21,7 @@ quantization:                                        # optional. tuning constrai
   calibration:
     sampling_size: 300                               # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
-      batch_size: 1
+      batch_size: 30
       dataset:
         ImageFolder:
           root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
@@ -40,10 +40,10 @@ evaluation:                                          # optional. required if use
     metric:
       topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
     dataloader:
-      batch_size: 1
+      batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/calibration/dataset         # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
@@ -61,7 +61,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageFolder:
-          root: /path/to/calibration/dataset         # NOTE: modify to evaluation dataset location if needed
+          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
@@ -73,8 +73,6 @@ evaluation:                                          # optional. required if use
           std: [0.229, 0.224, 0.225]
 
 tuning:
-  strategy:
-    name: hawq
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
   exit_policy:
