@@ -146,13 +146,16 @@ class KerasAdaptor(Adaptor):
                     format(calib_sampling_size, dataloader.batch_size,
                            dataloader.batch_size * iter))
         q_layers = []
-        # check the tuning_config here
         for idx, layer in enumerate(self.fp32_layers):
           layer_config = layer["config"]
-          if layer["class_name"] in ["Conv2D", "Dense"]:
+          if layer["class_name"] in ["Conv2D", "Dense"] and \
+            layer['config']['name'] in self.quantize_config['op_wise_config']:
+              op_config = self.quantize_config['op_wise_config'][layer['config']['name']]
+              mode = 'per_channel' if op_config[0] else 'per_tensor'
+              #(TODO) support asym/sym
               fake_quant_name = 'fake_quant_' + str(idx)
               q_layers.append({'class_name': 'FakeQuant', 
-                  'config': {'mode': 'per_tensor', 'axis': 1, 'name': fake_quant_name}})
+                  'config': {'mode': 'per_tensor', 'name': fake_quant_name}})
               q_layers.append(layer)
           else:
               q_layers.append(layer)
@@ -321,7 +324,6 @@ class KerasAdaptor(Adaptor):
             node_op = details['class_name']
             node_name = details['config']['name']
             if node_op == 'Conv2D': 
-                # quantizable_op_details[(node_name, node_op)] = [conv_config, fp32_config]
                 quantizable_op_details[(node_name, node_op)] = [conv_config, fp32_config]
             elif node_op == 'Dense':
                 quantizable_op_details[(node_name, node_op)] = [dense_config, fp32_config]

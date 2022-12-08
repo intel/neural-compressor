@@ -46,10 +46,10 @@ from tensorflow.python.keras.layers.convolutional import Conv
 from tensorflow.python.keras.layers.core import Dense
 
 class FakeQuant(Layer):
-    def __init__(self, mode='per_tensor', axis=None, **kwargs):
+    def __init__(self, mode='per_tensor', **kwargs):
         super(FakeQuant, self).__init__(**kwargs)
         self.mode = mode
-        self.axis = axis 
+        self.axis = 1 if mode == 'per_channel' else 0
         self.min_value = tf.constant(np.finfo(np.float32).max, dtype=tf.float32)
         self.max_value = tf.constant(np.finfo(np.float32).min, dtype=tf.float32)
 
@@ -57,8 +57,6 @@ class FakeQuant(Layer):
         if self.mode == 'per_tensor':
             self.min_value = tf.math.reduce_min(inputs)
             self.max_value = tf.math.reduce_max(inputs)
-            # self.min_value = tf.math.reduce_min(inputs)
-            # self.max_value = tf.math.reduce_max(inputs)
         else:
             self.min_value = tf.math.reduce_min(inputs, axis=self.axis)
             self.max_value = tf.math.reduce_max(inputs, axis=self.axis)
@@ -69,7 +67,7 @@ class FakeQuant(Layer):
         return cls(**config)
         
     def get_config(self):
-        return {'mode': self.mode, 'axis': self.axis,
+        return {'mode': self.mode,
                 'min_value': self.min_value.numpy(),
                 'max_value': self.max_value.numpy(),
                 'name': self.name}

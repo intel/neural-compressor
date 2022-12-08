@@ -36,6 +36,7 @@
                         },
             'activation': {
                         'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'granularity': ['per_tensor'],
                         'algorithm': ['minmax']
@@ -50,6 +51,7 @@
                         },
             'activation': {
                         'dtype': ['int8'],
+                        'quant_mode': 'static',
                         'scheme': ['sym'],
                         'algorithm': ['minmax'],
                         'granularity': ['per_tensor'],
