@@ -40,7 +40,6 @@ flags.DEFINE_bool(
 flags.DEFINE_bool(
     'benchmark', False, 'whether to benchmark the model')
 
-
 flags.DEFINE_string(
     'calib_data', None, 'location of calibration dataset')
 
@@ -82,8 +81,8 @@ def evaluate(model):
     postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
 
-    iteration = None
     def eval_func(dataloader, metric):
+        iteration = None
         latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = 100
