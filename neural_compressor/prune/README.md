@@ -22,6 +22,10 @@ Pruning
     1.4. [Pruning Schedule](#pruning-schedule)
 
 
+    
+    1.5. [Regularization](#regularization)
+
+
 
 2. [Pruning Support Matrix](#pruning-support-matrix)
 
@@ -74,47 +78,32 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 
 
-Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights).
-
-
+Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights). Both one-shot and iterative pruning schedules are supported. [Details](../../docs/source/pruning_details.md#pruning-schedule).
 
 - One-shot Pruning
 
-
-
-  One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model's initialization step. It can easily cause accuracy drop, but save much training time.
-
-
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/oneshot_pruning.PNG" width=450 height=200 alt="Pruning criteria">
+</a>
 
 - Iterative Pruning
 
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/iterative_pruning.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/iterative_pruning.PNG" width=500 height=200 alt="Iterative Pruning">
+</a>
 
-
-  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
-
-
-
-- Progressive Pruning
-
-
-
-  Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure. 
 
 
 ### Regularization
 
 
 
-Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection.
+Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus sparsified. Group-lasso method is used in INC.
+[Details](../../docs/source/pruning_details.md#regularization).
 
-
-
-- Group Lasso
-
-
-
-  The Group-lasso algorithm is used to prune entire rows, columns or blocks of parameters that result in a smaller dense network.
-
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/Regularization.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/Regularization.PNG" width=450 height=200 alt="Regularization">
+</a>
 
 
 
