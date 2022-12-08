@@ -27,16 +27,14 @@ def build_fake_yaml_basic():
           sparsity_decay_type: "cos"
           pruners:
             - !Pruner
-                start_step: 0
-                
+                start_step: 0      
                 end_step: 10
                 prune_type: "magnitude"
                 names: ['layer1.*']
                 extra_excluded_names: ['layer2.*']
                 prune_domain: "global"
-                pattern: "tile_pattern_4x1"
+                pattern: "4x1"
             
-
             - !Pruner
                 start_step: 1
                 end_step: 1
@@ -116,7 +114,7 @@ def build_fake_yaml_channel():
         f.write(fake_channel_pruning_yaml)
 
 
-class TestPytorchPruning(unittest.TestCase):
+class TestPruning(unittest.TestCase):
 
     model = torchvision.models.resnet18()
 
@@ -133,9 +131,8 @@ class TestPytorchPruning(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    def test_pytorch_pruning_basic(self):
+    def test_pruning_basic(self):
         prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
         prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
@@ -167,7 +164,7 @@ class TestPytorchPruning(unittest.TestCase):
         prune.on_before_eval()
         prune.on_after_eval()
 
-    def test_pytorch_pruner_channel_pruning(self):
+    def test_pruner_channel_pruning(self):
         prune = Pruning("fake_channel_pruning.yaml")
         ##prune.generate_pruners()
         prune.model = self.model

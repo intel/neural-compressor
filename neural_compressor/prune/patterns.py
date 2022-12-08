@@ -479,10 +479,14 @@ class PatternNxM(BasePattern):
             reduced_mask = self.get_reduced_masks_from_data(pre_masks[key], key)
             zero_cnt += (int(torch.sum(reduced_mask == 0.0).data.item()))
             total_cnt += int(reduced_mask.numel())
-        if return_dict:
-            return {"sparsity_ratio": float(zero_cnt) / total_cnt, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
+        if total_cnt == 0:
+            sparsity_ratio = 0.0
         else:
-            return float(zero_cnt) / total_cnt
+            sparsity_ratio = float(zero_cnt) / total_cnt
+        if return_dict:
+            return {"sparsity_ratio": sparsity_ratio, "zero_cnt": zero_cnt, "total_cnt": total_cnt}
+        else:
+            return sparsity_ratio
 
     def get_sparsity_ratio_progressive(self, pre_masks, return_dict=False):
         """Calculate the sparsity ratio of each layer."""
