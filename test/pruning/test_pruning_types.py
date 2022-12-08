@@ -45,15 +45,15 @@ def build_fake_yaml():
                 pattern: "4x1"
                 sparsity_decay_type: "exp"
 
-            # - !Pruner
-            #     start_step: 2
-            #     end_step: 8
-            #     target_sparsity: 0.8
-            #     prune_type: "snip_progressive"
-            #     names: ['layer3.*']
-            #     prune_domain: "local"
-            #     pattern: "16x1"
-            #     sparsity_decay_type: "cube"
+            - !Pruner
+                start_step: 2
+                end_step: 8
+                target_sparsity: 0.8
+                prune_type: "snip_progressive"
+                names: ['layer3.*']
+                prune_domain: "local"
+                pattern: "16x1"
+                sparsity_decay_type: "cube"
 
             
             
