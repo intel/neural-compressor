@@ -1029,7 +1029,7 @@ class TemplateAdaptor(Adaptor):
 
 
         # get bf16 capability
-        if (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -1308,18 +1308,33 @@ class PyTorchAdaptor(TemplateAdaptor):
                                                                  qscheme=torch.per_tensor_affine,
                                                                  reduce_range=REDUCE_RANGE),
             weight=torch.quantization.default_weight_fake_quant)
+        self.non_quant_dict = self.get_non_quant_modules(self.model.kwargs) 
+        quantizable_ops = []
+        self._get_quantizable_ops_recursively(self.model._model, '', quantizable_ops)
+        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
+        bf16_ops = []
+        if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self._get_bf16_ops_recursively(self.model._model, '', bf16_ops)
+        bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         self.model.model.training = True
         torch.quantization.prepare_qat(self.model._model, inplace=True)
 
-    def _post_hook_for_qat(self):
-        torch.quantization.convert(self.model._model, inplace=True)
         # This is a flag for reloading
         self.model.q_config = {
             'is_oneshot': True,
             'framework': 'pytorch',
             'reduce_range': REDUCE_RANGE,
-            'approach': 'quant_aware_training'
+            'approach': 'quant_aware_training',
+            'bf16_ops_list': bf16_ops_list,
         }
+
+    def _post_hook_for_qat(self):
+        torch.quantization.convert(self.model._model, inplace=True)
+        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+            self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
 
     def _pre_hook_for_hvd(self, dataloader=None):
         # TODO: lazy init here
@@ -2220,7 +2235,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                     self.model_calibration(q_model, dataloader, iterations, None,
                                            tune_cfg.get('calib_sampling_size', 1))
                 q_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-                if self.use_bf16:
+                if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+                    (self.version.release >= Version("1.11.0").release):
                     with torch.no_grad():
                         with torch.cpu.amp.autocast():
                             q_model = ipex.quantization.convert(q_model)
@@ -2231,6 +2247,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                 q_model = torch.jit.trace(q_model, example_inputs, strict=False)
                                 q_model = torch.jit.freeze(q_model.eval())
                 else:
+                    q_model = ipex.quantization.convert(q_model)
                     with torch.no_grad():
                         try:
                             q_model = torch.jit.trace(q_model, example_inputs)
@@ -2486,7 +2503,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
-                            to config.yaml'.format(batch_size))
+                            to config.yaml'                                           .format(batch_size))
             del init_model
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
@@ -2661,12 +2678,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
         self.tune_cfg["framework"] = "pytorch_fx"
-        # pragma: no cover
-        if self.approach != 'post_training_dynamic_quant' and self.version.release >= Version("1.13.0").release:
-            assert dataloader is not None, "Please pass a dataloader to quantizer!"
-            example_inputs = get_example_inputs(model._model, dataloader)
-        else:
-            example_inputs = None
+
+        # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
+        # so set it to None.
+        example_inputs = None
+
         if self.default_qconfig is not None:
             default_qconfig = copy.deepcopy(self.default_qconfig)
             default_qconfig['activation']['dtype'] = \
@@ -2722,6 +2738,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept
             # neural_compressor model and user defined func should accept framework model.
+            # For export API
+            hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
             q_model._model = q_func(
                 q_model if getattr(q_func, 'builtin', None) else q_model._model)
             assert q_model._model is not None, "Please return a trained model in train function!"
@@ -2750,6 +2768,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     prefix='',
                                                     example_inputs=example_inputs)
             if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
+                # For export API
+                hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
                 iterations = tune_cfg.get('calib_iteration', 1)
                 if q_func is not None:
                     q_func(q_model._model)
@@ -2758,6 +2778,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                            dataloader,
                                            iterations,
                                            calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
+
+        if self.approach != 'post_training_dynamic_quant':
+            # For export API
+            scale_info = torch_utils.util._get_input_scale(q_model._model, hook_list)
+
         if self.sub_module_list is None:
             if self.version > Version("1.12.1"):  # pragma: no cover
                 # pylint: disable=E1123
@@ -2773,13 +2798,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                 q_model._model, prefix='')
 
         if len(self.tune_cfg['bf16_ops_list']) > 0 and \
-            self.version.release >= Version("1.11.0").release and \
+            self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
+            q_model.q_config['scale_info'] = scale_info
 
         self._dump_model_op_stats(q_model._model, q_model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(q_model._model)
@@ -2843,6 +2869,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
+        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
+        bf16_ops = []
+        if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
+        bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
         for op in quantizable_ops:
             if op[1] in [
@@ -2851,6 +2883,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 quantized_ops[op[0]] = torch.quantization.default_dynamic_qconfig
             else:
                 quantized_ops[op[0]] = q_cfgs
+        # build op_config_dict to save module scale and zeropoint
+        op_config_dict = {}
+        for op in quantizable_ops:
+            op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
+
         if self.version.release < Version("1.11.0").release:
             quantized_ops["default_qconfig"] = None
         else:
@@ -2861,11 +2898,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import prepare_qat_fx
         fx_op_cfgs = _cfgs_to_fx_cfgs(quantized_ops, 'quant_aware_training')
         self.model._model.train()
-        if self.version.release >= Version("1.13.0").release:  # pragma: no cover
-            assert dataloader is not None, "Please pass dataloader to qat hook!"
-            example_inputs = get_example_inputs(self.model._model, dataloader)
-        else:
-            example_inputs = None
+
+        # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
+        # so set it to None.
+        example_inputs = None
 
         if self.sub_module_list is None:
             if self.version.release >= Version("1.13.0").release:  # pragma: no cover
@@ -2893,15 +2929,24 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                 example_inputs=example_inputs)
         # This is a flag for reloading
         self.model.q_config = {
+            'calib_sampling_size': 100, # tmp arg for export API
             'is_oneshot': True,
             'framework': 'pytorch_fx',
             'reduce_range': REDUCE_RANGE,
             'quantizable_ops': quantizable_ops,
+            'bf16_ops_list': bf16_ops_list,
+            'op': op_config_dict,
             'sub_module_list': self.sub_module_list,
             'approach': 'quant_aware_training'
         }
+        # For export API
+        global hook_list
+        hook_list = torch_utils.util._set_input_scale_hook(self.model._model, quantized_ops)
 
     def _post_hook_for_qat(self):
+        # For export API
+        scale_info = torch_utils.util._get_input_scale(self.model._model, hook_list)
+        self.model.q_config['scale_info'] = scale_info
         from torch.quantization.quantize_fx import convert_fx
         if self.sub_module_list is None:
             if self.version > Version("1.12.1"):  # pragma: no cover
@@ -2918,6 +2963,15 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
                                                 self.model._model, prefix='')
+
+        if self.approach != 'post_training_dynamic_quant':
+            self._get_scale_zeropoint(self.model._model, self.model.q_config)
+        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+            self.version.release >= Version("1.11.0").release and self.use_bf16 and \
+            (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
+        self._dump_model_op_stats(self.model._model, self.model.q_config, self.approach)
+        torch_utils.util.get_embedding_contiguous(self.model._model)
 
     def train(self, model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs):
         """Execute the train process on the specified model.
@@ -3092,7 +3146,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             res = dict()
             self._get_sub_module_op_stats(model, tune_cfg, approach, res)
 
-        if (self.version.release >= Version("1.11.0").release) and \
+        if self.use_bf16 and (self.version.release >= Version("1.11.0").release) and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             bf16_ops_list = tune_cfg['bf16_ops_list']
             if len(bf16_ops_list) > 0:

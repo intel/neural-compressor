@@ -198,7 +198,7 @@ function generate_html_core {
                         printf("<td style=\"background-color:#90EE90\">%.2f</td>", target);
                     }else if(target < 1) {
                         printf("<td style=\"background-color:#FFD2D2\">%.2f</td>", target);
-                        job_status = "fail"
+                        perf_status = "fail"
                     }else{
                         printf("<td>%.2f</td>", target);
                     }
@@ -233,10 +233,11 @@ function generate_html_core {
                     printf("<td style=\"%s\" colspan=2>%.2f %</td>", status_png, target*100);
                 } else {
                     target = new_result / previous_result;
-                    if(target <= 1.104 && target >= 0.895) {
+                    if(target <= 1.054 && target >= 0.945) {
                         status_png = "background-color:#90EE90";
                     } else {
                         status_png = "background-color:#FFD2D2";
+                        perf_status = "fail"
                     }
                     printf("<td style=\"%s\" colspan=2>%.2f</td>", status_png, target);
                 }
@@ -264,7 +265,7 @@ function generate_html_core {
                     status_png = "background-color:#90EE90";
                 } else {
                     status_png = "background-color:#FFD2D2";
-                    job_status = "fail"
+                    ratio_status = "fail"
                 }
                 printf("<td style=\"%s\">%.2f</td>", status_png, target);
             } else {
@@ -272,7 +273,7 @@ function generate_html_core {
                     printf("<td class=\"col-cell col-cell3\"></td>");
                 } else {
                     if (new_result == nan) {
-                        job_status = "fail"
+                        ratio_status = "fail"
                         status_png = "background-color:#FFD2D2";
                         printf("<td style=\"%s\"></td>", status_png);
                     } else {
@@ -284,6 +285,8 @@ function generate_html_core {
 
         BEGIN {
             job_status = "pass"
+            perf_status = "pass"
+            ratio_status = "pass"
             // issue list
             jira_mobilenet = "https://jira01.devtools.intel.com/browse/PADDLEQ-384";
             jira_resnext = "https://jira01.devtools.intel.com/browse/PADDLEQ-387";
@@ -377,8 +380,11 @@ function generate_html_core {
 
             printf("</tr>\n");
 
+            status = (perf_status == "fail" && ratio_status == "fail") ? "fail" : "pass"
+            status = (job_status == "fail") ? "fail" : status
+
         } END{
-            printf("\n%s", job_status);
+            printf("\n%s", status);
         }
     ' >> ${output_dir}/report.html
     job_state=$(tail -1 ${WORKSPACE}/report.html)

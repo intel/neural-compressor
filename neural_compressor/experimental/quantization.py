@@ -133,6 +133,9 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
+        if cfg.quantization.optimization_level == 0:
+            strategy = "conservative"
+            logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
@@ -390,12 +393,11 @@ class Quantization(Component):
         return None
 
     @q_func.setter
-    @deprecated(version='2.0', reason="please use `train_func` instead")
     def q_func(self, user_q_func):
-        """Training function for Quantization-Aware Training.
+        """Calibrate quantization parameters for Post-training static quantization.
 
            It is optional and only takes effect when user choose
-           "quant_aware_training" approach in yaml.
+           "post_training_static_quant" approach in yaml.
 
         Args:
             user_q_func: This function takes "model" as input parameter

@@ -24,7 +24,8 @@ from .contrib import *
 from .utils.utility import set_backend
 from .utils import options
 from .conf.config import conf
-from .conf.pythonic_config import config, DistillationConfig, Options, PostTrainingConfig, \
-                                  PruningConfig, QuantizationAwareTrainingConfig
+from .conf.pythonic_config import config
+from .config import DistillationConfig, PostTrainingQuantConfig, \
+                    PruningConfig, QuantizationAwareTrainingConfig
 
 set_backend('NA')

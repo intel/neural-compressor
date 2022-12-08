@@ -9,6 +9,7 @@ pr:
   paths:
     include:
       - neural_compressor
+      - setup.py
     exclude:
       - neural_compressor/ux
 
@@ -44,7 +45,7 @@ parameters:
       - ssd_mobilenet_v1_ckpt
       # - ssd_resnet50_v1_ckpt
       - inception_v1
-      - resnet50_fashion
+      # - resnet50_fashion
       - darknet19
       - densenet-121
       - resnet-101
@@ -155,7 +156,8 @@ stages:
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
               mkdir last_generated
-              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
+              pip install requests
+              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated --build_id=$(Build.BuildId)
             displayName: "Collect all logs"
           - task: DownloadPipelineArtifact@2
             continueOnError: true

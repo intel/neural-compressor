@@ -648,6 +648,8 @@ class TensorFlowAdaptor(Adaptor):
                     origin_op_type = 'DepthwiseConv2dNative'
                 if origin_op_type == 'BatchMatMul':
                     origin_op_type = 'BatchMatMulV2'
+                if origin_op_type == 'FusedBatchMatMulV2':
+                    origin_op_type = '_MklFusedBatchMatMulV2'
                 if origin_op_type == 'Deconv2D':
                     origin_op_type = 'Conv2DBackpropInput'
                 if origin_op_type == 'Deconv3D':

@@ -53,10 +53,12 @@ def metric_max_over_ground_truths(metric_fn, prediction, ground_truths):
 
     For each answer in ground_truths, evaluate the metric of prediction with
     this answer, and return the max metric.
+    
     Args:
         metric_fn: The function to calculate the metric.
         prediction: The prediction result.
         ground_truths: A list of correct answers.
+        
     Returns:
         The max metric. Float point number.
     """

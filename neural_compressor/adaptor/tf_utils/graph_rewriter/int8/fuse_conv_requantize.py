@@ -593,8 +593,6 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                     self.fused_ops = [b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize']
                 elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'Relu', b'Sum']):
                     self.fused_ops = [b'BiasAdd', b'Relu', b'Sum', b'Requantize']
-                elif str(quantized_node.attr['fused_ops'].list.s) == str([b'BiasAdd', b'LeakyRelu', b'Sum']):
-                    self.fused_ops = [b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize']
                     #Current fusion requires summand has same dtype as output if output is qint8
                     Helper.set_attr_dtype(new_node, "Tsummand", \
                         dtype_map_dict[requantize_node.attr['out_type'].type])

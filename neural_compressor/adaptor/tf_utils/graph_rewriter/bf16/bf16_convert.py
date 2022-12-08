@@ -243,11 +243,6 @@ class BF16Convert(GraphRewriterBase):
         for bf16_node_name in set(self.bf16_ops):
             if bf16_node_name not in self.cur_graph.node_name_details:
                 self.bf16_ops.remove(bf16_node_name)
-                continue
-            else:
-                if "fused_ops" in self.cur_graph.node_name_details[bf16_node_name].node.attr:
-                    self.bf16_ops.remove(bf16_node_name)
-                    continue
         for bf16_node_name in sorted(list(set(self.bf16_ops))):
             self._bf16_convert(bf16_node_name)
         return self.cur_graph.dump_graph()
