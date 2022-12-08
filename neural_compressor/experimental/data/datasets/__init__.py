@@ -17,7 +17,7 @@
 
 """Built-in datasets class for multiple framework backends."""
 
-from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
+from .dataset import Datasets, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
