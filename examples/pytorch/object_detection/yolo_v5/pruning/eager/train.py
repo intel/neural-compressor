@@ -50,7 +50,7 @@ from utils.autobatch import check_train_batch_size
 from utils.callbacks import Callbacks
 from utils.dataloaders import create_dataloader
 from utils.downloads import attempt_download, is_url
-from utils.loss import ComputeLoss, compute_distillation_output_loss
+from utils.loss import ComputeLoss
 from utils.general import (LOGGER, check_amp, check_dataset, check_file, check_git_status, check_img_size,
                            check_requirements, check_suffix, check_yaml, colorstr, get_latest_run, increment_path,
                            init_seeds, intersect_dicts, labels_to_class_weights, labels_to_image_weights, methods,
@@ -62,6 +62,64 @@ from utils.metrics import fitness
 from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
+from neural_compressor.pruning import Pruning
+
+
+import torch.nn.functional as F
+def compute_distillation_output_loss(p, t_p, model, dist_loss="l2", T=20, reg_norm=None):
+    t_ft = torch.cuda.FloatTensor if t_p[0].is_cuda else torch.Tensor
+    t_lcls, t_lbox, t_lobj = t_ft([0]), t_ft([0]), t_ft([0])
+    h = model.hyp  # hyperparameters
+    red = 'mean'  # Loss reduction (sum or mean)
+    if red != "mean":
+        raise NotImplementedError(
+            "reduction must be mean in distillation mode!")
+
+    DboxLoss = nn.MSELoss(reduction="none")
+    if dist_loss == "l2":
+        DclsLoss = nn.MSELoss(reduction="none")
+    elif dist_loss == "kl":
+        DclsLoss = nn.KLDivLoss(reduction="none")
+    else:
+        DclsLoss = nn.BCEWithLogitsLoss(reduction="none")
+    DobjLoss = nn.MSELoss(reduction="none")
+    # per output
+    for i, pi in enumerate(p):  # layer index, layer predictions
+        t_pi = t_p[i]
+        t_obj_scale = t_pi[..., 4].sigmoid()
+        # BBox
+        # b_obj_scale = t_obj_scale.unsqueeze(-1).repeat(1, 1, 1, 1, 4)
+        b_obj_scale = t_obj_scale.unsqueeze(-1).repeat(1, 1, 1, 1, 2) # fix a bug
+        if reg_norm is None:
+            t_lbox += torch.mean(DboxLoss(pi[..., :4],
+                                          t_pi[..., :4]) * b_obj_scale)
+        else:
+            wh_norm_scale = reg_norm[i].unsqueeze(
+                0).unsqueeze(-2).unsqueeze(-2)
+            t_lbox += torch.mean(DboxLoss(pi[..., :2].sigmoid(),
+                                          t_pi[..., :2].sigmoid()) * b_obj_scale)
+            t_lbox += torch.mean(DboxLoss(pi[..., 2:4].sigmoid(),
+                                          t_pi[..., 2:4].sigmoid() * wh_norm_scale) * b_obj_scale)
+
+        # Class
+        if model.nc > 1:  # cls loss (only if multiple classes)
+            c_obj_scale = t_obj_scale.unsqueeze(-1).repeat(1,
+                                                           1, 1, 1, model.nc)
+            if dist_loss == "kl":
+                kl_loss = DclsLoss(F.log_softmax(pi[..., 5:]/T, dim=-1),
+                                   F.softmax(t_pi[..., 5:]/T, dim=-1)) * (T * T)
+                t_lcls += torch.mean(kl_loss * c_obj_scale)
+            else:
+                t_lcls += torch.mean(DclsLoss(pi[..., 5:],
+                                              t_pi[..., 5:]) * c_obj_scale)
+
+        t_lobj += torch.mean(DobjLoss(pi[..., 4], t_pi[..., 4]) * t_obj_scale)
+    t_lbox *= h['box']
+    t_lobj *= h['obj']
+    t_lcls *= h['cls']
+    bs = p[0].shape[0]  # batch size
+    dloss = (t_lobj + t_lbox + t_lcls) * bs
+    return dloss
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
@@ -290,7 +348,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f'Starting training for {epochs} epochs...')
     
-    from pytorch_pruner.pruning import Pruning
     pruner = Pruning(opt.pruning_config)
     if not opt.keep_conf: # Update prune config as appropriate
         if opt.do_prune:

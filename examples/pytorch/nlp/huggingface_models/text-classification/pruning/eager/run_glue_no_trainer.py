@@ -44,6 +44,7 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
+from neural_compressor.pruning import Pruning
 
 logger = logging.getLogger(__name__)
 
@@ -462,7 +463,6 @@ def main():
     progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
     completed_steps = 0
 
-    from pytorch_pruner.pruning import Pruning
     pruner = Pruning(args.pruning_config)
     num_iterations = len(train_dataset) / total_batch_size
 
