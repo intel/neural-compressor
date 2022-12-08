@@ -126,15 +126,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             op_info_map[op_info[0]] = op_info  # op_name: (op_name, op_type)
         tmp_ordered_ops = [op_info_map[op_name] for op_name in ordered_ops]
         op_dtypes = OrderedDict(zip(tmp_ordered_ops, [target_dtype] * len(ordered_ops)))
-        indx=0
-        #defautly fallback 5 ops
-        for i in op_dtypes.keys():
-            op_dtypes[i]="fp32"
-            indx=indx+1
-            if indx>4:
-                break
 
-        logger.info("hawq op_config:"+str(op_dtypes))
         logger.info(f"Start to accumulate fallback to {target_dtype}.")
         initial_op_tuning_cfg = deepcopy(op_tuning_cfg)
         fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
