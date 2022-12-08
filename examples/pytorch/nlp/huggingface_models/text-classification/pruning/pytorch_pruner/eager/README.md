@@ -144,6 +144,40 @@ python3 ./run_glue_no_trainer.py \
         --lr_scheduler_type "constant"\
         --do_prune
 ```
+Also, per-channel pruning is also supported.
+```
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "./mrpcbaseline/bert-mini/" \
+        --pruning_config "./bert_mini_mrpc_1xchannel.yaml" \
+        --task_name "mrpc" \
+        --max_length "128" \
+        --per_device_train_batch_size "16" \
+        --learning_rate "1e-3" \
+        --num_train_epochs "15" \
+        --weight_decay "1e-3"  \
+        --cooldown_epochs "5" \
+        --sparsity_warm_epochs "1"\
+        --lr_scheduler_type "constant"\
+        --distill_loss_weight "5"\
+        --do_prune
+```
+```
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "./sst2_baseline/bert-mini/" \
+        --pruning_config "./bert_mini_sst2_1xchannel.yaml" \
+        --task_name "sst2" \
+        --max_length "128" \
+        --per_device_train_batch_size "16" \
+        --learning_rate "5e-5" \
+        --distill_loss_weight "2.0" \
+        --num_train_epochs "15" \
+        --weight_decay "5e-5"   \
+        --cooldown_epochs "5" \
+        --sparsity_warm_epochs "0"\
+        --lr_scheduler_type "constant"\
+        --do_prune
+```
+
 We can also train a dense model on glue datasets (by setting --do_prune to False):
 ```
 python run_glue_no_trainer.py --model_name_or_path "./bert-mini" --task_name "sst2" --max_length "128" --per_device_train_batch_size "32" --learning_rate "5e-5" --num_train_epochs "10" --output_dir "result/" 2>&1 | tee  sst2_orig.log
@@ -158,12 +192,14 @@ python3 run_glue_no_trainer.py  --model_name_or_path "./bert-mini"  --task_name 
 |  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: | :----: | :----: |
 | Bert-Mini  | MRPC |  4x1  |Snip-momentum| 0.8804 | Dense & Finetuned | 0.8619/0.8752 | 0.8610/0.8722 | -0.34% |
 | Bert-Mini  | MRPC |  2:4  |Snip-momentum| 0.4795 | Dense & Finetuned | 0.8619/0.8752| 0.8562/0.8695 | -0.65% |
+| Bert-Mini  | MRPC |  per channel  |Snip-momentum| 0.66 | Dense & Finetuned | 0.8619/0.8752| 0.8629/0.8680 | -0.83% |
 
 #### SST-2
 |  Model  | Dataset  |  Sparsity pattern | Pruning methods |Element-wise/matmul, Gemm, conv ratio | Init model | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max)| Relative drop|
 |  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: | :----: | :----: |
 | Bert-Mini  | SST-2 |  4x1  |Snip-momentum| 0.8815 | Dense & Finetuned | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
 | Bert-Mini  | SST-2 |  2:4  |Snip-momentum| 0.4795 | Dense & Finetuned | 0.8660/0.8761 | 0.8609/0.8693| -0.78% |
+| Bert-Mini  | SST-2 |  per channel  |Snip-momentum| 0.53 | Dense & Finetuned | 0.8660/0.8761 | 0.8651/0.8692| -0.79% |
 
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
