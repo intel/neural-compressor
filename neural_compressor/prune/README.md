@@ -55,7 +55,7 @@ A detailed explanation of pruning technique and results could be found in  [Prun
 Pruning patterns defines the rules of pruned weights' arrangements in space. INC currently supports unstructured, N:M pruning and blockwise patterns. [Details](../../docs/source/pruning_details.md#pruning-patterns).
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=600 height=200 alt="Sparsity Pattern">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=500 height=200 alt="Sparsity Pattern">
 </a>
 
 
