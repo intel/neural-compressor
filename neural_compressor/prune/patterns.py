@@ -18,7 +18,8 @@
 
 import logging
 
-import torch
+from neural_compressor.utils.utility import LazyImport
+torch = LazyImport('torch')
 from .logger import logger
 from collections import namedtuple
 
@@ -531,7 +532,7 @@ class PatternNxM(BasePattern):
             data = data.permute(0, 3, 1, 2)
         return data
 
-    def reshape_orig_to_pattern(self, data: torch.Tensor, key):
+    def reshape_orig_to_pattern(self, data, key):
         """Reshape the data(s1,s2) to [s1/N,N,s2,s2/M].
 
         Args:
@@ -951,7 +952,7 @@ class PatternNInM(BasePattern):
             data = data.permute(0, 3, 1, 2)
         return data
 
-    def reshape_orig_to_pattern(self, data: torch.Tensor, key):
+    def reshape_orig_to_pattern(self, data, key):
         """Reshape the data based on the pruning pattern."""
         data = self._reshape_orig_to_2dims(data)
         shape = data.shape

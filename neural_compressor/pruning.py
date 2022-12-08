@@ -15,10 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from neural_compressor.utils.utility import LazyImport
 
-import torch.nn
+LazyImport('torch.nn')
+torch = LazyImport('torch')
 
-from neural_compressor.prune.prune_utils import process_config, parse_to_prune
+from neural_compressor.prune.prune_utils import process_config, parse_to_prune,\
+    check_config, update_params
 from neural_compressor.prune.pruners import get_pruner
 from neural_compressor.utils import logger
 import re
@@ -46,7 +49,7 @@ class Pruning:
         self.model = None
         self.config_file_path = config
         self.pruners = []
-        self.pruner_info = process_config(self.config_file_path)
+        self.pruners_info = process_config(self.config_file_path)
 
     def update_config(self, **kwargs):
         """Add user-defined arguments to the original configurations.
@@ -55,10 +58,13 @@ class Pruning:
         However, users can still modify configurations by passing key-value arguments in this function.
         Please note that the key-value arguments' keys are analysable in current configuration.
         """
-        for item in self.pruner_info:
+        for item in self.pruners_info:
             for key in kwargs:
                 if key in item.keys():
                     item[key] = kwargs[key]
+
+            update_params(item)
+            check_config(item)
 
     # def _call_pruners(self, func):
     #     """Function which decorates the Pruning class's functions.
@@ -124,7 +130,7 @@ class Pruning:
         """Obtain Pruner objects."""
         assert isinstance(self.model, torch.nn.Module)
 
-        for info in self.pruner_info:
+        for info in self.pruners_info:
             modules = parse_to_prune(info, self.model)
             if modules == {}:
                 logger.warning("one pruner hooks no layers, please have a check")
