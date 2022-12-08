@@ -267,8 +267,8 @@ class HessianTrace:
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
             if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
                 break
-            if iter == 20:  ##TODO for debug
-                break
+            # if iter == 20:  ##TODO for debugging
+            #     break
             prev_avg_model_trace = model_trace
         weight_name_to_traces = {}
         layer_traces = layer_traces_estimate
@@ -321,8 +321,8 @@ class HessianTrace:
                             prev_model_act_trace + self.eps)
                     if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
                         break
-                    if iter == 50:  ##TODO for debug
-                        break
+                    # if iter == 50:  ##TODO for debug
+                    #     break
 
                     prev_model_act_trace = current_model_act_trace
                 act_traces_per_sample.append(vt_H_v_mean_per_act)
