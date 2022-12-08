@@ -17,7 +17,7 @@
 
 import os
 from .utils import logger
-from .data import DATALOADERS, DATASETS
+from .data import DATALOADERS, Datasets
 from .experimental import Quantization as ExpQuantization
 from deprecated import deprecated
 from neural_compressor.conf.pythonic_config import Config
@@ -173,7 +173,7 @@ class Quantization(object):
 
     @deprecated(version='2.0', reason="this function has been deprecated")
     def dataset(self, dataset_type, *args, **kwargs):
-        return DATASETS(self.exp_quantizer.framework)[dataset_type](*args, **kwargs)
+        return Datasets(self.exp_quantizer.framework)[dataset_type](*args, **kwargs)
 
     @deprecated(version='2.0', reason="this function has been deprecated")
     def dataloader(self, dataset, batch_size=1, collate_fn=None, last_batch='rollover',

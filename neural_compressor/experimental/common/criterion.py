@@ -130,7 +130,7 @@ class TensorFlowCrossEntropyLoss(object):
     """TensorFlow CrossEntropyLoss criterion."""
 
     def __init__(self, param_dict):
-        """Initialize the DATASETS class.
+        """Initialize the Datasets class.
 
         Args:
             param_dict (dict): The dict of parameters setting by user for CrossEntropyLoss criterion.
@@ -164,7 +164,7 @@ class TensorFlowSparseCategoricalCrossentropy(object):
     """TensorFlow SparseCategoricalCrossentropyLoss criterion."""
 
     def __init__(self, param_dict):
-        """Initialize the DATASETS class.
+        """Initialize the Datasets class.
 
         Args:
             param_dict (string): param_dict.

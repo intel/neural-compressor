@@ -14,10 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
-"""Neural Compressor Built-in transforms for multiple framework backends."""
 
-from .transform import TRANSFORMS, BaseTransform, transform_registry
+"""Built-in filter."""
+
+from .filter import FILTERS, Filter, filter_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -28,4 +28,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["TRANSFORMS", "BaseTransform", "transform_registry"]
+__all__ = ["FILTERS", "Filter", "filter_registry"]
