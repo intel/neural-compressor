@@ -24,9 +24,9 @@ from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 from time import time 
 
-from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
-from .st_utils.helper import tuning_record_msg
+from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_structs import OpTuningConfig
+from .utils.helper import tuning_record_msg
 
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):

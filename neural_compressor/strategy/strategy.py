@@ -46,9 +46,9 @@ from time import time
 from ..utils import logger
 
 
-from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
-from .st_utils.tuning_space import TuningItem, TuningSpace
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_space import TuningItem, TuningSpace
+from .utils.tuning_structs import OpTuningConfig
 
 
 STRATEGIES = {}

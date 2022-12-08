@@ -19,8 +19,8 @@ import numpy as np
 from .strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
 
-from .st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_structs import OpTuningConfig
 from ..utils import logger
 
 @strategy_registry
