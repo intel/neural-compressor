@@ -55,7 +55,7 @@ class Pruner:
                  # the following global key should be set to None
                  target_sparsity=None, prune_type=None, pattern=None, names=None,
                  excluded_names=None,
-                 start_step=None, end_step=None, prune_domain=None, update_frequency=None,
+                 start_step=None, end_step=None, prune_domain=None, prune_frequency=None,
                  min_layer_sparsity_ratio=None, max_layer_sparsity_ratio=None, sparsity_decay_type=None,
                  prune_layer_type=None, resume_from_pruned_checkpoint=None
                  ):
@@ -71,7 +71,7 @@ class Pruner:
         self.start_step = start_step
         self.end_step = end_step
         self.prune_domain = prune_domain
-        self.update_frequency = update_frequency
+        self.prune_frequency = prune_frequency
         self.min_layer_sparsity_ratio = min_layer_sparsity_ratio
         self.max_layer_sparsity_ratio = max_layer_sparsity_ratio
         self.sparsity_decay_type = sparsity_decay_type
@@ -707,11 +707,11 @@ weight_compression_schema = Schema({
     Optional('start_step', default=0): int,
     Optional('end_step', default=0): int,
     Optional('prune_domain', default="global"): str,
-    Optional('update_frequency', default=1): int,
+    Optional('prune_frequency', default=1): int,
     Optional('min_layer_sparsity_ratio', default=0.0): float,
     Optional('max_layer_sparsity_ratio', default=0.98): float,
     Optional('prune_layer_type', default=['Conv', 'Linear']): list,
-
+    Optional('sparsity_decay_type', default="exp"):str,
     Optional('resume_from_pruned_checkpoint', default=False): bool,
     Optional('pruners'): And(list, \
                              lambda s: all(isinstance(i, Pruner) for i in s))

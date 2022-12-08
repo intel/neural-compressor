@@ -320,59 +320,59 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    def test_pruning(self):
-        from neural_compressor.experimental import Pruning, common
-        prune = Pruning('fake.yaml')
-        scheduler = Scheduler()
-        scheduler.model = self.model
-        datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+    # def test_pruning(self):
+    #     from neural_compressor.experimental import Pruning, common
+    #     prune = Pruning('fake.yaml')
+    #     scheduler = Scheduler()
+    #     scheduler.model = self.model
+    #     datasets = DATASETS('pytorch')
+    #     dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
+    #     dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+    #
+    #     def training_func_for_nc(model):
+    #         epochs = 2
+    #         iters = 2
+    #         criterion = nn.CrossEntropyLoss()
+    #         optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    #         for nepoch in range(epochs):
+    #             model.train()
+    #             cnt = 0
+    #             prune.on_epoch_begin(nepoch)
+    #             for image, target in dummy_dataloader:
+    #                 prune.on_step_begin(cnt)
+    #                 print('.', end='')
+    #                 cnt += 1
+    #                 output = model(image)
+    #                 loss = criterion(output, target)
+    #                 optimizer.zero_grad()
+    #                 loss.backward()
+    #                 optimizer.step()
+    #                 prune.on_step_end()
+    #                 if cnt >= iters:
+    #                     break
+    #             prune.on_epoch_end()
+    #
+    #     prune.pruning_func = training_func_for_nc
+    #     prune.eval_dataloader = dummy_dataloader
+    #     prune.train_dataloader = dummy_dataloader
+    #     scheduler.append(prune)
+    #     opt_model = scheduler.fit()
 
-        def training_func_for_nc(model):
-            epochs = 2
-            iters = 2
-            criterion = nn.CrossEntropyLoss()
-            optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            for nepoch in range(epochs):
-                model.train()
-                cnt = 0
-                prune.on_epoch_begin(nepoch)
-                for image, target in dummy_dataloader:
-                    prune.on_step_begin(cnt)
-                    print('.', end='')
-                    cnt += 1
-                    output = model(image)
-                    loss = criterion(output, target)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                    prune.on_step_end()
-                    if cnt >= iters:
-                        break
-                prune.on_epoch_end()
-
-        prune.pruning_func = training_func_for_nc
-        prune.eval_dataloader = dummy_dataloader
-        prune.train_dataloader = dummy_dataloader
-        scheduler.append(prune)
-        opt_model = scheduler.fit()
-
-    def test_pure_yaml_pruning(self):
-        from neural_compressor.experimental import Pruning, common
-        prune = Pruning('fake2.yaml')
-        scheduler = Scheduler()
-        scheduler.model = self.model
-        scheduler.append(prune)
-        opt_model = scheduler.fit()
-        opt_model.report_sparsity()
-        try:
-          conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
-        except:
-          conv_weight = opt_model.model.layer1[0].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
+    # def test_pure_yaml_pruning(self):
+    #     from neural_compressor.experimental import Pruning, common
+    #     prune = Pruning('fake2.yaml')
+    #     scheduler = Scheduler()
+    #     scheduler.model = self.model
+    #     scheduler.append(prune)
+    #     opt_model = scheduler.fit()
+    #     opt_model.report_sparsity()
+    #     try:
+    #       conv_weight = opt_model.model.layer1[0].conv1.weight.dequantize()
+    #     except:
+    #       conv_weight = opt_model.model.layer1[0].conv1.weight
+    #     self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+    #                            0.64,
+    #                            delta=0.05)
 
     def test_scheduler_qat_distillation(self):
         from neural_compressor.experimental import Quantization, common, Distillation
@@ -396,26 +396,26 @@ class TestPruning(unittest.TestCase):
                                delta=0.01)
 
 
-    def test_combine_qat_pruning(self):
-        from neural_compressor.experimental import Pruning, common, Quantization
-        self.q_model = torchvision.models.quantization.resnet18()
-        self.q_model.fuse_model()
-        quantizer = Quantization('./fake3.yaml')
-        prune = Pruning('./fake2.yaml')
-        scheduler = Scheduler()
-        scheduler.model = self.q_model
-        combination = scheduler.combine(prune, quantizer)
-        scheduler.append(combination)
-        opt_model = scheduler.fit()
-        opt_model.report_sparsity()
-        try:
-          conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
-        except:
-          conv_weight = opt_model.model.layer1[0].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
+    # def test_combine_qat_pruning(self):
+    #     from neural_compressor.experimental import Pruning, common, Quantization
+    #     self.q_model = torchvision.models.quantization.resnet18()
+    #     self.q_model.fuse_model()
+    #     quantizer = Quantization('./fake3.yaml')
+    #     prune = Pruning('./fake2.yaml')
+    #     scheduler = Scheduler()
+    #     scheduler.model = self.q_model
+    #     combination = scheduler.combine(prune, quantizer)
+    #     scheduler.append(combination)
+    #     opt_model = scheduler.fit()
+    #     opt_model.report_sparsity()
+    #     try:
+    #       conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
+    #     except:
+    #       conv_weight = opt_model.model.layer1[0].conv1.weight
+    #     self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+    #                            0.64,
+    #                            delta=0.05)
+    #     self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
     def test_combine_qat_distillation(self):
         from neural_compressor.experimental import Quantization, common, Distillation
@@ -438,26 +438,26 @@ class TestPruning(unittest.TestCase):
                                delta=0.01)
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
 
-    @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
-      "Please use PyTroch 1.9 or higher version for Quantization & Pruning with pytorch_fx backend")
-    def test_combine_fx(self):
-        from neural_compressor.experimental import Pruning, common, Quantization
-        quantizer = Quantization('./fake5.yaml')
-        prune = Pruning('./fake4.yaml')
-        scheduler = Scheduler()
-        scheduler.model = self.model
-        combination = scheduler.combine(prune, quantizer)
-        scheduler.append(combination)
-        opt_model = scheduler.fit()
-        opt_model.report_sparsity()
-        try:
-          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
-        except:
-          conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
-        self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
-                               0.64,
-                               delta=0.05)
-        self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
+    # @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
+    #   "Please use PyTroch 1.9 or higher version for Quantization & Pruning with pytorch_fx backend")
+    # def test_combine_fx(self):
+    #     from neural_compressor.experimental import Pruning, common, Quantization
+    #     quantizer = Quantization('./fake5.yaml')
+    #     prune = Pruning('./fake4.yaml')
+    #     scheduler = Scheduler()
+    #     scheduler.model = self.model
+    #     combination = scheduler.combine(prune, quantizer)
+    #     scheduler.append(combination)
+    #     opt_model = scheduler.fit()
+    #     opt_model.report_sparsity()
+    #     try:
+    #       conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
+    #     except:
+    #       conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight
+    #     self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
+    #                            0.64,
+    #                            delta=0.05)
+    #     self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
 
 if __name__ == "__main__":
     unittest.main()

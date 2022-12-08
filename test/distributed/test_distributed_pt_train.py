@@ -74,21 +74,18 @@ def build_fake_yaml():
             reduction: sum
       approach:
         weight_compression:
-          initial_sparsity: 0.0
-          target_sparsity: 0.97
-          start_epoch: 0
-          end_epoch: 4
+          target_sparsity: 0.9
           pruners:
             - !Pruner
-                start_epoch: 1
-                end_epoch: 3
-                prune_type: basic_magnitude
+                start_step: 0
+                end_step: 1000
+                prune_type: "magnitude"
                 names: ['layer1.0.conv1.weight']
 
             - !Pruner
                 target_sparsity: 0.6
-                prune_type: gradient_sensitivity
-                update_frequency: 2
+                prune_type: "snip_momentum"
+                prune_frequency: 2
                 names: ['layer1.0.conv2.weight']
     evaluation:
       accuracy:

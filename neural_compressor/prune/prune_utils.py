@@ -44,9 +44,9 @@ def check_config(prune_config):
         "end_step should be greater than start_step"
     assert prune_config['target_sparsity'] >= 0 and prune_config['target_sparsity'] < 1.0, \
         "begin_pruning_step should be in range [0,1)"
-    assert prune_config['update_frequency'] > 0, "update_frequency should be greater than 0"
+    assert prune_config['prune_frequency'] > 0, "prune_frequency should be greater than 0"
     assert prune_config['max_layer_sparsity_ratio'] >= 0 and prune_config['max_layer_sparsity_ratio'] < 1, \
-        "update_frequency should be greater than 0"
+        "prune_frequency should be greater than 0"
     assert prune_config['prune_domain'] == "global" or prune_config['prune_domain'] == "local", \
         "only support 'global' and 'local' prune domain"
     try:
@@ -124,7 +124,7 @@ def process_and_check_config(val):
     """
     # def __init__(self, pruners=pruners, target_sparsity=0.9, prune_type="snip_momentum", pattern="4x1", names=[],
     #              excluded_names=[],
-    #              start_step=0, end_step=0, prune_domain="global", update_frequency=1,
+    #              start_step=0, end_step=0, prune_domain="global", prune_frequency=1,
     #              min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98, resume_from_pruned_checkpoint=False,
     #              ):
     # extra_excluded_names = [], sparsity_decay_type = "exp", reg_type = None, criterion_criterion_reduce_type = "mean", parameters = {
@@ -132,7 +132,7 @@ def process_and_check_config(val):
 
     default_global_config = {'target_sparsity': 0.9, 'prune_type': 'snip_momentum', 'pattern': '4x1', 'names': [],
                              'excluded_names': [],
-                             'start_step': 0, 'end_step': 0, 'prune_domain': 'global', 'update_frequency': 1,
+                             'start_step': 0, 'end_step': 0, 'prune_domain': 'global', 'prune_frequency': 1,
                              'min_layer_sparsity_ratio': 0.0, 'max_layer_sparsity_ratio': 0.98,
                              'sparsity_decay_type': 'exp',
                              'prune_layer_type': ['Conv', 'Linear'],
@@ -167,7 +167,7 @@ def process_and_check_config(val):
     # excluded_names = reset_non_value_to_default(val, "excluded_names", [])
     # prune_layer_type = reset_non_value_to_default(val, "prune_layer_type", ['Conv2d', 'Linear'])
     # target_sparsity = reset_non_value_to_default(val, "target_sparsity", 0.0)  ## be care of this val
-    # update_frequency = int(reset_non_value_to_default(val, "update_frequency", 1))
+    # prune_frequency = int(reset_non_value_to_default(val, "prune_frequency", 1))
     # prune_domain = reset_non_value_to_default(val, "prune_domain", "global")
     # prune_type = reset_non_value_to_default(val, "prune_type", "snip_momentum")
     # sparsity_decay_type = reset_non_value_to_default(val, "sparsity_decay_type", "exp")
@@ -190,8 +190,8 @@ def process_and_check_config(val):
     #     pruner['excluded_names'] = reset_non_value_to_default(info, 'excluded_names', excluded_names)
     #     pruner['prune_layer_type'] = reset_non_value_to_default(info, 'prune_layer_type', prune_layer_type)
     #     pruner['target_sparsity'] = reset_non_value_to_default(info, 'target_sparsity', target_sparsity)
-    #     pruner['update_frequency'] = reset_non_value_to_default(info, 'update_frequency', \
-    #                                                                     update_frequency)
+    #     pruner['prune_frequency'] = reset_non_value_to_default(info, 'prune_frequency', \
+    #                                                                     prune_frequency)
     #     pruner['prune_domain'] = reset_non_value_to_default(info, 'prune_domain', prune_domain)
     #     pruner['prune_type'] = reset_non_value_to_default(info, 'prune_type', prune_type)
     #     pruner['sparsity_decay_type'] = reset_non_value_to_default(info, 'sparsity_decay_type', sparsity_decay_type)
