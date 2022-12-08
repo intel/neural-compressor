@@ -6,13 +6,9 @@ import torch
 import torchvision
 import torch.nn as nn
 
-import sys
-sys.path.append("./")
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-
-#from neural_compressor.experimental.pytorch_pruner.pruning import Pruning
-from neural_compressor.experimental.pruning import Pruning
+from neural_compressor.pruning import Pruning
 
 def build_fake_yaml_basic():
     fake_snip_yaml = """
@@ -23,24 +19,23 @@ def build_fake_yaml_basic():
     pruning:
       approach:
         weight_compression:
-          initial_sparsity: 0.0
           target_sparsity: 0.9
           start_step: 0
           end_step: 10
-          excluded_names: ["classifier", "fp32"]
-
-          prune_frequency: 1
-          sparsity_decay_type: "exp"
+          excluded_names: ["classifier"]
+          prune_frequency: 1 
+          sparsity_decay_type: "cos"
           pruners:
             - !Pruner
                 start_step: 0
-                sparsity_decay_type: "cos"
+                
                 end_step: 10
                 prune_type: "magnitude"
                 names: ['layer1.*']
                 extra_excluded_names: ['layer2.*']
                 prune_domain: "global"
                 pattern: "tile_pattern_4x1"
+            
 
             - !Pruner
                 start_step: 1
@@ -50,7 +45,8 @@ def build_fake_yaml_basic():
                 prune_frequency: 2
                 names: ['layer2.*']
                 prune_domain: local
-                pattern: "tile_pattern_2:4"
+                pattern: "2:4"
+                sparsity_decay_type: "exp"
 
             - !Pruner
                 start_step: 2
@@ -59,7 +55,7 @@ def build_fake_yaml_basic():
                 prune_type: "snip"
                 names: ['layer3.*']
                 prune_domain: "local"
-                pattern: "tile_pattern_16x1"
+                pattern: "16x1"
                 sparsity_decay_type: "cube"
 
     """
@@ -75,14 +71,13 @@ def build_fake_yaml_channel():
         pruning:
           approach:
             weight_compression:
-              initial_sparsity: 0.0
               target_sparsity: 0.9
               start_step: 0
               end_step: 10
-              excluded_names: ["classifier", "fp32"]
+              excluded_names: ["classifier"]
 
               prune_frequency: 1
-              sparsity_decay_type: "exp"
+              
               pruners:
                 - !Pruner
                     start_step: 5
@@ -92,6 +87,7 @@ def build_fake_yaml_channel():
                     extra_excluded_names: ['layer2.*']
                     prune_domain: "global"
                     pattern: "channelx1"
+                    sparsity_decay_type: "exp"
 
                 - !Pruner
                     start_step: 1
@@ -102,6 +98,7 @@ def build_fake_yaml_channel():
                     names: ['layer2.*']
                     prune_domain: local
                     pattern: "2:4"
+                    sparsity_decay_type: "exp"
 
                 - !Pruner
                     start_step: 2
@@ -137,18 +134,17 @@ class TestPytorchPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pytorch_pruning_basic(self):
-        #import pdb;pdb.set_trace()
         prune = Pruning("fake_snip.yaml")
+        ##prune.generate_pruners()
         prune.update_config(start_step=1)
         prune.model = self.model
-        prune.prepare()
-
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
+        prune.update_config(prune_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
@@ -166,18 +162,15 @@ class TestPytorchPruning(unittest.TestCase):
                 local_step += 1
 
             prune.on_epoch_end()
-        #prune.get_sparsity_ratio()
+        prune.get_sparsity_ratio()
         prune.on_train_end()
         prune.on_before_eval()
         prune.on_after_eval()
 
     def test_pytorch_pruner_channel_pruning(self):
-        #import pdb;pdb.set_trace()
         prune = Pruning("fake_channel_pruning.yaml")
-        prune.update_config(prune_frequency=1)
+        ##prune.generate_pruners()
         prune.model = self.model
-        prune.prepare()
-
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = DATASETS('pytorch')
@@ -199,10 +192,8 @@ class TestPytorchPruning(unittest.TestCase):
                 prune.on_after_optimizer_step()
                 prune.on_step_end()
                 local_step += 1
+
             prune.on_epoch_end()
-        prune.on_train_end()
-        prune.on_before_eval()
-        prune.on_after_eval()
 
 if __name__ == "__main__":
     unittest.main()
