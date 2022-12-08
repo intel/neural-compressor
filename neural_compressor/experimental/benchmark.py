@@ -189,7 +189,6 @@ class Benchmark(object):
         if os.environ.get('NC_ENV_CONF') == 'True':
             return self.run_instance(mode)
         else:
-            print("---------start to config instance--->")
             self.config_instance()
             self.summary_benchmark()
             return None
@@ -222,7 +221,6 @@ class Benchmark(object):
 
     def config_instance(self):
         """Configure the multi-instance commands and trigger benchmark with sub process."""
-        print("---------config_instance--->")
         raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
         multi_instance_cmd = ''
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
@@ -251,7 +249,7 @@ class Benchmark(object):
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
 
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
-        print("Running command is\n{}".format(multi_instance_cmd))
+        logger.info("Running command is\n{}".format(multi_instance_cmd))
         # each instance will execute single instance
         set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
         if sys.platform in ['linux']:
@@ -283,7 +281,6 @@ class Benchmark(object):
             if cores_per_socket % cores_per_instance == 0:
                 from functools import reduce
                 hex_core = hex(reduce(lambda x, y : x | y, [1 << p for p in core_list]))
-                print("return prefix for windows --> ")
                 return 'start /b /WAIT /node {} /affinity {} CMD /c'.format(socket_id, hex_core)
         else:
             return ''
