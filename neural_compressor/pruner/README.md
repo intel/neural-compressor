@@ -44,8 +44,8 @@ Neural network pruning (briefly known as pruning or sparsity) is a promising mod
 
 
 
-<a target="_blank" href="./_static/imgs/pruning/pruning_intro.png">
-    <img src="./_static/imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_intro.png">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
 </a>
 
 
