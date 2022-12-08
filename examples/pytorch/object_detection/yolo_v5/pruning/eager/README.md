@@ -32,14 +32,14 @@ pruning:
         - !Pruner
             exclude_names: ["model.*.cv1", "model.*.cv2", "model.*.cv3"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
             pattern: "oc_pattern_1x1" # pattern type, we support "NxM" and "N:M"
-            update_frequency: 1000 # if use iterative pruning scheduler, this define the pruning frequency.
+            prune_frequency: 1000 # if use iterative pruning scheduler, this define the pruning frequency.
             prune_domain: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
             prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
         - !Pruner
             exclude_names: []
             pattern: "oc_pattern_4x1"
-            update_frequency: 1000
+            prune_frequency: 1000
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"

@@ -29,7 +29,7 @@ def build_fake_yaml_basic():
           end_step: 10
           excluded_names: ["classifier", "fp32"]
 
-          update_frequency: 1
+          prune_frequency: 1
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
@@ -47,7 +47,7 @@ def build_fake_yaml_basic():
                 end_step: 1
                 target_sparsity: 0.5
                 prune_type: "snip_momentum"
-                update_frequency: 2
+                prune_frequency: 2
                 names: ['layer2.*']
                 prune_domain: local
                 pattern: "tile_pattern_2:4"
@@ -81,7 +81,7 @@ def build_fake_yaml_channel():
               end_step: 10
               excluded_names: ["classifier", "fp32"]
 
-              update_frequency: 1
+              prune_frequency: 1
               sparsity_decay_type: "exp"
               pruners:
                 - !Pruner
@@ -98,7 +98,7 @@ def build_fake_yaml_channel():
                     end_step: 1
                     target_sparsity: 0.5
                     prune_type: "pattern_lock"
-                    update_frequency: 2
+                    prune_frequency: 2
                     names: ['layer2.*']
                     prune_domain: local
                     pattern: "2:4"
@@ -174,7 +174,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pytorch_pruner_channel_pruning(self):
         #import pdb;pdb.set_trace()
         prune = Pruning("fake_channel_pruning.yaml")
-        prune.update_config(update_frequency=1)
+        prune.update_config(prune_frequency=1)
         prune.model = self.model
         prune.prepare()
 

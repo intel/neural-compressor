@@ -18,14 +18,14 @@ pruning:
         - !Pruner
             extra_excluded_names: [".*query", ".*key", ".*value"]
             pattern: "1x1"
-            update_frequency: 100
+            prune_frequency: 100
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
         - !Pruner
             extra_excluded_names: [".*output", ".*intermediate"]
             pattern: "4x1"
-            update_frequency: 100
+            prune_frequency: 100
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"

@@ -17,7 +17,7 @@ pruning:
       pruners:
         - !Pruner
             pattern: "4x1"
-            update_frequency: 50
+            prune_frequency: 50
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"

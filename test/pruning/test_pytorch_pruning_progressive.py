@@ -22,7 +22,7 @@ def build_fake_yaml_basic():
           start_step: 0
           end_step: 40
           excluded_names: ["classifier"]
-          update_frequency: 8
+          prune_frequency: 8
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
@@ -59,7 +59,7 @@ def build_fake_yaml_channel():
               start_step: 0
               end_step: 40
               excluded_names: ["classifier"]
-              update_frequency: 8
+              prune_frequency: 8
               sparsity_decay_type: "exp"
               pruners:
                 - !Pruner
@@ -75,7 +75,7 @@ def build_fake_yaml_channel():
                     end_step: 1
                     target_sparsity: 0.5
                     prune_type: "pattern_lock"
-                    update_frequency: 2
+                    prune_frequency: 2
                     names: ['layer2.*']
                     prune_domain: local
                     pattern: "2:4"
@@ -143,7 +143,7 @@ class TestPytorchPruning(unittest.TestCase):
             dummy_dataset = TensorDataset(x_train, y_train)
         dummy_dataloader = DataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(update_frequency=1)
+        prune.update_config(prune_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)

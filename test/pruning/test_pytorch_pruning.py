@@ -23,7 +23,7 @@ def build_fake_yaml_basic():
           start_step: 0
           end_step: 10
           excluded_names: ["classifier"]
-          update_frequency: 1 
+          prune_frequency: 1 
           pruners:
             - !Pruner
                 start_step: 0
@@ -41,7 +41,7 @@ def build_fake_yaml_basic():
                 end_step: 1
                 target_sparsity: 0.5
                 prune_type: "snip_momentum"
-                update_frequency: 2
+                prune_frequency: 2
                 names: ['layer2.*']
                 prune_domain: local
                 pattern: "2:4"
@@ -75,7 +75,7 @@ def build_fake_yaml_channel():
               end_step: 10
               excluded_names: ["classifier"]
 
-              update_frequency: 1
+              prune_frequency: 1
               
               pruners:
                 - !Pruner
@@ -93,7 +93,7 @@ def build_fake_yaml_channel():
                     end_step: 1
                     target_sparsity: 0.5
                     prune_type: "pattern_lock"
-                    update_frequency: 2
+                    prune_frequency: 2
                     names: ['layer2.*']
                     prune_domain: local
                     pattern: "2:4"
@@ -143,7 +143,7 @@ class TestPytorchPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(update_frequency=1)
+        prune.update_config(prune_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
