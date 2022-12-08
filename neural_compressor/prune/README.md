@@ -60,8 +60,8 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. INC
 
 
 
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_pattern.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_pattern.PNG" width=750 height=250 alt="Sparsity Pattern">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=750 height=250 alt="Sparsity Pattern">
 </a>
 
 
