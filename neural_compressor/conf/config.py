@@ -1085,6 +1085,7 @@ schema = Schema({
             Optional("results_csv_path", default=None): str,
             Optional("dataset_path", default=None): str,
             Optional("batch_size", default=64): int,
+            Optional("num_workers", default=20): int,
             },
     },
 

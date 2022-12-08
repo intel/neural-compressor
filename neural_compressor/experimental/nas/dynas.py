@@ -72,7 +72,7 @@ class DyNAS(NASBase):
         self.macs_predictor = None
         self.latency_predictor = None
         self.results_csv_path = None
-        self.num_workers = 20
+        self.num_workers = None
         self.init_cfg(conf_fname_or_obj)
 
 
@@ -257,6 +257,7 @@ class DyNAS(NASBase):
         self.results_csv_path = dynas_config.results_csv_path
         self.dataset_path = dynas_config.dataset_path
         self.batch_size = dynas_config.batch_size
+        self.num_workers = dynas_config.num_workers
         if dynas_config.population < 10: # pragma: no cover
             raise NotImplementedError(
                 "Please specify a population size >= 10"
