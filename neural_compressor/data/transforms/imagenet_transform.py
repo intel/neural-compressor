@@ -138,14 +138,14 @@ class ParseDecodeImagenet():
 @transform_registry(transform_type="ParseDecodeImagenet", \
                     process="preprocess", framework="tensorflow")
 class ParseDecodeImagenetTransform(BaseTransform):
-    """imagenet decoding will be performed automatically from Neural Compressor v1.4.
+    """Imagenet decoding will be performed automatically from Neural Compressor v1.4.
 
-       Returns:
-            sample
+    Returns:
+        sample
     """
 
     def __call__(self, sample):
-        """Return sample"""
+        """Convert `ParseDecodeImagenetTransform` feature."""
         logger.warning("This transform is going to be deprecated, " \
             "imagenet decoding will be performed automatically from Neural Compressor v1.4.")
         return sample
@@ -201,15 +201,6 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
         scale = tf.cast(scale, dtype=tf.float32)
         new_height = tf.cast(tf.math.rint(height*scale), dtype=tf.int32)
         new_width = tf.cast(tf.math.rint(width*scale), dtype=tf.int32)
-
-        # image = tf.cond(pred=tf.greater(shape[0], shape[1]), \
-        #                 false_fn=lambda: tf.image.resize(image, \
-        #                     tf.convert_to_tensor(value=[self.resize_side*shape[0]/shape[1], \
-        #                         self.resize_side], dtype=tf.int32)),
-        #                 true_fn=lambda: tf.image.resize(image, \
-        #                     tf.convert_to_tensor(value=[self.resize_side, \
-        #                         self.resize_side * shape[1] / shape[0]], dtype=tf.int32)),
-        #                )
 
         if self.subpixels=='BGR' and self.data_format=='channels_first':
             # 'RGB'->'BGR'
