@@ -532,7 +532,7 @@ class PatternNxM(BasePattern):
             data = data.permute(0, 3, 1, 2)
         return data
 
-    def reshape_orig_to_pattern(self, data: torch.Tensor, key):
+    def reshape_orig_to_pattern(self, data, key):
         """Reshape the data(s1,s2) to [s1/N,N,s2,s2/M].
 
         Args:
