@@ -46,7 +46,7 @@ A detailed explanation of pruning technique and results could be found in  [Prun
 
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=500 height=250 alt="pruning intro">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=400 height=200 alt="pruning intro">
 </a>
 
 
@@ -61,59 +61,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. INC
 
 
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=750 height=250 alt="Sparsity Pattern">
-</a>
-
-
-
-
-#### Unstructured Pruning
-
-
-
-Unstructured pruning means pruning the least salient connections in the model. The nonzero patterns are irregular and could be anywhere in the matrix.
-
-
-
-
-#### Structured Pruning
-
-
-
-Structured pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
-
-
-
- -  2in4 Pruning
-
-
-
-NVIDIA proposed [2:4 sparsity](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/) (or known as "2in4 sparsity") in Ampere architecture; for every 4 continuous elements in a matrix, two of them are zero and others are non-zero.
-
-
-
- -  Block-wise Pruning
-
-
-
-Different from 2:4 sparsity above, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size ```S``` means the contiguous ```S``` elements in this block are all zero values.
-
-
-
-For a typical GEMM, the weight dimension is ```IC``` x ```OC```, where ```IC``` is the number of input channels and ```OC``` is the number of output channels. Note that sometimes ```IC``` is also called dimension ```K```, and ```OC``` is called dimension ```N```. The sparsity dimension is on ```OC``` (or ```N```).
-
-
-
-For a typical Convolution, the weight dimension is ```OC x IC x KH x KW```, where ```OC``` is the number of output channels, ```IC``` is the number of input channels, and ```KH``` and ```KW``` is the kernel height and weight. The sparsity dimension is also on ```OC```.
-
-
-
-Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension, and a block-wise sparsity pattern with block size 4 on ```OC``` dimension.
-
-
-
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/sparse_dim.png">
-    <img src="./../../docs/source/_static/imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=600 height=200 alt="Sparsity Pattern">
 </a>
 
 
