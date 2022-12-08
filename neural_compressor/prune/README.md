@@ -27,15 +27,11 @@ Pruning
 
 
 
-2. [Pruning Support Matrix](#pruning-support-matrix)
+2. [Get Started With Pruning API](#get-started-with-pruning-api)
 
 
 
-3. [Get Started With Pruning API](#get-started-with-pruning-api)
-
-
-
-4. [Examples](#examples)
+3. [Examples](#examples)
 
 
 
@@ -167,17 +163,8 @@ for epoch in range(num_train_epochs):
 
 
 
-We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed below. A complete overview of validated examples including quantization, pruning and distillation result could be found in  [INC Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
+We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed [here](../../docs/source/pruning_details.md#examples). A complete overview of validated examples including quantization, pruning and distillation result could be found in  [INC Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
-<table>
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Dataset</th>
-    <th>Pruning Algorithm</th>
-    <th>Framework</th>
-  </tr>
-</thead>
 
 Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
  

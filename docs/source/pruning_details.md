@@ -128,9 +128,17 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed below. A complete overview of validated examples including quantization, pruning and distillation result could be found in  [INC Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
+We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed below. 
 
 
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Dataset</th>
+    <th>Pruning Algorithm</th>
+    <th>Framework</th>
+  </tr>
+</thead>
 
-Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
  
