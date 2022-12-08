@@ -59,8 +59,8 @@ Pruning patterns defines the rules of pruned weights' arrangements in space.
 
 
 
-<a target="_blank" href="./_static/imgs/pruning/pruning_pattern.png">
-    <img src="./_static/imgs/pruning/pruning_patterns.png" width=600 height=225 alt="Sparsity Pattern">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_pattern.png">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_patterns.png" width=600 height=225 alt="Sparsity Pattern">
 </a>
 
 
@@ -111,8 +111,8 @@ Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension
 
 
 
-<a target="_blank" href="./_static/imgs/pruning/sparse_dim.png">
-    <img src="./_static/imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/sparse_dim.png">
+    <img src="./../../docs/source/_static/imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
 </a>
 
 
