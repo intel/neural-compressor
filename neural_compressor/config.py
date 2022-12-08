@@ -307,12 +307,14 @@ class _BaseQuantizationConfig:
                  op_type_list=None,
                  op_name_list=None,
                  strategy="basic",
+                 strategy_kwargs=None,
                  objective="performance",
                  timeout=0,
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
                  extra_precisions=["bf16"],
+                 optimization_level=1,
                  accuracy_criterion=accuracy_criterion):
         self._inputs = inputs
         self._outputs = outputs
@@ -321,6 +323,7 @@ class _BaseQuantizationConfig:
         self._op_type_list = op_type_list
         self._op_name_list = op_name_list
         self._strategy = strategy
+        self._strategy_kwargs = strategy_kwargs
         self._objective = objective
         self._timeout = timeout
         self._max_trials = max_trials
@@ -328,6 +331,7 @@ class _BaseQuantizationConfig:
         self._reduce_range = reduce_range
         self._extra_precisions = extra_precisions \
             if isinstance(extra_precisions, List) else [extra_precisions]
+        self._optimization_level = optimization_level
         self.use_bf16 = "bf16" in self._extra_precisions
         self._accuracy_criterion = accuracy_criterion
         self._calibration_sampling_size = calibration_sampling_size
@@ -345,6 +349,14 @@ class _BaseQuantizationConfig:
         if check_value('extra_precisions', extra_precisions, List):
             self._extra_precisions = extra_precisions
             self._use_bf16 = "bf16" in extra_precisions
+
+    @property
+    def optimization_level(self):
+        return self._optimization_level
+    
+    @optimization_level.setter
+    def optimization_level(self, optimization_level):
+        self._optimization_level = optimization_level
 
     @property
     def reduce_range(self):
@@ -399,8 +411,16 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
             self._strategy = strategy
+
+    @property
+    def strategy_kwargs(self):
+        return self._strategy_kwargs
+    
+    @strategy_kwargs.setter
+    def strategy_kwargs(self, strategy_kwargs):
+        self._strategy_kwargs = strategy_kwargs
 
     @property
     def op_name_list(self):
@@ -480,11 +500,12 @@ class _BaseQuantizationConfig:
 
 
 class TuningCriterion:
-    def __init__(self, strategy="basic", timeout=0, max_trials=100, objective="performance"):
+    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
         self._strategy = strategy
         self._timeout = timeout
         self._max_trials = max_trials
         self._objective = objective
+        self._strategy_kwargs = strategy_kwargs
 
     @property
     def max_trials(self):
@@ -521,9 +542,16 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
             self._strategy = strategy
-
+    
+    @property
+    def strategy_kwargs(self):
+        return self._strategy_kwargs
+    
+    @strategy_kwargs.setter
+    def strategy_kwargs(self, strategy_kwargs):
+        self._strategy_kwargs = strategy_kwargs
 
 tuning_criterion = TuningCriterion()
 
@@ -540,6 +568,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  extra_precisions = ["bf16"],
+                 optimization_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -551,11 +580,13 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,
                          strategy=tuning_criterion.strategy,
+                         strategy_kwargs=tuning_criterion.strategy_kwargs,
                          objective=tuning_criterion.objective,
                          timeout=tuning_criterion.timeout,
                          max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
                          extra_precisions=extra_precisions,
+                         optimization_level=optimization_level,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
 
@@ -578,10 +609,12 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions=["bf16"]):
+                 extra_precisions=["bf16"],
+                 optimization_level=1):
         super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
                          op_type_list=op_type_list, op_name_list=op_name_list,
-                         reduce_range=reduce_range, extra_precisions=extra_precisions)
+                         reduce_range=reduce_range, extra_precisions=extra_precisions, 
+                         optimization_level=optimization_level)
         self._approach = 'quant_aware_training'
 
     @property
@@ -825,6 +858,7 @@ class Torch2ONNXConfig(ExportConfig):
        input_names=None,
        output_names=None,
        dynamic_axes=None,
+       recipe='QDQ_OP_FP32_BIAS',
        **kwargs,
     ):
         super().__init__(
@@ -836,6 +870,7 @@ class Torch2ONNXConfig(ExportConfig):
             output_names=output_names,
             dynamic_axes=dynamic_axes,
         )
+        self.recipe = recipe
         self.kwargs = kwargs
 
 

@@ -86,6 +86,7 @@ function run_tuning {
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
         --tune \
+        --onnx \
         ${extra_cmd}
 }
 
