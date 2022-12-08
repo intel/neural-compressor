@@ -29,7 +29,7 @@ Pruning details
 
 
 
-2. [Examples and results](#examples)
+2. [Pruning examples](#examples)
 
 
 
@@ -124,7 +124,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-## Examples
+## Pruning Examples
 
 
 
