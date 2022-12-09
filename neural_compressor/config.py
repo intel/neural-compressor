@@ -352,7 +352,7 @@ class _BaseQuantizationConfig:
     @property
     def optimization_level(self):
         return self._optimization_level
-    
+
     @optimization_level.setter
     def optimization_level(self, optimization_level):
         self._optimization_level = optimization_level
@@ -410,13 +410,13 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+                       ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
             self._strategy = strategy
 
     @property
     def strategy_kwargs(self):
         return self._strategy_kwargs
-    
+
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
@@ -541,16 +541,17 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+                       ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
             self._strategy = strategy
-    
+
     @property
     def strategy_kwargs(self):
         return self._strategy_kwargs
-    
+
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
+
 
 tuning_criterion = TuningCriterion()
 
@@ -566,7 +567,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions = ["bf16"],
+                 extra_precisions=["bf16"],
                  optimization_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
@@ -612,7 +613,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  optimization_level=1):
         super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
                          op_type_list=op_type_list, op_name_list=op_name_list,
-                         reduce_range=reduce_range, extra_precisions=extra_precisions, 
+                         reduce_range=reduce_range, extra_precisions=extra_precisions,
                          optimization_level=optimization_level)
         self._approach = 'quant_aware_training'
 
@@ -629,7 +630,7 @@ class PruningConfig:
                  excluded_names=[],
                  start_step=0, end_step=0, pruning_scope="global", prune_frequency=1,
                  min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98,
-		 sparsity_decay_type="exp", prune_layer_type=['Conv', 'Linear'],
+                 sparsity_decay_type="exp", prune_layer_type=['Conv', 'Linear'],
                  resume_from_pruned_checkpoint=False
                  ):
         self._weight_compression = DotDict({
@@ -847,16 +848,16 @@ class ExportConfig:
 
 class Torch2ONNXConfig(ExportConfig):
     def __init__(
-       self,
-       dtype="int8",
-       opset_version=14,
-       quant_format="QDQ",
-       example_inputs=None,
-       input_names=None,
-       output_names=None,
-       dynamic_axes=None,
-       recipe='QDQ_OP_FP32_BIAS',
-       **kwargs,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
+            recipe='QDQ_OP_FP32_BIAS',
+            **kwargs,
     ):
         super().__init__(
             dtype=dtype,
