@@ -20,9 +20,12 @@ from collections import defaultdict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from fairseq import utils
 from torch.nn import Parameter
 from torch.nn.modules.module import _addindent
+
+from neural_compressor.utils.utility import LazyImport
+
+fairseq = LazyImport("fairseq")
 
 INCREMENTAL_STATE_INSTANCE_ID = defaultdict(lambda: 0)
 
@@ -511,7 +514,7 @@ class MultiheadAttentionSuper(nn.Module):
             attn_weights = attn_weights.view(
                 bsz * self.num_heads, tgt_len, src_len)
 
-        attn_weights = utils.softmax(
+        attn_weights = fairseq.utils.softmax(
             attn_weights, dim=-1, onnx_trace=self.onnx_trace,
         ).type_as(attn_weights)
         attn_weights = F.dropout(

@@ -19,22 +19,21 @@ import math
 
 import torch
 import torch.nn.functional as F
-from fairseq import utils
-from fairseq.models import (BaseFairseqModel, FairseqEncoder,
-                            FairseqIncrementalDecoder)
-from fairseq.modules import PositionalEmbedding, SinusoidalPositionalEmbedding
 from torch import nn
 
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 
 from .modules_supernetwork import (EmbeddingSuper, LayerNormSuper, LinearSuper,
                                    MultiheadAttentionSuper)
+
+fairseq = LazyImport("fairseq")
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
 
 
-class TransformerSuperNetwork(BaseFairseqModel):
+class TransformerSuperNetwork(fairseq.models.BaseFairseqModel):
     """Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)`.
 
     <https://arxiv.org/abs/1706.03762>
@@ -78,6 +77,8 @@ class TransformerSuperNetwork(BaseFairseqModel):
             decoder_config, tgt_dict, decoder_embed_tokens)
 
     def build_embedding(self, dictionary, embed_dim, path=None):  #noqa: D102
+        utils = fairseq.utils
+
         num_embeddings = len(dictionary)
         padding_idx = dictionary.pad()
         emb = Embedding(num_embeddings, embed_dim, padding_idx)
@@ -123,7 +124,7 @@ class TransformerSuperNetwork(BaseFairseqModel):
          return output
 
 
-class TransformerEncoder(FairseqEncoder):
+class TransformerEncoder(fairseq.models.FairseqEncoder):
     """Transformer encoder consisting of *args.encoder_layers* layers.
 
     Each layer is a :class:`TransformerEncoderLayer`.
@@ -167,7 +168,7 @@ class TransformerEncoder(FairseqEncoder):
 
         self.embed_tokens = embed_tokens
 
-        self.embed_positions = PositionalEmbedding(
+        self.embed_positions = fairseq.modules.PositionalEmbedding(
             self.max_source_positions, self.super_embed_dim, self.padding_idx,
             learned=False,
         )
@@ -309,7 +310,8 @@ class TransformerEncoder(FairseqEncoder):
 
     def upgrade_state_dict_named(self, state_dict, name):
         """Upgrade a (possibly old) state dict for new versions of fairseq."""
-        if isinstance(self.embed_positions, SinusoidalPositionalEmbedding):
+        utils = fairseq.utils
+        if isinstance(self.embed_positions, fairseq.modules.SinusoidalPositionalEmbedding):
             weights_key = '{}.embed_positions.weights'.format(name)
             if weights_key in state_dict:
                 del state_dict[weights_key]
@@ -329,7 +331,7 @@ class TransformerEncoder(FairseqEncoder):
         return state_dict
 
 
-class TransformerDecoder(FairseqIncrementalDecoder):
+class TransformerDecoder(fairseq.models.FairseqIncrementalDecoder):
     """Transformer decoder consisting of *args.decoder_layers* layers.
 
     Each layer is a :class:`TransformerDecoderLayer`.
@@ -388,7 +390,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         self.embed_tokens = embed_tokens
 
-        self.embed_positions = PositionalEmbedding(
+        self.embed_positions = fairseq.modules.PositionalEmbedding(
             self.max_target_positions, self.super_embed_dim, padding_idx,
             learned=False,
         ) if not False else None
@@ -606,6 +608,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         return min(self.max_target_positions, self.embed_positions.max_positions())
 
     def buffered_future_mask(self, tensor):  #noqa: D102
+        utils = fairseq.utils
+
         dim = tensor.size(0)
         if (
             not hasattr(self, '_future_mask')
@@ -619,7 +623,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
     def upgrade_state_dict_named(self, state_dict, name):
         """Upgrade a (possibly old) state dict for new versions of fairseq."""
-        if isinstance(self.embed_positions, SinusoidalPositionalEmbedding):
+        utils = fairseq.utils
+        if isinstance(self.embed_positions, fairseq.modules.SinusoidalPositionalEmbedding):
             weights_key = '{}.embed_positions.weights'.format(name)
             if weights_key in state_dict:
                 del state_dict[weights_key]
@@ -669,6 +674,8 @@ class TransformerEncoderLayer(nn.Module):
 
     def __init__(self, encoder_config, layer_idx):  #noqa: D107
         super().__init__()
+
+        utils = fairseq.utils
 
         # the configs of super arch
         self.super_embed_dim = encoder_config['encoder_embed_dim']
@@ -846,6 +853,8 @@ class TransformerDecoderLayer(nn.Module):
         add_zero_attn=False,
     ):  #noqa: D107
         super().__init__()
+
+        utils = fairseq.utils
 
         # the configs of super arch
         self.super_embed_dim = decoder_config['decoder_embed_dim']
