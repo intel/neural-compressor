@@ -23,7 +23,7 @@ from typing import Dict
 from copy import deepcopy
 from ...utils import logger
 
-PRECISION_SET = {'bf16', 'fp16', 'fp32'}
+PRECISION_SET = {'bf16', 'fp32'}
 QUANT_MODE_SET = {'static', 'dynamic'}
 QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
 
@@ -391,7 +391,7 @@ class TuningSpace:
         """
         Collect all op items that support the specific quantization/precision mode 
         Args:
-            quant_mode (str): fp32/bf16/fp16/dynamic/static
+            quant_mode (str): fp32/bf16/dynamic/static
 
         Returns:
             List: the list of op items
@@ -422,16 +422,15 @@ class TuningSpace:
         # set the first option as the default if the not support the required quant mode
         quant_mode_item = op_item.options[0]
         for quant_item in op_item.options:
-            if quant_mode == quant_item.name or quant_mode in quant_item.name:
+            if quant_mode == quant_item.name or (isinstance(quant_mode, str) and quant_mode in quant_item.name):
                 quant_mode_item = quant_item
                 break
         # set the first option as the default for each tuning item
         config = {item.name: item.options[0] for item in quant_mode_item.options}
         op_tuning_config = OpTuningConfig(op_name_type[0], 
                                           op_name_type[1], 
-                                          quant_mode_item.name, 
+                                          quant_mode, 
                                           self,
                                           config)
         return op_tuning_config
-
 

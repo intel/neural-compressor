@@ -280,10 +280,11 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
 
         # pragma: no cover
-        if version > Version("1.12.1") and tune_cfg['approach'] != "post_training_dynamic_quant":
+        if version.release >= Version(
+                "1.13.0").release and tune_cfg['approach'] != "post_training_dynamic_quant":
             from ..adaptor.pytorch import get_example_inputs
-            example_inputs = get_example_inputs(model, kwargs["dataloader"] if "dataloader" in
-                                                kwargs else None)
+            example_inputs = get_example_inputs(
+                model, kwargs["dataloader"] if "dataloader" in kwargs else None)
         else:
             example_inputs = None
 
