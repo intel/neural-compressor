@@ -12,10 +12,9 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Tensorflow
+### 2. Install requirements
 ```shell
-pip install tensorflow
-
+pip install -r requirements.txt
 ```
 > Note: Supported Tensorflow [Version](../../../../../../../README.md).
 

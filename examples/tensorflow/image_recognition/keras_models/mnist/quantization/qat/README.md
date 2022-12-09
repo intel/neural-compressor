@@ -12,9 +12,9 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Tensorflow
+### 2. Install requirements
 ```shell
-pip install tensorflow
+pip install -r requirements.txt
 ```
 > Note: To generate correct qat model with tensorflow_model_optimization 0.5.0, pls use TensorFlow 2.4 or above.
 
