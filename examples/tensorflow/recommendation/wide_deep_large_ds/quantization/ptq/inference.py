@@ -181,9 +181,9 @@ class eval_classifier_optimized_graph:
         Returns:
             graph: it will return a quantized pb
         """
-        from neural_compressor.experimental import common
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.utils.utility import set_random_seed
         infer_graph = load_graph(self.args.input_graph)
         set_random_seed(9527)
 
@@ -199,7 +199,7 @@ class eval_classifier_optimized_graph:
 
         if self.args.calib_data:
             q_model = fit(
-                model=common.Model(infer_graph),
+                model=infer_graph,
                 conf=config,
                 calib_dataloader=Dataloader(self.args.calib_data, self.args.batch_size),
                 eval_func=self.eval_inference)

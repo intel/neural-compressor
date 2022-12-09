@@ -126,7 +126,7 @@ if __name__ == "__main__":
                 file_name = preprocessed_files[test_data_index]
                 with open(os.path.join(preprocessed_data_dir, "{:}.pkl".format(file_name)), "rb") as f:
                     data = pickle.load(f)[0]
-                if args.mode == 'benchmark' and i < args.iters:
+                if args.mode == 'performance' and i < args.iters:
                     time_start = time.time()
                     predictions[i] = sess.run(output_tensor, feed_dict={input_tensor: data[np.newaxis, ...]})[0].astype(np.float32)
                     duration = time.time() - time_start
@@ -205,12 +205,13 @@ if __name__ == "__main__":
     if args.mode == 'tune':
         from neural_compressor.experimental import common
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.utils.utility import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(calibration_sampling_size=[40])
 
         q_model = fit(
-            model=common.Model(graph),
+            model=graph,
             conf=config,
             calib_dataloader=common.DataLoader(CalibrationDL()),
             eval_dataloader=common.DataLoader(CalibrationDL()),

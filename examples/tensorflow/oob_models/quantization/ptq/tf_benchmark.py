@@ -334,7 +334,8 @@ if __name__ == "__main__":
 
         from neural_compressor.experimental import common
         from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.utils.utility import set_random_seed
 
         set_random_seed(9527)
         config = PostTrainingQuantConfig(
@@ -376,7 +377,7 @@ if __name__ == "__main__":
                                                         if model_detail.get('model_name')!='DLRM' \
                                                             else oob_dlrm_collate_func)
         q_model = fit(
-            model=common.Model(args.model_path),
+            model=args.model_path,
             conf=config,
             calib_dataloader=calib_dataloader)
         q_model.save(args.output_path)
