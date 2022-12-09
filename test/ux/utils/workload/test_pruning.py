@@ -190,7 +190,7 @@ class TestTrainConfig(unittest.TestCase):
         )
 
 
-class TestPruningConfig(unittest.TestCase):
+class TestWeightPruningConfig(unittest.TestCase):
     """Pruning config tests."""
 
     def __init__(self, *args: str, **kwargs: str) -> None:
@@ -201,7 +201,7 @@ class TestPruningConfig(unittest.TestCase):
             "target_sparsity": 0.97,
             "start_epoch": 0,
             "end_epoch": 2,
-            "prune_type": "basic_magnitude",
+            "pruning_type": "basic_magnitude",
             "update_frequency": 0.1,
             "names": ["layer1.0.conv1.weight"],
         }

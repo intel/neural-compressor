@@ -51,8 +51,8 @@ pruning:
         - !Pruner
             start_step: 0
             end_step: 1000
-            prune_frequency: 10
-            prune_type: magnitude
+            pruning_frequency: 10
+            pruning_type: magnitude
             names: ['layer1.0.conv1.weight', 'layer1.0.conv2.weight']
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.

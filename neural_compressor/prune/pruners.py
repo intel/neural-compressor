@@ -63,12 +63,12 @@ def get_pruner(config, modules):
     Raises: AssertionError: Cuurently only support pruners which have been registered in PRUNERS.
     """
     ## do the ugly work here
-    if "progressive" not in config["prune_type"]:
-        name = config["prune_type"]
+    if "progressive" not in config["pruning_type"]:
+        name = config["pruning_type"]
         config["progressive"] = False
     else:
         # if progressive, delete "progressive" words and reset config["progressive"]
-        name = config["prune_type"][0:-12]
+        name = config["pruning_type"][0:-12]
         config["progressive"] = True
     if name in CRITERIAS:
         if config["progressive"] == False:
@@ -104,10 +104,10 @@ class BasePruner:
         global_step: An integer. The total steps the model has run.
         start_step: An integer. When to trigger pruning process.
         end_step: An integer. When to end pruning process.
-        prune_frequency: An integer. The pruning frequency, which's valid when iterative
+        pruning_frequency: An integer. The pruning frequency, which's valid when iterative
             pruning is enabled.
         target_sparsity_ratio: A float. The final sparsity after pruning.
-        max_layer_sparsity_ratio: A float. Sparsity ratio maximum for every module.
+        max_sparsity_ratio_per_op: A float. Sparsity ratio maximum for every module.
     """
 
     def __init__(self, config, modules):
@@ -119,10 +119,10 @@ class BasePruner:
         self.handled_global_step = -1
         self.start_step = self.config['start_step']
         self.end_step = self.config['end_step']
-        self.prune_frequency = self.config['prune_frequency']
+        self.pruning_frequency = self.config['pruning_frequency']
         ##this is different with original code
         self.total_prune_cnt = (self.end_step - self.start_step + 1) \
-                               // self.prune_frequency
+                               // self.pruning_frequency
         self.completed_pruned_cnt = 0
         for key in self.modules.keys():
             module = self.modules[key]
@@ -222,7 +222,7 @@ class BasePruner:
         """
         if step < self.start_step or step > self.end_step:
             return False
-        if int(step - self.start_step) % self.prune_frequency == 0:
+        if int(step - self.start_step) % self.pruning_frequency == 0:
             return True
         return False
 
@@ -422,14 +422,14 @@ class ProgressivePruner(BasicPruner):
             self.check_progressive_validity()
             self.pre_masks = copy.deepcopy(self.masks)
             self.progressive_masks = copy.deepcopy(self.masks)
-            if self.prune_frequency < self.progressive_steps:##TODO trick
-                self.progressive_steps = self.prune_frequency
+            if self.pruning_frequency < self.progressive_steps:##TODO trick
+                self.progressive_steps = self.pruning_frequency
                 # if self.progressive_steps == 3:
                 #     self.progressive_steps = 2
-                self.prune_frequency_progressive = self.progressive_steps
+                self.pruning_frequency_progressive = self.progressive_steps
             else:
-                self.prune_frequency_progressive = self.prune_frequency // self.progressive_steps
-            # this is a structural pruning step, it fits self.prune_frequency
+                self.pruning_frequency_progressive = self.pruning_frequency // self.progressive_steps
+            # this is a structural pruning step, it fits self.pruning_frequency
             self.structured_update_step = 0
 
     def check_progressive_validity(self):
@@ -468,7 +468,7 @@ class ProgressivePruner(BasicPruner):
         # used in progressive pruning
         if step < self.start_step or step > self.end_step:
             return False
-        if int(step - self.start_step) % self.prune_frequency_progressive == 0:
+        if int(step - self.start_step) % self.pruning_frequency_progressive == 0:
             return True
         return False
 
@@ -492,7 +492,7 @@ class ProgressivePruner(BasicPruner):
                 and self.check_is_pruned_step(self.global_step) == False:
             # do not do global pruning, only do the progressive mask update.
             step_offset = self.global_step - self.structured_update_step
-            progressive_idx = step_offset // self.prune_frequency_progressive
+            progressive_idx = step_offset // self.pruning_frequency_progressive
             if progressive_idx < (self.progressive_steps - 1):
                 self.progressive_masks = self.pattern.update_progressive_masks(self.pre_masks, self.masks, \
                                                                                self.criterion.scores, \

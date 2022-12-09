@@ -17,7 +17,7 @@
 
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
+from .config import DistillationConfig, WeightPruningConfig, QuantizationAwareTrainingConfig
 from .experimental.distillation import Distillation
 from neural_compressor.pruning import Pruning
 from .experimental.quantization import Quantization
@@ -181,7 +181,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
             if isinstance(conf, QuantizationAwareTrainingConfig):
                 conf_ = Config(quantization=conf)
                 com = Quantization(conf_)
-            elif isinstance(conf, PruningConfig):
+            elif isinstance(conf, WeightPruningConfig):
                 conf_ = Config(pruning=conf)
                 com = Pruning(conf_)
             elif isinstance(conf, DistillationConfig):
@@ -204,7 +204,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         if isinstance(confs, QuantizationAwareTrainingConfig):
             conf = Config(quantization=confs)
             component = Quantization(conf)
-        elif type(confs) == PruningConfig:
+        elif type(confs) == WeightPruningConfig:
             conf = Config(pruning=confs)
             component = Pruning(conf)
         elif type(confs) == DistillationConfig:
@@ -216,7 +216,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         else:
             assert False, logger.error(
                 "confs should be one of QuantizationAwareTrainingConfig, "
-                "PruningConfig, DistillationConfig. not {}".format(type(confs))
+                "WeightPruningConfig, DistillationConfig. not {}".format(type(confs))
             )
 
         component.model = model

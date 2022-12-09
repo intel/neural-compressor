@@ -9,11 +9,11 @@ pruning:
     weight_compression:
       start_step: 2
       end_step: 2
-      excluded_names: ["qa_outputs", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
-      prune_layer_type: ["Linear"]
+      excluded_op_names: ["qa_outputs", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
+      pruning_op_types: ["Linear"]
       target_sparsity: 0.5
-      prune_frequency: 1000
-      max_layer_sparsity_ratio: 0.98
+      pruning_frequency: 1000
+      max_sparsity_ratio_per_op: 0.98
       pruning_scope: "global"
 
       sparsity_decay_type: "exp"
@@ -21,9 +21,9 @@ pruning:
         - !Pruner
             pattern: "2:4"
             target_sparsity: 0.5
-            prune_frequency: 1000
+            pruning_frequency: 1000
             pruning_scope: "global"
-            prune_type: "snip_momentum"
+            pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"
 
 

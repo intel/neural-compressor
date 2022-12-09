@@ -26,6 +26,6 @@ from .utils import options
 from .conf.config import conf
 from .conf.pythonic_config import config
 from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    PruningConfig, QuantizationAwareTrainingConfig
+                    WeightPruningConfig, QuantizationAwareTrainingConfig
 
 set_backend('NA')

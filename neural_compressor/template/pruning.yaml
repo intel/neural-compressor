@@ -58,11 +58,11 @@ pruning:                                             # mandatory only for prunin
       pruners:
         - !Pruner
             target_sparsity: 0.97
-            prune_type: 'snip_momentum'
+            pruning_type: 'snip_momentum'
             names: ['layer1.0.conv1.weight']         # tensor name to be pruned.
             start_step: 0
             end_step: 2
-            prune_frequency: 0.1
+            pruning_frequency: 0.1
 
 evaluation:                                          # optional. used to config evaluation process. 
   accuracy:                                          # optional. used to evaluate accuracy of passing model.

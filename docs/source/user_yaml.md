@@ -111,7 +111,7 @@ pruning:
         - !Pruner
             start_epoch: 0
             end_epoch: 19
-            prune_type: basic_magnitude
+            pruning_type: basic_magnitude
 ```
 * ***distillation***: The distillation specifications define distillation's tuning
 space. Similar to pruning, to define the training behavior, users can use the 

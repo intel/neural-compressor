@@ -9,23 +9,23 @@ pruning:
     weight_compression:
       start_step: 0
       end_step: 0
-      excluded_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
-      prune_layer_type: ["Linear"]
+      excluded_op_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
+      pruning_op_types: ["Linear"]
       target_sparsity: 0.9
-      max_layer_sparsity_ratio: 0.98
+      max_sparsity_ratio_per_op: 0.98
 
       pruners:
         - !Pruner
-            extra_excluded_names: [".*query", ".*key", ".*value"]
+            extra_excluded_op_names: [".*query", ".*key", ".*value"]
             pattern: "1x1"
-            prune_frequency: 100
+            pruning_frequency: 100
             pruning_scope: "global"
-            prune_type: "snip_momentum"
+            pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"
         - !Pruner
-            extra_excluded_names: [".*output", ".*intermediate"]
+            extra_excluded_op_names: [".*output", ".*intermediate"]
             pattern: "4x1"
-            prune_frequency: 100
+            pruning_frequency: 100
             pruning_scope: "global"
-            prune_type: "snip_momentum"
+            pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"
