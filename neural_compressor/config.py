@@ -699,45 +699,7 @@ class PruningConfig:
         self._weight_compression = weight_compression
 
 
-class WeightPruningConfig:
-    """
-    similiar to torch optimizer's interface
-    """
 
-    def __init__(self, pruners=[{}],  ##empty dict will use global values
-                 target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
-                 excluded_op_names=[],
-                 start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
-                 min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
-                 sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
-                 **kwargs):
-        self.pruning_configs = pruners
-        self._weight_compression = DotDict({
-            'target_sparsity': target_sparsity,
-            'pruning_type': pruning_type,
-            'pattern': pattern,
-            'op_names': op_names,
-            'excluded_op_names': excluded_op_names,  ##global only
-            'start_step': start_step,
-            'end_step': end_step,
-            'pruning_scope': pruning_scope,
-            'pruning_frequency': pruning_frequency,
-            'min_sparsity_ratio_per_op': min_sparsity_ratio_per_op,
-            'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
-            'sparsity_decay_type': sparsity_decay_type,
-            'pruning_op_types': pruning_op_types,
-            ##reg_type=None, reduce_type="mean", parameters={"reg_coeff": 0.0}
-            ##'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint  ##resume_from_pruned_checkpoint
-        })
-        self._weight_compression.update(kwargs)
-
-    @property
-    def weight_compression(self):
-        return self._weight_compression
-
-    @weight_compression.setter
-    def weight_compression(self, weight_compression):
-        self._weight_compression = weight_compression
 
 
 class KnowledgeDistillationLossConfig:
