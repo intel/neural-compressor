@@ -22,7 +22,7 @@ import importlib
 from abc import abstractmethod
 import tempfile
 import sys
-from neural_compressor.utils.utility import LazyImport, compute_sparsity, get_backend
+from neural_compressor.utils.utility import LazyImport, compute_sparsity
 from neural_compressor.utils.utility import version1_lt_version2, version1_gt_version2, version1_gte_version2
 from neural_compressor.utils import logger
 from neural_compressor.conf import config as cfg
@@ -133,12 +133,12 @@ def get_model_fwk_name(model):
                 from onnxruntime_extensions import get_library_path
                 so.register_custom_ops_library(get_library_path())
             if isinstance(model, str):
-                ort.InferenceSession(model, so)
+                ort.InferenceSession(model, so, providers=['CPUExecutionProvider'])
             else:
-                ort.InferenceSession(model.SerializeToString(), so)
+                ort.InferenceSession(model.SerializeToString(), so, providers=['CPUExecutionProvider'])
         except Exception as e:  # pragma: no cover
             if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
-                logger.warning('Please use model path instead of onnx model object to quantize') 
+                logger.warning('Please use model path instead of onnx model object to quantize')
             else:
                 logger.warning("If you use an onnx model with custom_ops to do quantiztaion, "
                     "please ensure onnxruntime-extensions is installed")
@@ -148,7 +148,12 @@ def get_model_fwk_name(model):
 
     def _is_pytorch(model):
         try:
-            return 'pytorch' if isinstance(model, torch.nn.Module) else 'NA'
+            if isinstance(model, torch.nn.Module) or isinstance(
+                    model, torch.fx.GraphModule) or isinstance(
+                        model, torch.jit._script.RecursiveScriptModule):
+                return 'pytorch'
+            else:
+                return 'NA'
         except:
             return 'NA'
 
@@ -261,10 +266,6 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex':
-        from tensorflow.core.protobuf import rewriter_config_pb2
-        config.graph_options.rewrite_options.constant_folding = \
-                  rewriter_config_pb2.RewriterConfig.OFF
     sess = tf.compat.v1.Session(graph=model, config=config)
 
     input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
@@ -328,9 +329,9 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
 def _contains_function_with_implements_attr(saved_model_proto):
     meta_graph = saved_model_proto.meta_graphs[0]
     for function in meta_graph.graph_def.library.function:
-      if function.attr.get("_implements", None) or function.attr.get(
-          "api_implements", None):
-        return True
+        if function.attr.get("_implements", None) or function.attr.get(
+            "api_implements", None):
+            return True
     return False
 
 def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_names):
@@ -349,10 +350,6 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex':
-        from tensorflow.core.protobuf import rewriter_config_pb2
-        config.graph_options.rewrite_options.constant_folding = \
-                    rewriter_config_pb2.RewriterConfig.OFF
     if not os.listdir(os.path.join(model,'variables')):
         sess = tf.compat.v1.Session(graph=tf.Graph(), config=config)
         loader = tf.compat.v1.saved_model.loader.load(sess, ["serve"], model)
@@ -425,8 +422,8 @@ def check_keras_format(model, saved_model_dir):
     if saved_model_version == 0:
         return 'saved_model_v1'
     if saved_model_version not in [1, 2]:
-      raise ValueError("SavedModel file format({0}) is not supported".format(
-          saved_model_version))
+        raise ValueError("SavedModel file format({0}) is not supported".format(
+            saved_model_version))
     return version
 
 def get_graph_from_saved_model_v2(saved_model_dir,
@@ -494,7 +491,7 @@ def get_graph_from_saved_model_v1(model):
     from tensorflow.lite.python.convert_saved_model import get_signature_def
     from tensorflow.lite.python.convert_saved_model import get_inputs_outputs
     saved_model_tags = set([tag_constants.SERVING])
-    signature_key = signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY 
+    signature_key = signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
 
     meta_graph = get_meta_graph_def(model, saved_model_tags)
     signature_def = get_signature_def(meta_graph, signature_key)
@@ -502,29 +499,29 @@ def get_graph_from_saved_model_v1(model):
     # Check SavedModel for assets directory.
     collection_def = meta_graph.collection_def
     if constants.ASSETS_KEY in collection_def:
-      raise ValueError("SavedModels with assets/ directory are not supported.")
+        raise ValueError("SavedModels with assets/ directory are not supported.")
 
     from tensorflow.python.saved_model import loader
     from tensorflow.python.framework import graph_util as tf_graph_util
     graph = ops.Graph()
     import tensorflow as tf
     with session.Session(graph=graph) as sess:
-      loader.load(sess, meta_graph.meta_info_def.tags, model)
-      sess.run(tf.compat.v1.global_variables_initializer())
-      sess.run(tf.compat.v1.tables_initializer())
-      output_nodes = list(set([output.split(':')[0] for output in outputs]))
-      node_ops = [node.op for node in graph.as_graph_def().node]
-      if 'MakeIterator' in node_ops:
-          output_nodes.append('MakeIterator')
-      table_ops = tf.compat.v1.get_collection(
-          tf.compat.v1.GraphKeys.TABLE_INITIALIZERS)
-      # For table initialization
-      for table_op in table_ops:
-          output_nodes.append(table_op.name)
-      if len(table_ops) > 0:
-          output_nodes.append('init_all_tables')
-      graph_def = tf_graph_util.convert_variables_to_constants(
-          sess, graph.as_graph_def(), output_nodes)
+        loader.load(sess, meta_graph.meta_info_def.tags, model)
+        sess.run(tf.compat.v1.global_variables_initializer())
+        sess.run(tf.compat.v1.tables_initializer())
+        output_nodes = list(set([output.split(':')[0] for output in outputs]))
+        node_ops = [node.op for node in graph.as_graph_def().node]
+        if 'MakeIterator' in node_ops:
+            output_nodes.append('MakeIterator')
+        table_ops = tf.compat.v1.get_collection(
+            tf.compat.v1.GraphKeys.TABLE_INITIALIZERS)
+        # For table initialization
+        for table_op in table_ops:
+            output_nodes.append(table_op.name)
+        if len(table_ops) > 0:
+            output_nodes.append('init_all_tables')
+        graph_def = tf_graph_util.convert_variables_to_constants(
+            sess, graph.as_graph_def(), output_nodes)
     return graph_def, inputs, outputs
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
@@ -546,25 +543,25 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
             model = tf.keras.models.load_model(model)
         keras_format = check_keras_format(model, temp_dir)
         if keras_format == 'saved_model_v2':
-           try:
-               graph_def, input_names, output_names = get_graph_from_saved_model_v2(
-                   temp_dir, input_tensor_names, output_tensor_names)
-               if '_FusedBatchNormEx' in [node.op for node in graph_def.node]:
-                   keras_format = 'trackable_object'
-           except:
-               keras_format = 'trackable_object'
+            try:
+                graph_def, input_names, output_names = get_graph_from_saved_model_v2(
+                    temp_dir, input_tensor_names, output_tensor_names)
+                if '_FusedBatchNormEx' in [node.op for node in graph_def.node]:
+                    keras_format = 'trackable_object'
+            except:
+                keras_format = 'trackable_object'
         if keras_format == 'trackable_object':
-           try:
-               graph_def, input_names, output_names = get_graph_from_original_keras_v2(
-                                                      model, temp_dir)
-           except:
-               keras_format = 'saved_model_v1'
+            try:
+                graph_def, input_names, output_names = get_graph_from_original_keras_v2(
+                                                       model, temp_dir)
+            except:
+                keras_format = 'saved_model_v1'
         if keras_format == 'saved_model_v1':
-           try:
-               tf.keras.backend.set_learning_phase(0)
-               graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
-           except:
-               raise ValueError('Not supported keras model type...')
+            try:
+                tf.keras.backend.set_learning_phase(0)
+                graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
+            except:
+                raise ValueError('Not supported keras model type...')
 
     # tensorflow 1.x use v1 convert method
     else:
@@ -646,10 +643,6 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
-    if get_backend() == 'tensorflow_itex':
-        from tensorflow.core.protobuf import rewriter_config_pb2
-        config.graph_options.rewrite_options.constant_folding = \
-                 rewriter_config_pb2.RewriterConfig.OFF
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
     with graph.as_default():
@@ -683,34 +676,34 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
     assert 'input_fn' in kwargs, 'input func should be supplied for estimator session....'
     with tf.Graph().as_default() as g:
-      features, input_hooks = model._get_features_from_input_fn(
-          kwargs['input_fn'], tf.estimator.ModeKeys.PREDICT)
-      estimator_spec = model._call_model_fn(features, None,
-          tf.estimator.ModeKeys.PREDICT, model.config)
+        features, input_hooks = model._get_features_from_input_fn(
+            kwargs['input_fn'], tf.estimator.ModeKeys.PREDICT)
+        estimator_spec = model._call_model_fn(features, None,
+            tf.estimator.ModeKeys.PREDICT, model.config)
 
-      if len(output_tensor_names) == 0:
-          outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
-              isinstance(estimator_spec.predictions, dict) else \
-                  [estimator_spec.predictions.name]
-      else:
-          outputs = output_tensor_names
+        if len(output_tensor_names) == 0:
+            outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
+                isinstance(estimator_spec.predictions, dict) else \
+                    [estimator_spec.predictions.name]
+        else:
+            outputs = output_tensor_names
 
-      logger.info("Estimator output tensor names are {}.".format(outputs))
-      with tf.compat.v1.Session(graph=g) as sess:
-        sess.run(tf.compat.v1.global_variables_initializer())
-        # Freezing a graph requires output_node_names, which can be found in
-        # estimator_spec.predictions that contains prediction tensors as a
-        # dictionary
-        # When a model uses Iterator, we need to have 'MakeIterator' (default
-        # name used by TF) in the output_node_names as well.
-        output_nodes = list(set([output.split(':')[0] for output in outputs]))
-        if 'MakeIterator' in [node.op for node in g.as_graph_def().node]:
-            output_nodes.append('MakeIterator')
+        logger.info("Estimator output tensor names are {}.".format(outputs))
+        with tf.compat.v1.Session(graph=g) as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            # Freezing a graph requires output_node_names, which can be found in
+            # estimator_spec.predictions that contains prediction tensors as a
+            # dictionary
+            # When a model uses Iterator, we need to have 'MakeIterator' (default
+            # name used by TF) in the output_node_names as well.
+            output_nodes = list(set([output.split(':')[0] for output in outputs]))
+            if 'MakeIterator' in [node.op for node in g.as_graph_def().node]:
+                output_nodes.append('MakeIterator')
 
-        graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess,
-          g.as_graph_def(), output_nodes)
+            graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess,
+              g.as_graph_def(), output_nodes)
 
-      return graph_def_session(graph_def, input_tensor_names, outputs)
+        return graph_def_session(graph_def, input_tensor_names, outputs)
 
 def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with saved model
@@ -969,7 +962,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
     def model(self):
         import time
         import shutil
-        root = os.path.abspath(os.path.expanduser(cfg.default_workspace)) 
+        root = os.path.abspath(os.path.expanduser(cfg.default_workspace))
         root += str(time.time())
         if os.path.exists(root):
             shutil.rmtree(root)
@@ -1064,13 +1057,42 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
             builder.add_meta_graph_and_variables(sess,
                                                  [tag_constants.SERVING],
                                                  signature_def_map=sigs)
-        return root, builder                                         
+        return root, builder
 
     def save(self, root=None):
         root, builder = self.build_saved_model(root)
         builder.save()
         logger.info("Save quantized model to {}.".format(root))
 
+class TensorflowQATModel(TensorflowSavedModelModel):
+    def __init__(self, model='', **kwargs):
+        super(TensorflowQATModel, self).__init__(model)
+        self.keras_model = None
+        self.model_type = 'keras'
+
+    @property
+    def model(self):
+        if self.keras_model == None:
+            self.keras_model = tf.keras.models.load_model(self._model)
+        return self.keras_model
+
+    @model.setter
+    def model(self, q_model):
+        self.keras_model = q_model
+
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace + '/saved_model'
+        root = os.path.abspath(os.path.expanduser(root))
+        # if not have suffix, default append .pb
+        os.makedirs(os.path.dirname(root), exist_ok=True)
+        q_aware_model = self.keras_model
+        q_aware_model.save(root)
+        saved_format = 'saved_model'
+        if root.endswith('.h5'):
+            saved_format = 'h5 file'
+        logger.info("Save quantized model to {}.".format(saved_format))
+        return root
 
 class TensorflowCheckpointModel(TensorflowBaseModel):
 
@@ -1109,7 +1131,7 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'saved_model': TensorflowSavedModelModel,
                      'keras': TensorflowSavedModelModel,}
 
-class TensorflowModel(object): 
+class TensorflowModel(object):
     def __new__(cls, model_type, root, **kwargs):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -1167,4 +1189,7 @@ MODELS = {'tensorflow': TensorflowModel,
           'pytorch_ipex': PyTorchIpexModel if TORCH else None,
           'pytorch_fx': PyTorchFXModel if TORCH else None,
           'onnxruntime': ONNXModel,
+          'onnxrt_qlinearops': ONNXModel,
+          'onnxrt_qdq': ONNXModel,
+          'onnxrt_integerops': ONNXModel
           }

@@ -73,7 +73,8 @@ class TestSetTensor(unittest.TestCase):
             
             framework_specific_info = {'device': 'cpu', 'workspace_path': 'saved',\
                     'random_seed': 1978, 'inputs': ['input'], 'outputs': ['op_to_store'], \
-                    'approach': 'post_training_static_quant'}
+                    'approach': 'post_training_static_quant', 'format': 'default',
+                    'backend': 'default'}
             adaptor = TensorFlowAdaptor(framework_specific_info)
             adaptor.set_tensor(q_model, {'bias': np.random.random(16)})
 
@@ -136,7 +137,8 @@ class TestSetTensor(unittest.TestCase):
 
             framework_specific_info = {'device': 'cpu', 'workspace_path': 'saved',\
                     'random_seed': 1978, 'inputs': ['input'], 'outputs': ['op_to_store'], \
-                    'approach': 'post_training_static_quant'}
+                    'approach': 'post_training_static_quant', 'format': 'default',
+                    'backend': 'default'}
             adaptor = TensorFlowAdaptor(framework_specific_info)
             adaptor.set_tensor(q_model, {'bias1': np.random.randint(6,size=2, dtype='int32')})
             from tensorflow.core.framework import attr_value_pb2

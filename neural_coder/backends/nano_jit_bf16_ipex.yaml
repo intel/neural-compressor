@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .tuning_sampler import TuningSampler, OpWiseTuningSampler, OpTypeWiseTuningSampler, FallbackTuningSampler
-from .tuning_structs import OpTuningConfig
-from .tuning_space import TuningItem, TuningSpace
+transformation:
+  location:
+    - ["insert_below_model_definition_line", "insert_below_input_definition_line"]
+    - "indent_inference_line"
+  content:
+    - |-
+      [+] from bigdl.nano.pytorch import InferenceOptimizer
+      [+] MODEL_NAME = InferenceOptimizer.quantize(MODEL_NAME, accelerator="jit", precision="bf16", use_ipex=True, input_sample=INPUT_NAME)
+      [+] with InferenceOptimizer.get_context(MODEL_NAME):
+    - 1
+  order:
+    - below:
+      above:

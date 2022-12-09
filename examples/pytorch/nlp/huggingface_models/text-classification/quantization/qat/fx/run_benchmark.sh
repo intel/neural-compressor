@@ -64,7 +64,7 @@ function run_benchmark {
         extra_cmd=$extra_cmd" --int8"
     fi
 
-    python run_glue_tune.py \
+    python run_glue.py \
         --task_name ${task_name} \
         --do_train \
         --do_eval \
