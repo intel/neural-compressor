@@ -135,15 +135,15 @@ on_after_optimizer_step() : Implement after optimization step.
 
 
 
-The following section is an example of how to use hooks in user pass-in training function to perform BERT training:
+The following section is an example of how to use hooks in user pass-in training function to perform BERT training. Our pruning API supports multiple pruner objects in a single Pruning object, which means we can apply different pruning configurations for different layers in a model. Since these pruning configurations share the same parameter names, we introduce a global-local configuration structure to initialize a Pruning object. First, we set up a dict-like local_config, which refers to some unique configurations for specific pruners. Afterwards, we pass this local_config dict and common configurations for all pruners (known as "global setting") to Pruning's initialization function. Below is code example for how to utilize our global-local configuration method to initialize a Pruning object.
 
 
 
 ```python
 from neural_compressor.pruning import Pruning
 
-prune = Pruning(config_file)
-prune.update_config()
+prune = Pruning(config_dict)
+prune.update_config(start_step=1, end_step=10, pruning_frequency=1)
 prune.model = model
 prune.on_train_begin()
 for epoch in range(num_train_epochs):
@@ -161,9 +161,27 @@ for epoch in range(num_train_epochs):
             scheduler.step()  # Update learning rate schedule
             model.zero_grad()
         prune.on_step_end()
+    prune.on_epoch_end()
 ...
 ```
 
+```python
+config_dict = {
+            'target_sparsity': 0.9,  
+            'pruning_type': "magnitude_progressive",
+            'pattern': "4x1", 
+            'op_names': ['layer1.*'],  # A list of modules that would be pruned.
+            'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
+            'start_step': 0,
+            'end_step': 10,
+            'pruning_scope': "global",
+            'pruning_frequency': 1,
+            'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
+            'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
+            'sparsity_decay_type': "exp",
+            'pruning_op_types': ['Conv', 'Linear'], 
+        }
+```
 
 
 ## Examples
