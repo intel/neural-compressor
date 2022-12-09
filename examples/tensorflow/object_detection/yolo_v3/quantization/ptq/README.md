@@ -15,7 +15,7 @@ pip install neural-compressor
 ```shell
 pip install intel-tensorflow
 ```
-> Note: Supported Tensorflow versions please refer to Neural Compressor readme file.
+> Note: Only supported Tensorflow 1.x versions.
 
 ### 3. Installation Dependency packages
 ```shell
