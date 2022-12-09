@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.legacy.pruning_recipes import patterns
+from neural_compressor.experimental.pruning_recipes import patterns
 
 PRUNERS = {}
 
