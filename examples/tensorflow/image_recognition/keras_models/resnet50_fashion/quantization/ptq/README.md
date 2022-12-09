@@ -36,7 +36,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 ### 4. Prepare Pretrained model
 
-Run the `resnet50_fashion_mnist_train.py` script located in `LowPrecisionInferenceTool/examples/tensorflow/keras`, and it will generate a saved model called `resnet50_fashion` at current path.
+Run the `resnet50_fashion_mnist_train.py` script located in `examples/tensorflow/image_recognition/keras_models/resnet50_fashion/quantization/ptq`, and it will generate a saved model called `resnet50_fashion` at current path.
 
 ### 5. Prepare dataset
 

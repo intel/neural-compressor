@@ -126,7 +126,9 @@ class Pruning(Component):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
+                                   'q_dataloader': None,
+                                   'format': 'default',
+                                   'backend': 'default'}
 
         if self.framework == 'tensorflow':
             framework_specific_info.update(

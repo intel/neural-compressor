@@ -745,7 +745,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = "./onnxrt_test/optimized_model.onnx"  
-        session = ort.InferenceSession(model.SerializeToString(), sess_options)
+        session = ort.InferenceSession(model.SerializeToString(), sess_options, providers=ort.get_available_providers())
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
  
         q_config = {"Conv": self.static_q_config, "Relu": self.static_q_config}
@@ -758,7 +758,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.qdq_test(tmp_model, q_config, quantize_params, quantizable_op_types)
         
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
-        session = ort.InferenceSession(model.SerializeToString(), sess_options)
+        session = ort.InferenceSession(model.SerializeToString(), sess_options, providers=ort.get_available_providers())
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         self.qlinear_test(tmp_model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(tmp_model, q_config, quantize_params, quantizable_op_types)
@@ -766,7 +766,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         graph = helper.make_graph([conv_node, relu_node, add_node], 'test_graph_2', [A, B, E], [F])
         model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
-        session = ort.InferenceSession(model.SerializeToString(), sess_options)
+        session = ort.InferenceSession(model.SerializeToString(), sess_options, providers=ort.get_available_providers())
         tmp_model = onnx.load(sess_options.optimized_model_filepath)
         self.qlinear_test(tmp_model, q_config, quantize_params, quantizable_op_types)
         self.qdq_test(tmp_model, q_config, quantize_params, quantizable_op_types)
@@ -786,7 +786,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = "./onnxrt_test/optimized_model.onnx"
-        session = ort.InferenceSession(model.SerializeToString(), sess_options)
+        session = ort.InferenceSession(model.SerializeToString(), sess_options, providers=ort.get_available_providers())
         model = onnx.load(sess_options.optimized_model_filepath)
 
         q_config = {"Conv": self.static_q_config, "Clip": self.static_q_config}

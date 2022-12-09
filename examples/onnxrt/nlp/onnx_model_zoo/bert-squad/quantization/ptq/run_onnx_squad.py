@@ -538,7 +538,7 @@ def main():
         convert_examples_to_features(eval_examples, tokenizer, args.max_seq_length,
                                      args.doc_stride, args.max_query_length)
 
-    sess = onnxrt.InferenceSession(args.model, sess_options)
+    sess = onnxrt.InferenceSession(args.model, sess_options, providers=onnxrt.get_available_providers())
     for input_meta in sess.get_inputs():
         print(input_meta)
     n = len(input_ids)

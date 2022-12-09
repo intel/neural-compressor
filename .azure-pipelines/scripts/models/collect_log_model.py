@@ -133,9 +133,9 @@ def collect_log():
                 parse_tuning_line(line, tmp)
         print(tmp)
 
-        results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], URL))
-        results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], URL))
-        tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['strategy'], str(tmp['tune_time']), str(tmp['tuning_trials']), URL, f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
+        results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], "<url>"))
+        results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], "<url>"))
+        tuning_infos.append(';'.join([OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['strategy'], str(tmp['tune_time']), str(tmp['tuning_trials']), "<url>", f"{round(tmp['max_mem_size'] / tmp['total_mem_size'] * 100, 4)}%"])+'\n')
     # get model benchmark results
     for precision in ['int8', 'fp32']:
         throughput = 0.0

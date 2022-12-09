@@ -372,10 +372,12 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     if version.release >= Version("1.13.0").release:  # pragma: no cover
         from torch.ao.quantization import QConfigMapping
         fx_op_cfgs = QConfigMapping()
-        fx_op_cfgs.set_global(model_qconfig)
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs.set_global(model_qconfig)
     else:
         fx_op_cfgs = dict()
-        fx_op_cfgs[""] = model_qconfig
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs[""] = model_qconfig
         op_tuple_cfg_list = []
 
     for key, value in op_cfgs.items():
@@ -393,8 +395,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
 
     if version.release < Version("1.13.0").release:  # pragma: no cover
         fx_op_cfgs["module_name"] = op_tuple_cfg_list
-
-    if version.release >= Version("1.13.0").release:  # pragma: no cover
+    elif observer_type != 'post_training_dynamic_quant':
         from torch.ao.quantization import get_default_qconfig_mapping
         for name, q_config  in get_default_qconfig_mapping().to_dict()['object_type']:
             fx_op_cfgs.set_object_type(name, q_config)
@@ -1331,7 +1332,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model._model, inplace=True)
-        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+        if self.model.q_config is not None and len(self.model.q_config['bf16_ops_list']) > 0 and \
             self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
@@ -2738,6 +2739,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept
             # neural_compressor model and user defined func should accept framework model.
+            # For export API
+            hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
             q_model._model = q_func(
                 q_model if getattr(q_func, 'builtin', None) else q_model._model)
             assert q_model._model is not None, "Please return a trained model in train function!"
@@ -2745,7 +2748,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             if self.sub_module_list is None:
                 tmp_model = q_model._model
-                if self.version > Version("1.12.1"):  # pragma: no cover
+                if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                     # pylint: disable=E1123
                     q_model._model = prepare_fx(
                         q_model._model,
@@ -2766,6 +2769,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     prefix='',
                                                     example_inputs=example_inputs)
             if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
+                # For export API
+                hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
                 iterations = tune_cfg.get('calib_iteration', 1)
                 if q_func is not None:
                     q_func(q_model._model)
@@ -2774,8 +2779,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                            dataloader,
                                            iterations,
                                            calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
+
+        if self.approach != 'post_training_dynamic_quant':
+            # For export API
+            scale_info = torch_utils.util._get_input_scale(q_model._model, hook_list)
+
         if self.sub_module_list is None:
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model,
                                             convert_custom_config=self.convert_custom_config_dict)
@@ -2796,6 +2806,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
+            q_model.q_config['scale_info'] = scale_info
 
         self._dump_model_op_stats(q_model._model, q_model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(q_model._model)
@@ -2873,10 +2884,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 quantized_ops[op[0]] = torch.quantization.default_dynamic_qconfig
             else:
                 quantized_ops[op[0]] = q_cfgs
-        # build for fetching scale and zeropoint
+        # build op_config_dict to save module scale and zeropoint
         op_config_dict = {}
         for op in quantizable_ops:
             op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
+
         if self.version.release < Version("1.11.0").release:
             quantized_ops["default_qconfig"] = None
         else:
@@ -2928,8 +2940,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             'sub_module_list': self.sub_module_list,
             'approach': 'quant_aware_training'
         }
+        # For export API
+        global hook_list
+        hook_list = torch_utils.util._set_input_scale_hook(self.model._model, quantized_ops)
 
     def _post_hook_for_qat(self):
+        # For export API
+        scale_info = torch_utils.util._get_input_scale(self.model._model, hook_list)
+        self.model.q_config['scale_info'] = scale_info
         from torch.quantization.quantize_fx import convert_fx
         if self.sub_module_list is None:
             if self.version > Version("1.12.1"):  # pragma: no cover
@@ -3407,7 +3425,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         try:
             tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
             graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1124, E1123
                 fused_model = _fuse_fx(graph_module,
                                         is_qat,
