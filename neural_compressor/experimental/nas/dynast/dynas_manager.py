@@ -284,11 +284,11 @@ class ParameterManager:
             return features_train, features_test, labels_train, labels_test
 
 
-class TransformerLTEncoding(ParameterManager):
-    def __init__(self, param_dict: dict, verbose: bool = False, seed: int = 0):
+class TransformerLTEncoding(ParameterManager):  #noqa: D101
+    def __init__(self, param_dict: dict, verbose: bool = False, seed: int = 0):  #noqa: D107
         super().__init__(param_dict, verbose, seed)
 
-    def onehot_custom(self, subnet_cfg, provide_onehot=True):
+    def onehot_custom(self, subnet_cfg, provide_onehot=True):  #noqa: D102
 
         features = []
         #import ipdb;ipdb.set_trace()
@@ -399,7 +399,6 @@ class TransformerLTEncoding(ParameterManager):
         df - the output dataframe that contains the original config dict, pymoo, and 1-hot
              equivalent vector for training.
         """
-
         if column_names == None:
             df = pd.read_csv(filepath)
         else:
@@ -442,11 +441,10 @@ class TransformerLTEncoding(ParameterManager):
         split: float = 0.33,
         seed: bool = None,
     ) -> Tuple[list, list, list, list]:
-        '''
-        Create a sklearn compatible test/train set from an imported results csv
-        after "import_csv" method is run.
-        '''
+        """Create a sklearn compatible test/train.
 
+        The set is created from an imported results csv after "import_csv" method is run.
+        """
         collect_rows = list()
         for i in range(len(dataframe)):
             collect_rows.append(np.asarray(dataframe['config_onehot'].iloc[i]))

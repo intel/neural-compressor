@@ -336,7 +336,7 @@ class OFARunner(Runner):
         return self.subnet
 
 
-class TransformerLTRunner(Runner):
+class TransformerLTRunner(Runner):  #noqa: D101
 
     def __init__(
         self,
@@ -348,7 +348,7 @@ class TransformerLTRunner(Runner):
         batch_size: int,
         checkpoint_path: str,
         **kwargs,
-    ) -> None:
+    ) -> None:  #noqa: D107
         self.supernet = supernet
         self.acc_predictor = acc_predictor
         self.macs_predictor = macs_predictor
@@ -362,28 +362,28 @@ class TransformerLTRunner(Runner):
     def estimate_accuracy_bleu(
         self,
         subnet_cfg: dict,
-    ) -> float:
+    ) -> float:  #noqa: D102
         top1 = self.acc_predictor.predict(subnet_cfg)
         return top1
 
     def estimate_macs(
         self,
         subnet_cfg: dict,
-    ) -> int:
+    ) -> int:  #noqa: D102
         macs = self.macs_predictor.predict(subnet_cfg)
         return macs
 
     def estimate_latency(
         self,
         subnet_cfg: dict,
-    ) -> float:
+    ) -> float:  #noqa: D102
         latency = self.latency_predictor.predict(subnet_cfg)
         return latency
 
     def validate_bleu(
         self,
         subnet_cfg: dict,
-    ) -> float:  # pragma: no cover
+    ) -> float:    #noqa: D102
 
         bleu = compute_bleu(subnet_cfg, self.dataset_path,
                             self.checkpoint_path)
@@ -393,13 +393,13 @@ class TransformerLTRunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> float:
-        """Measure Torch model's FLOPs/MACs as per FVCore calculation
+        """Measure Torch model's FLOPs/MACs as per FVCore calculation.
+
         Args:
             subnet_cfg: sub-network Torch model
         Returns:
             `macs`
         """
-
         macs = compute_macs(subnet_cfg, self.dataset_path)
         logger.info('[DyNAS-T] Model\'s macs: {}'.format(macs))
 
@@ -411,12 +411,12 @@ class TransformerLTRunner(Runner):
         subnet_cfg: dict,
     ) -> Tuple[float, float]:
         """Measure model's latency.
+
         Args:
             subnet_cfg: sub-network Torch model
         Returns:
             mean latency; std latency
         """
-
         latency_mean, latency_std = compute_latency(
             subnet_cfg, self.dataset_path, self.batch_size)
         logger.info(
@@ -610,7 +610,7 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
             return sample, macs, -top1
 
 
-class EvaluationInterfaceTransformerLT(EvaluationInterface):
+class EvaluationInterfaceTransformerLT(EvaluationInterface):  #noqa: D101
     def __init__(
         self,
         evaluator: Runner,
@@ -618,13 +618,13 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
         metrics=['acc', 'macs'],
         predictor_mode=False,
         csv_path=None,
-    ) -> None:
+    ) -> None:  #noqa: D107
         super().__init__(evaluator, manager, metrics, predictor_mode, csv_path)
 
     def eval_subnet(
         self,
         x: list,
-    ) -> Tuple[dict, float, float]:
+    ) -> Tuple[dict, float, float]:  #noqa: D102
         # PyMoo vector to Elastic Parameter Mapping
         param_dict = self.manager.translate2param(x)
 
@@ -678,7 +678,7 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
         else:
             return sample, macs, -bleu
 
-    def clear_csv(self) -> None:
+    def clear_csv(self) -> None:  #noqa: D102
         if self.csv_path:
             f = open(self.csv_path, "w")
             writer = csv.writer(f)

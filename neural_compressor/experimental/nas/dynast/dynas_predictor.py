@@ -70,6 +70,7 @@ class Predictor:
 
     def train(self, examples, labels):
         """Train the predictor on the specified examples and labels using the underlying regressor.
+
         Args:
             examples: Examples to be used for training.
             labels: Labels to be used for training.

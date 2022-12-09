@@ -1,3 +1,4 @@
+#noqa: D100
 # https://github.com/mit-han-lab/hardware-aware-transformers/blob/master/LICENSE
 #
 # Copyright (c) 2022 Intel Corporation
@@ -34,9 +35,9 @@ DEFAULT_MAX_TARGET_POSITIONS = 1024
 
 
 class TransformerSuperNetwork(BaseFairseqModel):
-    """
-    Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)
-    <https://arxiv.org/abs/1706.03762>`_.
+    """Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)`.
+
+    <https://arxiv.org/abs/1706.03762>
 
     Args:
         encoder (TransformerEncoder): the encoder
@@ -50,7 +51,7 @@ class TransformerSuperNetwork(BaseFairseqModel):
         :prog:
     """
 
-    def __init__(self, task):
+    def __init__(self, task):  #noqa: D107
         super().__init__()
 
         src_dict, tgt_dict = task.source_dictionary, task.target_dictionary
@@ -76,7 +77,7 @@ class TransformerSuperNetwork(BaseFairseqModel):
         self.decoder = TransformerDecoder(
             decoder_config, tgt_dict, decoder_embed_tokens)
 
-    def build_embedding(self, dictionary, embed_dim, path=None):
+    def build_embedding(self, dictionary, embed_dim, path=None):  #noqa: D102
         num_embeddings = len(dictionary)
         padding_idx = dictionary.pad()
         emb = Embedding(num_embeddings, embed_dim, padding_idx)
@@ -86,12 +87,12 @@ class TransformerSuperNetwork(BaseFairseqModel):
             utils.load_embedding(embed_dict, dictionary, emb)
         return emb
 
-    def profile(self, mode=True):
+    def profile(self, mode=True):  #noqa: D102
         for module in self.modules():
             if hasattr(module, 'profile') and self != module:
                 module.profile(mode)
 
-    def get_sampled_params_numel(self, config):
+    def get_sampled_params_numel(self, config):  #noqa: D102
         self.set_sample_config(config)
         numels = []
         for name, module in self.named_modules():
@@ -105,21 +106,21 @@ class TransformerSuperNetwork(BaseFairseqModel):
                 numels.append(module.calc_sampled_param_num())
         return sum(numels)
 
-    def set_sample_config(self, config):
+    def set_sample_config(self, config):  #noqa: D102
         logger.info('[DyNAS-T] Setting active configuration to {}'.format(config))
         self.encoder.set_sample_config(config)
         self.decoder.set_sample_config(config)
 
-    def forward(self,src_tokens,src_lengths,prev_output_token):
+    def forward(self,src_tokens,src_lengths,prev_output_token):  #noqa: D102
          encoder_output = self.encoder.forward(src_tokens,src_lengths)
          output = self.decoder(prev_output_token,encoder_output)
          return output
 
 
 class TransformerEncoder(FairseqEncoder):
-    """
-    Transformer encoder consisting of *args.encoder_layers* layers. Each layer
-    is a :class:`TransformerEncoderLayer`.
+    """Transformer encoder consisting of *args.encoder_layers* layers.
+
+    Each layer is a :class:`TransformerEncoderLayer`.
 
     Args:
         args (argparse.Namespace): parsed command-line arguments
@@ -127,7 +128,7 @@ class TransformerEncoder(FairseqEncoder):
         embed_tokens (torch.nn.Embedding): input embedding
     """
 
-    def __init__(self, encoder_config, dictionary, embed_tokens):
+    def __init__(self, encoder_config, dictionary, embed_tokens):  #noqa: D107
         super().__init__(dictionary)
         # the configs of super arch
         self.super_embed_dim = encoder_config['encoder_embed_dim']
@@ -178,7 +179,7 @@ class TransformerEncoder(FairseqEncoder):
 
         self.vocab_original_scaling = False
 
-    def set_sample_config(self, config: dict):
+    def set_sample_config(self, config: dict):  #noqa: D102
 
         self.sample_embed_dim = config['encoder']['encoder_embed_dim']
 
@@ -221,6 +222,7 @@ class TransformerEncoder(FairseqEncoder):
 
     def forward(self, src_tokens, src_lengths):
         """Forward function.
+
         Args:
             src_tokens (LongTensor): tokens in the source language of shape
                 `(batch, src_len)`
@@ -268,8 +270,7 @@ class TransformerEncoder(FairseqEncoder):
         }
 
     def reorder_encoder_out(self, encoder_out, new_order):
-        """
-        Reorder encoder output according to *new_order*.
+        """Reorder encoder output according to *new_order*.
 
         Args:
             encoder_out: output from the ``forward()`` method
@@ -323,9 +324,9 @@ class TransformerEncoder(FairseqEncoder):
 
 
 class TransformerDecoder(FairseqIncrementalDecoder):
-    """
-    Transformer decoder consisting of *args.decoder_layers* layers. Each layer
-    is a :class:`TransformerDecoderLayer`.
+    """Transformer decoder consisting of *args.decoder_layers* layers.
+
+    Each layer is a :class:`TransformerDecoderLayer`.
 
     Args:
         args (argparse.Namespace): parsed command-line arguments
@@ -335,7 +336,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             (default: False).
     """
 
-    def __init__(self, decoder_config, dictionary, embed_tokens, no_encoder_attn=False):
+    def __init__(self, decoder_config, dictionary, embed_tokens, no_encoder_attn=False):  #noqa: D107
         super().__init__(dictionary)
 
         # the configs of super arch
@@ -409,7 +410,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
         self.vocab_original_scaling = False
 
-    def set_sample_config(self, config: dict):
+    def set_sample_config(self, config: dict):  #noqa: D102
 
         self.sample_embed_dim = config['decoder']['decoder_embed_dim']
         self.sample_encoder_embed_dim = config['encoder']['encoder_embed_dim']
@@ -460,7 +461,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 layer.set_sample_config(is_identity_layer=True)
 
     def forward(self, prev_output_tokens, encoder_out=None, incremental_state=None, **unused):
-        """
+        """Forward pass.
+
         Args:
             prev_output_tokens (LongTensor): previous decoder outputs of shape
                 `(batch, tgt_len)`, for teacher forcing
@@ -480,8 +482,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         return x, extra
 
     def extract_features(self, prev_output_tokens, encoder_out=None, incremental_state=None, **unused):
-        """
-        Similar to *forward* but only return features.
+        """Similar to *forward* but only return features.
 
         Returns:
             tuple:
@@ -594,7 +595,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         ipdb.set_trace()
         return min(self.max_target_positions, self.embed_positions.max_positions())
 
-    def buffered_future_mask(self, tensor):
+    def buffered_future_mask(self, tensor):  #noqa: D102
         dim = tensor.size(0)
         if not hasattr(self, '_future_mask') or self._future_mask is None or self._future_mask.device != tensor.device or self._future_mask.size(0) < dim:
             self._future_mask = torch.triu(
@@ -651,7 +652,7 @@ class TransformerEncoderLayer(nn.Module):
         args (argparse.Namespace): parsed command-line arguments
     """
 
-    def __init__(self, encoder_config, layer_idx):
+    def __init__(self, encoder_config, layer_idx):  #noqa: D107
         super().__init__()
 
         # the configs of super arch
@@ -692,7 +693,15 @@ class TransformerEncoderLayer(nn.Module):
                                super_out_dim=self.super_embed_dim, uniform_=None, non_linear='linear')
         self.final_layer_norm = LayerNormSuper(self.super_embed_dim)
 
-    def set_sample_config(self, is_identity_layer, sample_embed_dim=None, sample_ffn_embed_dim_this_layer=None, sample_self_attention_heads_this_layer=None, sample_dropout=None, sample_activation_dropout=None):
+    def set_sample_config(
+        self,
+        is_identity_layer,
+        sample_embed_dim=None,
+        sample_ffn_embed_dim_this_layer=None,
+        sample_self_attention_heads_this_layer=None,
+        sample_dropout=None,
+        sample_activation_dropout=None,
+    ):  #noqa: D102
 
         if is_identity_layer:
             self.is_identity_layer = True
@@ -722,7 +731,8 @@ class TransformerEncoderLayer(nn.Module):
             sample_embed_dim=self.sample_embed_dim)
 
     def upgrade_state_dict_named(self, state_dict, name):
-        """
+        """Renames keys in state dict.
+
         Rename layer norm states from `...layer_norms.0.weight` to
         `...self_attn_layer_norm.weight` and `...layer_norms.1.weight` to
         `...final_layer_norm.weight`
@@ -741,7 +751,8 @@ class TransformerEncoderLayer(nn.Module):
                     del state_dict[k]
 
     def forward(self, x, encoder_padding_mask, attn_mask=None):
-        """
+        """Forward pass.
+
         Args:
             x (Tensor): input to the layer of shape `(seq_len, batch, embed_dim)`
             encoder_padding_mask (ByteTensor): binary ByteTensor of shape
@@ -786,7 +797,7 @@ class TransformerEncoderLayer(nn.Module):
         x = self.maybe_layer_norm(self.final_layer_norm, x, after=True)
         return x
 
-    def maybe_layer_norm(self, layer_norm, x, before=False, after=False):
+    def maybe_layer_norm(self, layer_norm, x, before=False, after=False):  #noqa: D102
         assert before ^ after
         if after ^ self.normalize_before:
             return layer_norm(x)
@@ -811,7 +822,7 @@ class TransformerDecoderLayer(nn.Module):
             (default: False).
     """
 
-    def __init__(self, decoder_config, layer_idx, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False):
+    def __init__(self, decoder_config, layer_idx, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False):  #noqa: D107
         super().__init__()
 
         # the configs of super arch
@@ -883,7 +894,16 @@ class TransformerDecoderLayer(nn.Module):
 
         self.onnx_trace = False
 
-    def set_sample_config(self, is_identity_layer, sample_embed_dim=None, sample_encoder_embed_dim=None, sample_ffn_embed_dim_this_layer=None, sample_self_attention_heads_this_layer=None, sample_ende_attention_heads_this_layer=None, sample_dropout=None, sample_activation_dropout=None):
+    def set_sample_config(self,
+        is_identity_layer,
+        sample_embed_dim=None,
+        sample_encoder_embed_dim=None,
+        sample_ffn_embed_dim_this_layer=None,
+        sample_self_attention_heads_this_layer=None,
+        sample_ende_attention_heads_this_layer=None,
+        sample_dropout=None,
+        sample_activation_dropout=None,
+    ):  #noqa: D102
 
         if is_identity_layer:
             self.is_identity_layer = True
@@ -918,7 +938,7 @@ class TransformerDecoderLayer(nn.Module):
         self.final_layer_norm.set_sample_config(
             sample_embed_dim=self.sample_embed_dim)
 
-    def prepare_for_onnx_export_(self):
+    def prepare_for_onnx_export_(self):  #noqa: D102
         self.onnx_trace = True
 
     def forward(
@@ -932,7 +952,8 @@ class TransformerDecoderLayer(nn.Module):
         self_attn_mask=None,
         self_attn_padding_mask=None,
     ):
-        """
+        """Forward pass.
+
         Args:
             x (Tensor): input to the layer of shape `(seq_len, batch, embed_dim)`
             encoder_padding_mask (ByteTensor): binary ByteTensor of shape
@@ -1005,28 +1026,28 @@ class TransformerDecoderLayer(nn.Module):
             return x, attn, self_attn_state
         return x, attn
 
-    def maybe_layer_norm(self, layer_norm, x, before=False, after=False):
+    def maybe_layer_norm(self, layer_norm, x, before=False, after=False):  #noqa: D102
         assert before ^ after
         if after ^ self.normalize_before:
             return layer_norm(x)
         else:
             return x
 
-    def make_generation_fast_(self, need_attn=False, **kwargs):
+    def make_generation_fast_(self, need_attn=False, **kwargs):  #noqa: D102
         self.need_attn = need_attn
 
 
-def calc_dropout(dropout, sample_embed_dim, super_embed_dim):
+def calc_dropout(dropout, sample_embed_dim, super_embed_dim):  #noqa: D103
     return dropout * 1.0 * sample_embed_dim / super_embed_dim
 
 
-def Embedding(num_embeddings, embedding_dim, padding_idx):
+def Embedding(num_embeddings, embedding_dim, padding_idx):  #noqa: D103
     return EmbeddingSuper(num_embeddings, embedding_dim, padding_idx=padding_idx)
 
 
-def Linear(in_features, out_features, bias=True, uniform_=None, non_linear='linear'):
+def Linear(in_features, out_features, bias=True, uniform_=None, non_linear='linear'):  #noqa: D103
     m = nn.Linear(in_features, out_features, bias)
-    nn.init.xavier_uniform_(m.weight) if uniform_ is None else uniform_(
+    nn.init.xavier_uniform_(m.weight) if uniform_ is None else uniform_(  #noqa: D103
         m.weight, non_linear=non_linear)
     if bias:
         nn.init.constant_(m.bias, 0.)
