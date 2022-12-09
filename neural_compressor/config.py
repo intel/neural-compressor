@@ -17,7 +17,6 @@
 
 import datetime
 import logging
-from typing import List
 from schema import Schema, And, Optional
 from .conf.dotdict import DotDict
 from .conf.config import Pruner
@@ -44,7 +43,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s))},
@@ -57,7 +56,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
@@ -65,24 +64,20 @@ ops_schema = Schema({
 
 def check_value(name, src, supported_type, supported_value=[]):
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
-        logger.warning("Type of {} items should be {} but not {}, " \
-            "use its default value.".format(name, str(supported_type), [type(i) for i in src]))
-        return False
+        assert False, ("Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src]))
     elif not isinstance(src, list) and not isinstance(src, supported_type):
-        logger.warning("Type of {} should be {} but not {}, " \
-            "use its default value.".format(name, str(supported_type), type(src)))
-        return False
+        assert False, ("Type of {} should be {} but not {}".format(
+            name, str(supported_type), type(src)))
 
     if len(supported_value) > 0:
         if isinstance(src, str) and src not in supported_value:
-            logger.warning("{} is not in supported {}: {}. Skip setting it and" \
-                " use default value.".format(src, name, str(supported_value)))
-            return False
+            assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
+                src, name, str(supported_value)))
         elif isinstance(src, list) and all([isinstance(i, str) for i in src]) and \
             any([i not in supported_value for i in src]):
-            logger.warning("{} is not in supported {}: {}. Skip setting it and" \
-                " use default value.".format(src, name, str(supported_value)))
-            return False
+            assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
+                src, name, str(supported_value)))
 
     return True
 
@@ -90,10 +85,10 @@ def check_value(name, src, supported_type, supported_value=[]):
 class Options:
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
-        self._random_seed = random_seed
-        self._workspace = workspace
-        self._resume_from = resume_from
-        self._tensorboard = tensorboard
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+        self.tensorboard = tensorboard
 
     @property
     def random_seed(self):
@@ -119,7 +114,7 @@ class Options:
 
     @resume_from.setter
     def resume_from(self, resume_from):
-        if check_value('resume_from', resume_from, str):
+        if resume_from is None or check_value('resume_from', resume_from, str):
             self._resume_from = resume_from
 
     @property
@@ -139,20 +134,32 @@ class BenchmarkConfig:
     def __init__(self,
                  inputs=[],
                  outputs=[],
+                 backend='default',
                  warmup=5,
                  iteration=-1,
                  cores_per_instance=None,
                  num_of_instance=None,
                  inter_num_of_threads=None,
                  intra_num_of_threads=None):
-        self._inputs = inputs
-        self._outputs = outputs
-        self._warmup = warmup
-        self._iteration = iteration
-        self._cores_per_instance = cores_per_instance
-        self._num_of_instance = num_of_instance
-        self._inter_num_of_threads = inter_num_of_threads
-        self._intra_num_of_threads = intra_num_of_threads
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.warmup = warmup
+        self.iteration = iteration
+        self.cores_per_instance = cores_per_instance
+        self.num_of_instance = num_of_instance
+        self.inter_num_of_threads = inter_num_of_threads
+        self.intra_num_of_threads = intra_num_of_threads
+
+    @property
+    def backend(self):
+        return self._backend
+
+    @backend.setter
+    def backend(self, backend):
+        if check_value('backend', backend, str, [
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            self._backend = backend
 
     @property
     def outputs(self):
@@ -196,7 +203,8 @@ class BenchmarkConfig:
 
     @cores_per_instance.setter
     def cores_per_instance(self, cores_per_instance):
-        if check_value('cores_per_instance', cores_per_instance, int):
+        if cores_per_instance is None or check_value('cores_per_instance', cores_per_instance,
+                                                     int):
             self._cores_per_instance = cores_per_instance
 
     @property
@@ -205,7 +213,7 @@ class BenchmarkConfig:
 
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
-        if check_value('num_of_instance', num_of_instance, int):
+        if num_of_instance is None or check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
@@ -214,7 +222,8 @@ class BenchmarkConfig:
 
     @inter_num_of_threads.setter
     def inter_num_of_threads(self, inter_num_of_threads):
-        if check_value('inter_num_of_threads', inter_num_of_threads, int):
+        if inter_num_of_threads is None or check_value('inter_num_of_threads',
+                                                       inter_num_of_threads, int):
             self._inter_num_of_threads = inter_num_of_threads
 
     @property
@@ -223,41 +232,16 @@ class BenchmarkConfig:
 
     @intra_num_of_threads.setter
     def intra_num_of_threads(self, intra_num_of_threads):
-        if check_value('intra_num_of_threads', intra_num_of_threads, int):
+        if intra_num_of_threads is None or check_value('intra_num_of_threads',
+                                                       intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
 
 
-class AccuracyLoss:
-    def __init__(self, loss=0.01):
-        self._loss = loss
-
-    @property
-    def relative(self):
-        return self._loss
-
-    @relative.setter
-    def relative(self, relative):
-        if check_value('relative tolerable loss', relative, float):
-            self._loss = relative
-
-    @property
-    def absolute(self):
-        return self._loss
-
-    @absolute.setter
-    def absolute(self, absolute):
-        if check_value('absolute tolerable loss', absolute, float):
-            self._loss = absolute
-
-
-tolerable_loss = AccuracyLoss()
-
-
 class AccuracyCriterion:
-    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=tolerable_loss):
-        self._higher_is_better = higher_is_better
-        self._criterion = criterion
-        self._tolerable_loss = tolerable_loss
+    def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
+        self.higher_is_better = higher_is_better
+        self.criterion = criterion
+        self.tolerable_loss = tolerable_loss
 
     @property
     def higher_is_better(self):
@@ -270,28 +254,46 @@ class AccuracyCriterion:
 
     @property
     def relative(self):
-        if self._criterion != 'relative':
+        if self.criterion != 'relative':
             return None
-        return self._tolerable_loss.relative
+        return self.tolerable_loss
 
     @relative.setter
     def relative(self, relative):
-        self._criterion = 'relative'
-        self._tolerable_loss.relative = relative
+        self.criterion = 'relative'
+        self.tolerable_loss = relative
 
     @property
     def absolute(self):
-        if self._criterion != 'absolute':
+        if self.criterion != 'absolute':
             return None
-        return self._tolerable_loss.absolute
+        return self.tolerable_loss
 
     @absolute.setter
     def absolute(self, absolute):
-        self._criterion = 'absolute'
-        self._tolerable_loss.absolute = absolute
+        self.criterion = 'absolute'
+        self.tolerable_loss = absolute
+
+    @property
+    def criterion(self):
+        return self._criterion
+
+    @criterion.setter
+    def criterion(self, criterion):
+        if check_value('criterion', criterion, str, ['relative', 'absolute']):
+            self._criterion = criterion
+
+    @property
+    def tolerable_loss(self):
+        return self._tolerable_loss
+
+    @tolerable_loss.setter
+    def tolerable_loss(self, tolerable_loss):
+        if check_value('tolerable_loss', tolerable_loss, float):
+            self._tolerable_loss = tolerable_loss
 
     def __str__(self):
-        return self._criterion
+        return self.criterion
 
 
 accuracy_criterion = AccuracyCriterion()
@@ -301,7 +303,8 @@ class _BaseQuantizationConfig:
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend="NA",
+                 backend="default",
+                 quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
                  op_type_list=None,
@@ -313,47 +316,52 @@ class _BaseQuantizationConfig:
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
-                 extra_precisions=["bf16"],
+                 excluded_precisions=[],
                  optimization_level=1,
                  accuracy_criterion=accuracy_criterion):
-        self._inputs = inputs
-        self._outputs = outputs
-        self._backend = backend
-        self._device = device
-        self._op_type_list = op_type_list
-        self._op_name_list = op_name_list
-        self._strategy = strategy
-        self._strategy_kwargs = strategy_kwargs
-        self._objective = objective
-        self._timeout = timeout
-        self._max_trials = max_trials
-        self._performance_only = performance_only
-        self._reduce_range = reduce_range
-        self._extra_precisions = extra_precisions \
-            if isinstance(extra_precisions, List) else [extra_precisions]
-        self._optimization_level = optimization_level
-        self.use_bf16 = "bf16" in self._extra_precisions
-        self._accuracy_criterion = accuracy_criterion
-        self._calibration_sampling_size = calibration_sampling_size
+        self.inputs = inputs
+        self.outputs = outputs
+        self.backend = backend
+        self.quant_format = quant_format
+        self.device = device
+        self.op_type_list = op_type_list
+        self.op_name_list = op_name_list
+        self.strategy = strategy
+        self.strategy_kwargs = strategy_kwargs
+        self.objective = objective
+        self.timeout = timeout
+        self.max_trials = max_trials
+        self.performance_only = performance_only
+        self.reduce_range = reduce_range
+        self.excluded_precisions = excluded_precisions
+        self.use_bf16 = "bf16" not in self.excluded_precisions
+        self.accuracy_criterion = accuracy_criterion
+        self.calibration_sampling_size = calibration_sampling_size
+        self.optimization_level = optimization_level
 
     @property
     def accuracy_criterion(self):
         return self._accuracy_criterion
 
-    @property
-    def extra_precisions(self):
-        return self._extra_precisions
+    @accuracy_criterion.setter
+    def accuracy_criterion(self, accuracy_criterion):
+        if check_value("accuracy_criterion", accuracy_criterion, AccuracyCriterion):
+            self._accuracy_criterion = accuracy_criterion
 
-    @extra_precisions.setter
-    def extra_precisions(self, extra_precisions):
-        if check_value('extra_precisions', extra_precisions, List):
-            self._extra_precisions = extra_precisions
-            self._use_bf16 = "bf16" in extra_precisions
+    @property
+    def excluded_precisions(self):
+        return self._excluded_precisions
+
+    @excluded_precisions.setter
+    def excluded_precisions(self, excluded_precisions):
+        if check_value("excluded_precisions", excluded_precisions, str, ["bf16"]):
+            self._excluded_precisions = excluded_precisions
+            self._use_bf16 = "bf16" not in excluded_precisions
 
     @property
     def optimization_level(self):
         return self._optimization_level
-    
+
     @optimization_level.setter
     def optimization_level(self, optimization_level):
         self._optimization_level = optimization_level
@@ -364,7 +372,7 @@ class _BaseQuantizationConfig:
 
     @reduce_range.setter
     def reduce_range(self, reduce_range):
-        if check_value('reduce_range', reduce_range, bool):
+        if reduce_range is None or check_value('reduce_range', reduce_range, bool):
             self._reduce_range = reduce_range
 
     @property
@@ -411,13 +419,13 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
     @property
     def strategy_kwargs(self):
         return self._strategy_kwargs
-    
+
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
@@ -428,13 +436,15 @@ class _BaseQuantizationConfig:
 
     @op_name_list.setter
     def op_name_list(self, op_name_list):
-        if not isinstance(op_name_list, dict):
-            logger.warning("Type of op_name_list should be dict but not {}, " \
-                "use its default value.".format(type(op_name_list)))
-        else:
+        if op_name_list is None:
+            self._op_name_list = op_name_list
+        elif isinstance(op_name_list, dict):
             for k, v in op_name_list.items():
                 ops_schema.validate(v)
             self._op_name_list = op_name_list
+        else:
+            assert False, ("Type of op_name_list should be dict but not {}, ".format(
+                type(op_name_list)))
 
     @property
     def op_type_list(self):
@@ -442,13 +452,15 @@ class _BaseQuantizationConfig:
 
     @op_type_list.setter
     def op_type_list(self, op_type_list):
-        if not isinstance(op_type_list, dict):
-            logger.warning("Type of op_type_list should be dict but not {}, " \
-                "use its default value.".format(type(op_type_list)))
-        else:
+        if op_type_list is None:
+            self._op_type_list = op_type_list
+        elif isinstance(op_type_list, dict):
             for k, v in op_type_list.items():
                 ops_schema.validate(v)
             self._op_type_list = op_type_list
+        else:
+            assert False, ("Type of op_type_list should be dict but not {}".format(
+                type(op_type_list)))
 
     @property
     def calibration_sampling_size(self):
@@ -469,15 +481,23 @@ class _BaseQuantizationConfig:
             self._device = device
 
     @property
+    def quant_format(self):
+        return self._quant_format
+
+    @quant_format.setter
+    def quant_format(self, quant_format):
+        if check_value('quant_format', quant_format, str,
+            ['default', 'QDQ', 'QOperator']):
+            self._quant_format = quant_format
+
+    @property
     def backend(self):
         return self._backend
 
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'tensorflow', 'tensorflow_itex', 'pytorch', 'pytorch_ipex', 'pytorch_fx',
-                'onnxrt_qlinearops', 'onnxrt_integerops', 'onnxrt_qdq', 'onnxrt_qoperator', 'mxnet'
-        ]):
+                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -501,11 +521,11 @@ class _BaseQuantizationConfig:
 
 class TuningCriterion:
     def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
-        self._strategy = strategy
-        self._timeout = timeout
-        self._max_trials = max_trials
-        self._objective = objective
-        self._strategy_kwargs = strategy_kwargs
+        self.strategy = strategy
+        self.timeout = timeout
+        self.max_trials = max_trials
+        self.objective = objective
+        self.strategy_kwargs = strategy_kwargs
 
     @property
     def max_trials(self):
@@ -542,13 +562,13 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
-    
+
     @property
     def strategy_kwargs(self):
         return self._strategy_kwargs
-    
+
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
@@ -559,23 +579,26 @@ tuning_criterion = TuningCriterion()
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def __init__(self,
                  device="cpu",
-                 backend="NA",
+                 backend="default",
+                 quant_format="default",
                  inputs=[],
                  outputs=[],
-                 approach="auto",
+                 approach="static",
                  calibration_sampling_size=[100],
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions = ["bf16"],
+                 excluded_precisions=[],
                  optimization_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
+        self.tuning_criterion = tuning_criterion
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
                          backend=backend,
+                         quant_format=quant_format,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,
@@ -585,7 +608,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          timeout=tuning_criterion.timeout,
                          max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
-                         extra_precisions=extra_precisions,
+                         excluded_precisions=excluded_precisions,
                          optimization_level=optimization_level,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
@@ -599,21 +622,35 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         if check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
 
+    @property
+    def tuning_criterion(self):
+        return self._tuning_criterion
+
+    @tuning_criterion.setter
+    def tuning_criterion(self, tuning_criterion):
+        if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
+            self._tuning_criterion = tuning_criterion
+
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def __init__(self,
                  device="cpu",
-                 backend="NA",
+                 backend="default",
                  inputs=[],
                  outputs=[],
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
-                 extra_precisions=["bf16"],
+                 excluded_precisions=[],
                  optimization_level=1):
-        super().__init__(inputs=inputs, outputs=outputs, device=device, backend=backend,
-                         op_type_list=op_type_list, op_name_list=op_name_list,
-                         reduce_range=reduce_range, extra_precisions=extra_precisions, 
+        super().__init__(inputs=inputs,
+                         outputs=outputs,
+                         device=device,
+                         backend=backend,
+                         op_type_list=op_type_list,
+                         op_name_list=op_name_list,
+                         reduce_range=reduce_range,
+                         excluded_precisions=excluded_precisions,
                          optimization_level=optimization_level)
         self._approach = 'quant_aware_training'
 
@@ -632,7 +669,7 @@ class PruningConfig:
                  update_frequency_on_step=1, not_to_prune_names=[], prune_domain="global",
                  names=[], exclude_names=[], prune_layer_type=[], sparsity_decay_type="exp",
                  pattern="tile_pattern_1x1"):
-        self._weight_compression = DotDict({
+        self.weight_compression = DotDict({
             'initial_sparsity': initial_sparsity,
             'target_sparsity': target_sparsity,
             'max_sparsity_ratio_per_layer': max_sparsity_ratio_per_layer,
@@ -719,14 +756,14 @@ class DistillationConfig:
     """
 
     def __init__(self,
-                 teacher_model,
+                 teacher_model=None,
                  criterion=criterion,
                  optimizer={'SGD': {
                      'learning_rate': 0.0001
                  }}):
-        self._criterion = criterion.config
-        self._optimizer = optimizer
-        self._teacher_model = teacher_model
+        self.criterion = criterion.config
+        self.optimizer = optimizer
+        self.teacher_model = teacher_model
 
     @property
     def criterion(self):
@@ -756,19 +793,19 @@ class DistillationConfig:
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     def __init__(self,
                  device="cpu",
-                 backend="NA",
+                 backend="default",
                  inputs=[],
                  outputs=[],
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-                 extra_precisions=["bf16"]):
+                 excluded_precisions=[]):
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
                          backend=backend,
                          tuning_criterion=tuning_criterion,
                          accuracy_criterion=accuracy_criterion,
-                         extra_precisions=extra_precisions,
+                         excluded_precisions=excluded_precisions,
         )
 
 
@@ -783,13 +820,13 @@ class ExportConfig:
         output_names=None,
         dynamic_axes=None,
     ):
-        self._dtype = dtype
-        self._opset_version = opset_version
-        self._quant_format = quant_format
-        self._example_inputs = example_inputs
-        self._input_names = input_names
-        self._output_names = output_names
-        self._dynamic_axes = dynamic_axes
+        self.dtype = dtype
+        self.opset_version = opset_version
+        self.quant_format = quant_format
+        self.example_inputs = example_inputs
+        self.input_names = input_names
+        self.output_names = output_names
+        self.dynamic_axes = dynamic_axes
 
     @property
     def dtype(self):
@@ -896,19 +933,3 @@ class TF2ONNXConfig(ExportConfig):
             dynamic_axes=dynamic_axes,
         )
         self.kwargs = kwargs
-
-
-def set_random_seed(seed: int):
-    options.random_seed = seed
-
-
-def set_workspace(workspace: str):
-    options.workspace = workspace
-
-
-def set_resume_from(resume_from: str):
-    options.resume_from = resume_from
-
-
-def set_tensorboard(tensorboard: bool):
-    options.tensorboard = tensorboard

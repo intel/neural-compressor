@@ -29,4 +29,3 @@ stages:
           utScriptFileName: 'run_ncoder'
           uploadPath: $(UPLOAD_PATH)
           utArtifact: 'ut-ncoder'
-

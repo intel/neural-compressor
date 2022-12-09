@@ -203,7 +203,7 @@ As ResNet18/50/101 series are typical classification models, use Top-K as metric
 
 ### Prepare
 
-The related code please refer to examples/pytorch/ipex/image_recognition/imagenet/cpu/ptq/main.py.
+The related code please refer to examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex/main.py.
 
 ### Tuning With Intel PyTorch Extension
 
