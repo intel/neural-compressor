@@ -23,7 +23,11 @@ Pruning details
 
 
 
-    1.5. [Regularization](#regularization)
+    1.5. [Pruning Type](#pruning-type)
+
+
+
+    1.6. [Regularization](#regularization)
 
 
 
@@ -42,25 +46,23 @@ Neural network pruning is a promising model compression technique that removes t
 
 
 
+
 ### Pruning Patterns
 
 
-#### Unstructured Pruning
+- Unstructured Pruning
 
 
 Unstructured pruning means pruning the least salient connections in the model. The nonzero patterns are irregular and could be anywhere in the matrix.
 
 
-#### Structured Pruning
+- Structured Pruning
 
 
 Structured pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
 
 
-#### Progressive Pruning
 
-
-Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure. 
 
 
 
@@ -91,6 +93,7 @@ Pruning criteria determines how should the weights of a neural network be scored
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 
+
 ### Pruning Schedule
 
 
@@ -111,6 +114,23 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 
 
+
+### Pruning Type
+
+
+
+- Pattern_lock Pruning
+
+
+Pattern_lock pruning type uses masks of a fixed pattern during the pruning process.
+
+
+- Progressive Pruning
+
+
+Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
+
+
 ### Regularization
 
 
@@ -124,11 +144,12 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
+
 ## Pruning Examples
 
 
 
-We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System) and the examples are listed below. 
+We validate the pruning technique on typical models across various domains (including CV, NLP, and Recommendation System) and the examples are listed below. 
 
 
 <table>
