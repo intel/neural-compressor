@@ -194,6 +194,7 @@ stages:
         displayName: 'collect logs'
 
       - task: PublishPipelineArtifact@1
+        condition: succeededOrFailed()
         inputs:
           targetPath: $(UPLOAD_PATH)
           artifact: $(ARTIFACT_NAME)
