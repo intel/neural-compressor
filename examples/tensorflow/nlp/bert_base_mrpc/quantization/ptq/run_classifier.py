@@ -1092,7 +1092,6 @@ def main(_):
                 # dataloader should keep the order and len of inputs same with input_tensor
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
-                feed_dict = {}
                 feed_dict = dict(zip(input_tensor, inputs))
 
                 start = time.time()

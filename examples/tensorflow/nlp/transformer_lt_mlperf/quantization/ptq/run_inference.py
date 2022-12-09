@@ -312,11 +312,11 @@ def main(unused_args):
         calib_dataloader = common.DataLoader(dataset,
                                              collate_fn = collate_fn,
                                              batch_size = FLAGS.batch_size)
-        input_model = common.Model(graph)										
+										
         conf = PostTrainingQuantConfig(inputs=['input_tokens'],
                                         outputs=['model/Transformer/strided_slice_15'],
                                         calibration_sampling_size=[500])       
-        q_model = quantization.fit(input_model, conf=conf, calib_dataloader=calib_dataloader,
+        q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=eval_func)
         try:
             q_model.save(FLAGS.output_model)
