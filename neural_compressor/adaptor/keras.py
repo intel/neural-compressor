@@ -255,7 +255,8 @@ class KerasAdaptor(Adaptor):
 
     @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(self, model, dataloader, postprocess=None,
-                 metric=None, measurer=None, iteration=-1, tensorboard=False):
+                 metrics=None, measurer=None, iteration=-1,
+                 tensorboard=False, fp32_baseline=False):
         '''The function is used to run evaluation on validation dataset.
 
            Args:
@@ -266,17 +267,20 @@ class KerasAdaptor(Adaptor):
                measurer (object, optional): for precise benchmark measurement.
                iteration(int, optional): control steps of mini-batch
                tensorboard (boolean, optional): for tensorboard inspect tensor.
+               fp32_baseline (boolen, optional): only for compare_label=False pipeline
         '''
+        # use keras object
+        keras_model = model.model
         logger.info("Start to evaluate the Keras model.")
         results = []
         for idx, (inputs, labels) in enumerate(dataloader):
             # use predict on batch
             if measurer is not None:
                 measurer.start()
-                predictions = model.predict_on_batch(inputs)
+                predictions = keras_model.predict_on_batch(inputs)
                 measurer.end()
             else:
-                predictions = model.predict_on_batch(inputs)
+                predictions = keras_model.predict_on_batch(inputs)
 
             if self.fp32_preds_as_label:
                 self.fp32_results.append(predictions) if fp32_baseline else \

@@ -38,6 +38,17 @@ def build_dataset():
     y_test = keras.utils.to_categorical(y_test, num_classes)
     return x_train, y_train, x_test, y_test
 
+class Dataset():
+    def __init__(self, ):
+        self.inputs, self.labels, _, _ = build_dataset()
+
+    def __getitem__(self, idx):
+        return self.inputs[idx], self.labels[idx]
+
+    def __len__(self):
+        assert len(self.inputs) == len(self.labels), 'inputs should have equal len with labels'
+        return len(self.inputs)
+
 def build_model(x_train, y_train, x_test, y_test):
     if os.path.exists('fp32_model'):
         model = keras.models.load_model('fp32_model')

@@ -49,7 +49,7 @@ class KerasModel(BaseModel):
 
     @property
     def model(self):
-        return self._model
+        return self._model_object
 
     @property
     def graph_info(self):
