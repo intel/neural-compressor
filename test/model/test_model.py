@@ -135,7 +135,7 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
 
     def test_validate_graph_node(self):
-        from neural_compressor.model.model import validate_graph_node
+        from neural_compressor.model.tensorflow_model import validate_graph_node
         graph = build_graph()
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), []))
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), ['test']))
@@ -378,7 +378,7 @@ class TestONNXModel(unittest.TestCase):
 class TestPyTorchModel(unittest.TestCase):
     def testPyTorch(self):
         import torchvision
-        from neural_compressor.model.model import PyTorchModel, IPEXModel, PyTorchFXModel
+        from neural_compressor.model.torch_model import PyTorchModel, IPEXModel, PyTorchFXModel
         ori_model = torchvision.models.mobilenet_v2()
         self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
