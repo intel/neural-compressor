@@ -25,19 +25,20 @@ except:
     from .dot_dict import DotDict  ##TODO
 from .logger import logger
 
+
 class WeightPruningConfig:
     """
     similiar to torch optimizer's interface
     """
 
-    def __init__(self, pruners=[{}],  ##empty dict will use global values
+    def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
                  excluded_op_names=[],
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
-        self.pruning_configs = pruners
+        self.pruning_configs = pruning_configs
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
             'pruning_type': pruning_type,
@@ -64,8 +65,6 @@ class WeightPruningConfig:
     @weight_compression.setter
     def weight_compression(self, weight_compression):
         self._weight_compression = weight_compression
-        
-
 
 
 def check_config(prune_config):
