@@ -9,7 +9,7 @@ import torch.nn as nn
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
-from neural_compressor.config import WeightPruningConfig
+from neural_compressor.pruner.utils import WeightPruningConfig
 
 class TestPytorchPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
