@@ -41,8 +41,10 @@ class Node_collector:
 class HessianTrace:
     """
     please refer to
-    Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian." 2020 IEEE international conference on big data (Big data). IEEE, 2020.
-    Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks." Advances in neural information processing systems 33 (2020): 18518-18529.
+    Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian." 
+    2020 IEEE international conference on big data (Big data). IEEE, 2020.
+    Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks." 
+    Advances in neural information processing systems 33 (2020): 18518-18529.
     https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
     """
 
@@ -239,24 +241,25 @@ class HessianTrace:
         v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
         return v_t_H_v
 
-    def get_vtHv_act(self, params, num_samples):
-        v = self.sample_rademacher(params)
-        H_v = [0] * len(v)
-        cnt = 0
-        for step, data in enumerate(self.dataloader):
-            if cnt >= num_samples:
-                break
-            for i in range(self.dataloader.batchsize):  ##force to batchsize to be 1
-                input = data[0][i:i + 1]
-                target = data[1][i:i + 1]
+    # def get_vtHv_act(self, params, num_samples):
+    #     v = self.sample_rademacher(params)
+    #     H_v = [0] * len(v)
+    #     cnt = 0
+    #     for step, data in enumerate(self.dataloader):
+    #         if cnt >= num_samples:
+    #             break
+    #         for i in range(self.dataloader.batchsize):  ##force to batchsize to be 1
+    #             input = data[0][i:i + 1]
+    #             target = data[1][i:i + 1]
 
-                self.get_gradients(self.model, (input, target), self.criterion, create_graph=True)
-                layer_acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
-                layer_act_gradients = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]
-                hv_one = torch.autograd.grad(layer_act_gradients, layer_acts, v, only_inputs=True, retain_graph=False)
-                cnt += 1
-                if cnt >= num_samples:
-                    break
+    #             self.get_gradients(self.model, (input, target), self.criterion, create_graph=True)
+    #             layer_acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
+    #             layer_act_gradients = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]
+    #             hv_one = torch.autograd.grad(layer_act_gradients, layer_acts, v, 
+    #                                          only_inputs=True, retain_graph=False)
+    #             cnt += 1
+    #             if cnt >= num_samples:
+    #                 break
 
     def get_weight_traces(self, num_samples):
         import tqdm
@@ -567,7 +570,8 @@ def hawq_top(fp32_model,q_model,dataloader,criterion,enable_act):
     if enable_act:
         act_to_traces=traces['activation']
         for trace_i, pertur_i,act_i in zip(op_to_traces.keys(),pertur_lst.keys(),act_to_traces.keys()):
-                op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i]+act_to_traces[act_i] #Formula:Omig=Trace*L2+act_trace
+            #Formula:Omig=Trace*L2+act_trace
+            op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i]+act_to_traces[act_i] 
     else:
          for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
                 op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2       
