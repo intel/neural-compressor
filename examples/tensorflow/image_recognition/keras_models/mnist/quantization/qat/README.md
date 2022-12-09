@@ -71,7 +71,7 @@ After prepare step is done, we add quantization and benchmark code to generate q
 
 #### Tune
 ```python
-    logger.info('start quantizating the model...')
+    logger.info('start quantizing the model...')
     from neural_compressor import training, QuantizationAwareTrainingConfig
     config = QuantizationAwareTrainingConfig()
     # create a compression_manager instance to implement QAT
