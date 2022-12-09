@@ -20,9 +20,9 @@ from neural_compressor.utils.utility import LazyImport
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
-from neural_compressor.prune.prune_utils import process_config, parse_to_prune,\
+from neural_compressor.pruner.prune_utils import process_config, parse_to_prune,\
     check_config, update_params
-from neural_compressor.prune.pruners import get_pruner
+from neural_compressor.pruner.pruners import get_pruner
 from neural_compressor.utils import logger
 import re
 
