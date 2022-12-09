@@ -69,7 +69,6 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         conf = PostTrainingQuantConfig(
             approach="static",
-            backend="tensorflow",
             optimization_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
         
@@ -97,7 +96,6 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         conf = PostTrainingQuantConfig(
             approach="static",
-            backend="tensorflow",
             optimization_level=1,
             tuning_criterion=TuningCriterion(
                 strategy="mse_v2",
@@ -128,7 +126,6 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         conf = PostTrainingQuantConfig(
             approach="static",
-            backend="pytorch_fx",
             optimization_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
         
