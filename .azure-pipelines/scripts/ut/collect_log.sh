@@ -47,20 +47,25 @@ $BOLD_YELLOW && echo "clear upload path" && $RESET
 rm -fr log_dir/coverage_PR/.coverage*
 rm -fr log_dir/coverage_base/.coverage*
 rm -fr log_dir/ut-coverage-*
-if [[ ${coverage_PR_total} -lt ${coverage_base_total} ]]; then
-    decrease=$(($coverage_PR_total - $coverage_base_total))
-    rate=$(awk 'BEGIN{printf "%.2f%\n",'$decrease/100'}')
-    $BOLD_RED && echo "Unit Test failed with coverage decrease ${rate}%" && $RESET
-    $BOLD_RED && echo "compare coverage to give detail info" && $RESET
-    bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED"
-    exit 1
-else
-    $BOLD_GREEN && echo "Unit Test success with coverage ${coverage_PR_total}%" && $RESET
-    $BOLD_GREEN && echo "compare coverage to give detail info" && $RESET
-    bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS"
-    #sed "1i\Unit Test success with coverage ${coverage_PR_total}\n" ${coverage_log}
-fi
+# if [[ ${coverage_PR_total} -lt ${coverage_base_total} ]]; then
+#     decrease=$(($coverage_PR_total - $coverage_base_total))
+#     rate=$(awk 'BEGIN{printf "%.2f%\n",'$decrease/100'}')
+#     $BOLD_RED && echo "Unit Test failed with coverage decrease ${rate}%" && $RESET
+#     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
+#     bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED"
+#     exit 1
+# else
+#     $BOLD_GREEN && echo "Unit Test success with coverage ${coverage_PR_total}%" && $RESET
+#     $BOLD_GREEN && echo "compare coverage to give detail info" && $RESET
+#     bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS"
+#     #sed "1i\Unit Test success with coverage ${coverage_PR_total}\n" ${coverage_log}
+# fi
 
+decrease=$(($coverage_PR_total - $coverage_base_total))
+rate=$(awk 'BEGIN{printf "%.2f%\n",'$decrease/100'}')
+$BOLD_RED && echo "Unit Test failed with coverage decrease ${rate}%" && $RESET
+$BOLD_RED && echo "compare coverage to give detail info" && $RESET
+bash -x /neural-compressor/.azure-pipelines/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED"
 exit 1
 
 #rm -r ${coverage_log}
