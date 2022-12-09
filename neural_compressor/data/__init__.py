@@ -18,12 +18,16 @@
 """Built-in dataloaders, datasets, transforms, filters for multiple framework backends."""
 
 
-from .datasets import Datasets, Dataset, IterableDataset, dataset_registry
-from .transforms import TRANSFORMS, BaseTransform, transform_registry
-from .dataloaders import DATALOADERS
+import neural_compressor.data.datasets
+import neural_compressor.data.transforms
+from .data.datasets import Datasets, Dataset, IterableDataset, dataset_registry
+from .dataloaders import DATALOADERS, DataLoader
+from .transforms import TRANSFORMS, BaseTransform, transform_registry, Postprocess
+
 from .filters import FILTERS, Filter, filter_registry
 
 __all__ = [
+    "DataLoader",
     "DATALOADERS",
     "Datasets",
     "Dataset",
@@ -32,6 +36,7 @@ __all__ = [
     "TRANSFORMS",
     "BaseTransform",
     "transform_registry",
+    "Postprocess",
     "FILTERS",
     "Filter",
     "filter_registry",]
