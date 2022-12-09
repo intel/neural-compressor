@@ -15,8 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Built-in dataloaders for multiple framework backends."""
 
-from .dataloader import DATALOADERS
+from .dataloader import DataLoader, DATALOADERS
 
-__all__ = ["DATALOADERS"]
+__all__ = [
+    "DataLoader",
+    "DATALOADERS"
+]

@@ -18,6 +18,7 @@
 """Neural Compressor Built-in transforms for multiple framework backends."""
 
 from .transform import TRANSFORMS, BaseTransform, transform_registry
+from .postprocess import Postprocess
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -28,4 +29,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["TRANSFORMS", "BaseTransform", "transform_registry"]
+__all__ = ["TRANSFORMS", "BaseTransform", "transform_registry", "Postprocess"]
