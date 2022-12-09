@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .quantization import Quantization
 from .pruning import Pruning
 from .benchmark import Benchmark
 from .version import __version__
