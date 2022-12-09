@@ -105,9 +105,9 @@ def get_model_type(model):
 
     raise ValueError('model {} has not recognized model type....'.format(model))
 
+
 def validate_graph_node(graph_def, node_names):
     """Validate nodes exist in the graph_def
-
     Args:
         graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
         node_names (list of string): node names to be validated
@@ -127,12 +127,10 @@ def validate_graph_node(graph_def, node_names):
 def validate_and_inference_input_output(graph_def, \
     input_tensor_names, output_tensor_names):
     """validate and inference the input and output tensor names of graph_def
-
     Args:
         graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
         input_tensor_names (list of string): input_tensor_names of graph_def
         output_tensor_names (list of string): output_tensor_names of graph_def
-
     Returns:
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
@@ -155,12 +153,10 @@ def validate_and_inference_input_output(graph_def, \
 
 def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with tf.compat.v1.Graph
-
     Args:
         model (tf.compat.v1.Graph): tf.compat.v1.Graph object
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -179,12 +175,10 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
 def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with tf.compat.v1.GraphDef
-
     Args:
         model (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -211,12 +205,10 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
 def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with frozen pb
-
     Args:
         model (string): model path
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -240,12 +232,10 @@ def _contains_function_with_implements_attr(saved_model_proto):
 
 def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_names):
     """Load graph_def from saved model with the default serving signature key.
-
     Args:
       saved_model_dir: Directory of the SavedModel.
       saved_model_tags: Set of tags identifying the MetaGraphDef within the
         SavedModel to analyze.
-
     Returns:
       graph_def: The loaded GraphDef.
       input_tensors: List of input tensors.

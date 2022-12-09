@@ -30,7 +30,7 @@ torch = LazyImport('torch')
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')
-class DummyDataset(IterableDataset):
+class DummyDataset(IterableDataset):    # pragma: no cover
     """Dataset used for dummy_v2 data generation.
 
     This Dataset is to construct a dataset from a input shape and label shape.
@@ -147,7 +147,7 @@ class DummyDataset(IterableDataset):
                                                       onnxrt_qlinearops, onnxrt_integerops, \
                                                       pytorch, pytorch_ipex, pytorch_fx, mxnet",
                                                       dataset_format='')
-class SparseDummyDataset(IterableDataset):
+class SparseDummyDataset(IterableDataset):    # pragma: no cover
     """Dataset used for sparse_dummy_v2 data generation.
 
     This Dataset is to construct a dataset from a input shape and label shape.

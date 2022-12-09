@@ -20,7 +20,7 @@
 from abc import abstractmethod
 
 
-class BaseDataLoader:
+class BaseDataLoader:    # pragma: no cover
     """Base class for all DataLoaders.
 
     _generate_dataloader is needed to create a dataloader object

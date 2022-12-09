@@ -25,7 +25,7 @@ from .sampler import IterableSampler, SequentialSampler, BatchSampler
 from .fetcher import FETCHERS
 from .base_dataloader import BaseDataLoader
 
-def default_collate(batch):
+def default_collate(batch):    # pragma: no cover
     """Merge data with outer dimension batch size."""
     elem = batch[0]
     if isinstance(elem, collections.abc.Mapping):
@@ -41,7 +41,7 @@ def default_collate(batch):
     else:
         return batch
 
-class DefaultDataLoader(BaseDataLoader):
+class DefaultDataLoader(BaseDataLoader):    # pragma: no cover
     """DefaultDataLoader for multiple framework backends."""
     
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,

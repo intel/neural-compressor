@@ -18,6 +18,7 @@
 import os
 from neural_compressor.conf import config as cfg
 from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils import logger
 from .base_model import BaseModel
 mx = LazyImport('mxnet')
 

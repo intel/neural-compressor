@@ -24,7 +24,7 @@ from ..datasets.bert_dataset import ONNXRTBertDataset
 import logging
 torch = LazyImport('torch')
 
-class ONNXRTBertDataLoader(DefaultDataLoader):
+class ONNXRTBertDataLoader(DefaultDataLoader):    # pragma: no cover
     """Built-in dataloader for onnx bert model and its varients."""
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
@@ -62,7 +62,7 @@ class ONNXRTBertDataLoader(DefaultDataLoader):
             except StopIteration:
                 return
 
-class ONNXRTDataLoader(BaseDataLoader):
+class ONNXRTDataLoader(BaseDataLoader):    # pragma: no cover
     """Built-in dataloader for onnxruntime framework backends."""
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,

@@ -31,7 +31,7 @@ transformers = LazyImport('transformers')
 logger = logging.getLogger("neural_compressor")
 
 @dataset_registry(dataset_type="bert", framework="pytorch", dataset_format='')
-class PytorchBertDataset(Dataset):
+class PytorchBertDataset(Dataset):         # pragma: no cover
     """PyTorch dataset used for model Bert.
     
        This Dataset is to construct from the Bert TensorDataset and not a full implementation
@@ -114,7 +114,7 @@ class PytorchBertDataset(Dataset):
 
 @dataset_registry(dataset_type="GLUE", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
-class ONNXRTBertDataset(Dataset):
+class ONNXRTBertDataset(Dataset):    # pragma: no cover
     """ONNXRT dataset used for model Bert.
 
     Args: data_dir (str): The input data dir.
@@ -171,7 +171,7 @@ class ONNXRTBertDataset(Dataset):
 
 
 def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, \
-    model_type, tokenizer, evaluate):
+                model_type, tokenizer, evaluate):    # pragma: no cover
     """Load and cache the examples.
 
     Helper Function for ONNXRTBertDataset.
@@ -232,7 +232,7 @@ def convert_examples_to_features(
     pad_token=0,
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
-):
+    ):      # pragma: no cover
     """Convert examples to features.
 
     Helper function for load_and_cache_examples.
@@ -296,7 +296,7 @@ def convert_examples_to_features(
 
 
 @dataclass(frozen=True)
-class InputFeatures:
+class InputFeatures:    # pragma: no cover
     """Single set of features of data.
 
     Property names are the same names as the corresponding inputs to a model.
@@ -325,7 +325,7 @@ class InputFeatures:
 
 
 @dataset_registry(dataset_type="bert", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowBertDataset(Dataset):
+class TensorflowBertDataset(Dataset):    # pragma: no cover
     """Tensorflow dataset used for model Bert.
 
     This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.
@@ -363,7 +363,7 @@ class TensorflowBertDataset(Dataset):
         return 1
 
 
-class ParseDecodeBert():
+class ParseDecodeBert():    # pragma: no cover
     """Helper function for TensorflowModelZooBertDataset.
 
     Parse the features from sample.
@@ -395,7 +395,7 @@ class ParseDecodeBert():
         return (input_ids, input_mask, segment_ids)
 
 @dataset_registry(dataset_type="mzbert", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowModelZooBertDataset(Dataset):
+class TensorflowModelZooBertDataset(Dataset):    # pragma: no cover
     """Tensorflow dataset for three-input Bert in tf record format.
 
     Root is a full path to tfrecord file, which contains the file name.

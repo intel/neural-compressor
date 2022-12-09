@@ -41,7 +41,7 @@ tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
 torch = LazyImport('torch')
 
-class ParseDecodeCoco():
+class ParseDecodeCoco():    # pragma: no cover
     """Helper function for TensorflowModelZooBertDataset.
 
     Parse the features from sample.
@@ -97,7 +97,7 @@ class ParseDecodeCoco():
         return image_tensor, (bbox[0], str_label, int_label, image_id)
 
 @dataset_registry(dataset_type="COCORecord", framework="tensorflow, tensorflow_itex", dataset_format='')
-class COCORecordDataset(IterableDataset):
+class COCORecordDataset(IterableDataset):    # pragma: no cover
     """Tensorflow COCO dataset in tf record format.
 
     Root is a full path to tfrecord file, which contains the file name.
@@ -148,7 +148,7 @@ class COCORecordDataset(IterableDataset):
 @dataset_registry(dataset_type="COCORaw", framework="onnxrt_qlinearops, \
                     onnxrt_integerops, pytorch, mxnet, tensorflow, \
                     tensorflow_itex", dataset_format='')
-class COCORaw(Dataset):
+class COCORaw(Dataset):    # pragma: no cover
     """Coco raw dataset.
 
     Please arrange data in this way:
@@ -231,7 +231,7 @@ class COCORaw(Dataset):
 @dataset_registry(dataset_type="COCONpy", framework="onnxrt_qlinearops, \
                     onnxrt_integerops, pytorch, mxnet, tensorflow, \
                     tensorflow_itex", dataset_format='')
-class COCONpy(Dataset):
+class COCONpy(Dataset):    # pragma: no cover
     """COCO npy dataset.
 
     Please arrange data in this way:

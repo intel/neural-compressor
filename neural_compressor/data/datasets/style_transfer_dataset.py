@@ -25,7 +25,7 @@ from .dataset import dataset_registry, Dataset
 
 @dataset_registry(dataset_type="style_transfer", framework="tensorflow, \
                   tensorflow_itex", dataset_format='')
-class StyleTransferDataset(Dataset):
+class StyleTransferDataset(Dataset):     # pragma: no cover
     """Dataset used for style transfer task on tensorflow/inteltensorflow/tensorflow_itex backend.
 
     This Dataset is to construct a dataset from two specific image holders representing

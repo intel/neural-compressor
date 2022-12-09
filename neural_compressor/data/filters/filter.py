@@ -22,7 +22,7 @@ from neural_compressor.utils.utility import singleton
 
 
 @singleton
-class TensorflowFilters(object):
+class TensorflowFilters(object):    # pragma: no cover 
     """The base filter class for Tensorflow framework."""
 
     def __init__(self):
@@ -32,7 +32,7 @@ class TensorflowFilters(object):
 
 
 @singleton
-class ONNXRTQLFilters(object):
+class ONNXRTQLFilters(object):    # pragma: no cover 
     """The base filter class for ONNXRT framework QLinear mode."""
 
     def __init__(self):
@@ -42,7 +42,7 @@ class ONNXRTQLFilters(object):
 
 
 @singleton
-class ONNXRTITFilters(object):
+class ONNXRTITFilters(object):    # pragma: no cover 
     """The base filter class for ONNXRT framework IT mode."""
 
     def __init__(self):
@@ -52,7 +52,7 @@ class ONNXRTITFilters(object):
 
 
 @singleton
-class PyTorchFilters(object):
+class PyTorchFilters(object):    # pragma: no cover 
     """The base filter class for PyTorch framework."""
 
     def __init__(self):
@@ -62,7 +62,7 @@ class PyTorchFilters(object):
 
 
 @singleton
-class MXNetFilters(object):
+class MXNetFilters(object):    # pragma: no cover 
     """The base filter class for MXNet framework."""
 
     def __init__(self):
@@ -102,7 +102,7 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
                     "onnxrt_qlinearops": ONNXRT_QL_FILTERS}
 
 
-class FILTERS(object):
+class FILTERS(object):    # pragma: no cover 
     """The filter register for all frameworks.
 
     Args:
@@ -131,7 +131,7 @@ class FILTERS(object):
         return self.filters[filter_type]
 
 
-def filter_registry(filter_type, framework):
+def filter_registry(filter_type, framework):    # pragma: no cover 
     """Register all transform subclasses.
 
     Args:
@@ -164,7 +164,7 @@ def filter_registry(filter_type, framework):
     return decorator_transform
 
 
-class Filter(object):
+class Filter(object):    # pragma: no cover 
     """The base class for transform.
 
     __call__ method is needed when write user specific transform.
