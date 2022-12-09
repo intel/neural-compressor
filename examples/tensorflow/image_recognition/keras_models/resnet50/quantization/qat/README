@@ -4,6 +4,7 @@ Step-by-Step
 This document is used to apply QAT to Tensorflow Keras models using Intel® Neural Compressor.
 This example can run on Intel CPUs and GPUs.
 
+
 ## Prerequisite
 
 ### 1. Installation
@@ -41,8 +42,8 @@ python prepare_model.py --output_model=/path/to/model
 
 ## Run Command
   ```shell
-  bash run_tuning.sh --input_model=./path/to/model --output_model=./result 
-  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --batch_size=32
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=100
   ```
 
 Details of enabling Intel® Neural Compressor to apply QAT.
@@ -50,7 +51,7 @@ Details of enabling Intel® Neural Compressor to apply QAT.
 
 This is a tutorial of how to to apply QAT with Intel® Neural Compressor.
 ## User Code Analysis
-1. User specifies fp32 *model* to apply quantization, the dataset is automatically downloaded. In this step, QDQ patterns will be inserted to the keras model, but the fp32 model will not be converted to a int8 model.
+1. User specifies fp32 *model*, training dataset *dataset_location* to apply quantization. In this step, QDQ patterns will be inserted to the keras model, but the fp32 model will not be converted to a int8 model.
 
 2. User specifies *model* with QDQ patterns inserted, evaluate function to run benchmark. The model we get from the previous step will be run on ITEX backend. Then, the model is going to be fused and inferred.
 
@@ -82,17 +83,17 @@ After prepare step is done, we add quantization and benchmark code to generate q
     q_aware_model = compression_manager.model.model
 
     # training code defined by users
-    q_aware_model.compile(optimizer='adam',
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                metrics=['accuracy'])
+    q_aware_model.compile(
+        optimizer='sgd',
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"],
+    )
     q_aware_model.summary()
-    train_images_subset = train_images[0:1000]
-    train_labels_subset = train_labels[0:1000]
-    q_aware_model.fit(train_images_subset, train_labels_subset,
-                    batch_size=500, epochs=1, validation_split=0.1)
-    _, q_aware_model_accuracy = q_aware_model.evaluate(
-                                    test_images, test_labels, verbose=0)
-    print('Quant test accuracy:', q_aware_model_accuracy)
+    x_train, y_train = prepare_data(FLAGS.dataset_location)
+    q_aware_model.fit(x_train,
+                        y_train,
+                        batch_size=64,
+                        epochs=1)
 
     # apply some post process steps and save the output model
     compression_manager.callbacks.on_train_end()

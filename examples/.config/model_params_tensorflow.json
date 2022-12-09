@@ -1944,6 +1944,13 @@
       "batch_size": 1,
       "new_benchmark": false
     },
+    "mnist_keras": {
+      "model_src_dir": "image_recognition/keras_models/mnist/quantization/qat",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/mnist_keras/saved_model/",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
     "resnet50_fashion": {
       "model_src_dir": "image_recognition/keras_models/resnet50_fashion/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/mnist/FashionMNIST",
@@ -1961,6 +1968,13 @@
       "strategy": "basic",
       "batch_size": 1,
       "new_benchmark": true
+    },
+    "resnet50_keras_qat": {
+      "model_src_dir": "image_recognition/keras_models/resnet50/quantization/qat",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnet50_keras/resnet50",
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "resnet50_keras_h5": {
       "model_src_dir": "image_recognition/keras_models/resnet50/quantization/ptq",

@@ -68,6 +68,7 @@ class TensorFlowAdaptor(Adaptor):
         self.format = self.framework_specific_info['format']
         os.makedirs(self.work_dir, exist_ok=True)
 
+        self.model = None
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
 
@@ -524,17 +525,6 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        if self.approach == "quant_aware_training":
-            assert q_func is not None, "quantization aware training mode \
-                is not configured correctly"
-
-            from neural_compressor.experimental import common
-            qat_model = q_func(model)
-
-            return self.convert(common.Model(qat_model), 'QAT', 'default')
-
-        assert q_func is None, \
-            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -1370,6 +1360,12 @@ class TensorFlowAdaptor(Adaptor):
                 res[op[1]] = {'activation': {'dtype': ['bf16']}, 'weight': {'dtype': ['bf16']}}
         return res
 
+    def _pre_hook_for_qat(self, dataloader=None):
+        self.model.model = self.qat_convert(self.model.model)
+
+    def _post_hook_for_qat(self):
+        pass
+
     def _pre_eval_hook(self, model):
         return model
 
@@ -1380,6 +1376,8 @@ class TensorFlowAdaptor(Adaptor):
     def save(self, model, path):
         pass
 
+    # this function is used to convert keras QAT model to pb in old QAT implementation,
+    # and it's not used in refactored QAT
     def convert(self, model, source, destination):
         '''The function is used to convert a source model format to another.
 
@@ -1425,6 +1423,31 @@ class TensorFlowAdaptor(Adaptor):
                                    use_bf16=self.use_bf16)
 
         return converter.convert()
+
+    def qat_convert(self, model, quantize_recipe=None):
+        """
+        Convert a fp32 'tf.keras' model to be a int8 one with quantization aware training implementation.
+
+        Args:
+            model (tf.keras.Model): The model to be quantized, expected to be a Keras Functional or Sequential model.
+            quantize_recipe (dict): A dict that decide whether given layers should be quantized.
+
+        Returns:
+            converted_model (tf.keras.Model): Quantized model with fake quant nodes inserted.
+        """
+        import tensorflow as tf
+        assert isinstance(model, tf.keras.Model), ("The model to be converted is expected to be "
+        "a `tf.keras.Model` instance. You should not pass an instance of type: {input}.".format(
+            input=model.__class__.__name__))
+
+        assert (
+            model.__class__.__name__ in ['Functional', 'Sequential']
+        ), "Only `Functional` or `Sequential` keras model is supported for QAT."
+
+        from .tf_utils.quantize_graph.qat.quantize_helper import init_quantize_config, qat_clone_function
+        config = init_quantize_config(model, quantize_recipe)
+        q_model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=qat_clone_function)
+        return q_model
 
     @dump_elapsed_time("Pass recover model")
     def recover_tuned_model(self, model, q_config):
