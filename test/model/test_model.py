@@ -247,6 +247,27 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf simple_model')
         os.system('rm -rf keras_model')
 
+    def test_tf_qat_model(self):
+        if tf.version.VERSION < '2.3.0':
+            return
+        keras_model = build_keras()
+        self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
+
+        from neural_compressor.model.model import TensorflowQATModel
+        model = TensorflowQATModel(keras_model)
+        assert isinstance(model.model, tf.keras.Model)
+        keras_model.save('./simple_model')
+        # load from path
+        model = TensorflowQATModel('./simple_model')
+        assert isinstance(model.model, tf.keras.Model)
+
+
+        os.makedirs('./keras_model', exist_ok=True)
+        model.save('./keras_model')
+        load_model = tf.keras.models.load_model('./keras_model')
+        os.system('rm -rf simple_model')
+        os.system('rm -rf keras_model')
+
     @unittest.skipIf(tf.version.VERSION < '2.4.0' or platform.system().lower() == "windows", "Only supports tf 2.4.0 or above")
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'

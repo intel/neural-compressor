@@ -1064,6 +1064,35 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         builder.save()
         logger.info("Save quantized model to {}.".format(root))
 
+class TensorflowQATModel(TensorflowSavedModelModel):
+    def __init__(self, model='', **kwargs):
+        super(TensorflowQATModel, self).__init__(model)
+        self.keras_model = None
+        self.model_type = 'keras'
+
+    @property
+    def model(self):
+        if self.keras_model == None:
+            self.keras_model = tf.keras.models.load_model(self._model)
+        return self.keras_model
+
+    @model.setter
+    def model(self, q_model):
+        self.keras_model = q_model
+
+    def save(self, root=None):
+        if not root:
+            root = cfg.default_workspace + '/saved_model'
+        root = os.path.abspath(os.path.expanduser(root))
+        # if not have suffix, default append .pb
+        os.makedirs(os.path.dirname(root), exist_ok=True)
+        q_aware_model = self.keras_model
+        q_aware_model.save(root)
+        saved_format = 'saved_model'
+        if root.endswith('.h5'):
+            saved_format = 'h5 file'
+        logger.info("Save quantized model to {}.".format(saved_format))
+        return root
 
 class TensorflowCheckpointModel(TensorflowBaseModel):
 
