@@ -827,7 +827,7 @@ class TuneStrategy(object):
         
         # track the model with highest acc
         if self.best_tune_result and self.last_tune_result: # (acc, [perf])
-            if self.objectives.accuracy_meets():
+            if self.re_quant and self.objectives.accuracy_meets():
                 self.best_tune_result = self.last_tune_result
                 self.best_qmodel = self.last_qmodel
                 logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}.")
