@@ -507,33 +507,17 @@ class TensorFlowAdaptor(Adaptor):
         self.bf16_ops = bf16_ops
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+    def quantize(self, tune_cfg, model, data_loader):
         """Execute the quantize process on the specified model.
 
         Args:
             tune_cfg (dict): quantization configuration
             model (tf.compat.v1.GraphDef): fp32 model
             data_loader (generator): generator the data and labels
-            q_func (optional): training function for quantization aware training mode,
-                                which not enabled for tensorflow yet.
 
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        if self.approach == "quant_aware_training":
-            assert q_func is not None, "quantization aware training mode \
-                is not configured correctly"
-
-            q_model = q_func(model)
-            from neural_compressor.model.model import TensorflowQATModel
-            qat_model = TensorflowQATModel()
-            qat_model.model = q_model
-            root = qat_model.save()
-            qat_model._model = root
-            return qat_model
-
-        assert q_func is None, \
-            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -1368,6 +1352,12 @@ class TensorFlowAdaptor(Adaptor):
             if op[1] not in res:
                 res[op[1]] = {'activation': {'dtype': ['bf16']}, 'weight': {'dtype': ['bf16']}}
         return res
+
+    def _pre_hook_for_qat(self, dataloader=None):
+        self.model.model = self.qat_convert(self.model.model)
+
+    def _post_hook_for_qat(self):
+        pass
 
     def _pre_eval_hook(self, model):
         return model

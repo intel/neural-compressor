@@ -16,7 +16,9 @@
 # limitations under the License.
 
 from __future__ import print_function
-import tensorflow
+import yaml
+import numpy as np
+import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
 from  tensorflow.keras.layers import AveragePooling2D, Input, Flatten
 from  tensorflow.keras.callbacks import LearningRateScheduler
@@ -24,9 +26,6 @@ from  tensorflow.keras.callbacks import ReduceLROnPlateau
 from  tensorflow.keras.regularizers import l2
 from  tensorflow.keras.models import Model
 from  tensorflow.keras.datasets import cifar10
-import numpy as np
-import yaml
-
 
 def lr_schedule(epoch):
     """Learning Rate Schedule
@@ -176,7 +175,7 @@ def resnet_v2(input_shape, depth, num_classes=10):
                                  strides=strides,
                                  activation=None,
                                  batch_normalization=False)
-            x = tensorflow.keras.layers.add([x, y])
+            x = tf.keras.layers.add([x, y])
 
         num_filters_in = num_filters_out
 
@@ -193,30 +192,6 @@ def resnet_v2(input_shape, depth, num_classes=10):
     # Instantiate model.
     model = Model(inputs=inputs, outputs=outputs)
     return model
-
-
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-
-        device: cpu
-        quantization:
-          approach: quant_aware_training
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-          exit_policy:
-            performance_only: True
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
 
 # Training parameters
 batch_size = 32  # orig paper trained all networks with batch_size=128
@@ -263,8 +238,8 @@ def prepare_dataset():
     print(x_test.shape[0], 'test samples')
     print('y_train shape:', y_train.shape)
 
-    y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
-    y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+    y_train = tf.keras.utils.to_categorical(y_train, num_classes)
+    y_test = tf.keras.utils.to_categorical(y_test, num_classes)
     return x_train, y_train, x_test, y_test, input_shape
 
 x_train, y_train, x_test, y_test, input_shape = prepare_dataset()
@@ -273,7 +248,7 @@ def train():
     model = resnet_v2(input_shape=input_shape, depth=depth)
 
     model.compile(loss='categorical_crossentropy',
-                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.01),
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
                 metrics=['accuracy'])
 
     lr_scheduler = LearningRateScheduler(lr_schedule)
@@ -312,7 +287,7 @@ def evaluate(model, measurer=None):
 
     """
     model.compile(loss='categorical_crossentropy',
-                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.001),
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                 metrics=['accuracy'])
 
     if measurer:
@@ -322,36 +297,6 @@ def evaluate(model, measurer=None):
         measurer.end()
 
     return q_aware_model_accuracy
-
-def q_func(model):
-    from neural_compressor.experimental import ModelConversion
-    conversion = ModelConversion()
-    q_aware_model = conversion.fit(model.model)
-
-    # `quantize_model` requires a recompile.
-    q_aware_model.compile(loss='categorical_crossentropy',
-                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.001),
-                metrics=['accuracy'])
-    q_aware_model.summary()
-
-    # to avoid memory issue
-    max_data_num = 10000
-    if len(x_train) > max_data_num:
-        train_images_subset = x_train[0:max_data_num]
-        train_labels_subset = y_train[0:max_data_num]
-    else:
-        train_images_subset = x_train
-        train_labels_subset = y_train
-
-    q_aware_model.fit(train_images_subset, train_labels_subset,
-                      batch_size=500, epochs=2,
-                      validation_data=(x_test, y_test))
-
-    _, q_aware_model_accuracy = q_aware_model.evaluate(
-        x_test, y_test, verbose=0)
-
-    print('Quant test accuracy:', q_aware_model_accuracy)
-    return q_aware_model
 
 class Dataset(object):
     def __init__(self, batch_size=500):
@@ -371,8 +316,8 @@ class Dataset(object):
         print('y_train shape:', y_train.shape)
 
         # Convert class vectors to binary class matrices.
-        y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
-        y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+        y_train = tf.keras.utils.to_categorical(y_train, num_classes)
+        y_test = tf.keras.utils.to_categorical(y_test, num_classes)
         self.test_images = x_test
         self.test_labels = y_test
 
@@ -383,11 +328,35 @@ class Dataset(object):
         return self.test_images[idx], self.test_labels[idx]
 
 if __name__ == '__main__':
-    build_fake_yaml()
     train()
-    from neural_compressor.experimental import Quantization, common
-    quantizer = Quantization('fake_yaml.yaml')
-    quantizer.eval_func = evaluate(model)
-    quantizer.model = './baseline_model'
-    quantizer.q_func = q_func
-    quantizer.fit()
+    model = './baseline_model'
+    from neural_compressor import training, QuantizationAwareTrainingConfig
+    config = QuantizationAwareTrainingConfig()
+    compression_manager = training.prepare_compression(FLAGS.input_model, config)
+    compression_manager.callbacks.on_train_begin()
+
+    # `quantize_model` requires a recompile.
+    q_aware_model.compile(loss='categorical_crossentropy',
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                metrics=['accuracy'])
+    q_aware_model.summary()
+
+    # to avoid memory issue
+    max_data_num = 10000
+    if len(x_train) > max_data_num:
+        train_images_subset = x_train[0:max_data_num]
+        train_labels_subset = y_train[0:max_data_num]
+    else:
+        train_images_subset = x_train
+        train_labels_subset = y_train
+
+    q_aware_model.fit(train_images_subset, train_labels_subset,
+                      batch_size=500, epochs=2,
+                      validation_data=(x_test, y_test))
+
+    _, q_aware_model_accuracy = q_aware_model.evaluate(
+        x_test, y_test, verbose=0)
+    print('Quant test accuracy:', q_aware_model_accuracy)
+
+    compression_manager.callbacks.on_train_end()
+    compression_manager.save('output_model')

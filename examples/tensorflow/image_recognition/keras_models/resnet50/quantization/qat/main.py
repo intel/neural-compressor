@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
+import codeop
 import logging
 import numpy as np
 import tensorflow as tf
@@ -42,22 +44,20 @@ flags.DEFINE_bool(
     'benchmark', False, 'whether to benchmark the model')
 
 flags.DEFINE_string(
-    'config', 'resnet50.yaml', 'yaml configuration of the model')
+    'dataset_location', None, 'location of the dataset on tfrecord format')
 
-flags.DEFINE_string(
-    'train_data', None, 'location of training dataset on tfrecord format')
+flags.DEFINE_integer(
+    'batch_size', 32, 'batch_size')
 
-flags.DEFINE_string(
-    'val_data', None, 'location of validation dataset on tfrecord format')
-
-from neural_compressor.data.transforms.imagenet_transform import (
-    TensorflowResizeCropImagenetTransform,
-)
-from neural_compressor.experimental.data.datasets.dataset import TensorflowImageRecord
+from neural_compressor.experimental.metric.metric import TensorflowTopK
 from neural_compressor.experimental.data.transforms.transform import ComposeTransform
+from neural_compressor.experimental.data.datasets.dataset import TensorflowImageRecord
+from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
+from neural_compressor.data.transforms.imagenet_transform import TensorflowResizeCropImagenetTransform
 
 def prepare_data(root):
-    """Parse the input tf_record data.
+    """
+    Parse the input tf_record data.
 
     Args:
         root (string): The path to tfrecord files.
@@ -72,81 +72,113 @@ def prepare_data(root):
             TensorflowResizeCropImagenetTransform(
                 height=224, width=224)
         ]))
+
     data = np.array(list(dataset.map(lambda x, y: x)))
     data = tf.keras.applications.resnet.preprocess_input(data)
     label = np.array(list(dataset.map(lambda x, y: y))).squeeze(1)
+    
+    if len(data) > 10000:
+        data = data[:10000]
+        label = label[:10000]
+
     for idx, i in enumerate(label):
         label[idx] = i-1
+
     return data, label
 
-# Load the image data.
-x_train, y_train = prepare_data(FLAGS.train_data)
-x_val, y_val = prepare_data(FLAGS.val_data)
-
-def evaluate(model, measurer=None):
-    """Custom evaluate function to inference the model for specified metric on validation dataset.
+def evaluate(model):
+    """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
-        model (tf.keras.Model): The input model will be the class of tf.keras.Model.
-        measurer (object, optional): for duration benchmark measurement.
-
+        model (tf.Graph_def): The input model graph
+        
     Returns:
         accuracy (float): evaluation result, the larger is better.
-
     """
-    model.compile(
-        optimizer="sgd",
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        metrics=["accuracy"],
-    )
-    if measurer:
-        measurer.start()
-    _, q_aware_model_accuracy = model.evaluate(x_val, y_val)
-    if measurer:
-        measurer.end()
+    from neural_compressor.experimental import common
+    model = common.Model(model)
+    input_tensor = model.input_tensor
+    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                        model.output_tensor[0]
+    iteration = -1
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+        iteration = 100
+    postprocess = LabelShift(label_shift=1)
+    metric = TensorflowTopK(k=1)
 
-    return q_aware_model_accuracy
+    def eval_func(dataloader):
+        latency_list = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            # dataloader should keep the order and len of inputs same with input_tensor
+            inputs = np.array([inputs])
+            assert len(input_tensor) == len(inputs), \
+                'inputs len must equal with input_tensor'
+            feed_dict = dict(zip(input_tensor, inputs))
 
-def q_func(model):
-    """Custom train function to applying QAT to the fp32 model by calling the ModelConversion class.
-    The quantized model will be fine-tuned to compensate the loss brought by quantization.
+            start = time.time()
+            predictions = model.sess.run(output_tensor, feed_dict)
+            end = time.time()
 
-    Args:
-        model (neural_compressor.model.model.TensorflowQATModel): The input model will be the INC inner class. Use
-                                                                  model.model to get a model of tf.keras.Model class.
+            predictions, labels = postprocess((predictions, labels))
+            metric.update(predictions, labels)
+            latency_list.append(end-start)
+            if idx + 1 == iteration:
+                break
+        latency = np.array(latency_list).mean() / FLAGS.batch_size
+        return latency
 
-    Returns:
-        q_aware_model (tf.keras.Model): The quantized model by applying QAT.
-    """
-
-    from neural_compressor.experimental import ModelConversion
-    conversion = ModelConversion()
-    q_aware_model = conversion.fit(model.model)
-
-    q_aware_model.compile(
-        optimizer='sgd',
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        metrics=["accuracy"],
-    )
-
-    q_aware_model.summary()
-    q_aware_model.fit(x_train,
-                        y_train,
-                        batch_size=64,
-                        epochs=1)
-
-    return q_aware_model
+    from neural_compressor.experimental.data.dataloaders.default_dataloader import DefaultDataLoader
+    dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=ComposeTransform(transform_list=[
+            TensorflowResizeCropImagenetTransform(height=224, width=224)]))
+    dataloader = DefaultDataLoader(dataset, batch_size=FLAGS.batch_size)
+    latency = eval_func(dataloader)
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+        print("Batch size = {}".format(FLAGS.batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
+    acc = metric.result()
+    return acc 
 
 def main():
-    logger.info('start quantizating the model...')
-    from neural_compressor.experimental import Quantization
-    from neural_compressor.experimental import common
-    quantizer = Quantization(FLAGS.config)
-    quantizer.eval_func = evaluate
-    quantizer.q_func = q_func
-    quantizer.model = common.Model(FLAGS.input_model)
-    q_model = quantizer.fit()
-    q_model.save(FLAGS.output_model)
+    if FLAGS.tune:
+        logger.info('start quantizating the model...')
+        from neural_compressor import training, QuantizationAwareTrainingConfig
+        config = QuantizationAwareTrainingConfig()
+        compression_manager = training.prepare_compression(FLAGS.input_model, config)
+        compression_manager.callbacks.on_train_begin()
+
+        q_aware_model = compression_manager.model.model
+        q_aware_model.compile(
+            optimizer='sgd',
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+            metrics=["accuracy"],
+        )
+
+        q_aware_model.summary()
+        x_train, y_train = prepare_data(FLAGS.dataset_location)
+        q_aware_model.fit(x_train,
+                            y_train,
+                            batch_size=64,
+                            epochs=1)
+
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save(FLAGS.output_model)
+
+    if FLAGS.benchmark:
+        from neural_compressor.benchmark import fit
+        from neural_compressor.experimental import common
+        from neural_compressor.config import BenchmarkConfig
+        assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
+        "Benchmark only supports performance or accuracy mode."
+
+        model = common.Model(FLAGS.input_model).graph_def
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+            fit(model, conf, b_func=evaluate)
+        elif FLAGS.mode == 'accuracy':
+            accuracy = evaluate(model)
+            print('Batch size = %d' % FLAGS.batch_size)
+            print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
     main()

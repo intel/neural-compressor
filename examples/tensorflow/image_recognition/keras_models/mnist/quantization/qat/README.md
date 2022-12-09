@@ -52,6 +52,7 @@ In examples directory, there is a mnist.yaml for tuning the model on Intel CPUs.
 
 ## Run Command
   ```shell
-  python main.py --config resnet50.yaml --input_model ./path/to/model --output_model ./result
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result 
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --batch_size=32
   ```
 
