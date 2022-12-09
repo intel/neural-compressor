@@ -9,6 +9,7 @@ from neural_compressor.conf.config import NASConfig
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental import common, NAS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.experimental.nas.dynas import DyNAS
 
 def build_fake_yaml(approach=None, search_algorithm=None, metrics=['acc']):
     fake_yaml = """
@@ -57,6 +58,41 @@ def build_fake_yaml(approach=None, search_algorithm=None, metrics=['acc']):
     with open('fake.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
 
+def build_dynas_fake_yaml():
+    fake_yaml = """
+    model:
+        name: imagenet_nas
+        framework: pytorch
+
+    nas:
+        approach: dynas
+        search:
+            search_algorithm: nsga2
+        dynas:
+            supernet: ofa_resnet50
+            metrics: ['acc', 'macs']
+            results_csv_path: './search_results.csv'
+    """
+    with open('dynas_fake.yaml', 'w', encoding="utf-8") as f:
+        f.write(fake_yaml)
+
+def build_dynas_results_csv():
+    results_csv = """
+Sub-network,Date,Latency (ms), MACs,Top-1 Acc (%)
+"{'wid': None, 'ks': [7, 7, 3, 3, 5, 7, 7, 3, 5, 5, 3, 3, 7, 3, 5, 5, 5, 7, 5, 7], 'e': [3, 4, 4, 4, 4, 6, 6, 4, 4, 3, 4, 4, 3, 6, 4, 3, 4, 6, 3, 3], 'd': [2, 4, 4, 2, 3], 'r': [224]}",2022-07-07 03:13:06.306540,39,391813792,77.416
+"{'wid': None, 'ks': [3, 5, 5, 7, 5, 5, 3, 3, 7, 7, 7, 5, 7, 3, 7, 5, 3, 5, 3, 3], 'e': [4, 6, 3, 4, 4, 4, 4, 6, 3, 6, 4, 3, 4, 3, 4, 3, 6, 4, 4, 6], 'd': [4, 3, 3, 2, 3], 'r': [224]}",2022-07-07 03:14:50.398553,41,412962768,77.234
+"{'wid': None, 'ks': [5, 5, 5, 3, 7, 5, 7, 5, 7, 3, 3, 7, 7, 5, 7, 3, 5, 5, 7, 3], 'e': [6, 4, 3, 3, 3, 3, 4, 4, 3, 4, 3, 6, 4, 4, 3, 6, 4, 3, 4, 6], 'd': [4, 4, 4, 2, 4], 'r': [224]}",2022-07-07 03:16:53.105436,44,444295456,77.632
+"{'wid': None, 'ks': [3, 5, 3, 7, 3, 5, 7, 5, 3, 3, 3, 7, 3, 5, 3, 5, 3, 3, 7, 3], 'e': [4, 6, 3, 3, 6, 3, 3, 6, 6, 4, 4, 6, 3, 4, 3, 6, 3, 6, 3, 4], 'd': [4, 4, 2, 2, 4], 'r': [224]}",2022-07-07 03:18:47.301137,41,410969240,76.79
+"{'wid': None, 'ks': [3, 3, 3, 3, 7, 5, 3, 5, 3, 5, 5, 7, 7, 7, 3, 5, 7, 5, 3, 7], 'e': [3, 6, 6, 4, 6, 3, 3, 4, 3, 6, 3, 4, 4, 6, 3, 6, 4, 3, 6, 3], 'd': [2, 3, 4, 4, 2], 'r': [224]}",2022-07-07 03:20:35.391443,40,405868672,77.338
+"{'wid': None, 'ks': [3, 3, 3, 7, 5, 7, 7, 3, 3, 3, 3, 5, 7, 3, 7, 5, 3, 7, 5, 5], 'e': [4, 6, 3, 6, 4, 3, 3, 6, 3, 6, 4, 6, 4, 4, 3, 6, 4, 3, 4, 4], 'd': [3, 4, 4, 2, 2], 'r': [224]}",2022-07-07 03:22:14.504855,37,370501152,76.448
+"{'wid': None, 'ks': [7, 5, 3, 5, 7, 5, 3, 3, 5, 3, 3, 7, 7, 3, 5, 3, 3, 5, 5, 7], 'e': [3, 3, 4, 4, 4, 6, 6, 6, 6, 6, 6, 6, 6, 4, 3, 6, 3, 3, 3, 4], 'd': [4, 4, 3, 4, 2], 'r': [224]}",2022-07-07 03:24:12.500905,48,482299704,77.7
+"{'wid': None, 'ks': [7, 3, 5, 7, 5, 5, 7, 5, 3, 3, 3, 5, 5, 3, 7, 5, 5, 7, 3, 7], 'e': [3, 6, 4, 6, 6, 3, 3, 3, 6, 3, 6, 4, 4, 6, 4, 4, 4, 4, 6, 6], 'd': [4, 4, 2, 2, 2], 'r': [224]}",2022-07-07 03:25:50.198665,42,423721952,76.506
+"{'wid': None, 'ks': [7, 7, 3, 7, 5, 7, 5, 5, 5, 3, 5, 3, 3, 7, 3, 5, 3, 7, 7, 3], 'e': [3, 3, 3, 4, 4, 3, 4, 4, 4, 4, 4, 6, 6, 4, 3, 3, 3, 6, 3, 4], 'd': [4, 2, 2, 3, 3], 'r': [224]}",2022-07-07 03:27:26.901886,37,373770104,77.258
+"{'wid': None, 'ks': [3, 7, 5, 5, 7, 3, 5, 3, 5, 5, 5, 3, 5, 5, 3, 5, 7, 3, 7, 5], 'e': [3, 4, 6, 6, 4, 3, 6, 6, 6, 3, 3, 3, 3, 6, 3, 6, 6, 3, 6, 3], 'd': [3, 2, 3, 2, 3], 'r': [224]}",2022-07-07 03:29:00.989578,36,369186480,77.096
+"{'wid': None, 'ks': [7, 7, 5, 5, 7, 5, 3, 3, 3, 5, 7, 3, 7, 7, 5, 5, 3, 7, 3, 7], 'e': [6, 3, 6, 3, 4, 3, 3, 3, 4, 3, 6, 4, 3, 3, 6, 4, 4, 3, 4, 3], 'd': [4, 4, 3, 4, 4], 'r': [224]}",2022-07-07 03:31:07.608402,51,518341312,78.104
+    """
+    with open('search_results.csv', 'w', encoding="utf-8") as f:
+        f.write(results_csv)
 
 def model_builder(model_arch_params):
     channels = model_arch_params['channels']
@@ -87,10 +123,14 @@ class TestNAS(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         build_fake_yaml()
+        build_dynas_fake_yaml()
+        build_dynas_results_csv()
 
     @classmethod
     def tearDownClass(cls):
         os.remove('fake.yaml')
+        os.remove('dynas_fake.yaml')
+        os.remove('search_results.csv')
         shutil.rmtree(os.path.join(os.getcwd(), 'NASResults'), ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
@@ -143,6 +183,34 @@ class TestNAS(unittest.TestCase):
             nas_agent.eval_func = eval_func
             best_model_archs = nas_agent()
             self.assertTrue(len(best_model_archs) > 0)
+
+    def test_dynas(self):
+        nas_agent = NAS('dynas_fake.yaml')
+        for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
+            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+            config.dynas.supernet = supernet
+            config.seed = 42
+            config.dynas.metrics = ['acc', 'macs', 'lat']
+            config.dynas.population = 10
+            config.dynas.num_evals = 10
+            config.dynas.results_csv_path = 'search_results.csv'
+            config.dynas.batch_size = 64
+            nas_agent = NAS(config)
+            best_model_archs = nas_agent.search()
+        nas_agent.acc_predictor.get_parameters()
+        nas_agent.acc_predictor.save('tmp.pickle')
+        nas_agent.acc_predictor.load('tmp.pickle')
+        samples = nas_agent.supernet_manager.random_samples(10)
+        subnet_cfg = nas_agent.supernet_manager.translate2param(samples[0])
+        nas_agent.runner_validate.validate_macs(subnet_cfg)
+        nas_agent.runner_validate.measure_latency(subnet_cfg)
+        nas_agent.validation_interface.clear_csv()
+        os.remove('tmp.pickle')
+        from neural_compressor.experimental.nas.dynast.dynas_utils import TorchVisionReference
+        reference = TorchVisionReference('ofa_resnet50_ofa_mbv3', dataset_path=None, batch_size=1)
+        reference.validate_macs()
+        reference.measure_latency()
+        self.assertTrue(len(best_model_archs) > 0)
 
 
 if __name__ == "__main__":
