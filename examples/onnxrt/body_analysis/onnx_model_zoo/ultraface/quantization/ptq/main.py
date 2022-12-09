@@ -26,12 +26,12 @@ from scipy.io import loadmat
 import onnxruntime as ort
 
 class Dataloader:
-    def __init__(self, data_path, size=[320,240]):
+    def __init__(self, dataset_location, size=[320,240]):
         self.batch_size = 1
         image_mean=np.array([127, 127, 127], dtype=np.float32)
         image_std = 128.0
         self.data = []
-        for parent, dir_names, file_names in os.walk(data_path):
+        for parent, dir_names, file_names in os.walk(dataset_location):
             for file_name in file_names:
                 if not file_name.lower().endswith('jpg'):
                     continue
@@ -377,7 +377,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument(
-    '--data_path',
+    '--dataset_location',
     type=str,
     help="Path of wider face validation dataset."
 )
@@ -424,7 +424,7 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataloader  = Dataloader(args.data_path, size=args.input_size)
+    dataloader  = Dataloader(args.dataset_location, size=args.input_size)
     metric = AP(args.label_path)
     postprocess = Post()
     def eval(onnx_model):

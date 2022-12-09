@@ -24,6 +24,7 @@ import pandas as pd
 
 from PIL import Image
 import onnxruntime as ort
+from sklearn.metrics import accuracy_score
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -34,7 +35,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument(
-    '--data_path',
+    '--dataset_location',
     type=str,
 )
 parser.add_argument(
@@ -152,8 +153,8 @@ class TopK:
         return self.num_correct / self.num_sample
 
 class Dataloader:
-    def __init__(self, data_path):
-        df = pd.read_csv(data_path)
+    def __init__(self, dataset_location):
+        df = pd.read_csv(dataset_location)
         df = df[df['Usage']=='PublicTest']
         images = [np.reshape(np.fromstring(image, dtype=np.uint8, sep=' '), (48, 48)) for image in df['pixels']]
         labels = np.array(list(map(int, df['emotion'])))
@@ -187,7 +188,7 @@ def eval_func(model, dataloader, metric):
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataloader  = Dataloader(args.data_path)
+    dataloader  = Dataloader(args.dataset_location)
     top1 = TopK()
     def eval(onnx_model):
         return eval_func(onnx_model, dataloader, top1)

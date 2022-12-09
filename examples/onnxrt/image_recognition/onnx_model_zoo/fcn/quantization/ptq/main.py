@@ -46,12 +46,7 @@ parser.add_argument(
     help="Pre-trained model on onnx file"
 )
 parser.add_argument(
-    '--label_path',
-    type=str,
-    help="Annotation file path"
-)
-parser.add_argument(
-    '--data_path',
+    '--dataset_location',
     type=str,
     help="Path to val2017 of COCO"
 )
@@ -76,10 +71,11 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
-parser.add_argument('--quant_format',
+parser.add_argument(
+    '--quant_format',
     type=str,
-    default='Default', 
-    choices=['Default', 'QDQ'],
+    default='default', 
+    choices=['default', 'QDQ', 'QOperator'],
     help="quantization format"
 )
 args = parser.parse_args()
@@ -108,7 +104,7 @@ COCO_TO_VOC = {
     72: 20, # tv
 }
 VOC_CAT_IDS = list(COCO_TO_VOC.keys())
-cocoGt = COCO(str(args.label_path))
+cocoGt = COCO(os.path.join(args.dataset_location, 'annotations/instances_val2017.json'))
 
 preprocess = transforms.Compose([
     transforms.ToTensor(),
@@ -121,7 +117,7 @@ class Dataloader:
         imgIds = self.getImgIdsUnion(cocoGt, VOC_CAT_IDS)
         self.data = []
         for imgId in imgIds:
-            img_path = os.path.join(args.data_path, cocoGt.imgs[imgId]['file_name'])
+            img_path = os.path.join(os.path.join(args.dataset_location, 'val2017'), cocoGt.imgs[imgId]['file_name'])
             if os.path.exists(img_path):
                 input_tensor = self.load_image(img_path)
                 

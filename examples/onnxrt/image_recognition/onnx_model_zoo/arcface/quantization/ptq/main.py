@@ -147,7 +147,7 @@ if __name__ == '__main__':
         help="Pre-trained model on onnx file"
     )
     parser.add_argument(
-        '--data_path',
+        '--dataset_location',
         type=str,
         help="Imagenet data path"
     )
@@ -180,10 +180,10 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     # Load image size
-    image_size = load_property(args.data_path)
+    image_size = load_property(args.dataset_location)
     print('image_size', image_size)
     
-    dataloader = Dataloader(args.data_path)
+    dataloader = Dataloader(args.dataset_location)
     model = onnx.load(args.model_path)
     metric = Metric(args.nfolds)
     def eval(onnx_model):

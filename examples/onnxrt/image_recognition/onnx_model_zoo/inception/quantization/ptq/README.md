@@ -20,8 +20,7 @@ Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --data_path=/path/to/imagenet \
-                   --label_path=/path/to/imagenet/label \
+                   --dataset_location=/path/to/imagenet \
                    --output_model=path/to/save
 ```
 
@@ -29,8 +28,7 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --data_path=/path/to/imagenet \
-                   --label_path=/path/to/imagenet/label \
+                   --dataset_location=/path/to/imagenet \
                    --output_model=path/to/save \
                    --quant_format=QDQ
 ```
@@ -39,8 +37,7 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --data_path=/path/to/imagenet \
-                      --label_path=/path/to/imagenet/label \
+                      --dataset_location=/path/to/imagenet \
                       --mode=performance # or accuracy
 ```
 

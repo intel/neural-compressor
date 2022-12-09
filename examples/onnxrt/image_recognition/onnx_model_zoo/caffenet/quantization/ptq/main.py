@@ -120,14 +120,14 @@ class TopK:
         return self.num_correct / self.num_sample
 
 class Dataloader:
-    def __init__(self, data_path, image_list):
+    def __init__(self, dataset_location, image_list):
         self.batch_size = 1
         self.image_list = []
         self.label_list = []
         with open(image_list, 'r') as f:
             for s in f:
                 image_name, label = re.split(r"\s+", s.strip())
-                src = os.path.join(data_path, image_name)
+                src = os.path.join(dataset_location, image_name)
                 if not os.path.exists(src):
                     continue
                 with Image.open(src) as image:
@@ -167,14 +167,9 @@ if __name__ == "__main__":
         help="Pre-trained model on onnx file"
     )
     parser.add_argument(
-        '--data_path',
+        '--dataset_location',
         type=str,
         help="Imagenet data path"
-    )
-    parser.add_argument(
-        '--label_path',
-        type=str,
-        help="Imagenet label path"
     )
     parser.add_argument(
         '--benchmark',
@@ -197,16 +192,19 @@ if __name__ == "__main__":
         type=str,
         help="benchmark mode of performance or accuracy"
     )
-    parser.add_argument('--quant_format',
+    parser.add_argument(
+        '--quant_format',
         type=str,
-        default='Default', 
-        choices=['Default', 'QDQ'],
+        default='default', 
+        choices=['default', 'QDQ', 'QOperator'],
         help="quantization format"
     )
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
-    dataloader = Dataloader(args.data_path, args.label_path)
+    data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
+    label_path = os.path.join(args.dataset_location, 'val.txt')
+    dataloader = Dataloader(data_path, label_path)
     top1 = TopK()
     def eval(onnx_model):
         return eval_func(onnx_model, dataloader, top1)

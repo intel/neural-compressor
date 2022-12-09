@@ -119,14 +119,14 @@ class TopK:
         return self.num_correct / self.num_sample
 
 class Dataloader:
-    def __init__(self, data_path, image_list):
+    def __init__(self, dataset_location, image_list):
         self.batch_size = 1
         self.image_list = []
         self.label_list = []
         with open(image_list, 'r') as f:
             for s in f:
                 image_name, label = re.split(r"\s+", s.strip())
-                src = os.path.join(data_path, image_name)
+                src = os.path.join(dataset_location, image_name)
                 if not os.path.exists(src):
                     continue
                 with Image.open(src) as image:
@@ -193,14 +193,9 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
-        '--data_path',
+        '--dataset_location',
         type=str,
         help="Imagenet data path"
-    )
-    parser.add_argument(
-        '--label_path',
-        type=str,
-        help="Imagenet label path"
     )
     parser.add_argument(
         '--output_model',
@@ -214,7 +209,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     model = onnx.load(args.model_path)
-    dataloader = Dataloader(args.data_path, args.label_path)
+    data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
+    label_path = os.path.join(args.dataset_location, 'val.txt')
+    dataloader = Dataloader(data_path, label_path)
     top1 = TopK()
     postprocess = Squeeze()
     def eval(onnx_model):

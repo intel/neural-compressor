@@ -19,11 +19,8 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
-      --data_path=*)
-          data_path=$(echo $var |cut -f2 -d=)
-      ;;
-      --label_path=*)
-          label_path=$(echo $var |cut -f2 -d=)
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --quant_format=*)
           quant_format=$(echo $var |cut -f2 -d=)
@@ -38,8 +35,7 @@ function run_tuning {
     python main.py \
             --model_path ${input_model} \
             --output_model ${output_model} \
-            --data_path ${data_path} \
-            --label_path ${label_path} \
+            --dataset_location ${dataset_location} \
             --quant_format ${quant_format} \
             --tune
 }
