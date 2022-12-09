@@ -1,7 +1,7 @@
 version: 1.0
 
 model:
-  name: "bert-mini"
+  name: "yolov5s6"
   framework: "pytorch"
 
 pruning:
@@ -9,8 +9,8 @@ pruning:
     weight_compression:
       start_step: 0
       end_step: 0
-      excluded_names: ["qa_outputs", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
-      prune_layer_type: ["Linear"]
+      excluded_names: ["model.33.m.*"]
+      prune_layer_type: ["Conv2d"]
       target_sparsity: 0.8
       prune_frequency: 1000
       max_layer_sparsity_ratio: 0.98
@@ -24,3 +24,7 @@ pruning:
             prune_domain: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
+
+
+
+

@@ -5,9 +5,12 @@
 > patterns: NxM, N:M\
 > pruning schedulers: iterative pruning scheduler, one-shot pruning scheduler.
 
+## YOLOv5's Version
+YOLOv5s6 pruned example is developed based on Version 6.2[YOLOv5]https://github.com/ultralytics/yolov5/releases/tag/v6.2
+
 ## Usage
 ### Write a config yaml file
-PyTorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an yolov5s example of it:
+PyTorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an yolov5s example of it:
 ```yaml
 version: 1.0
 
@@ -22,7 +25,7 @@ pruning:
       # if start step equals to end step, one-shot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends
-      not_to_prune_names: ["model.33.m.*"] # a global announcement of layers which you do not wish to prune. 
+      not_to_prune_names: [] # a global announcement of layers which you do not wish to prune. 
       prune_layer_type: ["Conv2d"] # the module type which you want to prune (Linear, Conv2d, etc.)
       target_sparsity: 0.8 # the sparsity you want the model to be pruned.
       max_layer_sparsity_ratio: 0.98 # the highest sparsity a layer can reach.
@@ -30,19 +33,12 @@ pruning:
       pruners: # below each "Pruner" defines a pruning process for a group of layers. This enables us to apply different pruning methods for different layers in one model.
         # Local settings
         - !Pruner
-            exclude_names: ["model.*.cv1", "model.*.cv2", "model.*.cv3"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
-            pattern: "oc_pattern_1x1" # pattern type, we support "NxM" and "N:M"
+            exclude_names: [] # list of regular expressions, containing the layer names you wish not to be included in this pruner
+            pattern: "1x1" # pattern type, we support "NxM" and "N:M"
             prune_frequency: 1000 # if use iterative pruning scheduler, this define the pruning frequency.
             prune_domain: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
             prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
-        - !Pruner
-            exclude_names: []
-            pattern: "oc_pattern_4x1"
-            prune_frequency: 1000
-            prune_domain: "global"
-            prune_type: "snip_momentum"
-            sparsity_decay_type: "exp"
 ```
 Please be aware that when the keywords appear in both global and local settings, we select the **local** settings as priority.
 ### Coding template:
@@ -54,7 +50,7 @@ criterion = Criterion()
 optimizer = Optimizer()
 args = Args()
 
-from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
+from neural_compressor.pruning import Pruning
 
 pruner = Pruning("path/to/your/config.yaml")
 if opt.do_prune:
@@ -96,10 +92,10 @@ we have provided several pruning examples, which are trained on different datase
 We can train a sparse model with NxM (2:4) pattern:
 ```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
-        examples/pruning/yolov5/train_prune.py \
-        --data examples/pruning/yolov5/data/coco.yaml \
-        --hyp examples/pruning/yolov5/data/hyp.scratch-low.yaml \
-        --pruning_config "./examples/pruning/yolov5/data/yolov5s6_prune.yaml" \
+        ./train.py \
+        --data ./coco.yaml \
+        --hyp ./hyp.scratch-low.yaml \
+        --pruning_config ./yolov5s6_prune_1x1.yaml \
         --weights /path/to/dense_finetuned_model/ \
         --device 0,1 \
         --img 640 \
@@ -112,10 +108,11 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
 We can also choose pruning with distillation(l2/kl):
 ```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
-        ./examples/pruning/yolov5/train_prune.py \
-        --data examples/pruning/yolov5/data/coco.yaml \
-        --hyp examples/pruning/yolov5/data/hyp.scratch-low.yaml \
-        --pruning_config "./examples/pruning/yolov5/data/yolov5s6_prune.yaml" \
+        ./train.py \
+        --data ./coco.yaml \
+        --hyp ./hyp.scratch-low.yaml \
+        --pruning_config ./yolov5s6_prune_4x1.yaml \
+        --weights /path/to/dense_finetuned_model/ \
         --device 0,1 \
         --img 640 \
         --do_prune \
@@ -129,10 +126,10 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
 Dense model training is also supported as following (by setting --do_prune to False):
 ```python
 python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
-        examples/pruning/yolov5/train_prune.py \
-        --data examples/pruning/yolov5/data/coco.yaml \
-        --hyp examples/pruning/yolov5/data/hyp.scratch-low.yaml \
-        --pruning_config "./examples/pruning/yolov5/data/yolov5s6_prune.yaml" \
+        ./train.py \
+        --data ./coco.yaml \
+        --hyp ./hyp.scratch-low.yaml \
+        --pruning_config ./yolov5s6_prune_1x1.yaml \
         --weights /path/to/dense_pretrain_model/ \
         --device 0,1 \
         --img 640 \

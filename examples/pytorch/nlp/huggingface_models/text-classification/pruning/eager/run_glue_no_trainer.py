@@ -44,6 +44,7 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
+from neural_compressor.pruning import Pruning
 
 logger = logging.getLogger(__name__)
 
