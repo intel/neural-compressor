@@ -379,13 +379,13 @@ class TuneStrategy(object):
         
     def initial_tuning_cfg(self):
         if self.cfg.quantization.approach == 'post_training_auto_quant':
-            query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'dynamic', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'post_training_dynamic_quant':
-            query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['dynamic', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'post_training_static_quant':
-            query_order = ['static', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'quant_aware_training':
-            query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+            query_order = ['static', 'dynamic', 'bf16', 'fp32']
 
         quant_mode_wise_items = OrderedDict()
         pre_items = set()
@@ -520,6 +520,8 @@ class TuneStrategy(object):
                                    'approach': self.cfg.quantization.approach,
                                    'random_seed': self.cfg.tuning.random_seed}
         framework = self.cfg.model.framework.lower()
+        framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
+        framework_specific_info.update({'format': self.cfg.model.get('quant_format', 'default')})
 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)
@@ -532,21 +534,31 @@ class TuneStrategy(object):
                  'recipes': self.cfg.quantization.recipes,
                  'performance_only': self.cfg.tuning.exit_policy.performance_only,
                  'use_bf16': self.cfg.use_bf16 if self.cfg.use_bf16 is not None else False})
+            if self.cfg.model.backend == 'itex':
+                self.cfg.model.framework = 'tensorflow_itex'
+                framework = 'tensorflow_itex'
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
-        if 'onnxrt' in framework.lower():
+        if 'onnx' in framework.lower():
             if self.mixed_precision_mode:
-                framework_specific_info.update({"backend": "integerops"})
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
-            else:
-                framework_specific_info.update({"backend": framework.lower().split('_')[-1]})
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
             framework_specific_info.update({'recipes': self.cfg.quantization.recipes})
             framework_specific_info.update(
                                 {'graph_optimization': OPTIONS[framework].graph_optimization})
             framework_specific_info.update({'reduce_range': self.cfg.reduce_range})
+            if framework.lower() == 'onnxrt_qdq' or \
+                framework_specific_info['backend'] == 'onnxrt_trt_ep':
+                framework_specific_info.update({'format': 'QDQ'})
+                framework = 'onnxrt_qdq'
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
+            if self.cfg.model.backend == 'ipex':
+                self.cfg.model.framework = 'pytorch_ipex'
+                framework = 'pytorch_ipex'
+            elif self.cfg.model.backend == 'default':
+                self.cfg.model.framework = 'pytorch_fx'
+                framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
             framework_specific_info.update({"q_dataloader": q_dataloader})
@@ -722,12 +734,14 @@ class TuneStrategy(object):
             metric_cfg = self.cfg.evaluation.accuracy.metric if \
                 self.cfg.evaluation.accuracy.metric else \
                 self.cfg.evaluation.accuracy.multi_metrics
+            iteration = -1 if self.cfg.evaluation.accuracy.iteration is None \
+                else self.cfg.evaluation.accuracy.iteration
             eval_func = create_eval_func(self.framework,
                 self.eval_dataloader,
                 self.adaptor,
                 metric_cfg,
                 postprocess_cfg,
-                self.cfg.evaluation.accuracy.iteration,
+                iteration,
                 tensorboard = self.cfg.tuning.tensorboard,
                 fp32_baseline = self.baseline == None)
 

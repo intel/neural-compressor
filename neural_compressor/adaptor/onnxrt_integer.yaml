@@ -84,6 +84,8 @@
                         }
                     }
           }
+    CPUExecutionProvider: *ref_1_6
+    CUDAExecutionProvider: *ref_1_6
 
   graph_optimization: &default_optimization # from onnxruntime graph_optimization_level
     level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']    
@@ -98,7 +100,7 @@
     <<: *common_ops
 
   capabilities:
-    int8: {
+    int8: &ref_1_8 {
           'Conv': {
             'weight': {
                         'dtype': ['uint8'],
@@ -156,6 +158,8 @@
                         }
                     }
           }
+    CPUExecutionProvider: *ref_1_8
+    CUDAExecutionProvider: *ref_1_8
 
   graph_optimization:
     <<: *default_optimization
@@ -170,7 +174,7 @@
     <<: *common_ops
 
   capabilities:
-    int8: {
+    int8: &ref_1_9 {
           'Conv': {
             'weight': {
                         'dtype': ['uint8'],
@@ -242,6 +246,8 @@
                         }
                     }
           }
+    CPUExecutionProvider: *ref_1_9
+    CUDAExecutionProvider: *ref_1_9
 
   graph_optimization:
     <<: *default_optimization
