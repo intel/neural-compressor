@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from .component import Component
-from neural_compressor.prune.prune_legacy import PRUNERS
+from neural_compressor.pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
