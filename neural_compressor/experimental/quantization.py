@@ -28,6 +28,7 @@ from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
+from ..model.model import TensorflowQATModel
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
 from deprecated import deprecated
@@ -410,7 +411,7 @@ class Quantization(Component):
 
     @property
     def model(self):
-        """Override model getter method to handle quantization aware training case"""
+        """Override model getter method to handle quantization aware training case."""
         return self._model
 
     @model.setter

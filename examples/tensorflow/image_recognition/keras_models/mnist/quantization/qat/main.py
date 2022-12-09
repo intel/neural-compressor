@@ -135,7 +135,7 @@ def evaluate(model):
 
 def main():
     if FLAGS.tune:
-        logger.info('start quantizating the model...')
+        logger.info('start quantizing the model...')
         from neural_compressor import training, QuantizationAwareTrainingConfig
         config = QuantizationAwareTrainingConfig()
         compression_manager = training.prepare_compression(FLAGS.input_model, config)
@@ -155,7 +155,7 @@ def main():
         _, q_aware_model_accuracy = q_aware_model.evaluate(
                                         test_images, test_labels, verbose=0)
         print('Quant test accuracy:', q_aware_model_accuracy)
-        
+
         compression_manager.callbacks.on_train_end()
         compression_manager.save(FLAGS.output_model)
 

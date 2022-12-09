@@ -50,9 +50,9 @@ Details of enabling Intel® Neural Compressor to apply QAT.
 
 This is a tutorial of how to to apply QAT with Intel® Neural Compressor.
 ## User Code Analysis
-1. User specifies fp32 *model* to apply quantization, the dataset is automatically downloaded. In this step, QDQ patterns will be inserted to the keras model, but the fp32 model will not be conveted to a int8 model.
+1. User specifies fp32 *model* to apply quantization, the dataset is automatically downloaded. In this step, QDQ patterns will be inserted to the keras model, but the fp32 model will not be converted to a int8 model.
 
-2. User specifies *model* with QDQ patterns inserted, evaluate function to run benchmark. The model we get from the previous step will be run on ITEX backend. Then, the model is going to be fused and inferenced.
+2. User specifies *model* with QDQ patterns inserted, evaluate function to run benchmark. The model we get from the previous step will be run on ITEX backend. Then, the model is going to be fused and inferred.
 
 ### Quantization Config
 The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
@@ -67,7 +67,7 @@ config = QuantizationAwareTrainingConfig(
 
 ### Code update
 
-After prepare step is done, we add quatization and benchmark code to generate quantized model and benchmark.
+After prepare step is done, we add quantization and benchmark code to generate quantized model and benchmark.
 
 #### Tune
 ```python
