@@ -77,14 +77,17 @@ def eval_func(model):
 def main():
     x_train, y_train, x_test, y_test = build_dataset()
     model = build_model(x_train, y_train, x_test, y_test)
-    from neural_compressor.experimental import Quantization, common
-    quantizer = Quantization('./conf.yaml') 
-    quantizer.model = common.Model(model)
-    quantizer.calib_dataloader = common.DataLoader((x_train[:100], y_train[:100]), batch_size=10)
-    quantizer.eval_func = eval_func
-    quantized_model = quantizer.fit()
 
-    
+    from neural_compressor.quantization import fit
+    from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
+    from neural_compressor.experimental import common
+    set_random_seed(9527)
+    config = PostTrainingQuantConfig()
+    quantized_model = fit(model,
+                          conf=config,
+                          calib_dataloader=common.DataLoader((x_train[:100], y_train[:100]), batch_size=10),
+                          eval_func=eval_func)
+
 if __name__ == '__main__':
     main()
 

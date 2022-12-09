@@ -53,9 +53,9 @@ class KerasAdaptor(Adaptor):
         self.approach = deep_get(self.framework_specific_info, 'approach', False)
         self.quantize_config = {'op_wise_config': {}}
         self.device = self.framework_specific_info['device']
-        self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
+        #self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
-        os.makedirs(self.work_dir, exist_ok=True)
+        #os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
