@@ -315,6 +315,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                   op_name_list=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
+                model = compression_manager.model
                 q_model = train_func(model)
                 compression_manager.callbacks.on_train_end()
                 compression_manager.save("./saved")
@@ -351,6 +352,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 )
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
+                model = compression_manager.model
                 q_model = train_func(model)
                 compression_manager.callbacks.on_train_end()
                 compression_manager.save("./saved")
@@ -450,8 +452,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(op_name_list=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
-                model = compression_manager.model.model
                 compression_manager.callbacks.on_train_begin()
+                model = compression_manager.model
                 q_model = train_func(model)
                 compression_manager.callbacks.on_train_end()
                 compression_manager.save("./saved")
