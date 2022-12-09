@@ -7,16 +7,16 @@
             "yaml": "resnet50_v1_5.yaml",
             "strategy": "basic",
             "batch_size": 100,
-            "new_benchmark": false
+            "new_benchmark": true
         },
         "bert_base_MRPC_static": {
-            "model_src_dir": "language_translation/bert/quantization/ptq",
+            "model_src_dir": "nlp/bert/quantization/ptq",
             "dataset_location": "glue_data/MRPC",
             "input_model": "models/onnx/bert.onnx",
             "yaml": "bert_static.yaml",
             "strategy": "basic",
             "batch_size": 8,
-            "new_benchmark": false
+            "new_benchmark": true
         },
         "mobilenet_v2": {
             "model_src_dir": "image_recognition/mobilenet_v2/quantization/ptq",
@@ -25,7 +25,7 @@
             "yaml": "mobilenet_v2.yaml",
             "strategy": "basic",
             "batch_size": 100,
-            "new_benchmark": false
+            "new_benchmark": true
         }
     }
 }

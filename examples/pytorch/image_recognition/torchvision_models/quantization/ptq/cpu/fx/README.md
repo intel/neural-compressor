@@ -177,7 +177,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 
 ### Prepare
 
-The related code please refer to examples/pytorch/fx/image_recognition/imagenet/cpu/ptq/main.py.
+The related code please refer to examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx/main.py.
 
 ### Code Update
 
