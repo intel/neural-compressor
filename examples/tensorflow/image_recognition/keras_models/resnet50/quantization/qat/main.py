@@ -141,7 +141,7 @@ def evaluate(model):
 
 def main():
     if FLAGS.tune:
-        logger.info('start quantizating the model...')
+        logger.info('start quantizing the model...')
         from neural_compressor import training, QuantizationAwareTrainingConfig
         config = QuantizationAwareTrainingConfig()
         compression_manager = training.prepare_compression(FLAGS.input_model, config)
