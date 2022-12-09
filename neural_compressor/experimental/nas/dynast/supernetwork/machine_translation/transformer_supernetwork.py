@@ -98,9 +98,15 @@ class TransformerSuperNetwork(BaseFairseqModel):
         for name, module in self.named_modules():
             if hasattr(module, 'calc_sampled_param_num'):
                 # a hacky way to skip the layers that exceed encoder-layer-num or decoder-layer-num
-                if name.split('.')[0] == 'encoder' and eval(name.split('.')[2]) >= config['encoder']['encoder_layer_num']:
+                if (
+                    name.split('.')[0] == 'encoder'
+                    and eval(name.split('.')[2]) >= config['encoder']['encoder_layer_num']
+                ):
                     continue
-                if name.split('.')[0] == 'decoder' and eval(name.split('.')[2]) >= config['decoder']['decoder_layer_num']:
+                if (
+                    name.split('.')[0] == 'decoder'
+                    and eval(name.split('.')[2]) >= config['decoder']['decoder_layer_num']
+                ):
                     continue
 
                 numels.append(module.calc_sampled_param_num())
@@ -397,7 +403,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         self.adaptive_softmax = None
 
         self.project_out_dim = Linear(self.super_embed_dim, self.output_embed_dim, bias=False) \
-            if self.super_embed_dim != self.output_embed_dim and not args.tie_adaptive_weights else None
+            if self.super_embed_dim != self.output_embed_dim else None
 
         if not self.share_input_output_embed:
             self.embed_out = nn.Parameter(torch.Tensor(
@@ -533,7 +539,10 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                         [encoder_out['encoder_out'], encoder_out['encoder_out_all'][-2]], dim=0)
                 elif self.sample_arbitrary_ende_attn[i] == 2:
                     encoder_out_feed = torch.cat(
-                        [encoder_out['encoder_out'], encoder_out['encoder_out_all'][-2], encoder_out['encoder_out_all'][-3]], dim=0)
+                        [encoder_out['encoder_out'],
+                        encoder_out['encoder_out_all'][-2],
+                        encoder_out['encoder_out_all'][-3]],
+                        dim=0)
                 else:
                     raise NotImplementedError(
                         "arbitrary_ende_attn should in [-1, 1, 2]")
@@ -548,7 +557,10 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 # concat two more
                 elif self.sample_arbitrary_ende_attn[i] == 2:
                     encoder_padding_mask_feed = torch.cat(
-                        [encoder_out['encoder_padding_mask'], encoder_out['encoder_padding_mask'], encoder_out['encoder_padding_mask']], dim=1)
+                        [encoder_out['encoder_padding_mask'],
+                        encoder_out['encoder_padding_mask'],
+                        encoder_out['encoder_padding_mask']],
+                        dim=1)
                 else:
                     raise NotImplementedError(
                         "arbitrary_ende_attn should in [-1, 1, 2]")
@@ -565,7 +577,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             attns.append(attn)
 
         if self.layer_norm:
-            x = self.layer_norm(x)
+            x = self.layer_norm(x)  # pylint: disable=not-callable
 
         # T x B x C -> B x T x C
         x = x.transpose(0, 1)
@@ -591,16 +603,19 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         """Maximum output length supported by the decoder."""
         if self.embed_positions is None:
             return self.max_target_positions
-        import ipdb
-        ipdb.set_trace()
         return min(self.max_target_positions, self.embed_positions.max_positions())
 
     def buffered_future_mask(self, tensor):  #noqa: D102
         dim = tensor.size(0)
-        if not hasattr(self, '_future_mask') or self._future_mask is None or self._future_mask.device != tensor.device or self._future_mask.size(0) < dim:
-            self._future_mask = torch.triu(
+        if (
+            not hasattr(self, '_future_mask')
+            or self._future_mask is None  # pylint: disable=access-member-before-definition
+            or self._future_mask.device != tensor.device  # pylint: disable=access-member-before-definition
+            or self._future_mask.size(0) < dim  # pylint: disable=access-member-before-definition
+        ):
+            self._future_mask = torch.triu(  # pylint: disable=access-member-before-definition
                 utils.fill_with_neg_inf(tensor.new(dim, dim)), 1)
-        return self._future_mask[:dim, :dim]
+        return self._future_mask[:dim, :dim]  # pylint: disable=access-member-before-definition
 
     def upgrade_state_dict_named(self, state_dict, name):
         """Upgrade a (possibly old) state dict for new versions of fairseq."""
@@ -676,8 +691,8 @@ class TransformerEncoderLayer(nn.Module):
         self.qkv_dim = 512
 
         self.self_attn = MultiheadAttentionSuper(
-            super_embed_dim=self.super_embed_dim, num_heads=self.super_self_attention_heads_this_layer, is_encoder=True,
-            dropout=0.1, self_attention=True, qkv_dim=self.qkv_dim
+            super_embed_dim=self.super_embed_dim, num_heads=self.super_self_attention_heads_this_layer,
+            is_encoder=True, dropout=0.1, self_attention=True, qkv_dim=self.qkv_dim,
         )
 
         self.self_attn_layer_norm = LayerNormSuper(self.super_embed_dim)
@@ -822,7 +837,14 @@ class TransformerDecoderLayer(nn.Module):
             (default: False).
     """
 
-    def __init__(self, decoder_config, layer_idx, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False):  #noqa: D107
+    def __init__(
+        self,
+        decoder_config,
+        layer_idx,
+        no_encoder_attn=False,
+        add_bias_kv=False,
+        add_zero_attn=False,
+    ):  #noqa: D107
         super().__init__()
 
         # the configs of super arch
@@ -927,8 +949,11 @@ class TransformerDecoderLayer(nn.Module):
 
         self.self_attn.set_sample_config(sample_q_embed_dim=self.sample_embed_dim,
                                          sample_attention_heads=self.sample_self_attention_heads_this_layer)
-        self.encoder_attn.set_sample_config(sample_q_embed_dim=self.sample_embed_dim, sample_kv_embed_dim=self.sample_encoder_embed_dim,
-                                            sample_attention_heads=self.sample_ende_attention_heads_this_layer)
+        self.encoder_attn.set_sample_config(
+            sample_q_embed_dim=self.sample_embed_dim,
+            sample_kv_embed_dim=self.sample_encoder_embed_dim,
+            sample_attention_heads=self.sample_ende_attention_heads_this_layer,
+        )
 
         self.fc1.set_sample_config(
             sample_in_dim=self.sample_embed_dim, sample_out_dim=self.sample_ffn_embed_dim_this_layer)

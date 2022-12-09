@@ -94,7 +94,15 @@ class EmbeddingSuper(nn.Embedding):  #noqa: D101
         return self.sample_parameters(part)[part]['weight']
 
     def forward(self, input, part='encoder'):  #noqa: D102
-        return F.embedding(input, self.sampled_weight(part), self.padding_idx, self.max_norm, self.norm_type, self.scale_grad_by_freq, self.sparse)
+        return F.embedding(
+            input,
+            self.sampled_weight(part),
+            self.padding_idx,
+            self.max_norm,
+            self.norm_type,
+            self.scale_grad_by_freq,
+            self.sparse,
+        )
 
 
 class LinearSuper(nn.Linear):  #noqa: D101
@@ -213,7 +221,13 @@ class LayerNormSuper(torch.nn.LayerNorm):  #noqa: D101
 
     def forward(self, x):  # noqa: D102
         self.sample_parameters()
-        return F.layer_norm(x, (self.sample_embed_dim,), weight=self.samples['weight'], bias=self.samples['bias'], eps=self.eps)
+        return F.layer_norm(
+            x,
+            (self.sample_embed_dim,),
+            weight=self.samples['weight'],
+            bias=self.samples['bias'],
+            eps=self.eps,
+        )
 
     def calc_sampled_param_num(self):  # noqa: D102
         assert 'weight' in self.samples.keys()

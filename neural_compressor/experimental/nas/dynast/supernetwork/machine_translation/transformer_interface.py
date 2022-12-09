@@ -238,7 +238,9 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
         encoder_latencies = encoder_latencies[int(
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
         logger.info(
-            f'[DyNAS-T] Encoder latency for dataset generation: Mean: {np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms')
+            f'[DyNAS-T] Encoder latency for dataset generation: Mean: '
+            '{np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms'
+        )
 
         encoder_out_test_with_beam = model.encoder.reorder_encoder_out(
             encoder_out_test, new_order)
@@ -278,7 +280,9 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
 
     logger.info(
-        f'[DyNAS-T] Decoder latency for dataset generation: Mean: {np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms')
+        f'[DyNAS-T] Decoder latency for dataset generation: Mean: '
+        '{np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms'
+    )
 
     lat_mean = np.mean(encoder_latencies)+np.mean(decoder_latencies)
     lat_std = np.std(encoder_latencies)+np.std(decoder_latencies)
