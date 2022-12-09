@@ -30,8 +30,8 @@ from fvcore.nn import FlopCountAnalysis
 from neural_compressor.experimental.nas.dynast.dynas_manager import \
     ParameterManager
 from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
-from neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface import (
-    compute_bleu, compute_latency, compute_macs)
+# from neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface import (
+#     compute_bleu, compute_latency, compute_macs)
 from neural_compressor.utils.utility import LazyImport, logger
 from ofa.imagenet_classification.data_providers.imagenet import \
     ImagenetDataProvider
@@ -41,6 +41,7 @@ from ofa.tutorial.flops_table import rm_bn_from_net
 
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
+transformer_interface = LazyImport('neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface')
 
 
 def get_macs(
@@ -385,7 +386,7 @@ class TransformerLTRunner(Runner):  #noqa: D101
         subnet_cfg: dict,
     ) -> float:    #noqa: D102
 
-        bleu = compute_bleu(subnet_cfg, self.dataset_path,
+        bleu = transformer_interface.compute_bleu(subnet_cfg, self.dataset_path,
                             self.checkpoint_path)
         return bleu
 
@@ -400,7 +401,7 @@ class TransformerLTRunner(Runner):  #noqa: D101
         Returns:
             `macs`
         """
-        macs = compute_macs(subnet_cfg, self.dataset_path)
+        macs = transformer_interface.compute_macs(subnet_cfg, self.dataset_path)
         logger.info('[DyNAS-T] Model\'s macs: {}'.format(macs))
 
         return macs
@@ -417,7 +418,7 @@ class TransformerLTRunner(Runner):  #noqa: D101
         Returns:
             mean latency; std latency
         """
-        latency_mean, latency_std = compute_latency(
+        latency_mean, latency_std = transformer_interface.compute_latency(
             subnet_cfg, self.dataset_path, self.batch_size)
         logger.info(
             '[DyNAS-T] Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
