@@ -40,7 +40,7 @@ def build_dataset():
 
 class Dataset():
     def __init__(self, ):
-        self.inputs, self.labels, _, _ = build_dataset()
+         _, _ , self.inputs, self.labels = build_dataset()
 
     def __getitem__(self, idx):
         return self.inputs[idx], self.labels[idx]
@@ -97,7 +97,7 @@ def main():
     config = PostTrainingQuantConfig()
     quantized_model = fit(model,
                           conf=config,
-                          calib_dataloader=common.DataLoader((x_train[:100], y_train[:100]), batch_size=10),
+                          calib_dataloader=common.DataLoader(Dataset(), batch_size=10),
                           eval_func=eval_func)
 
 if __name__ == '__main__':

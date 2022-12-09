@@ -57,6 +57,20 @@ def get_model_type(model):
     """
 
     from neural_compressor.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
+    if isinstance(model, str):
+        model = os.path.abspath(os.path.expanduser(model))
+        if (model.endswith('.h5') and os.path.isfile(model)) or \
+          is_saved_model_format(os.path.dirname(model)) or \
+          (os.path.isdir(model) and is_saved_model_format(model)):
+            if version1_lt_version2(tf.version.VERSION, '2.10.0'):
+                logger.warn("keras model running on tensorflow 2.10.0 and"
+                            " lower not support intel ITEX.")
+            try:
+                model = tf.keras.models.load_model(model)
+            except:
+                pass
+    if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
+        return 'keras'
     if isinstance(model, tf.Graph):
         return 'graph'
     elif isinstance(model, tf.compat.v1.GraphDef):
@@ -123,26 +137,6 @@ def get_model_fwk_name(model):
         except:
             return 'NA'
 
-    def _is_keras(model):
-        from neural_compressor.adaptor.tf_utils.util import is_saved_model_format
-        if isinstance(model, str):
-            from neural_compressor.adaptor.tf_utils.util import is_saved_model_format
-            model = os.path.abspath(os.path.expanduser(model))
-            if (model.endswith('.h5') and os.path.isfile(model)) or \
-              is_saved_model_format(os.path.dirname(model)) or \
-              (os.path.isdir(model) and is_saved_model_format(model)):
-                if version1_lt_version2(tf.version.VERSION, '2.10.0'):
-                    logger.warn("keras model running on tensorflow 2.10.0 and"
-                                " lower not support intel ITEX.")
-                try:
-                    model = tf.keras.models.load_model(model)
-                except:
-                    return 'NA'
-        if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
-            return 'keras'
-        else:
-            return 'NA'
-
     def _is_tensorflow(model):
         try:
             os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -177,7 +171,7 @@ def get_model_fwk_name(model):
     if isinstance(model, TensorflowBaseModel):
         return 'tensorflow'
 
-    checker = [_is_keras, _is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
+    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
     for handler in checker:
         fwk_name = handler(model)
         if fwk_name != 'NA':
