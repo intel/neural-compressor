@@ -106,43 +106,12 @@ We also upstreamed several int8 models into HuggingFace [model hub](https://hugg
 ## This is a tutorial of how to enable NLP model with Intel® Neural Compressor.
 
 
-### Intel® Neural Compressor supports two usages:
-
-1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics in tuning.metrics field of model-specific yaml config file.
-2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
-
-As MRPC's metrics are 'f1', 'acc_and_f1', mcc', 'spearmanr', 'acc', so customer should provide evaluation function 'eval_func', it's suitable for the second use case.
-
-### Write Yaml config file
-
-In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.
-
-```yaml
-model:
-  name: bert
-  framework: pytorch_fx
-
-device: cpu
-
-quantization:
-  approach: post_training_static_quant
-
-tuning:
-  accuracy_criterion:
-    relative: 0.01
-  exit_policy:
-    timeout: 0
-    max_trials: 300
-  random_seed: 9527
-```
-
-Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
-
-> **Note** : neural_compressor does NOT support "mse" tuning strategy for pytorch framework
+### Intel® Neural Compressor supports usage:
+* User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
 
 ### Code Prepare
 
-We just need update run_squad_tune.py and run_glue.py like below
+We just need update run_glue.py like below
 
 ```python
 trainer = Trainer(
@@ -170,20 +139,19 @@ def take_eval_steps(model, trainer, metric_name, save_metrics=False):
 def eval_func(model):
     return take_eval_steps(model, trainer, metric_name)
 
-from neural_compressor.experimental import Quantization, common
-if (
-    not training_args.dataloader_drop_last
-    and eval_dataset.shape[0] % training_args.per_device_eval_batch_size != 0
-):
-    raise ValueError(
-        "The number of samples of the dataset is not a multiple of the batch size."
-        "Use --dataloader_drop_last to overcome."
-    )
-calib_dataloader = eval_dataloader
-quantizer = Quantization('conf.yaml')
-quantizer.eval_func = eval_func
-quantizer.calib_dataloader = calib_dataloader
-quantizer.model = common.Model(model)
-model = quantizer.fit()
-model.save(training_args.output_dir)
+from neural_compressor.quantization import fit
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+tuning_criterion = TuningCriterion(max_trials=600)
+conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
+from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
 ```
+
+# Appendix
+
+## Export to ONNX
+
+Right now, we experimentally support exporting PyTorch model to ONNX model, includes FP32 and INT8 model.
+
+By enabling `--onnx` argument, Intel Neural Compressor will export fp32 ONNX model, INT8 QDQ ONNX model, and INT8 QLinear ONNX model.

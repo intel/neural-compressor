@@ -30,7 +30,7 @@ from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils import OPTIONS
-from ..utils.utility import set_backend, GLOBAL_STATE, MODE
+from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
@@ -166,7 +166,6 @@ class Benchmark(object):
             self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
-            set_backend(self.framework)
 
     def __call__(self, mode='performance'):
         """Directly call a Benchmark object.
@@ -298,7 +297,9 @@ class Benchmark(object):
         GLOBAL_STATE.STATE = MODE.BENCHMARK
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
-                                   'random_seed': cfg.tuning.random_seed}
+                                   'random_seed': cfg.tuning.random_seed,
+                                   'backend': cfg.model.get('backend', 'default'),
+                                   'format': cfg.model.get('quant_format', 'default')}
         framework = cfg.model.framework.lower()
         if 'tensorflow' in framework:
             framework_specific_info.update({"inputs": cfg.model.inputs, \
@@ -307,10 +308,9 @@ class Benchmark(object):
                                             'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
-        if 'onnxrt' in framework.lower():
+        if 'onnx' in framework.lower():
             framework_specific_info.update(
-                                {"backend": framework.lower().split('_')[-1], \
-                                 'workspace_path': cfg.tuning.workspace.path, \
+                                 {'workspace_path': cfg.tuning.workspace.path, \
                                  'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
@@ -474,17 +474,24 @@ class Benchmark(object):
                        be careful of the name of the model configured in the yaml file,
                        make sure the name is in the supported slim model list.
         """
-        if not isinstance(user_model, BaseModel):
-            logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = NCModel(user_model)
-        else:
-            self._model = user_model
-
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "pytorch":
+                if cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
+                    import intel_extension_for_pytorch
             cfg.model.framework = self.framework
-            set_backend(self.framework)
+
+        if not isinstance(user_model, BaseModel):
+            logger.warning("Force convert framework model to neural_compressor model.")
+            self._model = NCModel(user_model, framework=self.framework)
+        else:
+            self._model = user_model
 
         # (TODO) ugly to set these params, but tensorflow need
         if 'tensorflow' in self.framework:

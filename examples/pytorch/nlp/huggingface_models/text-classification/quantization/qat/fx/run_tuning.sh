@@ -41,7 +41,7 @@ function init_params {
 # run_tuning
 function run_tuning {
 
-    python run_glue_tune.py \
+    python run_glue.py \
         --model_name_or_path ${input_model} \
         --task_name ${task_name} \
         --do_train \
@@ -60,6 +60,7 @@ function run_tuning {
         --save_strategy steps \
         --metric_for_best_model f1 \
         --save_total_limit 1 \
+        --onnx \
         --tune
 }
 

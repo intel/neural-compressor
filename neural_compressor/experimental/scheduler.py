@@ -18,24 +18,20 @@
 # limitations under the License.
 
 import os
-from itertools import permutations
 
-from ..conf.config import Conf
 from ..utils import logger
 from .common import Model as NCModel
 from ..model import BaseModel
-from .common import Metric, Postprocess
-from ..strategy import STRATEGIES
+from ..model.model import get_model_fwk_name
 
 from .quantization import Quantization
 from .pruning import Pruning
 from .distillation import Distillation
 from .model_conversion import ModelConversion
 from .graph_optimization import Graph_Optimization
-from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from .benchmark import Benchmark
 from .component import Component
-from ..conf.dotdict import DotDict, deep_set, deep_get
+from ..conf.dotdict import DotDict, deep_set
 
 SUPPORTED_COMPONENTS = [
   Quantization,
