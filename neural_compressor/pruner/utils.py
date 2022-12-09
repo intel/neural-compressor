@@ -139,10 +139,10 @@ def process_and_check_weight_config(val: WeightPruningConfig):
     default_config.update(default_local_config)
     default_config.update(params_default_config)
 
-    local_configs = val.local_configs
+    pruning_configs = val.pruning_configs
     pruners_info = []
     global_info = val.weight_compression
-    if len(local_configs) == 0:  ##only one
+    if len(pruning_configs) == 0:  ##only one
         pruner_info = global_info
         for key in default_config.keys():
             pruner_info[key] = reset_none_to_default(pruner_info, key, default_config[key])
@@ -152,7 +152,7 @@ def process_and_check_weight_config(val: WeightPruningConfig):
         pruners_info.append(pruner_info)
 
     else:  ##TODO need update, in this mode, we ingore the global op names
-        for pruner_info in local_configs:
+        for pruner_info in pruning_configs:
             for key in default_config.keys():
                 pruner_info[key] = reset_none_to_default(pruner_info, key, global_info[key])
                 pruner_info[key] = reset_none_to_default(pruner_info, key, default_config[key])
