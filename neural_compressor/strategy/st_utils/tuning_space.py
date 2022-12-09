@@ -173,8 +173,9 @@ class TuningSpace:
                                 else:
                                     logger.warning("By default, {1}: {2} is not supported for {0} ".format(
                                                     key, item_name, option) + "in Intel Neural Compressor")
-                                    logger.warning("Please visit the corresponding yaml file in neural_compressor/adaptor/ " +
-                                                   "to enhance the default capability in Intel Neural Compressor")
+                                    logger.warning("Please visit the corresponding yaml file in " +
+                                                   "neural_compressor/adaptor/ to enhance the default " +
+                                                   "capability in Intel Neural Compressor")
                             if len(merged_options) == 0:
                                 merged_options = fw_quant_cap[key][item_name]
                             op_cap['quant'][quant_mode_flag][key][item_name] = merged_options
