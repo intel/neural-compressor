@@ -19,8 +19,8 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
-      --data_path=*)
-          data_path=$(echo $var |cut -f2 -d=)
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -66,7 +66,7 @@ function run_benchmark {
     python main.py \
             --model_name_or_path ${model_name_or_path} \
             --model_path ${input_model} \
-            --data_path ${data_path} \
+            --data_path ${dataset_location} \
             --task ${TASK_NAME} \
             --mode=${mode} \
             --benchmark

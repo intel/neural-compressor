@@ -42,13 +42,13 @@ Quantize model with dynamic quantization:
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune \ # model path as *.onnx
-                   --data_path=path/to/glue/data
+                   --dataset_location=path/to/glue/data
 ```
 
 ### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
-                      --data_path=path/to/glue/data \ 
+                      --dataset_location=path/to/glue/data \ 
                       --mode=performance # or accuracy
 ```

@@ -20,9 +20,9 @@ Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --data_path=path/to/COCO2017 \
+                   --dataset_location=path/to/COCO2017 \
                    --output_model=path/to/save \
-                   --quant_format='QLinear'
+                   --quant_format='QOperator'
 ```
 Make sure **anno_path** in faster_rcnn.yaml is updated to the path of label_map.yaml.
 
@@ -30,7 +30,7 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --data_path=path/to/COCO2017 \
+                   --dataset_location=path/to/COCO2017 \
                    --output_model=path/to/save \
                    --quant_format='QDQ'
 ```
@@ -40,6 +40,6 @@ Make sure **anno_path** in faster_rcnn_qdq.yaml is updated to the path of label_
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --data_path=path/to/COCO2017 \
+                      --dataset_location=path/to/COCO2017 \
                       --mode=performance # or accuracy
 ```

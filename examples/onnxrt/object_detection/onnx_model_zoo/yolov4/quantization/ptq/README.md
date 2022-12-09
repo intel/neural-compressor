@@ -18,7 +18,7 @@ wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentatio
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --data_path=path/to/COCO2017 \
+                   --dataset_location=path/to/COCO2017 \
                    --output_model=path/to/save
 ```
 Make sure **anno_path** in yolov4.yaml is updated to the path of label_map.yaml.
@@ -27,6 +27,6 @@ Make sure **anno_path** in yolov4.yaml is updated to the path of label_map.yaml.
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --data_path=path/to/COCO2017 \
+                      --dataset_location=path/to/COCO2017 \
                       --mode=performance
 ```

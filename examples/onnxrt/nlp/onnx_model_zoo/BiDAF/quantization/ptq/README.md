@@ -16,7 +16,7 @@ wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bidirect
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
-                   --data_path=path/to/squad_v1/dev-v1.1.json
+                   --dataset_location=path/to/squad_v1/dev-v1.1.json
                    --output_model=path/to/model_tune
 ```
 
@@ -24,6 +24,6 @@ bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
-                      --data_path=path/to/squad_v1/dev-v1.1.json
+                      --dataset_location=path/to/squad_v1/dev-v1.1.json
                       --mode=performance # or accuracy
 ```

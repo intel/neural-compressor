@@ -43,10 +43,6 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
-    '--label_path',
-    type=str,
-)
-parser.add_argument(
     '--model_path',
     type=str,
     help="Pre-trained model on onnx file"
@@ -211,7 +207,8 @@ class IoU:
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     batch_size = 1
-    dataloader  = Dataloader(args.data_path, args.label_path, batch_size=batch_size)
+    label_path = args.data_path.split('/leftImg8bit/val')[0] + '/gtFine/val'
+    dataloader  = Dataloader(args.data_path, label_path, batch_size=batch_size)
     metric = IoU()
 
     def eval_func(model):

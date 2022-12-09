@@ -19,8 +19,8 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
-      --data_path=*)
-          data_path=$(echo $var |cut -f2 -d=)
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --quant_format=*)
           quant_format=$(echo $var |cut -f2 -d=)
@@ -36,7 +36,7 @@ function run_tuning {
             --model_path ${input_model} \
             --save_path ${output_model} \
             --quant_format ${quant_format} \
-            --data_path ${data_path} \
+            --data_path ${dataset_location} \
             --tune
 }
 

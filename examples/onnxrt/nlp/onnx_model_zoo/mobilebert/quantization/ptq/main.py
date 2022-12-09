@@ -119,7 +119,7 @@ def main():
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
     parser.add_argument('--quant_format', type=str, default='Default',
-                        choices=['Default', 'QDQ'],
+                        choices=['default', 'QDQ'],
                         help="quantization format")
     args = parser.parse_args()
 

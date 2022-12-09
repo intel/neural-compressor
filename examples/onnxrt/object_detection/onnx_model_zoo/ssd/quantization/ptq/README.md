@@ -21,8 +21,8 @@ Quantize model with QLinearOps:
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \
-                   --data_path=path/to/COCO2017 \
-                   --quant_format='QLinear' 
+                   --dataset_location=path/to/COCO2017 \
+                   --quant_format='QOperator' 
 ```
 
 Quantize model with QDQ mode:
@@ -30,14 +30,14 @@ Quantize model with QDQ mode:
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --output_model=path/to/save \
-                   --data_path=path/to/COCO2017 \
-                   --quant_format-'QDQ'
+                   --dataset_location=path/to/COCO2017 \
+                   --quant_format='QDQ'
 ```
 
 ### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --data_path=path/to/COCO2017 \
+                      --dataset_location=path/to/COCO2017 \
                       --mode=performance # or accuracy
 ```
