@@ -305,6 +305,8 @@ class Benchmark(object):
                                             "outputs": cfg.model.outputs, \
                                             "recipes": cfg.model.recipes, \
                                             'workspace_path': cfg.tuning.workspace.path})
+        if framework == 'keras':
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
         if 'onnxrt' in framework.lower():

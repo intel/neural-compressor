@@ -120,6 +120,7 @@ def get_model_fwk_name(model):
 
     def _is_keras(model):
         if isinstance(model, str):
+            from neural_compressor.adaptor.tf_utils.util import is_saved_model_format
             model = os.path.abspath(os.path.expanduser(model))
             if (model.endswith('.h5') and os.path.isfile(model)) or \
               is_saved_model_format(os.path.dirname(model)) or \
