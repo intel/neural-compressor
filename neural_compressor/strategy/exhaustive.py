@@ -20,8 +20,8 @@ import itertools
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 
-from .st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
+from .utils.tuning_structs import OpTuningConfig
 from ..utils import logger
 
 @strategy_registry

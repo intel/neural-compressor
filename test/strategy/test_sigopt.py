@@ -159,8 +159,8 @@ class TestSigoptTuningStrategy(unittest.TestCase):
         conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", 
                                        tuning_criterion=tuning_criterion,
                                        accuracy_criterion=accuracy_criterion)
+        self.assertEqual(conf.strategy_kwargs, strategy_kwargs)
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
-        self.assertIsNotNone(q_model)
 
 
 if __name__ == "__main__":
