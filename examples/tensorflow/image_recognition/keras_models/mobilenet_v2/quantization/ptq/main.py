@@ -113,15 +113,20 @@ def main(_):
 	if FLAGS.tune:
 		from neural_compressor import quantization
 		from neural_compressor.config import PostTrainingQuantConfig
+		op_name_list={
+			'StatefulPartitionedCall/mobilenetv2_1.00_224/expanded_conv_depthwise/depthwise':
+						{
+						'activation':  {'dtype': ['fp32']},
+						'weight': {'dtype': ['fp32']},
+						},
+			'StatefulPartitionedCall/mobilenetv2_1.00_224/expanded_conv_project_BN/FusedBatchNormV3/Mul':
+						{
+						'activation':  {'dtype': ['fp32']},
+						'weight': {'dtype': ['fp32']},
+						}										
+					}
 		conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50],
-										op_name_list={'StatefulPartitionedCall/mobilenetv2_1.00_224/ \
-											expanded_conv_depthwise/depthwise':
-												{
-												'activation':  {'dtype': ['fp32']},
-												'weight': {'dtype': ['fp32']},
-												}		
-											}
-										)
+										op_name_list=op_name_list)
 		q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
 					eval_func=evaluate)
 		q_model.save(FLAGS.output_model)
