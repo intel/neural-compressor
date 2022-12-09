@@ -30,10 +30,6 @@ from neural_compressor.model.base_model import BaseModel
 
 
 tf = LazyImport('tensorflow')
-yaml = LazyImport('yaml')
-json = LazyImport('json')
-np = LazyImport('numpy')
-
 tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
 def get_model_type(model):
