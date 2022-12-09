@@ -9,8 +9,7 @@ import torch.nn as nn
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
-from neural_compressor.config import WeightPruningConfig, GlobalPruningConfig, LocalPruningConfig
-
+from neural_compressor.config import WeightPruningConfig
 def build_fake_yaml_basic():
     fake_snip_yaml = """
     model:
@@ -79,8 +78,9 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_basic(self):
+        config = WeightPruningConfig(reg_type="group_lasso",target_sparsity=0.8)
 
-        prune = Pruning("fake_snip.yaml")
+        prune = Pruning(config)
         prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()

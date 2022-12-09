@@ -190,7 +190,7 @@ class TestTrainConfig(unittest.TestCase):
         )
 
 
-class TestPruningConfig(unittest.TestCase):
+class TestWeightPruningConfig(unittest.TestCase):
     """Pruning config tests."""
 
     def __init__(self, *args: str, **kwargs: str) -> None:

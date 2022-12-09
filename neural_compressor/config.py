@@ -635,7 +635,6 @@ class WeightPruningConfig:
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
         self.local_configs = local_configs
-        self.kwargs = kwargs
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
             'pruning_type': pruning_type,
@@ -653,6 +652,8 @@ class WeightPruningConfig:
             ##reg_type=None, reduce_type="mean", parameters={"reg_coeff": 0.0}
             ##'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint  ##resume_from_pruned_checkpoint
         })
+        self._weight_compression.update(kwargs)
+
 
     @property
     def weight_compression(self):

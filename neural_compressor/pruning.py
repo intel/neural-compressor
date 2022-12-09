@@ -46,11 +46,12 @@ class Pruning:
 
     def __init__(self, config):
         """Initialize."""
+        assert()
         self.model = None
         self.pruners = []
         self.pruners_info = process_config(config)
 
-    def update_config(self,*args, **kwargs):
+    def update_config(self, *args, **kwargs):
         """Add user-defined arguments to the original configurations.
 
         The original config of pruning is read from a file.

@@ -25,7 +25,8 @@ except:
     from .dot_dict import DotDict  ##TODO
 from .logger import logger
 
-from neural_compressor.config import PruningConfig
+from neural_compressor.config import WeightPruningConfig
+
 
 def check_config(prune_config):
     """Functions that check key-value is valid to run Pruning object.
@@ -119,6 +120,32 @@ def update_params(info):
             info[key] = params[key]
 
 
+def process_and_check_weight_config(val: WeightPruningConfig):
+    default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
+                             'excluded_op_names': [],
+                             'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
+                             'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
+                             'sparsity_decay_type': 'exp',
+                             'pruning_op_types': ['Conv', 'Linear'],
+                             }
+    default_local_config = {'resume_from_pruned_checkpoint': False, 'reg_type': None,
+                            'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
+
+    params_default_config = {"reg_coeff": 0.0}
+    local_configs = val.local_configs
+    pruner_infos = []
+    global_info = val.weight_compression
+    global_info.update(val.kwargs)
+    if len(local_configs)==0:##only one
+        pruner_infos.append(global_info)
+    else:##TODO support
+        pass
+
+
+
+
+
+
 def process_and_check_config(val):
     """Functions which converts a initial configuration object to a Pruning configuration.
     
@@ -139,12 +166,12 @@ def process_and_check_config(val):
                              'pruning_op_types': ['Conv', 'Linear'],
                              'resume_from_pruned_checkpoint': False}
 
-    default_local_config = {'extra_excluded_op_names': [], 'reg_type': None,
+    default_local_config = {'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
 
     prams_default_config = {"reg_coeff": 0.0}
     default_local_config.update(default_global_config)
-    if isinstance(val, PruningConfig):
+    if isinstance(val, WeightPruningConfig):
         val = val.weight_compression
     else:
         val = val["pruning"]['approach']['weight_compression']
@@ -156,7 +183,7 @@ def process_and_check_config(val):
     default_local_config.update(prams_default_config)
 
     pruners_info = []
-    if isinstance(val, PruningConfig):
+    if isinstance(val, WeightPruningConfig):
         pruners = val.pruners
     else:
         pruners = val['pruners']
@@ -172,7 +199,6 @@ def process_and_check_config(val):
         pruners_info.append(pruner_info)
 
     return pruners_info
-
 
 
 def process_config(config):
@@ -210,12 +236,10 @@ def process_config(config):
 
     elif isinstance(config, DotDict):
         return process_and_check_config(config)
-    elif isinstance(config, PruningConfig):
+    elif isinstance(config, WeightPruningConfig):
         return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
-
-
 
 
 def parse_to_prune(config, model):

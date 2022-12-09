@@ -80,7 +80,7 @@ class TestPytorchPruning(unittest.TestCase):
     def test_pruning_class_config(self):
         dummy_pruner1 = Pruner(extra_excluded_op_names=["layer1"], reg_type="group_lasso", max_sparsity_ratio_per_op=0.9)
         dummy_pruner2 = Pruner(pruning_scope="local", criterion_reduce_type="max", target_sparsity=0.85)
-        config = PruningConfig([dummy_pruner1, dummy_pruner2], target_sparsity=0.8, end_step=1)
+        config = WeightPruningConfig([dummy_pruner1, dummy_pruner2], target_sparsity=0.8, end_step=1)
         prune = Pruning(config)
         prune.model = self.model
         prune.on_train_begin()
