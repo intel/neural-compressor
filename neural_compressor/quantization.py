@@ -267,7 +267,7 @@ def fit(model,
     if isinstance(conf, PostTrainingQuantConfig):
         if eval_func is None and eval_dataloader is None:
             conf.performance_only = True
-        conf = Config(quantization=conf)
+        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
     quantizer = ExpQuantization(conf)
     quantizer.model = model
     if eval_func is not None:

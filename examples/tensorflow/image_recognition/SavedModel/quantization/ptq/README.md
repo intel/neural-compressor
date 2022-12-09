@@ -38,8 +38,8 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 Download the model from tensorflow-hub.
 
 image recognition
-- [mobilenetv1](https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v1_075_224/classification/5)
-- [mobilenetv2](https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v2_035_224/classification/5)
+- [mobilenetv1(experiment)](https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v1_075_224/classification/5)
+- [mobilenetv2(experiment)](https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v2_035_224/classification/5)
 - [efficientnet_v2_b0](https://hub.tensorflow.google.cn/google/imagenet/efficientnet_v2_imagenet1k_b0/classification/2)
 
 ## Write Yaml config file

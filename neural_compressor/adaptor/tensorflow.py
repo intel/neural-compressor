@@ -64,6 +64,8 @@ class TensorFlowAdaptor(Adaptor):
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.performance_only = deep_get(self.framework_specific_info, 'performance_only', False)
         self.use_bf16 = deep_get(self.framework_specific_info, 'use_bf16', False)
+        self.backend = self.framework_specific_info['backend']
+        self.format = self.framework_specific_info['format']
         os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
@@ -76,12 +78,12 @@ class TensorFlowAdaptor(Adaptor):
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name), performance_only=self.performance_only)
-        self.itex_mode = cfg_yaml_name == 'tensorflow_itex.yaml'
+        self.itex_mode = self.backend == 'itex' or cfg_yaml_name == 'tensorflow_itex.yaml'
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = True if parse_version(tf.version.VERSION) == parse_version('2.11.0202242') else False
-        self.qdq_enabled = cfg_yaml_name == 'tensorflow_itex.yaml' or self.new_api
+        self.new_api = parse_version(tf.version.VERSION) == parse_version('2.11.0202242')
+        self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
@@ -91,6 +93,8 @@ class TensorFlowAdaptor(Adaptor):
         self.callbacks = []
 
         self.optype_statistics = None
+
+        self._last_dequantize_ops = None
 
     def log_histogram(self, writer, tag, values, step=0, bins=1000):
         import tensorflow as tf
@@ -1451,8 +1455,161 @@ class TensorFlowAdaptor(Adaptor):
     def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
         from .tf_utils.util import tf_diagnosis_helper
         return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
+    
+    def get_output_op_names(self, qmodel):
+        from .tf_utils.graph_util import GraphAnalyzer
+        
+        graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
+        output_op_names = set()
 
+        for output_opname in qmodel.output_node_names:
+            op_count = 0
+            stack = [output_opname]
+            while stack:
+                opname = stack.pop()
+                while True:
+                    op_count += 1
+                    if opname not in graph_def:
+                        break
+                    op = graph_def[opname]
+                    if op.node.op == 'Dequantize':
+                        output_op_names.add(opname)
+                        break
+                    next_opnames = op.node.input
+                    if not next_opnames:
+                        break
+                    elif len(next_opnames) > 1:
+                        stack += next_opnames[1:]
 
+                    opname = next_opnames[0]
+
+        output_op_names = list(output_op_names)
+        logger.debug(f"output op names: {output_op_names}")
+        return output_op_names
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """Compute the op sensitivity.
+        
+        The sensitivity metric is the mse between the output of the last quantized op of 
+        the quantized model and the output of its corresponding op in the fp32 model.
+        
+          1. Backup the tune cfg
+          2. Fallback each int8 op and compute its mse if use fallback (with 'fallback == True'),
+            or re-quantize each fp32 op(fallen back in the previous stage) and compute its MSE if not.
+          3. Sorted op name list according to its MSE
+        
+        Args:
+          fp32_model: The fp32 model.
+          dataloader: the dataloader with full dataset.
+          tune_cfg: tuning config
+          fallback: denote fallback stage or re-quantize stage
+          requantize_cfgs: the dict of tuning configs for all re-quantizable ops
+
+        Returns:
+          A list of op names, sorted by its MSE sensitivity.
+        """
+        from copy import deepcopy
+
+        fp32_op_cfg = {'activation': {'dtype': 'fp32', 'quant_mode': 'fp32'},
+                       'weight': {'dtype': 'fp32'}}
+
+        if fallback:
+            ops_list = [op for op, config in tune_cfg['op'].items()
+                       if config['activation']['quant_mode'] in ('static', 'dynamic')]
+            replace_cfgs = {op : fp32_op_cfg for op in tune_cfg['op']}
+        else:
+            ops_list = [op for op, config in tune_cfg['op'].items() 
+                       if config['activation']['quant_mode'] == 'fp32' and op in requantize_cfgs]
+            replace_cfgs = requantize_cfgs
+
+        # Step2. compute mse
+        mse_result = self._get_mse_order(
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, 
+            output_op_names, confidence_batches)
+
+        # Step3. sort
+        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
+        logger.debug("Dump MSE order:")
+        for op in mse_order:
+            logger.debug(f"{op}: {mse_result[op]}")
+        return mse_order
+
+    def _get_mse_order(self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, 
+                       output_op_names, confidence_batches):
+        op_cfg = tune_cfg['op']
+        mse_result = {}
+        partial_dataloader = self._partial_dataloader(dataloader, confidence_batches)
+        
+        fp32_output = self._inference_model_on_batches(
+            fp32_model, tune_cfg, partial_dataloader, output_op_names)
+
+        for op in ops_lst:
+            # backup and set replace tuning config
+            backup_cfg = op_cfg[op] 
+            op_cfg[op] = replace_cfgs[op]
+
+            # quantize and inference the model
+            q_model = self.quantize(tune_cfg, fp32_model, partial_dataloader)
+            q_output = self._inference_model_on_batches(
+                q_model, tune_cfg, partial_dataloader, output_op_names)
+                
+            mse_result[op] = self._calculate_mse(fp32_output, q_output)
+
+            # recover tune_cfg
+            op_cfg[op] = backup_cfg
+        
+        return mse_result
+    
+    def _partial_dataset_of(self, dataloader, confidence_batches):
+        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
+        if isinstance(dataloader.dataset, DummyDataset):
+            assert(isinstance(confidence_batches, int))
+            ds = copy.deepcopy(dataloader.dataset)
+            ds.dataset = ds.dataset[:confidence_batches]
+            return ds
+        else:
+            return dataloader.dataset.take(confidence_batches)
+    
+    def _partial_dataloader(self, dataloader, confidence_batches):
+        return type(dataloader)(
+            dataset=self._partial_dataset_of(dataloader, confidence_batches),
+            batch_size=dataloader.batch_size, 
+            last_batch=dataloader.last_batch, 
+            collate_fn=dataloader.collate_fn,
+            sampler=dataloader.sampler, 
+            batch_sampler=dataloader.batch_sampler, 
+            num_workers=dataloader.num_workers, 
+            pin_memory=dataloader.pin_memory,
+            shuffle=dataloader.shuffle, 
+            distributed=dataloader.distributed)
+
+    def _calculate_mse(self, fp32_output, q_output):
+        result = []
+        for i, j in zip(fp32_output, q_output):
+            result.append(np.square(i - j).mean())
+        return np.array(result).mean()
+
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader, 
+                                    output_op_names):
+        from .tf_utils.util import generate_feed_dict
+
+        input_tensors = model.input_tensor
+        output_tensors = []
+        for op in output_op_names:
+            for tensor in model.graph.get_operation_by_name(op).outputs:
+                output_tensors.append(tensor)
+
+        predictions = []
+        for index, (inputs, _) in enumerate(dataloader):
+            feed_dict = generate_feed_dict(input_tensors, inputs)
+            
+            pred = model.sess.run(output_tensors, feed_dict)
+            for item in pred:
+                predictions.append(item)
+
+        return predictions
+        
 @adaptor_registry
 class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     def __init__(self, framework_specific_info):

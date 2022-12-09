@@ -22,7 +22,7 @@ The Component class will be inherited by the class 'Quantization', 'Pruning' and
 
 from ..conf.config import Conf
 from ..utils import logger
-from ..utils.utility import set_backend, required_libs
+from ..utils.utility import required_libs
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from ..model import BaseModel
 from .common import Model
@@ -96,7 +96,6 @@ class Component(object):
         self.cfg = self.conf.usr_cfg
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
-            set_backend(self.framework)
             if self.framework in required_libs:
                 for lib in required_libs[self.framework]:
                     try:
@@ -469,18 +468,22 @@ class Component(object):
                         make sure the name is in supported slim model list.
 
         """
+        if self.cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
+            self.framework = get_model_fwk_name(user_model)
+            if self.framework == "pytorch":
+                if self.cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif self.cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
+            self.cfg.model.framework = self.framework
+
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = Model(user_model)
+            self._model = Model(user_model, framework=self.framework)
         else:
             self._model = user_model
-
-        if self.cfg.model.framework == 'NA':
-            self.framework = get_model_fwk_name(user_model)
-            if self.framework == 'onnxruntime':
-                self.framework = 'onnxrt_qoperator'
-            self.cfg.model.framework = self.framework
-            set_backend(self.framework)
 
         if 'tensorflow' in self.framework:
             self._model.name = self.cfg.model.name

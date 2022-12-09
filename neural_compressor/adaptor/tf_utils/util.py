@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 
+from collections import OrderedDict, UserDict
 import os
 import numpy as np
 from google.protobuf import text_format
@@ -493,3 +494,62 @@ def _parse_config(q_config, cfg, op_list):
         if op_name_and_type[0] in op_list:
             updated_cfg['op'][op_name_and_type] = cfg['op'][op_name_and_type]
     return dequan_min_max, updated_cfg
+
+def generate_feed_dict(input_tensor, inputs):
+    if len(input_tensor) == 1:
+        feed_dict = {}
+        if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
+            or isinstance(inputs, UserDict):
+            for name in inputs:
+                for tensor in input_tensor:
+                    pos = tensor.name.rfind(":")
+                    t_name = tensor.name if pos < 0 else tensor.name[:pos]
+                    if name == t_name:
+                        feed_dict[tensor] = inputs[name]
+                        break
+        else:
+            feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
+    else:
+        assert len(input_tensor) == len(inputs), \
+            'inputs len must equal with input_tensor'
+        feed_dict = {}
+        if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \
+            or isinstance(inputs, UserDict):
+            for name in inputs:
+                for tensor in input_tensor:
+                    pos = tensor.name.rfind(":")
+                    t_name = tensor.name if pos < 0 else tensor.name[:pos]
+                    if name in [tensor.name, t_name]:
+                        feed_dict[tensor] = inputs[name]
+                        break
+        else:
+            # sometimes the input_tensor is not the same order with inputs
+            # we should check and pair them
+            def check_shape(tensor, data):
+                # scalar or 1 dim default True
+                if tensor.shape == None or \
+                    len(tensor.shape.dims) == 1 or \
+                    not hasattr(data, 'shape'):
+                    return True
+                tensor_shape = tuple(tensor.shape)
+                data_shape = tuple(data.shape)
+                for tensor_dim, data_dim in zip(tensor_shape, data_shape):
+                    if tensor_dim is not None and tensor_dim != data_dim:
+                        return False
+                return True
+
+            disorder_tensors = []
+            disorder_inputs = [] 
+            for idx, sort_tensor in enumerate(input_tensor):
+                sort_input = inputs[idx] 
+                if check_shape(sort_tensor, sort_input):
+                    feed_dict.update({sort_tensor: sort_input}) 
+                else:
+                    disorder_tensors.append(sort_tensor)
+                    disorder_inputs.append(sort_input)
+            for i, dis_tensor in enumerate(disorder_tensors):
+                for j, dis_input in enumerate(disorder_inputs):  
+                    if check_shape(dis_tensor, dis_input):
+                        feed_dict.update({dis_tensor: dis_input})    
+                        break
+    return feed_dict

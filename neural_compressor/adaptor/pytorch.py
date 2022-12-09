@@ -371,10 +371,12 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     if version.release >= Version("1.13.0").release:  # pragma: no cover
         from torch.ao.quantization import QConfigMapping
         fx_op_cfgs = QConfigMapping()
-        fx_op_cfgs.set_global(model_qconfig)
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs.set_global(model_qconfig)
     else:
         fx_op_cfgs = dict()
-        fx_op_cfgs[""] = model_qconfig
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs[""] = model_qconfig
         op_tuple_cfg_list = []
 
     for key, value in op_cfgs.items():
@@ -392,8 +394,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
 
     if version.release < Version("1.13.0").release:  # pragma: no cover
         fx_op_cfgs["module_name"] = op_tuple_cfg_list
-
-    if version.release >= Version("1.13.0").release:  # pragma: no cover
+    elif observer_type != 'post_training_dynamic_quant':
         from torch.ao.quantization import get_default_qconfig_mapping
         for name, q_config  in get_default_qconfig_mapping().to_dict()['object_type']:
             fx_op_cfgs.set_object_type(name, q_config)
@@ -1358,7 +1359,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model._model, inplace=True)
-        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+        if self.model.q_config is not None and len(self.model.q_config['bf16_ops_list']) > 0 and \
             self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
@@ -2774,7 +2775,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             if self.sub_module_list is None:
                 tmp_model = q_model._model
-                if self.version > Version("1.12.1"):  # pragma: no cover
+                if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                     # pylint: disable=E1123
                     q_model._model = prepare_fx(
                         q_model._model,
@@ -2811,7 +2812,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             scale_info = torch_utils.util._get_input_scale(q_model._model, hook_list)
 
         if self.sub_module_list is None:
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model,
                                             convert_custom_config=self.convert_custom_config_dict)
@@ -3450,7 +3451,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         try:
             tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
             graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1124, E1123
                 fused_model = _fuse_fx(graph_module,
                                         is_qat,
@@ -3531,6 +3532,28 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         except:  # pragma: no cover
             logger.info('Module has no forward function')
         return False
+
+    def get_output_op_names(self, *args, **kwargs):
+        return None
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): INC model containing fp32 model
+            dataloader (string): dataloader contains real data.
+            tune_cfg (dict): dictionary of tune configure for each op.
+            fallback (bool): switch method in fallback stage and re-quantize stage
+
+        Returns:
+            ops_lst (list): sorted op list by sensitivity
+        """
+        from .torch_utils.util import get_fallback_order
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, 
+                                         confidence_batches, fallback, requantize_cfgs)
+        return ordered_ops
 
 
 class PyTorchQuery(QueryBackendCapability):

@@ -38,9 +38,7 @@ PyTorch 1.8 is needed for pytorch_fx backend and huggingface/transformers.
 ### 1. Enable bert-base-cased/uncased example with the auto quantization aware training strategy of Neural Compressor.
 
   The changes made are as follows:
-  1. add conf_qat.yaml:  
-    This file contains the configuration of quantization.  
-  2. edit run_glue_tune.py:  
+  * edit run_glue.py:  
     - For quantization, We used neural_compressor in it.  
     - For training, we enbaled early stop strategy.  
 
@@ -50,7 +48,7 @@ PyTorch 1.8 is needed for pytorch_fx backend and huggingface/transformers.
 
 or
 
-    python run_glue_tune.py \
+    python run_glue.py \
         --model_name_or_path ${input_model} \
         --task_name ${task_name} \
         --do_train \
@@ -77,7 +75,7 @@ or
 
 or
 
-    python run_glue_tune.py \
+    python run_glue.py \
         --model_name_or_path ${input_model}/${tuned_checkpoint} \
         --task_name ${task_name} \
         --do_train \

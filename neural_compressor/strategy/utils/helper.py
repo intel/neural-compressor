@@ -15,15 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .quantization import Quantization
-from .pruning import Pruning
-from .benchmark import Benchmark
-from .version import __version__
-from .contrib import *
-# we need to set a global 'NA' backend, or Model can't be used
-from .utils.utility import set_random_seed, set_tensorboard, set_workspace
-from .utils import options
-from .conf.config import conf
-from .conf.pythonic_config import config
-from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    PruningConfig, QuantizationAwareTrainingConfig
+def tuning_record_msg(records):
+    records_str_lst = [[str(e) for e in record] for record in records]
+    record_msg = '\n'.join(','.join(record) for record in records_str_lst)
+    return record_msg

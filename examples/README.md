@@ -55,13 +55,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>MobileNet V1</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a>  / <a href="./tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>MobileNet V3</td>
@@ -236,6 +236,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/nlp/transformer_lt/quantization/ptq">pb</a></td>
+  </tr>
+  <tr>
+    <td>Transformer LT MLPerf</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/nlp/transformer_lt_mlperf/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>SSD ResNet50 V1</td>

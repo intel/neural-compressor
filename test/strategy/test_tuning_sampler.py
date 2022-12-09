@@ -1,7 +1,7 @@
-from neural_compressor.strategy.st_utils.tuning_sampler import OpTypeWiseTuningSampler, ModelWiseTuningSampler
-from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
-from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
-from neural_compressor.strategy.st_utils.tuning_space import TuningSpace
+from neural_compressor.strategy.utils.tuning_sampler import OpTypeWiseTuningSampler, ModelWiseTuningSampler
+from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
+from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
+from neural_compressor.strategy.utils.tuning_space import TuningSpace
 from collections import OrderedDict
 from copy import deepcopy
 import unittest
@@ -170,7 +170,7 @@ class TestTuningSampler(unittest.TestCase):
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         quant_mode_wise_items = OrderedDict()
-        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        query_order = ['static', 'dynamic', 'bf16', 'fp32']
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)
