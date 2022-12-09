@@ -16,7 +16,7 @@ pr:
     - test/ux
     - test/neural_coder
 
-pool: ICX-16C
+pool: test-pool
 
 variables:
   IMAGE_NAME: 'neural-compressor'
