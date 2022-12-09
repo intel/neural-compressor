@@ -7,7 +7,7 @@ import torch.nn as nn
 import unittest
 import os
 from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace
-from neural_compressor.data import Datasets, DATALOADERS
+from neural_compressor.data import Datasets, DATALOADERS, DataLoader
 from neural_compressor.experimental.data.datasets.dataset import Datasets
 from neural_compressor import quantization
 from neural_compressor.training import prepare_compression
@@ -485,7 +485,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         model_origin = DynamicControlModel()
         # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
-        dataloader = DATALOADERS["pytorch"](dataset)
+        dataloader = DataLoader("pytorch", dataset)
         set_workspace=("./saved")
         conf = PostTrainingQuantConfig(op_name_list=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin,
