@@ -6,9 +6,8 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from neural_compressor.data import DATASETS
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
+from neural_compressor.config import PruningConfig, Pruner
 
 
 def build_fake_yaml():
@@ -64,7 +63,7 @@ def build_fake_yaml():
 
 
 class TestPytorchPruning(unittest.TestCase):
-    model = torchvision.models.resnet18()
+    model = torch.nn.Module()
 
     @classmethod
     def setUpClass(cls):
@@ -76,16 +75,10 @@ class TestPytorchPruning(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    def test_pytorch_pruning_basic(self):
+    def test_pruning_yaml_config(self):
         prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
-        prune.update_config(start_step=1)
         prune.model = self.model
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
-        datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+        prune.update_config(start_step=1)
         prune.on_train_begin()
         prune.update_config(reg_type='group_lasso', parameters={"reg_coeff": 1.1}, \
                             max_layer_sparsity_ratio=0.99, min_layer_sparsity_ratio=0.21, \
@@ -97,30 +90,25 @@ class TestPytorchPruning(unittest.TestCase):
         assert prune.pruners[0].config['sparsity_decay_type'] == "cube", "sparsity_decay_type should be cube"
         assert prune.pruners[0].config['min_layer_sparsity_ratio'] == 0.21, "min_layer_sparsity_ratio should be 0.71"
         assert prune.pruners[0].config['max_layer_sparsity_ratio'] == 0.99, "max_layer_sparsity_ratio should be 0.99"
-        assert prune.pruners[0].config['reg_coeff'] == 1.1, \
-            f"reg_coeff should be 1.1 not {prune.pruners[0].config['reg_coeff']}"
+        assert prune.pruners[0].config[
+                   'reg_coeff'] == 1.1, f"reg_coeff should be 1.1 not {prune.pruners[0].config['reg_coeff']}"
 
-        for epoch in range(2):
-            self.model.train()
-            prune.on_epoch_begin(epoch)
-            local_step = 0
-            for image, target in dummy_dataloader:
-                prune.on_step_begin(local_step)
-                output = self.model(image)
-                loss = criterion(output, target)
-                optimizer.zero_grad()
-                loss.backward()
-                prune.on_before_optimizer_step()
-                optimizer.step()
-                prune.on_after_optimizer_step()
-                prune.on_step_end()
-                local_step += 1
-
-            prune.on_epoch_end()
-        prune.get_sparsity_ratio()
-        prune.on_train_end()
-        prune.on_before_eval()
-        prune.on_after_eval()
+    def test_pruning_class_config(self):
+        dummy_pruner1 = Pruner(extra_excluded_names=["layer1"], reg_type="group_lasso", max_layer_sparsity_ratio=0.9)
+        dummy_pruner2 = Pruner(prune_domain="local", criterion_reduce_type="max", target_sparsity=0.85)
+        config = PruningConfig([dummy_pruner1, dummy_pruner2], target_sparsity=0.8, end_step=1)
+        prune = Pruning(config)
+        prune.model = self.model
+        prune.on_train_begin()
+        assert prune.pruners[0].config['extra_excluded_names'] == ["layer1"]
+        assert prune.pruners[0].config['reg_type'] == "group_lasso"
+        assert prune.pruners[0].config['max_layer_sparsity_ratio'] == 0.9
+        assert prune.pruners[0].config['target_sparsity'] == 0.8
+        assert prune.pruners[0].config['end_step'] == 1
+        assert prune.pruners[1].config["prune_domain"] == "local"
+        assert prune.pruners[1].config["criterion_reduce_type"] == "max"
+        assert prune.pruners[1].config["target_sparsity"] == 0.85
+        assert prune.pruners[1].config['end_step'] == 1
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ except:
     from .dot_dict import DotDict  ##TODO
 from .logger import logger
 
+from neural_compressor.config import PruningConfig
 
 def check_config(prune_config):
     """Functions that check key-value is valid to run Pruning object.
@@ -143,7 +144,10 @@ def process_and_check_config(val):
 
     prams_default_config = {"reg_coeff": 0.0}
     default_local_config.update(default_global_config)
-    val = val["pruning"]['approach']['weight_compression']
+    if isinstance(val, PruningConfig):
+        val = val.weight_compression
+    else:
+        val = val["pruning"]['approach']['weight_compression']
 
     ##set global value
     for key in default_global_config.keys():
@@ -152,7 +156,12 @@ def process_and_check_config(val):
     default_local_config.update(prams_default_config)
 
     pruners_info = []
-    for info in val['pruners']:
+    if isinstance(val, PruningConfig):
+        pruners = val.pruners
+    else:
+        pruners = val['pruners']
+
+    for info in pruners:
         pruner_info = {}
         for key in default_local_config:
             pruner_info[key] = reset_none_to_default(info, key, default_local_config[key])
@@ -163,6 +172,7 @@ def process_and_check_config(val):
         pruners_info.append(pruner_info)
 
     return pruners_info
+
 
 
 def process_config(config):
@@ -186,6 +196,7 @@ def process_config(config):
 
                 val = yaml.safe_load(content)
                 schema.validate(val)
+            return process_and_check_config(val)
         except FileNotFoundError as f:
             logger.error("{}.".format(f))
             raise RuntimeError(
@@ -198,11 +209,13 @@ def process_config(config):
             )
 
     elif isinstance(config, DotDict):
-        val = config
+        return process_and_check_config(config)
+    elif isinstance(config, PruningConfig):
+        return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
 
-    return process_and_check_config(val)
+
 
 
 def parse_to_prune(config, model):
