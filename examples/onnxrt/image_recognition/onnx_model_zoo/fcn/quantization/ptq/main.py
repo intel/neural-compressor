@@ -67,11 +67,6 @@ parser.add_argument(
     help="whether quantize the model"
 )
 parser.add_argument(
-    '--config',
-    type=str,
-    help="config yaml path"
-)
-parser.add_argument(
     '--output_model',
     type=str,
     help="output model path"
@@ -80,6 +75,12 @@ parser.add_argument(
     '--mode',
     type=str,
     help="benchmark mode of performance or accuracy"
+)
+parser.add_argument('--quant_format',
+    type=str,
+    default='Default', 
+    choices=['Default', 'QDQ'],
+    help="quantization format"
 )
 args = parser.parse_args()
 
@@ -114,8 +115,9 @@ preprocess = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-class Dataset:
+class Dataloader:
     def __init__(self):
+        self.batch_size = 1
         imgIds = self.getImgIdsUnion(cocoGt, VOC_CAT_IDS)
         self.data = []
         for imgId in imgIds:
@@ -135,11 +137,9 @@ class Dataset:
                 output_tensor[0] = 1 - np.max(output_tensor, axis=0)
                 self.data.append((input_tensor, output_tensor))
 
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, index):
-        return self.data[index]
+    def __iter__(self, index):
+        for data in self.data:
+            yield data
 
     def getImgIdsUnion(self, gt, catIds):
         """
@@ -199,31 +199,32 @@ def evaluate(model, dataloader):
 if __name__ == "__main__":
 
     model = onnx.load(args.model_path)
-    ds = Dataset()
+    dataloader = Dataloader()
     def eval(model):
-        return evaluate(model, ds)
+        return evaluate(model, dataloader)
 
-    if args.benchmark and args.mode == "accuracy":
-        results = eval(model)
-        print("Batch size = 1")
-        print("Accuracy: %.5f" % results)
-
-    if args.benchmark and args.mode == "performance":
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(model)
-        evaluator.b_dataloader = common.DataLoader(ds)
-        evaluator(args.mode)
+    if args.benchmark:
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100, cores_per_instance=28, num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval(model)
+            print("Batch size = %d" % dataloader.batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        from neural_compressor import options
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.absolute = 0.01
+        config = PostTrainingQuantConfig(
+            accuracy_criterion=accuracy_criterion,
+            quant_format=args.quant_format)
+ 
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
+			     eval_func=eval)
 
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = common.DataLoader(ds)
-        quantize.eval_func = eval
-        q_model = quantize()
         q_model.save(args.output_model)
         

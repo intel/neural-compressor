@@ -13,9 +13,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -27,6 +24,9 @@ function init_params {
       ;;
       --label_path=*)
           label_path=$(echo $var |cut -f2 -d=)
+      ;;
+      --quant_format=*)
+          quant_format=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -40,7 +40,7 @@ function run_tuning {
             --data_path ${data_path} \
             --label_path ${label_path} \
             --output_model ${output_model} \
-            --config ${config} \
+            --quant_format ${quant_format} \
             --tune
 }
 

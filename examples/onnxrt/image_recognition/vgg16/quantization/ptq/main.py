@@ -60,15 +60,12 @@ if __name__ == "__main__":
         type=str,
         help="output model path"
     )
-
     parser.add_argument(
         '--mode',
         type=str,
         help="benchmark mode of performance or accuracy"
     )
-
     args = parser.parse_args()
-
     model = onnx.load(args.model_path)
     if args.benchmark:
         from neural_compressor.experimental import Benchmark, common
@@ -77,11 +74,6 @@ if __name__ == "__main__":
         evaluator(args.mode)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        from neural_compressor import options
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        q_model = quantize()
+        from neural_compressor import quantization
+        q_model = quantization.fit(model, args.config)
         q_model.save(args.output_model)

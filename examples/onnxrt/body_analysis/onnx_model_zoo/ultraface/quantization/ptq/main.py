@@ -23,6 +23,7 @@ import numpy as np
 import onnx
 import os
 from scipy.io import loadmat
+import onnxruntime as ort
 
 class Dataloader:
     def __init__(self, data_path, size=[320,240]):
@@ -356,6 +357,17 @@ def voc_ap(rec, prec):
     ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
     return ap
 
+def eval_func(model, dataloader, metric, postprocess):
+    metric.reset()
+    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    ort_inputs = {}
+    input_names = [i.name for i in sess.get_inputs()]
+    for input_data, label in dataloader:
+        output = sess.run(None, dict(zip(input_names, [input_data])))
+        output, label = postprocess((output, label))
+        metric.update(output, label)
+    return metric.result()
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -399,11 +411,6 @@ parser.add_argument(
     help="whether quantize the model"
 )
 parser.add_argument(
-    '--config',
-    type=str,
-    help="config yaml path"
-)
-parser.add_argument(
     '--output_model',
     type=str,
     help="output model path"
@@ -418,27 +425,27 @@ args = parser.parse_args()
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     dataloader  = Dataloader(args.data_path, size=args.input_size)
+    metric = AP(args.label_path)
+    postprocess = Post()
+    def eval(onnx_model):
+        return eval_func(onnx_model, dataloader, metric, postprocess)
+
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        if args.mode == 'accuracy':
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = dataloader
-            evaluator.postprocess = common.Postprocess(Post)
-            evaluator.metric = AP(args.label_path)
-            evaluator(args.mode)
-        else:
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator(args.mode)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig()
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval(model)
+            print("Batch size = %d" % dataloader.batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.eval_dataloader = dataloader
-        quantize.calib_dataloader = dataloader
-        quantize.postprocess = common.Postprocess(Post)
-        quantize.metric = AP(args.label_path)
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig()
+ 
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
+			     eval_func=eval)
+
         q_model.save(args.output_model)

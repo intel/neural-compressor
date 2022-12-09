@@ -13,11 +13,14 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
+      ;;
+      --data_path=*)
+          data_path=$(echo $var |cut -f2 -d=)
+      ;;
+      --label_path=*)
+          label_path=$(echo $var |cut -f2 -d=)
       ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
@@ -31,8 +34,9 @@ function init_params {
 function run_tuning {
     python main.py \
             --model_path ${input_model} \
+            --data_path ${data_path} \
+            --label_path ${label_path} \
             --output_model ${output_model} \
-            --config ${config} \
             --tune
 }
 

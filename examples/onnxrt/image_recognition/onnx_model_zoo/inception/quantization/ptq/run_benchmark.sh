@@ -12,9 +12,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -39,7 +36,6 @@ function run_benchmark {
             --model_path ${input_model} \
             --data_path ${data_path} \
             --label_path ${label_path} \
-            --config ${config} \
             --mode=${mode} \
             --benchmark
             

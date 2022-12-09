@@ -22,13 +22,150 @@ import argparse
 
 import numpy as np
 import onnx
+import onnxruntime as ort
+from sklearn.metrics import accuracy_score
+import cv2
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.WARN)
 
-class squeeze:
+def _topk_shape_validate(preds, labels):
+    # preds shape can be Nxclass_num or class_num(N=1 by default)
+    # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
+    if isinstance(preds, int):
+        preds = [preds]
+        preds = np.array(preds)
+    elif isinstance(preds, np.ndarray):
+        preds = np.array(preds)
+    elif isinstance(preds, list):
+        preds = np.array(preds)
+        preds = preds.reshape((-1, preds.shape[-1]))
+
+    # consider labels just int value 1x1
+    if isinstance(labels, int):
+        labels = [labels]
+        labels = np.array(labels)
+    elif isinstance(labels, tuple):
+        labels = np.array([labels])
+        labels = labels.reshape((labels.shape[-1], -1))
+    elif isinstance(labels, list):
+        if isinstance(labels[0], int):
+            labels = np.array(labels)
+            labels = labels.reshape((labels.shape[0], 1))
+        elif isinstance(labels[0], tuple):
+            labels = np.array(labels)
+            labels = labels.reshape((labels.shape[-1], -1))
+        else:
+            labels = np.array(labels)
+    # labels most have 2 axis, 2 cases: N(or Nx1 sparse) or Nxclass_num(one-hot)
+    # only support 2 dimension one-shot labels
+    # or 1 dimension one-hot class_num will confuse with N
+
+    if len(preds.shape) == 1:
+        N = 1
+        class_num = preds.shape[0]
+        preds = preds.reshape([-1, class_num])
+    elif len(preds.shape) >= 2:
+        N = preds.shape[0]
+        preds = preds.reshape([N, -1])
+        class_num = preds.shape[1]
+
+    label_N = labels.shape[0]
+    assert label_N == N, 'labels batch size should same with preds'
+    labels = labels.reshape([N, -1])
+    # one-hot labels will have 2 dimension not equal 1
+    if labels.shape[1] != 1:
+        labels = labels.argsort()[..., -1:]
+    return preds, labels
+
+class TopK:
+    def __init__(self, k=1):
+        self.k = k
+        self.num_correct = 0
+        self.num_sample = 0
+
+    def update(self, preds, labels, sample_weight=None):
+        preds, labels = _topk_shape_validate(preds, labels)
+        preds = preds.argsort()[..., -self.k:]
+        if self.k == 1:
+            correct = accuracy_score(preds, labels, normalize=False)
+            self.num_correct += correct
+
+        else:
+            for p, l in zip(preds, labels):
+                # get top-k labels with np.argpartition
+                # p = np.argpartition(p, -self.k)[-self.k:]
+                l = l.astype('int32')
+                if l in p:
+                    self.num_correct += 1
+
+        self.num_sample += len(labels)
+
+    def reset(self):
+        self.num_correct = 0
+        self.num_sample = 0
+
+    def result(self):
+        if self.num_sample == 0:
+            logger.warning("Sample num during evaluation is 0.")
+            return 0
+        elif getattr(self, '_hvd', None) is not None:
+            allgather_num_correct = sum(self._hvd.allgather_object(self.num_correct))
+            allgather_num_sample = sum(self._hvd.allgather_object(self.num_sample))
+            return allgather_num_correct / allgather_num_sample
+        return self.num_correct / self.num_sample
+
+class Dataloader:
+    def __init__(self, data_path, image_list):
+        self.batch_size = 1
+        self.image_list = []
+        self.label_list = []
+        with open(image_list, 'r') as f:
+            for s in f:
+                image_name, label = re.split(r"\s+", s.strip())
+                src = os.path.join(data_path, image_name)
+                if not os.path.exists(src):
+                    continue
+                with Image.open(src) as image:
+                    image = np.array(image.convert('RGB')).astype(np.float32)
+                    image = image / 255.
+                    image = cv2.resize(image, (256,256))
+                    h, w = image.shape[0], image.shape[1]
+                    if h + 1 < 224 or w + 1 < 224:
+                        raise ValueError(
+                            "Required crop size {} is larger then input image size {}".format(
+                                (224, 224), (h, w)))
+
+                    if 224 != h or 224 != w:
+                        y0 = (h - 224) // 2
+                        x0 = (w - 224) // 2
+                        image = image[y0:y0 + 224, x0:x0 + 224, :]
+                    
+                    image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225] 
+                    image = image.transpose((2, 0, 1))
+                    image = np.expand_dims(image, axis=0)
+                self.image_list.append(image.astype(np.float32))
+                self.label_list.append(int(label))
+
+    def __iter__(self):
+        for image, label in zip(self.image_list, self.label_list):
+            yield image, label
+
+def eval_func(model, dataloader, metric, postprocess):
+    metric.reset()
+    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    ort_inputs = {}
+    input_names = [i.name for i in sess.get_inputs()]
+    for input_data, label in dataloader:
+        output = sess.run(None, dict(zip(input_names, [input_data])))
+        output, label = postprocess((output, label))
+        metric.update(output, label)
+    return metric.result()
+
+class Squeeze:
     def __call__(self, sample):
         preds, labels = sample
         return np.squeeze(preds), labels
@@ -56,9 +193,14 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
-        '--config',
+        '--data_path',
         type=str,
-        help="config yaml path"
+        help="Imagenet data path"
+    )
+    parser.add_argument(
+        '--label_path',
+        type=str,
+        help="Imagenet label path"
     )
     parser.add_argument(
         '--output_model',
@@ -68,27 +210,37 @@ if __name__ == "__main__":
     parser.add_argument(
         '--mode',
         type=str,
-        default='performance',
         help="benchmark mode of performance or accuracy"
     )
-
     args = parser.parse_args()
-
     model = onnx.load(args.model_path)
+    dataloader = Dataloader(args.data_path, args.label_path)
+    top1 = TopK()
+    postprocess = Squeeze()
+    def eval(onnx_model):
+        return eval_func(onnx_model, dataloader, top1, postprocess)
+
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(model)
-        evaluator.postprocess = common.Postprocess(squeeze)
-        evaluator(args.mode)
-
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(warmup=10, iteration=1000, cores_per_instance=4, num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval(model)
+            print("Batch size = %d" % dataloader.batch_size)
+            print("Accuracy: %.5f" % acc_result)
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        from neural_compressor import options
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.relative = 0.02
+        config = PostTrainingQuantConfig(
+            accuracy_criterion=accuracy_criterion,
+            op_name_list={'Conv_nc_rename_0': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+                          'Relu_nc_rename_1': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}})
+ 
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
+			     eval_func=eval)
 
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.postprocess = common.Postprocess(squeeze)
-        q_model = quantize()
         q_model.save(args.output_model)

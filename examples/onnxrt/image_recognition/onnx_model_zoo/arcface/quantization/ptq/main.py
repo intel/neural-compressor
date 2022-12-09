@@ -7,6 +7,7 @@ import sklearn
 import pickle
 import logging
 import argparse
+import onnxruntime as ort
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -110,8 +111,9 @@ class Metric:
             np.asarray(self.actual_issame), nrof_folds=self.nfolds)
         return np.mean(accuracy)
 
-class Dataset:
+class Dataloader:
     def __init__(self, data_dir):
+        self.batch_size = 1
         path = os.path.join(data_dir)
         # Load data
         if os.path.exists(path):
@@ -119,11 +121,19 @@ class Dataset:
             self.data_list = data_set[0]
             self.issame_list = data_set[1]
  
-    def __getitem__(self, index):
-        return self.data_list[index], self.issame_list
+    def __iter__(self):
+        for data in self.data_list:
+            yield data, self.issame_list
 
-    def __len__(self):
-        return len(self.data_list)
+def eval_func(model, dataloader, metric):
+    metric.reset()
+    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    ort_inputs = {}
+    input_names = [i.name for i in sess.get_inputs()]
+    for input_data, label in dataloader:
+        output = sess.run(None, dict(zip(input_names, [input_data])))
+        metric.update(output, label)
+    return metric.result()
 
 if __name__ == '__main__':
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
@@ -153,47 +163,48 @@ if __name__ == '__main__':
         help="whether quantize the model"
     )
     parser.add_argument(
-        '--config',
-        type=str,
-        help="config yaml path"
-    )
-    parser.add_argument(
         '--output_model',
         type=str,
         help="output model path"
-    )
-    parser.add_argument(
-        '--mode',
-        type=str,
-        default='performance',
-        help="benchmark mode of performance or accuracy"
     )
     parser.add_argument(
         '--nfolds',
         type=int,
         default=1,
     )
- 
+    parser.add_argument(
+        '--mode',
+        type=str,
+        help="benchmark mode of performance or accuracy"
+    )
+    
     args = parser.parse_args()
     # Load image size
     image_size = load_property(args.data_path)
     print('image_size', image_size)
-    ds = Dataset(args.data_path)
+    
+    dataloader = Dataloader(args.data_path)
     model = onnx.load(args.model_path)
+    metric = Metric(args.nfolds)
+    def eval(onnx_model):
+        return eval_func(onnx_model, dataloader, metric)
+    
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(model)
-        evaluator.b_dataloader = common.DataLoader(ds)
-        evaluator.metric = Metric(args.nfolds)
-        evaluator(args.mode)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(warmup=10, iteration=1000, cores_per_instance=4, num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval(model)
+            print("Batch size = %d" % dataloader.batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = common.DataLoader(ds)
-        quantize.eval_dataloader = common.DataLoader(ds)
-        quantize.metric = Metric(args.nfolds)
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='static')
+ 
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
+			     eval_func=eval)
+
         q_model.save(args.output_model)

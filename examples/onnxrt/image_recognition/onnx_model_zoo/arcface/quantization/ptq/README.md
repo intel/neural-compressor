@@ -18,7 +18,6 @@ wget https://github.com/onnx/models/raw/main/vision/body_analysis/arcface/model/
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=arcface.yaml \
                    --data_path=/path/to/faces_ms1m_112x112/task.bin \
                    --nfolds=nfolds_num \ # optional, data type is int, default is 1
                    --output_model=path/to/save
@@ -28,7 +27,6 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=arcface.yaml \
                       --data_path=/path/to/faces_ms1m_112x112/task.bin \
                       --nfolds=nfolds_num \ # optional, data type is int, default is 1
                       --mode=performance # or accuracy

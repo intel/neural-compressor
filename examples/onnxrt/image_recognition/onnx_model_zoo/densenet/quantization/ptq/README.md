@@ -18,7 +18,8 @@ wget https://github.com/onnx/models/raw/main/vision/classification/densenet-121/
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=densenet.yaml \
+                   --data_path=path/to/dataset \
+                   --label_path=path/to/label \
                    --output_model=path/to/save
 ```
 
@@ -26,7 +27,9 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=densenet.yaml \
-                      --mode=performance
+                      --data_path=path/to/dataset \
+                      --label_path=path/to/label \
+                      --mode=performance # or accuracy
+ 
 ```
 

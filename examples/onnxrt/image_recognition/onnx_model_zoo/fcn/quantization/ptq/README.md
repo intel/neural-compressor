@@ -20,7 +20,6 @@ Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --config=fcn_rn50.yaml \ 
                    --data_path=path/to/coco/val2017 \
                    --label_path=path/to/coco/annotations/instances_val2017.json \
                    --output_model=path/to/save
@@ -30,17 +29,16 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --config=fcn_rn50_qdq.yaml \ 
                    --data_path=path/to/coco/val2017 \
                    --label_path=path/to/coco/annotations/instances_val2017.json \
-                   --output_model=path/to/save
+                   --output_model=path/to/save \
+                   --quant_format=QDQ
 ```
 
 ### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=fcn_rn50.yaml \
                       --data_path=path/to/coco/val2017 \
                       --label_path=path/to/coco/annotations/instances_val2017.json \
                       --mode=performance # or accuracy

@@ -20,7 +20,6 @@ Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=inception_v1.yaml \
                    --data_path=/path/to/imagenet \
                    --label_path=/path/to/imagenet/label \
                    --output_model=path/to/save
@@ -30,17 +29,16 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=inception_v1_qdq.yaml \
                    --data_path=/path/to/imagenet \
                    --label_path=/path/to/imagenet/label \
-                   --output_model=path/to/save
+                   --output_model=path/to/save \
+                   --quant_format=QDQ
 ```
 
 ### Benchmark 
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=inception_v1.yaml \
                       --data_path=/path/to/imagenet \
                       --label_path=/path/to/imagenet/label \
                       --mode=performance # or accuracy
