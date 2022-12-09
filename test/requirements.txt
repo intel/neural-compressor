@@ -18,6 +18,8 @@ tensorflow-addons
 onnxruntime-extensions; python_version < '3.10'
 autograd==1.4
 fvcore==0.1.5.post20220119
+fairseq==0.12.2
+torchprofile==0.0.4
 ofa==0.1.0.post202203231606
 pymoo==0.5.0
 intel-extension-for-pytorch
