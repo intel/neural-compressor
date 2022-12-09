@@ -100,7 +100,7 @@ calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,
                                    ctx=args.ctx,
                                    **combine_mean_std)
 
-from neural_compressor import Quantization, common
+from neural_compressor.experimental import Quantization, common
 quantizer = Quantization('conf.yaml')
 quantizer.model = fp32_model
 quantizer.calib_dataloader = calib_data
