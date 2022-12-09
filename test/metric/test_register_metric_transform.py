@@ -42,7 +42,8 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from neural_compressor import Benchmark, Quantization
+        from neural_compressor import Benchmark
+        from neural_compressor.experimental import Quantization
         from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
         from neural_compressor.experimental.metric.metric import TensorflowTopK
         os.environ['NC_ENV_CONF'] = 'True'
