@@ -2443,3 +2443,4 @@ npmjs
 AWSSageMakerSupport
 sagemaker
 BenchmarkConfig
+xpu
