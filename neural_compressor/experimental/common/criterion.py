@@ -1454,6 +1454,36 @@ class PyTorchSelfKnowledgeDistillationLoss(
             self.loss += tmp_loss
         return self.loss
 
+    def teacher_model_forward(self, input, teacher_model=None, device=None):
+        """Teacher model forward.
+
+        Args:
+            input (tensor): input data
+            teacher_model (torch.nn.model, optional): teacher model. Defaults to None.
+            device (torch.device, optional): device. Defaults to None.
+
+        Returns:
+            tensor: output
+        """
+        outputs = None
+        if self.loss_weights[1] > 0:
+            model = self.teacher_model if teacher_model is None else teacher_model
+            assert isinstance(model, torch.nn.Module), \
+                'Teacher model should be a torch Module instead of {}'.format(type(model))
+            model.eval()
+            try:
+                model_device = next(model.parameters()).device
+            except:
+                logger.warning("Cannot get model device, assuming it's in CPU.")
+                model_device = "cpu"
+            device = model_device if device is None else device
+            if device != model_device:
+                model.to(device)
+            with torch.no_grad():
+                outputs = pytorch_forward_wrapper(model, input, device=device)
+            self.teacher_outputs = outputs
+        return outputs
+
 
 @criterion_registry('SelfKnowledgeDistillationLoss', 'pytorch')
 class PyTorchSelfKnowledgeDistillationLossWrapper(object):
