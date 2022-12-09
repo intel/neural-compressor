@@ -9,6 +9,7 @@ import torch.nn as nn
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
+from neural_compressor.config import WeightPruningConfig
 
 
 def build_fake_yaml():
@@ -71,10 +72,6 @@ def build_fake_yaml():
     with open('fake_snip.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_snip_yaml)
 
-
-
-
-
 class TestPruningPatterns(unittest.TestCase):
     model = torchvision.models.resnet18()
 
@@ -89,18 +86,48 @@ class TestPruningPatterns(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_pattern(self):
-        prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
-        prune.update_config(start_step=1)
+        local_configs = [
+            {
+                "op_names": ['layer1.*'], 
+                'target_sparsity': 0.5,
+                "pattern": '5:8',
+                "pruning_type": "magnitude"
+            },
+            {
+                "op_names": ['layer2.*'],
+                "pattern": '1xchannel',
+                "pruning_scope": "global"
+            },
+            {
+                "start_step": 2,
+                "end_step": 20,
+                "op_names": ['layer3.*'],
+                'target_sparsity': 0.666666, 
+                'pattern': '4x2',
+                "pruning_type": "snip_progressive",
+                "pruning_frequency": 5
+            }
+        ]
+        config = WeightPruningConfig(
+            local_configs, 
+            target_sparsity=0.8,
+            sparsity_decay_type="cos",
+            excluded_op_names=["downsample.*"],
+            pruning_scope= "local",
+            min_sparsity_ratio_per_op=0.1
+        )
+        prune = Pruning(config)
+        prune.update_config(start_step=1, end_step=10)
         prune.model = self.model
+
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
         prune.on_train_begin()
-        prune.update_config(pruning_frequency=1)
-        for epoch in range(2):
+        for epoch in range(5):
             self.model.train()
             prune.on_epoch_begin(epoch)
             local_step = 0

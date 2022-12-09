@@ -77,21 +77,41 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_basic(self):
-        local_configs = [{"op_names": ['layer1.*'], 'target_sparsity': 0.9},
-                         {"op_names": ['layer1.*'], 'target_sparsity': 0.7,
-                          'pattern': '4x1'}]
-        config = WeightPruningConfig(local_configs, target_sparsity=0.8)
-
+        local_configs = [
+            {
+                "op_names": ['layer1.*'], 
+                'target_sparsity': 0.5,
+                "pattern": '8x2',
+                "pruning_type": "magnitude_progressive"
+            },
+            {
+                "op_names": ['layer2.*'],
+                'target_sparsity': 0.5, 
+                'pattern': '2:4'
+            },
+            {
+                "op_names": ['layer3.*'],
+                'target_sparsity': 0.7, 
+                'pattern': '4x1',
+                "pruning_type": "snip_progressive"
+            }
+        ]
+        config = WeightPruningConfig(
+            local_configs, 
+            target_sparsity=0.8
+        )
         prune = Pruning(config)
         prune.update_config(start_step=1, end_step=10)
         prune.model = self.model
+
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = DATASETS('pytorch')
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
         prune.on_train_begin()
-        prune.update_config(pruning_frequency=1)
+        prune.update_config(pruning_frequency=4)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)

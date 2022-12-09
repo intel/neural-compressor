@@ -6,9 +6,10 @@ import torch
 import torchvision
 import torch.nn as nn
 
+from neural_compressor.data import DATASETS
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
-from neural_compressor.config import WeightPruningConfig, GlobalPrunerConfig, LocalPruningConfig
-
+from neural_compressor.config import WeightPruningConfig
 
 def build_fake_yaml():
     fake_snip_yaml = """
@@ -63,7 +64,7 @@ def build_fake_yaml():
 
 
 class TestPytorchPruning(unittest.TestCase):
-    model = torch.nn.Module()
+    model = torchvision.models.resnet18()
 
     @classmethod
     def setUpClass(cls):
@@ -76,23 +77,59 @@ class TestPytorchPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
 
-
     def test_pruning_class_config(self):
-        dummy_pruner1 = Pruner(extra_excluded_op_names=["layer1"], reg_type="group_lasso", max_sparsity_ratio_per_op=0.9)
-        dummy_pruner2 = Pruner(pruning_scope="local", criterion_reduce_type="max", target_sparsity=0.85)
-        config = WeightPruningConfig([dummy_pruner1, dummy_pruner2], target_sparsity=0.8, end_step=1)
+        local_configs = [
+            {
+                "op_names": ['layer1.*', 'layer2.*'],
+                "excluded_op_names": ['downsample.*'], 
+                'target_sparsity': 0.6,
+                "pattern": 'channelx1',
+                "pruning_type": "snip_progressive",
+                "pruning_scope": "local",
+                "start_step": 0,
+                "end_step": 10
+            },
+            {
+                "op_names": ['layer3.*'],
+                "pruning_type": "pattern_lock"
+            }
+        ]
+        config = WeightPruningConfig(
+            local_configs,
+            pruning_frequency=2
+        )
         prune = Pruning(config)
         prune.model = self.model
+
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
+        datasets = DATASETS('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(12, 3, 224, 224), low=0., high=1., label=True)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
         prune.on_train_begin()
-        assert prune.pruners[0].config['extra_excluded_op_names'] == ["layer1"]
-        assert prune.pruners[0].config['reg_type'] == "group_lasso"
-        assert prune.pruners[0].config['max_sparsity_ratio_per_op'] == 0.9
-        assert prune.pruners[0].config['target_sparsity'] == 0.8
-        assert prune.pruners[0].config['end_step'] == 1
-        assert prune.pruners[1].config["pruning_scope"] == "local"
-        assert prune.pruners[1].config["criterion_reduce_type"] == "max"
-        assert prune.pruners[1].config["target_sparsity"] == 0.85
-        assert prune.pruners[1].config['end_step'] == 1
+        prune.update_config(pruning_frequency=4)
+        for epoch in range(3):
+            self.model.train()
+            prune.on_epoch_begin(epoch)
+            local_step = 0
+            for image, target in dummy_dataloader:
+                prune.on_step_begin(local_step)
+                output = self.model(image)
+                loss = criterion(output, target)
+                optimizer.zero_grad()
+                loss.backward()
+                prune.on_before_optimizer_step()
+                optimizer.step()
+                prune.on_after_optimizer_step()
+                prune.on_step_end()
+                local_step += 1
+
+            prune.on_epoch_end()
+        prune.get_sparsity_ratio()
+        prune.on_train_end()
+        prune.on_before_eval()
+        prune.on_after_eval()
 
 
 if __name__ == "__main__":
