@@ -16,7 +16,7 @@ pr:
     - test/ux
     - test/neural_coder
 
-pool: test-pool
+pool: ICX-16C
 
 variables:
   IMAGE_NAME: 'neural-compressor'
@@ -165,8 +165,7 @@ stages:
 
 - stage: Coverage
   displayName: "Coverage Combine"
-  # dependsOn: [Adaptor, TFNewAPI, Others, IPEX, Adaptor_base, TFNewAPI_base, Others_base, IPEX_base]
-  dependsOn: [IPEX]
+  dependsOn: [Adaptor, TFNewAPI, Others, IPEX, Adaptor_base, TFNewAPI_base, Others_base, IPEX_base]
   jobs:
   - job: CollectDatafiles
     steps:
