@@ -28,7 +28,7 @@ def build_fake_yaml():
           pruners:
             - !Pruner
                 start_step: 0
-                end_step: 0
+                end_step: 2
                 prune_type: "magnitude"
                 names: ['layer1.*']
                 extra_excluded_names: ['layer2.*']

@@ -628,7 +628,8 @@ class PruningConfig:
     def __init__(self, pruners=pruners, target_sparsity=0.9, prune_type="snip_momentum", pattern="4x1", names=[],
                  excluded_names=[],
                  start_step=0, end_step=0, prune_domain="global", prune_frequency=1,
-                 min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98, sparsity_decay_type="exp", prune_layer_type=['Conv', 'Linear'],
+                 min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98,
+		 sparsity_decay_type="exp", prune_layer_type=['Conv', 'Linear'],
                  resume_from_pruned_checkpoint=False
                  ):
         self._weight_compression = DotDict({
