@@ -1786,6 +1786,7 @@ teraoperations
 tesla
 testability
 TestSettings
+text
 tf
 TF
 TFBertForSequenceClassification
