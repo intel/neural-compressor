@@ -25,7 +25,11 @@ from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.mxnet_model import MXNetModel
-from neural_compressor.model.tensorflow_model import TensorflowModel
+from neural_compressor.model.tensorflow_model import (
+     TensorflowBaseModel,
+     TensorflowModel,
+     get_model_type
+     )
 
 TORCH = False
 if importlib.util.find_spec('torch'):
