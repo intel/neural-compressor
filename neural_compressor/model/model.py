@@ -134,7 +134,6 @@ def get_model_fwk_name(model):
                 if version1_lt_version2(tf.version.VERSION, '2.10.0'):
                     logger.warn("keras model running on tensorflow 2.10.0 and"
                                 " lower not support intel ITEX.")
-                    return 'NA'
                 try:
                     model = tf.keras.models.load_model(model)
                 except:
