@@ -516,7 +516,7 @@ class TensorFlowAdaptor(Adaptor):
             model (tf.compat.v1.GraphDef): fp32 model
             data_loader (generator): generator the data and labels
             q_func (optional): training function for quantization aware training mode,
-                    which not enabled for tensorflow yet.
+                                which not enabled for tensorflow yet.
 
         Returns:
             tf.compat.v1.GraphDef: the quantized model

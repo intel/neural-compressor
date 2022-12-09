@@ -65,9 +65,7 @@ class TestTensorflowQAT(unittest.TestCase):
     import tensorflow as tf
     @classmethod
     def setUpClass(self):
-        build_fake_yaml()
         train_func()
-        build_fake_yaml_by_train()
 
     @classmethod
     def tearDownClass(self):
