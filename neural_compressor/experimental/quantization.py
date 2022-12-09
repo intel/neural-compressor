@@ -432,6 +432,8 @@ class Quantization(Component):
                        make sure the name is in supported slim model list.
         """
         approach_cfg = deep_get(self.cfg, 'quantization.approach')
+        if not self.framework:
+            self.framework = get_model_fwk_name(user_model)
         if self.framework == 'tensorflow' and approach_cfg == 'quant_aware_training':
             if type(user_model) == str:
                 self._model = TensorflowQATModel(user_model)
