@@ -60,8 +60,8 @@ Neural network pruning is a promising model compression technique that removes t
 Pruning patterns defines the rules of pruned weights' arrangements in space. INC currently supports unstructured, N:M and NxM patterns. Please note that N:M pattern is applied to input channels while NxM pattern is applied to output ones. [Details](../../docs/source/pruning_details.md#pruning-patterns).
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=700 height=160 alt="Sparsity Pattern">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_patterns.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_patterns.PNG" width=700 height=160 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -84,8 +84,8 @@ Pruning Criteria determines how should the weights of a neural network be scored
 Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported. [Details](../../docs/source/pruning_details.md#pruning-schedule).
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/Pruning_schedule.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning//Pruning_schedule.PNG" width=950 height=210 alt="Pruning schedule">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_schedule.PNG">
+    <img src="./../../docs/source/_static/imgs/pruning//pruning_schedule.PNG" width=950 height=210 alt="Pruning schedule">
 </a>  
 </div>
 
@@ -106,8 +106,8 @@ Regularization is a technique that discourages learning a more complex model and
 [Details](../../docs/source/pruning_details.md#regularization).
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/Regularization.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/Regularization.PNG" width=350 height=170 alt="Regularization">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/regularization.PNG">
+    <img src="../../docs/source/_static/imgs/pruning/regularization.PNG" width=350 height=170 alt="Regularization">
 </a>
 </div>
 
