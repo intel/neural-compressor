@@ -65,7 +65,7 @@ class WeightPruningConfig:
     def weight_compression(self, weight_compression):
         self._weight_compression = weight_compression
         
-from neural_compressor.pruner.utils import WeightPruningConfig
+
 
 
 def check_config(prune_config):
