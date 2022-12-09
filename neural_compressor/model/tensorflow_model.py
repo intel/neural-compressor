@@ -38,10 +38,8 @@ tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
 def get_model_type(model):
     """Get mode type
-
     Args:
         model (string or model object): model path or model object
-
     Returns:
         type (string): model type
     """
@@ -106,7 +104,6 @@ def get_model_type(model):
             return 'frozen_pb'
 
     raise ValueError('model {} has not recognized model type....'.format(model))
-
 
 def validate_graph_node(graph_def, node_names):
     """Validate nodes exist in the graph_def
@@ -433,12 +430,10 @@ def get_graph_from_saved_model_v1(model):
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with keras model
-
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -479,12 +474,10 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with slim model
-
     Args:
         model (string): model path
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -529,12 +522,10 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
 def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with ckpt model
-
     Args:
         model (string): model path
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): validated output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -568,13 +559,11 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
 
 def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with estimator model
-
     Args:
         model (tf.estimator.Estimator): tf.estimator.Estimator object
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
         kwargs (dict): other required parameters, like input_fn
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -587,14 +576,12 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
             kwargs['input_fn'], tf.estimator.ModeKeys.PREDICT)
         estimator_spec = model._call_model_fn(features, None,
             tf.estimator.ModeKeys.PREDICT, model.config)
-
         if len(output_tensor_names) == 0:
             outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
                 isinstance(estimator_spec.predictions, dict) else \
                     [estimator_spec.predictions.name]
         else:
             outputs = output_tensor_names
-
         logger.info("Estimator output tensor names are {}.".format(outputs))
         with tf.compat.v1.Session(graph=g) as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
@@ -614,12 +601,10 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
 def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with saved model
-
     Args:
         model (string): model path
         input_tensor_names (list of string): input_tensor_names of model
         output_tensor_names (list of string): output_tensor_names of model
-
      Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
@@ -646,11 +631,9 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
 
 class TensorflowBaseModel(BaseModel):
     """Build TensorflowBaseModel object
-
     Args:
         model (string or tensorflow model object): model path or model object
         kwargs (dict): other required parameters, like input_fn
-
     """
 
     def __init__(self, model, **kwargs):
@@ -884,13 +867,10 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
 
     def report_sparsity(self):
         """ Get sparsity of the model
-
         Args:
-
         Returns:
             df (DataFrame): DataFrame of sparsity of each weight
             total_sparsity (float): total sparsity of model
-
         """
         import pandas as pd
         import tensorflow as tf
@@ -1044,4 +1024,5 @@ class TensorflowModel(object):
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
         model.model_type = model_type
+
         return model
