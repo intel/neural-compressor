@@ -622,33 +622,36 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
         return self._approach
 
 
-pruners = [Pruner()]
+class WeightPruningConfig:
+    """
+    similiar to torch optimizer's interface
+    """
 
-
-class PruningConfig:
-    def __init__(self, pruners=pruners, target_sparsity=0.9, prune_type="snip_momentum", pattern="4x1", names=[],
-                 excluded_names=[],
-                 start_step=0, end_step=0, pruning_scope="global", prune_frequency=1,
-                 min_layer_sparsity_ratio=0.0, max_layer_sparsity_ratio=0.98,
-                 sparsity_decay_type="exp", prune_layer_type=['Conv', 'Linear'],
-                 resume_from_pruned_checkpoint=False
-                 ):
+    def __init__(self, local_configs=[],
+                 target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
+                 excluded_op_names=[],
+                 start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
+                 min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
+                 sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
+                 **kwargs):
+        self.local_configs = local_configs
+        self.kwargs = kwargs
         self._weight_compression = DotDict({
-            'pruners': pruners,
             'target_sparsity': target_sparsity,
-            'prune_type': prune_type,
+            'pruning_type': pruning_type,
             'pattern': pattern,
-            'names': names,
-            'excluded_names': excluded_names,  ##global only
+            'op_names': op_names,
+            'excluded_op_names': excluded_op_names,  ##global only
             'start_step': start_step,
             'end_step': end_step,
             'pruning_scope': pruning_scope,
-            'prune_frequency': prune_frequency,
-            'min_layer_sparsity_ratio': min_layer_sparsity_ratio,
-            'max_layer_sparsity_ratio': max_layer_sparsity_ratio,
+            'pruning_frequency': pruning_frequency,
+            'min_sparsity_ratio_per_op': min_sparsity_ratio_per_op,
+            'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
             'sparsity_decay_type': sparsity_decay_type,
-            'prune_layer_type': prune_layer_type,
-            'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint  ##resume_from_pruned_checkpoint
+            'pruning_op_types': pruning_op_types,
+            ##reg_type=None, reduce_type="mean", parameters={"reg_coeff": 0.0}
+            ##'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint  ##resume_from_pruned_checkpoint
         })
 
     @property

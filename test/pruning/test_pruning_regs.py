@@ -23,15 +23,15 @@ def build_fake_yaml():
           target_sparsity: 0.9
           start_step: 0
           end_step: 10
-          prune_frequency: 1 
+          pruning_frequency: 1 
           sparsity_decay_type: "exp"
           pruners:
             - !Pruner
                 start_step: 0
                 end_step: 10
-                prune_type: "magnitude"
+                pruning_type: "magnitude"
                 names: ['layer1.*']
-                extra_excluded_names: ['layer2.*']
+                extra_excluded_op_names: ['layer2.*']
                 pruning_scope: "global"
                 target_sparsity: 0.5
                 pattern: "4x1"
@@ -42,8 +42,8 @@ def build_fake_yaml():
                 start_step: 1
                 end_step: 1
                 target_sparsity: 0.5
-                prune_type: "snip_momentum"
-                prune_frequency: 2
+                pruning_type: "snip_momentum"
+                pruning_frequency: 2
                 names: ['layer2.*']
                 pruning_scope: local
                 target_sparsity: 0.75
@@ -56,7 +56,7 @@ def build_fake_yaml():
                 start_step: 2
                 end_step: 8
                 target_sparsity: 0.8
-                prune_type: "snip"
+                pruning_type: "snip"
                 names: ['layer3.*']
                 pruning_scope: "local"
                 pattern: "8x2"
@@ -68,7 +68,7 @@ def build_fake_yaml():
                 start_step: 2
                 end_step: 8
                 target_sparsity: 0.1
-                prune_type: "gradient"
+                pruning_type: "gradient"
                 names: ['fc']
                 pruning_scope: "local"
                 pattern: "1x1"
@@ -108,7 +108,7 @@ class TestPruningRegs(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(prune_frequency=1)
+        prune.update_config(pruning_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)

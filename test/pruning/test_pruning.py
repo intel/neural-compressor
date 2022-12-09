@@ -9,6 +9,7 @@ import torch.nn as nn
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
+from neural_compressor.config import WeightPruningConfig, GlobalPruningConfig, LocalPruningConfig
 
 def build_fake_yaml_basic():
     fake_snip_yaml = """
@@ -22,16 +23,16 @@ def build_fake_yaml_basic():
           target_sparsity: 0.9
           start_step: 0
           end_step: 10
-          excluded_names: ["classifier"]
-          prune_frequency: 1 
+          excluded_op_names: ["classifier"]
+          pruning_frequency: 1 
           sparsity_decay_type: "cos"
           pruners:
             - !Pruner
                 start_step: 0      
                 end_step: 10
-                prune_type: "magnitude"
-                names: ['layer1.*']
-                extra_excluded_names: ['layer2.*']
+                pruning_type: "magnitude"
+                op_names: ['layer1.*']
+                extra_excluded_op_names: ['layer2.*']
                 pruning_scope: "global"
                 pattern: "4x1"
             
@@ -39,9 +40,9 @@ def build_fake_yaml_basic():
                 start_step: 1
                 end_step: 1
                 target_sparsity: 0.5
-                prune_type: "snip_momentum"
-                prune_frequency: 2
-                names: ['layer2.*']
+                pruning_type: "snip_momentum"
+                pruning_frequency: 2
+                op_names: ['layer2.*']
                 pruning_scope: local
                 pattern: "2:4"
                 sparsity_decay_type: "exp"
@@ -50,8 +51,8 @@ def build_fake_yaml_basic():
                 start_step: 2
                 end_step: 8
                 target_sparsity: 0.8
-                prune_type: "snip"
-                names: ['layer3.*']
+                pruning_type: "snip"
+                op_names: ['layer3.*']
                 pruning_scope: "local"
                 pattern: "16x1"
                 sparsity_decay_type: "cube"
@@ -78,6 +79,7 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_basic(self):
+
         prune = Pruning("fake_snip.yaml")
         prune.update_config(start_step=1)
         prune.model = self.model
@@ -87,7 +89,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(prune_frequency=1)
+        prune.update_config(pruning_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)

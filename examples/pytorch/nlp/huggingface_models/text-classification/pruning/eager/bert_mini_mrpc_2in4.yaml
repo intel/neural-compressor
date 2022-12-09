@@ -9,15 +9,15 @@ pruning:
     weight_compression:
       start_step: 0
       end_step: 0
-      excluded_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
-      prune_layer_type: ["Linear"]
+      excluded_op_names: ["classifier", "pooler", ".*embeddings*", "layer.3.attention.output.dense"]
+      pruning_op_types: ["Linear"]
       target_sparsity: 0.5
-      max_layer_sparsity_ratio: 0.98
+      max_sparsity_ratio_per_op: 0.98
 
       pruners:
         - !Pruner
             pattern: "2:4"
-            prune_frequency: 100
+            pruning_frequency: 100
             pruning_scope: "global"
-            prune_type: "snip_momentum"
+            pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"

@@ -45,9 +45,9 @@ def check_config(prune_config):
         "end_step should be greater than start_step"
     assert prune_config['target_sparsity'] >= 0 and prune_config['target_sparsity'] < 1.0, \
         "begin_pruning_step should be in range [0,1)"
-    assert prune_config['prune_frequency'] > 0, "prune_frequency should be greater than 0"
-    assert prune_config['max_layer_sparsity_ratio'] >= 0 and prune_config['max_layer_sparsity_ratio'] < 1, \
-        "prune_frequency should be greater than 0"
+    assert prune_config['pruning_frequency'] > 0, "pruning_frequency should be greater than 0"
+    assert prune_config['max_sparsity_ratio_per_op'] >= 0 and prune_config['max_sparsity_ratio_per_op'] < 1, \
+        "pruning_frequency should be greater than 0"
     assert prune_config['pruning_scope'] == "global" or prune_config['pruning_scope'] == "local", \
         "only support 'global' and 'local' prune domain"
     try:
@@ -78,13 +78,13 @@ def check_config(prune_config):
         max_ratio = float(N) / M
         assert prune_config['target_sparsity'] <= max_ratio, \
             "in N:M pattern, the max sparsity is N/M={}".format(max_ratio)
-        prune_config['max_layer_sparsity_ratio'] = min(max_ratio, prune_config['max_layer_sparsity_ratio'])
+        prune_config['max_sparsity_ratio_per_op'] = min(max_ratio, prune_config['max_sparsity_ratio_per_op'])
     if prune_config['reg_coeff'] != None:
         prune_config['reg_coeff'] = float(prune_config['reg_coeff'])
         assert prune_config['reg_coeff'] >= 0, "only support positive reg_type"
-    assert prune_config["min_layer_sparsity_ratio"] >= 0 and prune_config["min_layer_sparsity_ratio"] <= \
-           prune_config['max_layer_sparsity_ratio'], \
-        "min_layer_sparsity_ratio should in[0, max_layer_sparsity_ratio]"
+    assert prune_config["min_sparsity_ratio_per_op"] >= 0 and prune_config["min_sparsity_ratio_per_op"] <= \
+           prune_config['max_sparsity_ratio_per_op'], \
+        "min_sparsity_ratio_per_op should in[0, max_sparsity_ratio_per_op]"
 
 
 def reset_none_to_default(obj, key, default):
@@ -131,15 +131,15 @@ def process_and_check_config(val):
         A dict whose contents which are regularized for a Pruning obejct.
     """
 
-    default_global_config = {'target_sparsity': 0.9, 'prune_type': 'snip_momentum', 'pattern': '4x1', 'names': [],
-                             'excluded_names': [],
-                             'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'prune_frequency': 1,
-                             'min_layer_sparsity_ratio': 0.0, 'max_layer_sparsity_ratio': 0.98,
+    default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
+                             'excluded_op_names': [],
+                             'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
+                             'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
                              'sparsity_decay_type': 'exp',
-                             'prune_layer_type': ['Conv', 'Linear'],
+                             'pruning_op_types': ['Conv', 'Linear'],
                              'resume_from_pruned_checkpoint': False}
 
-    default_local_config = {'extra_excluded_names': [], 'reg_type': None,
+    default_local_config = {'extra_excluded_op_names': [], 'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
 
     prams_default_config = {"reg_coeff": 0.0}
@@ -221,21 +221,21 @@ def process_config(config):
 def parse_to_prune(config, model):
     """Keep target pruned layers."""
     modules = {}
-    if config["names"] == None or config["names"] == []:
-        config["names"] = [".*"]
-    for raw in config["names"]:
+    if config["op_names"] == None or config["op_names"] == []:
+        config["op_names"] = [".*"]
+    for raw in config["op_names"]:
         try:
             pattern = re.compile(raw)
         except:
             assert False, f"regular expression match does not support {raw}"
         for name, module in filter(lambda t: pattern.search(t[0]), model.named_modules()):
-            for layer_type in config["prune_layer_type"]:
+            for layer_type in config["pruning_op_types"]:
                 if layer_type in type(module).__name__:
                     modules[name] = module
                     break
     ##remove not to prune layers
     """Drop non-pruned layers."""
-    exclude_names = config["extra_excluded_names"] + config["excluded_names"]
+    exclude_names = config["extra_excluded_op_names"] + config["excluded_op_names"]
     patterns = [re.compile(s) for s in exclude_names]
     if len(patterns) <= 0:
         return modules

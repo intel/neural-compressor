@@ -92,8 +92,8 @@ class BasePattern:
         invalid_layers: the layers whose shape don't fit the patten
         modules: torch neural network modules, which will be pruned with the pattern
         config: A config dict object. Contains all the information including the pattern's.
-        max_layer_sparsity_ratio: A float. The maximum sparsity that one layer could reach
-        min_layer_sparsity_ratio: A float. The minimum sparsity that one layer could reach
+        max_sparsity_ratio_per_op: A float. The maximum sparsity that one layer could reach
+        min_sparsity_ratio_per_op: A float. The minimum sparsity that one layer could reach
         target_sparsity: A float. The sparsity ratio of the modules will be reached after pruning.
 
     """
@@ -106,8 +106,8 @@ class BasePattern:
         self.invalid_layers = []
         self.modules = modules
         self.config = config
-        self.max_layer_sparsity_ratio = self.config['max_layer_sparsity_ratio']
-        self.min_layer_sparsity_ratio = self.config['min_layer_sparsity_ratio']
+        self.max_sparsity_ratio_per_op = self.config['max_sparsity_ratio_per_op']
+        self.min_sparsity_ratio_per_op = self.config['min_sparsity_ratio_per_op']
         self.target_sparsity_ratio = self.config['target_sparsity']
         # Not using deterministic_algorithms for all examples
         torch.use_deterministic_algorithms(False)
@@ -601,7 +601,7 @@ class PatternNxM(BasePattern):
             scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
             cur_target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
             pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
-            max_layer_sparsity_ratio: A float. The maximum sparsity that one layer can reach.
+            max_sparsity_ratio_per_op: A float. The maximum sparsity that one layer can reach.
             keep_pre_masks: A bool. If True, keep the masks unchanged.
             
         Returns:
@@ -618,7 +618,7 @@ class PatternNxM(BasePattern):
         global_scores = torch.cat([torch.flatten(v) for v in new_scores.values()])
         residual_k = k_blockwise
         not_exceed_layers = [key for key in new_scores.keys()]
-        if self.min_layer_sparsity_ratio > 0:
+        if self.min_sparsity_ratio_per_op > 0:
             sparsity_infos_perlayer, _ = self.get_sparsity_ratio_each_layer(masks)
 
         while True:
@@ -633,8 +633,8 @@ class PatternNxM(BasePattern):
                 current_sparsity_ratio = float(zero_cnt) / total_cnt
                 key_new_sparsity = SparsityInfo(zero_cnt, total_cnt, current_sparsity_ratio)
                 need_adjust, adjust_ratio = self.adjust_ratio(masks, key, key_new_sparsity,
-                                                              self.max_layer_sparsity_ratio,
-                                                              self.min_layer_sparsity_ratio,
+                                                              self.max_sparsity_ratio_per_op,
+                                                              self.min_sparsity_ratio_per_op,
                                                               self.target_sparsity_ratio)
                 if need_adjust:
                     # uptade status
@@ -1022,7 +1022,7 @@ class PatternNInM(BasePattern):
             scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
             target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
             pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
-            max_layer_sparsity_ratio: A float. The maximum sparsity that one layer can reach.
+            max_sparsity_ratio_per_op: A float. The maximum sparsity that one layer can reach.
             
         Returns:
             A dict with the identical size as pre_masks. Update the 0/1 values in it.
@@ -1049,8 +1049,8 @@ class PatternNInM(BasePattern):
                 current_sparsity_ratio = float(zero_cnt) / total_cnt
                 key_new_sparsity = SparsityInfo(zero_cnt, total_cnt, current_sparsity_ratio)
                 need_adjust, adjust_ratio = self.adjust_ratio(masks, key, key_new_sparsity,
-                                                              self.max_layer_sparsity_ratio * self.M / self.N,
-                                                              self.min_layer_sparsity_ratio * self.M / self.N,
+                                                              self.max_sparsity_ratio_per_op * self.M / self.N,
+                                                              self.min_sparsity_ratio_per_op * self.M / self.N,
                                                               self.target_sparsity_ratio * self.M / self.N)
 
                 if need_adjust:

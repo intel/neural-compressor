@@ -36,7 +36,7 @@ def pruner_representer(dumper: Any, pruner: Pruner) -> Any:
         "update_frequency": pruner.update_frequency,
         "target_sparsity": pruner.target_sparsity,
         "initial_sparsity": pruner.initial_sparsity,
-        "prune_type": pruner.prune_type,
+        "pruning_type": pruner.pruning_type,
         "method": pruner.method,
         "names": pruner.names,
         "parameters": pruner.parameters,

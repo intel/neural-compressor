@@ -9,20 +9,20 @@ pruning:
     weight_compression:
       start_step: 0
       end_step: 0
-      excluded_names: [""]
-      prune_layer_type: ["Conv2d"]
+      excluded_op_names: [""]
+      pruning_op_types: ["Conv2d"]
       target_sparsity: 0.8
-      prune_frequency: 1000
-      max_layer_sparsity_ratio: 0.98
+      pruning_frequency: 1000
+      max_sparsity_ratio_per_op: 0.98
       pruning_scope: "global"
       sparsity_decay_type: "exp"
       pruners:
         - !Pruner
             pattern: "1x1"
             target_sparsity: 0.8
-            prune_frequency: 1000
+            pruning_frequency: 1000
             pruning_scope: "global"
-            prune_type: "snip_momentum"
+            pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"
 
 

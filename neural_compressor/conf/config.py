@@ -51,32 +51,34 @@ def constructor_register(cls):
 @constructor_register
 class Pruner:
     def __init__(self,
-                 extra_excluded_names=[], reg_type=None, criterion_reduce_type="mean", parameters={"reg_coeff": 0.0},
-                 # the following global key should be set to None
-                 target_sparsity=None, prune_type=None, pattern=None, names=None,
-                 excluded_names=None,
-                 start_step=None, end_step=None, pruning_scope=None, prune_frequency=None,
-                 min_layer_sparsity_ratio=None, max_layer_sparsity_ratio=None, sparsity_decay_type=None,
-                 prune_layer_type=None, resume_from_pruned_checkpoint=None
+               
+                 **kwargs
                  ):
-        self.extra_excluded_names = extra_excluded_names
+                 # # the following global key should be set to None
+                 # target_sparsity=None, pruning_type=None, pattern=None, op_names=None,
+                 # excluded_op_names=None,
+                 # start_step=None, end_step=None, pruning_scope=None, pruning_frequency=None,
+                 # min_sparsity_ratio_per_op=None, max_sparsity_ratio_per_op=None, sparsity_decay_type=None,
+                 # pruning_op_types=None, **kwargs
+                 ##):
+        ##self.extra_excluded_op_names = extra_excluded_op_names
         self.reg_type = reg_type
         self.criterion_reduce_type = criterion_reduce_type
         self.parameters = parameters
         self.target_sparsity = target_sparsity
-        self.prune_type = prune_type
+        self.pruning_type = pruning_type
         self.pattern = pattern
-        self.names = names
-        self.excluded_names = excluded_names
+        self.op_names = op_names
+        self.excluded_op_names = excluded_op_names
         self.start_step = start_step
         self.end_step = end_step
         self.pruning_scope = pruning_scope
-        self.prune_frequency = prune_frequency
-        self.min_layer_sparsity_ratio = min_layer_sparsity_ratio
-        self.max_layer_sparsity_ratio = max_layer_sparsity_ratio
+        self.pruning_frequency = pruning_frequency
+        self.min_sparsity_ratio_per_op = min_sparsity_ratio_per_op
+        self.max_sparsity_ratio_per_op = max_sparsity_ratio_per_op
         self.sparsity_decay_type = sparsity_decay_type
-        self.prune_layer_type = prune_layer_type
-        self.resume_from_pruned_checkpoint = resume_from_pruned_checkpoint
+        self.pruning_op_types = pruning_op_types
+        ##self.resume_from_pruned_checkpoint = resume_from_pruned_checkpoint
 
 
 # Schema library has different loading sequence priorities for different
@@ -696,17 +698,17 @@ train_schema = Schema({
 
 weight_compression_schema = Schema({
     Optional('target_sparsity', default=0.9): float,
-    Optional('prune_type', default="snip_momentum"): str,
+    Optional('pruning_type', default="snip_momentum"): str,
     Optional('pattern', default="4x1"): str,
-    Optional('names', default="[]"): list,
-    Optional('excluded_names', default="[]"): list,
+    Optional('op_names', default="[]"): list,
+    Optional('excluded_op_names', default="[]"): list,
     Optional('start_step', default=0): int,
     Optional('end_step', default=0): int,
     Optional('pruning_scope', default="global"): str,
-    Optional('prune_frequency', default=1): int,
-    Optional('min_layer_sparsity_ratio', default=0.0): float,
-    Optional('max_layer_sparsity_ratio', default=0.98): float,
-    Optional('prune_layer_type', default=['Conv', 'Linear']): list,
+    Optional('pruning_frequency', default=1): int,
+    Optional('min_sparsity_ratio_per_op', default=0.0): float,
+    Optional('max_sparsity_ratio_per_op', default=0.98): float,
+    Optional('pruning_op_types', default=['Conv', 'Linear']): list,
     Optional('sparsity_decay_type', default="exp"):str,
     Optional('resume_from_pruned_checkpoint', default=False): bool,
     Optional('pruners'): And(list, \

@@ -82,11 +82,11 @@ To specify pruning configurations, users can assign values to the corresponding 
 ```python
 from neural_compressor import config
 config.pruning.weight_compression.target_sparsity = 0.9
-config.pruning.weight_compression.max_layer_sparsity_ratio = 0.98
-config.pruning.weight_compression.prune_type = "snip_momentum"
+config.pruning.weight_compression.max_sparsity_ratio_per_op = 0.98
+config.pruning.weight_compression.pruning_type = "snip_momentum"
 config.pruning.weight_compression.start_step = 0
 config.pruning.weight_compression.end_step = 3
-config.pruning.weight_compression.prune_frequency = 1
+config.pruning.weight_compression.pruning_frequency = 1
 config.pruning.weight_compression.pruning_scope = "global"
 config.pruning.weight_compression.pattern = "4x1"
 

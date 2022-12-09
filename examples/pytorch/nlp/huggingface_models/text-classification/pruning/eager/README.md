@@ -21,25 +21,25 @@ pruning:
       # if start step equals to end step, oneshot pruning scheduler is enabled. Otherwise the API automatically implements iterative pruning scheduler.
       start_step: 0 # step which pruning process begins
       end_step: 0 # step which pruning process ends
-      excluded_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
-      prune_layer_type: ["Linear"] # the module type which you want to prune (Linear, Conv2d, etc.)
+      excluded_op_names: ["classifier", "pooler", ".*embeddings*"] # a global announcement of layers which you do not wish to prune. 
+      pruning_op_types: ["Linear"] # the module type which you want to prune (Linear, Conv2d, etc.)
       target_sparsity: 0.9 # the sparsity you want the model to be pruned.
-      max_layer_sparsity_ratio: 0.98 # the sparsity ratio's maximum which one layer can reach.
+      max_sparsity_ratio_per_op: 0.98 # the sparsity ratio's maximum which one layer can reach.
 
       pruners: # below each "Pruner" defines a pruning process for a group of layers. This enables us to apply different pruning methods for different layers in one model.
         - !Pruner
-            extra_excluded_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
+            extra_excluded_op_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
             pattern: "1x1" # pattern type, we support "NxM" and "N:M"
-            prune_frequency: 100 # if use iterative pruning scheduler, this define the pruning frequency.
+            pruning_frequency: 100 # if use iterative pruning scheduler, this define the pruning frequency.
             pruning_scope: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
-            prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
+            pruning_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
         - !Pruner
-            extra_excluded_names: [".*output", ".*intermediate"]
+            extra_excluded_op_names: [".*output", ".*intermediate"]
             pattern: "4x1"
-            prune_frequency: 100
+            pruning_frequency: 100
             pruning_scope: "global"
-            prune_type: "snip_momentum"
+            pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"
 ```
 Please be awared that when the keywords appear in both global and local settings, we select the **local settings** as priority.
