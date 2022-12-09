@@ -90,7 +90,8 @@ def main():
     model = build_model(x_train, y_train, x_test, y_test)
 
     from neural_compressor.quantization import fit
-    from neural_compressor.config import PostTrainingQuantConfig, set_random_seed
+    from neural_compressor.config import PostTrainingQuantConfig
+    from neural_compressor.utils.utility import set_random_seed
     from neural_compressor.experimental import common
     set_random_seed(9527)
     config = PostTrainingQuantConfig()
