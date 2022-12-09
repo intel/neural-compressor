@@ -13,8 +13,8 @@ from neural_compressor.pruning import Pruning
 
 local_types_config = [
     {
-        "start_step": 1,
-        "end_step": 1,
+        "start_step": 0,
+        "end_step": 0,
         "pruning_type": "pattern_lock",
         "op_names": ['layer1.*'],
         "excluded_op_names": ['layer2.*'],
