@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+"""prune init."""
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +15,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from os.path import dirname, basename, isfile, join
-import glob
-from .pruner import PRUNERS
-
-modules = glob.glob(join(dirname(__file__), "*.py"))
-
-for f in modules:
-    if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
-        __import__(basename(f)[:-3], globals(), locals(), level=1)
-
-__all__ = ["PRUNERS"]
