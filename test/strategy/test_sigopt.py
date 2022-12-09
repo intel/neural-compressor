@@ -143,7 +143,7 @@ class TestSigoptTuningStrategy(unittest.TestCase):
         
     def test_run_sigopt_one_trial_new_api(self):
         from neural_compressor.quantization import fit
-        from neural_compressor.config import AccuracyCriterion, AccuracyLoss, PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
         from neural_compressor.data import DATASETS, DATALOADERS
         
         # dataset and dataloader
@@ -151,8 +151,7 @@ class TestSigoptTuningStrategy(unittest.TestCase):
         dataloader = DATALOADERS["tensorflow"](dataset)
         
         # tuning and accuracy criterion
-        tolerable_loss = AccuracyLoss(0.01)
-        accuracy_criterion = AccuracyCriterion(criterion='relative', tolerable_loss=tolerable_loss)
+        accuracy_criterion = AccuracyCriterion(criterion='relative')
         strategy_kwargs = {'sigopt_api_token': 'sigopt_api_token_test', 
                            'sigopt_project_id': 'sigopt_project_id_test',
                            'sigopt_experiment_name': 'nc-tune'}

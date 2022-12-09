@@ -23,7 +23,7 @@ from typing import Dict
 from copy import deepcopy
 from ...utils import logger
 
-PRECISION_SET = {'bf16', 'fp16', 'fp32'}
+PRECISION_SET = {'bf16', 'fp32'}
 QUANT_MODE_SET = {'static', 'dynamic'}
 QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
 
@@ -391,7 +391,7 @@ class TuningSpace:
         """
         Collect all op items that support the specific quantization/precision mode 
         Args:
-            quant_mode (str): fp32/bf16/fp16/dynamic/static
+            quant_mode (str): fp32/bf16/dynamic/static
 
         Returns:
             List: the list of op items

@@ -2,7 +2,6 @@
 import psutil
 import unittest
 import os
-import yaml
 import numpy as np
 import tensorflow as tf
 import tempfile

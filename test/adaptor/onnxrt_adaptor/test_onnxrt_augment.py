@@ -154,7 +154,7 @@ class TestAugment(unittest.TestCase):
                                 dataloader, 
                                 ["Conv", "Relu"],
                                 iterations=[0])
-        calib_params = augment.dump_calibration()
+        calib_params = augment.dump_calibration({})
         assert "A" in calib_params and "B" in calib_params and "D" in calib_params and "C" in calib_params
 
     def test_augment_graph(self):
@@ -502,7 +502,7 @@ class TestAugment(unittest.TestCase):
 
         #test calculation of quantization params
         #TO_DO: check rmin/rmax
-        quantization_params_dict = augment.dump_calibration()
+        quantization_params_dict = augment.dump_calibration({})
         node_output_names, output_dicts_list = augment.get_intermediate_outputs('naive')
         dict_for_quantization = augment._map_calibration(node_output_names, output_dicts_list)
         #check the size of the quantization dictionary

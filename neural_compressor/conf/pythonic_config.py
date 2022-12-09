@@ -27,7 +27,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend='NA',
+                 backend='default',
                  device='cpu',
                  approach='post_training_static_quant',
                  calibration_sampling_size=[100],
@@ -43,24 +43,26 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  use_bf16=True,
                  optimization_level=1,
                  accuracy_criterion=accuracy_criterion):
-        extra_precisions = ["bf16"] if use_bf16 else []
-        super().__init__(inputs=inputs,
-                         outputs=outputs,
-                         backend=backend,
-                         device=device,
-                         calibration_sampling_size=calibration_sampling_size,
-                         op_type_list=op_type_list,
-                         op_name_list=op_name_list,
-                         strategy=strategy,
-                         strategy_kwargs=strategy_kwargs,
-                         objective=objective,
-                         timeout=timeout,
-                         max_trials=max_trials,
-                         performance_only=performance_only,
-                         reduce_range=reduce_range,
-                         extra_precisions=extra_precisions,
-                         optimization_level=optimization_level,
-                         accuracy_criterion=accuracy_criterion)
+        excluded_precisions = ["bf16"] if not use_bf16 else []
+        super().__init__(
+            inputs=inputs,
+            outputs=outputs,
+            backend=backend,
+            device=device,
+            calibration_sampling_size=calibration_sampling_size,
+            op_type_list=op_type_list,
+            op_name_list=op_name_list,
+            strategy=strategy,
+            strategy_kwargs=strategy_kwargs,
+            objective=objective,
+            timeout=timeout,
+            max_trials=max_trials,
+            performance_only=performance_only,
+            reduce_range=reduce_range,
+            excluded_precisions=excluded_precisions,
+            accuracy_criterion=accuracy_criterion,
+            optimization_level=optimization_level
+        )
         self._approach = approach
 
     @property
@@ -161,7 +163,7 @@ class MXNet:
     def precisions(self, precisions):
         if not isinstance(precisions, list):
             precisions = [precisions]
-        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
+        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16']):
             self._precisions = precisions
 
 class ONNX(MXNet):
