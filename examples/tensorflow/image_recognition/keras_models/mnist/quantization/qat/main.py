@@ -148,14 +148,14 @@ def main():
                     metrics=['accuracy'])
 
         q_aware_model.summary()
-        train_images_subset = train_images[0:1000] # out of 60000
+        train_images_subset = train_images[0:1000]
         train_labels_subset = train_labels[0:1000]
         q_aware_model.fit(train_images_subset, train_labels_subset,
                         batch_size=500, epochs=1, validation_split=0.1)
         _, q_aware_model_accuracy = q_aware_model.evaluate(
                                         test_images, test_labels, verbose=0)
-
         print('Quant test accuracy:', q_aware_model_accuracy)
+        
         compression_manager.callbacks.on_train_end()
         compression_manager.save(FLAGS.output_model)
 
