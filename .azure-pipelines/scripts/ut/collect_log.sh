@@ -61,5 +61,7 @@ else
     #sed "1i\Unit Test success with coverage ${coverage_PR_total}\n" ${coverage_log}
 fi
 
+exit 1
+
 #rm -r ${coverage_log}
 #rm -r ${coverage_log_base}
