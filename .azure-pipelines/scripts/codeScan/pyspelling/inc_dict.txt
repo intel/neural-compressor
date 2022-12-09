@@ -2447,6 +2447,9 @@ npmjs
 AWSSageMakerSupport
 sagemaker
 xpu
+dgpu
+BenchmarkConfig
+QuantizationAwareTrainingConfig
 Startup
 doesn
 startup

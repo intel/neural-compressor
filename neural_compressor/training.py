@@ -232,6 +232,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         component.model = model
         if isinstance(confs, QuantizationAwareTrainingConfig):
             component.prepare_qat()
+        else:
+            component.prepare()
     compression_manager = CompressionManager(component)
 
     return compression_manager

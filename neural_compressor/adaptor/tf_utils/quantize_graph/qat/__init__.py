@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +14,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from .pruning import Pruning
-from .benchmark import Benchmark
-from .version import __version__
-from .contrib import *
-# we need to set a global 'NA' backend, or Model can't be used
-from .utils.utility import set_random_seed, set_tensorboard, set_workspace
-from .utils import options
-from .conf.config import conf
-from .conf.pythonic_config import config
-from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    PruningConfig, QuantizationAwareTrainingConfig
