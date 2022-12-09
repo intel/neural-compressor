@@ -9,7 +9,7 @@ import tensorflow as tf
 from neural_compressor.data import DATASETS
 from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-
+from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 
 def build_fake_yaml():
     fake_yaml = """
@@ -252,7 +252,7 @@ class TestDistillation(unittest.TestCase):
         stat = torch.load('./saved/best_model.pt')
         opt_model = self.student_model.load_state_dict(stat)
 
-    @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras requires higher version than tf-2.3.0")
+    @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.3.0'), " keras requires higher version than tf-2.3.0")
     def test_tf_distillation(self):
         from neural_compressor.experimental import Distillation
         from neural_compressor.conf.config import DistillationConf
