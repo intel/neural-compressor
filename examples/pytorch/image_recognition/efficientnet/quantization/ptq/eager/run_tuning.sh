@@ -41,8 +41,7 @@ function run_tuning {
         conf_yaml=conf_efficientnet_b0.yaml
     elif [ "${topology}" = "mobilenetv3_rw" ]; then
         conf_yaml=conf_mobilenetv3_rw.yaml
-        # TODO only for test, uncomment it before merge
-        # sed -i "/relative:/s|relative:.*|relative: 0.02|g" $conf_yaml
+        sed -i "/relative:/s|relative:.*|relative: 0.02|g" $conf_yaml
     fi
     sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" $conf_yaml
     sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" $conf_yaml
