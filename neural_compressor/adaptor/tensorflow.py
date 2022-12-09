@@ -66,6 +66,7 @@ class TensorFlowAdaptor(Adaptor):
         self.use_bf16 = deep_get(self.framework_specific_info, 'use_bf16', False)
         os.makedirs(self.work_dir, exist_ok=True)
 
+        self.model = None
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
 
@@ -507,13 +508,15 @@ class TensorFlowAdaptor(Adaptor):
         self.bf16_ops = bf16_ops
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, tune_cfg, model, data_loader):
+    def quantize(self, tune_cfg, model, data_loader, q_func=None):
         """Execute the quantize process on the specified model.
 
         Args:
             tune_cfg (dict): quantization configuration
             model (tf.compat.v1.GraphDef): fp32 model
             data_loader (generator): generator the data and labels
+            q_func (optional): training function for quantization aware training mode,
+                    which not enabled for tensorflow yet.
 
         Returns:
             tf.compat.v1.GraphDef: the quantized model
