@@ -27,11 +27,13 @@ from packaging.version import Version
 from importlib.util import find_spec
 from neural_compressor.adaptor.adaptor import adaptor_registry, Adaptor
 from neural_compressor.adaptor.query import QueryBackendCapability
+from neural_compressor.adaptor.ox_utils.util import PROVIDERS, ONNXRT_BACKENDS
 from neural_compressor.utils.utility import LazyImport, dump_elapsed_time, \
                                             GLOBAL_STATE, MODE
 from neural_compressor.utils.utility import Statistics
 from neural_compressor.experimental.data.dataloaders.base_dataloader import BaseDataLoader
 from neural_compressor.conf.dotdict import deep_get
+from neural_compressor.utils.utility import CpuInfo
 import math
 import sys
 
@@ -43,7 +45,8 @@ ONNXRT112_VERSION = Version("1.12.0")
 
 logger = logging.getLogger("neural_compressor")
 
-class ONNXRTAdaptor(Adaptor):
+@adaptor_registry
+class ONNXRUNTIMEAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
     Args:
@@ -57,21 +60,57 @@ class ONNXRTAdaptor(Adaptor):
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
-        self.backend = framework_specific_info["backend"]
+        self.backend = PROVIDERS[framework_specific_info["backend"]]
+
+        if self.backend not in ort.get_all_providers():
+            logger.warning("{} backend is not supported in current environment, "
+                "supported backends: {}".format(ONNXRT_BACKENDS[self.backend],
+                [ONNXRT_BACKENDS[i] for i in ort.get_all_providers()]))
+
+        if self.backend == 'TensorrtExecutionProvider':
+            from neural_compressor import options
+            options.onnxrt.qdq_setting.AddQDQPairToWeight = True
+            options.onnxrt.qdq_setting.DedicatedQDQPair = True
+            options.onnxrt.graph_optimization.level = 'DISABLE_ALL'
+            self.static = True
+            self.dynamic = False
+
+        if (not self.dynamic and "format" in framework_specific_info and \
+            framework_specific_info["format"].lower() == 'qdq') or \
+            self.backend == 'TensorrtExecutionProvider':
+            self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                os.path.dirname(__file__), "onnxrt_qdq.yaml"))
+            self.format = "qdq"
+        else:
+            if not self.dynamic:
+                self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                    os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
+                self.format = "qlinearops"
+            else:
+                self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
+                    os.path.dirname(__file__), "onnxrt_integer.yaml"))
+                self.format = "integerops"
+                if "format" in framework_specific_info and \
+                    framework_specific_info["format"].lower() == 'qdq':
+                    logger.warning("Dynamic approach doesn't support QDQ format.")
+ 
         self.work_space = framework_specific_info["workspace_path"]
         self.graph_optimization = framework_specific_info["graph_optimization"]
         self.recipes = deep_get(framework_specific_info, 'recipes', {})
         self.reduce_range = framework_specific_info["reduce_range"] if \
-            "reduce_range" in framework_specific_info else None
+            "reduce_range" in framework_specific_info else not CpuInfo().vnni
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
         self.quantizable_op_types = []
         self.query_handler_ext = None
+        if framework_specific_info["approach"] == "post_training_auto_quant" and \
+            self.format != "integerops":
+            self.query_handler_ext = ONNXRTQuery(local_config_file=os.path.join(
+                os.path.dirname(__file__), "onnxrt_integer.yaml"))
+
         for precision in self.query_handler.get_precisions():
             if precision != 'fp32':
-                if self.device == 'cpu' and precision == 'fp16':
-                    continue
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
  
@@ -109,17 +148,13 @@ class ONNXRTAdaptor(Adaptor):
         if model.model.opset_import[0].version < 11: # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
         from neural_compressor.adaptor.ox_utils.util import QuantizationMode
-        if self.backend in ["qlinearops", "qoperator"]:
-            backend = QuantizationMode.QLinearOps
-            if self.backend == "qlinearops":
-                logger.warning("onnxrt_qlinearops uses the same model representation format as "
-                               "onnxrt_qoperator. Recommended to use onnxrt_qoperator to align "
-                               "with ONNXRUNTIME QuantFormat")
-        elif self.backend == "qdq":
+        if self.format == "qlinearops":
+            format = QuantizationMode.QLinearOps
+        elif self.format == "qdq":
             assert ort_version >= ONNXRT170_VERSION, 'QDQ mode needs onnxruntime1.7.0 or newer'
-            backend = "qdq"
+            format = "qdq"
         else:
-            backend = QuantizationMode.IntegerOps
+            format = QuantizationMode.IntegerOps
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         tmp_model = copy.deepcopy(model)
@@ -154,7 +189,7 @@ class ONNXRTAdaptor(Adaptor):
                         format(batch_size, 1))
                     data_loader.batch(1)
                     quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                                                quantize_config, calib_sampling_size)
+                                              quantize_config, calib_sampling_size)
             else:  # pragma: no cover
                 if hasattr(data_loader, 'batch_size') and \
                   calib_sampling_size % data_loader.batch_size != 0:
@@ -165,14 +200,14 @@ class ONNXRTAdaptor(Adaptor):
                         format(calib_sampling_size, data_loader.batch_size,
                                data_loader.batch_size * iterations))
                 quantize_params = self._get_quantize_params(tmp_model, data_loader, \
-                                                            quantize_config, iterations)
+                                          quantize_config, iterations)
         else:
             quantize_params = None
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         quantizer = Quantizer(copy.deepcopy(model),
             quantize_config,
-            backend,
+            format,
             self.static,
             quantize_params,
             self.quantizable_op_types,
@@ -204,7 +239,8 @@ class ONNXRTAdaptor(Adaptor):
         fwk_info = {}
         fwk_info['approach'] = "post_training_static_quant" if self.static else \
                                                         "post_training_dynamic_quant"
-        fwk_info['backend'] = self.backend
+        fwk_info['format'] = self.format
+        fwk_info['backend'] = ONNXRT_BACKENDS[self.backend]
         fwk_info['workspace_path'] = self.work_space
         fwk_info['graph_optimization'] = self.graph_optimization
         fwk_info['device'] = self.device
@@ -232,20 +268,20 @@ class ONNXRTAdaptor(Adaptor):
             logger.warning("Quantize input needs model opset 11 or newer.")
 
         from neural_compressor.adaptor.ox_utils.util import QuantizationMode
-        if self.backend in ["qlinearops", "qoperator"]:
-            backend = QuantizationMode.QLinearOps
-        elif self.backend == "qdq":
+        if self.format in ["qlinearops"]:
+            format = QuantizationMode.QLinearOps
+        elif self.format == "qdq":
             assert ort_version >= ONNXRT170_VERSION, 'QDQ mode needs onnxruntime1.7.0 or newer'
-            backend = self.backend
+            format = self.format
         else:
-            backend = QuantizationMode.IntegerOps
+            format = QuantizationMode.IntegerOps
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
         quantizer = Quantizer(model.model,
             quantize_config,
-            backend,
+            format,
             self.static,
             quantize_params,
             self.quantizable_op_types,
@@ -339,9 +375,10 @@ class ONNXRTAdaptor(Adaptor):
         augment = ONNXRTAugment(model, \
                   data_loader, self.quantizable_op_types, \
                   black_nodes=black_nodes, white_nodes=white_nodes, \
-                  iterations=list(range(0, quantize_config['calib_iteration'])))
+                  iterations=list(range(0, quantize_config['calib_iteration'])),
+                  backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax()
-        quantize_params = augment.dump_calibration()
+        quantize_params = augment.dump_calibration(quantize_config)
         return quantize_params
 
     def inspect_tensor(self, model, dataloader, op_list=[],
@@ -362,7 +399,8 @@ class ONNXRTAdaptor(Adaptor):
             op_list = [item[0] for item in op_list]
         augment = ONNXRTAugment(model, dataloader, [], \
                   iterations=iteration_list,
-                  white_nodes=op_list)
+                  white_nodes=op_list,
+                  backend=self.backend)
         tensors = augment.dump_tensor(activation=(inspect_type!='weight'),
                                       weight=(inspect_type!='activation'))
         if save_to_disk:
@@ -460,9 +498,13 @@ class ONNXRTAdaptor(Adaptor):
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
         if not model.large_size:
-            ort.InferenceSession(model.model.SerializeToString(), sess_options)
+            ort.InferenceSession(model.model.SerializeToString(),
+                                 sess_options,
+                                 providers=[self.backend])
         elif model.model_path is not None: # pragma: no cover
-            ort.InferenceSession(model.model_path, sess_options)
+            ort.InferenceSession(model.model_path,
+                                 sess_options,
+                                 providers=[self.backend])
         else: # pragma: no cover 
             logger.warning('Please use model path instead of onnx model object to quantize')
 
@@ -630,28 +672,28 @@ class ONNXRTAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
-                    continue
-                if precision in query.get_quantization_capability():
-                    special_config_types = list(query.get_quantization_capability() \
-                        [precision].keys())
-                    default_config = query.get_quantization_capability() \
-                        [precision]['default']
-                else:
-                    special_config_types = {}
-                    default_config = {'weight': {'dtype': precision}, 
-                                      'activation': {'dtype': precision}}
+                # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
                     optype_wise.keys()
+ 
+                if self.backend in query.get_quantization_capability():
+                    configs = query.get_quantization_capability()[self.backend] if \
+                        precision in query.get_quantization_capability() else \
+                        {'default': {'weight': {'dtype': precision}, 'activation': {'dtype': precision}}}
+                else:
+                    continue
+
                 for op in optypes:
                     if op not in quantizable_optype:
                         continue
-                    if op not in special_config_types:
-                        op_capability = copy.deepcopy(default_config)
+                    if op not in configs:
+                        if 'default' in configs:
+                            op_capability = copy.deepcopy(configs['default'])
+                        else:
+                            continue
                     else:
-                        op_capability = copy.deepcopy(
-                            query.get_quantization_capability()[precision][op])
+                        op_capability = copy.deepcopy(configs[op])
 
                     if precision in ['int8', 'uint8']:
                         if self.static:
@@ -745,6 +787,8 @@ class ONNXRTAdaptor(Adaptor):
 
         from onnx import onnx_pb as onnx_proto
         for _, op in enumerate(self.quantizable_ops):
+            if (op.name, op.op_type) not in tune_cfg['op']:
+                continue
             if tune_cfg['op'][(op.name, op.op_type)]['activation']['dtype'] in \
                 self.query_handler.get_fallback_list():
                 quantize_config[op.name] = \
@@ -805,6 +849,8 @@ class ONNXRTAdaptor(Adaptor):
                             location="weights.pb",
                             convert_attribute=False)
         sess_options = ort.SessionOptions()
+        if self.backend == 'TensorrtExecutionProvider':
+            sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL 
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
             cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
@@ -813,9 +859,12 @@ class ONNXRTAdaptor(Adaptor):
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
-        session = ort.InferenceSession(self.work_space + 'eval.onnx', sess_options) if \
-            input_graph.large_size else \
-            ort.InferenceSession(input_graph.model.SerializeToString(), sess_options)
+        session = ort.InferenceSession(self.work_space + 'eval.onnx',
+                                       sess_options,
+                                       providers=[self.backend]) if input_graph.large_size else \
+                  ort.InferenceSession(input_graph.model.SerializeToString(),
+                                       sess_options,
+                                       providers=[self.backend])
         results = []
         if metrics:
             for metric in metrics:
@@ -900,10 +949,10 @@ class ONNXRTAdaptor(Adaptor):
     def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
         from neural_compressor.utils.utility import dump_data_to_local
         from neural_compressor.adaptor.ox_utils.util import find_by_name
-        if self.backend in ["qlinearops", "qoperator"]:
+        if self.format == "qlinearops":
             supported_optype = ['Conv', 'MatMul', 'Concat', 'Attention', 'FusedConv',
                 'Add', 'Mul', 'LeakyRelu', 'Sigmoid', 'GlobalAveragePool', 'AveragePool']
-        elif self.backend == "qdq":
+        elif self.format == "qdq":
             supported_optype = ['Conv', 'MatMul', 'Concat', 'Attention', 'FusedConv',
                 'LeakyRelu', 'Sigmoid', 'GlobalAveragePool', 'AveragePool']
         else:
@@ -937,7 +986,7 @@ class ONNXRTAdaptor(Adaptor):
 
 
 @adaptor_registry
-class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
+class ONNXRT_QLinearOpsAdaptor(ONNXRUNTIMEAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
     Args:
@@ -945,30 +994,10 @@ class ONNXRT_QLinearOpsAdaptor(ONNXRTAdaptor):
     """
 
     def __init__(self, framework_specific_info):
-        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
-        self.backend = "qlinearops"
-        super().__init__(framework_specific_info)
-        if framework_specific_info["approach"] == "post_training_auto_quant":
-            self.query_handler_ext = ONNXRTQuery(local_config_file=os.path.join(
-                os.path.dirname(__file__), "onnxrt_integer.yaml"))
-
-@adaptor_registry
-class ONNXRT_QOperatorAdaptor(ONNXRTAdaptor):
-    """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
-
-    Args:
-        framework_specific_info (dict): framework specific configuration for quantization.
-    """
-
-    def __init__(self, framework_specific_info):
-        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "onnxrt_qlinear.yaml"))
-        self.backend = "qlinearops"
         super().__init__(framework_specific_info)
 
 @adaptor_registry
-class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
+class ONNXRT_IntegerOpsAdaptor(ONNXRUNTIMEAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
     Args:
@@ -976,13 +1005,10 @@ class ONNXRT_IntegerOpsAdaptor(ONNXRTAdaptor):
     """
 
     def __init__(self, framework_specific_info):
-        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "onnxrt_integer.yaml"))
-        self.backend = "integerops"
         super().__init__(framework_specific_info)
 
 @adaptor_registry
-class ONNXRT_QDQAdaptor(ONNXRTAdaptor):
+class ONNXRT_QDQAdaptor(ONNXRUNTIMEAdaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
 
     Args:
@@ -990,13 +1016,7 @@ class ONNXRT_QDQAdaptor(ONNXRTAdaptor):
     """
 
     def __init__(self, framework_specific_info):
-        self.query_handler = ONNXRTQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), "onnxrt_qdq.yaml"))
-        self.backend = "qdq"
         super().__init__(framework_specific_info)
-        if framework_specific_info["approach"] == "post_training_auto_quant":
-            self.query_handler_ext = ONNXRTQuery(local_config_file=os.path.join(
-                os.path.dirname(__file__), "onnxrt_integer.yaml"))
 
 class ONNXRTQuery(QueryBackendCapability):
 

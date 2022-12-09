@@ -73,7 +73,7 @@ class TestOptimizationLevel(unittest.TestCase):
 
         # tuning and accuracy criterion
         optimization_level = 0
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", optimization_level=0)
+        conf = PostTrainingQuantConfig(optimization_level=0)
 
         # fit
         q_model = fit(model=self.constant_graph,
@@ -100,8 +100,7 @@ class TestOptimizationLevel(unittest.TestCase):
         dataloader = DATALOADERS["tensorflow"](dataset)
 
         # tuning and accuracy criterion
-        optimization_level = 1
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", optimization_level=optimization_level)
+        conf = PostTrainingQuantConfig()
 
         # fit
         q_model = fit(model=self.constant_graph,
@@ -137,7 +136,7 @@ class TestOptimizationLevel(unittest.TestCase):
 
         # tuning and accuracy criterion
         optimization_level = 0
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch", optimization_level=optimization_level)
+        conf = PostTrainingQuantConfig(optimization_level=optimization_level)
 
         # fit
         q_model = fit(model=resnet18,
