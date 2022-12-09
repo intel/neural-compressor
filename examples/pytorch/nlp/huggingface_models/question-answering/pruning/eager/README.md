@@ -1,13 +1,13 @@
-# Pytorch Pruner
+# Pruning
 ## Intro
-[**Pytorch Pruner**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/experimental/pytorch_pruner) is an INC build-in API which supports a wide range of pruning algorithms, patterns as well as pruning schedulers. Features below are currently supported:
+[**Pruning**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/prune) is an Intel® Neural Compressor build-in API which supports a wide range of pruning algorithms, patterns as well as pruning schedulers. Features below are currently supported:
 > algorithms: magnitude, snip, snip-momentum\
 > patterns: NxM, N:M\
 > pruning schedulers: iterative pruning scheduler, oneshot pruning scheduler.
 
 ## Usage
 ### Write a config yaml file
-Pytorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an bert-mini example of it:
+pruning is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an bert-mini example of it:
 ```yaml
 version: 1.0
 
@@ -44,7 +44,7 @@ pruning:
             pruning_type: "snip_momentum"
             sparsity_decay_type: "exp"
 ```
-Please be awared that when the keywords appear in both global and local settings, we select the **local** settings as priority.
+Please be aware that when the keywords appear in both global and local settings, we select the **local** settings as priority.
 ### Coding template:
 With a settled config file, we provide a template for implementing pytorch_pruner API:
 
@@ -54,7 +54,7 @@ criterion = Criterion()
 optimizer = Optimizer()
 args = Args()
 
-from neural_compressor.pruning.pytorch_pruner.pruning import Pruning
+from neural_compressor.pruning import Pruning
 
 pruner = Pruning("path/to/your/config.yaml")
 if args.do_prune:
@@ -85,7 +85,7 @@ For more usage, please refer to our example codes below.
 
 ## Examples
 we have provided several pruning examples, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
-### [SQuAD](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning)
+### [SQuAD](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager/)
 We can train a sparse model with NxM (2:4) pattern:
 ```
 python3 ./run_qa_no_trainer.py \
@@ -146,3 +146,4 @@ python \
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
+

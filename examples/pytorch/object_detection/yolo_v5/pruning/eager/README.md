@@ -1,16 +1,16 @@
-# PyTorch Pruner
+# Pruning
 ## Intro
-[**PyTorch Pruner**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/experimental/pytorch_pruner) is an Intel® Neural Compressor build-in API which supports a wide range of pruning algorithms, Criteria, patterns as well as pruning schedulers. Features below are currently supported:
+[**Pruning**](https://github.com/intel/neural-compressor/tree/master/neural_compressor/prune/) is an Intel® Neural Compressor build-in API which supports a wide range of pruning algorithms, Criteria, patterns as well as pruning schedulers. Features below are currently supported:
 > algorithms: magnitude, snip, snip-momentum\
 > patterns: NxM, N:M\
 > pruning schedulers: iterative pruning scheduler, one-shot pruning scheduler.
 
 ## YOLOv5's Version
-YOLOv5s6 pruned example is developed based on Version 6.2[YOLOv5]https://github.com/ultralytics/yolov5/releases/tag/v6.2
+YOLOv5 pruned example is developed based on Version 6.2[YOLOv5]https://github.com/ultralytics/yolov5/releases/tag/v6.2
 
 ## Usage
 ### Write a config yaml file
-PyTorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an yolov5s example of it:
+Pruning is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an yolov5s6 example of it:
 ```yaml
 version: 1.0
 
@@ -140,3 +140,4 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Object detection at 200 Frames Per Second](https://arxiv.org/pdf/1805.06361.pdf)
+
