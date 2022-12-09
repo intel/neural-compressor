@@ -661,7 +661,41 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
 pruners = [Pruner()]
 
+class PruningConfig:
+    def __init__(self, pruners=pruners, initial_sparsity=0.0, target_sparsity=0.97,
+                 max_sparsity_ratio_per_layer=0.98, prune_type="basic_magnitude",
+                 start_epoch=0, end_epoch=4, start_step=0, end_step=0, update_frequency=1.0,
+                 update_frequency_on_step=1, not_to_prune_names=[], prune_domain="global",
+                 names=[], exclude_names=[], prune_layer_type=[], sparsity_decay_type="exp",
+                 pattern="tile_pattern_1x1"):
+        self.weight_compression = DotDict({
+            'initial_sparsity': initial_sparsity,
+            'target_sparsity': target_sparsity,
+            'max_sparsity_ratio_per_layer': max_sparsity_ratio_per_layer,
+            'prune_type': prune_type,
+            'start_epoch': start_epoch,
+            'end_epoch': end_epoch,
+            'start_step': start_step,
+            'end_step': end_step,
+            'update_frequency': update_frequency,
+            'update_frequency_on_step': update_frequency_on_step,
+            'not_to_prune_names': not_to_prune_names,
+            'prune_domain': prune_domain,
+            'names': names,
+            'exclude_names': exclude_names,
+            'prune_layer_type': prune_layer_type,
+            'sparsity_decay_type': sparsity_decay_type,
+            'pattern': pattern,
+            'pruners': pruners
+        })
 
+    @property
+    def weight_compression(self):
+        return self._weight_compression
+
+    @weight_compression.setter
+    def weight_compression(self, weight_compression):
+        self._weight_compression = weight_compression
 
 class WeightPruningConfig:
     """
