@@ -815,19 +815,8 @@ class ExportConfig:
         self._dynamic_axes = dynamic_axes
 
 class ONNXQlinear2QDQConfig:
-    def __init__(
-        self,
-        channel_axis={},
-    ):
-        self._channel_axis = channel_axis
-
-    @property
-    def channel_axis(self):
-        return self._channel_axis
-
-    @channel_axis.setter
-    def channel_axis(self, channel_axis):
-        self._dtype = channel_axis
+    def __init__(self):
+        pass
 
 class Torch2ONNXConfig(ExportConfig):
     def __init__(

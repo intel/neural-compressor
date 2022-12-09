@@ -35,9 +35,10 @@ class ArgMaxOperator(Operator):
         origin_name = node.input[0].split('_argmax_node')[0]
 
         if origin_name in self.quantizer.quantized_value_map:
+            #node.input[0] = self.quantizer.quantized_value_map[origin_name].q_name
             node.name = node.name + '_quant'
 
 @qop_registry(op_types="ArgMax")
 class QArgMaxOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis):
-        super().__init__(onnx_node, children, initializers, channel_axis)
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)

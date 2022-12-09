@@ -99,8 +99,8 @@ class ConcatOperator(Operator):
 
 @qop_registry(op_types="QLinearConcat")
 class QConcatOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis):
-        super().__init__(onnx_node, children, initializers, channel_axis)
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
 
     def convert(self):
         node = self.node

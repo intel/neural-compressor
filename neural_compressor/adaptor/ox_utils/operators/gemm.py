@@ -95,8 +95,8 @@ class GemmOperator(Operator):
         
 @qop_registry(op_types="QGemm")
 class QGemmOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis):
-        super().__init__(onnx_node, children, initializers, channel_axis)
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
 
     def convert(self):
         import numpy as np

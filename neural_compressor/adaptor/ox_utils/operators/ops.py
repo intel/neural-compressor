@@ -109,12 +109,10 @@ class Operator(object):
         self.quantizer.dtype_cast(self.node, self.dtype)
 
 class QOperator(object):
-    def __init__(self, onnx_node, children, initializers, channel_axis):
+    def __init__(self, onnx_node, children, initializers):
         self.node = onnx_node
         self.children = children
         self.initializers = initializers
-        self.axis = channel_axis
-        self.per_channel = False
         self.qop_list = ['QGemm', 'QAttention', 'QEmbedLayerNormalization',
                        'QLinearLeakyRelu', 'QLinearSigmoid', 'QLinearAdd','QLinearMul',
                        'QLinearConcat', 'QLinearConv', 'QLinearGlobalAveragePool',

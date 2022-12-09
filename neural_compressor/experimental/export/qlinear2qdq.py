@@ -48,7 +48,6 @@ def check_model(model):
 def onnx_qlinear_to_qdq(
     model,
     input_name_to_nodes,
-    channel_axis={}
 ):
     """Export FP32 PyTorch model into FP32 ONNX model.
 
@@ -72,8 +71,7 @@ def onnx_qlinear_to_qdq(
             converter = QOPERATORS[node.op_type](
                 node,
                 children,
-                model.graph.initializer,
-                channel_axis)
+                model.graph.initializer)
             done, add_node, init = converter.convert()
             if done:
                 add_nodes.extend(add_node)

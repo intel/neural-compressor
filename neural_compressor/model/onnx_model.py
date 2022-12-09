@@ -431,8 +431,7 @@ class ONNXModel(BaseModel):
     def export(self, save_path, conf):
         from neural_compressor.experimental.export import onnx_qlinear_to_qdq
         add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
-                                         self._input_name_to_nodes,
-                                         conf.channel_axis)
+                                         self._input_name_to_nodes)
         self.add_nodes(add_nodes)
         self.remove_nodes(remove_nodes)
         self.remove_unused_constant()
