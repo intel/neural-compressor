@@ -6,100 +6,62 @@ import torch
 import torchvision
 import torch.nn as nn
 
+from neural_compressor.config import WeightPruningConfig
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
 
+local_regs_config = [
+    {
+        "start_step": 0,
+        "end_step": 10,
+        "pruning_type": "magnitude",
+        "op_names": ['layer1.*'],
+        "excluded_op_names": ['layer2.*'],
+        "pruning_scope": "global",
+        "target_sparsity": 0.5,
+        "pattern": "4x1",
+        "reg_type": "group_lasso",
+        "parameters": {'reg_coeff':0.2}
+    },
+    {
+        "start_step": 1,
+        "end_step": 1,
+        "target_sparsity": 0.5,
+        "pruning_type": "snip_momentum",
+        "pruning_frequency": 2,
+        "op_names": ['layer2.*'],
+        "pruning_scope": "local",
+        "target_sparsity": 0.75,
+        "pattern": "1x1",
+        "sparsity_decay_type": "exp",
+        "reg_type": "group_lasso",
+        "parameters": {'reg_coeff':0.1}
+    },
+    {
+        "start_step": 2,
+        "end_step": 8,
+        "target_sparsity": 0.1,
+        "pruning_type": "gradient",
+        "pruning_frequency": 2,
+        "op_names": ['fc'],
+        "pruning_scope": "local",
+        "target_sparsity": 0.75,
+        "pattern": "1x1",
+        "sparsity_decay_type": "cube",
+        "reg_type": "group_lasso",
+        "parameters": {'reg_coeff':0.0}
+    }
+]
 
-def build_fake_yaml():
-    fake_snip_yaml = """
-    model:
-      name: imagenet_prune
-      framework: pytorch
-
-    pruning:
-      approach:
-        weight_compression:
-          target_sparsity: 0.9
-          start_step: 0
-          end_step: 10
-          prune_frequency: 1 
-          sparsity_decay_type: "exp"
-          pruners:
-            - !Pruner
-                start_step: 0
-                end_step: 10
-                prune_type: "magnitude"
-                names: ['layer1.*']
-                extra_excluded_names: ['layer2.*']
-                pruning_scope: "global"
-                target_sparsity: 0.5
-                pattern: "4x1"
-                reg_type: "group_lasso"
-                parameters: {'reg_coeff':0.2}
-
-            - !Pruner
-                start_step: 1
-                end_step: 1
-                target_sparsity: 0.5
-                prune_type: "snip_momentum"
-                prune_frequency: 2
-                names: ['layer2.*']
-                pruning_scope: local
-                target_sparsity: 0.75
-                pattern: "1x1"
-                sparsity_decay_type: "exp"
-                reg_type: "group_lasso"
-                parameters: {'reg_coeff':0.1}
-
-            - !Pruner
-                start_step: 2
-                end_step: 8
-                target_sparsity: 0.8
-                prune_type: "snip"
-                names: ['layer3.*']
-                pruning_scope: "local"
-                pattern: "8x2"
-                sparsity_decay_type: "cube"
-                reg_type: "group_lasso"
-                parameters: {'reg_coeff':2.0}
-                
-            - !Pruner
-                start_step: 2
-                end_step: 8
-                target_sparsity: 0.1
-                prune_type: "gradient"
-                names: ['fc']
-                pruning_scope: "local"
-                pattern: "1x1"
-                sparsity_decay_type: "cube"
-                reg_type: "group_lasso"
-                parameters: {'reg_coeff':0.0}
-
-    """
-    with open('fake_snip.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_snip_yaml)
-
-
-
-
+fake_snip_config = WeightPruningConfig(local_regs_config, target_sparsity=0.9, start_step=0, \
+                                       end_step=10, pruning_frequency=1, sparsity_decay_type="exp")
 
 class TestPruningRegs(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    @classmethod
-    def setUpClass(cls):
-        build_fake_yaml()
-
-    @classmethod
-    def tearDownClass(cls):
-        os.remove('fake_snip.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
     def test_pruning_regs(self):
-        prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
+        prune = Pruning(fake_snip_config)
         prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
@@ -108,7 +70,7 @@ class TestPruningRegs(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(prune_frequency=1)
+        prune.update_config(pruning_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
@@ -135,5 +97,6 @@ class TestPruningRegs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

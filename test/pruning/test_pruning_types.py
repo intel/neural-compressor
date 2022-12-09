@@ -6,89 +6,52 @@ import torch
 import torchvision
 import torch.nn as nn
 
+from neural_compressor.config import WeightPruningConfig
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
 
+local_types_config = [
+    {
+        "start_step": 1,
+        "end_step": 1,
+        "pruning_type": "pattern_lock",
+        "op_names": ['layer1.*'],
+        "excluded_op_names": ['layer2.*'],
+        "pruning_scope": "global"
+    },
+    {
+        "start_step": 1,
+        "end_step": 1,
+        "target_sparsity": 0.5,
+        "pruning_type": "snip_momentum_progressive",
+        "pruning_frequency": 2,
+        "op_names": ['layer2.*'],
+        "pruning_scope": "local",
+        "pattern": "4x1",
+        "sparsity_decay_type": "exp"
+    },
+    {
+        "start_step": 2,
+        "end_step": 8,
+        "target_sparsity": 0.8,
+        "pruning_type": "snip_progressive",
+        "pruning_frequency": 1,
+        "op_names": ['layer3.*'],
+        "pruning_scope": "local",
+        "pattern": "16x1",
+        "sparsity_decay_type": "cube"
+    }
+]
 
-def build_fake_yaml():
-    fake_snip_yaml = """
-    model:
-      name: imagenet_prune
-      framework: pytorch
-
-    pruning:
-      approach:
-        weight_compression:
-          target_sparsity: 0.9
-          start_step: 0
-          end_step: 10
-          prune_frequency: 3 
-          sparsity_decay_type: "exp"
-          pruners:
-            - !Pruner
-                start_step: 0
-                end_step: 0
-                prune_type: "pattern_lock"
-                names: ['layer1.*']
-                extra_excluded_names: ['layer2.*']
-                pruning_scope: "global"
-
-            - !Pruner
-                start_step: 1
-                end_step: 1
-                target_sparsity: 0.5
-                prune_type: "snip_momentum_progressive"
-                prune_frequency: 2
-                names: ['layer2.*']
-                pruning_scope: local
-                pattern: "4x1"
-                sparsity_decay_type: "exp"
-
-            - !Pruner
-                start_step: 2
-                end_step: 8
-                target_sparsity: 0.8
-                prune_type: "snip_progressive"
-                names: ['layer3.*']
-                pruning_scope: "local"
-                pattern: "16x1"
-                sparsity_decay_type: "cube"
-                prune_frequency: 1
-
-            
-            
-            # - !Pruner
-            #     start_step: 2
-            #     end_step: 8
-            #     target_sparsity: 0.1
-            #     prune_type: "gradient_progressive"
-            #     names: ['fc']
-            #     pruning_scope: "local"
-            #     pattern: "1x1"
-            #     sparsity_decay_type: "cube"
-
-    """
-    with open('fake_snip.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_snip_yaml)
-
-
+fake_snip_config = WeightPruningConfig(local_types_config, target_sparsity=0.9, start_step=0, \
+                                       end_step=10, pruning_frequency=3, sparsity_decay_type="exp")
 
 class TestPruningTypes(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    @classmethod
-    def setUpClass(cls):
-        build_fake_yaml()
-
-    @classmethod
-    def tearDownClass(cls):
-        os.remove('fake_snip.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
     def test_pruning_types(self):
-        prune = Pruning("fake_snip.yaml")
+        prune = Pruning(fake_snip_config)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
@@ -96,7 +59,7 @@ class TestPruningTypes(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(prune_frequency=1)
+        prune.update_config(pruning_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
@@ -122,5 +85,6 @@ class TestPruningTypes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

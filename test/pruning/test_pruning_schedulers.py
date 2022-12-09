@@ -6,69 +6,45 @@ import torch
 import torchvision
 import torch.nn as nn
 
+from neural_compressor.config import WeightPruningConfig
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
 
+local_schedulers_config = [
+    {
+        "start_step": 0,
+        "end_step": 2,
+        "pruning_type": "magnitude",
+        "op_names": ['layer1.*'],
+        "excluded_op_names": ['layer2.*'],
+        "pruning_scope": "global",
+        "target_sparsity": 0.5,
+        "pattern": "4x1"
+    },
+    {
+        "start_step": 1,
+        "end_step": 10,
+        "target_sparsity": 0.5,
+        "pruning_type": "snip_momentum",
+        "pruning_frequency": 2,
+        "op_names": ['layer2.*'],
+        "pruning_scope": "local",
+        "target_sparsity": 0.75,
+        "pattern": "32x1",
+        "sparsity_decay_type": "exp"
+    }
+]
 
-def build_fake_yaml():
-    fake_snip_yaml = """
-    model:
-      name: imagenet_prune
-      framework: pytorch
-
-    pruning:
-      approach:
-        weight_compression:
-          target_sparsity: 0.9
-          start_step: 0
-          end_step: 10
-          prune_frequency: 1 
-          sparsity_decay_type: "exp"
-          pruners:
-            - !Pruner
-                start_step: 0
-                end_step: 2
-                prune_type: "magnitude"
-                names: ['layer1.*']
-                extra_excluded_names: ['layer2.*']
-                pruning_scope: "global"
-                target_sparsity: 0.5
-                pattern: "4x1"
-
-            - !Pruner
-                start_step: 1
-                end_step: 10
-                target_sparsity: 0.5
-                prune_type: "snip_momentum"
-                prune_frequency: 2
-                names: ['layer2.*']
-                pruning_scope: local
-                target_sparsity: 0.75
-                pattern: "32x1"
-                sparsity_decay_type: "exp"
-
-    """
-    with open('fake_snip.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_snip_yaml)
-
+fake_snip_config = WeightPruningConfig(local_schedulers_config, target_sparsity=0.9, start_step=0, \
+                                       end_step=10, pruning_frequency=1, sparsity_decay_type="exp")
 
 class TestPruningCriteria(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    @classmethod
-    def setUpClass(cls):
-        build_fake_yaml()
-
-    @classmethod
-    def tearDownClass(cls):
-        os.remove('fake_snip.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
     def test_pruning_schedulers(self):
-        prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
+
+        prune = Pruning(fake_snip_config)
         prune.update_config(start_step=1)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
@@ -77,7 +53,7 @@ class TestPruningCriteria(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune.on_train_begin()
-        prune.update_config(prune_frequency=1)
+        prune.update_config(pruning_frequency=1)
         for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
@@ -103,5 +79,4 @@ class TestPruningCriteria(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
+    
