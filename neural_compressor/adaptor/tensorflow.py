@@ -64,6 +64,8 @@ class TensorFlowAdaptor(Adaptor):
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         self.performance_only = deep_get(self.framework_specific_info, 'performance_only', False)
         self.use_bf16 = deep_get(self.framework_specific_info, 'use_bf16', False)
+        self.backend = self.framework_specific_info['backend']
+        self.format = self.framework_specific_info['format']
         os.makedirs(self.work_dir, exist_ok=True)
 
         self.pre_optimized_model = None
@@ -76,12 +78,12 @@ class TensorFlowAdaptor(Adaptor):
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
         self.query_handler = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(__file__), cfg_yaml_name), performance_only=self.performance_only)
-        self.itex_mode = cfg_yaml_name == 'tensorflow_itex.yaml'
+        self.itex_mode = self.backend == 'itex' or cfg_yaml_name == 'tensorflow_itex.yaml'
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = True if parse_version(tf.version.VERSION) == parse_version('2.11.0202242') else False
-        self.qdq_enabled = cfg_yaml_name == 'tensorflow_itex.yaml' or self.new_api
+        self.new_api = parse_version(tf.version.VERSION) == parse_version('2.11.0202242')
+        self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
 

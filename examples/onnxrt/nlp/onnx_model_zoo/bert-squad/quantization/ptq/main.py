@@ -38,7 +38,8 @@ class squadDataset(Dataset):
         return len(self.input_ids)
 
 def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, input_file):
-    session = onnxruntime.InferenceSession(model.SerializeToString(), None)
+    session = onnxruntime.InferenceSession(model.SerializeToString(), None,
+        providers=onnxruntime.get_available_providers())
     for output_meta in session.get_outputs():
         print(output_meta)
     for input_meta in session.get_inputs():
