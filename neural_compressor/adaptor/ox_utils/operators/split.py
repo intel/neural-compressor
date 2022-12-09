@@ -96,16 +96,6 @@ class QSplitOperator(QOperator):
         if all([child.op_type not in self.qop_list or \
                 child.op_type != 'DequantizeLinear' for child in self.children]):
             return False, add_nodes, inits
-            
-        outputs = []
-        for i, out in enumerate(node.output):
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
-                [node.output[i]],
-                node.name + '_out_quant_' + str(i))
-        outputs.append([node.name + '_out_quant_' + str(i)])
-        add_nodes.append(out_q)
 
         # input dq
         for child in self.children:
@@ -118,6 +108,16 @@ class QSplitOperator(QOperator):
                 inputs.append(node.name + '_in_dequant')
                 add_nodes.append(in_dq)
                 break
+
+        outputs = []
+        for i, out in enumerate(node.output):
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
+                [node.output[i]],
+                node.name + '_out_quant_' + str(i))
+        outputs.append([node.name + '_out_quant_' + str(i)])
+        add_nodes.append(out_q)
 
         outputs = node.output
         kwargs = {}
