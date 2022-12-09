@@ -38,6 +38,17 @@ def build_dataset():
     y_test = keras.utils.to_categorical(y_test, num_classes)
     return x_train, y_train, x_test, y_test
 
+class Dataset():
+    def __init__(self, ):
+        self.inputs, self.labels, _, _ = build_dataset()
+
+    def __getitem__(self, idx):
+        return self.inputs[idx], self.labels[idx]
+
+    def __len__(self):
+        assert len(self.inputs) == len(self.labels), 'inputs should have equal len with labels'
+        return len(self.inputs)
+
 def build_model(x_train, y_train, x_test, y_test):
     if os.path.exists('fp32_model'):
         model = keras.models.load_model('fp32_model')
@@ -80,7 +91,7 @@ def main():
     from neural_compressor.experimental import Quantization, common
     quantizer = Quantization('./conf.yaml') 
     quantizer.model = common.Model(model)
-    quantizer.calib_dataloader = common.DataLoader((x_train[:100], y_train[:100]), batch_size=10)
+    quantizer.calib_dataloader = common.DataLoader(Dataset(), batch_size=10)
     quantizer.eval_func = eval_func
     quantized_model = quantizer.fit()
 
