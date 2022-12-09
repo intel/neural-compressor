@@ -11,76 +11,8 @@ from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import P
 from neural_compressor.pruning import Pruning
 from neural_compressor.config import WeightPruningConfig
 
-
-def build_fake_yaml_basic():
-    fake_snip_yaml = """
-    model:
-      name: imagenet_prune
-      framework: pytorch
-
-    pruning:
-      approach:
-        weight_compression:
-          target_sparsity: 0.9
-          start_step: 0
-          end_step: 10
-          pruning_frequency: 1 
-          sparsity_decay_type: "exp"
-          pruners:
-            - !Pruner
-                start_step: 0
-                end_step: 10
-                pruning_type: "magnitude"
-                names: ['layer1.*']
-                extra_excluded_op_names: ['layer2.*']
-                pruning_scope: "global"
-
-            - !Pruner
-                start_step: 1
-                end_step: 1
-                target_sparsity: 0.5
-                pruning_type: "snip_momentum"
-                pruning_frequency: 2
-                names: ['layer2.*']
-                pruning_scope: local
-                pattern: "2:4"
-                sparsity_decay_type: "exp"
-
-            - !Pruner
-                start_step: 2
-                end_step: 8
-                target_sparsity: 0.8
-                pruning_type: "snip"
-                names: ['layer3.*']
-                pruning_scope: "local"
-                pattern: "16x1"
-                sparsity_decay_type: "cube"
-            - !Pruner
-                start_step: 2
-                end_step: 8
-                target_sparsity: 0.1
-                pruning_type: "gradient"
-                names: ['fc']
-                pruning_scope: "local"
-                pattern: "1x1"
-                sparsity_decay_type: "cube"
-
-    """
-    with open('fake_snip.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_snip_yaml)
-
 class TestPruningCriteria(unittest.TestCase):
     model = torchvision.models.resnet18()
-
-    @classmethod
-    def setUpClass(cls):
-        build_fake_yaml_basic()
-
-    @classmethod
-    def tearDownClass(cls):
-        os.remove('fake_snip.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_criteria(self):
         local_configs = [
