@@ -17,7 +17,7 @@
 
 import os
 from .utils import logger
-from .data import DATALOADERS, Datasets
+from .experimental.data import DATALOADERS, Datasets
 from .experimental import Quantization as ExpQuantization
 from deprecated import deprecated
 from neural_compressor.conf.pythonic_config import Config
