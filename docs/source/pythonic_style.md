@@ -87,7 +87,7 @@ config.pruning.weight_compression.prune_type = "snip_momentum"
 config.pruning.weight_compression.start_step = 0
 config.pruning.weight_compression.end_step = 3
 config.pruning.weight_compression.prune_frequency = 1
-config.pruning.weight_compression.prune_domain = "global"
+config.pruning.weight_compression.pruning_scope = "global"
 config.pruning.weight_compression.pattern = "4x1"
 
 from neural_compressor.experimental import Pruning

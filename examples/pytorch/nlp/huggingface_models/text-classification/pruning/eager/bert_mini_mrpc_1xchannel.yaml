@@ -18,6 +18,6 @@ pruning:
         - !Pruner
             pattern: "1xchannel"
             prune_frequency: 50
-            prune_domain: "global"
+            pruning_scope: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"

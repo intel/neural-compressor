@@ -48,7 +48,7 @@ def check_config(prune_config):
     assert prune_config['prune_frequency'] > 0, "prune_frequency should be greater than 0"
     assert prune_config['max_layer_sparsity_ratio'] >= 0 and prune_config['max_layer_sparsity_ratio'] < 1, \
         "prune_frequency should be greater than 0"
-    assert prune_config['prune_domain'] == "global" or prune_config['prune_domain'] == "local", \
+    assert prune_config['pruning_scope'] == "global" or prune_config['pruning_scope'] == "local", \
         "only support 'global' and 'local' prune domain"
     try:
         prune_config['resume_from_pruned_checkpoint'] = bool(prune_config['resume_from_pruned_checkpoint'])
@@ -133,7 +133,7 @@ def process_and_check_config(val):
 
     default_global_config = {'target_sparsity': 0.9, 'prune_type': 'snip_momentum', 'pattern': '4x1', 'names': [],
                              'excluded_names': [],
-                             'start_step': 0, 'end_step': 0, 'prune_domain': 'global', 'prune_frequency': 1,
+                             'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'prune_frequency': 1,
                              'min_layer_sparsity_ratio': 0.0, 'max_layer_sparsity_ratio': 0.98,
                              'sparsity_decay_type': 'exp',
                              'prune_layer_type': ['Conv', 'Linear'],

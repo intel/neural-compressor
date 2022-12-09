@@ -32,7 +32,7 @@ def build_fake_yaml():
                 prune_type: "magnitude"
                 names: ['layer1.*']
                 extra_excluded_names: ['layer2.*']
-                prune_domain: "global"
+                pruning_scope: "global"
                 target_sparsity: 0.5
                 pattern: "5:8"
 
@@ -43,7 +43,7 @@ def build_fake_yaml():
                 prune_type: "snip_momentum"
                 prune_frequency: 2
                 names: ['layer2.*']
-                prune_domain: local
+                pruning_scope: local
                 target_sparsity: 0.75
                 pattern: "channelx1"
                 sparsity_decay_type: "exp"
@@ -54,7 +54,7 @@ def build_fake_yaml():
                 target_sparsity: 0.8
                 prune_type: "snip"
                 names: ['layer3.*']
-                prune_domain: "local"
+                pruning_scope: "local"
                 pattern: "8x2"
                 sparsity_decay_type: "cube"
             - !Pruner
@@ -63,7 +63,7 @@ def build_fake_yaml():
                 target_sparsity: 0.1
                 prune_type: "gradient"
                 names: ['fc']
-                prune_domain: "local"
+                pruning_scope: "local"
                 pattern: "1xchannel"
                 sparsity_decay_type: "cube"
 

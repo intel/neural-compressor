@@ -33,7 +33,7 @@ def build_fake_yaml():
                 prune_type: "magnitude"
                 names: ['layer1.*']
                 extra_excluded_names: ['layer2.*']
-                prune_domain: "global"
+                pruning_scope: "global"
                 pattern: "4x1"
                 target_sparsity: 0.88
 
@@ -44,7 +44,7 @@ def build_fake_yaml():
                 prune_type: "snip_momentum"
                 prune_frequency: 2
                 names: ['layer2.*']
-                prune_domain: local
+                pruning_scope: local
                 pattern: "2:4"
 
             - !Pruner
@@ -53,7 +53,7 @@ def build_fake_yaml():
                 target_sparsity: 0.8
                 prune_type: "snip"
                 names: ['layer3.*']
-                prune_domain: "local"
+                pruning_scope: "local"
                 pattern: "16x1"
                 sparsity_decay_type: "cube"
 
@@ -82,9 +82,9 @@ class TestPytorchPruning(unittest.TestCase):
         prune.on_train_begin()
         prune.update_config(reg_type='group_lasso', parameters={"reg_coeff": 1.1}, \
                             max_layer_sparsity_ratio=0.99, min_layer_sparsity_ratio=0.21, \
-                            sparsity_decay_type='cube', prune_frequency=2, prune_domain='local')
+                            sparsity_decay_type='cube', prune_frequency=2, pruning_scope='local')
         assert prune.pruners[0].config['prune_frequency'] == 2, "prune_frequency should be 1"
-        assert prune.pruners[0].config['prune_domain'] == 'local', "prune_domain should be local"
+        assert prune.pruners[0].config['pruning_scope'] == 'local', "pruning_scope should be local"
         assert prune.pruners[0].config['target_sparsity'] == 0.88, "target_sparsity should be 0.88"
         assert prune.pruners[0].config['reg_type'] == 'group_lasso', "reg_type should be group_lasso"
         assert prune.pruners[0].config['sparsity_decay_type'] == "cube", "sparsity_decay_type should be cube"
@@ -95,7 +95,7 @@ class TestPytorchPruning(unittest.TestCase):
 
     def test_pruning_class_config(self):
         dummy_pruner1 = Pruner(extra_excluded_names=["layer1"], reg_type="group_lasso", max_layer_sparsity_ratio=0.9)
-        dummy_pruner2 = Pruner(prune_domain="local", criterion_reduce_type="max", target_sparsity=0.85)
+        dummy_pruner2 = Pruner(pruning_scope="local", criterion_reduce_type="max", target_sparsity=0.85)
         config = PruningConfig([dummy_pruner1, dummy_pruner2], target_sparsity=0.8, end_step=1)
         prune = Pruning(config)
         prune.model = self.model
@@ -105,7 +105,7 @@ class TestPytorchPruning(unittest.TestCase):
         assert prune.pruners[0].config['max_layer_sparsity_ratio'] == 0.9
         assert prune.pruners[0].config['target_sparsity'] == 0.8
         assert prune.pruners[0].config['end_step'] == 1
-        assert prune.pruners[1].config["prune_domain"] == "local"
+        assert prune.pruners[1].config["pruning_scope"] == "local"
         assert prune.pruners[1].config["criterion_reduce_type"] == "max"
         assert prune.pruners[1].config["target_sparsity"] == 0.85
         assert prune.pruners[1].config['end_step'] == 1

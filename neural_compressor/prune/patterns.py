@@ -101,7 +101,7 @@ class BasePattern:
     def __init__(self, config, modules):
         """Initialize the basic pruning unit of a pattern."""
         self.pattern = config.pattern
-        self.is_global = config.prune_domain == "global"
+        self.is_global = config.pruning_scope == "global"
         self.keep_mask_layers = {}
         self.invalid_layers = []
         self.modules = modules

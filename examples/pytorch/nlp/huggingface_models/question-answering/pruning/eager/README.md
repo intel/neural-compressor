@@ -33,14 +33,14 @@ pruning:
             extra_excluded_names: [".*query", ".*key", ".*value"] # list of regular expressions, containing the layer names you wish not to be included in this pruner
             pattern: "1x1" # pattern type, we support "NxM" and "N:M"
             prune_frequency: 100 # if use iterative pruning scheduler, this define the pruning frequency.
-            prune_domain: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
+            pruning_scope: "global" # one in ["global", "local"], refers to the score map is computed out of entire parameters or its corresponding layer's weight.
             prune_type: "snip_momentum" # pruning algorithms, refer to pytorch_pruner/pruner.py
             sparsity_decay_type: "exp" # ["linear", "cos", "exp", "cube"] ways to determine the target sparsity during iterative pruning.
         - !Pruner
             extra_excluded_names: [".*output", ".*intermediate"]
             pattern: "4x1"
             prune_frequency: 100
-            prune_domain: "global"
+            pruning_scope: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
 ```

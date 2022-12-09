@@ -14,13 +14,13 @@ pruning:
       target_sparsity: 0.8
       prune_frequency: 1000
       max_layer_sparsity_ratio: 0.98
-      prune_domain: "global"
+      pruning_scope: "global"
       sparsity_decay_type: "exp"
       pruners:
         - !Pruner
             pattern: "4x1"
             target_sparsity: 0.8
             prune_frequency: 1000
-            prune_domain: "global"
+            pruning_scope: "global"
             prune_type: "snip_momentum"
             sparsity_decay_type: "exp"
