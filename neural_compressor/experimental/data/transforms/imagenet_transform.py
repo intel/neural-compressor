@@ -33,6 +33,7 @@
 
 import numpy as np
 from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils import logger
 from .transform import transform_registry, BaseTransform
 tf = LazyImport('tensorflow')
 cv2 = LazyImport('cv2')
