@@ -28,7 +28,10 @@ elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
 fi
 
-if [[ "${itex_version}" != "" ]]; then
+if [[ "${itex_version}" == "nightly" ]]; then
+    pip install /tf_dataset/itex_binary/221209/intel_extension_for_tensorflow-1.1.0-cp38-cp38-linux_x86_64.whl
+    pip install /tf_dataset/itex_binary/221209/intel_extension_for_tensorflow_lib-1.1.0.0-cp38-cp38-linux_x86_64.whl
+elif [[ "${itex_version}" != "" ]]; then
     pip install --upgrade intel-extension-for-tensorflow[cpu]==${itex_version}
 fi
 
