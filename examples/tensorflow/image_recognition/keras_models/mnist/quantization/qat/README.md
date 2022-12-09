@@ -12,10 +12,9 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow and TensorFlow Model Optimization
+### 2. Install Tensorflow
 ```shell
-pip install intel-tensorflow==2.4.0
-pip install tensorflow_model_optimization==0.5.0
+pip install tensorflow
 ```
 > Note: To generate correct qat model with tensorflow_model_optimization 0.5.0, pls use TensorFlow 2.4 or above.
 
@@ -38,7 +37,11 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 ### 4. Prepare Pretrained model
 
-Run the `train.py` script to get pretrained fp32 model.
+Run the `prepare_model.py` script to get pretrained fp32 model.
+ ```
+python prepare_model.py --output_model=/path/to/model
+ ```
+`--output_model ` the model should be saved as SavedModel format or H5 format.
 
 ### 5. Prepare QAT model
 
@@ -49,8 +52,7 @@ In examples directory, there is a mnist.yaml for tuning the model on Intel CPUs.
 
 ## Run Command
   ```shell
-  python convert.py     # to convert QAT model to quantized model.
-
-  python benchmark.py   # to run accuracy benchmark.
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result 
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --batch_size=32
   ```
 

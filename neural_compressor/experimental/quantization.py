@@ -408,6 +408,37 @@ class Quantization(Component):
 
     calib_func = q_func
 
+    @property
+    def model(self):
+        """Override model getter method to handle quantization aware training case"""
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        """Override model setter method to handle quantization aware training case.
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model),
+                       but not recommended. Best practice is to set from a initialized
+                       neural_compressor.experimental.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be
+                       auto inferenced, but sometimes auto inferenced
+                       inputs/outputs will not meet your requests,
+                       set them manually in config yaml file.
+                       Another corner case is slim model of tensorflow,
+                       be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+        """
+        approach_cfg = deep_get(self.cfg, 'quantization.approach')
+        if self.framework == 'tensorflow' and approach_cfg == 'quant_aware_training':
+            if type(user_model) == str:
+                self._model = TensorflowQATModel(user_model)
+            else:
+                self._model = TensorflowQATModel(user_model._model)
+        else:
+            Component.model.__set__(self, user_model)
+
     def __repr__(self):
         """Return the class string."""
         return 'Quantization'
