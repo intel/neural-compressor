@@ -137,7 +137,7 @@ def main():
     if FLAGS.tune:
         logger.info('start quantizing the model...')
         from neural_compressor import training, QuantizationAwareTrainingConfig
-        config = QuantizationAwareTrainingConfig()
+        config = QuantizationAwareTrainingConfig(backend="tensorflow")
         compression_manager = training.prepare_compression(FLAGS.input_model, config)
         compression_manager.callbacks.on_train_begin()
 
@@ -168,7 +168,8 @@ def main():
 
         model = common.Model(FLAGS.input_model).graph_def
         if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(backend="tensorflow", 
+                                    cores_per_instance=4, num_of_instance=7)
             fit(model, conf, b_func=evaluate)
         elif FLAGS.mode == 'accuracy':
             accuracy = evaluate(model)
