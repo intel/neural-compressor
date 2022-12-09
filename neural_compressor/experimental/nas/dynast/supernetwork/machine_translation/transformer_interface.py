@@ -14,27 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Translate pre-processed data with a trained model.
-"""
+"""Translate pre-processed data with a trained model."""
 import time
 import warnings
 
 import numpy as np
-import torch
-import torchprofile
-from fairseq import options, progress_bar, tasks, utils
-from fairseq.data.encoders.moses_tokenizer import MosesTokenizer
-from fairseq.meters import StopwatchMeter
 
-from neural_compressor.utils import logger
+from neural_compressor.utils.utility import logger, LazyImport
 
 from .transformer_supernetwork import TransformerSuperNetwork
+
+torch = LazyImport('torch')
+torchprofile = LazyImport('torchprofile')
+fairseq = LazyImport('fairseq')
 
 warnings.filterwarnings("ignore")
 
 
 def compute_bleu(config, dataset_path, checkpoint_path):
+    """Measure BLEU score of the Transformer-based model."""
+    options = fairseq.options
+    utils = fairseq.utils
+    tasks = fairseq.tasks
+    MosesTokenizer = fairseq.data.encoders.moses_tokenizer.MosesTokenizer
+    StopwatchMeter = fairseq.meters.StopwatchMeter
+    progress_bar = fairseq.progress_bar
 
     parser = options.get_generation_parser()
 
@@ -137,6 +141,11 @@ def compute_bleu(config, dataset_path, checkpoint_path):
 
 
 def compute_latency(config, dataset_path, batch_size, get_model_parameters=False):
+    """Measure latency of the Transformer-based model."""
+    options = fairseq.options
+    utils = fairseq.utils
+    tasks = fairseq.tasks
+
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser, [dataset_path])
@@ -277,6 +286,11 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
 
 
 def compute_macs(config, dataset_path):
+    """Calculate MACs for Transformer-based models."""
+    options = fairseq.options
+    utils = fairseq.utils
+    tasks = fairseq.tasks
+
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser,[dataset_path])

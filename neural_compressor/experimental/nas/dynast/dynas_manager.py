@@ -390,9 +390,7 @@ class TransformerLTEncoding(ParameterManager):
         column_names: List[str] = None,
         drop_duplicates: bool = True,
     ) -> pd.DataFrame:
-        '''
-        Import a csv file generated from a supernetwork search for the purpose
-        of training a predictor.
+        """Import a csv file generated from a supernetwork search for the purpose of training a predictor.
 
         filepath - path of the csv to be imported.
         config - the subnetwork configuration
@@ -400,7 +398,7 @@ class TransformerLTEncoding(ParameterManager):
         column_names - a list of column names for the dataframe
         df - the output dataframe that contains the original config dict, pymoo, and 1-hot
              equivalent vector for training.
-        '''
+        """
 
         if column_names == None:
             df = pd.read_csv(filepath)

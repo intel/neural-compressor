@@ -220,7 +220,7 @@ class TransformerEncoder(FairseqEncoder):
                 layer.set_sample_config(is_identity_layer=True)
 
     def forward(self, src_tokens, src_lengths):
-        """
+        """Forward function.
         Args:
             src_tokens (LongTensor): tokens in the source language of shape
                 `(batch, src_len)`
