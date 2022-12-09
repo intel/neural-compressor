@@ -20,7 +20,7 @@
 
 import neural_compressor.data.datasets
 import neural_compressor.data.transforms
-from .data.datasets import Datasets, Dataset, IterableDataset, dataset_registry
+from .datasets import Datasets, Dataset, IterableDataset, dataset_registry
 from .dataloaders import DATALOADERS, DataLoader
 from .transforms import TRANSFORMS, BaseTransform, transform_registry, Postprocess
 
