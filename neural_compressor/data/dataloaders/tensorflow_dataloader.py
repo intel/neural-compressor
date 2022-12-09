@@ -34,7 +34,7 @@ import logging
 tf = LazyImport('tensorflow')
 neural_compressor = LazyImport('neural_compressor')
 
-class TFDataDataLoader(BaseDataLoader):
+class TFDataDataLoader(BaseDataLoader):    # pragma: no cover
     """Tensorflow dataloader class.
     
     In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
@@ -153,7 +153,7 @@ class TFDataDataLoader(BaseDataLoader):
                             data_sess.close()
                             return
 
-class TensorflowBertDataLoader(DefaultDataLoader):
+class TensorflowBertDataLoader(DefaultDataLoader):    # pragma: no cover
     """Subclass of DefaultDataLoader.
         
     this dataloader is designed to satisfy the usage of Bert models.
@@ -182,7 +182,7 @@ class TensorflowBertDataLoader(DefaultDataLoader):
             except StopIteration:
                 return
 
-class TensorflowModelZooBertDataLoader(DefaultDataLoader):
+class TensorflowModelZooBertDataLoader(DefaultDataLoader):    # pragma: no cover
     """Subclass of DefaultDataLoader.
         
     this dataloader is designed to satisfy the usage of Model Zoo Bert models.
@@ -219,7 +219,7 @@ class TensorflowModelZooBertDataLoader(DefaultDataLoader):
             except StopIteration:
                 return
 
-class TensorflowDataLoader(BaseDataLoader):
+class TensorflowDataLoader(BaseDataLoader):     # pragma: no cover
     """DataLoader for framework Tensorflow.
     
     if it's a tf.data.Dataset we will directly use the dataloader in the other case 

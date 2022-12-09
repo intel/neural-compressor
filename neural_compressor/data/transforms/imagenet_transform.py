@@ -40,7 +40,7 @@ cv2 = LazyImport('cv2')
 
 @transform_registry(transform_type="QuantizedInput", \
                     process="preprocess", framework="tensorflow, tensorflow_itex")
-class QuantizedInput(BaseTransform):
+class QuantizedInput(BaseTransform):    # pragma: no cover 
     """Convert the dtype of input to quantize it.
 
     Args:
@@ -75,7 +75,7 @@ class QuantizedInput(BaseTransform):
 @transform_registry(transform_type="LabelShift", \
     process="postprocess", framework="pytorch, tensorflow, tensorflow_itex,\
                            onnxrt_qlinearops, onnxrt_integerops")
-class LabelShift(BaseTransform):
+class LabelShift(BaseTransform):    # pragma: no cover 
     """Convert label to label - label_shift.
 
     Args:
@@ -106,7 +106,7 @@ class LabelShift(BaseTransform):
             labels = np.array(labels) - self.label_shift
         return images, labels
 
-class ParseDecodeImagenet():
+class ParseDecodeImagenet():    # pragma: no cover 
     """Parse features in Example proto.
 
     Returns:
@@ -137,7 +137,7 @@ class ParseDecodeImagenet():
 
 @transform_registry(transform_type="ParseDecodeImagenet", \
                     process="preprocess", framework="tensorflow")
-class ParseDecodeImagenetTransform(BaseTransform):
+class ParseDecodeImagenetTransform(BaseTransform):    # pragma: no cover 
     """Imagenet decoding will be performed automatically from Neural Compressor v1.4.
 
     Returns:
@@ -152,7 +152,7 @@ class ParseDecodeImagenetTransform(BaseTransform):
 
 @transform_registry(transform_type="ResizeCropImagenet", \
                     process="preprocess", framework="tensorflow")
-class TensorflowResizeCropImagenetTransform(BaseTransform):
+class TensorflowResizeCropImagenetTransform(BaseTransform):    # pragma: no cover 
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
@@ -234,7 +234,7 @@ class TensorflowResizeCropImagenetTransform(BaseTransform):
 
 @transform_registry(transform_type="BilinearImagenet", \
                     process="preprocess", framework="tensorflow")
-class BilinearImagenetTransform(BaseTransform):
+class BilinearImagenetTransform(BaseTransform):    # pragma: no cover 
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
@@ -282,7 +282,7 @@ class BilinearImagenetTransform(BaseTransform):
 
 @transform_registry(transform_type="BilinearImagenet", process="preprocess", \
                     framework="onnxrt_qlinearops, onnxrt_integerops")
-class OnnxBilinearImagenetTransform(BaseTransform):
+class OnnxBilinearImagenetTransform(BaseTransform):    # pragma: no cover 
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
@@ -334,7 +334,7 @@ class OnnxBilinearImagenetTransform(BaseTransform):
 
 @transform_registry(transform_type="ResizeCropImagenet", process="preprocess", \
                     framework="onnxrt_qlinearops, onnxrt_integerops")
-class ONNXResizeCropImagenetTransform(BaseTransform):
+class ONNXResizeCropImagenetTransform(BaseTransform):    # pragma: no cover 
     """Combination of a series of transforms which is applicable to images in Imagenet.
 
     Args:
@@ -390,7 +390,7 @@ class ONNXResizeCropImagenetTransform(BaseTransform):
 
 @transform_registry(transform_type="ResizeWithAspectRatio", process="preprocess", \
                     framework="onnxrt_qlinearops, onnxrt_integerops")
-class ResizeWithAspectRatio(BaseTransform):
+class ResizeWithAspectRatio(BaseTransform):    # pragma: no cover 
     """Resize the image with aspect ratio.
 
     Returns:

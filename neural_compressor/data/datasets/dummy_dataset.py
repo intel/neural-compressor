@@ -32,7 +32,7 @@ logger = logging.getLogger("neural_compressor")
                                                    pytorch, pytorch_ipex, pytorch_fx, \
                                                    mxnet",
                                                    dataset_format='')
-class DummyDataset(Dataset):
+class DummyDataset(Dataset):    # pragma: no cover 
     """Dataset used for dummy data generation.
 
     This Dataset is to construct a dataset from a specific shape.

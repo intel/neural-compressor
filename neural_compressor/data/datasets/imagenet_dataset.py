@@ -44,7 +44,7 @@ torch = LazyImport('torch')
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
-class ImagenetRaw(Dataset):
+class ImagenetRaw(Dataset):    # pragma: no cover
     """Configuration for ImageNet raw dataset.
 
     Please arrange data in this way:  
@@ -104,7 +104,7 @@ class ImagenetRaw(Dataset):
         return len(self.image_list)
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="pytorch", dataset_format='')
-class PytorchImagenetRaw(ImagenetRaw):
+class PytorchImagenetRaw(ImagenetRaw):    # pragma: no cover
     """Dataset for ImageNet data generation on pytorch backend."""
 
     def __getitem__(self, index):
@@ -118,7 +118,7 @@ class PytorchImagenetRaw(ImagenetRaw):
             return (image, label)
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="mxnet", dataset_format='')
-class MXNetImagenetRaw(ImagenetRaw):
+class MXNetImagenetRaw(ImagenetRaw):    # pragma: no cover
     """Dataset for ImageNet data generation on mxnet backend."""
 
     def __getitem__(self, index):
@@ -131,7 +131,7 @@ class MXNetImagenetRaw(ImagenetRaw):
 
 @dataset_registry(dataset_type="ImagenetRaw", framework="tensorflow, \
                   tensorflow_itex", dataset_format='')
-class TensorflowImagenetRaw(ImagenetRaw):
+class TensorflowImagenetRaw(ImagenetRaw):    # pragma: no cover
     """Dataset for ImageNet data generation on tensorflow/inteltensorflow/tensorflow_itex backend."""
 
     def __getitem__(self, index):
@@ -149,7 +149,7 @@ class TensorflowImagenetRaw(ImagenetRaw):
             return (image, label)
 
 @dataset_registry(dataset_type="Imagenet", framework="tensorflow", dataset_format='')
-class TensorflowImagenetDataset(IterableDataset):
+class TensorflowImagenetDataset(IterableDataset):    # pragma: no cover
     """Configuration for Imagenet dataset."""
 
     def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
@@ -183,7 +183,7 @@ class TensorflowImagenetDataset(IterableDataset):
 
 @dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
                    onnxrt_integerops", dataset_format='')
-class ONNXRTImagenetDataset(Dataset):
+class ONNXRTImagenetDataset(Dataset):    # pragma: no cover
     """Configuration for Imagenet dataset."""
 
     def __init__(self, root, subset='val', num_cores=28, transform=None, filter=None):

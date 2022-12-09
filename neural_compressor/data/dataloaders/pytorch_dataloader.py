@@ -23,7 +23,7 @@ from .base_dataloader import BaseDataLoader
 torch = LazyImport('torch')
 hvd = LazyImport('horovod.torch')
 
-class PyTorchDataLoader(BaseDataLoader):
+class PyTorchDataLoader(BaseDataLoader):    # pragma: no cover
     """PyTorchDataLoader inherits from BaseDataLoader."""
 
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,

@@ -19,7 +19,7 @@
 
 from abc import abstractmethod
 
-class Sampler(object):
+class Sampler(object):    # pragma: no cover
     """Base class for all Samplers.
     
     __iter__ is needed no matter whether you use IterableSampler
@@ -39,7 +39,7 @@ class Sampler(object):
         raise NotImplementedError
 
 
-class IterableSampler(Sampler):
+class IterableSampler(Sampler):    # pragma: no cover
     """Interally samples elements.
     
     Used for datasets retrieved element by interator. Yield None to act as a placeholder for each iteration.
@@ -63,7 +63,7 @@ class IterableSampler(Sampler):
         """Return the length of dataset."""
         raise NotImplementedError("'__len__' for IterableDataset object has not defined")
 
-class SequentialSampler(Sampler):
+class SequentialSampler(Sampler):    # pragma: no cover
     """Sequentially samples elements, used for datasets retrieved element by index."""
 
     def __init__(self, dataset, distributed):
@@ -97,7 +97,7 @@ class SequentialSampler(Sampler):
         """Return the length of dataset."""
         return len(self.whole_dataset)
 
-class BatchSampler(Sampler):
+class BatchSampler(Sampler):    # pragma: no cover
     """Yield a batch of indices and number of batches."""
 
     def __init__(self, sampler, batch_size, drop_last=True):

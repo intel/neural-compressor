@@ -35,7 +35,7 @@ glob = LazyImport('glob')
 
 
 @singleton
-class TensorflowDatasets(object):
+class TensorflowDatasets(object):    # pragma: no cover
     """The base class of Tensorflow datasets class."""
 
     def __init__(self):
@@ -45,7 +45,7 @@ class TensorflowDatasets(object):
 
 
 @singleton
-class PyTorchDatasets(object):
+class PyTorchDatasets(object):    # pragma: no cover 
     """The base class of PyTorch datasets class."""
 
     def __init__(self):
@@ -58,7 +58,7 @@ class PyTorchDatasets(object):
 
 
 @singleton
-class MXNetDatasets(object):
+class MXNetDatasets(object):    # pragma: no cover 
     """The base class of MXNet datasets class."""
 
     def __init__(self):
@@ -68,7 +68,7 @@ class MXNetDatasets(object):
 
 
 @singleton
-class ONNXRTQLDatasets(object):
+class ONNXRTQLDatasets(object):    # pragma: no cover 
     """The base class of ONNXRT QLinear datasets class."""
 
     def __init__(self):
@@ -78,7 +78,7 @@ class ONNXRTQLDatasets(object):
 
 
 @singleton
-class ONNXRTITDatasets(object):
+class ONNXRTITDatasets(object):    # pragma: no cover 
     """The base class of ONNXRT IT datasets class."""
 
     def __init__(self):
@@ -87,7 +87,7 @@ class ONNXRTITDatasets(object):
         self.datasets.update(ONNXRTIT_DATASETS)
 
 
-class PytorchMxnetWrapDataset():
+class PytorchMxnetWrapDataset():    # pragma: no cover 
     """The base class for PyTorch and MXNet frameworks.
 
     Args:
@@ -104,7 +104,7 @@ class PytorchMxnetWrapDataset():
                         filter=filter, *args, **kwargs)
 
 
-class PytorchMxnetWrapFunction():
+class PytorchMxnetWrapFunction():    # pragma: no cover 
     """The Helper class for PytorchMxnetWrapDataset.
 
     Args:
@@ -158,7 +158,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
 """
 
 
-class Datasets(object):
+class Datasets(object):    # pragma: no cover 
     """A base class for all framework datasets.
 
     Args:
@@ -208,7 +208,7 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                     }
 
 
-def dataset_registry(dataset_type, framework, dataset_format=''):
+def dataset_registry(dataset_type, framework, dataset_format=''):    # pragma: no cover 
     """Register dataset subclasses.
 
     Args:
@@ -242,7 +242,7 @@ def dataset_registry(dataset_type, framework, dataset_format=''):
     return decorator_dataset
 
 
-class Dataset(object):
+class Dataset(object):    # pragma: no cover 
     """The base class of dataset.
 
     Subclass datasets should overwrite two methods:
@@ -263,7 +263,7 @@ class Dataset(object):
     #     raise NotImplementedError
 
 
-class IterableDataset(object):
+class IterableDataset(object):    # pragma: no cover 
     """An iterable Dataset.
 
     Subclass iterable dataset should also implement a method:
@@ -320,7 +320,7 @@ def download_url(url, root, filename=None, md5=None):  # pragma: no cover
             raise RuntimeError("File not found or corrupted.")
 
 
-def gen_bar_updater():
+def gen_bar_updater():    # pragma: no cover 
     """Generate progress bar."""
     from tqdm import tqdm
     pbar = tqdm(total=None)
@@ -334,7 +334,7 @@ def gen_bar_updater():
     return bar_update
 
 
-def check_integrity(fpath, md5):
+def check_integrity(fpath, md5):    # pragma: no cover 
     """Check MD5 checksum."""
     if not os.path.isfile(fpath):
         return False
@@ -343,7 +343,7 @@ def check_integrity(fpath, md5):
     return md5 == calculate_md5(fpath)
 
 
-def calculate_md5(fpath, chunk_size=1024*1024):
+def calculate_md5(fpath, chunk_size=1024*1024):    # pragma: no cover 
     """Generate MD5 checksum for a file."""
     md5 = hashlib.md5()
     with open(fpath, 'rb') as f:
@@ -353,7 +353,7 @@ def calculate_md5(fpath, chunk_size=1024*1024):
 
 @dataset_registry(dataset_type="CIFAR10", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
-class CIFAR10(Dataset):
+class CIFAR10(Dataset):    # pragma: no cover 
     """The CIFAR10 and CIFAR100 database.
 
     For CIFAR10: If download is True, it will download dataset to root/ and extract it
@@ -484,7 +484,7 @@ class CIFAR10(Dataset):
 
 
 @dataset_registry(dataset_type="CIFAR10", framework="pytorch", dataset_format='')
-class PytorchCIFAR10(CIFAR10):
+class PytorchCIFAR10(CIFAR10):    
     """The PyTorch datasets for CIFAR10."""
 
     def __getitem__(self, index):  # pragma: no cover
@@ -627,7 +627,7 @@ class TensorflowCIFAR100(CIFAR100):
 
 @dataset_registry(dataset_type="MNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
-class MNIST(Dataset):
+class MNIST(Dataset):    # pragma: no cover 
     """Modified National Institute of Standards and Technology database and FashionMNIST database.
 
     For MNIST: If download is True, it will download dataset to root/MNIST/, otherwise user
@@ -711,7 +711,7 @@ class MNIST(Dataset):
 
 
 @dataset_registry(dataset_type="MNIST", framework="pytorch", dataset_format='')
-class PytorchMNIST(MNIST):
+class PytorchMNIST(MNIST):    # pragma: no cover 
     """The PyTorch datasets for MNIST."""
 
     def __getitem__(self, index):
@@ -728,7 +728,7 @@ class PytorchMNIST(MNIST):
 
 
 @dataset_registry(dataset_type="MNIST", framework="mxnet", dataset_format='')
-class MXNetMNIST(MNIST):
+class MXNetMNIST(MNIST):    # pragma: no cover 
     """The MXNet datasets for MNIST."""
 
     def __getitem__(self, index):
@@ -745,7 +745,7 @@ class MXNetMNIST(MNIST):
 
 
 @dataset_registry(dataset_type="MNIST", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowMNIST(MNIST):
+class TensorflowMNIST(MNIST):    # pragma: no cover 
     """The Tensorflow datasets for MNIST."""
 
     def __getitem__(self, index):
@@ -767,7 +767,7 @@ class TensorflowMNIST(MNIST):
 
 @dataset_registry(dataset_type="FashionMNIST", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
-class FashionMNIST(MNIST):
+class FashionMNIST(MNIST):    # pragma: no cover 
     """FashionMNIST database.
 
     For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,
@@ -817,7 +817,7 @@ class FashionMNIST(MNIST):
 
 
 @dataset_registry(dataset_type="FashionMNIST", framework="pytorch", dataset_format='')
-class PytorchFashionMNIST(FashionMNIST):
+class PytorchFashionMNIST(FashionMNIST):    # pragma: no cover 
     """The PyTorch datasets for FashionMNIST."""
 
     def __getitem__(self, index):
@@ -834,7 +834,7 @@ class PytorchFashionMNIST(FashionMNIST):
 
 
 @dataset_registry(dataset_type="FashionMNIST", framework="mxnet", dataset_format='')
-class MXNetFashionMNIST(FashionMNIST):
+class MXNetFashionMNIST(FashionMNIST):    # pragma: no cover 
     """The MXNet Dataset for FashionMNIST."""
 
     def __getitem__(self, index):
@@ -851,7 +851,7 @@ class MXNetFashionMNIST(FashionMNIST):
 
 
 @dataset_registry(dataset_type="FashionMNIST", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowFashionMNIST(FashionMNIST):
+class TensorflowFashionMNIST(FashionMNIST):    # pragma: no cover 
     """The Tensorflow Dataset for FashionMNIST."""
 
     def __getitem__(self, index):
@@ -873,7 +873,7 @@ class TensorflowFashionMNIST(FashionMNIST):
 
 @dataset_registry(dataset_type="ImageFolder", framework="onnxrt_qlinearops, \
                     onnxrt_integerops", dataset_format='')
-class ImageFolder(Dataset):
+class ImageFolder(Dataset):    # pragma: no cover 
     """The base class for ImageFolder.
 
     Expects the data folder to contain subfolders representing the classes to which
@@ -929,7 +929,7 @@ class ImageFolder(Dataset):
 
 
 @dataset_registry(dataset_type="ImageFolder", framework="mxnet", dataset_format='')
-class MXNetImageFolder(ImageFolder):
+class MXNetImageFolder(ImageFolder):    # pragma: no cover 
     """The MXNet Dataset for image folder.
 
     Expects the data folder to contain subfolders representing the classes to which
@@ -965,7 +965,7 @@ class MXNetImageFolder(ImageFolder):
 
 
 @dataset_registry(dataset_type="ImageFolder", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowImageFolder(ImageFolder):
+class TensorflowImageFolder(ImageFolder):    # pragma: no cover 
     """The Tensorflow Dataset for image folder.
 
     Expects the data folder to contain subfolders representing the classes to which
@@ -1009,7 +1009,7 @@ class TensorflowImageFolder(ImageFolder):
 
 
 @dataset_registry(dataset_type="TFRecordDataset", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowTFRecordDataset(IterableDataset):
+class TensorflowTFRecordDataset(IterableDataset):    # pragma: no cover 
     """The Tensorflow TFRecord Dataset.
 
     Root is a full path to tfrecord file, which contains the file name.
@@ -1036,7 +1036,7 @@ class TensorflowTFRecordDataset(IterableDataset):
 
 
 @dataset_registry(dataset_type="ImageRecord", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowImageRecord(IterableDataset):
+class TensorflowImageRecord(IterableDataset):    # pragma: no cover 
     """Tensorflow imageNet database in tf record format.
 
     Please arrange data in this way:
@@ -1078,7 +1078,7 @@ class TensorflowImageRecord(IterableDataset):
 
 
 @dataset_registry(dataset_type="VOCRecord", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowVOCRecord(IterableDataset):
+class TensorflowVOCRecord(IterableDataset):    # pragma: no cover 
     """The Tensorflow PASCAL VOC 2012 database in tf record format.
 
     Please arrange data in this way:

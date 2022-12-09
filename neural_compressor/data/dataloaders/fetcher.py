@@ -19,7 +19,7 @@
 
 from abc import abstractmethod
 
-class Fetcher(object):
+class Fetcher(object):    # pragma: no cover
     """Base class for different fetchers."""
 
     def __init__(self, dataset, collate_fn, drop_last):
@@ -44,7 +44,7 @@ class Fetcher(object):
         """
         raise NotImplementedError
 
-class IterableFetcher(Fetcher):
+class IterableFetcher(Fetcher):    # pragma: no cover
     """Iterate to get next batch-size samples as a batch."""
 
     def __init__(self, dataset, collate_fn, drop_last, distributed):
@@ -97,7 +97,7 @@ class IterableFetcher(Fetcher):
             raise StopIteration
         return self.collate_fn(batch_data)
 
-class IndexFetcher(Fetcher):
+class IndexFetcher(Fetcher):    # pragma: no cover
     """Take single index or a batch of indices to fetch samples as a batch."""
 
     def __init__(self, dataset, collate_fn, drop_last, distributed):

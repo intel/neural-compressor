@@ -23,7 +23,7 @@ tf = LazyImport('tensorflow')
 
 
 @filter_registry(filter_type="LabelBalanceCOCORecord", framework="tensorflow, tensorflow_itex")
-class LabelBalanceCOCORecordFilter(Filter):
+class LabelBalanceCOCORecordFilter(Filter):    # pragma: no cover 
     """The label balance filter for COCO Record."""
 
     def __init__(self, size=1):
@@ -42,7 +42,7 @@ class LabelBalanceCOCORecordFilter(Filter):
 
 @filter_registry(filter_type="LabelBalanceCOCORaw", framework="tensorflow, \
                  tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
-class LabelBalanceCOCORawFilter(Filter):
+class LabelBalanceCOCORawFilter(Filter):    # pragma: no cover 
     """The label balance filter for COCO raw data."""
 
     def __init__(self, size=1):

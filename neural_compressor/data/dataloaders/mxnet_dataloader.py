@@ -22,7 +22,7 @@ from .base_dataloader import BaseDataLoader
 import logging
 mx = LazyImport('mxnet')
 
-class MXNetDataLoader(BaseDataLoader):
+class MXNetDataLoader(BaseDataLoader):    # pragma: no cover
     """Subclass of BaseDataLoader."""
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
