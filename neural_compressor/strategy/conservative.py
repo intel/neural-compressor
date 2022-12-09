@@ -25,7 +25,7 @@ from copy import deepcopy
 from typing import Dict, List, Tuple, OrderedDict
 
 from .strategy import strategy_registry, TuneStrategy
-from .st_utils.tuning_space import TuningItem
+from .utils.tuning_space import TuningItem
 from ..utils import logger
 from ..utils.utility import Statistics
 
