@@ -4,7 +4,8 @@ import unittest
 import os
 import platform
 from neural_compressor.model import MODELS
-import neural_compressor.model.model as NCModel
+from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.model.mxnet_model import MXNetModel
 from neural_compressor.model.model import get_model_fwk_name
 from neural_compressor.experimental.common.model import Model
 
@@ -367,7 +368,7 @@ class TestONNXModel(unittest.TestCase):
     def test_model(self):
         self.assertEqual('onnxruntime', get_model_fwk_name(self.cnn_export_path))
         model = MODELS['onnxruntime'](self.cnn_model)
-        self.assertEqual(True, isinstance(model, NCModel.ONNXModel))
+        self.assertEqual(True, isinstance(model, ONNXModel))
         self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
 
         model.save('test.onnx')
@@ -377,7 +378,7 @@ class TestONNXModel(unittest.TestCase):
 class TestPyTorchModel(unittest.TestCase):
     def testPyTorch(self):
         import torchvision
-        from neural_compressor.model.model import PyTorchModel, PyTorchIpexModel, PyTorchFXModel
+        from neural_compressor.model.model import PyTorchModel, IPEXModel, PyTorchFXModel
         ori_model = torchvision.models.mobilenet_v2()
         self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
@@ -386,7 +387,7 @@ class TestPyTorchModel(unittest.TestCase):
         with self.assertRaises(AssertionError):
             pt_model.workspace_path = './pytorch'
         
-        ipex_model = PyTorchIpexModel(ori_model)
+        ipex_model = IPEXModel(ori_model)
         self.assertTrue(ipex_model.model)
         ipex_model.model = ori_model
         ipex_model = PyTorchModel(torchvision.models.mobilenet_v2())
@@ -395,7 +396,7 @@ class TestPyTorchModel(unittest.TestCase):
         ipex_model.save('./')
 
         self.assertEqual('pytorch', get_model_fwk_name(PyTorchModel(ori_model)))
-        self.assertEqual('pytorch', get_model_fwk_name(PyTorchIpexModel(ori_model)))
+        self.assertEqual('pytorch', get_model_fwk_name(IPEXModel(ori_model)))
         self.assertEqual('pytorch', get_model_fwk_name(PyTorchFXModel(ori_model)))
 
 def load_mxnet_model(symbol_file, param_file):
@@ -438,7 +439,7 @@ class TestMXNetModel(unittest.TestCase):
         import mxnet as mx
         self.assertEqual('mxnet', get_model_fwk_name(self.net))
         model = MODELS['mxnet'](self.net)
-        self.assertEqual(True, isinstance(model, NCModel.MXNetModel))
+        self.assertEqual(True, isinstance(model, MXNetModel))
         self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
 
         model.save('./test')
