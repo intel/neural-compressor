@@ -213,12 +213,6 @@ class Pruning(Component):
             assert name == 'weight_compression' or name == "weight_compression_pytorch", \
                 'now we only support weight_compression and weight_compression_pytorch'
 
-            if self.cfg.pruning.approach.weight_compression_pytorch != None:
-                from .pytorch_pruner.pruning import Pruning as PytorchPruning
-                self.pytorch_pruner = PytorchPruning(self.cfg)
-                self.pruners.append(self.pytorch_pruner)
-
-
             if self.cfg.pruning.approach.weight_compression != None:
                 for pruner in self.cfg.pruning.approach.weight_compression.pruners:
                     if pruner.prune_type == 'basic_magnitude':

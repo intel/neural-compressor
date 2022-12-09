@@ -32,7 +32,6 @@ QUANTMAPPING = {
     "qat": "quant_aware_training",
 }
 
-
 ops_schema = Schema({
     Optional('weight', default=None): {
         Optional('granularity'): And(
@@ -75,7 +74,7 @@ def check_value(name, src, supported_type, supported_value=[]):
             assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
                 src, name, str(supported_value)))
         elif isinstance(src, list) and all([isinstance(i, str) for i in src]) and \
-            any([i not in supported_value for i in src]):
+                any([i not in supported_value for i in src]):
             assert False, ("{} is not in supported {}: {}. Skip setting it.".format(
                 src, name, str(supported_value)))
 
@@ -158,7 +157,7 @@ class BenchmarkConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -409,7 +408,7 @@ class _BaseQuantizationConfig:
     @objective.setter
     def objective(self, objective):
         if check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
+                       ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
     @property
@@ -419,7 +418,8 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
+                       ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
+
             self._strategy = strategy
 
     @property
@@ -487,7 +487,7 @@ class _BaseQuantizationConfig:
     @quant_format.setter
     def quant_format(self, quant_format):
         if check_value('quant_format', quant_format, str,
-            ['default', 'QDQ', 'QOperator']):
+                       ['default', 'QDQ', 'QOperator']):
             self._quant_format = quant_format
 
     @property
@@ -497,7 +497,7 @@ class _BaseQuantizationConfig:
     @backend.setter
     def backend(self, backend):
         if check_value('backend', backend, str, [
-                'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
+            'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
@@ -552,7 +552,7 @@ class TuningCriterion:
     @objective.setter
     def objective(self, objective):
         if check_value('objective', objective, str,
-            ['performance', 'accuracy', 'modelsize', 'footprint']):
+                       ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
     @property
@@ -573,6 +573,7 @@ class TuningCriterion:
     def strategy_kwargs(self, strategy_kwargs):
         self._strategy_kwargs = strategy_kwargs
 
+
 tuning_criterion = TuningCriterion()
 
 
@@ -592,7 +593,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  optimization_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
-    ):
+                 ):
         self.tuning_criterion = tuning_criterion
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -661,6 +662,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
 pruners = [Pruner()]
 
+
 class PruningConfig:
     def __init__(self, pruners=pruners, initial_sparsity=0.0, target_sparsity=0.97,
                  max_sparsity_ratio_per_layer=0.98, prune_type="basic_magnitude",
@@ -697,19 +699,20 @@ class PruningConfig:
     def weight_compression(self, weight_compression):
         self._weight_compression = weight_compression
 
+
 class WeightPruningConfig:
     """
     similiar to torch optimizer's interface
     """
 
-    def __init__(self, pruning_configs=[{}],##empty dict will use global values
+    def __init__(self, pruners=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
                  excluded_op_names=[],
                  start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
-        self.pruning_configs = pruning_configs
+        self.pruning_configs = pruners
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
             'pruning_type': pruning_type,
@@ -729,7 +732,6 @@ class WeightPruningConfig:
         })
         self._weight_compression.update(kwargs)
 
-
     @property
     def weight_compression(self):
         return self._weight_compression
@@ -737,6 +739,7 @@ class WeightPruningConfig:
     @weight_compression.setter
     def weight_compression(self, weight_compression):
         self._weight_compression = weight_compression
+
 
 class KnowledgeDistillationLossConfig:
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
@@ -845,19 +848,19 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                          tuning_criterion=tuning_criterion,
                          accuracy_criterion=accuracy_criterion,
                          excluded_precisions=excluded_precisions,
-        )
+                         )
 
 
 class ExportConfig:
     def __init__(
-        self,
-        dtype="int8",
-        opset_version=14,
-        quant_format="QDQ",
-        example_inputs=None,
-        input_names=None,
-        output_names=None,
-        dynamic_axes=None,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
     ):
         self.dtype = dtype
         self.opset_version = opset_version
@@ -926,16 +929,16 @@ class ExportConfig:
 
 class Torch2ONNXConfig(ExportConfig):
     def __init__(
-       self,
-       dtype="int8",
-       opset_version=14,
-       quant_format="QDQ",
-       example_inputs=None,
-       input_names=None,
-       output_names=None,
-       dynamic_axes=None,
-       recipe='QDQ_OP_FP32_BIAS',
-       **kwargs,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
+            recipe='QDQ_OP_FP32_BIAS',
+            **kwargs,
     ):
         super().__init__(
             dtype=dtype,
@@ -952,15 +955,15 @@ class Torch2ONNXConfig(ExportConfig):
 
 class TF2ONNXConfig(ExportConfig):
     def __init__(
-       self,
-       dtype="int8",
-       opset_version=14,
-       quant_format="QDQ",
-       example_inputs=None,
-       input_names=None,
-       output_names=None,
-       dynamic_axes=None,
-       **kwargs,
+            self,
+            dtype="int8",
+            opset_version=14,
+            quant_format="QDQ",
+            example_inputs=None,
+            input_names=None,
+            output_names=None,
+            dynamic_axes=None,
+            **kwargs,
     ):
         super().__init__(
             dtype=dtype,

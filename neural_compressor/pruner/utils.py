@@ -164,61 +164,6 @@ def process_and_check_weight_config(val: WeightPruningConfig):
     return pruners_info
 
 
-# def process_and_check_config(val):
-#     """Functions which converts a initial configuration object to a Pruning configuration.
-#
-#     Copy parameters and add some non-define parameters to a new Pruning configuration object.
-#
-#     Args:
-#         val: A dict directly read from a config file.
-#
-#     Returns:
-#         A dict whose contents which are regularized for a Pruning obejct.
-#     """
-#
-#     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
-#                              'excluded_op_names': [],
-#                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
-#                              'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
-#                              'sparsity_decay_type': 'exp',
-#                              'pruning_op_types': ['Conv', 'Linear'],
-#                              'resume_from_pruned_checkpoint': False}
-#
-#     default_local_config = {'reg_type': None,
-#                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
-#
-#     prams_default_config = {"reg_coeff": 0.0}
-#     default_local_config.update(default_global_config)
-#     if isinstance(val, WeightPruningConfig):
-#         val = val.weight_compression
-#     else:
-#         val = val["pruning"]['approach']['weight_compression']
-#
-#     ##set global value
-#     for key in default_global_config.keys():
-#         default_local_config[key] = reset_none_to_default(val, key, default_local_config[key])
-#
-#     default_local_config.update(prams_default_config)
-#
-#     pruners_info = []
-#     if isinstance(val, WeightPruningConfig):
-#         pruners = val.pruners
-#     else:
-#         pruners = val['pruners']
-#
-#     for info in pruners:
-#         pruner_info = {}
-#         for key in default_local_config:
-#             pruner_info[key] = reset_none_to_default(info, key, default_local_config[key])
-#
-#         update_params(pruner_info)
-#         check_config(pruner_info)
-#         pruner_info = DotDict(pruner_info)
-#         pruners_info.append(pruner_info)
-#
-#     return pruners_info
-
-
 def process_config(config):
     """Obtain a config dict object from a config file.
     
@@ -228,32 +173,6 @@ def process_config(config):
     Returns:
         A config dict object.
     """
-    # if isinstance(config, str):
-    #     try:
-    #         with open(config, 'r') as f:
-    #             content = f.read()
-    #             try:
-    #                 from .schema_check import schema
-    #
-    #             except ImportError:
-    #                 from ..conf.config import schema
-    #
-    #             val = yaml.safe_load(content)
-    #             schema.validate(val)
-    #         return process_and_check_config(val)
-    #     except FileNotFoundError as f:
-    #         logger.error("{}.".format(f))
-    #         raise RuntimeError(
-    #             "The yaml file is not exist. Please check the file name or path."
-    #         )
-    #     except Exception as e:
-    #         logger.error("{}.".format(e))
-    #         raise RuntimeError(
-    #             "The yaml file format is not correct. Please refer to document."
-    #         )
-    #
-    # elif isinstance(config, DotDict):
-    #     return process_and_check_config(config)
     if isinstance(config, WeightPruningConfig):
         return process_and_check_weight_config(config)
     else:

@@ -20,7 +20,7 @@
 The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
 """
 
-from ..conf.config import Conf
+from neural_compressor.conf.config import Conf
 from ..utils import logger
 from ..utils.utility import required_libs
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
