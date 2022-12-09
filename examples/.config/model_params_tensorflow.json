@@ -553,10 +553,8 @@
       "model_src_dir": "nlp/transformer_lt/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/transformer-lt-official-fp32-inference/transformer_lt_official_fp32_pretrained_model/data",
       "input_model": "/tf_dataset/tensorflow/transformer-lt-official-fp32-inference/transformer_lt_official_fp32_pretrained_model/graph/fp32_graphdef.pb",
-      "yaml": "transformer_lt.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_inference.py",
+      "batch_size": 64
     },
     "bert_large_squad": {
       "model_src_dir": "nlp/bert_large_squad/quantization/ptq",
@@ -580,10 +578,8 @@
       "model_src_dir": "nlp/bert_base_mrpc/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/bert/mrpc_data",
       "input_model": "/tf_dataset/tensorflow/bert/bert_base_mrpc",
-      "yaml": "mrpc.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": true
+      "main_script": "run_classifier.py",
+      "batch_size": 64
     },
     "deeplab": {
       "model_src_dir": "semantic_image_segmentation/deeplab/quantization/ptq",
@@ -2462,19 +2458,15 @@
       "model_src_dir": "nlp/transformer_lt_mlperf/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/transformer_uniform_data",
       "input_model": "/tf_dataset2/models/tensorflow/transformer_lt_mlperf/fp32/transformer_mlperf_fp32.pb",
-      "yaml": "transformer_lt_mlperf.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_inference.py",
+      "batch_size": 64
     },
     "distilbert_base": {
       "model_src_dir": "nlp/distilbert_base/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
       "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
-      "yaml": "distilbert_base.yaml",
-      "strategy": "basic",
-      "batch_size": 128,
-      "new_benchmark": false
+      "main_script": "run_inference.py",
+      "batch_size": 128
     },
     "xception": {
       "model_src_dir": "image_recognition/keras_models/xception/quantization/ptq",
