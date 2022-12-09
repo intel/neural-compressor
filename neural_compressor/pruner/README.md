@@ -60,8 +60,8 @@ Neural network pruning is a promising model compression technique that removes t
 Pruning patterns defines the rules of pruned weights' arrangements in space. INC currently supports unstructured, N:M and NxM patterns. Please note that N:M pattern is applied to input channels while NxM pattern is applied to output ones. [Details](../../docs/source/pruning_details.md#pruning-patterns).
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_patterns.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_patterns.PNG" width=700 height=160 alt="Sparsity Pattern">
+<a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_patterns.png">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_patterns.png" width=700 height=160 alt="Sparsity Pattern">
 </a>
 </div>
 
