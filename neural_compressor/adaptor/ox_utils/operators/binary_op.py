@@ -81,8 +81,8 @@ class BinaryOperator(Operator):
 
 @qop_registry(op_types="QLinearAdd, QLinearMul")
 class QBinaryOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         node = self.node
@@ -104,16 +104,14 @@ class QBinaryOperator(QOperator):
         
         add_nodes.extend([in_dq1, in_dq2])
         # output q
-        if not self.disable_qdq_for_node_output:
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out', node.input[6], node.input[7]],
-                node.output,
-                node.name + '_out_quant')
-            outputs = [node.name + '_out']
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[6], node.input[7]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))

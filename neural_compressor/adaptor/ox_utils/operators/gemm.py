@@ -95,8 +95,8 @@ class GemmOperator(Operator):
         
 @qop_registry(op_types="QGemm")
 class QGemmOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         import numpy as np
@@ -117,20 +117,12 @@ class QGemmOperator(QOperator):
             [node.name + '_in_dequant1'],
             node.name + '_in_dequant1')
 
-        if len(weight_scale.shape) == 1:
-            axis = 0 if is_B_transposed(node) else 1
-            in_dq2 = onnx.helper.make_node(
-                'DequantizeLinear',
-                node.input[3:6],
-                [node.name + '_in_dequant2'],
-                node.name + '_in_dequant2',
-                axis=axis)
-        else:
-            in_dq2 = onnx.helper.make_node(
-                'DequantizeLinear',
-                node.input[3:6],
-                [node.name + '_in_dequant2'],
-                node.name + '_in_dequant2')
+
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.input[3:6],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
 
         # update scale initializer
         bias_scale_data = np.asarray(bias_scale, dtype=np.float32).reshape(-1)
@@ -152,16 +144,14 @@ class QGemmOperator(QOperator):
         add_nodes.extend([in_dq1, in_dq2, in_dq3])
 
         # output q
-        if not self.disable_qdq_for_node_output:
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out', node.input[6], node.input[7]],
-                node.output,
-                node.name + '_out_quant')
-            outputs = [node.name + '_out']
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[6], node.input[7]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))

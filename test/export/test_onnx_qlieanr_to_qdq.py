@@ -37,7 +37,7 @@ def build_model():
 
     initializers = [conv1_weight_initializer, conv2_weight_initializer]
     initializers.append(onnx.numpy_helper.from_array(np.array([88, 11], dtype=np.int64), name='shape'))
-    initializers.append(onnx.numpy_helper.from_array(np.zeros((1, 3, 15, 15)), name='add_init'))
+    initializers.append(onnx.numpy_helper.from_array(np.zeros((1, 3, 15, 15), dtype=np.float32), name='add_init'))
     graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node, reshape_node, add_node],
                               'test', [input], [output], initializer=initializers)
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
@@ -97,53 +97,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             quantizable_op_types)
         quantizer.quantize_model()
         return Model(model)
-
-    def test_resize(self):
-        input_tensor = helper.make_tensor_value_info('input', TensorProto.FLOAT, [1, 2, 26, 42])
-
-        conv_weight_arr = np.random.randint(-1, 2, [3, 2, 3, 3]).astype(np.float32)
-        conv_weight_initializer = onnx.numpy_helper.from_array(conv_weight_arr, name='conv1_weight')
-        conv_node = onnx.helper.make_node('Conv', ['input', 'conv1_weight'], ['conv_output'], name='conv_node')
-
-        initializers = [conv_weight_initializer]
-
-        output_tensor = helper.make_tensor_value_info('output', TensorProto.FLOAT, [1, 3, 48, 80])
-        resize_inputs = ['conv_output']  # resize_roi_name, resize_scales_name, resize_sizes_name]
-        resize_attrs = {'coordinate_transformation_mode': 'asymmetric', 'mode': 'nearest', 'nearest_mode': 'floor'}
-        resize_node = helper.make_node('Resize', resize_inputs, ['output'], name='resize_node', **resize_attrs)
-        resize_roi = [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]
-        resize_roi_name = 'resize_roi'
-        resize_roi_initializer = helper.make_tensor(resize_roi_name, TensorProto.FLOAT, [len(resize_roi)], resize_roi)
-        initializers.extend([resize_roi_initializer])
-        resize_node.input.extend([resize_roi_name])
-
-        resize_scales = [1.0, 1.0, 2.0, 2.0]
-        resize_scales_name = 'resize_scales'
-        resize_scales_initializer = helper.make_tensor(resize_scales_name, TensorProto.FLOAT, [
-                                                       len(resize_scales)], resize_scales)
-        initializers.extend([resize_scales_initializer])
-        resize_node.input.extend([resize_scales_name])
-
-        graph = helper.make_graph([conv_node, resize_node], 'TestOpQuantizerResize_test_model',
-                                  [input_tensor], [output_tensor], initializer=initializers)
-        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
-        model.ir_version = 7 # use stable onnx ir version
-        
-        q_config = {'conv_node': self.static_q_config,
-                    'resize_node': self.static_q_config}
-        quantize_params = {'input': [np.float32(10.), np.uint8(0)],
-                           'conv1_weight': [np.float32(10.), np.uint8(0)],
-                           'conv_output': [np.float32(10.), np.uint8(0)],
-                           'output': [np.float32(10.), np.uint8(0)],
-                           }
-        q_model = self.qlinear_test(model, q_config, quantize_params, ['Resize', 'Conv'])                        
-        q_model.export('./test.onnx', self.config)
-
-        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 10)])
-        model.ir_version = 7 # use stable onnx ir version
-        q_model = self.qlinear_test(model, q_config, quantize_params, ['Resize', 'Conv'])                        
-        q_model.export('./test.onnx', self.config)
-        
+       
     def test_argmax(self):
         input_name = "input"
         output_name = "output"
@@ -200,10 +154,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         model.ir_version = 7  # use stable onnx ir version
         q_config = {'conv_node': self.static_q_config,
                     'argmax_node': self.static_q_config}
-        quantize_params = {'input': [np.float32(10.), np.uint8(0)],
-                           'conv_weight': [np.float32(10.), np.uint8(0)],
-                           'conv_output': [np.float32(10.), np.uint8(0)],
-                           'output': [np.float32(10.), np.uint8(0)],
+        quantize_params = {'input': [np.uint8(0), np.float32(10.)],
+                           'conv_weight': [np.uint8(0), np.float32(10.)],
+                           'conv_output': [np.uint8(0), np.float32(10.)],
+                           'output': [np.uint8(0), np.float32(10.)],
                            }
         q_model = self.qlinear_test(model, q_config, quantize_params, ['Conv', 'ArgMax'])
         q_model.export('./test.onnx', self.config)
@@ -248,10 +202,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         model.ir_version = 7  # use stable onnx ir version
         q_config = {'gemm': self.static_q_config}
-        quantize_params = {'input': [np.float32(10.), np.uint8(0)],
-                           'linear1.weight': [np.float32(10.), np.uint8(0)],
-                           'linear1.bias': [np.float32(10.), np.uint8(0)],
-                           'output': [np.float32(10.), np.uint8(0)],
+        quantize_params = {'input': [np.uint8(0), np.float32(10.)],
+                           'linear1.weight': [np.uint8(0), np.float32(10.)],
+                           'linear1.bias': [np.uint8(0), np.float32(10.)],
+                           'output': [np.uint8(0), np.float32(10.)],
                            }
         q_model = self.qlinear_test(model, q_config, quantize_params, ['Gemm'])
         q_model.export('./test.onnx', self.config)
@@ -288,6 +242,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         segment_ids_shape = [1, 4]
         segment_ids_tensor = helper.make_tensor_value_info('segment_ids', TensorProto.INT32, segment_ids_shape)
 
+        mask_shape = [1, 4]
+        mask_tensor = helper.make_tensor_value_info('mask', TensorProto.INT32, input_ids_shape)
+
         # EmbedLayerNormalization Node Constants and Weights:
         word_embed_shape = [32, 4]
         word_embed_weights = np.random.random_sample(word_embed_shape).astype(dtype='float32')
@@ -318,7 +275,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         # EmbedLayerNormalization Node:
         embed_layer_norm_inputs = [
-            'input_ids', 'segment_ids', 'word_embed', 'pos_embed', 'seg_embed', 'gamma', 'beta'
+            'input_ids', 'segment_ids', 'word_embed', 'pos_embed', 'seg_embed', 'gamma', 'beta', 'mask'
         ]
         embed_layer_norm_outputs = ['layernorm_out', 'mask_index_out']
         embed_layer_norm_node = helper.make_node('EmbedLayerNormalization',
@@ -330,7 +287,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         # Construct the Graph and Model:
         nodes = [embed_layer_norm_node]
         graph_name = 'embed_layernorm_graph'
-        inputs = [input_ids_tensor, segment_ids_tensor]
+        inputs = [input_ids_tensor, segment_ids_tensor, mask_tensor]
         outputs = [layernorm_out_tensor, mask_index_out_tensor]
         initializers = [
             word_embed_initializer, pos_embed_initializer, seg_embed_initializer, gamma_initializer, beta_initializer
@@ -338,7 +295,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
         graph = helper.make_graph(nodes, graph_name, inputs, outputs, initializer=initializers)
         model = helper.make_model(graph, 
-            opset_imports=[helper.make_opsetid("com.microsoft", 14), helper.make_opsetid("ai.onnx", 14)])
+            opset_imports=[helper.make_opsetid("com.microsoft", 1), helper.make_opsetid("ai.onnx", 12)])
         model.ir_version = 7 # use stable onnx ir version
         
         q_config = {'Embed': self.static_q_config}
@@ -408,7 +365,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model.export('./test.onnx', self.config)
  
     def test_conv(self):
-        for op in ['Conv', 'FusedConv']:
+        for op in ['Conv']:
             A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 5, 5, 1])
             B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 3, 3, 1])
             C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 5, 5, 1])
@@ -463,13 +420,15 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model.export('./test.onnx', self.config)
 
     def test_attention(self):
-        A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 1, 5, 5])
-        B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 1, 5, 5])
-        C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 5])
-        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 5, 5])
-        node = onnx.helper.make_node('Attention', ['A', 'B', 'C'], ['D'], name='Attention')
-        graph = helper.make_graph([node], 'test_graph_1', [A, B, C], [D])
-        model = helper.make_model(graph)
+        A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 128, 768])
+        B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [768, 2304])
+        C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [2304])
+        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 128, 768])
+        mask = helper.make_tensor_value_info('mask', TensorProto.INT32, [1, 128])
+ 
+        node = onnx.helper.make_node('Attention', ['A', 'B', 'C', 'mask'], ['D'], name='Attention', num_heads=1)
+        graph = helper.make_graph([node], 'test_graph_1', [A, B, C, mask], [D])
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
         q_config = {"Attention": self.static_q_config}
         quantize_params = {"A": [np.uint8(0), np.float32(0.5)],
                            "B": [np.uint8(0), np.float32(0.5)],
@@ -479,25 +438,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         q_model.export('./test.onnx', self.config)
         q_config = {"Attention": self.dynamic_q_config}
-        q_model = self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
-        q_model.export('./test.onnx', self.config)
-
-        E = helper.make_tensor_value_info('E', TensorProto.INT32, [1, 1, 5, 5])
-        F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [1, 1, 5, 5])
-        node = onnx.helper.make_node('Attention', ['A', 'B', 'C', 'F', 'E'], ['D'], name='Attention')
-        graph = helper.make_graph([node], 'test_graph_1', [A, B, C, F, E], [D])
-        model = helper.make_model(graph)
-        q_config = {"Attention": self.static_q_config}
-        quantize_params = {"A": [np.uint8(0), np.float32(0.5)],
-                           "B": [np.uint8(0), np.float32(0.5)],
-                           "C": [np.uint8(0), np.float32(0.5)],
-                           "D": [np.uint8(0), np.float32(0.5)]}
-        quantizable_op_types = ["Attention"]
-        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        q_model.export('./test.onnx', self.config)
-        q_config = {"Attention": self.dynamic_q_config}
-        q_model = self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
-        q_model.export('./test.onnx', self.config)
 
     def test_gather(self):
         a_value = np.random.randn(100, 4).astype(np.float32)
@@ -512,9 +452,9 @@ class TestAdaptorONNXRT(unittest.TestCase):
         node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='Gather')
         graph = helper.make_graph([node], 'test_graph_1', [A, B], [C], [A_init, B_init])
         model = helper.make_model(graph)
-        q_config = {'Gather': {"weight":{'dtype': 3,
+        q_config = {'Gather': {"weight":{'dtype': 2,
                                          'algorithm': 'minmax',
-                                         'scheme':'sym',
+                                         'scheme':'asym',
                                          'granularity': 'per_tensor'},
                               'activation':{'dtype': 2,
                                          'algorithm': 'minmax',
@@ -555,117 +495,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
         q_model.export('./test.onnx', self.config)
 
-    def test_split(self):
-        a_value = np.random.randn(100, 4).astype(np.float32)
-        A_init = helper.make_tensor('A', TensorProto.FLOAT, [100, 4],
-                                    a_value.reshape(400).tolist())
-        A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [100, 4])
-        B = helper.make_tensor_value_info('conv1_output', TensorProto.FLOAT, [50, 4])
-        C = helper.make_tensor_value_info('conv2_output', TensorProto.FLOAT, [50, 4])
-
-        node = onnx.helper.make_node('Split', ['A'], ['B', 'C'], name='Split')
-        graph = helper.make_graph([node], 'test_graph_1', [A], [B, C], [A_init])
-        model = helper.make_model(graph)
-        q_config = {'Split': {"weight":{'dtype': 3,
-                                         'algorithm': 'minmax',
-                                         'scheme':'sym',
-                                         'granularity': 'per_tensor'},
-                              'activation':{'dtype': 2,
-                                         'algorithm': 'minmax',
-                                         'scheme':'asym',
-                                         'granularity':'per_tensor',
-                                         'quant_mode': 'static'}
-                        },
-                    }
-        quantize_params = {"A": [np.uint8(10.), np.float32(0)],
-                           "B": [np.uint8(10.), np.float32(0)],
-                           "C": [np.uint8(10.), np.float32(0)],
-                           }
-        quantizable_op_types = ["Split"]
-        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-        q_model.export('./test.onnx', self.config)
- 
-    def test_pad(self):
-        b_value = np.array([0, 1, 1, 0, 1, 1]).astype(np.int64)
-        B_init = helper.make_tensor('B', TensorProto.INT64, [6],
-                                    b_value.reshape(6).tolist())
-        B = helper.make_tensor_value_info('B', TensorProto.INT64, [6])
-        C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 7, 7])
-
-        d_value = np.random.randn(1).astype(np.float32)
-        D_init = helper.make_tensor('D', TensorProto.FLOAT, [1],
-                                    d_value.reshape(1).tolist())
-        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1])
-
-        e_value = np.random.randn(1, 5, 5).astype(np.float32)
-        E_init = helper.make_tensor('E', TensorProto.FLOAT, [1, 1, 5, 5],
-                                    e_value.reshape(25).tolist())
-        E = helper.make_tensor_value_info('E', TensorProto.FLOAT, [1, 1, 5, 5])
-        f_value = np.random.randn(1, 3, 3).astype(np.float32)
-        F_init = helper.make_tensor('F', TensorProto.FLOAT, [1, 1, 3, 3],
-                                    f_value.reshape(9).tolist())
-        F = helper.make_tensor_value_info('F', TensorProto.FLOAT, [1, 1, 3, 3])
-        for mode in ["constant", "edge", "reflect", "constant_value", "constant_value_wo_init"]:
-            conv_node = onnx.helper.make_node('Conv', ['E', 'F'], ['A'], 
-                                              name='Conv', 
-                                              kernel=[3, 3],
-                                              padding=[1, 1, 1, 1])
-            if mode == "constant_value":
-                node = onnx.helper.make_node('Pad', ['A', 'B', 'D'], ['C'], name='Pad', mode="constant")
-                graph = helper.make_graph([conv_node, node], 'test_graph_1', [E, F, B, D], [C], [E_init, F_init, B_init, D_init])
-            elif mode == "constant_value_wo_init":
-                node = onnx.helper.make_node('Pad', ['A', 'B', 'D'], ['C'], name='Pad', mode="constant")
-                graph = helper.make_graph([conv_node, node], 'test_graph_1', [E, F, B, D], [C], [E_init, F_init, B_init])
-            else:
-                node = onnx.helper.make_node('Pad', ['A', 'B'], ['C'], name='Pad', mode=mode)
-                graph = helper.make_graph([conv_node, node], 'test_graph_1', [E, F, B], [C], [E_init, F_init, B_init])
-            model = helper.make_model(graph)
-            pad_config = {"weight":{'dtype': 3,
-                                    'algorithm': 'minmax',
-                                    'scheme':'sym',
-                                    'granularity': 'per_tensor'},
-                         'activation':{'dtype': 2,
-                                    'algorithm': 'minmax',
-                                    'scheme':'asym',
-                                    'granularity':'per_tensor',
-                                    'quant_mode': 'static'}}
-            conv_config = {"weight":{'dtype': 3,
-                                    'algorithm': 'minmax',
-                                    'scheme':'sym',
-                                    'granularity': 'per_channel'},
-                         'activation':{'dtype': 2,
-                                    'algorithm': 'minmax',
-                                    'scheme':'asym',
-                                    'granularity':'per_tensor',
-                                    'quant_mode': 'static'}}
-            q_config = {'Conv': conv_config,
-                        'Pad': pad_config}
-            quantize_params = {"A": [np.uint8(10.), np.float32(1)],
-                               "C": [np.uint8(10.), np.float32(1)],
-                               "D": [np.uint8(10.), np.float32(1)],
-                               "E": [np.uint8(10.), np.float32(1)],
-                               "F": [np.uint8(10.), np.float32(1)]}
-            quantizable_op_types = ["Conv", "Pad"]
-            q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-            q_model.export('./test.onnx', self.config)
-            options.onnxrt.qdq_setting.AddQDQPairToWeight = True
-            options.onnxrt.qdq_setting.AddQDQPairToWeight = False
-
-        node = onnx.helper.make_node('Pad', ['E', 'B', 'D'], ['C'], name='Pad', mode="constant")
-        graph = helper.make_graph([node], 'test_graph_1', [E, B, D], [C], [E_init, B_init, D_init])
-        model = helper.make_model(graph)
-        q_config = {'Pad': {'activation':{'dtype': 2,
-                                         'algorithm': 'minmax',
-                                         'scheme':'asym',
-                                         'granularity':'per_tensor',
-                                         'quant_mode': 'static'}
-                  }}
-        quantize_params = {"C": [np.uint8(10.), np.float32(0)],
-                           "E": [np.uint8(10.), np.float32(0)]}
-        quantizable_op_types = ["Pad"]
-        q_model = self.qlinear_test(model, pad_config, quantize_params, quantizable_op_types)
-        q_model.export('./test.onnx', self.config)
-
     def test_binary(self):
         for op in ['Mul', 'Add']:
             A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 10])
@@ -685,13 +514,24 @@ class TestAdaptorONNXRT(unittest.TestCase):
             q_model.export('./test.onnx', self.config)
     
     def test_activation(self):
+        config = {"weight":{'dtype': 2, 
+                            'algorithm': 'minmax', 
+                            'scheme':'asym', 
+                            'granularity': 'per_tensor'},
+                     'activation':{'dtype': 2, 
+                                   'algorithm': 'minmax', 
+                                   'scheme':'asym', 
+                                   'granularity':'per_tensor',
+                                   'quant_mode': 'static'}
+                       }
+ 
         for op in ["Relu", "LeakyRelu", "Sigmoid"]:
             B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 10])
             A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 10])
             node = onnx.helper.make_node(op, ['A'], ['B'], name=op)
             graph = helper.make_graph([node], 'test_graph_1', [A], [B])
             model = helper.make_model(graph)
-            q_config = {op: self.static_q_config}
+            q_config = {op: config}
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)]}
             quantizable_op_types = [op]
@@ -704,8 +544,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
             graph = helper.make_graph([node], 'test_graph_1', [A], [B], [A_init])
             model = helper.make_model(graph)
             q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
-            q_model.export('./test.onnx', self.config)
-            q_model = self.qlinear_test(model, q_config, {}, quantizable_op_types)
             q_model.export('./test.onnx', self.config)
 
     def test_pooling(self):
@@ -735,7 +573,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                           name='Conv',
                                           kernel_shape=[3, 3],
                                           pads=[1, 1, 1, 1])
-        pool_node = onnx.helper.make_node(op, ['C'], ['D'], name=op)
+        pool_node = onnx.helper.make_node(op, ['C'], ['D'], name=op, kernel_shape=[1, 1])
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
         model = helper.make_model(graph)
  
@@ -752,9 +590,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [1, 5, 1, 1])
         A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 5, 5, 1])
         node = onnx.helper.make_node(op, ['A'], ['B'], 
-                                     name=op,
-                                     kernel_shape=[3, 3],
-                                     pads=[1, 1, 1, 1])
+                                     name=op)
         graph = helper.make_graph([node], 'test_graph_1', [A], [B]) 
         q_config = {op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
@@ -791,12 +627,12 @@ class TestAdaptorONNXRT(unittest.TestCase):
     def test_exclude_node(self):
         A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 5, 5, 1])
         B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [3, 3, 1, 1])
-        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 1, 3, 3])
+        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [1, 3, 5, 1])
         conv_node = onnx.helper.make_node('Conv', ['A', 'B'], ['C'],
                                           name='Conv',
                                           kernel_shape=[3, 3],
                                           pads=[1, 1, 1, 1])
-        pool_node = onnx.helper.make_node("MaxPool", ['C'], ['D'], name="MaxPool")
+        pool_node = onnx.helper.make_node("MaxPool", ['C'], ['D'], name="MaxPool", kernel_shape=[1, 1])
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
         model = helper.make_model(graph)
 
@@ -806,6 +642,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            "C": [np.uint8(10.), np.float32(0)],
                            "D": [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = ["Conv", "MaxPool"]
+        self.config.exclude_output_quantization = ['Conv']
         q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
         q_model.export('./test.onnx', self.config)
 

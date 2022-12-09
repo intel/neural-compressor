@@ -70,11 +70,12 @@ class EmbedLayerNormalizationOperator(Operator):
                                                        node.name, **kwargs)
         self.quantizer.new_nodes.append(qembed_layer_norm_node)
         self.quantizer.remove_nodes.extend(parents)
+        self.quantizer.remove_nodes.append(node)
 
 @qop_registry(op_types="QEmbedLayerNormalization")
 class QEmbedLayerNormalizationOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         node = self.node

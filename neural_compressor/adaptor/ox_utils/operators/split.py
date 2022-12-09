@@ -84,17 +84,29 @@ class SplitOperator(Operator):
 
 @qop_registry(op_types="Split")
 class QSplitOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         node = self.node
         add_nodes = []
         inputs = []
         inits = []
-        
-        if all([i.op_type != 'DequantizeLinear' for i in self.children]):
-            return False, add_nodes
+
+        if all([child.op_type not in self.qop_list or \
+                child.op_type != 'DequantizeLinear' for child in self.children]):
+            return False, add_nodes, inits
+            
+        outputs = []
+        for i, out in enumerate(node.output):
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
+                [node.output[i]],
+                node.name + '_out_quant_' + str(i))
+        outputs.append([node.name + '_out_quant_' + str(i)])
+        add_nodes.append(out_q)
+
         # input dq
         for child in self.children:
             if child.op_type == 'DequantizeLinear':
@@ -106,21 +118,6 @@ class QSplitOperator(QOperator):
                 inputs.append(node.name + '_in_dequant')
                 add_nodes.append(in_dq)
                 break
-
-        # output q
-        outputs = []
-        output_optype_mapping = dict((child.input[0], child.op_type) for child in self.children)
-        if not self.disable_qdq_for_node_output:
-            for i, out in enumerate(node.output):
-                out_q = onnx.helper.make_node(
-                    'QuantizeLinear',
-                    [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
-                    [node.output[i]],
-                    node.name + '_out_quant_' + str(i))
-            outputs.append([node.name + '_out_quant_' + str(i)])
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
 
         outputs = node.output
         kwargs = {}

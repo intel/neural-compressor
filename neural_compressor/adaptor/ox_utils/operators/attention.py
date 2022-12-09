@@ -77,14 +77,16 @@ class AttentionOperator(Operator):
 
 @qop_registry(op_types="QAttention")
 class QAttentionOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         node = self.node
         add_nodes = []
         inputs = []
         inits = []
+        if find_by_name(node.input[3], self.initializers) is None:
+            return False, add_nodes, inits
         # input dq
         in_dq1 = onnx.helper.make_node(
             'DequantizeLinear',
@@ -92,45 +94,19 @@ class QAttentionOperator(QOperator):
             [node.name + '_in_dequant1'],
             node.name + '_in_dequant1')
         
-        weight_scale = onnx.numpy_helper.to_array(
-            find_by_name(node.input[4], self.initializers))
-        if len(weight_scale.shape) == 1:
-            if 'MatMul' not in self.axis:
-                from neural_compressor.utils import logger
-                logger.warning(
-                    "Don't offer the axis of per-channel quantizd Attention, use default axis=1")
-                axis = 1
-            else:
-                axis = self.axis['Attention']
-            in_dq2 = onnx.helper.make_node(
-                'DequantizeLinear',
-                [node.input[1], node.input[4], node.input[7]],
-                [node.name + '_in_dequant2'],
-                node.name + '_in_dequant2',
-                axis=axis)
-        else:
-            in_dq2 = onnx.helper.make_node(
-                'DequantizeLinear',
-                [node.input[1], node.input[4], node.input[7]],
-                [node.name + '_in_dequant2'],
-                node.name + '_in_dequant2')
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            [node.input[1], node.input[4], node.input[7]],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
         inputs = [node.name + '_in_dequant1',
                   node.name + '_in_dequant2',
                   node.input[2],
                   node.input[5]]
         
         add_nodes.extend([in_dq1, in_dq2])
-        # output q
-        if not self.disable_qdq_for_node_output:
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out', node.input[6], node.input[7]],
-                node.output,
-                node.name + '_out_quant')
-            outputs = [node.name + '_out']
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
+
+        outputs = node.output
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))

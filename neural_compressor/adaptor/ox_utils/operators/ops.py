@@ -47,10 +47,13 @@ def qop_registry(op_types):
     def decorator_op(cls):
         assert cls.__name__.endswith(
             'Operator'), "The name of subclass of QOperator should end with \'Operator\' substring."
-        if cls.__name__[:-len('Operator')] in OPERATORS: # pragma: no cover
+        if cls.__name__[:-len('Operator')] in QOPERATORS: # pragma: no cover
             raise ValueError('Cannot have two operators with the same name.')
         for single_op_type in [op_type.strip() for op_type in op_types.split(',')]:
-            if single_op_type.startswith('QLinear') or single_op_type in ['QGemm']:
+            if single_op_type.startswith('QLinear') or \
+                single_op_type in ['QGemm', 'QAttention', 'QEmbedLayerNormalization', 'ArgMax', 
+                                   'Reshape', 'Transpose', 'Squeeze', 'Unsqueeze', 'Gather',
+                                   'MaxPool', 'Pad', 'Resize', 'Split']:
                 QOPERATORS[single_op_type] = cls
         return cls
     return decorator_op
@@ -106,23 +109,26 @@ class Operator(object):
         self.quantizer.dtype_cast(self.node, self.dtype)
 
 class QOperator(object):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
+    def __init__(self, onnx_node, children, initializers, channel_axis):
         self.node = onnx_node
         self.children = children
         self.initializers = initializers
-        self.disable_qdq_for_node_output = True if onnx_node.op_type in \
-            exclude_output_quantization else False
         self.axis = channel_axis
         self.per_channel = False
+        self.qop_list = ['QGemm', 'QAttention', 'QEmbedLayerNormalization',
+                       'QLinearLeakyRelu', 'QLinearSigmoid', 'QLinearAdd','QLinearMul',
+                       'QLinearConcat', 'QLinearConv', 'QLinearGlobalAveragePool',
+                       'QLinearMatMul', 'QLinearAveragePool']
 
     def convert(self):
         node = self.node
         add_nodes = []
         inputs = []
         inits = []
-        # output is not int8 tensor
-        if all([i.op_type != 'DequantizeLinear' for i in self.children]):
-            return False, add_nodes
+        if all([child.op_type not in self.qop_list or \
+                child.op_type != 'DequantizeLinear' for child in self.children]):
+            return False, add_nodes, inits
+
         # input dq
         for child in self.children:
             if child.op_type == 'DequantizeLinear':
@@ -134,17 +140,15 @@ class QOperator(object):
                 inputs.append(node.name + '_in_dequant')
                 add_nodes.append(in_dq)
                 break
+
         # output q
-        if not self.disable_qdq_for_node_output:
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out', in_dq.input[1], in_dq.input[2]],
-                node.output,
-                node.name + '_out_quant')
-            outputs = [node.name + '_out']
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', in_dq.input[1], in_dq.input[2]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
 
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover

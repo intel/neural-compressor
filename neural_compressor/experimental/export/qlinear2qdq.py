@@ -47,18 +47,16 @@ def check_model(model):
 
 def onnx_qlinear_to_qdq(
     model,
-    output_name_to_node,
-    channel_axis={},
-    exclude_output_quantization=[]
+    input_name_to_nodes,
+    channel_axis={}
 ):
     """Export FP32 PyTorch model into FP32 ONNX model.
 
     Args:
         model (ModelProto): int8 onnx model.
-        output_name_to_node (dict): the mapping of tensor name and its destination nodes. 
+        input_name_to_nodes (dict): the mapping of tensor name and its destination nodes. 
         channel_axis (dict, optional): quantization axis of for per-channel quantized optype,
             the key is optype (str), the value is axis (int).
-        exclude_output_quantization (list, optional): optypes to exclude output quantization.
     """
     from neural_compressor.adaptor.ox_utils.operators.ops import QOPERATORS
     add_nodes = []
@@ -66,17 +64,16 @@ def onnx_qlinear_to_qdq(
     inits = []
     for node in model.graph.node:
         if node.op_type in QOPERATORS:
-            if node.output[0] not in output_name_to_node:
+            if node.output[0] not in input_name_to_nodes:
                 continue
             children = []
             for out in node.output:
-                children.append(output_name_to_node[node.output[0]])
+                children.extend(input_name_to_nodes[node.output[0]])
             converter = QOPERATORS[node.op_type](
                 node,
                 children,
                 model.graph.initializer,
-                channel_axis,
-                exclude_output_quantization)
+                channel_axis)
             done, add_node, init = converter.convert()
             if done:
                 add_nodes.extend(add_node)

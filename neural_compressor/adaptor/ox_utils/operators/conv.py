@@ -156,6 +156,7 @@ class ConvOperator(Operator):
                 if attribute.name == 'activation_params': # pragma: no cover
                     continue
                 kwargs.update(attribute_to_kwarg(attribute))
+
             qlinear_conv_node = onnx.helper.make_node("QLinearConv", qlinear_conv_inputs, 
                                                     [qlinear_conv_output],
                                                     node.name, **kwargs)
@@ -166,8 +167,8 @@ class ConvOperator(Operator):
 
 @qop_registry(op_types="QLinearConv")
 class QConvOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         node = self.node
@@ -180,35 +181,20 @@ class QConvOperator(QOperator):
             [node.name + '_in_dequant1'],
             node.name + '_in_dequant1')
 
-        weight_scale = onnx.numpy_helper.to_array(
-            find_by_name(node.input[4], self.initializers))
-        if weight_scale is not None and len(weight_scale.shape) == 1:
-            if 'Conv' not in self.axis:
-                from neural_compressor.utils import logger
-                logger.warning("Don't offer the axis of per-channel quantizd Conv, use default axis=0")
-                axis = 0
-            else:
-                axis = self.axis['Conv']
-            in_dq2 = onnx.helper.make_node(
-                'DequantizeLinear',
-                node.input[3:6],
-                [node.name + '_in_dequant2'],
-                node.name + '_in_dequant2',
-                axis=axis)
-        elif weight_scale is not None:
-            in_dq2 = onnx.helper.make_node(
-                'DequantizeLinear',
-                node.input[3:6],
-                [node.name + '_in_dequant2'],
-                node.name + '_in_dequant2')
-                
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.input[3:6],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
+  
         add_nodes.extend([in_dq1, in_dq2])
         inputs = [node.name + '_in_dequant1', node.name + '_in_dequant2']
         if len(node.input) == 9:
             import numpy as np
             input_scale = onnx.numpy_helper.to_array(
                 find_by_name(node.input[1], self.initializers))
-
+            weight_scale = onnx.numpy_helper.to_array(
+                find_by_name(node.input[4], self.initializers))
             bias_scale = input_scale * weight_scale
 
             # update scale initializer
@@ -230,16 +216,14 @@ class QConvOperator(QOperator):
             inputs.append(in_dq3.name)
             add_nodes.append(in_dq3)
         # output q
-        if not self.disable_qdq_for_node_output:
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out', node.input[6], node.input[7]],
-                node.output,
-                node.name + '_out_quant')
-            outputs = [node.name + '_out']
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[6], node.input[7]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))

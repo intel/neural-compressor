@@ -99,8 +99,8 @@ class ConcatOperator(Operator):
 
 @qop_registry(op_types="QLinearConcat")
 class QConcatOperator(QOperator):
-    def __init__(self, onnx_node, children, initializers, channel_axis, exclude_output_quantization):
-        super().__init__(onnx_node, children, initializers, channel_axis, exclude_output_quantization)
+    def __init__(self, onnx_node, children, initializers, channel_axis):
+        super().__init__(onnx_node, children, initializers, channel_axis)
 
     def convert(self):
         node = self.node
@@ -108,7 +108,7 @@ class QConcatOperator(QOperator):
         inputs = []
         inits = []
         # input dq
-        for i in range((len(node.inputs) - 2) / 3 - 1):
+        for i in range(int((len(node.input) - 2) / 3 - 1)):
             in_dq = onnx.helper.make_node(
                 'DequantizeLinear',
                 node.input[2 + i*3 : 2 + (i+1)*3],
@@ -118,16 +118,14 @@ class QConcatOperator(QOperator):
             add_nodes.append(in_dq)
 
         # output q
-        if not self.disable_qdq_for_node_output:
-            out_q = onnx.helper.make_node(
-                'QuantizeLinear',
-                [node.name + '_out', node.input[0], node.input[1]],
-                node.output,
-                node.name + '_out_quant')
-            outputs = [node.name + '_out']
-            add_nodes.append(out_q)
-        else:
-            outputs = node.output
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[0], node.input[1]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
         kwargs = {}
         for attribute in node.attribute: # pragma: no cover
             kwargs.update(attribute_to_kwarg(attribute))
