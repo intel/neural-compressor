@@ -46,7 +46,6 @@ class Pruning:
 
     def __init__(self, config):
         """Initialize."""
-        assert()
         self.model = None
         self.pruners = []
         self.pruners_info = process_config(config)

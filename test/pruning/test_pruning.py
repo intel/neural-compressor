@@ -10,6 +10,8 @@ from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning
 from neural_compressor.config import WeightPruningConfig
+
+
 def build_fake_yaml_basic():
     fake_snip_yaml = """
     model:
@@ -61,15 +63,12 @@ def build_fake_yaml_basic():
         f.write(fake_snip_yaml)
 
 
-
 class TestPruning(unittest.TestCase):
-
     model = torchvision.models.resnet18()
 
     @classmethod
     def setUpClass(cls):
         build_fake_yaml_basic()
-
 
     @classmethod
     def tearDownClass(cls):
@@ -78,10 +77,13 @@ class TestPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pruning_basic(self):
-        config = WeightPruningConfig(reg_type="group_lasso",target_sparsity=0.8)
+        local_configs = [{"op_names": ['layer1.*'], 'target_sparsity': 0.9},
+                         {"op_names": ['layer1.*'], 'target_sparsity': 0.7,
+                          'pattern': '4x1'}]
+        config = WeightPruningConfig(local_configs, target_sparsity=0.8)
 
         prune = Pruning(config)
-        prune.update_config(start_step=1)
+        prune.update_config(start_step=1, end_step=10)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
@@ -115,5 +117,3 @@ class TestPruning(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

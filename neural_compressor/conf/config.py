@@ -49,36 +49,34 @@ def constructor_register(cls):
 
 
 @constructor_register
-class Pruner:
-    def __init__(self,
-               
-                 **kwargs
-                 ):
-                 # # the following global key should be set to None
-                 # target_sparsity=None, pruning_type=None, pattern=None, op_names=None,
-                 # excluded_op_names=None,
-                 # start_step=None, end_step=None, pruning_scope=None, pruning_frequency=None,
-                 # min_sparsity_ratio_per_op=None, max_sparsity_ratio_per_op=None, sparsity_decay_type=None,
-                 # pruning_op_types=None, **kwargs
-                 ##):
-        ##self.extra_excluded_op_names = extra_excluded_op_names
-        self.reg_type = reg_type
-        self.criterion_reduce_type = criterion_reduce_type
-        self.parameters = parameters
+class Pruner():
+    def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None,
+                 target_sparsity=None, update_frequency=1,
+                 method='per_tensor',
+                 prune_type='basic_magnitude',  ##for pytorch pruning, these values should be None
+                 start_step=None, end_step=None, update_frequency_on_step=None, prune_domain=None,
+                 sparsity_decay_type=None, pattern="tile_pattern_1x1", names=None,
+                 extra_excluded_names=None, parameters=None):
+        self.start_epoch = start_epoch
+        self.end_epoch = end_epoch
+        self.update_frequency = update_frequency
         self.target_sparsity = target_sparsity
-        self.pruning_type = pruning_type
-        self.pattern = pattern
-        self.op_names = op_names
-        self.excluded_op_names = excluded_op_names
+        self.initial_sparsity = initial_sparsity
+        self.update_frequency = update_frequency
         self.start_step = start_step
         self.end_step = end_step
-        self.pruning_scope = pruning_scope
-        self.pruning_frequency = pruning_frequency
-        self.min_sparsity_ratio_per_op = min_sparsity_ratio_per_op
-        self.max_sparsity_ratio_per_op = max_sparsity_ratio_per_op
+        self.update_frequency_on_step = update_frequency_on_step
+        self.prune_domain = prune_domain
         self.sparsity_decay_type = sparsity_decay_type
-        self.pruning_op_types = pruning_op_types
-        ##self.resume_from_pruned_checkpoint = resume_from_pruned_checkpoint
+        self.extra_excluded_names = extra_excluded_names
+        self.pattern = pattern
+        ## move this to experimental/pruning to support dynamic pruning
+        # assert prune_type.replace('_', '') in [i.lower() for i in PRUNERS], \
+        #                                  'now only support {}'.format(PRUNERS.keys())
+        self.prune_type = prune_type
+        self.method = method
+        self.names = names
+        self.parameters = parameters
 
 
 # Schema library has different loading sequence priorities for different
@@ -104,7 +102,11 @@ def _valid_prune_epoch(key, scope, error):
 
 
 def _valid_prune_sparsity(key, scope, error):
-    if "target_sparsity" in scope[key]:
+    if "initial_sparsity" in scope[key] and "target_sparsity" in scope[key]:
+        assert scope[key]["initial_sparsity"] <= scope[key]["target_sparsity"]
+    elif "initial_sparsity" in scope[key]:
+        assert scope[key]["initial_sparsity"] >= 0
+    elif "target_sparsity" in scope[key]:
         assert scope[key]["target_sparsity"] < 1
 
 
@@ -231,7 +233,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
@@ -249,7 +251,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         # compute_dtypeis only for PyTorch framework
         Optional('compute_dtype', default=['uint8']): And(
             list,
@@ -273,13 +275,13 @@ graph_optimization_schema = Schema({
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
         }
     }
 })
@@ -289,20 +291,20 @@ mixed_precision_schema = Schema({
     Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
-        lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+        lambda s: all(i in ['fp32', 'bf16'] for i in s)),
 
     Optional('op_wise', default={'weight': {}, 'activation': {}}): {
         Optional('weight', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
         }
     }
 })
@@ -697,29 +699,35 @@ train_schema = Schema({
 })
 
 weight_compression_schema = Schema({
-    Optional('target_sparsity', default=0.9): float,
-    Optional('pruning_type', default="snip_momentum"): str,
-    Optional('pattern', default="4x1"): str,
-    Optional('op_names', default="[]"): list,
-    Optional('excluded_op_names', default="[]"): list,
+    Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
+    Optional('target_sparsity', default=0.97): float,
+    Optional('max_sparsity_ratio_per_layer', default=0.98): float,
+    Optional('prune_type', default="basic_magnitude"): str,
+    Optional('start_epoch', default=0): int,
+    Optional('end_epoch', default=4): int,
     Optional('start_step', default=0): int,
     Optional('end_step', default=0): int,
-    Optional('pruning_scope', default="global"): str,
-    Optional('pruning_frequency', default=1): int,
-    Optional('min_sparsity_ratio_per_op', default=0.0): float,
-    Optional('max_sparsity_ratio_per_op', default=0.98): float,
-    Optional('pruning_op_types', default=['Conv', 'Linear']): list,
-    Optional('sparsity_decay_type', default="exp"):str,
-    Optional('resume_from_pruned_checkpoint', default=False): bool,
+    Optional('update_frequency', default=1.0): float,
+    Optional('update_frequency_on_step', default=1): int,
+    Optional('excluded_names', default=[]): list,
+    Optional('prune_domain', default="global"): str,
+    Optional('names', default=[]): list,
+    Optional('extra_excluded_names', default=None): list,
+    Optional('prune_layer_type', default=None): list,
+    Optional('sparsity_decay_type', default="exp"): str,
+    Optional('pattern', default="tile_pattern_1x1"): str,
+
     Optional('pruners'): And(list, \
                              lambda s: all(isinstance(i, Pruner) for i in s))
 })
 
+# weight_compression_pytorch_schema = Schema({},ignore_extra_keys=True)
+
 approach_schema = Schema({
     Hook('weight_compression', handler=_valid_prune_sparsity): object,
-    ##Hook('weight_compression', handler=_valid_prune_sparsity): object,
+    Hook('weight_compression_pytorch', handler=_valid_prune_sparsity): object,
     Optional('weight_compression'): weight_compression_schema,
-    ##Optional('weight_compression'): weight_compression_schema,
+    Optional('weight_compression_pytorch'): weight_compression_schema,
 })
 
 default_workspace = './nc_workspace/{}/'.format(
@@ -738,6 +746,7 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
+
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
         Or(float,
@@ -806,7 +815,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -829,7 +838,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
                 # compute_dtypeis only for PyTorch framework
                 Optional('compute_dtype', default=['uint8']): And(
                     Or(str, list),
@@ -1149,9 +1158,9 @@ pruning_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('pruning', default={'approach': {'weight_compression': {
-                                                                     'target_sparsity': 0.9, 'start_step': 0, \
-                                                                     'end_step': 0}}}): dict,
+    Optional('pruning', default={'approach': {'weight_compression': {'initial_sparsity': 0.0, \
+                                                                     'target_sparsity': 0.97, 'start_epoch': 0, \
+                                                                     'end_epoch': 4}}}): dict,
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
 })
@@ -1287,10 +1296,8 @@ distillation_default_schema = Schema({
 
 class Conf(object):
     """config parser.
-
     Args:
         cfg_fname (string): The path to the configuration file.
-
     """
 
     def __init__(self, cfg_fname):
@@ -1299,7 +1306,6 @@ class Conf(object):
 
     def _read_cfg(self, cfg_fname):
         """Load a config file following yaml syntax.
-
            Args:
                cfg_fname(string): The name of configuration yaml file
         """
@@ -1342,7 +1348,8 @@ class Conf(object):
                 'device': pythonic_config.quantization.device,
                 'model.inputs': pythonic_config.quantization.inputs,
                 'model.outputs': pythonic_config.quantization.outputs,
-                'model.framework': pythonic_config.quantization.backend,
+                'model.backend': pythonic_config.quantization.backend,
+                'model.quant_format': pythonic_config.quantization.quant_format,
                 'quantization.approach': pythonic_config.quantization.approach,
                 'quantization.calibration.sampling_size':
                     pythonic_config.quantization.calibration_sampling_size,
@@ -1366,11 +1373,11 @@ class Conf(object):
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
-                    'accuracy_weight', 'latency_weight']:
+                               'accuracy_weight', 'latency_weight']:
                     if st_key in st_kwargs:
-                        st_val =  st_kwargs[st_key]
+                        st_val = st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
-            
+
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
@@ -1432,16 +1439,13 @@ class Conf(object):
 
     def _convert_cfg(self, src, dst):
         """Helper function to merge user defined dict into default dict.
-
            If the key in src doesn't exist in dst, then add this key and value
            pair to dst.
            If the key in src is in dst, then override the value in dst with the
            value in src.
-
         Args:
             src (dict): The source dict merged from
             dst (dict): The source dict merged to
-
         Returns:
             dict: The merged dict from src to dst
         """
@@ -1471,10 +1475,8 @@ class Conf(object):
 
 class Quantization_Conf(Conf):
     """config parser.
-
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1490,15 +1492,12 @@ class Quantization_Conf(Conf):
 
     def _merge_dicts(self, src, dst):
         """Helper function to merge src dict into dst dict.
-
            If the key in src doesn't exist in dst, then skip
            If the key in src is in dst and the value intersects with the one in
            dst, then override the value in dst with the intersect value.
-
         Args:
             src (dict): The source dict merged from
             dst (dict): The source dict merged to
-
         Returns:
             dict: The merged dict from src to dst
         """
@@ -1535,10 +1534,8 @@ class Quantization_Conf(Conf):
 
 class Pruning_Conf(Conf):
     """config parser.
-
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1554,10 +1551,8 @@ class Pruning_Conf(Conf):
 
 class Graph_Optimization_Conf(Quantization_Conf):
     """config parser.
-
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1572,10 +1567,8 @@ class Graph_Optimization_Conf(Quantization_Conf):
 
 class MixedPrecision_Conf(Quantization_Conf):
     """config parser.
-
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1590,10 +1583,8 @@ class MixedPrecision_Conf(Quantization_Conf):
 
 class Benchmark_Conf(Conf):
     """config parser.
-
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1608,10 +1599,8 @@ class Benchmark_Conf(Conf):
 
 class Distillation_Conf(Conf):
     """config parser.
-
     Args:
         cfg: The path to the configuration file or DotDict object or None.
-
     """
 
     def __init__(self, cfg=None):
@@ -1626,11 +1615,9 @@ class Distillation_Conf(Conf):
 
 class NASConfig(Conf):
     """config parser.
-
     Args:
         approach: The approach of the NAS.
         search_algorithm: The search algorithm for NAS procedure.
-
     """
 
     def __init__(self, approach=None, search_space=None, search_algorithm=None):
