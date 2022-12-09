@@ -18,11 +18,14 @@
 
 import os
 import numpy as np
-from onnx import helper, numpy_helper
-from onnx import onnx_pb as onnx_proto  
+from neural_compressor.utils.utility import LazyImport
 from enum import Enum
 from pathlib import Path
 import abc
+
+helper = LazyImport('onnx.helper')
+numpy_helper = LazyImport('onnx.numpy_helper')
+onnx_proto = LazyImport('onnx.onnx_pb')
 
 __producer__ = "onnx.quantize"
 __version__ = "0.1.0"
@@ -56,6 +59,18 @@ dtype_mapping = {
     'uint64': 13,
     'complex64': 14,
     'complex128': 15,
+}
+
+PROVIDERS = {
+    'default': 'CPUExecutionProvider',
+    'onnxrt_trt_ep': 'TensorrtExecutionProvider',
+    'onnxrt_cuda_ep': 'CUDAExecutionProvider',
+}
+
+ONNXRT_BACKENDS = {
+    'CPUExecutionProvider': 'default',
+    'TensorrtExecutionProvider': 'onnxrt_trt_ep',
+    'CUDAExecutionProvider': 'onnxrt_cuda_ep'
 }
 
 def dtype_to_name(dtype_mapping, dtype):
@@ -175,6 +190,23 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
                                                                         qType, scheme))
     return quantized_data
 
+def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
+    if scheme == 'sym':
+        max_range = max(abs(rmin), abs(rmax))
+        scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
+    else:
+        scale = (float(rmax) - rmin) / quantize_range if rmin != rmax else 1
+
+    if scale == 1 or (scheme == 'sym' and qType == onnx_proto.TensorProto.INT8):
+        zero_point = 0
+    elif qType == onnx_proto.TensorProto.UINT8:
+        zero_point = round((0 - rmin) / scale)
+        zero_point = np.uint8(round(max(0, min(255, zero_point))))
+    else:
+        zero_point = round((-64 - rmin) / scale) if quantize_range == 128 \
+            else round((-127 - rmin) / scale)
+    return scale, zero_point
+
 def quantize_data(data, quantize_range, qType, scheme):
     '''
         :parameter data: data to quantize
@@ -196,17 +228,7 @@ def quantize_data(data, quantize_range, qType, scheme):
     rmin = min(min(data), 0)
     rmax = max(max(data), 0)
 
-    if scheme == 'sym' and qType == onnx_proto.TensorProto.INT8:
-        max_range = max(abs(rmin), abs(rmax))
-        scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
-        zero_point = 0
-    elif scheme == 'asym' and qType == onnx_proto.TensorProto.UINT8:
-        scale = (float(rmax) - rmin) / quantize_range if rmin != rmax else 1
-        zero_point = round((0 - rmin) / scale)
-    else:
-        raise ValueError("Unexpected combination of data type {} and scheme {}.".format(
-            qType, scheme))
-
+    scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
     quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 

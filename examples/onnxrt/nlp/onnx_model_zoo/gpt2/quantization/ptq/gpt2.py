@@ -115,7 +115,8 @@ def evaluate(args, model, tokenizer, prefix=""):
     total_time = 0.0
 
     options = ort.SessionOptions()
-    session = ort.InferenceSession(model.SerializeToString(), options)
+    session = ort.InferenceSession(model.SerializeToString(), options,
+        providers=ort.get_available_providers())
     len_outputs = len(session.get_outputs())
     len_inputs = len(session.get_inputs())
     inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]

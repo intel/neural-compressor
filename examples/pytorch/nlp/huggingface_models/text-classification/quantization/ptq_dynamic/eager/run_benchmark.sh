@@ -110,7 +110,7 @@ function run_benchmark {
     fi
     echo $extra_cmd
 
-    python -u run_glue_tune.py \
+    python -u run_glue.py \
         --task_name ${TASK_NAME} \
         --do_eval \
         --max_seq_length ${MAX_SEQ_LENGTH} \

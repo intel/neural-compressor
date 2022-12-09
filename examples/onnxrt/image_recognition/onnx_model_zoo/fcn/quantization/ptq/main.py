@@ -175,7 +175,9 @@ def iou(model_tensor, target_tensor):
 
 def evaluate(model, dataloader):    
     totalIoU = 0
-    sess = onnxruntime.InferenceSession(model.SerializeToString(), None)
+    sess = onnxruntime.InferenceSession(model.SerializeToString(),
+                                        None,
+                                        providers=onnxruntime.get_available_providers())
     idx = 1
     for input_tensor, target_tensor in dataloader:
         input_tensor = input_tensor[np.newaxis, ...]

@@ -150,6 +150,7 @@ def _get_input_scale(model, hook_list):
                     'output_scale': float(scale_out),
                     'output_zeropoint': int(zero_point_out)
                 }
+                del module.input_observer, module[0].output_observer
         elif hasattr(module, "input_observer") and hasattr(module, "output_observer"):
             scale_in, zero_point_in = module.input_observer.calculate_qparams()
             scale_out, zero_point_out = module.output_observer.calculate_qparams()
@@ -159,6 +160,7 @@ def _get_input_scale(model, hook_list):
                 'output_scale': float(scale_out),
                 'output_zeropoint': int(zero_point_out)
             }
+            del module.input_observer, module.output_observer
     for h in hook_list:
         h.remove()
     return scale_info

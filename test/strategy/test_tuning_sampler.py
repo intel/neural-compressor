@@ -170,7 +170,7 @@ class TestTuningSampler(unittest.TestCase):
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         quant_mode_wise_items = OrderedDict()
-        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        query_order = ['static', 'dynamic', 'bf16', 'fp32']
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)
