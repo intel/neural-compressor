@@ -130,7 +130,9 @@ class Component(object):
             framework_specific_info = {'device': self.cfg.device,
                                     'random_seed': self.cfg.tuning.random_seed,
                                     'workspace_path': self.cfg.tuning.workspace.path,
-                                    'q_dataloader': None}
+                                    'q_dataloader': None,
+                                    'backend': self.cfg.model.get('backend', 'default'),
+                                    'format': self.cfg.model.get('quant_format', 'default')}
             if self.cfg.quantization.approach is not None:
                 framework_specific_info['approach'] = self.cfg.quantization.approach
 

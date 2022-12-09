@@ -73,7 +73,7 @@ After prepare step is done, we add quantization and benchmark code to generate q
 ```python
     logger.info('start quantizating the model...')
     from neural_compressor import training, QuantizationAwareTrainingConfig
-    config = QuantizationAwareTrainingConfig(backend="tensorflow")
+    config = QuantizationAwareTrainingConfig()
     # create a compression_manager instance to implement QAT
     compression_manager = training.prepare_compression(FLAGS.input_model, config)
     # QDQ patterns will be inserted to the input keras model
@@ -109,8 +109,7 @@ After prepare step is done, we add quantization and benchmark code to generate q
     # convert the quantized keras model to graph_def so that it can be fused by ITEX
     model = common.Model(FLAGS.input_model).graph_def
     if FLAGS.mode == 'performance':
-        conf = BenchmarkConfig(backend="tensorflow", 
-                                cores_per_instance=4, num_of_instance=7)
+        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
         fit(model, conf, b_func=evaluate)
     elif FLAGS.mode == 'accuracy':
         accuracy = evaluate(model)
