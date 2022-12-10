@@ -18,7 +18,7 @@ class TestPytorchPruning(unittest.TestCase):
         local_configs = [
             {
                 "op_names": ['layer1.*', 'layer2.*'],
-                "excluded_op_names": ['downsample.*'], 
+                "excluded_op_names": ['downsample.*'],
                 'target_sparsity': 0.6,
                 "pattern": 'channelx1',
                 "pruning_type": "snip_progressive",

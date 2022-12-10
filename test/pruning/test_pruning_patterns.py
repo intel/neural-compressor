@@ -17,7 +17,7 @@ class TestPruningPatterns(unittest.TestCase):
     def test_pruning_pattern(self):
         local_configs = [
             {
-                "op_names": ['layer1.*'], 
+                "op_names": ['layer1.*'],
                 'target_sparsity': 0.5,
                 "pattern": '5:8',
                 "pruning_type": "magnitude"
@@ -31,18 +31,18 @@ class TestPruningPatterns(unittest.TestCase):
                 "start_step": 2,
                 "end_step": 20,
                 "op_names": ['layer3.*'],
-                'target_sparsity': 0.666666, 
+                'target_sparsity': 0.666666,
                 'pattern': '4x2',
                 "pruning_type": "snip_progressive",
                 "pruning_frequency": 5
             }
         ]
         config = WeightPruningConfig(
-            local_configs, 
+            local_configs,
             target_sparsity=0.8,
             sparsity_decay_type="cos",
             excluded_op_names=["downsample.*"],
-            pruning_scope= "local",
+            pruning_scope="local",
             min_sparsity_ratio_per_op=0.1
         )
         prune = Pruning(config)
@@ -79,8 +79,5 @@ class TestPruningPatterns(unittest.TestCase):
         prune.on_after_eval()
 
 
-
 if __name__ == "__main__":
     unittest.main()
-
-

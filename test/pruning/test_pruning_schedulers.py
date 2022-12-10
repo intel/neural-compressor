@@ -38,6 +38,7 @@ local_schedulers_config = [
 fake_snip_config = WeightPruningConfig(local_schedulers_config, target_sparsity=0.9, start_step=0, \
                                        end_step=10, pruning_frequency=1, sparsity_decay_type="exp")
 
+
 class TestPruningCriteria(unittest.TestCase):
     model = torchvision.models.resnet18()
 
@@ -78,4 +79,3 @@ class TestPruningCriteria(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    

@@ -8,7 +8,7 @@ import torch.nn as nn
 
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.pruning import Pruning,WeightPruningConfig
+from neural_compressor.pruning import Pruning, WeightPruningConfig
 
 local_regs_config = [
     {
@@ -21,7 +21,7 @@ local_regs_config = [
         "target_sparsity": 0.5,
         "pattern": "4x1",
         "reg_type": "group_lasso",
-        "parameters": {'reg_coeff':0.2}
+        "parameters": {'reg_coeff': 0.2}
     },
     {
         "start_step": 1,
@@ -35,7 +35,7 @@ local_regs_config = [
         "pattern": "1x1",
         "sparsity_decay_type": "exp",
         "reg_type": "group_lasso",
-        "parameters": {'reg_coeff':0.1}
+        "parameters": {'reg_coeff': 0.1}
     },
     {
         "start_step": 2,
@@ -49,12 +49,13 @@ local_regs_config = [
         "pattern": "1x1",
         "sparsity_decay_type": "cube",
         "reg_type": "group_lasso",
-        "parameters": {'reg_coeff':0.0}
+        "parameters": {'reg_coeff': 0.0}
     }
 ]
 
 fake_snip_config = WeightPruningConfig(local_regs_config, target_sparsity=0.9, start_step=0, \
                                        end_step=10, pruning_frequency=1, sparsity_decay_type="exp")
+
 
 class TestPruningRegs(unittest.TestCase):
     model = torchvision.models.resnet18()
@@ -93,9 +94,5 @@ class TestPruningRegs(unittest.TestCase):
         prune.on_after_eval()
 
 
-
 if __name__ == "__main__":
     unittest.main()
-
-
-

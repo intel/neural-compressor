@@ -449,7 +449,7 @@ class PatternNxM(BasePattern):
             block_size = block_sizes[key]
             if shape[0] % block_size[0] != 0 or shape[1] % block_size[1] != 0:  ## only consider input channel
                 self.invalid_layers.append(key)
-                logger.warning(f"{key} shape {data[key].shape} cannot be divided by {self.pattern}")
+                logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
 
     def get_reduced_masks_from_data(self, data, key):
         """Obtain the unpruned weights and reshape according to the block_size."""
@@ -872,10 +872,10 @@ class PatternNInM(BasePattern):
         for key in datas.keys():
             data = datas[key].weight
             data = self._reshape_orig_to_2dims(data)
-            data = data.shape
-            if data[1] % block_size[1] != 0:
+            shape = data.shape
+            if shape[1] % block_size[1] != 0:
                 self.invalid_layers.append(key)
-                logger.warning(f"{key} shape {data[key].shape} cannot be divided by {self.pattern}")
+                logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
 
     def get_reduced_masks_from_data(self, data, key):
         """Obtain the unpruned weights and reshape according to the block_size."""

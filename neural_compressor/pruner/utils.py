@@ -18,12 +18,13 @@
 
 import re
 import yaml
+from .logger import logger
+from .schema_check import schema
 
 try:
     from neural_compressor.conf.dotdict import DotDict
 except:
     from .dot_dict import DotDict  ##TODO
-from .logger import logger
 
 
 class WeightPruningConfig:
@@ -159,7 +160,57 @@ def update_params(info):
             info[key] = params[key]
 
 
-def process_and_check_weight_config(val: WeightPruningConfig):
+def process_weight_config(global_config, local_configs, default_config):
+    pruners_info = []
+    default_all = global_config
+    for key in default_config.keys():
+        default_all[key] = reset_none_to_default(default_all, key, default_config[key])
+
+    if len(local_configs) == 0:  ##only one
+
+        update_params(default_all)
+        check_config(default_all)
+        pruner_info = DotDict(default_all)
+        pruners_info.append(pruner_info)
+    else:  ##TODO need update, in this mode, we ingore the global op names
+        for pruner_info in local_configs:
+            for key in default_config.keys():
+                ##pruner_info[key] = reset_none_to_default(pruner_info, key, global_config[key])
+                pruner_info[key] = reset_none_to_default(pruner_info, key, default_all[key])
+            update_params(pruner_info)
+            check_config(pruner_info)
+            pruner_info = DotDict(pruner_info)
+            pruners_info.append(pruner_info)
+
+    return pruners_info
+
+
+def process_yaml_config(global_config, local_configs, default_config):
+    pruners_info = []
+    default_all = global_config
+    for key in default_config.keys():
+        default_all[key] = reset_none_to_default(default_all, key, default_config[key])
+    if len(local_configs) == 0:
+        update_params(default_all)
+        check_config(default_all)
+        pruner_info = DotDict(default_all)
+        pruners_info.append(pruner_info)
+
+    else:  ##TODO need update, in this mode, we ingore the global op names
+        for pruner in local_configs:
+            for key in default_config.keys():
+                pruner_info = pruner.pruner_config
+                pruner_info[key] = reset_none_to_default(pruner_info, key, default_all[key])
+            update_params(pruner_info)
+            check_config(pruner_info)
+            pruner_info = DotDict(pruner_info)
+            pruners_info.append(pruner_info)
+
+    return pruners_info
+
+
+
+def process_and_check_config(val):
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
                              'excluded_op_names': [],
                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
@@ -177,30 +228,16 @@ def process_and_check_weight_config(val: WeightPruningConfig):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
+    if isinstance(val, WeightPruningConfig):
+        pruning_configs = val.pruning_configs
+        global_configs = val.weight_compression
+        return process_weight_config(global_configs, pruning_configs, default_config)
+    else:
+        val = val["pruning"]["approach"]["weight_compression"]
+        global_configs = val
+        pruning_configs = val["pruners"]
+        return process_yaml_config(global_configs, pruning_configs, default_config)
 
-    pruning_configs = val.pruning_configs
-    pruners_info = []
-    global_info = val.weight_compression
-    if len(pruning_configs) == 0:  ##only one
-        pruner_info = global_info
-        for key in default_config.keys():
-            pruner_info[key] = reset_none_to_default(pruner_info, key, default_config[key])
-        update_params(pruner_info)
-        check_config(pruner_info)
-        pruner_info = DotDict(pruner_info)
-        pruners_info.append(pruner_info)
-
-    else:  ##TODO need update, in this mode, we ingore the global op names
-        for pruner_info in pruning_configs:
-            for key in default_config.keys():
-                pruner_info[key] = reset_none_to_default(pruner_info, key, global_info[key])
-                pruner_info[key] = reset_none_to_default(pruner_info, key, default_config[key])
-            update_params(pruner_info)
-            check_config(pruner_info)
-            pruner_info = DotDict(pruner_info)
-            pruners_info.append(pruner_info)
-
-    return pruners_info
 
 
 def process_config(config):
@@ -212,8 +249,27 @@ def process_config(config):
     Returns:
         A config dict object.
     """
+
+    if isinstance(config, str):
+        try:
+            with open(config, 'r') as f:
+                content = f.read()
+                val = yaml.safe_load(content)
+                schema.validate(val)
+            return process_and_check_config(val)
+        except FileNotFoundError as f:
+            logger.error("{}.".format(f))
+            raise RuntimeError(
+                "The yaml file is not exist. Please check the file name or path."
+            )
+        except Exception as e:
+            logger.error("{}.".format(e))
+            raise RuntimeError(
+                "The yaml file format is not correct. Please refer to document."
+            )
+
     if isinstance(config, WeightPruningConfig):
-        return process_and_check_weight_config(config)
+        return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
 

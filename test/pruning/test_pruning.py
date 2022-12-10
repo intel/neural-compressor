@@ -10,31 +10,32 @@ from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning, WeightPruningConfig
 
+
 class TestPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
 
     def test_pruning_basic(self):
         local_configs = [
             {
-                "op_names": ['layer1.*'], 
+                "op_names": ['layer1.*'],
                 'target_sparsity': 0.5,
                 "pattern": '8x2',
                 "pruning_type": "magnitude_progressive"
             },
             {
                 "op_names": ['layer2.*'],
-                'target_sparsity': 0.5, 
+                'target_sparsity': 0.5,
                 'pattern': '2:4'
             },
             {
                 "op_names": ['layer3.*'],
-                'target_sparsity': 0.7, 
-                'pattern': '4x1',
+                'target_sparsity': 0.7,
+                'pattern': '5x1',
                 "pruning_type": "snip_progressive"
             }
         ]
         config = WeightPruningConfig(
-            local_configs, 
+            local_configs,
             target_sparsity=0.8
         )
         prune = Pruning(config)

@@ -8,7 +8,7 @@ import torch.nn as nn
 
 from neural_compressor.data import DATASETS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.pruning import Pruning,WeightPruningConfig
+from neural_compressor.pruning import Pruning, WeightPruningConfig
 
 
 class TestPruningCriteria(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestPruningCriteria(unittest.TestCase):
     def test_pruning_criteria(self):
         local_configs = [
             {
-                "op_names": ['layer1.*'], 
+                "op_names": ['layer1.*'],
                 'target_sparsity': 0.4,
                 "pattern": '8x2',
                 "pruning_type": "magnitude_progressive",
@@ -26,7 +26,7 @@ class TestPruningCriteria(unittest.TestCase):
             },
             {
                 "op_names": ['layer2.*'],
-                'target_sparsity': 0.45, 
+                'target_sparsity': 0.45,
                 'pattern': '2:4',
                 "pruning_type": "snip",
                 'start_step': 6,
@@ -35,7 +35,7 @@ class TestPruningCriteria(unittest.TestCase):
             {
                 "op_names": ['layer3.*'],
                 'excluded_op_names': ['downsample.*'],
-                'target_sparsity': 0.7, 
+                'target_sparsity': 0.7,
                 'pattern': '4x1',
                 "pruning_type": "snip_momentum_progressive",
                 "pruning_frequency": 4,
@@ -44,9 +44,9 @@ class TestPruningCriteria(unittest.TestCase):
             }
         ]
         config = WeightPruningConfig(
-            local_configs, 
+            local_configs,
             target_sparsity=0.8,
-            sparsity_decay_type= "cube"
+            sparsity_decay_type="cube"
         )
         prune = Pruning(config)
         prune.update_config(start_step=1, end_step=10)
@@ -82,7 +82,6 @@ class TestPruningCriteria(unittest.TestCase):
         prune.on_before_eval()
         prune.on_after_eval()
 
+
 if __name__ == "__main__":
     unittest.main()
-
-
