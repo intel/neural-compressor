@@ -72,11 +72,3 @@ class KerasModel(BaseModel):
     @abstractmethod
     def framework(self):
         return 'keras'
-
-    def get_all_weight_names(self):
-        import tensorflow as tf
-        names = []
-        for index, layer in enumerate(tf.keras.models.load_model(self._model).layers):
-            if len(layer.weights):
-                names.append(index)
-        return names

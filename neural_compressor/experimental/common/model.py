@@ -44,10 +44,9 @@ class Model(object):
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
-            if model_type == 'keras':
-                model = MODELS['keras'](root, **kwargs)
-            else:
-                model = MODELS['tensorflow'](model_type, root, **kwargs)
+            model = MODELS['tensorflow'](model_type, root, **kwargs)
+        elif framework == 'keras':
+            model = MODELS['keras'](root, **kwargs)
         elif framework == 'pytorch':
             model = MODELS[framework](root, **kwargs)
         else:

@@ -439,6 +439,28 @@ def get_graph_from_original_keras_v2(model, output_dir):
     output_names = [tensor.name.split(':')[0] for tensor in output_tensors]
     return graph_def, input_names, output_names
 
+def check_keras_format(model, saved_model_dir):
+    from tensorflow.python import saved_model
+    from tensorflow.python.saved_model.load import load
+    from tensorflow.python.saved_model import save_options
+    from tensorflow.python.saved_model.loader_impl import parse_saved_model_with_debug_info
+    version = 'saved_model_v2'
+    try:
+        saved_model.save(
+            model,
+            saved_model_dir,
+            options=save_options.SaveOptions(save_debug_info=True))
+    except:
+        return 'trackable_object'
+    saved_model_proto, _ = parse_saved_model_with_debug_info(saved_model_dir)
+    saved_model_version = saved_model_proto.saved_model_schema_version
+    if saved_model_version == 0:
+        return 'saved_model_v1'
+    if saved_model_version not in [1, 2]:
+        raise ValueError("SavedModel file format({0}) is not supported".format(
+            saved_model_version))
+    return version
+
 def get_graph_from_saved_model_v1(model):
     from tensorflow.python.framework import ops
     from tensorflow.python.saved_model import constants
@@ -481,6 +503,51 @@ def get_graph_from_saved_model_v1(model):
         graph_def = tf_graph_util.convert_variables_to_constants(
             sess, graph.as_graph_def(), output_nodes)
     return graph_def, inputs, outputs
+
+def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with keras model
+    Args:
+        model (string or tf.keras.Model): model path or tf.keras.Model object
+        input_tensor_names (list of string): input_tensor_names of model
+        output_tensor_names (list of string): output_tensor_names of model
+     Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object
+        input_tensor_names (list of string): validated input_tensor_names
+        output_tensor_names (list of string): validated output_tensor_names
+    """
+    temp_dir = tempfile.mkdtemp()
+    if tf.version.VERSION > '2.1.0':
+        if not isinstance(model, tf.keras.Model):
+            model = tf.keras.models.load_model(model)
+        keras_format = check_keras_format(model, temp_dir)
+        if keras_format == 'saved_model_v2':
+            try:
+                graph_def, input_names, output_names = get_graph_from_saved_model_v2(
+                    temp_dir, input_tensor_names, output_tensor_names)
+                if '_FusedBatchNormEx' in [node.op for node in graph_def.node]:
+                    keras_format = 'trackable_object'
+            except:
+                keras_format = 'trackable_object'
+        if keras_format == 'trackable_object':
+            try:
+                graph_def, input_names, output_names = get_graph_from_original_keras_v2(
+                                                       model, temp_dir)
+            except:
+                keras_format = 'saved_model_v1'
+        if keras_format == 'saved_model_v1':
+            try:
+                tf.keras.backend.set_learning_phase(0)
+                graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
+            except:
+                raise ValueError('Not supported keras model type...')
+
+    # tensorflow 1.x use v1 convert method
+    else:
+        tf.keras.backend.set_learning_phase(0)
+        graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
+    shutil.rmtree(temp_dir, True)
+    return graph_def_session(graph_def, input_names, output_names, **kwargs)
+
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with slim model
@@ -643,6 +710,7 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
             'graph_def': graph_def_session,
             'graph': graph_session,
             'saved_model': saved_model_session,
+            'keras': keras_session,
             'checkpoint': checkpoint_session,
             'estimator': estimator_session,
             'slim': slim_session,}
@@ -1011,6 +1079,7 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'estimator': TensorflowBaseModel,
                      'slim': TensorflowBaseModel,
                      'saved_model': TensorflowSavedModelModel,
+                     'keras': TensorflowSavedModelModel
                      }
 
 class TensorflowModel(object):

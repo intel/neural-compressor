@@ -1391,6 +1391,7 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
+                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':

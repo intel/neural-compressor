@@ -94,7 +94,7 @@ def main():
     from neural_compressor.utils.utility import set_random_seed
     from neural_compressor.experimental import common
     set_random_seed(9527)
-    config = PostTrainingQuantConfig()
+    config = PostTrainingQuantConfig(backend='itex')
     quantized_model = fit(model,
                           conf=config,
                           calib_dataloader=common.DataLoader(Dataset(), batch_size=10),
