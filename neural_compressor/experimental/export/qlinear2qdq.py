@@ -27,7 +27,7 @@ def check_model(model):
     """
     has_integerop = False
     has_qlinearop = False
-    for node in model.nodes():
+    for node in model.graph.node:
         if node.op_type.endswith('Integer'):
             has_integerop = True
         elif node.op_type.startswith('QLinear'):
@@ -38,6 +38,9 @@ def check_model(model):
         logger.info("This model has Integer ops, these ops will be skipped.")
     if has_qlinearop:
         return True
+    else:
+        logger.info("This model has no QLinear ops, save the original model.")
+        return False
 
 def onnx_qlinear_to_qdq(
     model,
@@ -55,20 +58,21 @@ def onnx_qlinear_to_qdq(
     add_nodes = []
     remove_nodes = []
     inits = []
-    for node in model.graph.node:
-        if node.op_type in QOPERATORS:
-            if node.output[0] not in input_name_to_nodes:
-                continue
-            children = []
-            for out in node.output:
-                children.extend(input_name_to_nodes[node.output[0]])
-            converter = QOPERATORS[node.op_type](
-                node,
-                children,
-                model.graph.initializer)
-            done, add_node, init = converter.convert()
-            if done:
-                add_nodes.extend(add_node)
-                inits.extend(init)
-                remove_nodes.append(node)
+    if check_model(model):
+        for node in model.graph.node:
+            if node.op_type in QOPERATORS:
+                if node.output[0] not in input_name_to_nodes:
+                    continue
+                children = []
+                for out in node.output:
+                    children.extend(input_name_to_nodes[node.output[0]])
+                converter = QOPERATORS[node.op_type](
+                    node,
+                    children,
+                    model.graph.initializer)
+                done, add_node, init = converter.convert()
+                if done:
+                    add_nodes.extend(add_node)
+                    inits.extend(init)
+                    remove_nodes.append(node)
     return add_nodes, remove_nodes, inits
