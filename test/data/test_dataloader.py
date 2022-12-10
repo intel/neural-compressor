@@ -6,7 +6,7 @@ import numpy as np
 import shutil
 from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
 from neural_compressor.data.dataloaders.dataloader import DataLoader
-from neural_compressor.experimental.data import Datasets, DATALOADERS, TRANSFORMS
+from neural_compressor.data import Datasets, DATALOADERS, TRANSFORMS
 from PIL import Image
 
 class TestBuiltinDataloader(unittest.TestCase):

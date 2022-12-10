@@ -17,23 +17,7 @@
 
 """Built-in dataloaders for multiple framework backends."""
 
-from .tensorflow_dataloader import TensorflowDataLoader
-from .mxnet_dataloader import MXNetDataLoader
-from .pytorch_dataloader import PyTorchDataLoader
-from .onnxrt_dataloader import ONNXRTDataLoader
-from .default_dataloader import DefaultDataLoader
-
-DATALOADERS = {"tensorflow": TensorflowDataLoader,
-               "tensorflow_itex": TensorflowDataLoader,
-               "mxnet": MXNetDataLoader,
-               "pytorch": PyTorchDataLoader,
-               "pytorch_ipex": PyTorchDataLoader,
-               "pytorch_fx": PyTorchDataLoader,
-               "onnxrt_qlinearops": ONNXRTDataLoader,
-               "onnxrt_integerops": ONNXRTDataLoader,
-               "onnxrt_qdq": ONNXRTDataLoader,
-               "onnxrt_qoperator": ONNXRTDataLoader,
-               }
+from neural_compressor.experimental.data.dataloaders import DATALOADERS
 
 # THIS API IS TO BE DEPRECATED!
 class DataLoader(object):

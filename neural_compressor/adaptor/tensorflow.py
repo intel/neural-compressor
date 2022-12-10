@@ -1586,7 +1586,8 @@ class TensorFlowAdaptor(Adaptor):
     
     def _partial_dataset_of(self, dataloader, confidence_batches):
         from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
-        if isinstance(dataloader.dataset, DummyDataset):
+        from neural_compressor.data.datasets.dummy_dataset import DummyDataset as DummyDataset_v2_x
+        if isinstance(dataloader.dataset, DummyDataset) or isinstance(dataloader.dataset, DummyDataset_v2_x):
             assert(isinstance(confidence_batches, int))
             ds = copy.deepcopy(dataloader.dataset)
             ds.dataset = ds.dataset[:confidence_batches]
