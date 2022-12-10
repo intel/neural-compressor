@@ -191,35 +191,33 @@ class TestNAS(unittest.TestCase):
             self.assertTrue(len(best_model_archs) > 0)
 
     def test_dynas(self):
-        try:
-            nas_agent = NAS('dynas_fake.yaml')
-            for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
-                config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-                config.dynas.supernet = supernet
-                config.seed = 42
-                config.dynas.metrics = ['acc', 'macs', 'lat']
-                config.dynas.population = 10
-                config.dynas.num_evals = 10
-                config.dynas.results_csv_path = 'search_results.csv'
-                config.dynas.batch_size = 64
-                nas_agent = NAS(config)
-                best_model_archs = nas_agent.search()
-                self.assertTrue(len(best_model_archs) > 0)
+        nas_agent = NAS('dynas_fake.yaml')
+        for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
+            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+            config.dynas.supernet = supernet
+            config.seed = 42
+            config.dynas.metrics = ['acc', 'macs', 'lat']
+            config.dynas.population = 10
+            config.dynas.num_evals = 10
+            config.dynas.results_csv_path = 'search_results.csv'
+            config.dynas.batch_size = 64
+            nas_agent = NAS(config)
+            best_model_archs = nas_agent.search()
+            self.assertTrue(len(best_model_archs) > 0)
 
-            nas_agent.acc_predictor.get_parameters()
-            nas_agent.acc_predictor.save('tmp.pickle')
-            nas_agent.acc_predictor.load('tmp.pickle')
-            samples = nas_agent.supernet_manager.random_samples(10)
-            subnet_cfg = nas_agent.supernet_manager.translate2param(samples[0])
-            nas_agent.runner_validate.validate_macs(subnet_cfg)
-            nas_agent.runner_validate.measure_latency(subnet_cfg)
-            nas_agent.validation_interface.clear_csv()
-            os.remove('tmp.pickle')
-        except TimeoutError:
-            pass
+        nas_agent.acc_predictor.get_parameters()
+        nas_agent.acc_predictor.save('tmp.pickle')
+        nas_agent.acc_predictor.load('tmp.pickle')
+        samples = nas_agent.supernet_manager.random_samples(10)
+        subnet_cfg = nas_agent.supernet_manager.translate2param(samples[0])
+        nas_agent.runner_validate.validate_macs(subnet_cfg)
+        nas_agent.runner_validate.measure_latency(subnet_cfg)
+        nas_agent.validation_interface.clear_csv()
+        os.remove('tmp.pickle')
 
     def test_vision_reference(self):
-        from neural_compressor.experimental.nas.dynast.dynas_utils import TorchVisionReference
+        from neural_compressor.experimental.nas.dynast.dynas_utils import \
+            TorchVisionReference
         reference = TorchVisionReference('ofa_mbv3', dataset_path=None, batch_size=1)
         macs = reference.validate_macs()
 
