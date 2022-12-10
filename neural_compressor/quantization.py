@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from .experimental import Quantization as ExpQuantization
 from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import PostTrainingQuantConfig
-
 
 def fit(model,
         conf,
