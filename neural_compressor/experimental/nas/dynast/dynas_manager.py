@@ -291,12 +291,9 @@ class TransformerLTEncoding(ParameterManager):  #noqa: D101
     def onehot_custom(self, subnet_cfg, provide_onehot=True):  #noqa: D102
 
         features = []
-        #import ipdb;ipdb.set_trace()
         features.extend(subnet_cfg['encoder_embed_dim'])
 
-        #encoder_layer_num = subnet_cfg['encoder_layer_num']
-        encode_layer_num_int = 6  # encoder_layer_num[0]
-        # features.extend(encoder_layer_num)
+        encode_layer_num_int = 6
 
         # Encoder FFN Embed Dim
         encoder_ffn_embed_dim = subnet_cfg['encoder_ffn_embed_dim']
@@ -360,10 +357,6 @@ class TransformerLTEncoding(ParameterManager):  #noqa: D101
             one_hot_count = 0
             unique_values = self.unique_values
 
-            # uncomment
-            # with open(self.onehot_unique,'rb') as f:
-            #    load_unique_values = pickle.load(f)
-            #    unique_values = load_unique_values.tolist()
             for unique in unique_values:
                 one_hot_count += len(unique.tolist())
 
@@ -379,8 +372,6 @@ class TransformerLTEncoding(ParameterManager):  #noqa: D101
 
         else:
             return features
-
-        # return np.array(ks_onehot + ex_onehot)
 
     def import_csv(
         self,
@@ -426,7 +417,6 @@ class TransformerLTEncoding(ParameterManager):  #noqa: D101
             config_as_onehot = self.onehot_custom(
                 config_as_dict, provide_onehot=False)
             convert_to_onehot.append(config_as_onehot)
-        #import ipdb;ipdb.set_trace()
         df[config] = convert_to_dict
         df['config_pymoo'] = convert_to_pymoo
         df['config_onehot'] = convert_to_onehot
