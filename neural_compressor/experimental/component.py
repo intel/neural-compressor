@@ -474,6 +474,10 @@ class Component(object):
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "tensorflow":
+                from ..model.model import get_model_type
+                if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
+                    self.framework = 'keras'
             if self.framework == "pytorch":
                 if self.cfg.model.backend == "default":
                     self.framework = "pytorch_fx"

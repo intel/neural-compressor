@@ -185,6 +185,10 @@ class TensorFlow(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
 
+class Keras(MXNet):
+    def __init__(self, precisions=None):
+        super().__init__(precisions)
+
 class PyTorch(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
@@ -243,6 +247,7 @@ distillation = DistillationConfig(teacher_model=None)
 nas = NASConfig()
 onnxruntime_config = ONNX()
 tensorflow_config = TensorFlow()
+keras_config = Keras()
 pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
@@ -258,7 +263,8 @@ class Config:
                  onnxruntime=onnxruntime_config,
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
-                 mxnet=mxnet_config):
+                 mxnet=mxnet_config,
+                 keras=keras_config):
         self._quantization = quantization
         self._benchmark = benchmark
         self._options = options
@@ -269,6 +275,7 @@ class Config:
         self._tensorflow = tensorflow
         self._pytorch = pytorch
         self._mxnet = mxnet
+        self._keras = keras
 
     @property
     def distillation(self):
@@ -281,6 +288,10 @@ class Config:
     @property
     def tensorflow(self):
         return self._tensorflow
+
+    @property
+    def keras(self):
+        return self._keras
 
     @property
     def pytorch(self):
