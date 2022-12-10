@@ -126,6 +126,12 @@ class TestNAS(unittest.TestCase):
         build_dynas_fake_yaml()
         build_dynas_results_csv()
 
+        try:
+            shutil.rmtree('.torch/')
+        except:
+            pass
+
+
     @classmethod
     def tearDownClass(cls):
         os.remove('fake.yaml')
