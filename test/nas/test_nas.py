@@ -1,15 +1,17 @@
-from multiprocessing.spawn import import_main_path
 import os
 import shutil
 import unittest
+from pathlib import Path
+
 import numpy as np
 import torch
 
 from neural_compressor.conf.config import NASConfig
 from neural_compressor.data import DATASETS
-from neural_compressor.experimental import common, NAS
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.experimental.nas.dynas import DyNAS
+from neural_compressor.experimental import NAS, common
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import \
+    PyTorchDataLoader
+
 
 def build_fake_yaml(approach=None, search_algorithm=None, metrics=['acc']):
     fake_yaml = """
@@ -126,12 +128,6 @@ class TestNAS(unittest.TestCase):
         build_dynas_fake_yaml()
         build_dynas_results_csv()
 
-        try:
-            shutil.rmtree('.torch/')
-        except:
-            pass
-
-
     @classmethod
     def tearDownClass(cls):
         os.remove('fake.yaml')
@@ -139,6 +135,7 @@ class TestNAS(unittest.TestCase):
         os.remove('search_results.csv')
         shutil.rmtree(os.path.join(os.getcwd(), 'NASResults'), ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
+        shutil.rmtree(os.path.join(os.getcwd(), '.torch'), ignore_errors=True)
 
     def test_basic_nas(self):
         # Built-in train, evaluation
