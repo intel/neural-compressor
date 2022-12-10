@@ -1,0 +1,69 @@
+## Copyright (c) 2021 Intel Corporation
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##    http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
+#
+-
+  version:
+    name: 'default'
+  
+  precisions: &common_precisions
+    names: int8, fp32
+    valid_mixed_precisions: []
+  
+  ops: &common_ops
+    int8: ['Conv2D', 'Dense']
+    fp32: ['*'] # '*' means all op types
+  
+  capabilities: &common_capabilities
+    int8: {
+          'Conv2D':  {
+            'weight':   {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        }
+                    },
+          'Dense': {
+            'weight':   {
+                        'dtype': ['int8'],
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor'],
+                        },
+            'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor'],
+                        }
+                    },
+         'default': {
+             'activation': {
+                        'dtype': ['int8'],
+                        'quant_mode': 'static',
+                        'scheme': ['sym'],
+                        'algorithm': ['minmax'],
+                        'granularity': ['per_tensor']
+                        }
+                    },
+          }
