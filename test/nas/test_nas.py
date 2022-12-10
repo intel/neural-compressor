@@ -203,6 +203,8 @@ class TestNAS(unittest.TestCase):
             config.dynas.batch_size = 64
             nas_agent = NAS(config)
             best_model_archs = nas_agent.search()
+            self.assertTrue(len(best_model_archs) > 0)
+
         nas_agent.acc_predictor.get_parameters()
         nas_agent.acc_predictor.save('tmp.pickle')
         nas_agent.acc_predictor.load('tmp.pickle')
@@ -212,11 +214,18 @@ class TestNAS(unittest.TestCase):
         nas_agent.runner_validate.measure_latency(subnet_cfg)
         nas_agent.validation_interface.clear_csv()
         os.remove('tmp.pickle')
+
+    def test_vision_reference(self):
         from neural_compressor.experimental.nas.dynast.dynas_utils import TorchVisionReference
-        reference = TorchVisionReference('ofa_resnet50_ofa_mbv3', dataset_path=None, batch_size=1)
-        reference.validate_macs()
-        reference.measure_latency()
-        self.assertTrue(len(best_model_archs) > 0)
+        reference = TorchVisionReference('ofa_mbv3', dataset_path=None, batch_size=1)
+        macs = reference.validate_macs()
+
+        self.assertEqual(macs, 217234208)
+
+        reference.measure_latency(
+            warmup_steps=1,
+            measure_steps=1,
+        )
 
 
 if __name__ == "__main__":
