@@ -18,12 +18,6 @@
 """Helper functions to export onnx model from QLinearops to QDQ."""
 
 from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport
-
-torch = LazyImport('torch')
-onnx = LazyImport('onnx')
-ort = LazyImport('onnxruntime')
-ortq = LazyImport('onnxruntime.quantization')
 
 def check_model(model):
     """Check optype for input model.
@@ -49,7 +43,7 @@ def onnx_qlinear_to_qdq(
     model,
     input_name_to_nodes,
 ):
-    """Export FP32 PyTorch model into FP32 ONNX model.
+    """Export ONNX QLinearops model into QDQ model.
 
     Args:
         model (ModelProto): int8 onnx model.
