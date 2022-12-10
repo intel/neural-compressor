@@ -41,7 +41,9 @@ from ofa.tutorial.flops_table import rm_bn_from_net
 
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
-transformer_interface = LazyImport('neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface')
+transformer_interface = LazyImport(
+    'neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface'
+)
 
 
 def get_macs(
