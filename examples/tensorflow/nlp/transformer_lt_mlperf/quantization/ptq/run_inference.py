@@ -329,7 +329,7 @@ def main(unused_args):
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
-            fit(graph, conf=BenchmarkConfig(), b_func=eval_func)
+            fit(graph, conf=BenchmarkConfig(cores_per_instance=28, num_of_instance=1), b_func=eval_func)
         elif FLAGS.mode == 'accuracy':
             eval_func(graph)
             
