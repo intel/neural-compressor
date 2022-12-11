@@ -25,6 +25,7 @@ from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.mxnet_model import MXNetModel
+from neural_compressor.model.keras_model import KerasModel
 from neural_compressor.model.tensorflow_model import (
      TensorflowBaseModel,
      TensorflowModel,
@@ -47,6 +48,7 @@ np = LazyImport('numpy')
 
 MODELS = {'tensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,
+          'keras': KerasModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel if TORCH else None,
           'pytorch_ipex': IPEXModel if TORCH else None,
@@ -59,7 +61,6 @@ MODELS = {'tensorflow': TensorflowModel,
 
 def get_model_fwk_name(model):
     """Detect the input model belongs to which framework
-
     Args:
         model (string): framework name that supported by Neural Compressor, if there's no available fwk info,
                         then return 'NA'.
@@ -166,6 +167,8 @@ class Model(object):
             else:
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
+        elif framework == 'keras':
+            model = MODELS['keras'](root, **kwargs)
         elif framework == 'pytorch':
             model = MODELS[framework](root, **kwargs)
         else:

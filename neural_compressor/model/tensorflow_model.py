@@ -28,8 +28,9 @@ from neural_compressor.utils import logger
 from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 
-
 tf = LazyImport('tensorflow')
+np = LazyImport('numpy')
+
 tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
 def get_model_type(model):
@@ -41,39 +42,31 @@ def get_model_type(model):
     """
 
     from neural_compressor.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
+    if isinstance(model, str):
+        model = os.path.abspath(os.path.expanduser(model))
+        if (model.endswith('.h5') and os.path.isfile(model)) or \
+          is_saved_model_format(os.path.dirname(model)) or \
+          (os.path.isdir(model) and is_saved_model_format(model)):
+            if version1_lt_version2(tf.version.VERSION, '2.10.0'):
+                logger.warn("keras model running on tensorflow 2.10.0 and"
+                            " lower not support intel ITEX.")
+            try:
+                model = tf.keras.models.load_model(model)
+            except:
+                pass
+    if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
+        return 'keras'
     if isinstance(model, tf.Graph):
         return 'graph'
     elif isinstance(model, tf.compat.v1.GraphDef):
         return 'graph_def'
-    elif isinstance(model, tf.keras.Model):
-        return 'keras'
     elif isinstance(model, tf.compat.v1.estimator.Estimator):
         return 'estimator'
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
-        if (model.endswith('.h5') and os.path.isfile(model)):
-            if version1_lt_version2(tf.version.VERSION, '2.3.0'):
-                logger.warn("keras model running on tensorflow 2.2.0 and"
-                            " lower may have problem.")
-            model = tf.keras.models.load_model(model)
-            if isinstance(model, tf.keras.Model):
-                return 'keras'
         if (model.endswith('.pb') and os.path.isfile(model)):
             if is_saved_model_format(os.path.dirname(model)):
-                # Warning: TF compatibility issue to load saved model. TF 2.3 keras.load
-                # can load saved model from TF backend, but TF 2.4 cannot.
-                try:
-                    if version1_lt_version2(tf.version.VERSION, '2.3.0'):
-                        logger.warn("keras model running on tensorflow 2.2.0 and"
-                                    " lower may have problem.")
-                    model = tf.keras.models.load_model(model)
-                    if isinstance(model, tf.keras.Model):
-                        return 'keras'
-                    else:
-                        return 'saved_model'
-                except:
-                    # can't use keras load
-                    return 'saved_model'
+                return 'saved_model'
             else:
                 return 'frozen_pb'
         elif model.endswith('.ckpt') and os.path.isfile(model):
@@ -82,24 +75,12 @@ def get_model_type(model):
             if is_ckpt_format(model):
                 return 'checkpoint'
             elif is_saved_model_format(model):
-                # it's very ugly tf version issue, in tf2.3 keras.load can
-                #batch_size_(batch_size), load saved model from tf backend, but tf2.4 it will crash
-                try:
-                    if version1_lt_version2(tf.version.VERSION, '2.3.0'):
-                        logger.warn("keras model running on tensorflow 2.2.0 and"
-                                    " lower may have problem.")
-                    model = tf.keras.models.load_model(model)
-                    if isinstance(model, tf.keras.Model):
-                        return 'keras'
-                    else:
-                        return 'saved_model'
-                except:
-                    # can't use keras load
-                    return 'saved_model'
+                return 'saved_model'
         elif os.path.isfile(model + '.pb'):
             return 'frozen_pb'
 
     raise ValueError('model {} has not recognized model type....'.format(model))
+
 
 
 def validate_graph_node(graph_def, node_names):
@@ -294,28 +275,6 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
                                          grappler_meta_graph_def, graph_id=b"tf_graph")
         return opt, input_tensor_names, output_tensor_names
 
-def check_keras_format(model, saved_model_dir):
-    from tensorflow.python import saved_model
-    from tensorflow.python.saved_model.load import load
-    from tensorflow.python.saved_model import save_options
-    from tensorflow.python.saved_model.loader_impl import parse_saved_model_with_debug_info
-    version = 'saved_model_v2'
-    try:
-        saved_model.save(
-            model,
-            saved_model_dir,
-            options=save_options.SaveOptions(save_debug_info=True))
-    except:
-        return 'trackable_object'
-    saved_model_proto, _ = parse_saved_model_with_debug_info(saved_model_dir)
-    saved_model_version = saved_model_proto.saved_model_schema_version
-    if saved_model_version == 0:
-        return 'saved_model_v1'
-    if saved_model_version not in [1, 2]:
-        raise ValueError("SavedModel file format({0}) is not supported".format(
-            saved_model_version))
-    return version
-
 def get_graph_from_saved_model_v2(saved_model_dir,
         input_tensor_names, output_tensor_names):
     from tensorflow.python.saved_model import tag_constants
@@ -370,6 +329,28 @@ def get_graph_from_original_keras_v2(model, output_dir):
     input_names = [tensor.name.split(':')[0] for tensor in input_tensors]
     output_names = [tensor.name.split(':')[0] for tensor in output_tensors]
     return graph_def, input_names, output_names
+
+def check_keras_format(model, saved_model_dir):
+    from tensorflow.python import saved_model
+    from tensorflow.python.saved_model.load import load
+    from tensorflow.python.saved_model import save_options
+    from tensorflow.python.saved_model.loader_impl import parse_saved_model_with_debug_info
+    version = 'saved_model_v2'
+    try:
+        saved_model.save(
+            model,
+            saved_model_dir,
+            options=save_options.SaveOptions(save_debug_info=True))
+    except:
+        return 'trackable_object'
+    saved_model_proto, _ = parse_saved_model_with_debug_info(saved_model_dir)
+    saved_model_version = saved_model_proto.saved_model_schema_version
+    if saved_model_version == 0:
+        return 'saved_model_v1'
+    if saved_model_version not in [1, 2]:
+        raise ValueError("SavedModel file format({0}) is not supported".format(
+            saved_model_version))
+    return version
 
 def get_graph_from_saved_model_v1(model):
     from tensorflow.python.framework import ops
@@ -457,6 +438,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
     shutil.rmtree(temp_dir, True)
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
+
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with slim model
@@ -562,12 +544,14 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
             kwargs['input_fn'], tf.estimator.ModeKeys.PREDICT)
         estimator_spec = model._call_model_fn(features, None,
             tf.estimator.ModeKeys.PREDICT, model.config)
+
         if len(output_tensor_names) == 0:
             outputs = [tensor.name for tensor in estimator_spec.predictions.values()] if\
                 isinstance(estimator_spec.predictions, dict) else \
                     [estimator_spec.predictions.name]
         else:
             outputs = output_tensor_names
+
         logger.info("Estimator output tensor names are {}.".format(outputs))
         with tf.compat.v1.Session(graph=g) as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
@@ -1002,7 +986,8 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'estimator': TensorflowBaseModel,
                      'slim': TensorflowBaseModel,
                      'saved_model': TensorflowSavedModelModel,
-                     'keras': TensorflowSavedModelModel,}
+                     'keras': TensorflowSavedModelModel
+                     }
 
 class TensorflowModel(object):
     def __new__(cls, model_type, root, **kwargs):
@@ -1010,5 +995,4 @@ class TensorflowModel(object):
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
         model.model_type = model_type
-
         return model
