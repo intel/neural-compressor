@@ -558,6 +558,9 @@ class TuneStrategy(object):
             if self.cfg.model.backend == 'itex':
                 self.cfg.model.framework = 'tensorflow_itex'
                 framework = 'tensorflow_itex'
+        if 'keras' in framework:
+            framework_specific_info.update({
+                 'workspace_path': self.cfg.tuning.workspace.path, })
         if framework == 'mxnet':
             framework_specific_info.update({"q_dataloader": q_dataloader})
         if 'onnx' in framework.lower():
