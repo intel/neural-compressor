@@ -40,7 +40,7 @@ from .common import Model as NCModel
 from .common import Metric as NCMetric
 from .common import Postprocess as NCPostprocess
 from .common import _generate_common_dataloader
-from ..model.tensorflow_model import get_model_fwk_name
+from ..model.model import get_model_fwk_name
 from ..conf.pythonic_config import Config
 
 def set_env_var(env_var, value, overwrite_existing=False):
