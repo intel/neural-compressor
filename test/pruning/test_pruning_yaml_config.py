@@ -26,7 +26,7 @@ def build_fake_yaml():
           max_sparsity_ratio_per_op: 0.95
           pruning_frequency: 2
           pruners:
-            - !Pruner
+            - !PrunerV2
                 target_sparsity: 0.3
                 start_step: 0
                 sparsity_decay_type: "cos"
@@ -35,7 +35,7 @@ def build_fake_yaml():
                 op_names: ['layer1.*']
                 pruning_scope: "global"
                 pattern: "3:5"
-            - !Pruner
+            - !PrunerV2
                 start_step: 1
                 end_step: 1
                 target_sparsity: 0.5
@@ -64,7 +64,7 @@ class TestPytorchPruning(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    def test_pytorch_pruning_basic(self):
+    def test_pruning_yaml_config(self):
         prune = Pruning("fake_snip.yaml")
         ##prune.generate_pruners()
         prune.update_config(start_step=1)

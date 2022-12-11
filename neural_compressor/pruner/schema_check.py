@@ -43,7 +43,7 @@ def constructor_register(cls):
 
 
 @constructor_register
-class Pruner:
+class PrunerV2:
     """
     similiar to torch optimizer's interface
     """
@@ -105,7 +105,7 @@ weight_compression_schema = Schema({
     Optional('parameters', default={"reg_coeff": 0.0}): dict,
     Optional('resume_from_pruned_checkpoint', default=False): str,
     Optional('pruners'): And(list, \
-                             lambda s: all(isinstance(i, Pruner) for i in s))
+                             lambda s: all(isinstance(i, PrunerV2) for i in s))
 })
 
 approach_schema = Schema({

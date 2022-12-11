@@ -26,7 +26,7 @@ def build_fake_yaml_basic():
           pruning_frequency: 1 
           sparsity_decay_type: "cos"
           pruners:
-            - !Pruner
+            - !PrunerV2
                 start_step: 0      
                 end_step: 10
                 pruning_type: "magnitude"
@@ -35,7 +35,7 @@ def build_fake_yaml_basic():
                 pattern: "4x1"
                 parameters: {"reg_coeff":0.1}
 
-            - !Pruner
+            - !PrunerV2
                 start_step: 1
                 end_step: 1
                 target_sparsity: 0.5
@@ -45,7 +45,7 @@ def build_fake_yaml_basic():
                 pruning_scope: local
                 pattern: "2:4"
                 sparsity_decay_type: "exp"
-            - !Pruner
+            - !PrunerV2
                 start_step: 2
                 end_step: 8
                 target_sparsity: 0.8
@@ -73,7 +73,7 @@ class TestPruningYaml(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
 
-    def test_pruning_basic(self):
+    def test_pruning_yaml(self):
         prune = Pruning("fake_snip.yaml")
         prune.update_config(start_step=1)
         prune.model = self.model
