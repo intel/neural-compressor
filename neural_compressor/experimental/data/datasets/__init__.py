@@ -17,7 +17,7 @@
 
 """Built-in datasets class for multiple framework backends."""
 
-from .dataset import DATASETS, Dataset, IterableDataset, dataset_registry
+from .dataset import Datasets, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -28,4 +28,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["DATASETS", "Dataset", "IterableDataset", "dataset_registry"]
+__all__ = ["Datasets", "Dataset", "IterableDataset", "dataset_registry"]

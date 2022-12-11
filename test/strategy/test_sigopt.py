@@ -144,10 +144,10 @@ class TestSigoptTuningStrategy(unittest.TestCase):
     def test_run_sigopt_one_trial_new_api(self):
         from neural_compressor.quantization import fit
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.data import Datasets, DATALOADERS
         
         # dataset and dataloader
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
         
         # tuning and accuracy criterion

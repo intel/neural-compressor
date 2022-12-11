@@ -9,7 +9,7 @@ import unittest
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.experimental.data.datasets.dataset import DATASETS
+from neural_compressor.experimental.data.datasets.dataset import Datasets
 from packaging.version import Version
 from torch.quantization import QuantStub, DeQuantStub
 
@@ -209,7 +209,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             model = DynamicControlModel()
             # run fx_quant in neural_compressor and save the quantized GraphModule
             conf = PostTrainingQuantConfig(approach=approach)
-            dataset = DATASETS("pytorch")['dummy']((100, 3, 224, 224))
+            dataset = Datasets("pytorch")['dummy']((100, 3, 224, 224))
             dataloader = torch.utils.data.DataLoader(dataset)
             q_model = quantization.fit(model,
                                        conf,
