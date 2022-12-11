@@ -40,7 +40,7 @@ from .common import Model as NCModel
 from .common import Metric as NCMetric
 from .common import Postprocess as NCPostprocess
 from .common import _generate_common_dataloader
-from ..model.model import get_model_fwk_name
+from ..model.tensorflow_model import get_model_fwk_name
 from ..conf.pythonic_config import Config
 
 def set_env_var(env_var, value, overwrite_existing=False):
@@ -482,7 +482,7 @@ class Benchmark(object):
                 "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
             if self.framework == "tensorflow":
-                from ..model.model import get_model_type
+                from ..model.tensorflow_model import get_model_type
                 if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
                     self.framework = 'keras'
             if self.framework == "pytorch":

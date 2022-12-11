@@ -254,7 +254,7 @@ class TestTensorflowModel(unittest.TestCase):
         keras_model = build_keras()
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
 
-        from neural_compressor.model.model import TensorflowQATModel
+        from neural_compressor.model.tensorflow_model import TensorflowQATModel
         model = TensorflowQATModel(keras_model)
         assert isinstance(model.model, tf.keras.Model)
         keras_model.save('./simple_model')
@@ -324,7 +324,7 @@ class TestTensorflowModel(unittest.TestCase):
 
 
     def test_tensorflow(self):
-        from neural_compressor.model.model import TensorflowBaseModel
+        from neural_compressor.model.tensorflow_model import TensorflowBaseModel
         ori_model = build_graph()
         self.assertEqual('tensorflow', get_model_fwk_name(ori_model))
         self.assertEqual('tensorflow', get_model_fwk_name(TensorflowBaseModel(ori_model)))
