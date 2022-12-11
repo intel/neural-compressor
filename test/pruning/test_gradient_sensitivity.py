@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 
 import torch
 import torchvision
@@ -206,7 +206,7 @@ class TestGradientSensitivityUnstructured(unittest.TestCase):
     def test_unstructured_pruning(self):
         from neural_compressor.experimental import Pruning, common
         prune_cv = Pruning('fake_unstructured.yaml')
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 

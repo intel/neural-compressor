@@ -6,7 +6,7 @@ import torch
 import torchvision
 import torch.nn as nn
 
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_yaml():

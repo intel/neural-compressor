@@ -1109,7 +1109,7 @@ def main(_):
       evaluator.metric = Accuracy()
 
 
-      from neural_compressor.model.model import get_model_type
+      from neural_compressor.model.tensorflow_model import get_model_type
       model_type = get_model_type(FLAGS.input_model)
       if model_type == 'frozen_pb':
           evaluator.model = FLAGS.input_model

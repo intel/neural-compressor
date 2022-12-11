@@ -36,6 +36,7 @@ import re
 import numpy as np
 from PIL import Image
 from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils import logger
 from .dataset import dataset_registry, IterableDataset, Dataset
 tf = LazyImport('tensorflow')
 mx = LazyImport('mxnet')
@@ -146,3 +147,73 @@ class TensorflowImagenetRaw(ImagenetRaw):
             elif type(image).__name__ == 'EagerTensor':
                 image = image.numpy()
             return (image, label)
+
+@dataset_registry(dataset_type="Imagenet", framework="tensorflow", dataset_format='')
+class TensorflowImagenetDataset(IterableDataset):
+    """Configuration for Imagenet dataset."""
+
+    def __new__(cls, root, subset='validation', num_cores=28, transform=None, filter=None):
+        """New a imagenet dataset for tensorflow."""
+        assert subset in ('validation', 'train'), \
+            'only support subset (validation, train)'
+        logger.warning("This api is going to be deprecated, "
+                       "please use ImageRecord instead.")
+
+        from tensorflow.python.platform import gfile
+        glob_pattern = os.path.join(root, '%s-*-of-*' % subset)
+        file_names = gfile.Glob(glob_pattern)
+        if not file_names:
+            raise ValueError('Found no files in --root matching: {}'.format(glob_pattern))
+
+        from tensorflow.python.data.experimental import parallel_interleave
+        from neural_compressor.data.transforms.imagenet_transform import ParseDecodeImagenet
+        ds = tf.data.TFRecordDataset.list_files(file_names, shuffle=False)
+        ds = ds.apply(
+          parallel_interleave(
+            tf.data.TFRecordDataset, cycle_length=num_cores))
+
+        if transform is not None:
+            transform.transform_list.insert(0, ParseDecodeImagenet())
+        else:
+            transform = ParseDecodeImagenet()
+        ds = ds.map(transform, num_parallel_calls=None)
+
+        ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)  # this number can be tuned
+        return ds
+
+@dataset_registry(dataset_type="Imagenet", framework="onnxrt_qlinearops, \
+                   onnxrt_integerops", dataset_format='')
+class ONNXRTImagenetDataset(Dataset):
+    """Configuration for Imagenet dataset."""
+
+    def __init__(self, root, subset='val', num_cores=28, transform=None, filter=None):
+        """Initialize `ONNXRTImagenetDataset` class."""
+        self.val_dir = os.path.join(root, subset)
+        assert os.path.exists(self.val_dir), "find no val dir in {}".format(root) + \
+            "please make sure there are train/val subfolders"
+        import glob
+        logger.warning("This api is going to be deprecated, "
+                       "please use ImageRecord instead.")
+
+        self.transform = transform
+        self.image_list = []
+        files = glob.glob(os.path.join(self.val_dir, '*'))
+        files.sort()
+        for idx, file in enumerate(files):
+            imgs = glob.glob(os.path.join(file, '*'))
+            for img in imgs:
+                self.image_list.append((img, idx))
+
+    def __len__(self):
+        """Return the number of images."""
+        return len(self.image_list)
+
+    def __getitem__(self, index):
+        """Return the item of dataset according to the given index."""
+        from PIL import Image
+        sample = self.image_list[index]
+        image = Image.open(sample[0])
+        if self.transform is not None:
+            image, label = self.transform((image, sample[1]))
+            return (image, label)
+

@@ -28,7 +28,7 @@ class TestHAWQV2TuningStrategy(unittest.TestCase):
         logger.info("*** Test: HAWQ v2 with pytorch model.")
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.data import Datasets, DATALOADERS
 
         # model
         model = copy.deepcopy(self.model)
@@ -40,7 +40,7 @@ class TestHAWQV2TuningStrategy(unittest.TestCase):
             return self.test_hawq_v2_pipeline_fake_acc
 
         # dataset and dataloader
-        dataset = DATASETS("pytorch")["dummy"](((1, 3, 224, 224)))
+        dataset = Datasets("pytorch")["dummy"](((1, 3, 224, 224)))
         dataloader = DATALOADERS["pytorch"](dataset)
         
         #tuning and accuracy criterion
