@@ -48,11 +48,11 @@ flags.DEFINE_string(
 
 flags.DEFINE_integer('batch_size', 32, 'batch_size')
 
-from neural_compressor.experimental.metric.metric import TensorflowTopK
-from neural_compressor.experimental.data.transforms.transform import ComposeTransform
-from neural_compressor.experimental.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
-from neural_compressor.experimental.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor.data.datasets.dataset import TensorflowImageRecord
+from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data.transforms.transform import ComposeTransform
+from neural_compressor.data.transforms.imagenet_transform import LabelShift
 from neural_compressor.data.transforms.imagenet_transform import TensorflowResizeCropImagenetTransform
 
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
