@@ -2,7 +2,8 @@ import torch
 import torchvision
 import unittest
 import neural_compressor.adaptor.pytorch as nc_torch
-from neural_compressor.model import MODELS
+from neural_compressor.model import MODELS, Model
+from neural_compressor.model.torch_model import PyTorchModel
 from packaging.version import Version
 
 try:
@@ -22,6 +23,11 @@ class TestPytorchModel(unittest.TestCase):
     framework = "pytorch"
     model = torchvision.models.quantization.resnet18()
     lpot_model = MODELS['pytorch'](model)
+
+    def test_Model(self):
+        model = torchvision.models.quantization.resnet18()
+        inc_model = Model(model)
+        self.assertTrue(isinstance(inc_model, PyTorchModel))
 
     def test_get_all_weight_name(self):
         assert len(list(self.lpot_model.get_all_weight_names())) == 62

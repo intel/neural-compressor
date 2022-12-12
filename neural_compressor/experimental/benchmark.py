@@ -225,13 +225,13 @@ class Benchmark(object):
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
 
-        if(get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
+        if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
             raise OSError('Currently no support on AMD with hyperthreads')
-        else:
+        elif sys.platform in ['linux']:
             bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 
         for i in range(0, num_of_instance):
-            if get_architecture() == 'x86_64':
+            if sys.platform in ['linux'] and get_architecture() == 'x86_64':
                 core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
                 core_list = np.array(bounded_threads)[core_list_idx]
             else:
@@ -306,6 +306,8 @@ class Benchmark(object):
                                             "outputs": cfg.model.outputs, \
                                             "recipes": cfg.model.recipes, \
                                             'workspace_path': cfg.tuning.workspace.path})
+        if framework == 'keras':
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
         if 'onnx' in framework.lower():
@@ -479,6 +481,10 @@ class Benchmark(object):
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "tensorflow":
+                from ..model.tensorflow_model import get_model_type
+                if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
+                    self.framework = 'keras'
             if self.framework == "pytorch":
                 if cfg.model.backend == "default":
                     self.framework = "pytorch_fx"

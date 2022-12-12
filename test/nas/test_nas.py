@@ -1,15 +1,17 @@
-from multiprocessing.spawn import import_main_path
 import os
 import shutil
 import unittest
+from pathlib import Path
+
 import numpy as np
 import torch
 
 from neural_compressor.conf.config import NASConfig
-from neural_compressor.data import DATASETS
-from neural_compressor.experimental import common, NAS
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.experimental.nas.dynas import DyNAS
+from neural_compressor.data import Datasets
+from neural_compressor.experimental import NAS, common
+from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import \
+    PyTorchDataLoader
+
 
 def build_fake_yaml(approach=None, search_algorithm=None, metrics=['acc']):
     fake_yaml = """
@@ -143,7 +145,7 @@ class TestNAS(unittest.TestCase):
         self.assertTrue(len(best_model_archs) > 0)
 
         # Customized train, evaluation
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(32, 3, 64, 64), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         def train_func(model):
@@ -197,6 +199,8 @@ class TestNAS(unittest.TestCase):
             config.dynas.batch_size = 64
             nas_agent = NAS(config)
             best_model_archs = nas_agent.search()
+            self.assertTrue(len(best_model_archs) > 0)
+
         nas_agent.acc_predictor.get_parameters()
         nas_agent.acc_predictor.save('tmp.pickle')
         nas_agent.acc_predictor.load('tmp.pickle')
@@ -206,11 +210,19 @@ class TestNAS(unittest.TestCase):
         nas_agent.runner_validate.measure_latency(subnet_cfg)
         nas_agent.validation_interface.clear_csv()
         os.remove('tmp.pickle')
-        from neural_compressor.experimental.nas.dynast.dynas_utils import TorchVisionReference
-        reference = TorchVisionReference('ofa_resnet50_ofa_mbv3', dataset_path=None, batch_size=1)
-        reference.validate_macs()
-        reference.measure_latency()
-        self.assertTrue(len(best_model_archs) > 0)
+
+    def test_vision_reference(self):
+        from neural_compressor.experimental.nas.dynast.dynas_utils import \
+            TorchVisionReference
+        reference = TorchVisionReference('ofa_mbv3', dataset_path=None, batch_size=1)
+        macs = reference.validate_macs()
+
+        self.assertEqual(macs, 217234208)
+
+        reference.measure_latency(
+            warmup_steps=1,
+            measure_steps=1,
+        )
 
 
 if __name__ == "__main__":

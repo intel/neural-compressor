@@ -200,6 +200,39 @@ tuning:
   random_seed: 9527
 ```
 
+### MSE_v2
+
+#### Design
+
+`MSE_v2` is a two-stage fallback strategy for few-shot mixed quantization,
+which is composed of three key components. First, a multi-batch order
+combination based on per-layer fallback MSE values helps evaluate layer 
+sensitivity with few-shot. Second, a sensitivity gradient is proposed to 
+better evaluate the sensitivity, together with the beam search to solve 
+the local optimum problem. Third, a quantize-again procedure is introduced 
+to remove redundancy in fallback layers to protect performance. MSE_v2 performs
+better especially in models with a long full-dataset evaluation time and a 
+large number of tuning counts.
+
+#### Usage
+`MSE_v2` is similar to `MSE` in usage. To use the `MSE_v2` tuning strategy,
+the specific strategy name of `mse_v2` must be included. Also, the option
+`confidence_batches` can be included optionally to specify the count of batches
+in sensitivity calculation process.
+
+
+```yaml
+tuning:
+  strategy:
+    name: mse_v2
+    confidence_batches: 2
+  accuracy_criterion:
+    relative:  0.01
+  exit_policy:
+    timeout: 0
+  random_seed: 9527
+```
+
 ### TPE
 
 #### Design

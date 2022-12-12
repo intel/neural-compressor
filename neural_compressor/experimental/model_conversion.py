@@ -154,8 +154,8 @@ class ModelConversion():
         Returns:
             class: dataset class
         """
-        from .data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from .data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def source(self):

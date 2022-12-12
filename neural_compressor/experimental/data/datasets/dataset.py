@@ -153,12 +153,12 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
    The naming convention of new dataset subclass should be something like ImageClassifier, user
    could choose this dataset by setting "imageclassifier" string in tuning.strategy field of yaml.
 
-   DATASETS variable is used to store all implemented Dataset subclasses to support
+   Datasets variable is used to store all implemented Dataset subclasses to support
    model specific dataset.
 """
 
 
-class DATASETS(object):
+class Datasets(object):
     """A base class for all framework datasets.
 
     Args:

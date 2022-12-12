@@ -10,7 +10,7 @@ from collections import OrderedDict
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
 from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.data import DATASETS, DATALOADERS
+from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor.experimental import Quantization, common
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor import options
@@ -529,7 +529,7 @@ def build_gemm_model():
 def build_benchmark():
     seq = '''
 from neural_compressor.experimental import Benchmark
-from neural_compressor.data import DATASETS, DATALOADERS
+from neural_compressor.data import Datasets, DATALOADERS
 from neural_compressor import conf
 from onnx import onnx_pb as onnx_proto
 from onnx import helper, TensorProto, numpy_helper
@@ -555,7 +555,7 @@ output0 = helper.make_tensor_value_info(
 graph = helper.make_graph(nodes, 'test0', [input0], [output0])
 model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
 
-datasets = DATASETS('onnxrt_qlinearops')
+datasets = Datasets('onnxrt_qlinearops')
 ext_dataset = datasets['dummy'](shape=(10, 2), low=0., high=1., label=True)
 ext_dataloader = DATALOADERS['onnxrt_qlinearops'](ext_dataset)
 
@@ -590,26 +590,26 @@ class TestAdaptorONNXRT(unittest.TestCase):
     rn50_export_path = "rn50.onnx"
     rn50_model = torchvision.models.resnet50()
 
-    datasets = DATASETS('onnxrt_qlinearops')
+    datasets = Datasets('onnxrt_qlinearops')
     cv_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
     cv_dataloader = DATALOADERS['onnxrt_qlinearops'](cv_dataset)
     
     ir3_dataset = datasets['dummy'](shape=(10, 2048), low=0., high=1., label=True)
     ir3_dataloader = DATALOADERS['onnxrt_qlinearops'](ir3_dataset)
 
-    gather_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 100, 4), label=True)
+    gather_dataset = Datasets('onnxrt_qlinearops')['dummy'](shape=(5, 100, 4), label=True)
     gather_dataloader = DATALOADERS['onnxrt_qlinearops'](gather_dataset)
 
     ext_dataset = datasets['dummy'](shape=(10, 2), low=0., high=1., label=True)
     ext_dataloader = DATALOADERS['onnxrt_qlinearops'](ext_dataset)
 
-    rename_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(5, 1, 200), label=True)
+    rename_dataset = Datasets('onnxrt_qlinearops')['dummy'](shape=(5, 1, 200), label=True)
     rename_dataloader = DATALOADERS['onnxrt_qlinearops'](rename_dataset)
 
     matmul_dataset = MatmulDataset()
     matmul_dataloader = DATALOADERS['onnxrt_qlinearops'](matmul_dataset)
 
-    conv_dataset = DATASETS('onnxrt_qlinearops')['dummy'](shape=(10, 3, 1, 3), label=True)
+    conv_dataset = Datasets('onnxrt_qlinearops')['dummy'](shape=(10, 3, 1, 3), label=True)
     conv_dataloader = DATALOADERS['onnxrt_qlinearops'](conv_dataset)
 
     @classmethod

@@ -30,7 +30,6 @@ from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 
-
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -1094,6 +1093,34 @@ class TemplateAdaptor(Adaptor):
             return True
         else:
             return False
+        
+    def calculate_hessian_trace(self,
+                                fp32_model, 
+                                dataloader, 
+                                q_model,
+                                criterion, 
+                                enable_act = False
+                                ):
+        """Calculate hessian trace.
+
+        Args:
+            fp32_model: The original fp32 model.
+            criterion: The loss function for calculate the hessian trace. # loss = criterion(output, target)
+            dataloader: The dataloader for calculate the gradient.
+            q_model: The INT8 AMAP model.
+            enable_act: Enabling quantization error or not.
+            
+        Return:
+            hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
+        """
+        from .torch_utils.hawq_metric import hawq_top
+        op_to_traces=hawq_top(fp32_model=fp32_model,
+                              dataloader=dataloader,
+                              q_model=q_model,
+                              criterion=criterion,
+                              enable_act=enable_act)
+        return op_to_traces
+        pass
 
 
 unify_op_type_mapping = {
@@ -3182,7 +3209,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3506,6 +3532,28 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         except:  # pragma: no cover
             logger.info('Module has no forward function')
         return False
+
+    def get_output_op_names(self, *args, **kwargs):
+        return None
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): INC model containing fp32 model
+            dataloader (string): dataloader contains real data.
+            tune_cfg (dict): dictionary of tune configure for each op.
+            fallback (bool): switch method in fallback stage and re-quantize stage
+
+        Returns:
+            ops_lst (list): sorted op list by sensitivity
+        """
+        from .torch_utils.util import get_fallback_order
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, 
+                                         confidence_batches, fallback, requantize_cfgs)
+        return ordered_ops
 
 
 class PyTorchQuery(QueryBackendCapability):

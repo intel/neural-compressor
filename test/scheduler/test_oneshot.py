@@ -9,7 +9,7 @@ import torch.nn as nn
 import neural_compressor.adaptor.pytorch as nc_torch
 
 from neural_compressor.conf.config import DistillationConf, PruningConf
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
 from neural_compressor.training import prepare_compression
@@ -189,7 +189,7 @@ class TestPruning(unittest.TestCase):
 
     def test_prune_qat_oneshot(self):
         from neural_compressor.experimental import Pruning, Quantization
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         q_model = copy.deepcopy(self.q_model)
@@ -250,7 +250,7 @@ class TestPruning(unittest.TestCase):
 
     def test_distillation_qat_oneshot(self):
         from neural_compressor.experimental import Distillation, Quantization
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
@@ -303,7 +303,7 @@ class TestPruning(unittest.TestCase):
     def test_distillation_prune_oneshot_with_new_API(self):
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
         from neural_compressor.config import Pruner, PruningConfig
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
@@ -363,7 +363,7 @@ class TestPruning(unittest.TestCase):
 
     def test_prune_qat_distillation_oneshot(self):
         from neural_compressor.experimental import Pruning, Quantization, Distillation
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
@@ -421,7 +421,7 @@ class TestPruning(unittest.TestCase):
 
     def test_prune_qat_oneshot_fx(self):
         from neural_compressor.experimental import Pruning, Quantization
-        datasets = DATASETS('pytorch_fx')
+        datasets = Datasets('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         prune = Pruning('./fx_fake.yaml')
@@ -479,7 +479,7 @@ class TestPruning(unittest.TestCase):
       "requires higher version of torch than 1.9.0")
     def test_distillation_qat_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Quantization
-        datasets = DATASETS('pytorch_fx')
+        datasets = Datasets('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = DynamicControlModel()
@@ -532,7 +532,7 @@ class TestPruning(unittest.TestCase):
 
     def test_distillation_prune_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Pruning
-        datasets = DATASETS('pytorch_fx')
+        datasets = Datasets('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         distiller = Distillation('./fx_fake3.yaml')
@@ -590,7 +590,7 @@ class TestPruning(unittest.TestCase):
       "requires higher version of torch than 1.9.0")
     def test_prune_qat_distillation_oneshot_fx(self):
         from neural_compressor.experimental import Pruning, Quantization, Distillation
-        datasets = DATASETS('pytorch_fx')
+        datasets = Datasets('pytorch_fx')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
