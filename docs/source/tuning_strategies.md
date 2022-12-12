@@ -5,11 +5,12 @@ Tuning Strategies
 
 Intel® Neural Compressor aims to help users quickly deploy
 the low-precision inference solution on popular Deep Learning frameworks
-such as TensorFlow, PyTorch, and MxNet. Using built-in strategies, it
+such as TensorFlow, PyTorch, and ONNX Runtime. Using built-in strategies, it
 automatically optimizes low-precision recipes for deep learning models to
 achieve optimal product objectives, such as inference performance and memory
-usage, with expected accuracy criteria. Currently, it supports `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random`, `SigOpt` and `TPE` strategies. `Basic` is
-the default strategy.
+usage, with expected accuracy criteria. Currently, several strategies, including
+`Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_v2, `Random`, `SigOpt`, `TPE`, 
+`Hawq_v2` etc is supported. By default, `Basic` strategy is used for tuning.
 
 ## Strategy Design
 
