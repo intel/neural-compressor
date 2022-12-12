@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 @op_registry(op_types="ArgMax")
 class ArgMaxOperator(Operator):

@@ -18,7 +18,7 @@
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
-from neural_compressor.adaptor.ox_utils.util import find_by_name, ms_domain, attribute_to_kwarg
+from neural_compressor.adaptor.ox_utils.util import find_by_name, attribute_to_kwarg
 from onnx import onnx_pb as onnx_proto
 
 @op_registry(op_types="MatMul")

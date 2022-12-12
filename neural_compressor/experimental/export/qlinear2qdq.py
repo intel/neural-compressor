@@ -29,7 +29,6 @@ def check_model(model):
     Args:
         model (ModelProto): onnx model.
     """
-
     has_integerop = False
     has_qlinearop = False
     for node in model.graph.node:
