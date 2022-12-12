@@ -9,7 +9,7 @@ such as TensorFlow, PyTorch, and ONNX Runtime. Using built-in strategies, it
 automatically optimizes low-precision recipes for deep learning models to
 achieve optimal product objectives, such as inference performance and memory
 usage, with expected accuracy criteria. Currently, several strategies, including
-`Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_v2, `Random`, `SigOpt`, `TPE`, 
+`Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_v2`, `Random`, `SigOpt`, `TPE`, 
 `Hawq_v2` etc is supported. By default, `Basic` strategy is used for tuning.
 
 ## Strategy Design
