@@ -464,7 +464,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>DLRM</td>
