@@ -27,8 +27,8 @@ from copy import deepcopy
 
 from ..utils import logger
 from .strategy import strategy_registry, TuneStrategy
-from .st_utils.tuning_sampler import OpWiseTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpWiseTuningSampler
+from .utils.tuning_structs import OpTuningConfig
 
 
 @strategy_registry

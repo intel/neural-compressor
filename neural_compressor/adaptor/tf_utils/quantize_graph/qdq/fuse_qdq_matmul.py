@@ -963,12 +963,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                             self.exclude_matmul_nodes.append(cur_node.name)
                             continue
 
-                        for i in self.node_name_mapping:
-                            if weight_node.input and not weight_node.input[0].startswith('^') \
-                               and weight_node.name in self.node_name_mapping[i].output:
-                                self.exclude_matmul_nodes.append(cur_node.name)
-                                continue
-
                 for sub_rule in patterns:
                     if sub_rule[0] != "Dequantize":
                         self.exclude_matmul_nodes.append(cur_node.name)

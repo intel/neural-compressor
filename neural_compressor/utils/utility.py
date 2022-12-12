@@ -108,13 +108,6 @@ def singleton(cls):
         return instances[cls]
     return _singleton
 
-def set_backend(backend):
-    global __BACKEND
-    __BACKEND = backend
-
-def get_backend():
-    global __BACKEND
-    return __BACKEND
 
 @contextmanager
 def time_limit(seconds):
@@ -348,7 +341,7 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
 
     from neural_compressor.adaptor import FRAMEWORKS
     adaptor = FRAMEWORKS[framework](q_config['framework_specific_info'])
-    if 'onnxrt' in framework:
+    if 'onnx' in framework:
         from neural_compressor.experimental import common
         ox_fp32_model = common.Model(fp32_model)
         tune_index_qmodel = adaptor.recover(ox_fp32_model, q_config)
@@ -487,3 +480,24 @@ def dump_data_to_local(data, path, filename):
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
+
+
+
+def set_random_seed(seed: int):
+    from neural_compressor.config import options
+    options.random_seed = seed
+
+
+def set_workspace(workspace: str):
+    from neural_compressor.config import options
+    options.workspace = workspace
+
+
+def set_resume_from(resume_from: str):
+    from neural_compressor.config import options
+    options.resume_from = resume_from
+
+
+def set_tensorboard(tensorboard: bool):
+    from neural_compressor.config import options
+    options.tensorboard = tensorboard

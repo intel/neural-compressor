@@ -308,7 +308,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
           --input_model=/PATH/TO/frozen_nasnet_mobile.pb --output_model=./nc_nasnet_mobile
   ```
 
-### 20. EfficientNet-b0
+### 20. EfficientNet-b0(experiment)
 
   Download pre-trained checkpoint
   ```shell
