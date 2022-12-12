@@ -90,5 +90,5 @@ else: # auto_quant
     from neural_coder import auto_quant
     auto_quant(
         code=script_copied,
-        args=args.script_args,
+        args=' '.join(args.script_args), # convert list of strings to a single string
     )
