@@ -27,6 +27,7 @@ from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
 from ..utils.utility import Statistics, GLOBAL_STATE, MODE, version1_lt_version2
 from ..utils import logger
+from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 
@@ -83,7 +84,7 @@ class TensorFlowAdaptor(Adaptor):
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = parse_version(tf.version.VERSION) == parse_version('2.11.0202250')
+        self.new_api = tf.version.VERSION in TF_SPR_BASE_VERSIONS
         self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
