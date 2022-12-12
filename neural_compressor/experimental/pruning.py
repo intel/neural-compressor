@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from .component import Component
-from ..pruners import PRUNERS
+from neural_compressor.pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
@@ -210,13 +210,8 @@ class Pruning(Component):
     def generate_pruners(self):
         """Functions that generate pruners and set up self.pruners."""
         for name in self.cfg.pruning.approach:
-            assert name == 'weight_compression' or name == "weight_compression_pytorch", \
+            assert name == 'weight_compression', \
                 'now we only support weight_compression and weight_compression_pytorch'
-
-            if self.cfg.pruning.approach.weight_compression_pytorch != None:
-                from .pytorch_pruner.pruning import Pruning as PytorchPruning
-                self.pytorch_pruner = PytorchPruning(self.cfg)
-                self.pruners.append(self.pytorch_pruner)
 
 
             if self.cfg.pruning.approach.weight_compression != None:

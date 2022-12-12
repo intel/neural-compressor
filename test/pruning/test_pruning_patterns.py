@@ -11,32 +11,39 @@ from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import P
 from neural_compressor.pruning import Pruning, WeightPruningConfig
 
 
-class TestPruning(unittest.TestCase):
+class TestPruningPatterns(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    def test_pruning_basic(self):
+    def test_pruning_pattern(self):
         local_configs = [
             {
                 "op_names": ['layer1.*'],
                 'target_sparsity': 0.5,
-                "pattern": '8x2',
-                "pruning_type": "magnitude_progressive"
+                "pattern": '5:8',
+                "pruning_type": "magnitude"
             },
             {
                 "op_names": ['layer2.*'],
-                'target_sparsity': 0.5,
-                'pattern': '2:4'
+                "pattern": '1xchannel',
+                "pruning_scope": "global"
             },
             {
+                "start_step": 2,
+                "end_step": 20,
                 "op_names": ['layer3.*'],
-                'target_sparsity': 0.7,
-                'pattern': '5x1',
-                "pruning_type": "snip_progressive"
+                'target_sparsity': 0.666666,
+                'pattern': '4x2',
+                "pruning_type": "snip_progressive",
+                "pruning_frequency": 5
             }
         ]
         config = WeightPruningConfig(
             local_configs,
-            target_sparsity=0.8
+            target_sparsity=0.8,
+            sparsity_decay_type="cos",
+            excluded_op_names=["downsample.*"],
+            pruning_scope="local",
+            min_sparsity_ratio_per_op=0.1
         )
         prune = Pruning(config)
         prune.update_config(start_step=1, end_step=10)
@@ -49,8 +56,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
         prune.on_train_begin()
-        prune.update_config(pruning_frequency=4)
-        for epoch in range(2):
+        for epoch in range(5):
             self.model.train()
             prune.on_epoch_begin(epoch)
             local_step = 0

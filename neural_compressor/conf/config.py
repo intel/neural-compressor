@@ -20,15 +20,13 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruners import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
 import copy
-import itertools
 from collections import OrderedDict
 from .dotdict import DotDict, deep_set
-import os, datetime
+import datetime
 
 def constructor_register(cls):
     yaml_key = "!{}".format(cls.__name__)
