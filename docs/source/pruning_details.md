@@ -7,33 +7,37 @@ Pruning details
 
 
 
-    1.1. [Neural Network Pruning](#neural-network-pruning)
+>>>[Neural Network Pruning](#neural-network-pruning)
 
 
 
-    1.2. [Pruning Patterns](#pruning-patterns)
+>>>[Pruning Patterns](#pruning-patterns)
 
 
 
-    1.3. [Pruning Criteria](#pruning-criteria)
+>>>[Pruning Criteria](#pruning-criteria)
 
 
 
-    1.4. [Pruning Schedule](#pruning-schedule)
+>>>[Pruning Schedule](#pruning-schedule)
 
 
 
-    1.5. [Pruning Type](#pruning-type)
+>>>[Pruning Type](#pruning-type)
 
 
 
-    1.6. [Regularization](#regularization)
+>>>[Regularization](#regularization)
 
 
 
 
 
 2. [Pruning examples](#examples)
+
+
+
+3. [Reference](#reference)
 
 
 
@@ -78,6 +82,10 @@ Pruning criteria determines how should the weights of a neural network be scored
 
   The algorithm prunes the weight by the lowest absolute value at each layer with given sparsity target.
 
+
+- Gradient 
+
+  The algorithm prunes the weight by the lowest gradient value at each layer with given sparsity target.
 
 - SNIP
 
@@ -161,5 +169,15 @@ We validate the pruning technique on typical models across various domains (incl
     <th>Framework</th>
   </tr>
 </thead>
+
+
+
+## Reference
+
+[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: SINGLE-SHOT NETWORK
+PRUNING BASED ON CONNECTION SENSITIVITY. In International Conference on
+Learning Representations, 2019.
+
+
 
  
