@@ -20,13 +20,16 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
+from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
 import copy
+import itertools
 from collections import OrderedDict
 from .dotdict import DotDict, deep_set
-import datetime
+import os, datetime
+
 
 def constructor_register(cls):
     yaml_key = "!{}".format(cls.__name__)
@@ -45,12 +48,13 @@ def constructor_register(cls):
     )
     return cls
 
+
 @constructor_register
 class Pruner():
     def __init__(self, start_epoch=None, end_epoch=None, initial_sparsity=None,
                  target_sparsity=None, update_frequency=1,
                  method='per_tensor',
-                 prune_type='basic_magnitude',##for pytorch pruning, these values should be None
+                 prune_type='basic_magnitude',  ##for pytorch pruning, these values should be None
                  start_step=None, end_step=None, update_frequency_on_step=None, prune_domain=None,
                  sparsity_decay_type=None, pattern="tile_pattern_1x1", names=None,
                  extra_excluded_names=None, parameters=None):
@@ -72,8 +76,9 @@ class Pruner():
         #                                  'now only support {}'.format(PRUNERS.keys())
         self.prune_type = prune_type
         self.method = method
-        self.names= names
+        self.names = names
         self.parameters = parameters
+
 
 # Schema library has different loading sequence priorities for different
 # value types.
@@ -85,14 +90,17 @@ yaml.SafeLoader.add_constructor('tag:yaml.org,2002:null', lambda loader, node: {
 yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
                                 lambda loader, node: tuple(loader.construct_sequence(node)))
 
+
 def _valid_accuracy_field(key, scope, error):
     assert bool(
         'relative' in scope['accuracy_criterion']) != bool(
         'absolute' in scope['accuracy_criterion'])
 
+
 def _valid_prune_epoch(key, scope, error):
     if "start_epoch" in scope[key] and "end_epoch" in scope[key]:
         assert scope[key]["start_epoch"] <= scope[key]["end_epoch"]
+
 
 def _valid_prune_sparsity(key, scope, error):
     if "initial_sparsity" in scope[key] and "target_sparsity" in scope[key]:
@@ -102,13 +110,16 @@ def _valid_prune_sparsity(key, scope, error):
     elif "target_sparsity" in scope[key]:
         assert scope[key]["target_sparsity"] < 1
 
+
 def _valid_multi_objectives(key, scope, error):
     if 'weight' in scope[key] and scope[key]['weight'] is not None:
         assert len(scope[key]['objective']) == len(scope[key]['weight'])
 
+
 def _valid_multi_metrics(key, scope, error):
     if 'metric' in scope and 'multi_metrics' in scope:
         assert False
+
 
 def _valid_metric_length(key, scope, error):
     metrics = [i for i in scope[key] if i != 'weight' and i != 'higher_is_better']
@@ -116,6 +127,7 @@ def _valid_metric_length(key, scope, error):
         assert len(input_to_list_float(scope[key]['weight'])) == len(metrics)
     if 'higher_is_better' in scope[key] and scope[key]['higher_is_better'] is not None:
         assert len(input_to_list_bool(scope[key]['higher_is_better'])) == len(metrics)
+
 
 # used for '123.68 116.78 103.94' style to float list
 def input_to_list_float(data):
@@ -127,6 +139,7 @@ def input_to_list_float(data):
 
     assert isinstance(data, list)
     return [float(d) for d in data]
+
 
 def input_to_list_bool(data):
     if isinstance(data, str):
@@ -140,6 +153,7 @@ def input_to_list_bool(data):
 
     assert isinstance(data, list) and all([isinstance(i, bool) for i in data])
     return data
+
 
 def input_int_to_float(data):
     if isinstance(data, str):
@@ -159,6 +173,7 @@ def input_int_to_float(data):
     elif isinstance(data, int):
         return float(data)
 
+
 def input_to_list_int(data):
     if isinstance(data, str):
         return [int(s.strip()) for s in data.split(',')]
@@ -168,6 +183,7 @@ def input_to_list_int(data):
 
     assert isinstance(data, list)
     return [int(d) for d in data]
+
 
 def input_to_list(data):
     if isinstance(data, str):
@@ -182,6 +198,7 @@ def input_to_list(data):
     assert isinstance(data, list)
     return data
 
+
 def list_to_tuple(data):
     if isinstance(data, str):
         return tuple([int(s.strip()) for s in data.split(',')])
@@ -195,6 +212,7 @@ def list_to_tuple(data):
         else:
             return tuple([int(s) for s in data])
 
+
 def percent_to_float(data):
     if isinstance(data, str) and re.match(r'-?\d+(\.\d+)?%', data):
         data = float(data.strip('%')) / 100
@@ -203,6 +221,7 @@ def percent_to_float(data):
     else:
         assert isinstance(data, float), 'This field should be float, int or percent string'
     return data
+
 
 ops_schema = Schema({
     Optional('weight', default=None): {
@@ -219,7 +238,7 @@ ops_schema = Schema({
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
-        Optional('bit'):  And(
+        Optional('bit'): And(
             Or(float, list),
             Use(input_to_list_float),
             lambda s: all(0.0 < i <= 7.0 for i in s))
@@ -250,7 +269,7 @@ graph_optimization_schema = Schema({
     Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
-        lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),
+        lambda s: all(i in ['fp32', 'bf16'] for i in s)),
 
     Optional('op_wise', default={'weight': {}, 'activation': {}}): {
         Optional('weight', default=None): {
@@ -264,7 +283,7 @@ graph_optimization_schema = Schema({
                 Or(str, list),
                 Use(input_to_list),
                 lambda s: all(i in ['fp32', 'bf16'] for i in s)),
-            }
+        }
     }
 })
 
@@ -273,7 +292,7 @@ mixed_precision_schema = Schema({
     Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
-        lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),
+        lambda s: all(i in ['fp32', 'bf16'] for i in s)),
 
     Optional('op_wise', default={'weight': {}, 'activation': {}}): {
         Optional('weight', default=None): {
@@ -287,7 +306,7 @@ mixed_precision_schema = Schema({
                 Or(str, list),
                 Use(input_to_list),
                 lambda s: all(i in ['fp32', 'bf16'] for i in s)),
-            }
+        }
     }
 })
 
@@ -303,7 +322,7 @@ filter_schema = Schema({
 })
 
 transform_schema = Schema({
-    Optional('ResizeWithRatio'):{
+    Optional('ResizeWithRatio'): {
         Optional('min_dim'): int,
         Optional('max_dim'): int,
         Optional('padding'): bool,
@@ -320,7 +339,7 @@ transform_schema = Schema({
     },
     Optional('RandomResizedCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0)),
+                   And(int, lambda s: s > 0)),
         Optional('scale'): And(list, lambda s: all(isinstance(i, float) for i in s)),
         Optional('ratio'): And(list, lambda s: all(isinstance(i, float) for i in s)),
         Optional('interpolation'): And(
@@ -337,7 +356,7 @@ transform_schema = Schema({
         'width': int,
         'height': int,
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0)),
+                   And(int, lambda s: s > 0)),
         Optional('interpolation'): And(
             str,
             lambda s: s in ['nearest', 'bilinear', 'bicubic']),
@@ -353,23 +372,23 @@ transform_schema = Schema({
     },
     Optional('Resize'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0)),
+                   And(int, lambda s: s > 0)),
         Optional('interpolation'): And(
             str,
             lambda s: s in ['nearest', 'bilinear', 'bicubic']),
     },
     Optional('RandomCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0))
+                   And(int, lambda s: s > 0))
     },
     Optional('Rescale'): Or({}, None),
     Optional('CenterCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0))
+                   And(int, lambda s: s > 0))
     },
     Optional('PaddedCenterCrop'): {
         'size': Or(And(list, lambda s: all(isinstance(i, int) for i in s)),
-                    And(int, lambda s: s > 0)),
+                   And(int, lambda s: s > 0)),
         Optional('crop_padding'): And(int, lambda s: s > 0),
     },
     Optional('ToArray'): Or({}, None),
@@ -409,7 +428,7 @@ transform_schema = Schema({
         Optional('mean_value'): And(Or(str, list), Use(input_to_list_float)),
         Optional('scale'): float,
     },
-    Optional('ResizeWithAspectRatio'):{
+    Optional('ResizeWithAspectRatio'): {
         'height': And(int, lambda s: s > 0),
         'width': And(int, lambda s: s > 0),
     },
@@ -425,7 +444,7 @@ transform_schema = Schema({
 })
 
 postprocess_schema = Schema({
-    Optional('LabelShift'):  int,
+    Optional('LabelShift'): int,
     Optional('Collect'): {
         'length': int
     },
@@ -507,7 +526,7 @@ dataset_schema = Schema({
             And(str, Use(input_int_to_float))),
         Optional('dtype'): And(Or(str, list), Use(input_to_list)),
     },
- 
+
     Optional('dummy'): {
         'shape': And(Or(str, list), Use(list_to_tuple)),
         Optional('low'): Or(
@@ -587,8 +606,8 @@ dataloader_schema = Schema({
     'dataset': dataset_schema,
     Optional('filter'): filter_schema,
     Optional('transform'): transform_schema,
-    Optional('shuffle', default = False): And(bool, lambda s: s in [True, False]),
-    Optional('distributed', default = False): And(bool, lambda s: s in [True, False]),
+    Optional('shuffle', default=False): And(bool, lambda s: s in [True, False]),
+    Optional('distributed', default=False): And(bool, lambda s: s in [True, False]),
 })
 
 configs_schema = Schema({
@@ -621,7 +640,7 @@ optimizer_schema = Schema({
         Optional('beta_2', default=0.999): Use(float),
         Optional('epsilon', default=1e-07): Use(float),
         Optional('amsgrad', default=False): bool
-    }, 
+    },
 })
 
 criterion_schema = Schema({
@@ -683,15 +702,15 @@ train_schema = Schema({
 weight_compression_schema = Schema({
     Optional('initial_sparsity', default=0): And(float, lambda s: s < 1.0 and s >= 0.0),
     Optional('target_sparsity', default=0.97): float,
-    Optional('max_sparsity_ratio_per_layer', default=0.98):float,
+    Optional('max_sparsity_ratio_per_layer', default=0.98): float,
     Optional('prune_type', default="basic_magnitude"): str,
     Optional('start_epoch', default=0): int,
     Optional('end_epoch', default=4): int,
     Optional('start_step', default=0): int,
     Optional('end_step', default=0): int,
     Optional('update_frequency', default=1.0): float,
-    Optional('update_frequency_on_step', default=1):int,
-    Optional('excluded_names', default=[]):list,
+    Optional('update_frequency_on_step', default=1): int,
+    Optional('excluded_names', default=[]): list,
     Optional('prune_domain', default="global"): str,
     Optional('names', default=[]): list,
     Optional('extra_excluded_names', default=None): list,
@@ -700,7 +719,7 @@ weight_compression_schema = Schema({
     Optional('pattern', default="tile_pattern_1x1"): str,
 
     Optional('pruners'): And(list, \
-                               lambda s: all(isinstance(i, Pruner) for i in s))
+                             lambda s: all(isinstance(i, Pruner) for i in s))
 })
 
 # weight_compression_pytorch_schema = Schema({},ignore_extra_keys=True)
@@ -713,7 +732,7 @@ approach_schema = Schema({
 })
 
 default_workspace = './nc_workspace/{}/'.format(
-                                           datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
 COCOmAP_input_order_schema = Schema({
     Optional('num_detections'): int,
@@ -728,21 +747,21 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
- 
+
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
-                                          Or(float,
-                                             And(int, Use(input_int_to_float)),
-                                             And(str, Use(input_int_to_float))),
-                                          lambda s: s == float(__version__.split('.')[0])),
+        Or(float,
+           And(int, Use(input_int_to_float)),
+           And(str, Use(input_int_to_float))),
+        lambda s: s == float(__version__.split('.')[0])),
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \
                                       'calibration': {'sampling_size': [100]}, \
                                       'recipes': {'scale_propagation_max_pooling': True,
-                                                      'scale_propagation_concat': True,
-                                                      'first_conv_or_matmul_quantization': True,
-                                                      'last_conv_or_matmul_quantization': True,
-                                                      'pre_post_process_quantization': True},
+                                                  'scale_propagation_concat': True,
+                                                  'first_conv_or_matmul_quantization': True,
+                                                  'last_conv_or_matmul_quantization': True,
+                                                  'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
                                       'optimization_level': 1,
@@ -764,27 +783,27 @@ schema = Schema({
             Optional('dataloader', default=None): dataloader_schema
         },
         Optional('recipes', default={'scale_propagation_max_pooling': True,
-                                         'scale_propagation_concat': True,
-                                         'first_conv_or_matmul_quantization': True,
-                                         'last_conv_or_matmul_quantization': True,
-                                         'pre_post_process_quantization': True}): {
+                                     'scale_propagation_concat': True,
+                                     'first_conv_or_matmul_quantization': True,
+                                     'last_conv_or_matmul_quantization': True,
+                                     'pre_post_process_quantization': True}): {
             Optional('scale_propagation_max_pooling', default=True):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
             Optional('scale_propagation_concat', default=True):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
             Optional('first_conv_or_matmul_quantization', default=True):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
             Optional('last_conv_or_matmul_quantization', default=True):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
             Optional('pre_post_process_quantization', default=True):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
             Optional('fast_bias_correction', default=False):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
             Optional('weight_correction', default=False):
-                    And(bool, lambda s: s in [True, False]),
+                And(bool, lambda s: s in [True, False]),
         },
         Optional('model_wise', default={'weight': {'bit': [7.0]}, 'activation': {}}): {
-            Optional('weight', default= {'bit': [7.0]}): {
+            Optional('weight', default={'bit': [7.0]}): {
                 Optional('granularity', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -802,7 +821,7 @@ schema = Schema({
                     Or(str, list),
                     Use(input_to_list),
                     lambda s: all(i in ['minmax'] for i in s)),
-                Optional('bit', default=[7.0]):  And(
+                Optional('bit', default=[7.0]): And(
                     Or(float, list),
                     Use(input_to_list_float),
                     lambda s: all(0.0 < i <= 7.0 for i in s))
@@ -849,16 +868,16 @@ schema = Schema({
     Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
-        'strategy': {'name': 'basic'}, 
+        'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace},
         'diagnosis': False,
-        }): {
+    }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES), 
+            'name': And(str, lambda s: s in STRATEGIES),
             Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
@@ -866,7 +885,7 @@ schema = Schema({
             Optional('latency_weight', default=1.0): float,
             Optional('confidence_batches', default=2): int,
             Optional('hawq_v2_loss', default=None): object,
-        } ,
+        },
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
             Optional('relative'): And(Or(str, float), Use(percent_to_float)),
@@ -875,7 +894,7 @@ schema = Schema({
         },
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
         Hook('multi_objectives', handler=_valid_multi_objectives): object,
-        Optional('multi_objectives'):{ 
+        Optional('multi_objectives'): {
             Optional('objective'): And(
                 Or(str, list), Use(input_to_list), lambda s: all(i in OBJECTIVES for i in s)),
             Optional('weight'): And(Or(str, list), Use(input_to_list_float)),
@@ -895,18 +914,18 @@ schema = Schema({
             Optional('path', default=None): str,
             Optional('resume'): str
         },
-        Optional('diagnosis', default = {
+        Optional('diagnosis', default={
             'diagnosis_after_tuning': False,
             'op_list': [],
             'iteration_list': [1],
             'inspect_type': 'activation',
             'save_to_disk': True,
             'save_path': './nc_workspace/inspect_saved/',
-        }):{
+        }): {
             Optional('diagnosis_after_tuning', default=False): And(bool, lambda s: s in [True, False]),
             Optional('op_list', default=[]): And(Or(str, list), Use(input_to_list)),
             Optional('iteration_list', default=[1]): And(Or(int, list), Use(input_to_list_int)),
-            Optional('inspect_type', default='all'): And(str, lambda s : s in ['all', 'activation', 'weight']),
+            Optional('inspect_type', default='all'): And(str, lambda s: s in ['all', 'activation', 'weight']),
             Optional('save_to_disk', default=True): And(bool, lambda s: s in [True, False]),
             Optional('save_path', default='./nc_workspace/inspect_saved/'): str,
         },
@@ -923,8 +942,8 @@ schema = Schema({
                 Optional('mAP'): {
                     Optional('anno_path'): str,
                     Optional('iou_thrs', default=0.5):
-                            Or(And(str, lambda s: s in ['0.5:0.05:0.95']),
-                               And(float, lambda s: s <= 1.0 and s >= 0.0)),
+                        Or(And(str, lambda s: s in ['0.5:0.05:0.95']),
+                           And(float, lambda s: s <= 1.0 and s >= 0.0)),
                     Optional('map_points', default=0): And(int, lambda s: s in [0, 11, 101])
                 },
                 Optional('COCOmAP'): {
@@ -934,10 +953,10 @@ schema = Schema({
                 Optional('COCOmAPv2'): {
                     Optional('anno_path'): str,
                     Optional('map_key', default='DetectionBoxes_Precision/mAP'): str,
-                    Optional('output_index_mapping', default={'num_detections': -1, 
-                                                      'boxes': 0, 
-                                                      'scores': 1, 
-                                                      'classes': 2}): COCOmAP_input_order_schema
+                    Optional('output_index_mapping', default={'num_detections': -1,
+                                                              'boxes': 0,
+                                                              'scores': 1,
+                                                              'classes': 2}): COCOmAP_input_order_schema
                 },
                 Optional('VOCmAP'): {
                     Optional('anno_path'): str
@@ -966,14 +985,14 @@ schema = Schema({
                 Optional('ROC'): {
                     Optional('task'): str
                 },
-            }, 
+            },
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
                 Optional('mAP'): {
                     Optional('anno_path'): str,
                     Optional('iou_thrs', default=0.5):
-                            Or(And(str, lambda s: s in ['0.5:0.05:0.95']),
-                               And(float, lambda s: s <= 1.0 and s >= 0.0)),
+                        Or(And(str, lambda s: s in ['0.5:0.05:0.95']),
+                           And(float, lambda s: s <= 1.0 and s >= 0.0)),
                     Optional('map_points', default=0): And(int, lambda s: s in [0, 11, 101])
                 },
                 Optional('COCOmAP'): {
@@ -983,10 +1002,10 @@ schema = Schema({
                 Optional('COCOmAPv2'): {
                     Optional('anno_path'): str,
                     Optional('map_key', default='DetectionBoxes_Precision/mAP'): str,
-                    Optional('output_index_mapping', default={'num_detections': -1, 
-                                                      'boxes': 0, 
-                                                      'scores': 1, 
-                                                      'classes': 2}): COCOmAP_input_order_schema
+                    Optional('output_index_mapping', default={'num_detections': -1,
+                                                              'boxes': 0,
+                                                              'scores': 1,
+                                                              'classes': 2}): COCOmAP_input_order_schema
                 },
                 Optional('VOCmAP'): {
                     Optional('anno_path'): str
@@ -1051,7 +1070,7 @@ schema = Schema({
             Optional("higher_is_better", default=[]): list,
             Optional("max_trials", default=1): int,
             Optional("seed", default=42): int,
-            },
+        },
         Optional("flash_distillation"): {
             Optional("knowledge_transfer"): {
                 Optional("block_names", default=[]): list,
@@ -1060,7 +1079,7 @@ schema = Schema({
                 Optional("loss_weights", default=[]): list,
                 Optional("add_origin_loss", default=[]): list,
                 Optional("train_steps", default=[]): list,
-                },
+            },
             Optional("regular_distillation"): {
                 Optional("block_names", default=[]): list,
                 "layer_mappings_for_knowledge_transfer": list,
@@ -1068,8 +1087,8 @@ schema = Schema({
                 Optional("loss_weights", default=[]): list,
                 Optional("add_origin_loss", default=[]): list,
                 Optional("train_steps", default=[]): list,
-                },
             },
+        },
     },
 
     Optional('nas'): {
@@ -1081,7 +1100,7 @@ schema = Schema({
             Optional("higher_is_better", default=None): list,
             Optional("max_trials", default=None): int,
             Optional("seed", default=42): int,
-            },
+        },
         Optional("dynas"): {
             Optional("supernet", default=None): str,
             Optional("metrics", default=None): list,
@@ -1090,7 +1109,7 @@ schema = Schema({
             Optional("results_csv_path", default=None): str,
             Optional("dataset_path", default=None): str,
             Optional("batch_size", default=64): int,
-            },
+        },
     },
 
     Optional("train"): train_schema
@@ -1099,7 +1118,7 @@ schema = Schema({
 quantization_default_schema = Schema({
     Optional('model', default={'name': 'default_model_name', \
                                'framework': 'NA', \
-                                'inputs': [], 'outputs': []}): dict,
+                               'inputs': [], 'outputs': []}): dict,
 
     Optional('version', default=float(__version__.split('.')[0])): str,
 
@@ -1108,13 +1127,13 @@ quantization_default_schema = Schema({
     Optional('quantization', default={'approach': 'post_training_static_quant', \
                                       'calibration': {'sampling_size': [100]},
                                       'recipes': {'scale_propagation_max_pooling': True,
-                                                      'scale_propagation_concat': True,
-                                                      'first_conv_or_matmul_quantization': True,
-                                                      'last_conv_or_matmul_quantization': True,
-                                                      'pre_post_process_quantization': True},
+                                                  'scale_propagation_concat': True,
+                                                  'first_conv_or_matmul_quantization': True,
+                                                  'last_conv_or_matmul_quantization': True,
+                                                  'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                    }): dict,
+                                      }): dict,
     Optional('use_bf16', default=False): bool,
     Optional('optimization_level', default=1): int,
     Optional('tuning', default={
@@ -1131,7 +1150,7 @@ quantization_default_schema = Schema({
 pruning_default_schema = Schema({
     Optional('model', default={'name': 'default_model_name', \
                                'framework': 'NA', \
-                                'inputs': [], 'outputs': []}): dict,
+                               'inputs': [], 'outputs': []}): dict,
 
     Optional('version', default=float(__version__.split('.')[0])): str,
 
@@ -1143,9 +1162,9 @@ pruning_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('pruning', default={'approach': {'weight_compression':{'initial_sparsity': 0.0, \
-                                            'target_sparsity': 0.97, 'start_epoch': 0, \
-                                            'end_epoch': 4}}}): dict,
+    Optional('pruning', default={'approach': {'weight_compression': {'initial_sparsity': 0.0, \
+                                                                     'target_sparsity': 0.97, 'start_epoch': 0, \
+                                                                     'end_epoch': 4}}}): dict,
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
 })
@@ -1153,21 +1172,21 @@ pruning_default_schema = Schema({
 graph_optimization_default_schema = Schema({
     Optional('model', default={'name': 'resnet50', \
                                'framework': 'NA', \
-                                'inputs': [], 'outputs': []}): dict,
+                               'inputs': [], 'outputs': []}): dict,
 
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', 
-                                    'calibration': {'sampling_size': [100]},
-                                    'recipes': {'scale_propagation_max_pooling': True,
-                                                    'scale_propagation_concat': True,
-                                                    'first_conv_or_matmul_quantization': True,
-                                                    'last_conv_or_matmul_quantization': True,
-                                                    'pre_post_process_quantization': True},
-                                    'model_wise': {'weight': {'bit': [7.0]},
-                                                    'activation': {}}}): dict,
+    Optional('quantization', default={'approach': 'post_training_static_quant',
+                                      'calibration': {'sampling_size': [100]},
+                                      'recipes': {'scale_propagation_max_pooling': True,
+                                                  'scale_propagation_concat': True,
+                                                  'first_conv_or_matmul_quantization': True,
+                                                  'last_conv_or_matmul_quantization': True,
+                                                  'pre_post_process_quantization': True},
+                                      'model_wise': {'weight': {'bit': [7.0]},
+                                                     'activation': {}}}): dict,
 
     Optional('use_bf16', default=False): bool,
 
@@ -1181,27 +1200,27 @@ graph_optimization_default_schema = Schema({
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
-    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict 
+    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict
 })
 
 mixed_precision_default_schema = Schema({
     Optional('model', default={'name': 'resnet50', \
                                'framework': 'NA', \
-                                'inputs': [], 'outputs': []}): dict,
+                               'inputs': [], 'outputs': []}): dict,
 
     Optional('version', default=float(__version__.split('.')[0])): str,
 
     Optional('device', default='cpu'): str,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', 
-                                    'calibration': {'sampling_size': [100]},
-                                    'recipes': {'scale_propagation_max_pooling': True,
-                                                    'scale_propagation_concat': True,
-                                                    'first_conv_or_matmul_quantization': True,
-                                                    'last_conv_or_matmul_quantization': True,
-                                                    'pre_post_process_quantization': True},
-                                    'model_wise': {'weight': {'bit': [7.0]},
-                                                    'activation': {}}}): dict,
+    Optional('quantization', default={'approach': 'post_training_static_quant',
+                                      'calibration': {'sampling_size': [100]},
+                                      'recipes': {'scale_propagation_max_pooling': True,
+                                                  'scale_propagation_concat': True,
+                                                  'first_conv_or_matmul_quantization': True,
+                                                  'last_conv_or_matmul_quantization': True,
+                                                  'pre_post_process_quantization': True},
+                                      'model_wise': {'weight': {'bit': [7.0]},
+                                                     'activation': {}}}): dict,
 
     Optional('use_bf16', default=False): bool,
 
@@ -1215,13 +1234,13 @@ mixed_precision_default_schema = Schema({
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
-    Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict 
+    Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict
 })
 
 benchmark_default_schema = Schema({
     Optional('model', default={'name': 'resnet50', \
                                'framework': 'NA', \
-                                'inputs': [], 'outputs': []}): dict,
+                               'inputs': [], 'outputs': []}): dict,
 
     Optional('version', default=float(__version__.split('.')[0])): str,
 
@@ -1229,15 +1248,15 @@ benchmark_default_schema = Schema({
 
     Optional('use_bf16', default=False): bool,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', 
-                                    'calibration': {'sampling_size': [100]},
-                                    'recipes': {'scale_propagation_max_pooling': True,
-                                                    'scale_propagation_concat': True,
-                                                    'first_conv_or_matmul_quantization': True,
-                                                    'last_conv_or_matmul_quantization': True,
-                                                    'pre_post_process_quantization': True},
-                                    'model_wise': {'weight': {'bit': [7.0]},
-                                                    'activation': {}}}): dict,
+    Optional('quantization', default={'approach': 'post_training_static_quant',
+                                      'calibration': {'sampling_size': [100]},
+                                      'recipes': {'scale_propagation_max_pooling': True,
+                                                  'scale_propagation_concat': True,
+                                                  'first_conv_or_matmul_quantization': True,
+                                                  'last_conv_or_matmul_quantization': True,
+                                                  'pre_post_process_quantization': True},
+                                      'model_wise': {'weight': {'bit': [7.0]},
+                                                     'activation': {}}}): dict,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
@@ -1266,17 +1285,18 @@ distillation_default_schema = Schema({
         'workspace': {'path': default_workspace}}): dict,
 
     Optional('distillation', default={
-        'train': {'start_epoch': 0, 'end_epoch': 10, 
-                  'iteration': 1000, 'frequency': 1, 
-                  'optimizer': {'SGD': {'learning_rate': 0.001}}, 
-                  'criterion': {'KnowledgeDistillationLoss': 
-                                 {'temperature': 1.0, 
-                                  'loss_types': ['CE', 'KL'], 
-                                  'loss_weights': [0.5, 0.5]}}}}): dict,
+        'train': {'start_epoch': 0, 'end_epoch': 10,
+                  'iteration': 1000, 'frequency': 1,
+                  'optimizer': {'SGD': {'learning_rate': 0.001}},
+                  'criterion': {'KnowledgeDistillationLoss':
+                                    {'temperature': 1.0,
+                                     'loss_types': ['CE', 'KL'],
+                                     'loss_weights': [0.5, 0.5]}}}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}):dict
- 
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+
 })
+
 
 class Conf(object):
     """config parser.
@@ -1285,6 +1305,7 @@ class Conf(object):
         cfg_fname (string): The path to the configuration file.
 
     """
+
     def __init__(self, cfg_fname):
         assert cfg_fname is not None
         self.usr_cfg = DotDict(self._read_cfg(cfg_fname))
@@ -1308,14 +1329,14 @@ class Conf(object):
                                                content).group().split("model")[0]
                 content = re.sub(r'model\s*:',
                                  'version: {}\n\n{}model:'.format(
-                                                               float(__version__.split('.')[0]),
-                                                               leading_whitespace
-                                                           ),
+                                     float(__version__.split('.')[0]),
+                                     leading_whitespace
+                                 ),
                                  content)
                 with open(cfg_fname, 'w') as f:
                     f.write(content)
 
-            return validated_cfg   
+            return validated_cfg
         except FileNotFoundError as f:
             logger.error("{}.".format(f))
             raise RuntimeError(
@@ -1337,12 +1358,12 @@ class Conf(object):
                 'model.backend': pythonic_config.quantization.backend,
                 'model.quant_format': pythonic_config.quantization.quant_format,
                 'quantization.approach': pythonic_config.quantization.approach,
-                'quantization.calibration.sampling_size': 
+                'quantization.calibration.sampling_size':
                     pythonic_config.quantization.calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,
                 'quantization.op_wise': pythonic_config.quantization.op_name_list,
                 'tuning.strategy.name': pythonic_config.quantization.strategy,
-                'tuning.accuracy_criterion.relative': 
+                'tuning.accuracy_criterion.relative':
                     pythonic_config.quantization.accuracy_criterion.relative,
                 'tuning.accuracy_criterion.absolute':
                     pythonic_config.quantization.accuracy_criterion.absolute,
@@ -1359,12 +1380,12 @@ class Conf(object):
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
-                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
+                               'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
 
                     if st_key in st_kwargs:
-                        st_val =  st_kwargs[st_key]
+                        st_val = st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
-            
+
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
@@ -1419,7 +1440,7 @@ class Conf(object):
                 target_key = str(pythonic_config.quantization.accuracy_criterion)
                 if target_key not in k and 'accuracy_criterion' in self.usr_cfg.tuning:
                     if target_key in self.usr_cfg.tuning.accuracy_criterion and \
-                                    k.split('.')[-1] in self.usr_cfg.tuning.accuracy_criterion:
+                            k.split('.')[-1] in self.usr_cfg.tuning.accuracy_criterion:
                         self.usr_cfg.tuning.accuracy_criterion.pop(k.split('.')[-1])
                     continue
             if v is not None:
@@ -1443,11 +1464,11 @@ class Conf(object):
         for key in src:
             if key in dst:
                 if isinstance(dst[key], dict) and isinstance(src[key], dict):
-                    if key in ['accuracy_criterion', 'metric', 'dataset', 
-                        'criterion', 'optimizer']:
+                    if key in ['accuracy_criterion', 'metric', 'dataset',
+                               'criterion', 'optimizer']:
                         # accuracy_criterion can only have one of absolute and relative
                         # others can only have one item
-                        inter_key = src[key].keys() & dst[key].keys()-{'higher_is_better'}
+                        inter_key = src[key].keys() & dst[key].keys() - {'higher_is_better'}
                         if len(inter_key) == 0:
                             dst[key] = {}
                     if key == 'accuracy' and src[key].get('multi_metrics', None):
@@ -1462,6 +1483,7 @@ class Conf(object):
             else:
                 dst[key] = src[key]
         return dst
+
 
 class Quantization_Conf(Conf):
     """config parser.
@@ -1526,6 +1548,7 @@ class Quantization_Conf(Conf):
 
         return self._model_wise_tune_space
 
+
 class Pruning_Conf(Conf):
     """config parser.
 
@@ -1544,6 +1567,7 @@ class Pruning_Conf(Conf):
         else:
             self.usr_cfg = DotDict(pruning_default_schema.validate(dict()))
 
+
 class Graph_Optimization_Conf(Quantization_Conf):
     """config parser.
 
@@ -1560,6 +1584,7 @@ class Graph_Optimization_Conf(Quantization_Conf):
                 cfg, copy.deepcopy(graph_optimization_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(graph_optimization_default_schema.validate(dict()))
+
 
 class MixedPrecision_Conf(Quantization_Conf):
     """config parser.
@@ -1578,6 +1603,7 @@ class MixedPrecision_Conf(Quantization_Conf):
         else:
             self.usr_cfg = DotDict(mixed_precision_default_schema.validate(dict()))
 
+
 class Benchmark_Conf(Conf):
     """config parser.
 
@@ -1595,6 +1621,7 @@ class Benchmark_Conf(Conf):
         else:
             self.usr_cfg = DotDict(benchmark_default_schema.validate(dict()))
 
+
 class Distillation_Conf(Conf):
     """config parser.
 
@@ -1611,6 +1638,7 @@ class Distillation_Conf(Conf):
                 cfg, copy.deepcopy(distillation_default_schema.validate(dict())))))
         else:
             self.usr_cfg = DotDict(distillation_default_schema.validate(dict()))
+
 
 class NASConfig(Conf):
     """config parser.
@@ -1639,10 +1667,11 @@ class NASConfig(Conf):
 
     def validate(self):
         self.usr_cfg = schema.validate(self.usr_cfg)
-        
+
     @property
     def nas(self):
         return self.usr_cfg.nas
+
 
 class DefaultConf(DotDict):
     def __getitem__(self, key):
@@ -1652,6 +1681,7 @@ class DefaultConf(DotDict):
         return value
 
     __getattr__ = __getitem__
+
 
 conf = DefaultConf({})
 QuantConf = Quantization_Conf
