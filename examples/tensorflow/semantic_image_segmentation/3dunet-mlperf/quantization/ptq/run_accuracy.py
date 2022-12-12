@@ -203,7 +203,7 @@ if __name__ == "__main__":
     print(args)
     graph = load_graph(args.input_model)
     if args.mode == 'tune':
-        from neural_compressor.experimental import common
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.utils.utility import set_random_seed
@@ -213,8 +213,8 @@ if __name__ == "__main__":
         q_model = fit(
             model=graph,
             conf=config,
-            calib_dataloader=common.DataLoader(CalibrationDL()),
-            eval_dataloader=common.DataLoader(CalibrationDL()),
+            calib_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
+            eval_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
             eval_func=eval_func)
         try:
             q_model.save(args.output_model)

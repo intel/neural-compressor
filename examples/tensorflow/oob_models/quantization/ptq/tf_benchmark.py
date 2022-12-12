@@ -332,7 +332,7 @@ if __name__ == "__main__":
         inputs = model_detail['input']
         outputs = model_detail['output']
 
-        from neural_compressor.experimental import common
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.utils.utility import set_random_seed
@@ -350,18 +350,19 @@ if __name__ == "__main__":
             for i in range(1, len(sparse_input_names)):
                 sparse_input_seq += sparse_input_names[i]
             input_dense_shape = [tuple(list(i.values())[0]) for i in model_detail['sparse_d_shape'].values()]
-            from neural_compressor.data import DATASETS
-            dataset = DATASETS('tensorflow')['sparse_dummy_v2'](
+            from neural_compressor.data import Datasets
+            dataset = Datasets('tensorflow')['sparse_dummy_v2'](
                                         dense_shape=input_dense_shape,
                                         label_shape=[[1] for _ in range(len(input_dense_shape))],
                                         sparse_ratio=[1-1/np.multiply(*i) for i in input_dense_shape])
             seq_idxs = [sparse_input_seq.index(i) for i in inputs.keys()]
-            calib_dataloader = common.DataLoader(dataset=dataset,
-                                                           batch_size=1,
-                                                           collate_fn=oob_collate_sparse_func)
+            calib_dataloader = DataLoader(framework='tensorflow',
+                                          dataset=dataset,
+                                          batch_size=1,
+                                          collate_fn=oob_collate_sparse_func)
         else:
-            from neural_compressor.data import DATASETS
-            dataset = DATASETS('tensorflow')['dummy'](
+            from neural_compressor.data import Datasets
+            dataset = Datasets('tensorflow')['dummy'](
                                         shape=inputs_shape,
                                         low=low, high=high,
                                         dtype=inputs_dtype,
@@ -370,12 +371,13 @@ if __name__ == "__main__":
             if args.model_name and args.model_name in dataloader_dict.keys():
                 Dataloader = dataloader_dict[args.model_name]
             else:
-                Dataloader = common.DataLoader
-            calib_dataloader = Dataloader(dataset=dataset,
-                                                    batch_size=args.batch_size,
-                                                    collate_fn=oob_collate_data_func \
-                                                        if model_detail.get('model_name')!='DLRM' \
-                                                            else oob_dlrm_collate_func)
+                Dataloader = DataLoader
+            calib_dataloader = Dataloader(framework='tensorflow',
+                                          dataset=dataset,
+                                          batch_size=args.batch_size,
+                                          collate_fn=oob_collate_data_func \
+                                            if model_detail.get('model_name')!='DLRM' \
+                                            else oob_dlrm_collate_func)
         q_model = fit(
             model=args.model_path,
             conf=config,

@@ -32,9 +32,8 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
+      --iters=*)
+          iters=$(echo ${var} |cut -f2 -d=)
       ;;
     esac
   done
@@ -42,7 +41,6 @@ function init_params {
 }
 
 function define_mode {
-
     if [[ ${mode} == "accuracy" ]]; then
       echo "For TF OOB models, there is only benchmark mode!, num iter is: ${iters}"
       exit 1
