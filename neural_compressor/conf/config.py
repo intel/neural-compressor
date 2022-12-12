@@ -1091,6 +1091,7 @@ schema = Schema({
             Optional("num_evals", default=100000): int,
             Optional("results_csv_path", default=None): str,
             Optional("dataset_path", default=None): str,
+            Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             },
     },
