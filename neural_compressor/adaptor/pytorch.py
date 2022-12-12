@@ -30,7 +30,6 @@ from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 
-
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -372,10 +371,12 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     if version.release >= Version("1.13.0").release:  # pragma: no cover
         from torch.ao.quantization import QConfigMapping
         fx_op_cfgs = QConfigMapping()
-        fx_op_cfgs.set_global(model_qconfig)
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs.set_global(model_qconfig)
     else:
         fx_op_cfgs = dict()
-        fx_op_cfgs[""] = model_qconfig
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs[""] = model_qconfig
         op_tuple_cfg_list = []
 
     for key, value in op_cfgs.items():
@@ -393,8 +394,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
 
     if version.release < Version("1.13.0").release:  # pragma: no cover
         fx_op_cfgs["module_name"] = op_tuple_cfg_list
-
-    if version.release >= Version("1.13.0").release:  # pragma: no cover
+    elif observer_type != 'post_training_dynamic_quant':
         from torch.ao.quantization import get_default_qconfig_mapping
         for name, q_config  in get_default_qconfig_mapping().to_dict()['object_type']:
             fx_op_cfgs.set_object_type(name, q_config)
@@ -1093,6 +1093,34 @@ class TemplateAdaptor(Adaptor):
             return True
         else:
             return False
+        
+    def calculate_hessian_trace(self,
+                                fp32_model, 
+                                dataloader, 
+                                q_model,
+                                criterion, 
+                                enable_act = False
+                                ):
+        """Calculate hessian trace.
+
+        Args:
+            fp32_model: The original fp32 model.
+            criterion: The loss function for calculate the hessian trace. # loss = criterion(output, target)
+            dataloader: The dataloader for calculate the gradient.
+            q_model: The INT8 AMAP model.
+            enable_act: Enabling quantization error or not.
+            
+        Return:
+            hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
+        """
+        from .torch_utils.hawq_metric import hawq_top
+        op_to_traces=hawq_top(fp32_model=fp32_model,
+                              dataloader=dataloader,
+                              q_model=q_model,
+                              criterion=criterion,
+                              enable_act=enable_act)
+        return op_to_traces
+        pass
 
 
 unify_op_type_mapping = {
@@ -1331,7 +1359,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model._model, inplace=True)
-        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+        if self.model.q_config is not None and len(self.model.q_config['bf16_ops_list']) > 0 and \
             self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
@@ -2738,6 +2766,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept
             # neural_compressor model and user defined func should accept framework model.
+            # For export API
+            hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
             q_model._model = q_func(
                 q_model if getattr(q_func, 'builtin', None) else q_model._model)
             assert q_model._model is not None, "Please return a trained model in train function!"
@@ -2745,7 +2775,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             if self.sub_module_list is None:
                 tmp_model = q_model._model
-                if self.version > Version("1.12.1"):  # pragma: no cover
+                if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                     # pylint: disable=E1123
                     q_model._model = prepare_fx(
                         q_model._model,
@@ -2766,6 +2796,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     prefix='',
                                                     example_inputs=example_inputs)
             if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
+                # For export API
+                hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
                 iterations = tune_cfg.get('calib_iteration', 1)
                 if q_func is not None:
                     q_func(q_model._model)
@@ -2774,8 +2806,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                            dataloader,
                                            iterations,
                                            calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
+
+        if self.approach != 'post_training_dynamic_quant':
+            # For export API
+            scale_info = torch_utils.util._get_input_scale(q_model._model, hook_list)
+
         if self.sub_module_list is None:
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model,
                                             convert_custom_config=self.convert_custom_config_dict)
@@ -2796,6 +2833,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         q_model.q_config = copy.deepcopy(self.tune_cfg)
         if self.approach != 'post_training_dynamic_quant':
             self._get_scale_zeropoint(q_model._model, q_model.q_config)
+            q_model.q_config['scale_info'] = scale_info
 
         self._dump_model_op_stats(q_model._model, q_model.q_config, self.approach)
         torch_utils.util.get_embedding_contiguous(q_model._model)
@@ -2873,10 +2911,11 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 quantized_ops[op[0]] = torch.quantization.default_dynamic_qconfig
             else:
                 quantized_ops[op[0]] = q_cfgs
-        # build for fetching scale and zeropoint
+        # build op_config_dict to save module scale and zeropoint
         op_config_dict = {}
         for op in quantizable_ops:
             op_config_dict[op] = {'weight': {'dtype': 'int8'}, 'activation': {'dtype': 'uint8'}}
+
         if self.version.release < Version("1.11.0").release:
             quantized_ops["default_qconfig"] = None
         else:
@@ -2928,8 +2967,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             'sub_module_list': self.sub_module_list,
             'approach': 'quant_aware_training'
         }
+        # For export API
+        global hook_list
+        hook_list = torch_utils.util._set_input_scale_hook(self.model._model, quantized_ops)
 
     def _post_hook_for_qat(self):
+        # For export API
+        scale_info = torch_utils.util._get_input_scale(self.model._model, hook_list)
+        self.model.q_config['scale_info'] = scale_info
         from torch.quantization.quantize_fx import convert_fx
         if self.sub_module_list is None:
             if self.version > Version("1.12.1"):  # pragma: no cover
@@ -3164,7 +3209,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3407,7 +3451,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         try:
             tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
             graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1124, E1123
                 fused_model = _fuse_fx(graph_module,
                                         is_qat,
@@ -3488,6 +3532,28 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         except:  # pragma: no cover
             logger.info('Module has no forward function')
         return False
+
+    def get_output_op_names(self, *args, **kwargs):
+        return None
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): INC model containing fp32 model
+            dataloader (string): dataloader contains real data.
+            tune_cfg (dict): dictionary of tune configure for each op.
+            fallback (bool): switch method in fallback stage and re-quantize stage
+
+        Returns:
+            ops_lst (list): sorted op list by sensitivity
+        """
+        from .torch_utils.util import get_fallback_order
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, 
+                                         confidence_batches, fallback, requantize_cfgs)
+        return ordered_ops
 
 
 class PyTorchQuery(QueryBackendCapability):

@@ -20,8 +20,8 @@ from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.strategy.strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
-from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler
-from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
+from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler
+from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
 
 sigopt = LazyImport('sigopt')
 
@@ -88,7 +88,13 @@ class SigOptTuneStrategy(TuneStrategy):
             try:
                 import sigopt
             except ImportError:
-                ImportError(f"Please install sigopt for using {strategy_name} strategy.")
+                try:
+                    import subprocess
+                    import sys
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", "sigopt"])
+                    import sigopt # pylint: disable=import-error
+                except:
+                    assert False, "Unable to import sigopt from the local environment."
         else:
             pass
         # SigOpt init
@@ -215,7 +221,7 @@ class SigOptTuneStrategy(TuneStrategy):
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         # step1. collect the ops that support static and dynamic
         quant_mode_wise_items = OrderedDict()
-        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        query_order = ['static', 'dynamic', 'bf16', 'fp32']
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)

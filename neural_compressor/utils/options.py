@@ -32,7 +32,7 @@ OPTIONS = {'tensorflow': None,
            'onnxrt_integerops': onnxrt,
            'onnxrt_qlinearops': onnxrt,
            'onnxrt_qdq': onnxrt,
-           'onnxrt_qoperator': onnxrt,
+           'onnxruntime': onnxrt,
            }
 
 

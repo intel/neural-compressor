@@ -24,7 +24,9 @@ def fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=No
     assert isinstance(config, MixedPrecisionConfig), "Please provide MixedPrecisionConfig!"
     conf = Config(quantization=config)
     converter = MixedPrecision(conf)
-    converter.precisions = config.extra_precisions
+    precisions = ["bf16", "fp32"]
+    precisions = list(set(precisions) - set(config.excluded_precisions))
+    converter.precisions = precisions
     converter.model = model
     if eval_func is not None:
         converter.eval_func = eval_func

@@ -7,7 +7,7 @@ import torchvision
 import torch.nn as nn
 
 from neural_compressor.config import Pruner, PruningConfig
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.training import prepare_compression
 
@@ -60,7 +60,7 @@ class TestPruning(unittest.TestCase):
         pruner1 = Pruner(start_epoch=1, end_epoch=2, names=['layer1.0.conv1.weight'])
         pruner2 = Pruner(target_sparsity=0.6, update_frequency=2, names=['layer1.0.conv2.weight'])
         conf = PruningConfig(pruners=[pruner1, pruner2], end_epoch=2)
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         compression_manager = prepare_compression(self.model, conf)
@@ -98,7 +98,7 @@ class TestPruning(unittest.TestCase):
             Pruner(target_sparsity=0.6,update_frequency=2,names=['layer1.0.conv2.weight'])]
         conf = PruningConfig(pruners)
 
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         compression_manager = prepare_compression(self.model, conf)

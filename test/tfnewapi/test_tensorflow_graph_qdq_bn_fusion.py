@@ -135,7 +135,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         self.assertEqual(conv_input_type, True)
         self.assertEqual(found_fusion, True)
         self.assertEqual(qbn_num, 1)
-        self.assertEqual(dq_num, 1)
+        self.assertEqual(dq_num, 0)
 
     @disable_random()
     def test_training_bn_relu_depthwiseconv_biasadd_relu6_fusion(self):
@@ -174,7 +174,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                 dq_num += 1
         self.assertEqual(bn_num, 1)
         self.assertEqual(qbn_num, 0)
-        self.assertEqual(dq_num, 1)
+        self.assertEqual(dq_num, 0)
         bf16_enabled = bool(CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1')
         if bf16_enabled:
             self.assertEqual(bf16_bn_num, 1)
@@ -231,7 +231,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         self.assertEqual(conv_input_type, True)
         self.assertEqual(found_fusion, True)
         self.assertEqual(qbn_num, 1)
-        self.assertEqual(dq_num, 1)
+        self.assertEqual(dq_num, 0)
         self.assertEqual(is_offset_const, True)
         self.assertEqual(is_mean_const, True)
         self.assertEqual(round(qbn_alpha, 7), 0.3)
@@ -289,7 +289,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         self.assertEqual(conv_input_type, True)
         self.assertEqual(found_fusion, True)
         self.assertEqual(qbn_num, 1)
-        self.assertEqual(dq_num, 1)
+        self.assertEqual(dq_num, 0)
         self.assertEqual(is_offset_const, True)
         self.assertEqual(is_mean_const, True)
         self.assertEqual(frozen_qbn_output_max, qbn_output_max_name)

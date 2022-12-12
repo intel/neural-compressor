@@ -26,7 +26,7 @@ from mxnet import gluon
 from mxnet.gluon.data import DataLoader
 from mxnet.gluon.data.vision import transforms
 
-from neural_compressor.adaptor.mxnet_utils.util import check_mx_version, get_backend_name
+from neural_compressor.adaptor.mxnet_utils.util import check_mx_version, get_framework_name
 
 if check_mx_version('2.0.0') or not check_mx_version('1.7.0'):  # version >= 2.0.0 or == 1.6.0
     from mxnet.contrib.quantization import quantize_net
@@ -82,7 +82,7 @@ def quantize(net, ctx, dataloader, batch_size, num_calib_batches, save_path, cal
 
     data = next(iter(dataloader))[0].as_in_context(ctx)
     if check_mx_version('1.7.0'):
-        qnet.optimize_for(data, backend=get_backend_name(ctx), static_alloc=True, static_shape=True)
+        qnet.optimize_for(data, backend=get_framework_name(ctx), static_alloc=True, static_shape=True)
     qnet.export(save_path, 0)
     logger.info('Saved quantized model to: {}'.format(save_path))
 
