@@ -441,3 +441,7 @@ class ONNXModel(BaseModel):
             self.remove_unused_constant()
             self.topological_sort()
             self.save(save_path)
+        else:
+            logger.warning("Unsupported config for export, "
+                "only ONNXQlinear2QDQConfig is supported!")
+            exit(0)
