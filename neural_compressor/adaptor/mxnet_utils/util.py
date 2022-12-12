@@ -24,7 +24,7 @@ import numpy as np
 from enum import Enum
 from tempfile import TemporaryDirectory
 from neural_compressor.utils.utility import LazyImport
-from neural_compressor.model.model import MXNetModel as NCModel
+from neural_compressor.model.mxnet_model import MXNetModel as NCModel
 
 mx = LazyImport("mxnet")
 
@@ -126,16 +126,16 @@ def fuse(sym_model, ctx):
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
-    backend = get_backend_name(ctx)
-    if backend is not None:
+    framework = get_framework_name(ctx)
+    if framework is not None:
         if check_mx_version('2.0.0'):
-            symnet = symnet.optimize_for(backend)
+            symnet = symnet.optimize_for(framework)
         else:
-            symnet = symnet.get_backend_symbol(backend)
+            symnet = symnet.get_backend_symbol(framework)
     return (symnet, args, auxs)
 
 
-def get_backend_name(ctx):
+def get_framework_name(ctx):
     if 'cpu' in ctx.device_type:
         if check_mx_version('2.0.0'):
             return 'ONEDNN_QUANTIZE'

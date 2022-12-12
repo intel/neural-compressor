@@ -20,7 +20,7 @@ echo "mxnet version is $mxnet_version"
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
-    pip install /tf_dataset/tf_binary/221125/tensorflow*.whl
+    pip install /tf_dataset/tf_binary/221204/tensorflow*.whl
     if [[ $? -ne 0 ]]; then
       exit 1
     fi
@@ -28,7 +28,10 @@ elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
 fi
 
-if [[ "${itex_version}" != "" ]]; then
+if [[ "${itex_version}" == "nightly" ]]; then
+    pip install /tf_dataset/itex_binary/221209/intel_extension_for_tensorflow-1.1.0-cp38-cp38-linux_x86_64.whl
+    pip install /tf_dataset/itex_binary/221209/intel_extension_for_tensorflow_lib-1.1.0.0-cp38-cp38-linux_x86_64.whl
+elif [[ "${itex_version}" != "" ]]; then
     pip install --upgrade intel-extension-for-tensorflow[cpu]==${itex_version}
 fi
 

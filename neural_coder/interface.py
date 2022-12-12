@@ -17,6 +17,7 @@ import subprocess
 import logging
 import time
 import yaml
+import re
 
 from . import globals
 
@@ -662,8 +663,8 @@ def bench(
                 pass
         if "Accuracy (int8|fp32)" in line:
             try:
-                acc_int8 = float(line[line.find("Accuracy")+22:line.find("Accuracy")+28])
-                acc_fp32 = float(line[line.find("Accuracy")+29:line.find("Accuracy")+35])
+                acc_int8 = float(re.search(r"\d+\.\d+", line).group())
+                acc_fp32 = float(re.search(r"(?<=\|)\d+\.\d+", line).group())
                 acc_delta = round((acc_int8 - acc_fp32) / acc_fp32 * 100, 2) # percent of increase/decrease
             except ValueError as ve:
                 pass

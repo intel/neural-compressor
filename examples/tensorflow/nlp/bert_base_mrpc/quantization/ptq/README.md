@@ -173,7 +173,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 #### Benchmark
 ```python
       from neural_compressor.experimental import Benchmark, common
-      from neural_compressor.model.model import get_model_type
+      from neural_compressor.model.tensorflow_model import get_model_type
       evaluator = Benchmark(FLAGS.config)
       dataset = Dataset(eval_file, FLAGS.eval_batch_size)
       evaluator.b_dataloader = common.DataLoader(\
