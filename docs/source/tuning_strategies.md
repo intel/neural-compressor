@@ -120,25 +120,17 @@ conf = config.PostTrainingQuantConfig(
     # when set to 0, conservitive tuning strategy will be used.
     # this field has a higher priority than tuning_criterion.strategy.
     optimization_level=1,
+
     accuracy_criterion=config.AccuracyCriterion(
-        # optional. 
-        higher_is_better=True,
-        # optional. available values are 'relative' and 'absolute'.
-        criterion='relative',
-        # optional.
-        tolerable_loss=0.01,
+        higher_is_better=True, # optional. 
+        criterion='relative', # optional. available values are 'relative' and 'absolute'.
+        tolerable_loss=0.01, # optional.
     ),
     tuning_criterion=config.TuningCriterion(
-        # optional. tuning timeout (seconds)
-        # when set to 0, early stop is enabled.
-        timeout=0,
-        # optional. max tuning times.
-        # combined with `timeout` field to decide when to exit tuning.
-        max_trials=100,
-        # optional. name of tuning strategy. 
-        strategy="basic",
-        # optional. see concrete tuning strategy for available settings.
-        strategy_kwargs=None,
+        timeout=0, # optional. tuning timeout (seconds). when set to 0, early stop is enabled.
+        max_trials=100, # optional. max tuning times. combined with `timeout` field to decide when to exit tuning.
+        strategy="basic", # optional. name of tuning strategy. 
+        strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
     ),
 )
 ```
