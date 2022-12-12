@@ -5,37 +5,48 @@ import unittest
 import torch
 import torchvision
 import torch.nn as nn
+
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.pruning import Pruning, WeightPruningConfig
 
 
-class TestPruning(unittest.TestCase):
+class TestPruningCriteria(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    def test_pruning_basic(self):
+    def test_pruning_criteria(self):
         local_configs = [
             {
                 "op_names": ['layer1.*'],
-                'target_sparsity': 0.5,
+                'target_sparsity': 0.4,
                 "pattern": '8x2',
-                "pruning_type": "magnitude_progressive"
+                "pruning_type": "magnitude_progressive",
+                "pruning_scope": "local",
+                "sparsity_decay_type": "cube"
             },
             {
                 "op_names": ['layer2.*'],
-                'target_sparsity': 0.5,
-                'pattern': '2:4'
+                'target_sparsity': 0.45,
+                'pattern': '2:4',
+                "pruning_type": "snip",
+                'start_step': 6,
+                'end_step': 6
             },
             {
                 "op_names": ['layer3.*'],
+                'excluded_op_names': ['downsample.*'],
                 'target_sparsity': 0.7,
-                'pattern': '5x1',
-                "pruning_type": "snip_progressive"
+                'pattern': '4x1',
+                "pruning_type": "snip_momentum_progressive",
+                "pruning_frequency": 4,
+                "min_sparsity_ratio_per_op": 0.5,
+                "max_sparsity_ratio_per_op": 0.8,
             }
         ]
         config = WeightPruningConfig(
             local_configs,
-            target_sparsity=0.8
+            target_sparsity=0.8,
+            sparsity_decay_type="cube"
         )
         prune = Pruning(config)
         prune.update_config(start_step=1, end_step=10)

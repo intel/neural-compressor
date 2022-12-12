@@ -150,6 +150,7 @@ berts
 bertsquad
 BertTokenizer
 bfloat
+blockwise
 BFP
 BGR
 Bianchi
@@ -327,6 +328,7 @@ convolutional
 Convolutional
 ConvPerStage
 ConvReLU
+cooldown
 copt
 coreml
 CoreML
@@ -741,6 +743,7 @@ horovodrun
 hostfile
 Hounsfield
 howpublished
+hyp
 HqEgzS
 href
 html
@@ -1179,6 +1182,7 @@ ngatang
 NGPUS
 ngram
 NHWC
+ni
 NIC
 nifti
 niftis
@@ -1240,8 +1244,11 @@ nvidia
 NVIDIA
 NVIDIA's
 nvme
+nw
 Nx
+NxM
 nyu
+oc
 ok
 ol
 Omer
@@ -1251,6 +1258,7 @@ oneapi
 oneAPI
 onednn
 oneDNN
+oneshot
 onlinedocs
 onnx
 ONNX
@@ -1885,6 +1893,7 @@ UI
 UID
 uint
 uk
+ultralytics
 un
 uncomment
 uncompress
@@ -1895,6 +1904,7 @@ unidecode
 uniq
 unittest
 unref
+unscale
 unsqueeze
 unstack
 upenn
@@ -2121,6 +2131,7 @@ tensorrt
 hardwares
 BenchmarkConf
 PruningConf
+Pruning's
 DistillationConf
 grey
 ModelZoo
@@ -2442,3 +2453,8 @@ QuantizationAwareTrainingConfig
 Startup
 doesn
 startup
+Ajanthan
+WeightPruningConfig
+Namhoon
+Thalaiyasingam
+Torr
