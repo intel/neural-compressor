@@ -54,7 +54,7 @@ import shutil
 script_copied = args.script[:-3] + "_optimized.py"
 shutil.copy(args.script, script_copied)
 
-if args.bench:
+if not args.bench: # enable
     # optimize on copied script with Neural Coder
     from neural_coder import enable
     if args.opt == "":
@@ -86,7 +86,7 @@ if args.bench:
 
     process = subprocess.Popen(cmd, env=os.environ, shell=True)  # nosec
     process.wait()
-else:
+else: # auto_quant
     from neural_coder import auto_quant
     auto_quant(
         code=script_copied,
