@@ -119,7 +119,6 @@ class TestKerasInKerasOut(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('itex_qdq_keras_model',ignore_errors=True)
-        os.system("rm *.log")
 
     def test_keras_in_keras_out(self):
         logger.info("Run test_keras_in_keras_out case...")
