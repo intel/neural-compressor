@@ -18,6 +18,10 @@
 """Helper functions to export onnx model from QLinearops to QDQ."""
 
 from neural_compressor.utils import logger
+from neural_compressor.adaptor.ox_utils.util import find_by_name
+from neural_compressor.utils.utility import LazyImport
+
+numpy_helper = LazyImport('onnx.numpy_helper')
 
 def check_model(model):
     """Check optype for input model.
@@ -25,6 +29,7 @@ def check_model(model):
     Args:
         model (ModelProto): onnx model.
     """
+
     has_integerop = False
     has_qlinearop = False
     for node in model.graph.node:
@@ -34,6 +39,11 @@ def check_model(model):
             has_qlinearop = True
         elif node.op_type in ['QAttention', 'QGemm', 'QEmbedLayerNormalization']:
             has_qlinearop = True
+        elif node.op_type in ['Gather']:
+            input_data = find_by_name(node.input[0], model.graph.initializer)
+            if input_data is not None and \
+                numpy_helper.to_array(input_data).dtype in ['int8', 'uint8']:
+                has_qlinearop = True
     if has_integerop:
         logger.info("This model has Integer ops, these ops will be skipped.")
     if has_qlinearop:
@@ -51,10 +61,8 @@ def onnx_qlinear_to_qdq(
     Args:
         model (ModelProto): int8 onnx model.
         input_name_to_nodes (dict): the mapping of tensor name and its destination nodes. 
-        channel_axis (dict, optional): quantization axis of for per-channel quantized optype,
-            the key is optype (str), the value is axis (int).
     """
-    from neural_compressor.adaptor.ox_utils.operators.ops import QOPERATORS
+    from neural_compressor.adaptor.ox_utils.operators import QOPERATORS
     add_nodes = []
     remove_nodes = []
     inits = []

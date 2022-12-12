@@ -430,12 +430,14 @@ class ONNXModel(BaseModel):
 
     def export(self, save_path, conf):
         from neural_compressor.experimental.export import onnx_qlinear_to_qdq
-        add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
-                                         self._input_name_to_nodes)
-        self.add_nodes(add_nodes)
-        self.remove_nodes(remove_nodes)
-        self.add_initializers(inits)
-        self.update()
-        self.remove_unused_constant()
-        self.topological_sort()
-        self.save(save_path)
+        from neural_compressor.config import ONNXQlinear2QDQConfig
+        if isinstance(conf, ONNXQlinear2QDQConfig):
+            add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
+                                             self._input_name_to_nodes)
+            self.add_nodes(add_nodes)
+            self.remove_nodes(remove_nodes)
+            self.add_initializers(inits)
+            self.update()
+            self.remove_unused_constant()
+            self.topological_sort()
+            self.save(save_path)

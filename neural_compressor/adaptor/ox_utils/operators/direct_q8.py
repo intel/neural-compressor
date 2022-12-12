@@ -17,7 +17,6 @@
 #
 
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
 class Direct8BitOperator(Operator):
