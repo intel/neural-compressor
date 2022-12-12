@@ -629,11 +629,10 @@ def eval_ssd_r34_mlperf_coco(args):
 
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion, AccuracyLoss
-        tuning_criterion = TuningCriterion(timeout=0, max_trials=600)
-        accuracy_criterion = AccuracyCriterion(tolerable_loss=AccuracyLoss(0.05))
+        tuning_criterion = TuningCriterion(max_trials=600)
 
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_ipex",
-            calibration_sampling_size=[800], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+        conf = PostTrainingQuantConfig(approach="static", backend="ipex",
+            calibration_sampling_size=[800], tuning_criterion=tuning_criterion)
         q_model = quantization.fit(ssd_r34,
             conf=conf,
             eval_func=coco_eval,

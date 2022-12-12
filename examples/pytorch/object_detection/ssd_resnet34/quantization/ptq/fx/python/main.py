@@ -596,11 +596,10 @@ def main():
                                      transform=transforms.ToTensor())
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
 
-        tuning_criterion = TuningCriterion(timeout=0, max_trials=600)
-        accuracy_criterion = AccuracyCriterion(tolerable_loss=AccuracyLoss(0.05))
+        tuning_criterion = TuningCriterion(max_trials=600)
 
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx",
-            calibration_sampling_size=[50,100,500], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+        conf = PostTrainingQuantConfig(approach="static", backend="default",
+            calibration_sampling_size=[50,100,500], tuning_criterion=tuning_criterion)
         q_model = quantization.fit(raw_model,
             conf=conf,
             eval_func=eval_func,
