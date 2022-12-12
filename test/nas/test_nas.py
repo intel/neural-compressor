@@ -135,7 +135,6 @@ class TestNAS(unittest.TestCase):
         os.remove('search_results.csv')
         shutil.rmtree(os.path.join(os.getcwd(), 'NASResults'), ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
-        shutil.rmtree(os.path.join(os.getcwd(), '.torch'), ignore_errors=True)
 
     def test_basic_nas(self):
         # Built-in train, evaluation
