@@ -17,7 +17,7 @@
 
 import numpy as np
 from .pruner import pruner_registry, Pruner
-from ..utils import logger
+from neural_compressor.utils import logger
 
 @pruner_registry
 class BasicMagnitudePruner(Pruner):
