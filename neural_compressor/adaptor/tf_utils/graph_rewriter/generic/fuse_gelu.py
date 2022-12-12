@@ -29,7 +29,7 @@ class FuseGeluOptimizer(GraphRewriterBase): # pragma: no cover
 
     def do_transformation(self):
         if not (tf.version.VERSION in ('1.15.0-up2','1.15.0-up3') or \
-           version1_eq_version2(tf.version.VERSION, '2.11.0202242')):
+           version1_eq_version2(tf.version.VERSION, '2.11.0202250')):
             return self.model
 
         cur_graph = GraphAnalyzer()
