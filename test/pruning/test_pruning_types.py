@@ -46,6 +46,7 @@ local_types_config = [
 fake_snip_config = WeightPruningConfig(local_types_config, target_sparsity=0.9, start_step=0, \
                                        end_step=10, pruning_frequency=3, sparsity_decay_type="exp")
 
+
 class TestPruningTypes(unittest.TestCase):
     model = torchvision.models.resnet18()
 
@@ -84,6 +85,3 @@ class TestPruningTypes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

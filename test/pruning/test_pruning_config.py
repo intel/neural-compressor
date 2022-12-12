@@ -18,7 +18,7 @@ class TestPytorchPruning(unittest.TestCase):
         local_configs = [
             {
                 "op_names": ['layer1.*', 'layer2.*'],
-                "excluded_op_names": ['downsample.*'], 
+                "excluded_op_names": ['downsample.*'],
                 'target_sparsity': 0.6,
                 "pattern": 'channelx1',
                 "pruning_type": "snip_progressive",
@@ -33,7 +33,8 @@ class TestPytorchPruning(unittest.TestCase):
         ]
         config = WeightPruningConfig(
             local_configs,
-            pruning_frequency=2
+            pruning_frequency=2,
+            target_sparsity=0.8,
         )
         prune = Pruning(config)
         prune.model = self.model
@@ -46,7 +47,13 @@ class TestPytorchPruning(unittest.TestCase):
 
         prune.on_train_begin()
         prune.update_config(pruning_frequency=4)
-        for epoch in range(3):
+        assert prune.pruners[0].config['pruning_frequency'] == 4
+        assert prune.pruners[0].config['target_sparsity'] == 0.6
+        assert prune.pruners[1].config['target_sparsity'] == 0.8
+        assert prune.pruners[0].config['pattern'] == "channelx1"
+        assert prune.pruners[1].config['pruning_type'] == 'pattern_lock'
+
+        for epoch in range(1):
             self.model.train()
             prune.on_epoch_begin(epoch)
             local_step = 0
