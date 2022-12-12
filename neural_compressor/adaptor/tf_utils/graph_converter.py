@@ -34,7 +34,7 @@ from neural_compressor.experimental.common import Model
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2
+from .util import generate_feed_dict, iterator_sess_run,version1_gt_version2,version1_eq_version2
 from .util import version1_gte_version2,version1_lte_version2,version1_lt_version2
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph_common import QuantizeGraphHelper

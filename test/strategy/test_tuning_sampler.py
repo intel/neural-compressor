@@ -1,7 +1,7 @@
-from neural_compressor.strategy.st_utils.tuning_sampler import OpTypeWiseTuningSampler, ModelWiseTuningSampler
-from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
-from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
-from neural_compressor.strategy.st_utils.tuning_space import TuningSpace
+from neural_compressor.strategy.utils.tuning_sampler import OpTypeWiseTuningSampler, ModelWiseTuningSampler
+from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
+from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
+from neural_compressor.strategy.utils.tuning_space import TuningSpace
 from collections import OrderedDict
 from copy import deepcopy
 import unittest

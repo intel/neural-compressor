@@ -24,8 +24,8 @@ from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.strategy.strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
-from neural_compressor.strategy.st_utils.tuning_sampler import OpWiseTuningSampler
-from neural_compressor.strategy.st_utils.tuning_structs import OpTuningConfig
+from neural_compressor.strategy.utils.tuning_sampler import OpWiseTuningSampler
+from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
 
 hyperopt = LazyImport('hyperopt')
 

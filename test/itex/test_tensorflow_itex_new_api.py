@@ -58,8 +58,8 @@ class TestItexNewAPI(unittest.TestCase):
             quant_format="QDQ",
             calibration_sampling_size=[200])
 
-        from neural_compressor.data import DATASETS
-        dataset = DATASETS('tensorflow')['dummy'](shape=(100, 56, 56, 16), label=True)
+        from neural_compressor.data import Datasets
+        dataset = Datasets('tensorflow')['dummy'](shape=(100, 56, 56, 16), label=True)
         output_graph = fit(
             model=output_graph_def,
             conf=config,

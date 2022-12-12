@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from neural_compressor.conf.config import NASConfig
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental import common, NAS
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.nas.dynas import DyNAS
@@ -143,7 +143,7 @@ class TestNAS(unittest.TestCase):
         self.assertTrue(len(best_model_archs) > 0)
 
         # Customized train, evaluation
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(32, 3, 64, 64), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         def train_func(model):

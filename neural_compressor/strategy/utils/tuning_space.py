@@ -148,7 +148,7 @@ class TuningSpace:
                     }
             }
         Returns:
-        """        
+        """
         for key in ['activation', 'weight']:
             if key in op_user_cfg and op_user_cfg[key] is not None:
                 user_dtype_lst = op_user_cfg[key]['dtype'] if op_user_cfg[key]['dtype'] is not None else []
@@ -166,8 +166,16 @@ class TuningSpace:
                         op_cap['quant'][quant_mode_flag] = deepcopy(fw_quant_cap)
                     for item_name, item_options in op_user_cfg[key].items():
                         if item_options is not None and key in fw_quant_cap and item_name in fw_quant_cap[key]:
-                            merged_options = [option for option in item_options if \
-                                              option in fw_quant_cap[key][item_name]]
+                            merged_options = []
+                            for option in item_options:
+                                if option in fw_quant_cap[key][item_name]:
+                                    merged_options.append(option)
+                                else:
+                                    logger.warning("By default, {1}: {2} is not supported for {0} ".format(
+                                                    key, item_name, option) + "in Intel Neural Compressor")
+                                    logger.warning("Please visit the corresponding yaml file in " +
+                                                   "neural_compressor/adaptor/ to enhance the default " +
+                                                   "capability in Intel Neural Compressor")
                             if len(merged_options) == 0:
                                 merged_options = fw_quant_cap[key][item_name]
                             op_cap['quant'][quant_mode_flag][key][item_name] = merged_options
@@ -207,19 +215,19 @@ class TuningSpace:
         
         Here is an example:
         capability:{
-            （'op1','type1'): {
+            ('op1','type1'): {
                 'item1': [item1_option1, item1_option2, item1_option3],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op2','type1'): {
+            ('op2','type1'): {
                 'item1': [item1_option1, item1_option2, item1_option3],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op3','type2'): {
+            ('op3','type2'): {
                 'item1': [item1_option1, item1_option2],
                 'item2': [item2_option1, item2_option2],
                 }
-            （'op4','type2'): {
+            ('op4','type2'): {
                 'item1': [item1_option1, item1_option2],
                 'item2': [item2_option1, item2_option2],
                 }
@@ -234,26 +242,26 @@ class TuningSpace:
                     'item1': [item1_option1, item1_option2]
                     }}
             op-wise: {
-                （'op3','type2'): {
+                ('op3','type2'): {
                     'item2': [item2_option1]
                     }}
             }
 
         # step1. merged with model-wise
         capability:{
-            （'op1','type1'): {
+            ('op1','type1'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op2','type1'): {
+            ('op2','type1'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op3','type2'): {
+            ('op3','type2'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2],
                 }
-            （'op4','type2'): {
+            ('op4','type2'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2],
                 }
@@ -261,19 +269,19 @@ class TuningSpace:
 
         # step2. merged with optype-wise
         capability:{
-            （'op1','type1'): {
+            ('op1','type1'): {
                 'item1': [item1_option1, item1_option2],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op2','type1'): {
+            ('op2','type1'): {
                 'item1': [item1_option1, item1_option2],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op3','type2'): {
+            ('op3','type2'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2],
                 }
-            （'op4','type2'): {
+            ('op4','type2'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2],
                 }
@@ -281,19 +289,19 @@ class TuningSpace:
 
         # step3. merged with op-wise
         capability:{
-            （'op1','type1'): {
+            ('op1','type1'): {
                 'item1': [item1_option1, item1_option2],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op2','type1'): {
+            ('op2','type1'): {
                 'item1': [item1_option1, item1_option2],
                 'item2': [item2_option1, item2_option2, item2_option3],
                 }
-            （'op3','type2'): {
+            ('op3','type2'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1],
                 }
-            （'op4','type2'): {
+            ('op4','type2'): {
                 'item1': [item1_option1],
                 'item2': [item2_option1, item2_option2],
                 }

@@ -419,7 +419,7 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
     @property
@@ -562,7 +562,7 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
     @property

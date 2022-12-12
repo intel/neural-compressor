@@ -21,9 +21,9 @@ from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
-from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
-from .st_utils.tuning_space import TUNING_ITEMS_LST
+from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
+from .utils.tuning_structs import OpTuningConfig
+from .utils.tuning_space import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
