@@ -82,6 +82,7 @@ def evaluate(model):
     metric = TensorflowTopK(k=1)
 
     def eval_func(dataloader, metric):
+        warmup = 5
         iteration = None
         latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
@@ -98,7 +99,7 @@ def evaluate(model):
             latency_list.append(end - start)
             if iteration and idx >= iteration:
                 break
-        latency = np.array(latency_list).mean() / eval_dataloader.batch_size
+        latency = np.array(latency_list[warmup:]).mean() / eval_dataloader.batch_size
         return latency
 
     latency = eval_func(eval_dataloader, metric)
@@ -125,7 +126,7 @@ def main(_):
 			conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
 			fit(FLAGS.input_model, conf, b_func=evaluate)
 		else:
-			from neural_compressor.experimental import common
+			from neural_compressor import common
 			model = common.Model(FLAGS.input_model).model
 			accuracy = evaluate(model)
 			print('Batch size = %d' % FLAGS.batch_size)

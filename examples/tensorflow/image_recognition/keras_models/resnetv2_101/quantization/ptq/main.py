@@ -49,10 +49,10 @@ flags.DEFINE_string(
 flags.DEFINE_integer('batch_size', 32, 'batch_size')
 
 from neural_compressor.metric.metric import TensorflowTopK
-from neural_compressor.data.transforms.transform import ComposeTransform
 from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import LabelShift
 from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data.transforms.transform import ComposeTransform
+from neural_compressor.data.transforms.imagenet_transform import LabelShift
 from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
 
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
@@ -82,6 +82,7 @@ def evaluate(model):
     metric = TensorflowTopK(k=1)
 
     def eval_func(dataloader, metric):
+        warmup = 5
         iteration = None
         latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
@@ -98,7 +99,7 @@ def evaluate(model):
             latency_list.append(end - start)
             if iteration and idx >= iteration:
                 break
-        latency = np.array(latency_list).mean() / eval_dataloader.batch_size
+        latency = np.array(latency_list[warmup:]).mean() / eval_dataloader.batch_size
         return latency
 
     latency = eval_func(eval_dataloader, metric)
