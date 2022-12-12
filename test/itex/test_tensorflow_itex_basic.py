@@ -22,6 +22,7 @@ def build_fake_yaml(fake_yaml, save_path, **kwargs):
 class TestItexEnabling(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        os.system("rm *.log")
         fake_yaml_1 = '''
         model:
           name: fake_model_cpu
@@ -238,8 +239,6 @@ class TestItexEnabling(unittest.TestCase):
         relu = tf.nn.relu(add)
         relu6 = tf.nn.relu6(relu, name='op_to_store')
         out_name = relu6.name.split(':')[0]
-        num_of_instance = 1
-        cores_per_instance = 1
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
