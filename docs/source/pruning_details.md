@@ -286,35 +286,9 @@ Regularization is a technique that discourages learning a more complex model and
 ## Pruning Examples
 
 
-
-
  
 
-We validate the pruning technique on typical models across various domains (including CV, NLP, and Recommendation System) and the examples are listed below.
-
-
-
- 
-
-<table>
-
-<thead>
-
-  <tr>
-
-    <th>Model</th>
-
-    <th>Dataset</th>
-
-    <th>Pruning Algorithm</th>
-
-    <th>Framework</th>
-
-  </tr>
-
-</thead>
-
-
+We validate the pruning technique on typical models across various domains (including CV and NLP).
 
 
  

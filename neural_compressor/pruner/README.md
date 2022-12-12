@@ -7,27 +7,27 @@ Pruning
 
 
 
->>>[Neural Network Pruning](#neural-network-pruning)
+   - [Neural Network Pruning](#neural-network-pruning)
 
 
 
->>>[Pruning Patterns](#pruning-patterns)
+>- [Pruning Patterns](#pruning-patterns)
 
 
 
->>>[Pruning Criteria](#pruning-criteria)
+>- [Pruning Criteria](#pruning-criteria)
 
 
 
->>>[Pruning Schedules](#pruning-schedule)
+>- [Pruning Schedules](#pruning-schedule)
 
 
 
->>>[Pruning types](#pruning-type)
+>- [Pruning types](#pruning-type)
 
 
 
->>>[Regularization](#regularization)
+>- [Regularization](#regularization)
 
 
 
@@ -37,9 +37,6 @@ Pruning
 
 3. [Examples](#examples)
 
-
-
-4. [Citation](#citation)
 
 
 
@@ -64,8 +61,8 @@ Neural network pruning is a promising model compression technique that removes t
 Pruning patterns defines the rules of pruned weights' arrangements in space. INC currently supports unstructured, N:M and NxM patterns. Please note that N:M pattern is applied to input channels while NxM pattern is applied to output ones. [Details](../../docs/source/pruning_details.md#pruning-patterns).
 
 <div align=center>
-<a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_patterns.png">
-    <img src="../../docs/source/_static/imgs/pruning/pruning_patterns.png" width=700 height=160 alt="Sparsity Pattern">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
+    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=700 height=160 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -144,36 +141,36 @@ The following section is an example of how to use hooks in user pass-in training
 
 
 ```python
-from neural_compressor.pruning import Pruning
-from neural_compressor.config import WeightPruningConfig
+from neural_compressor.pruning import Pruning, WeightPruningConfig
 
 config = WeightPruningConfig(
     local_configs,  # An example of local_configs is shown below.
     target_sparsity=0.8, start_step=1, end_step=10, pruning_frequency=1
 )
-prune = Pruning(config)
-prune.model = model
-prune.on_train_begin()
+prune = Pruning(config)  # Pruning constructor.
+prune.model = model      # Set model object to prune.
+prune.on_train_begin()   # Execute on_train_begin hook before training.
 for epoch in range(num_train_epochs):
-    model.train()
-    prune.on_epoch_begin(epoch)
+    model.train()    
+    prune.on_epoch_begin(epoch)    # Execute on_epoch_begin hook before each epoch.
     for step, batch in enumerate(train_dataloader):
-        prune.on_step_begin(step)
+        prune.on_step_begin(step)  # Execute on_step_begin hook before each step.
         outputs = model(**batch)
         loss = outputs.loss
         loss.backward()
-        prune.on_before_optimizer_step()
+        prune.on_before_optimizer_step()  #Execute on_before_optimizer_step() hook before optimization.
         optimizer.step()
-        prune.on_after_optimizer_step()
+        prune.on_after_optimizer_step()   #Execute on_after_optimizer_step() hook after optimization.
         scheduler.step()  # Update learning rate schedule
         model.zero_grad()
-        prune.on_step_end()
-    prune.on_epoch_end()
+        prune.on_step_end()  # Execute on_step_end hook after each step.
+    prune.on_epoch_end()  # Execute on_epoch_end hook after each epoch.
 ...
 ```
 
 ```python
-config_dict = [{
+config_dict = [
+        {
             'target_sparsity': 0.9,   # Target sparsity ratio of modules.
             'pruning_type': "snip_momentum", # Default pruning type.
             'pattern': "4x1", # Default pruning pattern. 
@@ -187,7 +184,13 @@ config_dict = [{
             'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
             'sparsity_decay_type': "exp", # Function applied to control pruning rate.
             'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
-        }]
+        },
+        {
+            "op_names": ['layer3.*'], # A list of modules that would be pruned.
+            'target_sparsity': 0.7,   # Target sparsity ratio of modules. 
+            "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
+        }
+    ]
 ```
 
 
@@ -201,6 +204,3 @@ We validate the pruning technique on typical models across various domains (incl
 Please refer to pruning examples([PyTorch](../../examples/README.md#Pruning-1)) for more information.
 
 
-
-
-## Citation

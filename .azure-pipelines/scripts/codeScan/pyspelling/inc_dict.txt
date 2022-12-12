@@ -2453,3 +2453,8 @@ QuantizationAwareTrainingConfig
 Startup
 doesn
 startup
+Ajanthan
+WeightPruningConfig
+Namhoon
+Thalaiyasingam
+Torr
