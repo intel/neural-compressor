@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from .experimental import Quantization as ExpQuantization
 from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import PostTrainingQuantConfig
-
 
 def fit(model,
         conf,
@@ -29,7 +29,6 @@ def fit(model,
         eval_metric=None,
         **kwargs):
     """Quantize the model with a given configure.
-
     Args:
         model (torch.nn.Module):              For Tensorflow model, it could be a path
                                               to frozen pb,loaded graph_def object or
@@ -75,15 +74,12 @@ def fit(model,
                                               encapsulated in this function implementation
                                               and outputs a higher-is-better accuracy scalar
                                               value.
-
                                               The pseudo code should be something like:
-
                                               def eval_func(model):
                                                    input, label = dataloader()
                                                    output = model(input)
                                                    accuracy = metric(output, label)
                                                    return accuracy
-
     """
 
     if isinstance(conf, PostTrainingQuantConfig):

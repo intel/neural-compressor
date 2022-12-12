@@ -63,8 +63,8 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         from neural_compressor.quantization import fit
         from neural_compressor.config import TuningCriterion, PostTrainingQuantConfig
-        from neural_compressor.data import DATASETS, DATALOADERS
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        from neural_compressor.data import Datasets, DATALOADERS
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS['tensorflow'](dataset)
         
         conf = PostTrainingQuantConfig(
@@ -90,8 +90,8 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         from neural_compressor.quantization import fit
         from neural_compressor.config import TuningCriterion, PostTrainingQuantConfig
-        from neural_compressor.data import DATASETS, DATALOADERS
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        from neural_compressor.data import Datasets, DATALOADERS
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS['tensorflow'](dataset)
         
         conf = PostTrainingQuantConfig(
@@ -120,8 +120,8 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         from neural_compressor.quantization import fit
         from neural_compressor.config import TuningCriterion, PostTrainingQuantConfig
-        from neural_compressor.data import DATASETS, DATALOADERS
-        dataset = DATASETS("pytorch")["dummy"](((1, 3, 224, 224)))
+        from neural_compressor.data import Datasets, DATALOADERS
+        dataset = Datasets("pytorch")["dummy"](((1, 3, 224, 224)))
         dataloader = DATALOADERS['pytorch'](dataset)
         
         conf = PostTrainingQuantConfig(

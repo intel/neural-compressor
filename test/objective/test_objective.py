@@ -225,8 +225,8 @@ class TestObjective(unittest.TestCase):
         shutil.rmtree('./saved', ignore_errors=True)
 
     def test_performance(self):
-        from neural_compressor.data import DATASETS
-        dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
+        from neural_compressor.data import Datasets
+        dataset = Datasets('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
         from neural_compressor.experimental import Quantization, common
         from neural_compressor.utils.utility import get_size
@@ -245,8 +245,8 @@ class TestObjective(unittest.TestCase):
 
     def test_model_size(self):
         from neural_compressor.experimental import Benchmark, common
-        from neural_compressor.data import DATASETS
-        dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
+        from neural_compressor.data import Datasets
+        dataset = Datasets('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
         benchmarker = Benchmark('fake_yaml_model_size.yaml')
         benchmarker.b_dataloader = common.DataLoader(dataset)
@@ -255,8 +255,8 @@ class TestObjective(unittest.TestCase):
 
     def test_footprint(self):
         from neural_compressor.experimental import Benchmark, common
-        from neural_compressor.data import DATASETS
-        dataset = DATASETS('tensorflow')['dummy']((100, 256, 256, 1), label=True)
+        from neural_compressor.data import Datasets
+        dataset = Datasets('tensorflow')['dummy']((100, 256, 256, 1), label=True)
 
         benchmarker = Benchmark('fake_yaml_footprint.yaml')
         benchmarker.b_dataloader = common.DataLoader(dataset)
