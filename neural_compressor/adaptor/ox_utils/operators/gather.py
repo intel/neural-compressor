@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 @op_registry(op_types="Gather")
@@ -90,3 +90,8 @@ class GatherOperator(Operator):
                         self.quantizer.model.replace_node_input(n, 
                                         child.output[0], gather_new_output)
             self.quantizer.remove_nodes.extend([node, parents[0]])
+            
+@qop_registry(op_types="Gather")
+class QGatherOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)

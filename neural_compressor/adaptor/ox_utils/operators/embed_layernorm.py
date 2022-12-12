@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="EmbedLayerNormalization")
@@ -70,3 +70,37 @@ class EmbedLayerNormalizationOperator(Operator):
                                                        node.name, **kwargs)
         self.quantizer.new_nodes.append(qembed_layer_norm_node)
         self.quantizer.remove_nodes.extend(parents)
+        self.quantizer.remove_nodes.append(node)
+
+@qop_registry(op_types="QEmbedLayerNormalization")
+class QEmbedLayerNormalizationOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inits = []
+        inputs = [node.input[0], node.input[1]]
+        # input dq
+        for i in range(5):
+            in_dq = onnx.helper.make_node(
+                'DequantizeLinear',
+                [node.input[2+i], node.input[-10+i], node.input[-5+i]],
+                [node.name + '_in_dequant_' + str(i)],
+                node.name + '_in_dequant_' + str(i))
+            inputs.append(node.name + '_in_dequant_' + str(i))
+            add_nodes.append(in_dq)
+        if len(node.input) > 17:
+            inputs.append(node.input[7])
+
+        outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+
+        binary_node = onnx.helper.make_node(
+            'EmbedLayerNormalization', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(binary_node)
+        return True, add_nodes, inits

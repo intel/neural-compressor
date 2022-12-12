@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 
 @op_registry(op_types="MaxPool")
 class MaxPoolOperator(Operator):
@@ -68,3 +68,8 @@ class MaxPoolOperator(Operator):
                                     child.output[0], node.output[0])
 
         self.quantizer.remove_nodes.append(parent)
+
+@qop_registry(op_types="MaxPool")
+class QMaxPoolOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
