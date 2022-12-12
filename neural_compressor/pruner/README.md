@@ -74,7 +74,7 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=385 height=187 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=360 height=187 alt="Pruning criteria">
 </a>
 </div>
 
@@ -117,22 +117,8 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.pruning`, which takes a user defined yaml file as input. 
+Neural Compressor `Pruning` API is defined under `neural_compressor.pruning`, which takes a user-defined config object as input. 
 Users can pass the customized training/evaluation functions to `Pruning` in various scenarios. 
-
-In this case, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function. The pre-defined Neural Compressor hooks are listed below.
-
-
-
-```
-on_train_begin() : Execute at the beginning of training phase.
-on_epoch_begin(epoch) : Execute at the beginning of each epoch.
-on_step_begin(batch) : Execute at the beginning of each batch.
-on_step_end() : Execute at the end of each batch.
-on_epoch_end() : Execute at the end of each epoch.
-on_before_optimizer_step() : Execute before optimization step.
-on_after_optimizer_step() : Execute after optimization step.
-```
 
 
 
@@ -169,7 +155,7 @@ for epoch in range(num_train_epochs):
 ```
 
 ```python
-config_dict = [
+local_configs = [
         {
             'target_sparsity': 0.9,   # Target sparsity ratio of modules.
             'pruning_type': "snip_momentum", # Default pruning type.
@@ -192,6 +178,24 @@ config_dict = [
         }
     ]
 ```
+
+ In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function. The pre-defined Neural Compressor hooks are listed below.
+
+
+
+```
+on_train_begin() : Execute at the beginning of training phase.
+on_epoch_begin(epoch) : Execute at the beginning of each epoch.
+on_step_begin(batch) : Execute at the beginning of each batch.
+on_step_end() : Execute at the end of each batch.
+on_epoch_end() : Execute at the end of each epoch.
+on_before_optimizer_step() : Execute before optimization step.
+on_after_optimizer_step() : Execute after optimization step.
+```
+
+
+
+
 
 
 ## Examples
