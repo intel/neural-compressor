@@ -586,7 +586,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (question-answering)</td>
     <td>Unstructured</td>
-    <td>Pattern Lock</td>
+    <td>POfA and Snip-momentum</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pattern_lock/eager">eager</a></td>
   </tr>
   <tr>
@@ -607,7 +607,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (text-classification)</td>
     <td>Unstructured</td>
-    <td>Pattern Lock</td>
+    <td>POfA and Snip-momentum</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
   </tr>
   <tr>
