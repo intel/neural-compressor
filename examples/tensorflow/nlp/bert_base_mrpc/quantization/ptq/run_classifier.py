@@ -1075,7 +1075,8 @@ def main(_):
             accuracy (float): evaluation result, the larger is better.
         """
         from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
-        model = Model(model)
+        if not isinstance(model, BaseModel):
+          model = Model(model)
         model.input_tensor_names = ["input_file", "batch_size"]
         model.output_tensor_names = ["loss/Softmax:0", "IteratorGetNext:3"]
         input_tensor = model.input_tensor
@@ -1087,6 +1088,7 @@ def main(_):
         metric = Accuracy()
 
         def eval_func(dataloader):
+            warmup = 5
             latency_list = []
             for idx, (inputs, labels) in enumerate(dataloader):
                 # dataloader should keep the order and len of inputs same with input_tensor
@@ -1103,7 +1105,7 @@ def main(_):
                 latency_list.append(end-start)
                 if idx + 1 == iteration:
                     break
-            latency = np.array(latency_list).mean() / FLAGS.eval_batch_size
+            latency = np.array(latency_list[warmup:]).mean() / FLAGS.eval_batch_size
             return latency
 
         from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
@@ -1129,13 +1131,13 @@ def main(_):
         is_training=False,
         drop_remainder=False)
 
-    from neural_compressor.model.model import get_model_type
+    from neural_compressor.model.tensorflow_model import get_model_type
     try:
         model_type = get_model_type(FLAGS.input_model)
     except:
         model_type = None
     if model_type == 'frozen_pb':
-        model = Model(FLAGS.input_model)
+        model = FLAGS.input_model
     else:
         model = Model(estimator, input_fn=estimator_input_fn)
 
@@ -1166,7 +1168,7 @@ def main(_):
             conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
             fit(model, conf, b_func=evaluate)
         else:
-            accuracy = evaluate(model.graph_def)
+            accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.eval_batch_size)
             print("Accuracy: %.5f" % accuracy)
 

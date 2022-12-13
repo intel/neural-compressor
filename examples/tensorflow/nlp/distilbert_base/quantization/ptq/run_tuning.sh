@@ -24,6 +24,9 @@ function init_params {
   for var in "$@"
   do
     case $var in
+      --topology=*)
+          topology=$(echo $var |cut -f2 -d=)
+      ;;
       --input_model=*)
           input_model=$(echo ${var} |cut -f2 -d=)
       ;;

@@ -234,17 +234,15 @@ def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.tune:
         from neural_compressor import quantization
-        from neural_compressor.model.model import Model
         from neural_compressor.data.dataloaders.dataloader import DataLoader
         from neural_compressor.config import PostTrainingQuantConfig
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
         calib_dataloader = DataLoader(dataset=ds, collate_fn=collate_fn, \
-                                      batch_size=FLAGS.batch_size, framework='tensorflow')
-        input_model = Model(graph)										
+                                      batch_size=FLAGS.batch_size, framework='tensorflow')										
         conf = PostTrainingQuantConfig(inputs=['input_tensor'],
                                         outputs=['model/Transformer/strided_slice_19'],
                                         calibration_sampling_size=[500])       
-        q_model = quantization.fit(input_model, conf=conf, calib_dataloader=calib_dataloader,
+        q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=eval_func)
         try:
             q_model.save(FLAGS.output_model)
