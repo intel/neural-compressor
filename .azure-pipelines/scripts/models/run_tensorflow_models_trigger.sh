@@ -24,6 +24,7 @@ done
 FRAMEWORK="tensorflow"
 FRAMEWORK_VERSION="2.10.0"
 
+inc_new_api=false
 # ======== set up config for tensorflow models ========
 if [ "${model}" == "resnet50v1.5" ]; then
     model_src_dir="image_recognition/tensorflow_models/quantization/ptq"
@@ -131,6 +132,7 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
+    --inc_new_api="${inc_new_api}" \
     --mode=${mode} \
     --USE_TUNE_ACC=${USE_TUNE_ACC} \
     --PERF_STABLE_CHECK=${PERF_STABLE_CHECK} \
