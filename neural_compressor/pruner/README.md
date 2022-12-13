@@ -124,8 +124,6 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.  
 
-Our pruning API supports multiple pruner objects in a single Pruning object, which means we can apply different pruning configurations for different layers in a model.
-Since these pruning configurations share the same parameter names, we introduce a global-local configuration structure to initialize a Pruning object. First, we set up a dict-like local_config, which refers to some unique configurations for specific pruners. Afterwards, we pass this local_config dict and common configurations for all pruners (known as "global setting") to Pruning's initialization function. Below is code example for how to utilize our global-local configuration method to initialize a Pruning object.
 
 
 
@@ -178,7 +176,7 @@ pruning_configs = [
             "op_names": ['layer3.*'], # A list of modules that would be pruned.
             "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
             # 'target_sparsity' 
-        } # FOr layer3, the missing target_sparsty would be complemented by default setting (i.e. 0.8)
+        } # For layer3, the missing target_sparsty would be complemented by default setting (i.e. 0.8)
     ]
 ```
 
