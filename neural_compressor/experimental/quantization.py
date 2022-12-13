@@ -138,6 +138,11 @@ class Quantization(Component):
         if cfg.quantization.optimization_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
+            
+        if strategy == "mse_v2":
+            if not self.framework.startswith("tensorflow") and self.framework != 'pytorch_fx':
+                strategy = "basic"
+                logger.warning(f"MSE_v2 does not support {self.framework} now, use basic instead.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
@@ -160,6 +165,7 @@ class Quantization(Component):
             self._eval_func,
             _resume,
             self.hooks)
+        
         if getattr(self._calib_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
