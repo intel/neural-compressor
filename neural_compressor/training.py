@@ -95,6 +95,9 @@ class CompressionManager:
             """ called on the end of backward"""
             self.callbacks.on_before_optimizer_step()
 
+        def on_after_optimizer_step(self):
+            """ called after optimizer step"""
+            self.callbacks.on_before_optimizer_step()
 
         def on_step_end(self):
             """ called on the end of batches"""
@@ -207,7 +210,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                           distillation=None,
                           nas=None)
             component = Quantization(conf)
-        elif type(confs) == PruningConfig:
+        elif type(confs) == WeightPruningConfig:
             conf = Config(pruning=confs,
                           benchmark=None,
                           quantization=None,

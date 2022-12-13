@@ -26,7 +26,7 @@ from neural_compressor.pruner.pruners import get_pruner
 from neural_compressor.utils import logger
 import re
 from neural_compressor.pruner.utils import WeightPruningConfig
-
+##from ..conf.pythonic_config import Config ## circular import issue
 class Pruning:
     """Pruning.
 
@@ -46,9 +46,14 @@ class Pruning:
 
     def __init__(self, config):
         """Initialize."""
+        if not isinstance(config, WeightPruningConfig):
+            config = config.pruning
         self.model = None
         self.pruners = []
         self.pruners_info = process_config(config)
+
+    def prepare(self):
+        pass
 
     def update_config(self, *args, **kwargs):
         """Add user-defined arguments to the original configurations.
@@ -140,7 +145,7 @@ class Pruning:
             logger.info(info)
 
     # @_call_pruners
-    def on_train_begin(self):
+    def on_train_begin(self, dataloader=None):
         """Implement at the beginning of training process.
 
         Before training, ensure that pruners are generated.
