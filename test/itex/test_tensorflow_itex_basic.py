@@ -23,6 +23,7 @@ def build_fake_yaml(fake_yaml, save_path, **kwargs):
 class TestItexEnabling(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        os.system("rm *.log")
         fake_yaml_1 = '''
         model:
           name: fake_model_cpu

@@ -18,7 +18,7 @@
 import numpy as np
 from .pruner import pruner_registry, Pruner
 from heapq import heappush, heappop
-from ..utils import logger
+from neural_compressor.utils import logger
 import re
 
 @pruner_registry

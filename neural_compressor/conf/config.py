@@ -20,7 +20,7 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruners import PRUNERS
+from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
