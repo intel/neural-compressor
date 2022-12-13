@@ -497,6 +497,12 @@ class Benchmark(object):
             logger.warning("Force convert framework model to neural_compressor model.")
             self._model = NCModel(user_model, framework=self.framework)
         else:
+            # It is config of neural_compressor version < 2.0, no need in 2.0
+            if cfg.model.framework == "pytorch_ipex":
+                from neural_compressor.model.torch_model import IPEXModel
+                if not isinstance(user_model, IPEXModel):
+                    self._model = NCModel(user_model.model, framework=cfg.model.framework)
+                    return
             self._model = user_model
 
         # (TODO) ugly to set these params, but tensorflow need
