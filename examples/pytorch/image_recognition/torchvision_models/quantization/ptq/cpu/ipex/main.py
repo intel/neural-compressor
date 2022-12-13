@@ -292,12 +292,19 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.evaluate:
         validate(val_loader, model, criterion, args)
 
+    def eval_func(model):
+        accu = validate(val_loader, model, criterion, args)
+        return float(accu)
+
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf_ipex.yaml")
-        quantizer.model = common.Model(model)
-        q_model = quantizer.fit()
-        q_model.save(args.tuned_checkpoint)
+        from neural_compressor import PostTrainingQuantConfig
+        from neural_compressor import quantization
+        conf = PostTrainingQuantConfig(backend='ipex')
+        q_model = quantization.fit(model,
+                                    conf,
+                                    calib_dataloader=val_loader,
+                                    eval_func=eval_func)
+        q_model.save("./saved")
         return
 
     if args.benchmark or args.accuracy_only:

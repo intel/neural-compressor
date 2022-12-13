@@ -164,7 +164,7 @@ def main():
         return
 
     if args.tune:
-        def training_func_for_nc(model):
+        def train_func(model):
             epochs = 8
             iters = 30
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -191,14 +191,17 @@ def main():
 
             return model
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization(args.config)
-        quantizer.model = common.Model(model)
-        quantizer.q_func = training_func_for_nc
-        quantizer.calib_dataloader = val_loader
-        quantizer.eval_dataloader = val_loader
-        q_model = quantizer.fit()
-        q_model.save(args.tuned_checkpoint)
+        import copy
+        from neural_compressor import QuantizationAwareTrainingConfig
+        from neural_compressor.training import prepare_compression
+        model = copy.deepcopy(model)
+        conf = QuantizationAwareTrainingConfig()
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        q_model = train_func(model)
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save("./saved")
         return
 
     if args.benchmark:

@@ -85,6 +85,20 @@ def main_worker(args):
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
+    # define optimizer
+    optimizer = torch.optim.SGD(student_model.parameters(), args.lr,
+                                momentum=args.momentum, nesterov = args.nesterov,
+                                weight_decay=args.weight_decay)
+
+    # cosine learning rate
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(train_loader)*args.epochs)
+
+    def train_func(model):
+        return train(train_loader, model, scheduler, distiller, best_prec1)
+
+    def eval_func(model):
+        return validate(val_loader, model, distiller)
+
     if args.distillation:
         from neural_compressor.experimental import Distillation, common
         distiller = Distillation(args.config)
