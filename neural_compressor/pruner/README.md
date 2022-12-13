@@ -108,7 +108,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=350 height=170 alt="Regularization">
+    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=380 height=230 alt="Regularization">
 </a>
 </div>
 
