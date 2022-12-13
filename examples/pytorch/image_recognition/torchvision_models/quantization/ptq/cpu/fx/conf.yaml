@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: 1.0
+
 model:                                               # mandatory. used to specify model specific information.
   name: imagenet
   framework: pytorch_fx                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
@@ -24,7 +26,7 @@ quantization:                                        # optional. tuning constrai
       batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
+          root:  /home/bfang1/Projects/HAWQ_INC/datasets/raw/val         # NOTE: modify to calibration dataset location if needed
       transform:
         Resize:
           size: 256
@@ -43,7 +45,7 @@ evaluation:                                          # optional. required if use
       batch_size: 30
       dataset:
         ImageFolder:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+          root:  /home/bfang1/Projects/HAWQ_INC/datasets/raw/val          # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
@@ -61,7 +63,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageFolder:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
+          root: /home/bfang1/Projects/HAWQ_INC/datasets/raw/val          # NOTE: modify to evaluation dataset location if needed
       transform:
         Resize:
           size: 256
@@ -73,8 +75,10 @@ evaluation:                                          # optional. required if use
           std: [0.229, 0.224, 0.225]
 
 tuning:
+  strategy:
+    name: hawq_v2
   accuracy_criterion:
-    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+    relative:  0.0005                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
   exit_policy:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
