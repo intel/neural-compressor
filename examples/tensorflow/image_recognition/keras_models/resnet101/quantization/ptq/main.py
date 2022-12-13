@@ -126,8 +126,8 @@ def main(_):
 			conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
 			fit(FLAGS.input_model, conf, b_func=evaluate)
 		else:
-			from neural_compressor import common
-			model = common.Model(FLAGS.input_model).model
+			from neural_compressor.model.model import Model
+			model = Model(FLAGS.input_model).model
 			accuracy = evaluate(model)
 			print('Batch size = %d' % FLAGS.batch_size)
 			print("Accuracy: %.5f" % accuracy)
