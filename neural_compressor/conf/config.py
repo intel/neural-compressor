@@ -20,7 +20,7 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruners import PRUNERS
+from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
@@ -851,7 +851,7 @@ schema = Schema({
     Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
-        'strategy': {'name': 'basic'},
+        'strategy': {'name': 'basic'}, 
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
@@ -860,11 +860,14 @@ schema = Schema({
         'diagnosis': False,
         }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
+            'name': And(str, lambda s: s in STRATEGIES), 
+            Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
-            Optional('latency_weight', default=1.0): float
+            Optional('latency_weight', default=1.0): float,
+            Optional('confidence_batches', default=2): int,
+            Optional('hawq_v2_loss', default=None): object,
         } ,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
@@ -1088,6 +1091,7 @@ schema = Schema({
             Optional("num_evals", default=100000): int,
             Optional("results_csv_path", default=None): str,
             Optional("dataset_path", default=None): str,
+            Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             },
     },
@@ -1358,7 +1362,8 @@ class Conf(object):
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
-                    'accuracy_weight', 'latency_weight']:
+                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
+
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
@@ -1391,6 +1396,7 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
+                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':

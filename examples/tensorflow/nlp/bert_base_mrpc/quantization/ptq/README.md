@@ -134,5 +134,5 @@ After prepare step is done, we add tune and benchmark code to generate quantized
         accuracy = evaluate(model.graph_def)
         print('Batch size = %d' % FLAGS.eval_batch_size)
         print("Accuracy: %.5f" % accuracy)
-```
+
 The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.

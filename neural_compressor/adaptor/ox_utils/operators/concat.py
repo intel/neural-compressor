@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="Concat")
@@ -96,3 +96,42 @@ class ConcatOperator(Operator):
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
         self.quantizer.dtype_cast(self.node, self.dtype)
+
+@qop_registry(op_types="QLinearConcat")
+class QConcatOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inputs = []
+        inits = []
+        # input dq
+        for i in range(int((len(node.input) - 2) / 3 - 1)):
+            in_dq = onnx.helper.make_node(
+                'DequantizeLinear',
+                node.input[2 + i*3 : 2 + (i+1)*3],
+                [node.name + '_in_dequant_' + str(i)],
+                node.name + '_in_dequant_' + str(i))
+            inputs.append(node.name + '_in_dequant_' + str(i))
+            add_nodes.append(in_dq)
+
+        # output q
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[0], node.input[1]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+
+        concat_node = onnx.helper.make_node(
+            'Concat', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(concat_node)
+        return True, add_nodes, inits

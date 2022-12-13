@@ -16,14 +16,17 @@
 # limitations under the License.
 
 import copy
+from copy import deepcopy
 import numpy as np
 from collections import OrderedDict
 from typing import Dict, Any, List
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
+from time import time 
 
-from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_structs import OpTuningConfig
+from .utils.helper import tuning_record_msg
 
 @strategy_registry
 class MSETuneStrategy(TuneStrategy):
@@ -175,7 +178,7 @@ class MSETuneStrategy(TuneStrategy):
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for calib_sampling_size in calib_sampling_size_lst:
-            # step1. collect the ops that support static and dynamic
+            # Collect the ops that support static and dynamic
             quant_mode_wise_items = OrderedDict()
             query_order = ['static', 'dynamic', 'bf16', 'fp32']
             pre_items = set()
@@ -193,9 +196,9 @@ class MSETuneStrategy(TuneStrategy):
             for quant_mode, quant_mode_items in quant_mode_wise_items.items():
                 initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
 
-            # step3. optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-            early_stop_tuning = False
-            stage1_cnt = 0
+            # Optype-wise tuning 
+            early_stop_tuning = True
+            stage1_cnt = 0  
             int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
             stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
@@ -208,14 +211,13 @@ class MSETuneStrategy(TuneStrategy):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
 
-            # step4. fallback the ops supported both static and dynamic from static to dynamic
-            # tuning items: None
+            # Fallback the ops supported both static and dynamic from static to dynamic
             static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                     item in tuning_space.query_items_by_quant_mode('dynamic')]
             if static_dynamic_items:
                 logger.info("Fallback all ops that support both dynamic and static to dynamic.")
             else:
-                logger.info("Non ops that support both dynamic")
+                logger.info("No op support both dynamic and static")
 
             def dynamic_op_tuning_cfg_from_static(op_tuning_cfg: OpTuningConfig):
                 new_op_tuning_cfg = deepcopy(op_tuning_cfg)
@@ -230,14 +232,13 @@ class MSETuneStrategy(TuneStrategy):
 
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
-            # step5. fallback
+            # Fallback to float point datatypes ('bf16' or 'fp32')
             for target_dtype in ['bf16', 'fp32']:
                 fallback_items_lst = [item for item in int8_ops if
                                     item in tuning_space.query_items_by_quant_mode(target_dtype)]
                 if fallback_items_lst:
                     logger.info(f"Start to fallback op to {target_dtype} one by one.")
-                    self._fallback_started()
-                # replace it with sorted items list
+                # Replace it with sorted items list
                 fallback_items_name_lst = [item.name for item in fallback_items_lst]
                 # TODO check the best_qmodel
                 ordered_op_name_types = self.mse_impact_lst(fallback_items_name_lst, self.model, self.best_qmodel)
@@ -254,11 +255,11 @@ class MSETuneStrategy(TuneStrategy):
                     acc, _ = self.last_tune_result
                     op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
-                # do accumulated fallback according to the order in the previous stage
+                # Do accumulated fallback according to the order in the previous stage
                 if len(op_fallback_acc_impact) > 0:
                     ordered_ops = sorted(op_fallback_acc_impact.keys(), 
-                                         key=lambda key: op_fallback_acc_impact[key],
-                                         reverse=self.higher_is_better)
+                                        key=lambda key: op_fallback_acc_impact[key],
+                                        reverse=self.higher_is_better)
                     op_dtypes = OrderedDict(zip(ordered_ops, [target_dtype] * len(fallback_items_name_lst)))
                     logger.info(f"Start to accumulate fallback to {target_dtype}.")
                     initial_op_tuning_cfg = deepcopy(best_op_tuning_cfg_stage1)

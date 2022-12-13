@@ -19,7 +19,7 @@ import torch
 from torch import nn
 
 from neural_compressor.conf.pythonic_config import OpQuantConf, ActivationConf, WeightConf
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental import Quantization, Distillation, Pruning, NAS, common
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor import FRAMEWORKS
@@ -199,7 +199,7 @@ class TestPyhonicConf(unittest.TestCase):
         distiller.teacher_model = ConvNet(16, 32)
 
         # Customized train, evaluation
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(32, 3, 64, 64), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         def train_func(model):
@@ -241,7 +241,7 @@ class TestPyhonicConf(unittest.TestCase):
         prune.model = model
 
         # Customized train, evaluation
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(32, 3, 64, 64), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         def train_func(model):

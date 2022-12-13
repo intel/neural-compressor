@@ -7,8 +7,8 @@ import torch.nn as nn
 import unittest
 import os
 from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace
-from neural_compressor.data import DATASETS, DATALOADERS
-from neural_compressor.experimental.data.datasets.dataset import DATASETS
+from neural_compressor.data import Datasets, DATALOADERS, DataLoader
+from neural_compressor.experimental.data.datasets.dataset import Datasets
 from neural_compressor import quantization
 from neural_compressor.training import prepare_compression
 from neural_compressor.utils.pytorch import load
@@ -307,7 +307,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
     def test_fx_quant(self):
         for approach in ["qat", "static"]:
             model_origin = resnet18()
-            dataset = DATASETS("pytorch")["dummy"]((10, 3, 224, 224), label=True)
+            dataset = Datasets("pytorch")["dummy"]((10, 3, 224, 224), label=True)
             dataloader = DATALOADERS["pytorch"](dataset)
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
@@ -343,7 +343,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         for approach in ["qat", "static"]:
             model_origin = M()
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224), label=True)
+            dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224), label=True)
             dataloader = DATALOADERS["pytorch"](dataset)
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
@@ -419,7 +419,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 nhid = 256,
                 nlayers = 2,
             )
-            dataset = DATASETS("pytorch")["dummy"]((3, 10))
+            dataset = Datasets("pytorch")["dummy"]((3, 10))
             dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
             if approach == "qat":
@@ -445,7 +445,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
     def test_fx_sub_module_quant(self):
         for approach in ["qat", "static"]:
             model_origin = DynamicControlModel()
-            dataset = DATASETS("pytorch")["dummy"]((1, 3, 224, 224))
+            dataset = Datasets("pytorch")["dummy"]((1, 3, 224, 224))
             dataloader = DATALOADERS["pytorch"](dataset)
             # run fx_quant in neural_compressor and save the quantized GraphModule
             if approach == "qat":
@@ -484,8 +484,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
     def test_mix_precision(self):
         model_origin = DynamicControlModel()
         # run fx_quant in neural_compressor and save the quantized GraphModule
-        dataset = DATASETS("pytorch")["dummy"]((100, 3, 224, 224))
-        dataloader = DATALOADERS["pytorch"](dataset)
+        dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
+        dataloader = DataLoader("pytorch", dataset)
         set_workspace=("./saved")
         conf = PostTrainingQuantConfig(op_name_list=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin,
