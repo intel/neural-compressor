@@ -143,6 +143,7 @@ class Quantization(Component):
             if not self.framework.startswith("tensorflow") and self.framework != 'pytorch_fx':
                 strategy = "basic"
                 logger.warning(f"MSE_v2 does not support {self.framework} now, use basic instead.")
+                logger.info("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
