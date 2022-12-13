@@ -60,12 +60,12 @@ arg_parser.add_argument("-m", "--mode", type=str,
                         dest="mode",
                         default="performance"
                         )
-arg_parser.add_argument("-m", "--tune", type=bool,
+arg_parser.add_argument("--tune", type=bool,
                         help="whether to apply quantization",
                         dest="tune",
                         default=False
                         )
-arg_parser.add_argument("-m", "--benchmark", type=bool,
+arg_parser.add_argument("--benchmark", type=bool,
                         help="whether to do benchmark",
                         dest="benchmark",
                         default=False

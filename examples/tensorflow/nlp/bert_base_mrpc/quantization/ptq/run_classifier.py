@@ -1064,6 +1064,7 @@ def main(_):
     eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
     dataset = Dataset(eval_file, FLAGS.eval_batch_size)
     from neural_compressor.model.model import Model
+    from neural_compressor.base_model.model import BaseModel
 
     def evaluate(model):
         """Custom evaluate function to estimate the accuracy of the bert model.
@@ -1140,6 +1141,9 @@ def main(_):
         model = FLAGS.input_model
     else:
         model = Model(estimator, input_fn=estimator_input_fn)
+
+    if isinstance(model, BaseModel):
+        model = model.graph_def
 
     if FLAGS.tune:
         from neural_compressor import quantization

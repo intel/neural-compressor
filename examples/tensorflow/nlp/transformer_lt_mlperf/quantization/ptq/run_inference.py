@@ -235,13 +235,13 @@ def eval_func(infer_graph):
         iteration = -1
         if FLAGS.benchmark and FLAGS.mode == "performance":
             iteration = FLAGS.iters
+            assert iteration >= warmup, \
+            "'iteration' must be greater than or equal to warmup."
             logger.info('******** Start to get performance of the model ********')
         else:
             logger.info('******** Start to get accuracy and performance of the model ********')
         assert iteration != 0, \
             "'iteration' cannot be zero."
-        assert iteration >= warmup, \
-            "'iteration' must be greater than or equal to warmup."
         assert iteration <= len(dataloader), \
             "'iteration' must be less than or equal to len(dataloader)."
 
