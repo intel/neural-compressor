@@ -124,33 +124,30 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 
 The following section is an example of how to use hooks in user pass-in training function to perform BERT training. Our pruning API supports multiple pruner objects in a single Pruning object, which means we can apply different pruning configurations for different layers in a model. Since these pruning configurations share the same parameter names, we introduce a global-local configuration structure to initialize a Pruning object. First, we set up a dict-like local_config, which refers to some unique configurations for specific pruners. Afterwards, we pass this local_config dict and common configurations for all pruners (known as "global setting") to Pruning's initialization function. Below is code example for how to utilize our global-local configuration method to initialize a Pruning object.
 
-
-
 ```python
-from neural_compressor.pruning import Pruning, WeightPruningConfig
+from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
 
 config = WeightPruningConfig(
     local_configs,  # An example of local_configs is shown below.
     target_sparsity=0.8, start_step=1, end_step=10, pruning_frequency=1
 )
 prune = Pruning(config)  # Pruning constructor.
-prune.model = model      # Set model object to prune.
-prune.on_train_begin()   # Execute on_train_begin hook before training.
+prune.model = model  # Set model object to prune.
+prune.on_train_begin()  # Execute on_train_begin hook before training.
 for epoch in range(num_train_epochs):
-    model.train()    
-    prune.on_epoch_begin(epoch)    # Execute on_epoch_begin hook before each epoch.
+    model.train()
+    prune.on_epoch_begin(epoch)  # Execute on_epoch_begin hook before each epoch.
     for step, batch in enumerate(train_dataloader):
-        prune.on_step_begin(step)  # Execute on_step_begin hook before each step.
+            prune.on_step_begin(step)  # Execute on_step_begin hook before each step.
         outputs = model(**batch)
         loss = outputs.loss
         loss.backward()
-        prune.on_before_optimizer_step()  #Execute on_before_optimizer_step() hook before optimization.
+        prune.on_before_optimizer_step()  # Execute on_before_optimizer_step() hook before optimization.
         optimizer.step()
-        prune.on_after_optimizer_step()   #Execute on_after_optimizer_step() hook after optimization.
-        scheduler.step()  # Update learning rate schedule
-        model.zero_grad()
+prune.on_after_optimizer_step()  # Execute on_after_optimizer_step() hook after optimization.
+        lr_scheduler.step()  
         prune.on_step_end()  # Execute on_step_end hook after each step.
-    prune.on_epoch_end()  # Execute on_epoch_end hook after each epoch.
+prune.on_epoch_end()  # Execute on_epoch_end hook after each epoch.
 ...
 ```
 

@@ -17,9 +17,9 @@
 
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
+from .config import DistillationConfig, QuantizationAwareTrainingConfig
 from .experimental.distillation import Distillation
-from .experimental.pruning import Pruning
+from .pruner.pruning import Pruning, WeightPruningConfig
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
 from .utils import logger
@@ -171,7 +171,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                                nas=None)
                 com = Quantization(conf_)
                 com.model = model
-            elif isinstance(conf, PruningConfig):
+            elif isinstance(conf, WeightPruningConfig):
                 conf_ = Config(pruning=conf,
                                benchmark=None,
                                quantization=None,
