@@ -1063,7 +1063,7 @@ def main(_):
     eval_examples = processor.get_dev_examples(FLAGS.data_dir)
     eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
     dataset = Dataset(eval_file, FLAGS.eval_batch_size)
-    from neural_compressor.experimental import common
+    from neural_compressor.model.model import Model
 
     def evaluate(model):
         """Custom evaluate function to estimate the accuracy of the bert model.
@@ -1075,7 +1075,7 @@ def main(_):
             accuracy (float): evaluation result, the larger is better.
         """
         from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
-        model = common.Model(model)
+        model = Model(model)
         model.input_tensor_names = ["input_file", "batch_size"]
         model.output_tensor_names = ["loss/Softmax:0", "IteratorGetNext:3"]
         input_tensor = model.input_tensor
@@ -1106,7 +1106,7 @@ def main(_):
             latency = np.array(latency_list).mean() / FLAGS.eval_batch_size
             return latency
 
-        from neural_compressor.experimental.data.dataloaders.default_dataloader import DefaultDataLoader
+        from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
         dataloader = DefaultDataLoader(dataset, collate_fn=collate_fn, batch_size=FLAGS.eval_batch_size)
         latency = eval_func(dataloader)
         if FLAGS.benchmark and FLAGS.mode == 'performance':
@@ -1135,19 +1135,20 @@ def main(_):
     except:
         model_type = None
     if model_type == 'frozen_pb':
-        model = common.Model(FLAGS.input_model)
+        model = Model(FLAGS.input_model)
     else:
-        model = common.Model(estimator, input_fn=estimator_input_fn)
+        model = Model(estimator, input_fn=estimator_input_fn)
 
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         config = PostTrainingQuantConfig(
             inputs=["input_file", "batch_size"],
             outputs=["loss/Softmax:0", "IteratorGetNext:3"],
             calibration_sampling_size=[500],)
-        calib_dataloader=common.DataLoader(dataset, collate_fn=collate_fn)
-        eval_dataloader=common.DataLoader(dataset, collate_fn=collate_fn)
+        calib_dataloader=DataLoader(dataset=dataset, collate_fn=collate_fn, framework='tensorflow')
+        eval_dataloader=DataLoader(dataset=dataset, collate_fn=collate_fn, framework='tensorflow')
         q_model = quantization.fit(model=model, conf=config, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader, eval_metric=Accuracy())
 

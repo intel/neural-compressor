@@ -151,31 +151,33 @@ After prepare step is done, we add tune code to generate quantized model.
 
 #### Tune
 ```python
-  from neural_compressor import quantization
-  from neural_compressor.experimental import common
-  from neural_compressor.config import PostTrainingQuantConfig
-  dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
-  calib_dataloader = common.DataLoader(dataset,
-                                        collate_fn = collate_fn,
-                                        batch_size = FLAGS.batch_size)
-  input_model = common.Model(graph)										
-  conf = PostTrainingQuantConfig(inputs=['input_tokens'],
-                                  outputs=['model/Transformer/strided_slice_15'],
-                                  calibration_sampling_size=[500])       
-  q_model = quantization.fit(input_model, conf=conf, calib_dataloader=calib_dataloader,
-              eval_func=eval_func)
-  try:
-      q_model.save(FLAGS.output_model)
-  except Exception as e:
-      tf.compat.v1.logging.error("Failed to save model due to {}".format(str(e)))
+    graph = load_graph(FLAGS.input_graph)
+    from neural_compressor import quantization
+    from neural_compressor.config import PostTrainingQuantConfig
+    from neural_compressor.data.dataloaders.dataloader import DataLoader
+    dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
+    calib_dataloader = DataLoader(dataset = dataset,
+                                  framework ='tensorflow',
+                                  collate_fn = collate_fn,
+                                  batch_size = FLAGS.batch_size)
+                                    
+    conf = PostTrainingQuantConfig(inputs=['input_tokens'],
+                                   outputs=['model/Transformer/strided_slice_15'],
+                                   calibration_sampling_size=[500])       
+    q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
+                eval_func=eval_func)
+    try:
+        q_model.save(FLAGS.output_model)
+    except Exception as e:
+        tf.compat.v1.logging.error("Failed to save model due to {}".format(str(e)))
 ```
 #### Benchmark
 ```python
-  from neural_compressor.benchmark import fit
-  from neural_compressor.config import BenchmarkConfig
-  if FLAGS.mode == 'performance':
-      fit(graph, conf=BenchmarkConfig(), b_func=eval_func)
-  elif FLAGS.mode == 'accuracy':
-      eval_func(graph)
+    from neural_compressor.benchmark import fit
+    from neural_compressor.config import BenchmarkConfig
+    if FLAGS.mode == 'performance':
+        fit(graph, conf=BenchmarkConfig(), b_func=eval_func)
+    elif FLAGS.mode == 'accuracy':
+        eval_func(graph)
 ```
 The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.

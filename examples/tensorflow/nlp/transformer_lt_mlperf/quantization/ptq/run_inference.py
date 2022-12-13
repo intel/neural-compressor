@@ -31,7 +31,6 @@ from google.protobuf import text_format
 from utils import tokenizer
 from utils.tokenizer import Subtokenizer
 from utils import metrics
-from neural_compressor.experimental import Quantization, common
 from neural_compressor.data import DATALOADERS
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
@@ -306,12 +305,13 @@ def main(unused_args):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.tune:
         from neural_compressor import quantization
-        from neural_compressor.experimental import common
         from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
-        calib_dataloader = common.DataLoader(dataset,
-                                             collate_fn = collate_fn,
-                                             batch_size = FLAGS.batch_size)
+        calib_dataloader = DataLoader(dataset = dataset,
+                                      framework ='tensorflow',
+                                      collate_fn = collate_fn,
+                                      batch_size = FLAGS.batch_size)
 										
         conf = PostTrainingQuantConfig(inputs=['input_tokens'],
                                         outputs=['model/Transformer/strided_slice_15'],

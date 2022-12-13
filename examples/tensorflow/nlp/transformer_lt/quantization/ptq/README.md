@@ -115,12 +115,13 @@ After prepare step is done, we add tune code to generate quantized model.
 #### Tune
 ```python
 	from neural_compressor import quantization
-	from neural_compressor.experimental import common
+	from neural_compressor.model.model import Model
+	from neural_compressor.data.dataloaders.dataloader import DataLoader
 	from neural_compressor.config import PostTrainingQuantConfig
 	ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-	calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, \
-												batch_size=FLAGS.batch_size)
-	input_model = common.Model(graph)										
+	calib_dataloader = DataLoader(dataset=ds, collate_fn=collate_fn, \
+									batch_size=FLAGS.batch_size, framework='tensorflow')
+	input_model = Model(graph)										
 	conf = PostTrainingQuantConfig(inputs=['input_tensor'],
 									outputs=['model/Transformer/strided_slice_19'],
 									calibration_sampling_size=[500])       

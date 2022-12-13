@@ -110,12 +110,13 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```python
     from neural_compressor import quantization
     from neural_compressor.config import PostTrainingQuantConfig
+    from neural_compressor.data.dataloaders.dataloader import DataLoader
     config = PostTrainingQuantConfig(
         inputs=["input_file", "batch_size"],
         outputs=["loss/Softmax:0", "IteratorGetNext:3"],
         calibration_sampling_size=[500],)
-    calib_dataloader=common.DataLoader(dataset, collate_fn=collate_fn)
-    eval_dataloader=common.DataLoader(dataset, collate_fn=collate_fn)
+    calib_dataloader=DataLoader(dataset, collate_fn=collate_fn, framework='tensorflow')
+    eval_dataloader=DataLoader(dataset, collate_fn=collate_fn, framework='tensorflow')
     q_model = quantization.fit(model=model, conf=config, calib_dataloader=calib_dataloader,
                     eval_dataloader=eval_dataloader, eval_metric=Accuracy())
 
