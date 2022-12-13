@@ -342,13 +342,13 @@ class TestQuantization(unittest.TestCase):
 
     def test_autodump(self):
         # test auto_dump using old api
-        from neural_compressor.quantization import Quantization
+        from neural_compressor.experimental import Quantization, common
         quantizer = Quantization('fake_yaml3.yaml')
         dataset = quantizer.dataset('dummy', shape=(100, 3, 3, 1), label=True)
-        dataloader = quantizer.dataloader(dataset)
+        quantizer.eval_dataloader = common.DataLoader(dataset)
+        quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.model = self.constant_graph
-        output_graph = quantizer(self.constant_graph, \
-                                 q_dataloader=dataloader, eval_dataloader=dataloader)
+        output_graph = quantizer.fit()
         self.assertNotEqual(output_graph, None)
 
     def test_performance_only(self):

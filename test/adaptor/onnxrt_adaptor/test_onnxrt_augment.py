@@ -11,7 +11,7 @@ sys.path.append('..')
 from neural_compressor.experimental.data.datasets.dataset import Dataset
 from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
 from neural_compressor.model.onnx_model import ONNXModel
-from neural_compressor.data import DATASETS, DATALOADERS
+from neural_compressor.data import Datasets, DATALOADERS
 
 def generate_input_initializer(tensor_shape, tensor_dtype, input_name):
     '''
@@ -55,7 +55,7 @@ def create_nlp_session():
     node = onnx.helper.make_node('Gather', ['D', 'B'], ['C'], name='gather')
     graph = helper.make_graph([squeeze, node], 'test_graph_1', [A], [C], [B_init])
     model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
-    datasets = DATASETS('onnxrt_qlinearops')
+    datasets = Datasets('onnxrt_qlinearops')
     dataset = datasets['dummy_v2'](input_shape=(100, 4), label_shape=(1,))
     
     dataloader = DATALOADERS['onnxrt_qlinearops'](dataset)

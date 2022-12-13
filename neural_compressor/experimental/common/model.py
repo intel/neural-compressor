@@ -17,7 +17,9 @@
 
 """common Model just collects the information to construct a Model."""
 
-from neural_compressor.model.model import get_model_fwk_name, MODELS, get_model_type
+from neural_compressor.model.model import get_model_fwk_name, MODELS
+from neural_compressor.model.tensorflow_model import get_model_type
+from neural_compressor.utils import logger
 
 class Model(object):
     """A wrapper of the information needed to construct a Model."""
@@ -45,6 +47,8 @@ class Model(object):
             else:
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
+        elif framework == 'keras':
+            model = MODELS['keras'](root, **kwargs)
         elif framework == 'pytorch':
             model = MODELS[framework](root, **kwargs)
         else:

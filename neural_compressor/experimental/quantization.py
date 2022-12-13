@@ -28,7 +28,8 @@ from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
-from ..model.model import TensorflowQATModel, get_model_fwk_name
+from ..model.tensorflow_model import TensorflowQATModel
+from ..model.model import get_model_fwk_name
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
 from deprecated import deprecated
@@ -233,8 +234,8 @@ class Quantization(Component):
 
     def dataset(self, dataset_type, *args, **kwargs):
         """Get dataset according to dataset_type."""
-        from ..data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from ..data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def calib_dataloader(self):

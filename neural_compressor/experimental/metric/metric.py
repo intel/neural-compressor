@@ -113,6 +113,7 @@ class ONNXRTITMetrics(object):
 
 framework_metrics = {"tensorflow": TensorflowMetrics,
                      "tensorflow_itex": TensorflowMetrics,
+                     "keras": TensorflowMetrics,
                      "mxnet": MXNetMetrics,
                      "pytorch": PyTorchMetrics,
                      "pytorch_ipex": PyTorchMetrics,
@@ -132,6 +133,7 @@ ONNXRT_IT_METRICS = {}
 
 registry_metrics = {"tensorflow": TENSORFLOW_METRICS,
                     "tensorflow_itex": TENSORFLOW_ITEX_METRICS,
+                    "keras": TENSORFLOW_METRICS,
                     "mxnet": MXNET_METRICS,
                     "pytorch": PYTORCH_METRICS,
                     "pytorch_ipex": PYTORCH_METRICS,
@@ -156,7 +158,7 @@ class METRICS(object):
         Args:
             framework: The framwork name.
         """
-        assert framework in ("tensorflow", "tensorflow_itex",
+        assert framework in ("tensorflow", "tensorflow_itex","keras",
                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq",
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet",
                              "onnxrt_qoperator"), \

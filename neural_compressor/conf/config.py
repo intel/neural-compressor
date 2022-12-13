@@ -20,7 +20,7 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruners import PRUNERS
+from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
@@ -1091,6 +1091,7 @@ schema = Schema({
             Optional("num_evals", default=100000): int,
             Optional("results_csv_path", default=None): str,
             Optional("dataset_path", default=None): str,
+            Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             },
     },
@@ -1395,6 +1396,7 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
+                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':

@@ -136,7 +136,7 @@ class TensorFlowAdaptor(Adaptor):
               criterion_tuple, hooks, postprocess, **kwargs):
         # check model is savedmodel or not
         import tensorflow as tf
-        from neural_compressor.model.model import get_model_type
+        from neural_compressor.model.tensorflow_model import get_model_type
         tf.random.set_seed(1)
         self.model_type = get_model_type(model._model)
         optimizer = optimizer_tuple[0](**optimizer_tuple[1])
@@ -1204,7 +1204,7 @@ class TensorFlowAdaptor(Adaptor):
                  ]
                }
         """
-        from neural_compressor.model.model import TensorflowBaseModel
+        from neural_compressor.model.tensorflow_model import TensorflowBaseModel
         from neural_compressor.utils.utility import load_data_from_pkl, dump_data_to_local
         from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
         from .tf_utils.util import int8_node_name_reverse
@@ -1586,7 +1586,8 @@ class TensorFlowAdaptor(Adaptor):
     
     def _partial_dataset_of(self, dataloader, confidence_batches):
         from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
-        if isinstance(dataloader.dataset, DummyDataset):
+        from neural_compressor.data.datasets.dummy_dataset import DummyDataset as DummyDataset_v2_x
+        if isinstance(dataloader.dataset, DummyDataset) or isinstance(dataloader.dataset, DummyDataset_v2_x):
             assert(isinstance(confidence_batches, int))
             ds = copy.deepcopy(dataloader.dataset)
             ds.dataset = ds.dataset[:confidence_batches]

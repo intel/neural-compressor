@@ -695,15 +695,15 @@ class PyTorchFXModel(PyTorchModel):
         super(PyTorchFXModel, self).__init__(model, **kwargs)
 
 
-class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
-    """Build PyTorchIpexModel object
+class IPEXModel(PyTorchBaseModel):   # pragma: no cover
+    """Build IPEXModel object
 
     Args:
         model (onnx model): model path
     """
 
     def __init__(self, model, **kwargs):
-        super(PyTorchIpexModel, self).__init__(model, **kwargs)
+        super(IPEXModel, self).__init__(model, **kwargs)
         self.ipex_config_path = None
 
     @property

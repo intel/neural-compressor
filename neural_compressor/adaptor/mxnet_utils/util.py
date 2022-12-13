@@ -24,7 +24,7 @@ import numpy as np
 from enum import Enum
 from tempfile import TemporaryDirectory
 from neural_compressor.utils.utility import LazyImport
-from neural_compressor.model.model import MXNetModel as NCModel
+from neural_compressor.model.mxnet_model import MXNetModel as NCModel
 
 mx = LazyImport("mxnet")
 

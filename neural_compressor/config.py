@@ -884,6 +884,9 @@ class ExportConfig:
     def dynamic_axes(self, dynamic_axes):
         self._dynamic_axes = dynamic_axes
 
+class ONNXQlinear2QDQConfig:
+    def __init__(self):
+        pass
 
 class Torch2ONNXConfig(ExportConfig):
     def __init__(
